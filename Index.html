@@ -1,0 +1,4458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypixClin</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f8fafc;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --input-background: #ffffff;
+            --hover-color: #3b82f6;
+        }
+		
+		  /* Styles pour le système de masquage/affichage */
+			.section-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 1rem;
+				padding-bottom: 0.5rem;
+				width: 100%;
+				border-bottom: 2px solid var(--border-color);
+			}
+
+			.section-header h3 {
+				margin: 0;
+				padding: 0;
+			}
+
+        .toggle-button {
+            background-color: #1e40af;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+			margin-left: 10px;
+			display: inline-block;
+}
+        }
+
+        .toggle-button:hover {
+            background-color: #cbd5e1;
+        }
+
+        .section-content {
+            transition: all 0.3s ease;
+        }
+
+        .section-content.hidden {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        /* Style pour masquer la scrollbar sur certains navigateurs */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			margin-bottom: 1em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin: 0.5rem 0;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+			 .container {
+			   max-width: 1200px;
+			   margin: 0 auto;
+			   padding: 0.1rem;
+			}
+
+			.section {
+			   background: white;
+			   border-radius: 8px;
+			   padding: 1rem;
+			   margin-bottom: 0.75rem;
+			   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+			}
+
+        .fixed-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .fixed-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+     
+        /* Ajustement de l'espacement pour le contenu fixe */
+        .content-wrapper {
+            padding-bottom: 200px;
+        }
+
+        /* Style pour les champs de texte de précision */
+        .precision-input {
+            width: 300px !important; /* Remplace la largeur standard */
+        }
+
+        .section h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin: 0 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section h4 {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            width: 60px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        input[type="text"].wide {
+            width: 120px;
+        }
+
+        .symptom-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+			textarea {
+				width: 100%;
+				padding: 1rem;
+				border: 1px solid var(--border-color);
+				border-radius: 6px;
+				font-size: 1rem;
+				resize: vertical;
+				min-height: 150px;
+				font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+				line-height: 1.6;
+				background-color: #fafafa;
+				letter-spacing: 0.3px;
+				color: #2d3748;
+			}
+
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        /* Styles spécifiques pour les constantes */
+        .constantes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .constante-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Style pour les options conditionnelles */
+        .conditional-options {
+            margin-left: 1.5rem;
+            padding: 0.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+	
+	.toggle-button, .reset-button {
+    background-color: #1e40af;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TypixClin</h1>
+        <h2>Votre examen clinique en ligne</h2>
+    </header>
+	
+    <div class="container">
+        <!-- Section Constantes -->
+        <div class="section">
+            <div class="section-header">
+                
+				
+				<h3>Examen général :</h3>
+               	
+                    <div class="button-group">
+						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+					</div>
+            </div>		
+            <div class="section-content">
+			<h4>Paramètres généraux</h4>
+
+			
+				<p><strong>Mensurations :</strong>
+					<label>Taille (m): <input type="text" id="taille" placeholder="m" style="width: 50px; margin-right: 10px;"></label>
+					<label>Poids (kg) : <input type="text" id="poids" placeholder="kg" style="width: 50px; margin-right: 10px;"></label>
+					<label>IMC : <input type="text" id="IMC" readonly placeholder="kg/m²" style="width: 80px; background-color: #e9e9e9; margin-left: 10px;"></label>
+				</p>
+				<script>
+					document.getElementById('taille').addEventListener('input', calculateIMC);
+					document.getElementById('poids').addEventListener('input', calculateIMC);
+
+					function calculateIMC() {
+						const tailleval = parseFloat(document.getElementById('taille').value) || 0;
+						const poidsval = parseFloat(document.getElementById('poids').value) || 0;
+						
+						if (tailleval > 0) { // Vérifie que la taille est valide pour éviter la division par 0
+							const IMCval = (poidsval / (tailleval * tailleval)).toFixed(1);
+							document.getElementById('IMC').value = IMCval;
+						} else {
+							document.getElementById('IMC').value = ''; // Remet à zéro si la taille est invalide
+						}
+					}
+				</script>
+
+			
+			<h4>Paramètres vitaux</h4>
+            <p><strong>Fréquence respiratoire (/min) :</strong> <input type="text" id="FreqResp" placeholder="/min" style="margin-left: 10px;width: 40px;"></p>
+          <p><strong>Saturation en oxygène :</strong> <input type="text" id="saturation" placeholder="%" style="margin-left: 10px; width: 40px;">
+                <span id="saturation-options" style="display: none; margin-left: 20px;">
+                    <label><input type="radio" name="saturation-type" id="air-ambiant" checked> En air ambiant</label>
+                    <label style="margin-left: 10px;"><input type="radio" name="saturation-type" id="sous-oxygene"> Sous oxygène</label>
+                    <input type="text" id="litres" placeholder="L" style="display: none; margin-left: 10px; width: 100px;">
+                </span>
+            </p>
+			<script>
+				const saturationInput = document.getElementById('saturation');
+				const saturationOptions = document.getElementById('saturation-options');
+				const sousOxygeneCheckbox = document.getElementById('sous-oxygene');
+				const airAmbiantCheckbox = document.getElementById('air-ambiant');
+				const litresOxygeneInput = document.getElementById('litres');
+
+				// Afficher les options après saisie d'une valeur
+				saturationInput.addEventListener('input', () => {
+					if (saturationInput.value.trim() !== '') {
+						saturationOptions.style.display = 'inline';
+					} else {
+						saturationOptions.style.display = 'none';
+						sousOxygeneCheckbox.checked = false;
+						airAmbiantCheckbox.checked = true; // Réinitialiser à "En air ambiant"
+						litresOxygeneInput.style.display = 'none';
+					}
+				});
+
+				// Gérer le comportement des boutons radio
+				sousOxygeneCheckbox.addEventListener('change', () => {
+					if (sousOxygeneCheckbox.checked) {
+						litresOxygeneInput.style.display = 'inline';
+						airAmbiantCheckbox.checked = false;
+					} else {
+						litresOxygeneInput.style.display = 'none';
+						airAmbiantCheckbox.checked = true;
+					}
+				});
+
+				airAmbiantCheckbox.addEventListener('change', () => {
+					if (airAmbiantCheckbox.checked) {
+						sousOxygeneCheckbox.checked = false;
+						litresOxygeneInput.style.display = 'none';
+					}
+				});
+			</script>
+
+
+			<p><strong>Fréquence cardiaque (/min) :</strong> <input type="text" id="FreqCard" placeholder="/min" style="margin-left: 10px;width: 40px;"></p>
+			<p><strong>Pression artérielle (mmHg) :</strong>
+                <label>PAS : <input type="text" id="pas" placeholder="mmHg" style="width: 50px; margin-right: 10px;"></label>
+                <label>PAD : <input type="text" id="pad" placeholder="mmHg" style="width: 50px; margin-right: 10px;"></label>
+                <label>PAM : <input type="text" id="map" readonly placeholder="mmHg" style="width: 80px; background-color: #e9e9e9; margin-left: 10px;"></label>
+            </p>
+            <script>
+                document.getElementById('pas').addEventListener('input', calculateMap);
+                document.getElementById('pad').addEventListener('input', calculateMap);
+
+                function calculateMap() {
+                    const pas = parseFloat(document.getElementById('pas').value) || 0;
+                    const pad = parseFloat(document.getElementById('pad').value) || 0;
+                    const map = ((pas + 2 * pad) / 3).toFixed(0);
+                    document.getElementById('map').value = map;
+                }
+            </script>
+			<p><strong>Glasgow (/15)</strong>
+                <label>Y/4 : <input type="text" id="Y/4" placeholder="Y/4" style="width: 50px; margin-right: 10px;"></label>
+                <label>V/5 : <input type="text" id="V/5" placeholder="V/5" style="width: 50px; margin-right: 10px;"></label>
+				<label>M/6 : <input type="text" id="M/6" placeholder="M/6" style="width: 50px; margin-right: 10px;"></label>
+                <label>GSG/15 : <input type="text" id="GSG/15" readonly placeholder="GSG/15" style="width: 80px; background-color: #e9e9e9; margin-left: 10px;"></label>
+            </p>
+            <script>
+                document.getElementById('Y/4').addEventListener('input', calculateGSG);
+                document.getElementById('V/5').addEventListener('input', calculateGSG);
+				document.getElementById('M/6').addEventListener('input', calculateGSG);
+
+                function calculateGSG() {
+                    const Y = parseFloat(document.getElementById('Y/4').value) || 0;
+                    const V = parseFloat(document.getElementById('V/5').value) || 0;
+					const M = parseFloat(document.getElementById('M/6').value) || 0;
+                    const GSG = (Y+V+M).toFixed(0);
+                    document.getElementById('GSG/15').value = GSG;
+                }
+            </script>
+			<p><strong>Glycémie (g/L) :</strong> <input type="text" placeholder="g/L" style="margin-left: 10px;width: 40px;"></p>
+			<p><strong>Température (°C) :</strong> <input type="text" placeholder="°C" style="margin-left: 10px;width: 40px;"></p>
+        </div>
+		
+   </div>
+ </div>	
+ 	<div class="container">
+        <div class="section">
+            <div class="section-header">
+                <h3>Examen cardiovasculaire :</h3>
+                    <div class="button-group">
+						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+					</div>
+            </div>
+            <div class="section-content">
+            <h4>Signes fonctionnels</h4>
+			
+			<p><strong>Palpitations :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="card1" id="nocard1" checked> Pas de palpitation
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="card1" id="yescard1"> Palpitations
+            </label>
+            <input type="text" id="card1d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Douleur thoracique :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="card2" id="nocard2" checked> Pas de douleur thoracique
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="card2" id="yescard2"> Douleur thoracique
+            </label>
+            <input type="text" id="card2d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Dyspnée :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="card3" id="nocard3" checked> Pas de dyspnée
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="card3" id="yescard3"> Dyspnée
+            </label>
+            <input type="text" id="card3d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+		
+			<h4>Signes physiques</h4>
+			
+			<p><strong>Hémodynamique :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="card4" id="nocard4" checked> Hémodynamique stable
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="card4" id="yescard4"> Hémodynamique instable
+            </label> </p>
+           </p> 
+		   <div class="card4d1" id="card4d1">
+		   <input type="checkbox" id="card4d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card4d1Input">Oligurie</label> 
+		   </div>
+		   <div class="card4d2" id="card4d2">
+		   <input type="checkbox" id="card4d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card4d2Input">Confusion</label> 
+		   </div>
+		   <div class="card4d3" id="card4d3">
+		   <input type="checkbox" id="card4d3Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card4d3Input">Marbrures</label> 
+		   </div>
+		   <div class="card4d4" id="card4d4">
+		   <input type="checkbox" id="card4d4Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card4d4Input">TRC>3s</label> 
+		   </div>
+		   <div class="card4d5" id="card4d5">
+		   <input type="checkbox" id="card4d5Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card4d5Input">Polypnée</label> 
+		   </div>
+			</p>
+			
+			<p><strong>Insuffisance cardiaque droite :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="card5" id="nocard5" checked> Pas de signe
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="card5" id="yescard5"> Signes cliniques
+            </label> </p>
+           </p> 
+		   <div class="card5d1" id="card5d1">
+		   <input type="checkbox" id="card5d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card5d1Input">Turgescence jugulaire</label> 
+		   </div>
+		   <div class="card5d2" id="card5d2">
+		   <input type="checkbox" id="card5d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card5d2Input">Reflux hépatojugulaire</label> 
+		   </div>
+		   <div class="card5d3" id="card5d3">
+		   <input type="checkbox" id="card5d3Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card5d3Input">Hépatomégalie</label> 
+		   </div>
+		   <div class="card5d4" id="card5d4">
+		   <input type="checkbox" id="card5d4Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card5d4Input">OMI</label> 
+		   </div>
+			</p>
+			
+			<p><strong>Insuffisance cardiaque gauche :</strong>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="icg" id="noicg" checked> Pas de signe
+			</label>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="icg" id="yesicg"> Signes cliniques
+			</label>
+			</p>
+			<div id="icgOptions" style="display: none;">
+				<div style="margin-left: 20px; display: flex; gap: 20px;">
+					<div>
+						<input type="checkbox" id="crepitants">
+						<label for="crepitants">Crépitants bilatéraux et symétriques</label>
+					</div>
+					<div>
+						<input type="checkbox" id="orthopnee">
+						<label for="orthopnee">Orthopnée</label>
+					</div>
+				</div>
+				<div id="crepitantsLevel" style="display: none; margin-left: 40px;">
+					<div>
+						<input type="radio" name="crepitantsLocation" id="bases">
+						<label for="bases">Aux bases</label>
+					</div>
+					<div>
+						<input type="radio" name="crepitantsLocation" id="miChamps">
+						<label for="miChamps">Jusqu'aux mi-champs pulmonaires</label>
+					</div>
+					<div>
+						<input type="radio" name="crepitantsLocation" id="totalite">
+						<label for="totalite">Sur la totalité des champs pulmonaires</label>
+					</div>
+				</div>
+			</div>
+			
+							
+			<p><strong>Pouls :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="pulseType" value="normal" checked> 
+					Pouls périphériques perçus et bien frappés
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="pulseType" value="abnormal">
+					Anomalie des pouls
+				</label>
+				</p>
+
+				<div id="pulseDetails" style="display: none; margin-left: 20px;">
+					<div>
+						<p>Radiaux :
+							<label style="margin-right: 10px;">
+								<input type="checkbox" name="radialPulse" value="right" checked> Droit
+							</label>
+							<label>
+								<input type="checkbox" name="radialPulse" value="left" checked> Gauche
+							</label>
+						</p>
+					</div>
+
+					<div>
+						<p>Poplités :
+							<label style="margin-right: 10px;">
+								<input type="checkbox" name="poplitealPulse" value="right" checked> Droit
+							</label>
+							<label>
+								<input type="checkbox" name="poplitealPulse" value="left" checked> Gauche
+							</label>
+						</p>
+					</div>
+
+					<div>
+						<p>Tibiaux postérieurs :
+							<label style="margin-right: 10px;">
+								<input type="checkbox" name="tibialPulse" value="right" checked> Droit
+							</label>
+							<label>
+								<input type="checkbox" name="tibialPulse" value="left" checked> Gauche
+							</label>
+						</p>
+					</div>
+
+					<div>
+						<p>Pédieux :
+							<label style="margin-right: 10px;">
+								<input type="checkbox" name="pedialPulse" value="right" checked> Droit
+							</label>
+							<label>
+								<input type="checkbox" name="pedialPulse" value="left" checked> Gauche
+							</label>
+						</p>
+					</div>
+				</div>
+				
+			<p><strong>Thrombose veineuse profonde :</strong>
+			<label style="margin-right: 10px;">
+			   <input type="radio" name="tvp" id="notvp" checked> 
+			   Pas de signe de thrombose veineuse profonde
+			</label>
+			<label style="margin-right: 10px;">
+			   <input type="radio" name="tvp" id="yestvp">
+			   Signes de thrombose veineuse profonde
+			</label>
+			</p>
+
+			<div class="tvpDetails" style="display: none; margin-left: 20px;">
+			   <p>Côté :
+				   <label style="margin-right: 10px;">
+					   <input type="radio" name="tvpSide" value="droite" checked> Droite
+				   </label>
+				   <label style="margin-right: 10px;">
+					   <input type="radio" name="tvpSide" value="gauche"> Gauche
+				   </label>
+				   <label>
+					   <input type="radio" name="tvpSide" value="bilatérale"> Bilatérale
+				   </label>
+			   </p>
+
+			   <p>Localisation :
+				   <input type="checkbox" id="mollet"> 
+				   <label for="mollet" style="margin-right: 10px;">Mollet</label>
+				   <input type="checkbox" id="cuisse"> 
+				   <label for="cuisse">Cuisse</label>
+			   </p>
+
+			   <p>Signes cliniques :
+				   <input type="checkbox" id="douleur"> 
+				   <label for="douleur" style="margin-right: 10px;">Douleur</label>
+				   
+				   <input type="checkbox" id="oedeme"> 
+				   <label for="oedeme" style="margin-right: 10px;">Œdème inflammatoire</label>
+				   
+				   <input type="checkbox" id="cordon"> 
+				   <label for="cordon">Cordon induré</label>
+				   
+				   	<input type="checkbox" id="homans"> 
+				   <label for="homans">Signe de Homans</label>
+			   </p>
+			</div>
+						
+			<p><strong>Souffles vasculaires :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="vascularMurmur" id="noVascularMurmur" checked> 
+					Pas de souffle vasculaire
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="vascularMurmur" id="yesVascularMurmur">
+					Présence d'un souffle vasculaire
+				</label>
+			</p>
+
+			<div id="vascularMurmurDetails" style="display: none; margin-left: 20px;">
+				<!-- Souffles fémoraux -->
+				<div>
+					<input type="checkbox" id="femoralMurmur"> 
+					<label for="femoralMurmur">Souffle vasculaire fémoral</label>
+					<div id="femoralDetails" style="display: none; margin-left: 20px;">
+						<label style="margin-right: 10px;">
+							<input type="radio" name="femoralSide" value="droit" checked> Droit
+						</label>
+						<label style="margin-right: 10px;">
+							<input type="radio" name="femoralSide" value="gauche"> Gauche
+						</label>
+						<label>
+							<input type="radio" name="femoralSide" value="bilateral"> Bilatéral
+						</label>
+					</div>
+				</div>
+
+				<!-- Souffles carotidiens -->
+				<div>
+					<input type="checkbox" id="carotidMurmur"> 
+					<label for="carotidMurmur">Souffle vasculaire carotidien</label>
+					<div id="carotidDetails" style="display: none; margin-left: 20px;">
+						<label style="margin-right: 10px;">
+							<input type="radio" name="carotidSide" value="droit" checked> Droit
+						</label>
+						<label style="margin-right: 10px;">
+							<input type="radio" name="carotidSide" value="gauche"> Gauche
+						</label>
+						<label>
+							<input type="radio" name="carotidSide" value="bilateral"> Bilatéral
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<p><strong>Bruits du cœur :</strong>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="heartSoundType" value="normal" checked> 
+				Réguliers sans souffle perçus
+			</label>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="heartSoundType" value="abnormal">
+				Anomalie auscultatoire  
+			</label>
+			</p>
+
+				<div id="abnormalDetails" style="display: none; margin-left: 20px;">
+					<div class="flex gap-4 mb-2">
+						<label>
+							<input type="radio" name="rhythm" value="regular" checked> Régulier
+						</label>
+						<label>
+							<input type="radio" name="rhythm" value="irregular"> Irrégulier
+						</label>
+					</div>
+
+					<div class="mb-2">
+						<label>
+							<input type="checkbox" id="hasMurmur"> Présence d'un souffle
+						</label>
+					</div>
+
+					<div id="murmurDetails" style="display: none; margin-left: 20px;">
+					<div class="mb-2">
+				   <div>
+					   <p>Siège
+					   <label>
+						   <input type="checkbox" name="location" value="aortic"> Aortique
+					   </label>
+					   <label>
+						   <input type="checkbox" name="location" value="mitral"> Mitral
+					   </label>
+					   <label>
+						   <input type="checkbox" name="location" value="tricuspid"> Tricuspidien
+					   </label>
+					   <label>
+						   <input type="checkbox" name="location" value="pulmonary"> Pulmonaire
+					   </label>
+					   </p>
+				   </div>
+
+				   <div>
+					   <p>Timbre
+					   <label>
+						   <input type="checkbox" name="timbre" value="soft"> Doux humé aspiratif
+					   </label>
+					   <label>
+						   <input type="checkbox" name="timbre" value="harsh"> Rude râpeux
+					   </label>
+					   <label>
+						   <input type="checkbox" name="timbre" value="musical"> En jet de vapeur piaulant
+					   </label>
+					   <label>
+						   <input type="checkbox" name="timbre" value="friction"> Frottement péricardique
+					   </label>
+					   </p>
+				   </div>
+
+				   <div>
+					   <p>Temps
+					   <label>
+						   <input type="checkbox" name="timing" value="systolic"> Systolique
+					   </label>
+					   <label>
+						   <input type="checkbox" name="timing" value="diastolic"> Diastolique
+					   </label>
+					   <label>
+						   <input type="checkbox" name="timing" value="continuous"> Systolo-diastolique
+					   </label>
+					   </p>
+				   </div>
+
+				   <div class="mb-2">
+					   <p class="font-medium">Intensité :
+					   <select name="intensity">
+						   <option value="1">1/6</option>
+						   <option value="2">2/6</option>
+						   <option value="3">3/6</option>
+						   <option value="4">4/6</option>
+						   <option value="5">5/6</option>
+						   <option value="6">6/6</option>
+					   </select>
+					   </p>
+				   </div>
+
+				   <div class="mb-2">
+					   <p class="font-medium">Irradiation :
+					   <label>
+						   <input type="checkbox" name="radiation" value="carotid"> Carotidienne
+					   </label>
+					   <label>
+						   <input type="checkbox" name="radiation" value="axillary"> Axillaire
+					   </label>
+					   <label>
+						   <input type="checkbox" name="radiation" value="none"> Sans irradiation
+					   </label>
+					   </p>
+				   </div>
+				</div>
+				</div>
+			</div>
+
+        </div>
+    </div>
+ </div>
+ </div>	
+ 
+ 	<div class="container">
+        <div class="section">
+            <div class="section-header">
+                <h3>Examen respiratoire :</h3>
+                    <div class="button-group">
+						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+					</div>
+            </div>
+            <div class="section-content">
+			
+            <h4>Signes fonctionnels</h4>
+			<p><strong>Hémoptysie :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp1" id="noresp1" checked> Pas d'hémoptysie
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp1" id="yesresp1"> Hémoptysie
+            </label>
+            <input type="text" id="resp1d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+
+			<p><strong>Toux :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp2" id="noresp2" checked> Pas de toux
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp2" id="yesresp2"> Toux
+            </label>
+            <input type="text" id="resp2d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+
+			<p><strong>Crachats :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp3" id="noresp3" checked> Pas de crachat
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp3" id="yesresp3"> Crachats
+            </label>
+            <input type="text" id="resp3d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>			
+			
+			<h4>Signes physiques</h4>
+
+			<p><strong>Inspection thoracique :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="inspection" id="normalInspection" checked> 
+					Pas d'anomalie à l'inspection
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="inspection" id="abnormalInspection">
+					Anomalie à l'inspection
+				</label>
+			</p>
+
+			<div id="inspectionDetails" style="display: none; margin-left: 20px;">
+				<!-- Ampliation thoracique -->
+				<p>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="ampliation" value="symetrique" checked> 
+						Ampliation thoracique symétrique
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="ampliation" value="asymetrique">
+						Ampliation thoracique asymétrique
+					</label>
+				</p>
+				<div id="ampliationSide" style="display: none; margin-left: 40px;">
+					<label style="margin-right: 10px;">
+						<input type="radio" name="ampliationSideChoice" value="droite" checked> à droite
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="ampliationSideChoice" value="gauche"> à gauche
+					</label>
+				</div>
+
+				<!-- Hippocratisme -->
+				<p>
+					<input type="checkbox" id="hippocratisme"> 
+					<label for="hippocratisme">Hippocratisme digital</label>
+				</p>
+				
+				<!-- Cyanose -->
+				<p>
+					<input type="checkbox" id="cyanose"> 
+					<label for="cyanose">Cyanose des extrémités</label>
+				</p>
+				
+				<!-- Distension -->
+				<p>
+					<input type="checkbox" id="distension"> 
+					<label for="distension">Distension thoracique</label>
+				</p>
+			</div>
+			<p><strong>Hypercapnie :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp4" id="noresp4" checked> Pas de signe
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="resp4" id="yesresp4"> Signes cliniques
+            </label> </p>
+           </p> 
+		   <div class="resp4d1" id="resp4d1">
+		   <input type="checkbox" id="resp4d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="resp4d1Input">Sueurs</label> 
+		   </div>
+		   <div class="resp4d2" id="resp4d2">
+		   <input type="checkbox" id="resp4d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="resp4d2Input">Astéririx</label> 
+		   </div>
+		   <div class="resp4d3" id="resp4d3">
+		   <input type="checkbox" id="resp4d3Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="resp4d3Input">Céphalées</label> 
+		   </div>
+		   <div class="resp4d4" id="resp4d4">
+		   <input type="checkbox" id="resp4d4Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="resp4d4Input">HTA</label> 
+		   </div>
+		   <div class="resp4d5" id="resp4d5">
+		   <input type="checkbox" id="resp4d5Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="resp4d5Input">Agitation/confusion</label> 
+		   </div>
+			</p>
+			
+			<p><strong>Signes de lutte :</strong>
+			<label style="margin-right: 10px;">
+			   <input type="radio" name="resp5" id="noresp5" checked> Pas de signe
+			</label>
+			<label style="margin-right: 10px;">
+			   <input type="radio" name="resp5" id="yesresp5"> Signes cliniques
+			   <select id="resp5Intensity" style="display: none; margin-left: 10px;">
+				   <option value="léger">Léger</option>
+				   <option value="modéré">Modéré</option>
+				   <option value="majeur">Majeur</option>
+			   </select>
+			</label>
+			</p>
+
+			<div style="display: none;" id="signeLutteDetails">
+			   <div class="resp5d1" id="resp5d1">
+				  <input type="checkbox" id="resp5d1Input"> <label for="resp5d1Input">Tirage intercostal</label> 
+			   </div>
+			   <div class="resp5d2" id="resp5d2">
+				  <input type="checkbox" id="resp5d2Input"> <label for="resp5d2Input">Tirage susclaviculaire</label> 
+			   </div>
+			   <div class="resp5d3" id="resp5d3">
+				  <input type="checkbox" id="resp5d3Input"> <label for="resp5d3Input">Tirage souscostal</label> 
+			   </div>
+			   <div class="resp5d4" id="resp5d4">
+				  <input type="checkbox" id="resp5d4Input"> <label for="resp5d4Input">Balancement thoracoabdominal</label> 
+			   </div>
+			</div>
+			
+			<p><strong>Percussion :</strong>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="percussion" id="normalPercussion" checked> Percussion sans anomalie
+			</label>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="percussion" id="abnormalPercussion"> Anomalie de la percussion
+			</label>
+			</p>
+
+			<div id="percussionDetails" style="display: none; margin-left: 20px;">
+				<div>
+					<input type="checkbox" id="tympanisme"> 
+					<label for="tympanisme">Tympanisme</label>
+					<input type="text" id="tympanismeLocation" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+				</div>
+
+				<div>
+					<input type="checkbox" id="matite"> 
+					<label for="matite">Matité</label>
+					<input type="text" id="matiteLocation" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+				</div>
+			</div>
+			
+			<p><strong>Vibrations vocales :</strong>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="vibrations" id="normalVibrations" checked> 
+				Sans anomalie
+			</label>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="vibrations" id="abnormalVibrations"> 
+				Anomalies
+				<div id="vibrationsDetails" style="display: none; margin-left: 20px;">
+					<div>
+						<input type="checkbox" id="diminutionVibrations"> 
+						<label for="diminutionVibrations">Abolition des vibrations vocales</label>
+						<input type="text" id="diminutionLocation" class="locationInput" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+					<div>
+						<input type="checkbox" id="augmentationVibrations"> 
+						<label for="augmentationVibrations">Augmentation des vibrations vocales</label>
+						<input type="text" id="augmentationLocation" class="locationInput" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+				</div>
+			</label>
+			</p>
+			
+		<p><strong>Auscultation pulmonaire :</strong>
+		<label style="margin-right: 10px;">
+			<input type="radio" name="resp6" id="noresp6" checked> 
+			Murmure vésiculaire bilatéral et symétrique sans bruit surajouté
+		</label>
+		<label style="margin-right: 10px;">
+			<input type="radio" name="resp6" id="yesresp6">
+						Anomalie auscultatoire
+					</label>
+					</p>
+
+					<div class="resp6d1" id="resp6d1">
+					   <input type="checkbox" id="resp6d1Input" style="display: none; margin-left: 10px;"> 
+					   <label for="resp6d1Input">Crépitants</label>
+					   <input type="text" id="resp6d1Text" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+
+					<div class="resp6d2" id="resp6d2">
+					   <input type="checkbox" id="resp6d2Input" style="display: none; margin-left: 10px;"> 
+					   <label for="resp6d2Input">Sibilants</label>
+					   <input type="text" id="resp6d2Text" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+
+					<div class="resp6d3" id="resp6d3">
+					   <input type="checkbox" id="resp6d3Input" style="display: none; margin-left: 10px;"> 
+					   <label for="resp6d3Input">Souffle tubaire</label>
+					   <input type="text" id="resp6d3Text" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+
+					<div class="resp6d4" id="resp6d4">
+					   <input type="checkbox" id="resp6d4Input" style="display: none; margin-left: 10px;"> 
+					   <label for="resp6d4Input">Ronchis</label>
+					   <input type="text" id="resp6d4Text" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+
+					<div class="resp6d5" id="resp6d5">
+					   <input type="checkbox" id="resp6d5Input" style="display: none; margin-left: 10px;"> 
+					   <label for="resp6d5Input">Abolition du murmure vésiculaire</label>
+					   <input type="text" id="resp6d5Text" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
+					</div>
+				</div>
+		    </div>
+ </div>
+
+        <!-- Section Uro-digestif -->
+	<div class="container">	
+        <div class="section">
+            <div class="section-header">
+                <h3>Examen uro-digestif :</h3>
+                    <div class="button-group">
+						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+					</div>            
+			</div>
+            <div class="section-content">
+            <h4>Signes fonctionnels</h4>
+			<p><strong>Diarrhée :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig1" id="nodig1" checked> Pas de diarrhée
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig1" id="yesdig1"> Diarrhée
+            </label>
+            <input type="text" id="dig1d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Constipation :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig2" id="nodig2" checked> Pas de constipation
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig2" id="yesdig2"> Constipation
+            </label>
+            <input type="text" id="dig2d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Vomissement :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig3" id="nodig3" checked> Pas de vomissement
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig3" id="yesdig3"> Vomissements
+            </label>
+            <input type="text" id="dig3d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Douleur abdominale :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig4" id="nodig4" checked> Pas de douleur abdominale
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig4" id="yesdig4"> Douleur abdominale
+            </label>
+            <input type="text" id="dig4d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Urines :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig5" id="nodig5" checked> Urines claires, translucides et non odorantes.
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig5" id="yesdig5"> Anomalie. 
+            </label>
+            <input type="text" id="dig5d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<h4>Signes physiques</h4>
+			<p><strong>Signes d'hypertension portale :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig6" id="nodig6" checked> Pas de signe
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig6" id="yesdig6"> Signes cliniques
+            </label> </p>
+           </p> 
+		   <div class="dig6d1" id="dig6d1">
+		   <input type="checkbox" id="dig6d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig6d1Input">Circulation veineuse collatérale</label> 
+		   </div>
+		   <div class="dig6d2" id="dig6d2">
+		   <input type="checkbox" id="dig6d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig6d2Input">Ascite</label> 
+		   </div>
+		   <div class="dig6d3" id="dig6d3">
+		   <input type="checkbox" id="dig6d3Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig6d3Input">Splénomégalie</label> 
+		   </div>
+			</p>
+			
+			<p><strong>Signes d'insuffisance hépatocellulaire :</strong>
+			<label style=\"margin-right: 10px;\">
+             <input type="radio" name="dig7" id="nodig7" checked> Pas de signe
+            </label>
+            <label style=\"margin-right: 10px;\">
+               <input type="radio" name="dig7" id="yesdig7"> Signes cliniques
+            </label> </p>
+           </p> 
+		   <div class="dig7d1" id="dig7d1">
+		   <input type="checkbox" id="dig7d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig7d1Input">Angiomes stellaires</label> 
+		   </div>
+		   <div class="dig7d2" id="dig7d2">
+		   <input type="checkbox" id="dig7d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig7d2Input">Astérixis</label> 
+		   </div>
+		   <div class="dig7d3" id="dig7d3">
+		   <input type="checkbox" id="dig7d3Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig7d3Input">Ictère</label> 
+		   </div>
+		   <div class="dig7d4" id="dig7d4">
+		   <input type="checkbox" id="dig7d4Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig7d4Input">Encéphalopathie</label> 
+		   </div>
+			</p>
+			
+			<p><strong>Organomégalie :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig9" id="nodig9" checked> Pas d'organomégalie
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig9" id="yesdig9"> Organomégalie
+            </label>
+            <input type="text" id="dig9d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<p><strong>Douleur à l'ébranlement des fosses lombaires :</strong>
+			<label style=\"margin-right: 10px;\">
+             <input type="radio" name="dig8" id="nodig8" checked> Pas de douleur
+            </label>
+            <label style=\"margin-right: 10px;\">
+               <input type="radio" name="dig8" id="yesdig8"> Douleurs
+            </label> </p>
+           </p> 
+		   <div class="dig8d1" id="dig8d1">
+		   <input type="checkbox" id="dig8d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig8d1Input">Droite</label> 
+		   </div>
+		   <div class="dig8d2" id="dig8d2">
+		   <input type="checkbox" id="dig8d2Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="dig8d2Input">Gauche</label> 
+		   </div> </p>
+		   
+			<p><strong>Globe vésical :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig10" id="nodig10" checked> Pas de globe vésical
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig10" id="yesdig10"> Globe vésical
+			</p>
+			
+			<p><strong>Abdomen :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig11" id="nodig11" checked> Abdomen souple dépressible et indolore. 
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="dig11" id="yesdig11"> Anomalie.
+            </label>
+            <input type="text" id="dig11d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+        </div>
+		
+	</div>
+
+</div>
+</div>	
+
+<div class="container">
+        <!-- Section Neurologique -->
+        <div class="section">
+            <div class="section-header">
+                <h3>Examen neurologique :</h3>
+                    <div class="button-group">
+						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+					</div>
+            </div>
+            <div class="section-content">
+            <h4>Signes fonctionnels</h4>
+			<p><strong>Céphalées :</strong>
+			<label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur1" id="noneur1" checked> Pas de céphalée
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur1" id="yesneur1"> Céphalées
+            </label>
+            <input type="text" id="neur1d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+
+			<p><strong>Douleurs neuropathiques :</strong>
+			<label style=\"margin-right: 10px;\">
+            <input type="radio" name="neur2" id="noneur2" checked> Pas de douleur neuropathique
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur2" id="yesneur2"> Douleurs neuropathiques
+            </label>
+            <input type="text" id="neur2d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+
+			<p><strong>Troubles sensoriels (visuels, auditifs) :</strong> 
+			<label style=\"margin-right: 10px;\">
+            <input type="radio" name="neur3" id="noneur3" checked> Pas de trouble sensoriel
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur3" id="yesneur3"> Troubles sensoriels :
+            </label>
+            <input type="text" id="neur3d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+
+			<p><strong>Vertiges :</strong>
+			<label style=\"margin-right: 10px;\">
+            <input type="radio" name="neur4" id="noneur4" checked> Pas de vertige
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur4" id="yesneur4"> Vertiges
+            </label>
+            <input type="text" id="neur4d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>			
+			
+			<p><strong>Nausées et vomissements :</strong> 
+			<label style=\"margin-right: 10px;\">
+            <input type="radio" name="neur5" id="noneur5" checked> Pas de nausée et de vomissement
+            </label>
+            <label style=\"margin-right: 10px;\">
+                <input type="radio" name="neur5" id="yesneur5"> Nausées et vomissements
+            </label>
+            <input type="text" id="neur5d" placeholder="Précisez" style=\"display: none; margin-left: 10px; width: 500px;\">
+			</p>
+			
+			<h4>Signes physiques</h4>
+			
+			
+			<p><strong>Marche :</strong>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="walkingType" value="normal" checked> 
+				Pas de trouble de la marche
+			</label>
+			<label style="margin-right: 10px;">
+				<input type="radio" name="walkingType" value="abnormal">
+				Troubles de la marche
+			</label>
+			</p>
+
+			<div id="walkingDetails" style="display: none; margin-left: 20px;">
+				<div>
+					<input type="checkbox" id="speed"> 
+					<label for="speed">Description de la marche</label>
+					<input type="text" id="speedDetails" placeholder="Précisez" style="display: none; margin-left: 10px; width: 300px;">
+				</div>
+
+				<div>
+					<input type="checkbox" id="turning"> 
+					<label for="turning">Demi-tour</label>
+					<input type="text" id="turningDetails" placeholder="Précisez" style="display: none; margin-left: 10px; width: 300px;">
+				</div>
+
+				<div>
+					<input type="checkbox" id="armSwing"> 
+					<label for="armSwing">Ballant automatique des bras</label>
+					<div id="armSwingDetails" style="display: none; margin-left: 20px;">
+						<label>
+							<input type="radio" name="armSwingStatus" value="preserved" checked> Conservé
+						</label>
+						<label style="margin-left: 10px;">
+							<input type="radio" name="armSwingStatus" value="altered"> Non conservé
+						</label>
+					</div>
+				</div>
+
+				<div>
+					<input type="checkbox" id="baseSupport"> 
+					<label for="baseSupport">Polygone de sustentation</label>
+					<div id="baseSupportDetails" style="display: none; margin-left: 20px;">
+						<label>
+							<input type="radio" name="baseSupportStatus" value="normal" checked> Normal
+						</label>
+						<label style="margin-left: 10px;">
+							<input type="radio" name="baseSupportStatus" value="widened"> Élargi
+						</label>
+					</div>
+				</div>
+			</div>
+			
+				<p><strong>Station debout et équilibre :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="balanceType" id="normalBalance" checked> 
+					Pas de trouble de la station debout et de l'équilibre
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="balanceType" id="abnormalBalance">
+					Troubles de la station debout et de l'équilibre
+				</label>
+				</p>
+
+				<div id="balanceDetails" style="display: none; margin-left: 20px;">
+					<div>
+						<input type="text" id="balanceDescription" placeholder="Précisez" style="width: 500px;">
+					</div>
+				</div>
+				
+				
+				
+				
+								<!-- Ajouter dans la section examen neurologique, juste après la section des ROT -->
+				<p><strong>Déficit moteur :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="deficitMoteur" id="noDeficitMoteur" checked> 
+					Pas de déficit moteur
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="deficitMoteur" id="yesDeficitMoteur">
+					Présence d'un déficit moteur
+				</label>
+				</p>
+
+				<div id="deficitMoteurDetails" style="display: none; margin-left: 20px;">
+					<!-- Évaluation globale -->
+					<div class="evaluation-globale">
+						<p><strong>Évaluation globale</strong></p>
+						<div>
+							<input type="checkbox" id="amyotrophie">
+							<label for="amyotrophie">Amyotrophie</label>
+							<input type="text" id="amyotrophieDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 300px;">
+						</div>
+						<div>
+							<input type="checkbox" id="barre">
+							<label for="barre">Manœuvre de Barré</label>
+							<input type="text" id="barreDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 300px;">
+						</div>
+						<div>
+							<input type="checkbox" id="mingazzini">
+							<label for="mingazzini">Manœuvre de Mingazzini</label>
+							<input type="text" id="mingazziniDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 300px;">
+						</div>
+						<div>
+							<input type="checkbox" id="fasciculations">
+							<label for="fasciculations">Fasciculations</label>
+							<input type="text" id="fasciculationsDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 300px;">
+						</div>
+						<div>
+							<input type="checkbox" id="myalgies">
+							<label for="myalgies">Myalgies</label>
+							<input type="text" id="myalgiesDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 300px;">
+						</div>
+					</div>
+
+					<!-- Membres supérieurs -->
+					<div class="membres-superieurs">
+						<p><strong>Testing des membres supérieurs</strong></p>
+						<div>
+							<input type="checkbox" id="deficitMS">
+							<label for="deficitMS">Présence d'un déficit moteur aux membres supérieurs</label>
+						</div>
+						<div id="msDetails" style="display: none; margin-left: 20px;">
+							<!-- Deltoïde -->
+							<div class="muscle-group">
+								<input type="checkbox" id="deltoide">
+								<label for="deltoide">Deltoïde : Abduction d'épaule > 90°</label>
+								<select class="force" id="deltoideForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+									<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="deltoide_droit"> 
+									<label for="deltoide_droit">D</label>
+									<input type="checkbox" class="side-check" id="deltoide_gauche"> 
+									<label for="deltoide_gauche">G</label>
+									</div>
+							</div>
+
+							<!-- Supra-épineux -->
+							<div class="muscle-group">
+								<input type="checkbox" id="supraepineux">
+								<label for="supraepineux">Supra-épineux : Abduction d'épaule 0-90°</label>
+								<select class="force" id="supraepeineuxForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+									<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="supraepeineux_droit"> 
+									<label for="supraepeineux_droit">D</label>
+									<input type="checkbox" class="side-check" id="supraepeineux_gauche"> 
+									<label for="supraepeineux_gauche">G</label>
+									</div>								
+							</div>
+
+							<!-- Infra épineux et petit rond -->
+							<div class="muscle-group">
+								<input type="checkbox" id="infraepineux">
+								<label for="infraepineux">Infra épineux et petit rond : Rotation externe d'épaule</label>
+								<select class="force" id="infraepineuxForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+									<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="infraepineux_droit"> 
+									<label for="infraepineux_droit">D</label>
+									<input type="checkbox" class="side-check" id="infraepineux_gauche"> 
+									<label for="infraepineux_gauche">G</label>
+									</div>	
+							</div>
+
+							<!-- Grand rond et subscapulaire -->
+							<div class="muscle-group">
+								<input type="checkbox" id="grandrond">
+								<label for="grandrond">Grand rond et subscapulaire : Adduction et rotation interne d'épaule</label>
+								<select class="force" id="grandrondForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="grandrond_droit"> 
+								<label for="grandrond_droit">D</label>
+								<input type="checkbox" class="side-check" id="grandrond_gauche"> 
+								<label for="grandrond_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Biceps brachial -->
+							<div class="muscle-group">
+								<input type="checkbox" id="biceps">
+								<label for="biceps">Biceps brachial : Flexion de coude en supination</label>
+								<select class="force" id="bicepsForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="biceps_droit"> 
+								<label for="biceps_droit">D</label>
+								<input type="checkbox" class="side-check" id="biceps_gauche"> 
+								<label for="biceps_gauche">G</label>
+							</div>
+							</div>
+
+							<!-- Brachio-radial -->
+							<div class="muscle-group">
+								<input type="checkbox" id="brachioradial">
+								<label for="brachioradial">Brachio-radial : Flexion de coude en position neutre</label>
+								<select class="force" id="brachioradialForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="brachioradial_droit"> 
+								<label for="brachioradial_droit">D</label>
+								<input type="checkbox" class="side-check" id="brachioradial_gauche"> 
+								<label for="brachioradial_gauche">G</label>
+							</div>
+						
+							</div>
+
+							<!-- Triceps -->
+							<div class="muscle-group">
+								<input type="checkbox" id="triceps">
+								<label for="triceps">Triceps : Extension de coude</label>
+								<select class="force" id="tricepsForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="triceps_droit"> 
+								<label for="triceps_droit">D</label>
+								<input type="checkbox" class="side-check" id="triceps_gauche"> 
+								<label for="triceps_gauche">G</label>
+							</div>
+							</div>
+
+							<!-- Extenseurs radiaux -->
+							<div class="muscle-group">
+								<input type="checkbox" id="extenseursradiaux">
+								<label for="extenseursradiaux">Extenseurs radiaux : Extension du poignet</label>
+								<select class="force" id="extenseursradiauxForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="extenseursradiaux_droit"> 
+									<label for="extenseursradiaux_droit">D</label>
+									<input type="checkbox" class="side-check" id="extenseursradiaux_gauche"> 
+									<label for="extenseursradiaux_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Fléchisseurs du carpe -->
+							<div class="muscle-group">
+								<input type="checkbox" id="flechisseurscarpe">
+								<label for="flechisseurscarpe">Fléchisseurs du carpe : Flexion du poignet</label>
+								<select class="force" id="flechisseurscarpeForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="flechisseurscarpe_droit"> 
+								<label for="flechisseurscarpe_droit">D</label>
+								<input type="checkbox" class="side-check" id="flechisseurscarpe_gauche"> 
+								<label for="flechisseurscarpe_gauche">G</label>
+							</div>
+							</div>
+
+							<!-- Interosseux -->
+							<div class="muscle-group">
+								<input type="checkbox" id="interosseux">
+								<label for="interosseux">Interosseux : Écartement et rapprochement des doigts</label>
+								<select class="force" id="interosseuxForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="interosseux_droit"> 
+								<label for="interosseux_droit">D</label>
+								<input type="checkbox" class="side-check" id="interosseux_gauche"> 
+								<label for="interosseux_gauche">G</label>
+							</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Membres inférieurs -->
+					<div class="membres-inferieurs">
+						<p><strong>Testing des membres inférieurs</strong></p>
+						<div>
+							<input type="checkbox" id="deficitMI">
+							<label for="deficitMI">Présence d'un déficit moteur aux membres inférieurs</label>
+						</div>
+						<div id="miDetails" style="display: none; margin-left: 20px;">
+							<!-- Psoas iliaque -->
+							<div class="muscle-group">
+								<input type="checkbox" id="psoas">
+								<label for="psoas">Psoas iliaque : Flexion de hanche</label>
+								<select class="force" id="psoasForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="psoas_droit"> 
+									<label for="psoas_droit">D</label>
+									<input type="checkbox" class="side-check" id="psoas_gauche"> 
+									<label for="psoas_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Moyen fessier -->
+							<div class="muscle-group">
+								<input type="checkbox" id="moyenfessier">
+								<label for="moyenfessier">Moyen fessier : Abduction de hanche</label>
+								<select class="force" id="moyenfessierForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="moyenfessier_droit"> 
+									<label for="moyenfessier_droit">D</label>
+									<input type="checkbox" class="side-check" id="moyenfessier_gauche"> 
+									<label for="moyenfessier_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Grand fessier -->
+							<div class="muscle-group">
+								<input type="checkbox" id="grandfessier">
+								<label for="grandfessier">Grand fessier : Extension de hanche</label>
+								<select class="force" id="grandfessierForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="grandfessier_droit"> 
+									<label for="grandfessier_droit">D</label>
+									<input type="checkbox" class="side-check" id="grandfessier_gauche"> 
+									<label for="grandfessier_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Quadriceps -->
+							<div class="muscle-group">
+								<input type="checkbox" id="quadriceps">
+								<label for="quadriceps">Quadriceps : Extension de genoux</label>
+								<select class="force" id="quadricepsForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="quadriceps_droit"> 
+									<label for="quadriceps_droit">D</label>
+									<input type="checkbox" class="side-check" id="quadriceps_gauche"> 
+									<label for="quadriceps_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Ischiojambiers -->
+							<div class="muscle-group">
+								<input type="checkbox" id="ischiojambiers">
+								<label for="ischiojambiers">Ischiojambiers : Flexion de genoux</label>
+								<select class="force" id="ischiojambiersForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="ischiojambiers_droit"> 
+									<label for="ischiojambiers_droit">D</label>
+									<input type="checkbox" class="side-check" id="ischiojambiers_gauche"> 
+									<label for="ischiojambiers_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Adducteurs -->
+							<div class="muscle-group">
+								<input type="checkbox" id="adducteurs">
+								<label for="adducteurs">Adducteurs : Adduction de hanche</label>
+								<select class="force" id="adducteursForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="adducteurs_droit"> 
+									<label for="adducteurs_droit">D</label>
+									<input type="checkbox" class="side-check" id="adducteurs_gauche"> 
+									<label for="adducteurs_gauche">G</label>
+								</div>
+							</div>		
+						
+							<!-- Tibial antérieur -->
+							<div class="muscle-group">
+								<input type="checkbox" id="tibialant">
+								<label for="tibialant">Tibial antérieur : Dorsiflexion de cheville</label>
+								<select class="force" id="tibialantForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="tibialant_droit"> 
+									<label for="tibialant_droit">D</label>
+									<input type="checkbox" class="side-check" id="tibialant_gauche"> 
+									<label for="tibialant_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Fibulaires -->
+							<div class="muscle-group">
+								<input type="checkbox" id="fibulaires">
+								<label for="fibulaires">Fibulaires : Éversion plantaire</label>
+								<select class="force" id="fibulairesForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="fibulaires_droit"> 
+									<label for="fibulaires_droit">D</label>
+									<input type="checkbox" class="side-check" id="fibulaires_gauche"> 
+									<label for="fibulaires_gauche">G</label>
+								</div>
+							</div>
+
+							<!-- Tibial postérieur -->
+							<div class="muscle-group">
+								<input type="checkbox" id="tibialpost">
+								<label for="tibialpost">Tibial postérieur : Inversion plantaire</label>
+								<select class="force" id="tibialpostForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="tibialpost_droit"> 
+								<label for="tibialpost_droit">D</label>
+								<input type="checkbox" class="side-check" id="tibialpost_gauche"> 
+								<label for="tibialpost_gauche">G</label>
+							</div>
+							</div>
+
+							<!-- Triceps sural -->
+							<div class="muscle-group">
+								<input type="checkbox" id="tricepssural">
+								<label for="tricepssural">Triceps sural : Extension de cheville</label>
+								<select class="force" id="tricepsuralForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+										<input type="checkbox" class="side-check" id="tricepssural_droit"> 
+										<label for="tricepssural_droit">D</label>
+										<input type="checkbox" class="side-check" id="tricepssural_gauche"> 
+										<label for="tricepssural_gauche">G</label>
+									</div>
+							</div>
+
+							<!-- Extenseur des orteils -->
+							<div class="muscle-group">
+								<input type="checkbox" id="extenseurorteils">
+								<label for="extenseurorteils">Extenseur des orteils</label>
+								<select class="force" id="extenseuroreilsForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+								<input type="checkbox" class="side-check" id="extenseurorteils_droit"> 
+								<label for="extenseurorteils_droit">D</label>
+								<input type="checkbox" class="side-check" id="extenseurorteils_gauche"> 
+								<label for="extenseurorteils_gauche">G</label>
+							</div>
+							</div>
+
+							<!-- Fléchisseur des orteils -->
+							<div class="muscle-group">
+								<input type="checkbox" id="flechisseurorteils">
+								<label for="flechisseurorteils">Fléchisseur des orteils</label>
+								<select class="force" id="flechisseuroreilsForce" style="display: none; margin-left: 10px;">
+									<option value="5" selected>5/5</option>
+									<option value="4">4/5</option>
+									<option value="3">3/5</option>
+									<option value="2">2/5</option>
+									<option value="1">1/5</option>
+									<option value="0">0/5</option>
+								</select>
+								<div style="display: none; margin-left: 10px;" class="side-force">
+									<input type="checkbox" class="side-check" id="flechisseurorteils_droit"> 
+									<label for="flechisseurorteils_droit">D</label>
+									<input type="checkbox" class="side-check" id="flechisseurorteils_gauche"> 
+									<label for="flechisseurorteils_gauche">G</label>
+								</div>
+							</div>
+						</div>
+					</div>			
+				</div>	
+			
+				<p><strong>Réflexes ostéotendineux :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="reflexType" id="normalReflex" checked> 
+					ROT symétriques non diffusés non polycinétiques et non vifs
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="reflexType" id="abnormalReflex">
+					Anomalie des réflexes ostéotendineux
+				</label>
+				</p>
+
+				<div id="reflexDetails" style="display: none; margin-left: 20px;">
+					<!-- Membres supérieurs -->
+					<div>
+						<input type="checkbox" id="upperLimbReflex"> 
+						<label for="upperLimbReflex">Aux membres supérieurs</label>
+					</div>
+					
+					<div id="upperLimbDetails" style="display: none; margin-left: 20px;">
+						<!-- Bicipital -->
+						<div class="reflex-group">
+							<input type="checkbox" id="bicipitalReflex">
+							<label for="bicipitalReflex">Bicipital</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="bicipitalVif">
+									<label for="bicipitalVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="bicipitalDiffuse">
+									<label for="bicipitalDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="bicipitalPoly">
+									<label for="bicipitalPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="bicipitalZone">
+									<label for="bicipitalZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="bicipitalAboli">
+									<label for="bicipitalAboli">Abolition</label>
+								</div>
+								
+								<input type="text" id="bicipitalLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							
+							</div>
+						</div>
+
+						<!-- Tricipital -->
+						<div class="reflex-group">
+							<input type="checkbox" id="tricipitalReflex">
+							<label for="tricipitalReflex">Tricipital</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="tricipitalVif">
+									<label for="tricipitalVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="tricipitalDiffuse">
+									<label for="tricipitalDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="tricipitalPoly">
+									<label for="tricipitalPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="tricipitalZone">
+									<label for="tricipitalZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="tricipitalAboli">
+									<label for="tricipitalAboli">Abolition</label>
+								</div>
+								<input type="text" id="tricipitalLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							</div>
+						</div>
+
+						<!-- Styloradial -->
+						<div class="reflex-group">
+							<input type="checkbox" id="styloradialReflex">
+							<label for="styloradialReflex">Styloradial</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="styloradialVif">
+									<label for="styloradialVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="styloradialDiffuse">
+									<label for="styloradialDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="styloradialPoly">
+									<label for="styloradialPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="styloradialZone">
+									<label for="styloradialZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="styloradialAboli">
+									<label for="styloradialAboli">Abolition</label>
+								</div>
+								<input type="text" id="styloradialLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							</div>
+						</div>
+
+						<!-- Cubitopronateur -->
+						<div class="reflex-group">
+							<input type="checkbox" id="cubitopronateurReflex">
+							<label for="cubitopronateurReflex">Cubitopronateur</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="cubitopronateurVif">
+									<label for="cubitopronateurVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="cubitopronateurDiffuse">
+									<label for="cubitopronateurDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="cubitopronateurPoly">
+									<label for="cubitopronateurPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="cubitopronateurZone">
+									<label for="cubitopronateurZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="cubitopronateurAboli">
+									<label for="cubitopronateurAboli">Abolition</label>
+								</div>
+								<input type="text" id="cubitopronateurLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							</div>
+						</div>
+					</div>
+
+					<!-- Membres inférieurs -->
+					<div>
+						<input type="checkbox" id="lowerLimbReflex"> 
+						<label for="lowerLimbReflex">Aux membres inférieurs</label>
+					</div>
+
+					<div id="lowerLimbDetails" style="display: none; margin-left: 20px;">
+						<!-- Achilléen -->
+						<div class="reflex-group">
+							<input type="checkbox" id="achilleenReflex">
+							<label for="achilleenReflex">Achilléen</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="achilleenVif">
+									<label for="achilleenVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="achilleenDiffuse">
+									<label for="achilleenDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="achilleenPoly">
+									<label for="achilleenPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="achilleenZone">
+									<label for="achilleenZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="achilleenAboli">
+									<label for="achilleenAboli">Abolition</label>
+								</div>
+								<input type="text" id="achilleenLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							</div>
+						</div>
+
+						<!-- Rotulien -->
+						<div class="reflex-group">
+							<input type="checkbox" id="rotulienReflex">
+							<label for="rotulienReflex">Rotulien</label>
+							<div class="reflex-anomalies" style="display: none; margin-left: 30px;">
+								<div>
+									<input type="checkbox" id="rotulienVif">
+									<label for="rotulienVif">Vif</label>
+								</div>
+								<div>
+									<input type="checkbox" id="rotulienDiffuse">
+									<label for="rotulienDiffuse">Diffusé</label>
+								</div>
+								<div>
+									<input type="checkbox" id="rotulienPoly">
+									<label for="rotulienPoly">Polycinétique</label>
+								</div>
+								<div>
+									<input type="checkbox" id="rotulienZone">
+									<label for="rotulienZone">Extension de la zone réflexogène</label>
+								</div>
+								<div>
+									<input type="checkbox" id="rotulienAboli">
+									<label for="rotulienAboli">Abolition</label>
+								</div>
+								<input type="text" id="rotulienLocation" class="location-input" placeholder="Précisez la localisation" style="width: 300px; margin-top: 5px;">
+							</div>
+						</div>
+					</div>
+				</div>
+	
+			
+				<p><strong>Déficit sensitif :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="deficitSensitif" id="noDeficitSensitif" checked> 
+					Pas de déficit sensitif
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="deficitSensitif" id="yesDeficitSensitif">
+					Présence d'un déficit sensitif
+				</label>
+				</p>
+
+				<div id="deficitSensitifDetails" style="display: none; margin-left: 20px;">
+					<!-- Membres supérieurs -->
+					<div>
+						<input type="checkbox" id="deficitMS"> 
+						<label for="deficitMS">Déficit sensitif aux membres supérieurs</label>
+					</div>
+					<div id="deficitMSDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="deficitMSDescription" placeholder="Précisez la localisation et le type" style="width: 500px;">
+					</div>
+
+					<!-- Membres inférieurs -->
+					<div>
+						<input type="checkbox" id="deficitMI"> 
+						<label for="deficitMI">Déficit sensitif aux membres inférieurs</label>
+					</div>
+					<div id="deficitMIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="deficitMIDescription" placeholder="Précisez la localisation et le type" style="width: 500px;">
+					</div>
+				</div>
+			
+				<p><strong>Paires crâniennes :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="pairescraniennes" id="noPairescraniennes" checked> 
+					Pas d'anomalie des paires crâniennes
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="pairescraniennes" id="yesPairescraniennes">
+					Anomalies des paires crâniennes
+				</label>
+				</p>
+
+				<div id="pairescraniennesDetails" style="display: none; margin-left: 20px;">
+					<!-- I Olfactif -->
+					<div>
+						<input type="checkbox" id="nerveI"> 
+						<label for="nerveI">I (Olfactif)</label>
+					</div>
+					<div id="nerveIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- II Optique -->
+					<div>
+						<input type="checkbox" id="nerveII"> 
+						<label for="nerveII">II (Optique)</label>
+					</div>
+					<div id="nerveIIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveIIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- III, IV, VI -->
+					<div>
+						<input type="checkbox" id="nerveIII_IV_VI"> 
+						<label for="nerveIII_IV_VI">III (Oculomoteur), IV (Trochléaire), VI (Abducens)</label>
+					</div>
+					<div id="nerveIII_IV_VIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveIII_IV_VIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- V Trijumeau -->
+					<div>
+						<input type="checkbox" id="nerveV"> 
+						<label for="nerveV">V (Trijumeau)</label>
+					</div>
+					<div id="nerveVDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveVDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- VII Facial -->
+					<div>
+						<input type="checkbox" id="nerveVII"> 
+						<label for="nerveVII">VII (Facial)</label>
+					</div>
+					<div id="nerveVIIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveVIIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- VIII Cochléovestibulaire -->
+					<div>
+						<input type="checkbox" id="nerveVIII"> 
+						<label for="nerveVIII">VIII (Cochléovestibulaire)</label>
+					</div>
+					<div id="nerveVIIIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveVIIIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- IX Glossopharyngien -->
+					<div>
+						<input type="checkbox" id="nerveIX"> 
+						<label for="nerveIX">IX (Glossopharyngien)</label>
+					</div>
+					<div id="nerveIXDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveIXDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- X Vague -->
+					<div>
+						<input type="checkbox" id="nerveX"> 
+						<label for="nerveX">X (Vague)</label>
+					</div>
+					<div id="nerveXDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveXDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- XI Accessoire -->
+					<div>
+						<input type="checkbox" id="nerveXI"> 
+						<label for="nerveXI">XI (Accessoire)</label>
+					</div>
+					<div id="nerveXIDetails" style="display: none; margin-left: 20px;">
+						<input type="text" id="nerveXIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+					</div>
+
+					<!-- XII Hypoglosse -->
+					<div>
+						<input type="checkbox" id="nerveXII"> 
+						<label for="nerveXII">XII (Hypoglosse)</label>
+						</div>
+						<div id="nerveXIIDetails" style="display: none; margin-left: 20px;">
+							<input type="text" id="nerveXIIDescription" placeholder="Précisez l'anomalie" style="width: 500px;">
+						</div>
+					</div>
+					
+					
+					<p><strong>Syndrome cérébelleux :</strong>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="syndromeCerebelleux" id="noSyndromeCerebelleux" checked> 
+						Pas de syndrome cérébelleux
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="syndromeCerebelleux" id="yesSyndromeCerebelleux">
+						Présence d'un syndrome cérébelleux
+					</label>
+					</p>
+
+					<div id="syndromeCerebelleuxDetails" style="display: none; margin-left: 20px;">
+						<div style="margin-bottom: 10px;">
+							<p>Côté :
+							<label style="margin-right: 10px;">
+								<input type="radio" name="cerebelleuxSide" value="droit" checked> Droit
+							</label>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="cerebelleuxSide" value="gauche"> Gauche
+							</label>
+							<label>
+								<input type="radio" name="cerebelleuxSide" value="bilateral"> Bilatéral
+							</label></p>
+						</div>
+						<div style="margin-bottom: 10px;">
+							<input type="checkbox" id="cerebelleuxStatique"> 
+							<label for="cerebelleuxStatique">Syndrome cérébelleux statique</label>
+							<div id="cerebelleuxStatiqueDetails" style="display: none; margin-left: 20px;">
+								<input type="checkbox" id="elargissementPolygone"> 
+								<label for="elargissementPolygone">Elargissement du polygone de sustentation</label><br>
+								<input type="checkbox" id="demarcheEbrieuse"> 
+								<label for="demarcheEbrieuse">Démarche ébrieuse</label><br>
+								<input type="checkbox" id="danseTendons"> 
+								<label for="danseTendons">Danse des tendons</label>
+							</div>
+						</div>
+
+						<div style="margin-bottom: 10px;">
+							<input type="checkbox" id="cerebelleuxCinetique"> 
+							<label for="cerebelleuxCinetique">Syndrome cérébelleux cinétique</label>
+							<div id="cerebelleuxCinetiqueDetails" style="display: none; margin-left: 20px;">
+								<input type="checkbox" id="hypermetrie"> 
+								<label for="hypermetrie">Hypermétrie</label><br>
+								<input type="checkbox" id="dysmetrie"> 
+								<label for="dysmetrie">Dysmétrie</label><br>
+								<input type="checkbox" id="adiadococinesie"> 
+								<label for="adiadococinesie">Adiadococinésie</label><br>
+								<input type="checkbox" id="dysarthrie"> 
+								<label for="dysarthrie">Dysarthrie cérébelleuse</label><br>
+								<input type="checkbox" id="nystagmus"> 
+								<label for="nystagmus">Nystagmus</label>
+							</div>
+						</div>
+
+						<div>
+							<p>Précisions :
+							<input type="text" id="cerebelleuxPrecisions" placeholder="Précisions éventuelles" style="width: 500px;"></p>
+						</div>
+					</div>
+					
+						<p><strong>Syndrome pyramidal :</strong>
+						<label style="margin-right: 10px;">
+							<input type="radio" name="syndromepyramidal" id="noSyndromePyramidal" checked> 
+							Pas de syndrome pyramidal
+						</label>
+						<label style="margin-right: 10px;">
+							<input type="radio" name="syndromepyramidal" id="yesSyndromePyramidal">
+							Présence d'un syndrome pyramidal
+						</label>
+						</p>
+
+						<div id="syndromePyramidalDetails" style="display: none; margin-left: 20px;">
+							<div style="margin-bottom: 10px;">
+								<p>Côté :
+								<label style="margin-right: 10px;">
+									<input type="radio" name="pyramidalSide" value="droit" checked> Droit
+								</label>
+								<label style="margin-right: 10px;">
+									<input type="radio" name="pyramidalSide" value="gauche"> Gauche
+								</label>
+								<label>
+									<input type="radio" name="pyramidalSide" value="bilateral"> Bilatéral
+								</label></p>
+							</div>
+							<div style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+								<div>
+									<input type="checkbox" id="babinski"> 
+									<label for="babinski">Signe de Babinski</label>
+								</div>
+								<div>
+									<input type="checkbox" id="hoffman"> 
+									<label for="hoffman">Signe de Hoffman</label>
+								</div>
+								<div>
+									<input type="checkbox" id="trepidation"> 
+									<label for="trepidation">Trépidation épileptoïde</label>
+								</div>
+							</div>
+							<div>
+								<p>Précisions :
+								<input type="text" id="pyramidalPrecisions" placeholder="Précisions éventuelles" style="width: 500px;"></p>
+							</div>
+						</div>
+					
+					<p><strong>Syndrome extra-pyramidal :</strong>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="syndromeextrapyramidal" id="noSyndromeExtrapyramidal" checked> 
+						Pas de syndrome extra-pyramidal
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="syndromeextrapyramidal" id="yesSyndromeExtrapyramidal">
+						Présence d'un syndrome extra-pyramidal
+					</label>
+					</p>
+
+					<div id="syndromeExtrapyramidalDetails" style="display: none; margin-left: 20px;">
+						<div style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+							<div>
+								<input type="checkbox" id="tremblement">
+								<label for="tremblement">Tremblement</label>
+							</div>
+							<div>
+								<input type="checkbox" id="hypertonie">
+								<label for="hypertonie">Hypertonie plastique</label>
+							</div>
+							<div>
+								<input type="checkbox" id="akinesie">
+								<label for="akinesie">Akinésie</label>
+							</div>				
+						<div>
+							<p>Précisions :
+							<input type="text" id="extraPyramidalPrecisions" placeholder="Précisions éventuelles" style="width: 500px;"></p>
+						</div>
+						</div>
+					</div>
+	
+				<p><strong>Syndrome méningé :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="syndromeninge" id="noSyndromeMeningé" checked> 
+					Pas de syndrome méningé
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="syndromeninge" id="yesSyndromeMeningé">
+					Présence d'un syndrome méningé
+				</label>
+				</p>
+
+				<div id="syndromeMeningeDetails" style="display: none; margin-left: 20px;">
+					<div style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+						<div>
+							<input type="checkbox" id="kernig">
+							<label for="kernig">Signe de Kernig</label>
+						</div>
+						<div>
+							<input type="checkbox" id="brudzinski">
+							<label for="brudzinski">Signe de Brudzinski</label>
+						</div>
+						<div>
+							<input type="checkbox" id="photophonophobie">
+							<label for="photophonophobie">Photophonophobie</label>
+						</div>
+						<div>
+							<input type="checkbox" id="raideurNucale">
+							<label for="raideurNucale">Raideur nucale</label>
+						</div>
+						<div>
+							<input type="checkbox" id="purpura">
+							<label for="purpura">Purpura</label>
+						</div>
+						<div>
+							<p>Précisions :
+							<input type="text" id="meningePrecisions" placeholder="Précisions éventuelles" style="width: 500px;"></p>
+						</div>
+						
+					</div>
+				</div>		
+				
+				<p><strong>Syndrome vestibulaire :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="syndromevestibulaire" id="noSyndromeVestibulaire" checked> 
+					Pas de syndrome vestibulaire
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="syndromevestibulaire" id="yesSyndromeVestibulaire">
+					Présence d'un syndrome vestibulaire
+				</label>
+				</p>
+
+				<div id="syndromeVestibulaireDetails" style="display: none; margin-left: 20px;">
+					<div style="margin-bottom: 10px;">
+						<p>Côté :
+						<label style="margin-right: 10px;">
+							<input type="radio" name="vestibulaireSide" value="droit" checked> Droit
+						</label>
+						<label style="margin-right: 10px;">
+							<input type="radio" name="vestibulaireSide" value="gauche"> Gauche
+						</label>
+						<label>
+							<input type="radio" name="vestibulaireSide" value="bilateral"> Bilatéral
+						</label></p>
+					</div>
+					<div style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+						<div>
+							<input type="checkbox" id="nystagmus"> 
+							<label for="nystagmus">Nystagmus</label>
+						</div>
+						<div>
+							<input type="checkbox" id="romberg"> 
+							<label for="romberg">Manœuvre de Romberg latéralisée</label>
+						</div>
+					</div>
+					<div>
+						<p>Précisions :
+						<input type="text" id="vestibulairePrecisions" placeholder="Précisions éventuelles" style="width: 500px;"></p>
+					</div>
+				</div>
+				
+<div style="margin-bottom: 1rem;"><strong>Fonctions cognitives :</strong>
+<label style="margin-right: 10px;">
+    <input type="radio" name="neur11" id="noneur11" checked> Pas de trouble des fonctions cognitives
+</label>
+<label style="margin-right: 10px;">
+    <input type="radio" name="neur11" id="yesneur11"> Trouble des fonctions cognitives
+</label>
+<input type="text" id="neur11d" placeholder="Précisez" style="display: none; margin-left: 10px; width: 500px;">
+</div>				
+        </div>
+	   </div>
+   </div>
+		
+	<div class="container">
+		<div class="section">
+			<h3 style="font-size: 1.5em;">Texte type final :</h3>
+			<textarea id="generatedTextArea" rows="10" cols="500" readonly style="resize: none; width: 95%; height: 400px;"></textarea>
+			<button id="generateText">Générer Texte Type</button>
+			<button id="copyText">Copier dans le presse-papier</button>
+		</div>
+
+    </div>
+</div>		        
+ </div>	
+ 
+<script>
+
+		document.getElementById('generateText').addEventListener('click', function () {
+			// constantes
+			const getConstanteDescription = () => {
+				let constantes = [];
+				
+						
+				const tailleval = document.getElementById('taille').value;
+				const poidsval = document.getElementById('poids').value;
+				const IMCval = document.getElementById('IMC').value;
+				if (tailleval && poidsval && IMCval) constantes.push(`Taille : ${tailleval}m, Poids : ${poidsval}kg (IMC : ${IMCval})`);
+					
+				const fr = document.getElementById('FreqResp').value;
+				if (fr) constantes.push(`FR ${fr}/min`);
+				
+				const sat = document.getElementById('saturation').value;
+				if (sat) {
+					const oxygenType = document.getElementById('sous-oxygene').checked
+						? `sous ${document.getElementById('litres').value || '?'} L d'O2`
+						: 'en air ambiant';
+					constantes.push(`Saturation à ${sat}% ${oxygenType}`);
+				}
+				
+				const fc = document.getElementById('FreqCard').value;
+				if (fc) constantes.push(`FC ${fc} bpm`);
+				
+				const pas = document.getElementById('pas').value;
+				const pad = document.getElementById('pad').value;
+				const pam = document.getElementById('map').value;
+				if (pas && pad && pam) constantes.push(`PA ${pas}/${pad} (${pam}) mmHg`);
+				
+				const temp = document.querySelector('input[placeholder="°C"]').value;
+				if (temp) constantes.push(`T ${temp}°C`);
+				
+				const glyc = document.querySelector('input[placeholder="g/L"]').value;
+				if (glyc) constantes.push(`Glycémie ${glyc} g/L`);
+				
+				const y = document.getElementById('Y/4').value;
+				const v = document.getElementById('V/5').value;
+				const m = document.getElementById('M/6').value;
+				if (y || v || m) {
+					const glasgow = (parseFloat(y || 0) + parseFloat(v || 0) + parseFloat(m || 0)).toFixed(0);
+					constantes.push(`G${glasgow} (Y${y || 0}V${v || 0}M${m || 0})`);
+				}
+
+				return constantes.length > 0 
+					? `Examen général et paramètres vitaux :\n${constantes.join(' ; ')}`
+					: '';
+			};
+
+			const resultconst = getConstanteDescription();
+
+		// Stockage variables partie examen cardiovasculaire 
+		const card1val = document.getElementById('yescard1').checked 
+		? `Palpitations (${document.getElementById('card1d').value || 'N/A'})`
+		: 'Pas de palpitation';
+		const card2val = document.getElementById('yescard2').checked 
+		? `Douleur thoracique (${document.getElementById('card2d').value || 'N/A'})`
+		: 'Pas de douleur thoracique';
+		const card3val = document.getElementById('yescard3').checked 
+		? `Dyspnée (${document.getElementById('card3d').value || 'N/A'})`
+		: 'Pas de dyspnée';
+			
+		// Partie hémodynamique
+		let card4val = '';
+		if (document.getElementById('yescard4').checked) {
+			const symptoms = [];
+			if (document.getElementById('card4d1Input').checked) symptoms.push('Oligurie');
+			if (document.getElementById('card4d2Input').checked) symptoms.push('Confusion');
+			if (document.getElementById('card4d3Input').checked) symptoms.push('Marbrures');
+			if (document.getElementById('card4d4Input').checked) symptoms.push('TRC>3s');
+			if (document.getElementById('card4d5Input').checked) symptoms.push('Polypnée');
+			
+			card4val = symptoms.length > 0 
+				? 'Troubles hémodynamiques avec ' + symptoms.join(', ') + ''
+				: 'Troubles hémodynamiques';
+		} else {
+			card4val = 'Hémodynamique stable, pas de signe de choc';
+		}
+		
+		// Partie ICD
+		let card5val = '';
+		if (document.getElementById('yescard5').checked) {
+			const symptomsICD = [];
+			if (document.getElementById('card5d1Input').checked) symptomsICD.push('TJ');
+			if (document.getElementById('card5d2Input').checked) symptomsICD.push('RHJ');
+			if (document.getElementById('card5d3Input').checked) symptomsICD.push('Hépatomégalie');
+			if (document.getElementById('card5d4Input').checked) symptomsICD.push('OMI');
+			
+			card5val = symptomsICD.length > 0 
+				? 'Insuffisance cardiaque droite avec ' + symptomsICD.join(', ') + '.'
+				: 'Insuffisance cardiaque droite';
+		} else {
+			card5val = 'Pas de signe dinsuffisance cardiaque droite.';
+		}
+		
+        const resultcard = 
+`Examen cardiovasculaire : 
+${card1val}. ${card2val}. ${card3val}.
+${card4val}.
+${card5val} ${getICGDescription()}.
+${getPulseDescription()}. 
+${getTVPDescription()}.  
+${getVascularMurmurDescription()}.
+${getHeartSoundsDescription()}`
+		
+		 
+		// Stockage variables partie examen respiratoire 
+		const resp1val = document.getElementById('yesresp1').checked 
+		? `Hémoptysie (${document.getElementById('resp1d').value || 'N/A'})`
+		: 'Pas dhémoptysie';
+
+		const resp2val = document.getElementById('yesresp2').checked 
+		? `Toux (${document.getElementById('resp1d').value || 'N/A'})`
+		: 'Pas de toux';
+		
+		const resp3val = document.getElementById('yesresp3').checked 
+		? `Crachats (${document.getElementById('resp3d').value || 'N/A'})`
+		: 'Pas de crachat';
+		
+		// Partie Hypercapnie
+		let resp4val = '';
+		if (document.getElementById('yesresp4').checked) {
+			const symptomsCapnie = [];
+			if (document.getElementById('resp4d1Input').checked) symptomsCapnie.push('Sueurs');
+			if (document.getElementById('resp4d2Input').checked) symptomsCapnie.push('Astérixis');
+			if (document.getElementById('resp4d3Input').checked) symptomsCapnie.push('Céphalées');
+			if (document.getElementById('resp4d4Input').checked) symptomsCapnie.push('HTA');
+			if (document.getElementById('resp4d5Input').checked) symptomsCapnie.push('Agitation/Confusion');
+
+
+			resp4val = symptomsCapnie.length > 0 
+				? 'Hypercapnie avec ' + symptomsCapnie.join(', ') + '.'
+				: 'Hypercapnie';
+		} else {
+			resp4val = 'Pas de signe d hypercanie.';
+		}
+
+		// Partie DE LUTTE
+let resp5val = '';
+if (document.getElementById('yesresp5').checked) {
+    const symptomsLutte = [];
+    if (document.getElementById('resp5d1Input').checked) symptomsLutte.push('tirage intercostal');
+    if (document.getElementById('resp5d2Input').checked) symptomsLutte.push('tirage susclaviculaire');
+    if (document.getElementById('resp5d3Input').checked) symptomsLutte.push('tirage souscostal');
+    if (document.getElementById('resp5d4Input').checked) symptomsLutte.push('balancement thoracoabdominal');
+    
+    const intensity = document.getElementById('resp5Intensity').value;
+    
+    resp5val = symptomsLutte.length > 0 
+        ? `Patient dyspnéique avec signe de lutte ${intensity} à type de ${symptomsLutte.join(', ')}.`
+        : `Patient dyspnéique avec signe de lutte ${intensity}.`;
+} else {
+    resp5val = 'Pas de signe de lutte.';
+}
+			
+		const resultresp = 
+`Examen respiratoire : 
+${resp1val}. ${resp2val}. ${resp3val}.
+${resp4val} ${resp5val}
+${getInspectionDescription()}. 
+${getPercussionDescription()}. ${getVibrationsDescription()}. 
+${getAuscultationDescription()}.`
+		
+		// Stockage variables partie examen uro-digestif 
+		
+		const dig1val = document.getElementById('yesdig1').checked 
+		? `Diarrhée ${document.getElementById('dig1d').value || ''}`
+		: 'Pas de diarrhée';
+		
+		const dig2val = document.getElementById('yesdig2').checked 
+		? `Constipation ${document.getElementById('dig2d').value || ''}`
+		: 'Pas de constipation';
+		
+		const dig3val = document.getElementById('yesdig3').checked 
+		? `Vomissements ${document.getElementById('dig3d').value || ''}`
+		: 'Pas de vomissement';	
+
+		const dig4val = document.getElementById('yesdig4').checked 
+		? `Douleur abdominale ${document.getElementById('dig4d').value || ''}`
+		: 'Pas de douleur abdominale';		
+		
+		const dig5val = document.getElementById('yesdig5').checked 
+		? `Urines ${document.getElementById('dig5d').value || ''}`
+		: 'Urines claires translucides et non orodorantes';		
+
+		// Partie HTP
+		let dig6val = '';
+		if (document.getElementById('yesdig6').checked) {
+			const symptomsHTP = [];
+			if (document.getElementById('dig6d1Input').checked) symptomsHTP.push('circulation veineuse collatérale');
+			if (document.getElementById('dig6d2Input').checked) symptomsHTP.push('ascite');
+			if (document.getElementById('dig6d3Input').checked) symptomsHTP.push('splénomégalie');
+			
+			dig6val = symptomsHTP.length > 0 
+				? 'Hypertension portale avec ' + symptomsHTP.join(', ') + '.'
+				: 'Hypertension portale';
+		} else {
+			dig6val = 'Pas de signe dhypertension portale.';
+		}
+		
+		// Partie IHC
+		let dig7val = '';
+		if (document.getElementById('yesdig7').checked) {
+			const symptomsIHC = [];
+			if (document.getElementById('dig7d1Input').checked) symptomsIHC.push('angiomes stellaires');
+			if (document.getElementById('dig7d2Input').checked) symptomsIHC.push('astéririx');
+			if (document.getElementById('dig7d3Input').checked) symptomsIHC.push('ictère');
+			if (document.getElementById('dig7d4Input').checked) symptomsIHC.push('encéphalopathie');
+			
+			dig7val = symptomsIHC.length > 0 
+				? 'Insuffisance hépatocellulaire avec ' + symptomsIHC.join(', ') + '.'
+				: 'Insuffisance hépatocellulaire';
+		} else {
+			dig7val = 'Pas de signe dinssufisance hépatocellulaire.';
+		}
+		
+		// Partie fosse lombaire
+		let dig8val = '';
+		if (document.getElementById('yesdig8').checked) {
+			const symptomsFOSSE = [];
+			if (document.getElementById('dig8d1Input').checked) symptomsFOSSE.push('à droite');
+			if (document.getElementById('dig8d2Input').checked) symptomsFOSSE.push('à gauche');
+			
+			dig8val = symptomsFOSSE.length > 0 
+				? 'Douleur à lébranlement des fosses lombaires : ' + symptomsFOSSE.join(', ') + '.'
+				: 'Douleur à lébranlement des fosses lombaires.';
+		} else {
+			dig8val = 'Pas de douleur à lébranlement des fosses lombaires.';
+		}
+		
+		const dig9val = document.getElementById('yesdig9').checked 
+		? `Organomégalie clinique : ${document.getElementById('dig9d').value || ''}`
+		: 'Pas dorganomégalie palpée';		
+		const dig10val = document.getElementById('yesdig10').checked 
+		? `Présence d'un globe vésical`
+		: 'Pas de globe vésical';		
+		
+		const dig11val = document.getElementById('yesdig11').checked 
+		? `La palpation abdominale met en évidence un abdomen ${document.getElementById('dig11d').value || ''}`
+		: 'Abdomen souple dépressible et indolore';	
+		
+		const resultdig = 
+`Examen uro-digestif : 
+${dig1val}. ${dig2val}. ${dig3val}. ${dig4val}.
+${dig5val}.
+${dig6val} ${dig7val}
+Pas de syndrome occlusif clinique. 
+${dig9val}. 
+${dig10val}. ${dig8val} 
+${dig11val}.`	
+
+		const neur1val = document.getElementById('yesneur1').checked 
+		? `Céphalées (${document.getElementById('neur1d').value || 'N/A'})`
+		: 'Pas de céphalée';
+
+		const neur2val = document.getElementById('yesneur2').checked 
+		? `Douleurs neuropathiques (${document.getElementById('neur2d').value || 'N/A'})`
+		: 'Pas de douleur neuropathique';		
+
+		const neur3val = document.getElementById('yesneur3').checked 
+		? `Troubles sensoriels (${document.getElementById('neur3d').value || 'N/A'})`
+		: 'Pas de trouble sensoriel';	
+
+		const neur4val = document.getElementById('yesneur4').checked 
+		? `Vertiges (${document.getElementById('neur4d').value || 'N/A'})`
+		: 'Pas de trouble vertige';
+
+		const neur5val = document.getElementById('yesneur5').checked 
+		? `Nausées et vomissements (${document.getElementById('neur5d').value || 'N/A'})`
+		: 'Pas de nausée et pas de vomissement';		
+		
+		const neur11val = document.getElementById('yesneur11').checked 
+		? `Troubles des fonctions cognitives : ${document.getElementById('neur11d').value || 'N/A'}`
+		: 'Pas de trouble des fonctions cognitives';
+		
+		// Stockage variables partie examen neurologique
+		const resultneuro = 
+`Examen neurologique :
+${neur1val}. ${neur2val}. ${neur3val}. ${neur4val}. ${neur5val}. 
+${getWalkingDescription()}. ${getBalanceDescription()}. 
+${getDeficitMoteurDescription()}
+${getReflexDescription()}.
+${getPairescraniennesDescription()}. 
+${getSyndromeCerebelleuxDescription()}. ${getSyndromePyramidalDescription()}. ${getSyndromeExtrapyramidalDescription()}. ${getSyndromeVestibulaireDescription()}.
+${getSyndromeMeningeDescription()}. 
+${neur11val}.`
+		
+		// Variable qui rassemble tout 
+		
+const total = [
+    resultconst,
+    resultcard,
+    resultresp, 
+    resultdig,
+    resultneuro
+].filter(Boolean).join('\n\n');
+		
+		
+        // Insérer le texte dans la zone de texte
+
+        const textArea = document.getElementById('generatedTextArea');
+        if (textArea) {
+            textArea.value = total;
+        } else {
+            console.error("La zone de texte pour afficher le résultat n'a pas été trouvée !");
+        }
+    });
+	
+		// Copier dans le presse-papier
+		document.getElementById('copyText').addEventListener('click', function () {
+			const textArea = document.getElementById('generatedTextArea');
+			navigator.clipboard.writeText(textArea.value).then(() => {
+				alert('Texte copié dans le presse-papier.');
+			}).catch(err => {
+				console.error('Erreur lors de la copie :', err);
+			});
+		});
+
+
+
+
+		// Affichage Saturation
+			document.getElementById('sous-oxygene').addEventListener('change', () => {
+				document.getElementById('litres').style.display = document.getElementById('sous-oxygene').checked ? 'inline' : 'none';
+			});
+			
+			// Affichage palpitations
+			document.getElementById('card1d').style.display = 'none';
+
+			document.getElementById('yescard1').addEventListener('change', function () {
+				document.getElementById('card1d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard1').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card1d').style.display = 'none';
+				}
+			});
+			
+			// Affichage douleurs thoraciques
+			document.getElementById('card2d').style.display = 'none';
+
+			document.getElementById('yescard2').addEventListener('change', function () {
+				document.getElementById('card2d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard2').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card2d').style.display = 'none';
+				}
+			});
+
+			// Affichage Dyspnée
+			document.getElementById('card3d').style.display = 'none';
+
+			document.getElementById('yescard3').addEventListener('change', function () {
+				document.getElementById('card3d').style.display = this.checked ? 'inline' : 'none';
+			});
+			document.getElementById('nocard3').addEventListener('change', function () {
+				if (this.checked) {
+
+					document.getElementById('card3d').style.display = 'none';
+				}
+			});
+			
+			// Affichage Hémodynamique
+			document.getElementById('card4d1').style.display = 'none';
+			document.getElementById('card4d2').style.display = 'none';
+			document.getElementById('card4d3').style.display = 'none';
+			document.getElementById('card4d4').style.display = 'none';
+			document.getElementById('card4d5').style.display = 'none';
+
+			document.getElementById('yescard4').addEventListener('change', function () {
+				document.getElementById('card4d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card4d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yescard4').addEventListener('change', function () {
+				document.getElementById('card4d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card4d2').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yescard4').addEventListener('change', function () {
+				document.getElementById('card4d3').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card4d3').style.display = 'none';
+				}
+			});
+
+			document.getElementById('yescard4').addEventListener('change', function () {
+				document.getElementById('card4d4').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card4d4').style.display = 'none';
+				}
+			});
+
+			document.getElementById('yescard4').addEventListener('change', function () {
+				document.getElementById('card4d5').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card4d5').style.display = 'none';
+				}
+			});
+			
+			// Affichage ICD
+			document.getElementById('card5d1').style.display = 'none';
+			document.getElementById('card5d2').style.display = 'none';
+			document.getElementById('card5d3').style.display = 'none';
+			document.getElementById('card5d4').style.display = 'none';
+
+			document.getElementById('yescard5').addEventListener('change', function () {
+				document.getElementById('card5d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card5d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yescard5').addEventListener('change', function () {
+				document.getElementById('card5d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card5d2').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yescard5').addEventListener('change', function () {
+				document.getElementById('card5d3').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card5d3').style.display = 'none';
+				}
+			});
+
+			document.getElementById('yescard5').addEventListener('change', function () {
+				document.getElementById('card5d4').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nocard5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('card5d4').style.display = 'none';
+				}
+			});
+			
+			// Gestion de l'insuffisance cardiaque gauche
+			document.getElementById('yesicg').addEventListener('change', function() {
+				document.getElementById('icgOptions').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('noicg').addEventListener('change', function() {
+				if (this.checked) {
+					document.getElementById('icgOptions').style.display = 'none';
+					document.getElementById('crepitantsLevel').style.display = 'none';
+					document.getElementById('orthopnee').checked = false;
+					document.getElementById('crepitants').checked = false;
+					document.querySelectorAll('input[name="crepitantsLocation"]').forEach(radio => radio.checked = false);
+				}
+			});
+
+			document.getElementById('crepitants').addEventListener('change', function() {
+				document.getElementById('crepitantsLevel').style.display = this.checked ? 'block' : 'none';
+			});
+			
+			function getICGDescription() {
+			if (document.getElementById('yesicg').checked) {
+				let description = "Insuffisance cardiaque gauche avec";
+				const hasOrthopnee = document.getElementById('orthopnee').checked;
+				const hasCrepitants = document.getElementById('crepitants').checked;
+				
+				if (hasOrthopnee) {
+					description += " orthopnée";
+				}
+				
+				if (hasCrepitants) {
+					description += ", crépitants bilatéraux et symétriques";
+					const locationRadios = document.querySelectorAll('input[name="crepitantsLocation"]');
+					for (const radio of locationRadios) {
+						if (radio.checked) {
+							switch (radio.id) {
+								case 'bases':
+									description += " aux bases";
+									break;
+								case 'miChamps':
+									description += " jusqu'aux mi-champs pulmonaires";
+									break;
+								case 'totalite':
+									description += " sur la totalité des champs pulmonaires";
+									break;
+							}
+							break;
+						}
+					}
+				}
+				return description;
+			}
+			return "Pas de signe d'insuffisance cardiaque gauche";
+		}
+		
+		document.querySelectorAll('input[name="tvp"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelector('.tvpDetails').style.display = 
+            this.id === 'yestvp' ? 'block' : 'none';
+    });
+});
+
+			//pouls 
+			document.querySelectorAll('input[name="pulseType"]').forEach(radio => {
+				radio.addEventListener('change', function() {
+					document.getElementById('pulseDetails').style.display = 
+						this.value === 'abnormal' ? 'block' : 'none';
+				});
+			});
+
+			function getPulseDescription() {
+				const pulseType = document.querySelector('input[name="pulseType"]:checked').value;
+				
+				if (pulseType === 'normal') {
+					return "Les pouls périphériques sont perçus et bien frappés";
+				}
+
+				const pulseStatus = {
+					radial: {
+						right: document.querySelector('input[name="radialPulse"][value="right"]').checked,
+						left: document.querySelector('input[name="radialPulse"][value="left"]').checked
+					},
+					popliteal: {
+						right: document.querySelector('input[name="poplitealPulse"][value="right"]').checked,
+						left: document.querySelector('input[name="poplitealPulse"][value="left"]').checked
+					},
+					tibial: {
+						right: document.querySelector('input[name="tibialPulse"][value="right"]').checked,
+						left: document.querySelector('input[name="tibialPulse"][value="left"]').checked
+					},
+					pedial: {
+						right: document.querySelector('input[name="pedialPulse"][value="right"]').checked,
+						left: document.querySelector('input[name="pedialPulse"][value="left"]').checked
+					}
+				};
+
+				return `Pouls périphériques : Radiaux D${pulseStatus.radial.right ? '+' : '-'}/G${pulseStatus.radial.left ? '+' : '-'}, ` +
+					   `poplités D${pulseStatus.popliteal.right ? '+' : '-'}/G${pulseStatus.popliteal.left ? '+' : '-'}, ` +
+					   `tibiaux postérieurs D${pulseStatus.tibial.right ? '+' : '-'}/G${pulseStatus.tibial.left ? '+' : '-'}, ` +
+					   `pédieux D${pulseStatus.pedial.right ? '+' : '-'}/G${pulseStatus.pedial.left ? '+' : '-'}`;
+			}
+
+					//TVP
+
+			function getTVPDescription() {
+				if (document.getElementById('notvp').checked) {
+					return "Pas de signe de thrombose veineuse profonde";
+				}
+
+				const side = document.querySelector('input[name="tvpSide"]:checked').value;
+				const locations = [];
+				if (document.getElementById('mollet').checked) locations.push(' du mollet');
+				if (document.getElementById('cuisse').checked) locations.push(' de la cuisse');
+				
+				const signs = [];
+				if (document.getElementById('douleur').checked) signs.push('douleur');
+				if (document.getElementById('oedeme').checked) signs.push('œdème inflammatoire');
+				if (document.getElementById('cordon').checked) signs.push('cordon induré');
+				if (document.getElementById('homans').checked) signs.push('signe de Hoomans');
+				
+				return `Signes de thrombose veineuse profonde ${side}${locations.length ? '' + locations.join(' et ') : ''}${signs.length ? ' (' + signs.join(', ') + ')' : ''}`;
+			}
+			
+			
+			// Souffles vasculaires
+			
+				function getVascularMurmurDescription() {
+				if (document.getElementById('noVascularMurmur').checked) {
+					return "Pas de souffle vasculaire";
+				}
+
+				let description = [];
+				
+				if (document.getElementById('carotidMurmur').checked) {
+					const carotidSide = document.querySelector('input[name="carotidSide"]:checked').value;
+					description.push(`Présence d'un souffle vasculaire carotidien ${carotidSide}`);
+				}
+				
+				if (document.getElementById('femoralMurmur').checked) {
+					const femoralSide = document.querySelector('input[name="femoralSide"]:checked').value;
+					description.push(`Présence d'un souffle vasculaire fémoral ${femoralSide}`);
+				}
+
+				return description.length > 0 ? description.join('. ') : "Pas de souffle vasculaire";
+			}
+
+			function initVascularMurmurListeners() {
+				document.querySelectorAll('input[name="vascularMurmur"]').forEach(radio => {
+					radio.addEventListener('change', function() {
+						document.getElementById('vascularMurmurDetails').style.display = 
+							document.getElementById('yesVascularMurmur').checked ? 'block' : 'none';
+					});
+				});
+
+				document.getElementById('femoralMurmur').addEventListener('change', function() {
+					document.getElementById('femoralDetails').style.display = 
+						this.checked ? 'block' : 'none';
+				});
+
+				document.getElementById('carotidMurmur').addEventListener('change', function() {
+					document.getElementById('carotidDetails').style.display = 
+						this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Initialisation des écouteurs d'événements au chargement de la page
+			document.addEventListener('DOMContentLoaded', function() {
+				initVascularMurmurListeners();
+			});
+
+			// gestion bruits du coeur 
+			// Gestion de l'affichage des détails anormaux
+			document.querySelectorAll('input[name="heartSoundType"]').forEach(radio => {
+				radio.addEventListener('change', function() {
+					document.getElementById('abnormalDetails').style.display = 
+						this.value === 'abnormal' ? 'block' : 'none';
+				});
+			});
+
+			// Gestion de l'affichage des détails du souffle
+			document.getElementById('hasMurmur').addEventListener('change', function() {
+				document.getElementById('murmurDetails').style.display = 
+					this.checked ? 'block' : 'none';
+			});
+
+		// Fonction pour obtenir la description des bruits du cœur
+			function getHeartSoundsDescription() {
+			   const heartSoundType = document.querySelector('input[name="heartSoundType"]:checked');
+			   if (!heartSoundType || heartSoundType.value === 'normal') {
+				   return "Bruits du cœur réguliers sans souffle perçu.";
+			   }
+
+			   const rhythm = document.querySelector('input[name="rhythm"]:checked')?.value === 'regular' ? 'réguliers' : 'irréguliers';
+			   let description = `Bruits du cœur`;
+
+			   const hasMurmur = document.getElementById('hasMurmur')?.checked;
+			   if (hasMurmur) {
+				   // Collecte tous les attributs sélectionnés
+				   const locations = Array.from(document.querySelectorAll('input[name="location"]:checked'))
+					   .map(cb => cb.value);
+				   const timbres = Array.from(document.querySelectorAll('input[name="timbre"]:checked'))
+					   .map(cb => cb.value);
+				   const timings = Array.from(document.querySelectorAll('input[name="timing"]:checked'))
+					   .map(cb => cb.value);
+				   const intensity = document.querySelector('select[name="intensity"]')?.value;
+				   const radiations = Array.from(document.querySelectorAll('input[name="radiation"]:checked'))
+					   .map(cb => cb.value)
+					   .filter(v => v !== 'none');
+
+				   // Conversion des locations
+				   const locationText = locations.map(loc => 
+					   loc === 'aortic' ? 'aortique' : 
+					   loc === 'mitral' ? 'mitral' : 
+					   loc === 'tricuspid' ? 'tricuspidien' : 
+					   'pulmonaire'
+				   ).join(' et ');
+
+				   // Conversion des timbres
+				   const timbreText = timbres.map(t => 
+					   t === 'soft' ? 'doux humé aspiratif' : 
+					   t === 'harsh' ? 'rude râpeux' : 
+					   t === 'musical' ? 'en jet de vapeur piaulant' : 
+					   'frottement péricardique'
+				   ).join(' et ');
+
+				   // Conversion des timings
+				   const timingText = timings.map(t => 
+					   t === 'systolic' ? 'systolique' : 
+					   t === 'diastolic' ? 'diastolique' : 
+					   'systolo-diastolique'
+				   ).join(' et ');
+
+				   // Construction de la description
+				   description = `Bruits du cœur ${rhythm} avec souffle`;
+				   
+				   if (timingText) description += ` ${timingText}`;
+				   if (timbreText) description += ` ${timbreText}`;
+				   if (intensity) description += ` d'intensité ${intensity}/6`;
+				   if (locationText) description += ` au foyer ${locationText}`;
+
+				   // Ajout des irradiations si présentes
+				   if (radiations.length > 0) {
+					   const radiationText = radiations
+						   .map(r => r === 'carotid' ? 'carotidienne' : 'axillaire')
+						   .join(' et ');
+					   description += ` avec irradiation ${radiationText}`;
+				   }
+			   } else {
+				   description += ` ${rhythm} sans souffle perçu`;
+			   }
+
+			   return description;
+			}
+
+
+
+			// Affichage Hémoptysie
+			document.getElementById('resp1d').style.display = 'none';
+
+			document.getElementById('yesresp1').addEventListener('change', function () {
+				document.getElementById('resp1d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp1').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp1d').style.display = 'none';
+				}
+			});
+
+			// Affichage Toux
+			document.getElementById('resp2d').style.display = 'none';
+
+			document.getElementById('yesresp2').addEventListener('change', function () {
+				document.getElementById('resp2d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp2').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp2d').style.display = 'none';
+				}
+			});
+			
+			// Affichage crachats
+			document.getElementById('resp3d').style.display = 'none';
+
+			document.getElementById('yesresp3').addEventListener('change', function () {
+				document.getElementById('resp3d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp3').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp3d').style.display = 'none';
+				}
+			});
+			
+			// Affichage hypercapnie
+			document.getElementById('resp4d1').style.display = 'none';
+			document.getElementById('resp4d2').style.display = 'none';
+			document.getElementById('resp4d3').style.display = 'none';
+			document.getElementById('resp4d4').style.display = 'none';
+			document.getElementById('resp4d5').style.display = 'none';
+
+			document.getElementById('yesresp4').addEventListener('change', function () {
+				document.getElementById('resp4d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp4d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesresp4').addEventListener('change', function () {
+				document.getElementById('resp4d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp4d2').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesresp4').addEventListener('change', function () {
+				document.getElementById('resp4d3').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp4d3').style.display = 'none';
+				}
+			});
+
+			document.getElementById('yesresp4').addEventListener('change', function () {
+				document.getElementById('resp4d4').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp4d4').style.display = 'none';
+				}
+			});
+
+			document.getElementById('yesresp4').addEventListener('change', function () {
+				document.getElementById('resp4d5').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noresp4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp4d5').style.display = 'none';
+				}
+			});
+			
+			//Inspection
+			
+			function getInspectionDescription() {
+				if (document.getElementById('normalInspection').checked) {
+					return "Ampliation thoracique symétrique. Pas d'hippocratisme digital. Pas de cyanose des extrémités. Pas de distension thoracique";
+				}
+
+				let description = [];
+				
+				if (document.querySelector('input[name="ampliation"]:checked').value === 'symetrique') {
+					description.push("Ampliation thoracique symétrique");
+				} else {
+					const side = document.querySelector('input[name="ampliationSideChoice"]:checked').value;
+					description.push(`Ampliation thoracique asymétrique avec diminution ${side}`);
+				}
+				
+				description.push(document.getElementById('hippocratisme').checked 
+					? "Présence d'un hippocratisme digital"
+					: "Pas d'hippocratisme digital");
+					
+				description.push(document.getElementById('cyanose').checked 
+					? "Présence d'une cyanose des extrémités"
+					: "Pas de cyanose des extrémités");
+					
+				description.push(document.getElementById('distension').checked 
+					? "Présence d'une distension thoracique"
+					: "Pas de distension thoracique");
+				
+				return description.join(". ");
+			}
+
+			document.getElementById('abnormalInspection').addEventListener('change', function() {
+				document.getElementById('inspectionDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('normalInspection').addEventListener('change', function() {
+				document.getElementById('inspectionDetails').style.display = 'none';
+			});
+
+			document.querySelectorAll('input[name="ampliation"]').forEach(radio => {
+				radio.addEventListener('change', function() {
+					document.getElementById('ampliationSide').style.display = 
+						this.value === 'asymetrique' ? 'inline' : 'none';
+				});
+			});
+						
+			
+			// Affichage signe de lutte
+			document.getElementById('yesresp5').addEventListener('change', function () {
+				document.getElementById('resp5Intensity').style.display = this.checked ? 'inline' : 'none';
+				document.getElementById('signeLutteDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('noresp5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('resp5Intensity').style.display = 'none';
+					document.getElementById('signeLutteDetails').style.display = 'none';
+				}
+			});
+			
+			
+			// Gestion de l'affichage pour la Percussion
+						document.getElementById('abnormalPercussion').addEventListener('change', function() {
+							document.getElementById('percussionDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						document.getElementById('normalPercussion').addEventListener('change', function() {
+							document.getElementById('percussionDetails').style.display = 'none';
+						});
+
+			document.getElementById('tympanisme').addEventListener('change', function() {
+				document.getElementById('tympanismeLocation').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('matite').addEventListener('change', function() {
+				document.getElementById('matiteLocation').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			function getPercussionDescription() {
+				if (document.getElementById('normalPercussion').checked) {
+					return "Percussion sans anomalie";
+				}
+
+				const anomalies = [];
+				if (document.getElementById('tympanisme').checked) {
+					const loc = document.getElementById('tympanismeLocation').value;
+					anomalies.push(`un tympanisme ${loc}`);
+				}
+				if (document.getElementById('matite').checked) {
+					const loc = document.getElementById('matiteLocation').value;
+					anomalies.push(`une matité ${loc}`);
+				}
+
+				return anomalies.length > 0 
+					? `La percussion met en évidence ${anomalies.join(' et ')}`
+					: "Percussion sans anomalie";
+}
+
+		// Gestion auscultation
+		['resp6d1', 'resp6d2', 'resp6d3', 'resp6d4', 'resp6d5'].forEach(id => {
+			document.getElementById(id).style.display = 'none';
+		});
+
+		document.getElementById('yesresp6').addEventListener('change', function() {
+			['resp6d1', 'resp6d2', 'resp6d3', 'resp6d4', 'resp6d5'].forEach(id => {
+				document.getElementById(id).style.display = 'block';
+				document.getElementById(id + 'Input').style.display = 'inline';
+			});
+		});
+
+		document.getElementById('noresp6').addEventListener('change', function() {
+			['resp6d1', 'resp6d2', 'resp6d3', 'resp6d4', 'resp6d5'].forEach(id => {
+				document.getElementById(id).style.display = 'none';
+				document.getElementById(id + 'Input').style.display = 'none';
+			});
+		});
+		
+		
+		// Gestion de l'affichage des vibrations vocales
+document.getElementById('abnormalVibrations').addEventListener('change', function() {
+    document.getElementById('vibrationsDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('normalVibrations').addEventListener('change', function() {
+    document.getElementById('vibrationsDetails').style.display = 'none';
+});
+
+// Gestion des champs de localisation
+document.getElementById('diminutionVibrations').addEventListener('change', function() {
+    document.getElementById('diminutionLocation').style.display = this.checked ? 'inline' : 'none';
+});
+
+document.getElementById('augmentationVibrations').addEventListener('change', function() {
+    document.getElementById('augmentationLocation').style.display = this.checked ? 'inline' : 'none';
+});
+
+// Fonction pour la génération du texte
+function getVibrationsDescription() {
+    if (document.getElementById('normalVibrations').checked) {
+        return "Vibrations vocales perçues et symétriques";
+    }
+
+    const anomalies = [];
+    if (document.getElementById('diminutionVibrations').checked) {
+        const loc = document.getElementById('diminutionLocation').value;
+        if (loc) anomalies.push(`diminuées ${loc}`);
+    }
+    if (document.getElementById('augmentationVibrations').checked) {
+        const loc = document.getElementById('augmentationLocation').value;
+        if (loc) anomalies.push(`augmentées ${loc}`);
+    }
+
+    return anomalies.length > 0 
+        ? `Vibrations vocales ${anomalies.join(', ')}`
+        : "Vibrations vocales perçues et symétriques";
+}
+		
+		
+
+// Gestion des zones de texte
+['resp6d1', 'resp6d2', 'resp6d3', 'resp6d4', 'resp6d5'].forEach(id => {
+    document.getElementById(id + 'Input').addEventListener('change', function() {
+        document.getElementById(id + 'Text').style.display = this.checked ? 'inline' : 'none';
+    });
+});
+
+function getAuscultationDescription() {
+    if (document.getElementById('noresp6').checked) {
+        return "Murmure vésiculaire bilatéral et symétrique sans bruit surajouté";
+    }
+
+    let anomalies = [];
+    const checks = [
+        {id: 'resp6d5', text: 'Abolition du murmure vésiculaire'},
+		{id: 'resp6d1', text: 'crépitants'},
+        {id: 'resp6d2', text: 'sibilants'},
+        {id: 'resp6d3', text: 'souffle tubaire'},
+        {id: 'resp6d4', text: 'ronchis'}
+    ];
+
+    checks.forEach(check => {
+        if (document.getElementById(check.id + 'Input').checked) {
+            const loc = document.getElementById(check.id + 'Text').value;
+            anomalies.push(`${check.text}${loc ? ` ${loc}` : ''}`);
+        }
+    });
+
+    return anomalies.length > 0 ? anomalies.join(', ') : "Murmure vésiculaire bilatéral et symétrique sans bruit surajouté";
+}
+
+			// Affichage diarrhée
+			document.getElementById('dig1d').style.display = 'none';
+
+			document.getElementById('yesdig1').addEventListener('change', function () {
+				document.getElementById('dig1d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig1').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig1d').style.display = 'none';
+				}
+			});
+
+			// Affichage constipation
+			document.getElementById('dig2d').style.display = 'none';
+
+			document.getElementById('yesdig2').addEventListener('change', function () {
+				document.getElementById('dig2d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig2').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig2d').style.display = 'none';
+				}
+			});
+
+			// Affichage vomissements
+			document.getElementById('dig3d').style.display = 'none';
+			
+			document.getElementById('yesdig3').addEventListener('change', function () {
+				document.getElementById('dig3d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig3').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig3d').style.display = 'none';
+				}
+			});
+
+			// Affichage douleur abdominale
+			document.getElementById('dig4d').style.display = 'none';
+
+			document.getElementById('yesdig4').addEventListener('change', function () {
+				document.getElementById('dig4d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig4d').style.display = 'none';
+				}
+			})
+			
+			// Affichage Urines
+			document.getElementById('dig5d').style.display = 'none';
+
+			document.getElementById('yesdig5').addEventListener('change', function () {
+				document.getElementById('dig5d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig5d').style.display = 'none';
+				}
+			});
+			
+			// Affichage HTP
+			document.getElementById('dig6d1').style.display = 'none';
+			document.getElementById('dig6d2').style.display = 'none';
+			document.getElementById('dig6d3').style.display = 'none';
+
+			document.getElementById('yesdig6').addEventListener('change', function () {
+				document.getElementById('dig6d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig6').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig6d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesdig6').addEventListener('change', function () {
+				document.getElementById('dig6d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig6').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig6d2').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesdig6').addEventListener('change', function () {
+				document.getElementById('dig6d3').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig6').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig6d3').style.display = 'none';
+				}
+			});
+			
+			// Affichage IHC
+			document.getElementById('dig7d1').style.display = 'none';
+			document.getElementById('dig7d2').style.display = 'none';
+			document.getElementById('dig7d3').style.display = 'none';
+			document.getElementById('dig7d4').style.display = 'none';
+
+			document.getElementById('yesdig7').addEventListener('change', function () {
+				document.getElementById('dig7d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig7').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig7d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesdig7').addEventListener('change', function () {
+				document.getElementById('dig7d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig7').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig7d2').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesdig7').addEventListener('change', function () {
+				document.getElementById('dig7d3').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig7').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig7d3').style.display = 'none';
+				}
+			});
+			document.getElementById('yesdig7').addEventListener('change', function () {
+				document.getElementById('dig7d4').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig7').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig7d4').style.display = 'none';
+				}
+			});
+			
+						// Affichage fosses lombaires
+			document.getElementById('dig8d1').style.display = 'none';
+			document.getElementById('dig8d2').style.display = 'none';
+
+			document.getElementById('yesdig8').addEventListener('change', function () {
+				document.getElementById('dig8d1').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig8').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig8d1').style.display = 'none';
+				}
+			});
+			
+			document.getElementById('yesdig8').addEventListener('change', function () {
+				document.getElementById('dig8d2').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig8').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig8d2').style.display = 'none';
+				}
+			});
+			
+						// Affichage Organomégalie
+			document.getElementById('dig9d').style.display = 'none';
+
+			document.getElementById('yesdig9').addEventListener('change', function () {
+				document.getElementById('dig9d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig9').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig9d').style.display = 'none';
+				}
+			})
+			
+						// Affichage PALPATION ABDO
+			document.getElementById('dig11d').style.display = 'none';
+
+			document.getElementById('yesdig11').addEventListener('change', function () {
+				document.getElementById('dig11d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('nodig11').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('dig11d').style.display = 'none';
+				}
+			})
+			
+			// Affichage céphalées
+			document.getElementById('neur1d').style.display = 'none';
+
+			document.getElementById('yesneur1').addEventListener('change', function () {
+				document.getElementById('neur1d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noneur1').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('neur1d').style.display = 'none';
+				}
+			});
+			
+			// Affichage douleurs neuro
+			document.getElementById('neur2d').style.display = 'none';
+
+			document.getElementById('yesneur2').addEventListener('change', function () {
+				document.getElementById('neur2d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noneur2').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('neur2d').style.display = 'none';
+				}
+			});
+
+			// Affichage TROUBLE SENSORIEL
+			document.getElementById('neur3d').style.display = 'none';
+
+			document.getElementById('yesneur3').addEventListener('change', function () {
+				document.getElementById('neur3d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noneur3').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('neur3d').style.display = 'none';
+				}
+			});
+			
+			// Affichage Vertiges
+			document.getElementById('neur4d').style.display = 'none';
+
+			document.getElementById('yesneur4').addEventListener('change', function () {
+				document.getElementById('neur4d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noneur4').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('neur4d').style.display = 'none';
+				}
+			});		
+			
+			// Affichage nausée
+			document.getElementById('neur5d').style.display = 'none';
+
+			document.getElementById('yesneur5').addEventListener('change', function () {
+				document.getElementById('neur5d').style.display = this.checked ? 'inline' : 'none';
+			});
+
+			document.getElementById('noneur5').addEventListener('change', function () {
+				if (this.checked) {
+					document.getElementById('neur5d').style.display = 'none';
+				}
+			});	
+			
+				// Gestion de l'affichage des détails de la marche
+				document.querySelectorAll('input[name="walkingType"]').forEach(radio => {
+					radio.addEventListener('change', function() {
+						document.getElementById('walkingDetails').style.display = 
+							this.value === 'abnormal' ? 'block' : 'none';
+					});
+				});
+
+				document.getElementById('speed').addEventListener('change', function() {
+					document.getElementById('speedDetails').style.display = 
+						this.checked ? 'inline' : 'none';
+				});
+
+				document.getElementById('turning').addEventListener('change', function() {
+					document.getElementById('turningDetails').style.display = 
+						this.checked ? 'inline' : 'none';
+				});
+
+				document.getElementById('armSwing').addEventListener('change', function() {
+					document.getElementById('armSwingDetails').style.display = 
+						this.checked ? 'block' : 'none';
+				});
+
+				document.getElementById('baseSupport').addEventListener('change', function() {
+					document.getElementById('baseSupportDetails').style.display = 
+						this.checked ? 'block' : 'none';
+				});
+
+				function getWalkingDescription() {
+					const walkingType = document.querySelector('input[name="walkingType"]:checked').value;
+					
+					if (walkingType === 'normal') {
+						return "Pas de trouble de la marche";
+					}
+
+					let details = [];
+					
+					if (document.getElementById('speed').checked) {
+						const speedText = document.getElementById('speedDetails').value;
+						details.push(`${speedText ? ` (${speedText})` : ''}`);
+					}
+					
+					if (document.getElementById('turning').checked) {
+						const turningText = document.getElementById('turningDetails').value;
+						details.push(`difficulté au demi-tour${turningText ? ` (${turningText})` : ''}`);
+					}
+					
+					if (document.getElementById('armSwing').checked) {
+						const armSwingStatus = document.querySelector('input[name="armSwingStatus"]:checked').value;
+						details.push(`ballant automatique des bras ${armSwingStatus === 'preserved' ? 'conservé' : 'non conservé'}`);
+					}
+					
+					if (document.getElementById('baseSupport').checked) {
+						const baseSupportStatus = document.querySelector('input[name="baseSupportStatus"]:checked').value;
+						details.push(`polygone de sustentation ${baseSupportStatus === 'normal' ? 'normal' : 'élargi'}`);
+					}
+
+					return details.length > 0 
+						? `Marche altérée${details.join(', ')}`
+						: "Troubles de la marche";
+				}
+				
+			// Gestion de l'affichage des détails de l'équilibre
+			document.querySelectorAll('input[name="balanceType"]').forEach(radio => {
+				radio.addEventListener('change', function() {
+					document.getElementById('balanceDetails').style.display = 
+						document.getElementById('abnormalBalance').checked ? 'block' : 'none';
+				});
+			});
+
+			function getBalanceDescription() {
+				if (document.getElementById('normalBalance').checked) {
+					return "Pas de trouble de la station debout et de l'équilibre";
+				}
+				
+				const description = document.getElementById('balanceDescription').value;
+				return `Troubles de la station debout et de l'équilibre${description ? ' : ' + description : ''}`;
+			}
+			
+			
+			// Gestion déficit moteur
+					document.getElementById('yesDeficitMoteur').addEventListener('change', function() {
+						document.getElementById('deficitMoteurDetails').style.display = this.checked ? 'block' : 'none';
+					});
+
+					document.getElementById('noDeficitMoteur').addEventListener('change', function() {
+						document.getElementById('deficitMoteurDetails').style.display = 'none';
+					});
+
+					// Gestion de l'évaluation globale
+					document.querySelectorAll('.evaluation-globale input[type="checkbox"]').forEach(checkbox => {
+						checkbox.addEventListener('change', function() {
+							const details = document.getElementById(this.id + 'Details');
+							if (details) {
+								details.style.display = this.checked ? 'inline' : 'none';
+							}
+						});
+					});
+
+					// Gestion des membres supérieurs
+					document.getElementById('deficitMS').addEventListener('change', function() {
+						document.getElementById('msDetails').style.display = this.checked ? 'block' : 'none';
+					});
+
+					// Gestion des membres inférieurs
+					document.getElementById('deficitMI').addEventListener('change', function() {
+						document.getElementById('miDetails').style.display = this.checked ? 'block' : 'none';
+					});
+
+					// Gestion de l'affichage des menus déroulants de force et des cases à cocher droite/gauche
+					document.querySelectorAll('.muscle-group input[type="checkbox"]').forEach(checkbox => {
+						checkbox.addEventListener('change', function() {
+							const select = this.parentElement.querySelector('.force');
+							const sideDiv = this.parentElement.querySelector('.side-force');
+							if (select && sideDiv) {
+								select.style.display = this.checked ? 'inline' : 'none';
+								sideDiv.style.display = this.checked ? 'inline-block' : 'none';
+							}
+						});
+					});
+
+					function getDeficitMoteurDescription() {
+						if (document.getElementById('noDeficitMoteur').checked) {
+							return "Pas de déficit moteur. Manœuvres de Barré et de Mingazzini tenues et symétriques";
+						}
+
+						let description = [];
+						
+						// Évaluation globale
+						let evaluationGlobale = [];
+						if (document.getElementById('amyotrophie').checked) {
+							const details = document.getElementById('amyotrophieDetails').value;
+							evaluationGlobale.push(`Amyotrophie ${details}`);
+						}
+						if (document.getElementById('barre').checked) {
+							const details = document.getElementById('barreDetails').value;
+							evaluationGlobale.push(`Manœuvre de Barré ${details}`);
+						}
+						if (document.getElementById('mingazzini').checked) {
+							const details = document.getElementById('mingazziniDetails').value;
+							evaluationGlobale.push(`Manœuvre de Mingazzini ${details}`);
+						}
+						if (document.getElementById('fasciculations').checked) {
+							const details = document.getElementById('fasciculationsDetails').value;
+							evaluationGlobale.push(`Fasciculations ${details}`);
+						}
+						if (document.getElementById('myalgies').checked) {
+							const details = document.getElementById('myalgiesDetails').value;
+							evaluationGlobale.push(`Myalgies ${details}`);
+						}
+
+						if (evaluationGlobale.length > 0) {
+							description.push(evaluationGlobale.join(', '));
+						}
+
+						// Membres supérieurs
+						if (document.getElementById('deficitMS').checked) {
+							let deficitsMS = [];
+							document.querySelectorAll('#msDetails .muscle-group').forEach(group => {
+								const checkbox = group.querySelector('input[type="checkbox"]');
+								if (checkbox && checkbox.checked) {
+									const force = group.querySelector('.force').value;
+									const droitChecked = group.querySelector('.side-check[id$="_droit"]').checked;
+									const gaucheChecked = group.querySelector('.side-check[id$="_gauche"]').checked;
+									
+									if (force < 5 && (droitChecked || gaucheChecked)) {
+										let cote = '';
+										if (droitChecked && gaucheChecked) cote = ' bilatéral';
+										else if (droitChecked) cote = ' droit';
+										else if (gaucheChecked) cote = ' gauche';
+										
+										const muscleName = checkbox.parentElement.querySelector('label').textContent.split(':')[0].trim();
+										deficitsMS.push(`${muscleName}${cote} ${force}/5`);
+									}
+								}
+							});
+							if (deficitsMS.length > 0) {
+								description.push(`Déficit moteur aux membres supérieurs : ${deficitsMS.join(', ')}`);
+							}
+						}
+
+						// Membres inférieurs
+						if (document.getElementById('deficitMI').checked) {
+							let deficitsMI = [];
+							document.querySelectorAll('#miDetails .muscle-group').forEach(group => {
+								const checkbox = group.querySelector('input[type="checkbox"]');
+								if (checkbox && checkbox.checked) {
+									const force = group.querySelector('.force').value;
+									const droitChecked = group.querySelector('.side-check[id$="_droit"]').checked;
+									const gaucheChecked = group.querySelector('.side-check[id$="_gauche"]').checked;
+									
+									if (force < 5 && (droitChecked || gaucheChecked)) {
+										let cote = '';
+										if (droitChecked && gaucheChecked) cote = ' bilatéral';
+										else if (droitChecked) cote = ' droit';
+										else if (gaucheChecked) cote = ' gauche';
+										
+										const muscleName = checkbox.parentElement.querySelector('label').textContent.split(':')[0].trim();
+										deficitsMI.push(`${muscleName}${cote} ${force}/5`);
+									}
+								}
+							});
+							if (deficitsMI.length > 0) {
+								description.push(`Déficit moteur aux membres inférieurs : ${deficitsMI.join(', ')}`);
+							}
+						}
+
+						if (description.length === 0) {
+							return "Examen de la force musculaire normal";
+						}
+
+						return description.join('. ') + '.';
+					}
+			
+			
+			// ROT 
+							document.getElementById('abnormalReflex').addEventListener('change', function() {
+					document.getElementById('reflexDetails').style.display = this.checked ? 'block' : 'none';
+				});
+
+				document.getElementById('normalReflex').addEventListener('change', function() {
+					document.getElementById('reflexDetails').style.display = 'none';
+				});
+
+				document.getElementById('upperLimbReflex').addEventListener('change', function() {
+					document.getElementById('upperLimbDetails').style.display = this.checked ? 'block' : 'none';
+				});
+
+			document.getElementById('lowerLimbReflex').addEventListener('change', function() {
+					document.getElementById('lowerLimbDetails').style.display = this.checked ? 'block' : 'none';
+				});
+
+				const reflexes = ['bicipital', 'tricipital', 'styloradial', 'cubitopronateur', 'achilleen', 'rotulien'];
+
+				reflexes.forEach(reflex => {
+					document.getElementById(`${reflex}Reflex`).addEventListener('change', function() {
+						document.querySelector(`#${reflex}Reflex`).closest('.reflex-group').querySelector('.reflex-anomalies').style.display = 
+							this.checked ? 'block' : 'none';
+					});
+				});
+
+				function getReflexDescription() {
+					if (document.getElementById('normalReflex').checked) {
+						return "ROT symétriques non diffusés non polycinétiques et non vifs";
+					}
+
+					let description = [];
+					let upperLimbAnomalies = [];
+					let lowerLimbAnomalies = [];
+
+					if (document.getElementById('upperLimbReflex').checked) {
+						const upperReflexes = ['bicipital', 'tricipital', 'styloradial', 'cubitopronateur'];
+						upperReflexes.forEach(reflex => {
+							if (document.getElementById(`${reflex}Reflex`).checked) {
+								let anomalies = [];
+								if (document.getElementById(`${reflex}Vif`).checked) anomalies.push("vif");
+								if (document.getElementById(`${reflex}Diffuse`).checked) anomalies.push("diffusé");
+								if (document.getElementById(`${reflex}Poly`).checked) anomalies.push("polycinétique");
+								if (document.getElementById(`${reflex}Zone`).checked) anomalies.push("extension de la zone réflexogène");
+								if (document.getElementById(`${reflex}Aboli`).checked) anomalies.push("aboli");
+								
+								const location = document.getElementById(`${reflex}Location`).value;
+								if (anomalies.length > 0 || location) {
+									upperLimbAnomalies.push(`${reflex} ${anomalies.join(", ")}${location ? ` (${location})` : ''}`);
+								}
+							}
+						});
+					}
+
+					if (document.getElementById('lowerLimbReflex').checked) {
+						const lowerReflexes = ['achilleen', 'rotulien'];
+						lowerReflexes.forEach(reflex => {
+							if (document.getElementById(`${reflex}Reflex`).checked) {
+								let anomalies = [];
+								if (document.getElementById(`${reflex}Vif`).checked) anomalies.push("vif");
+								if (document.getElementById(`${reflex}Diffuse`).checked) anomalies.push("diffusé");
+								if (document.getElementById(`${reflex}Poly`).checked) anomalies.push("polycinétique");
+								if (document.getElementById(`${reflex}Zone`).checked) anomalies.push("extension de la zone réflexogène");
+								if (document.getElementById(`${reflex}Aboli`).checked) anomalies.push("aboli");
+								
+								const location = document.getElementById(`${reflex}Location`).value;
+								if (anomalies.length > 0 || location) {
+									lowerLimbAnomalies.push(`${reflex} ${anomalies.join(", ")}${location ? ` (${location})` : ''}`);
+								}
+							}
+						});
+					}
+
+					if (upperLimbAnomalies.length > 0) {
+						description.push(`Aux membres supérieurs : ${upperLimbAnomalies.join(", ")}`);
+					}
+					if (lowerLimbAnomalies.length > 0) {
+						description.push(`Aux membres inférieurs : ${lowerLimbAnomalies.join(", ")}`);
+					}
+
+					return description.length > 0 
+						? `Anomalie des ROT : ${description.join(". ")}`
+						: "Anomalie des ROT";
+				}
+
+
+		// Déficit sensitif
+			document.getElementById('yesDeficitSensitif').addEventListener('change', function() {
+				document.getElementById('deficitSensitifDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('noDeficitSensitif').addEventListener('change', function() {
+				document.getElementById('deficitSensitifDetails').style.display = 'none';
+				document.getElementById('deficitMS').checked = false;
+				document.getElementById('deficitMI').checked = false;
+				document.getElementById('deficitMSDetails').style.display = 'none';
+				document.getElementById('deficitMIDetails').style.display = 'none';
+			});
+
+			document.getElementById('deficitMS').addEventListener('change', function() {
+				document.getElementById('deficitMSDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('deficitMI').addEventListener('change', function() {
+				document.getElementById('deficitMIDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			function getDeficitDescription() {
+				if (document.getElementById('noDeficitSensitif').checked) {
+					return "Pas de déficit sensitif";
+				}
+
+				let description = [];
+				
+				if (document.getElementById('deficitMS').checked) {
+					const msDesc = document.getElementById('deficitMSDescription').value;
+					description.push(`Déficit sensitif aux membres supérieurs${msDesc ? ` (${msDesc})` : ''}`);
+				}
+				
+				if (document.getElementById('deficitMI').checked) {
+					const miDesc = document.getElementById('deficitMIDescription').value;
+					description.push(`Déficit sensitif aux membres inférieurs${miDesc ? ` (${miDesc})` : ''}`);
+				}
+
+				return description.length > 0 
+					? `Déficit sensitif : ${description.join(' et ')}`
+					: "Présence d'un déficit sensitif";
+			}
+			
+			// paires craniennes
+			document.addEventListener('DOMContentLoaded', function() {
+				// Cache tous les détails au chargement
+				document.getElementById('pairescraniennesDetails').style.display = 'none';
+				document.querySelectorAll('[id$="Details"]').forEach(el => {
+					if (el.id !== 'pairescraniennesDetails') {
+						el.style.display = 'none';
+					}
+				});
+			});
+
+			document.getElementById('yesPairescraniennes').addEventListener('change', function() {
+				document.getElementById('pairescraniennesDetails').style.display = this.checked ? 'block' : 'none';
+			});
+
+			document.getElementById('noPairescraniennes').addEventListener('change', function() {
+				const details = document.getElementById('pairescraniennesDetails');
+				details.style.display = 'none';
+				
+				const nerfs = ['I', 'II', 'III_IV_VI', 'V', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+				nerfs.forEach(nerf => {
+					const checkbox = document.getElementById(`nerve${nerf}`);
+					const details = document.getElementById(`nerve${nerf}Details`);
+					const description = document.getElementById(`nerve${nerf}Description`);
+					
+					if (checkbox) checkbox.checked = false;
+					if (details) details.style.display = 'none';
+					if (description) description.value = '';
+				});
+			});
+
+			const nerfs = ['I', 'II', 'III_IV_VI', 'V', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+			nerfs.forEach(nerf => {
+				const checkbox = document.getElementById(`nerve${nerf}`);
+				if (checkbox) {
+					checkbox.addEventListener('change', function() {
+						const details = document.getElementById(`nerve${nerf}Details`);
+						if (details) {
+							details.style.display = this.checked ? 'block' : 'none';
+							if (!this.checked) {
+								const description = document.getElementById(`nerve${nerf}Description`);
+								if (description) description.value = '';
+							}
+						}
+					});
+				}
+			});
+
+			nerfs.forEach(nerf => {
+				const checkbox = document.getElementById(`nerve${nerf}`);
+				const details = document.getElementById(`nerve${nerf}Details`);
+				console.log(`Nerf ${nerf}:`, {
+					checkbox: checkbox ? 'exists' : 'missing',
+					details: details ? 'exists' : 'missing'
+				});
+			});
+
+			function getPairescraniennesDescription() {
+				if (document.getElementById('noPairescraniennes').checked) {
+					return "Pas d'anomalie des paires crâniennes";
+				}
+
+				let anomalies = [];
+				
+				const nerfs = [
+					{ id: 'I', nom: 'I Olfactif' },
+					{ id: 'II', nom: 'II Optique' },
+					{ id: 'III_IV_VI', nom: 'III, IV, VI' },
+					{ id: 'V', nom: 'V Trijumeau' },
+					{ id: 'VII', nom: 'VII Facial' },
+					{ id: 'VIII', nom: 'VIII Cochléovestibulaire' },
+					{ id: 'IX', nom: 'IX Glossopharyngien' },
+					{ id: 'X', nom: 'X Vague' },
+					{ id: 'XI', nom: 'XI Accessoire' },
+					{ id: 'XII', nom: 'XII Hypoglosse' }
+				];
+
+				nerfs.forEach(nerf => {
+					const checkbox = document.getElementById(`nerve${nerf.id}`);
+					if (checkbox && checkbox.checked) {
+						const desc = document.getElementById(`nerve${nerf.id}Description`).value;
+						anomalies.push(`${nerf.nom}${desc ? ` (${desc})` : ''}. Pas d'anomalie des autres paires craniennes`);
+					}
+				});
+
+				return anomalies.length > 0 
+				   ? `Paires crâniennes : ${anomalies.join('; ')}`
+					: "Anomalies des paires crâniennes sans précision";
+			}
+
+
+					// Gestion du syndrome méningé
+					document.getElementById('yesSyndromeMeningé').addEventListener('change', function() {
+						document.getElementById('syndromeMeningeDetails').style.display = this.checked ? 'block' : 'none';
+					});
+
+					document.getElementById('noSyndromeMeningé').addEventListener('change', function() {
+						document.getElementById('syndromeMeningeDetails').style.display = 'none';
+						document.getElementById('kernig').checked = false;
+						document.getElementById('brudzinski').checked = false;
+						document.getElementById('photophonophobie').checked = false;
+						document.getElementById('raideurNucale').checked = false;
+						document.getElementById('purpura').checked = false;
+						document.getElementById('meningePrecisions').value = '';
+					});
+
+					function getSyndromeMeningeDescription() {
+						if (document.getElementById('noSyndromeMeningé').checked) {
+							return "Pas de syndrome méningé";
+						}
+
+						let signes = [];
+						
+						if (document.getElementById('kernig').checked) signes.push('signe de Kernig positif');
+						if (document.getElementById('brudzinski').checked) signes.push('signe de Brudzinski positif');
+						if (document.getElementById('photophonophobie').checked) signes.push('photophonophobie');
+						if (document.getElementById('raideurNucale').checked) signes.push('raideur nucale');
+						if (document.getElementById('purpura').checked) signes.push('purpura');
+						
+						const precisions = document.getElementById('meningePrecisions').value;
+						
+						let description = "Présence d'un syndrome méningé";
+						if (signes.length > 0) {
+							description += ` avec ${signes.join(', ')}`;
+						}
+						if (precisions) {
+							description += `, ${precisions}`;
+						}
+
+						return description;
+					}
+					
+					
+											// Gestion du syndrome extra-pyramidal
+						document.getElementById('yesSyndromeExtrapyramidal').addEventListener('change', function() {
+							document.getElementById('syndromeExtrapyramidalDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						document.getElementById('noSyndromeExtrapyramidal').addEventListener('change', function() {
+							document.getElementById('syndromeExtrapyramidalDetails').style.display = 'none';
+							document.getElementById('tremblement').checked = false;
+							document.getElementById('hypertonie').checked = false;
+							document.getElementById('akinesie').checked = false;
+							document.getElementById('extraPyramidalPrecisions').value = '';
+						});
+
+						function getSyndromeExtrapyramidalDescription() {
+							if (document.getElementById('noSyndromeExtrapyramidal').checked) {
+								return "Pas de syndrome extra-pyramidal";
+							}
+
+							let signes = [];
+							
+							if (document.getElementById('tremblement').checked) signes.push('tremblement');
+							if (document.getElementById('hypertonie').checked) signes.push('hypertonie plastique');
+							if (document.getElementById('akinesie').checked) signes.push('akinésie');
+							
+							const precisions = document.getElementById('extraPyramidalPrecisions').value;
+							
+							let description = "Présence d'un syndrome extra-pyramidal";
+							if (signes.length > 0) {
+								description += ` avec ${signes.join(', ')}`;
+							}
+							if (precisions) {
+								description += `, ${precisions}`;
+							}
+
+							return description;
+						}
+
+
+						// Gestion du syndrome cérébelleux
+						document.getElementById('yesSyndromeCerebelleux').addEventListener('change', function() {
+							document.getElementById('syndromeCerebelleuxDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						document.getElementById('noSyndromeCerebelleux').addEventListener('change', function() {
+							document.getElementById('syndromeCerebelleuxDetails').style.display = 'none';
+							document.getElementById('cerebelleuxStatique').checked = false;
+							document.getElementById('cerebelleuxCinetique').checked = false;
+							document.getElementById('cerebelleuxPrecisions').value = '';
+							document.getElementById('cerebelleuxStatiqueDetails').style.display = 'none';
+							document.getElementById('cerebelleuxCinetiqueDetails').style.display = 'none';
+						});
+
+						// Gestion des détails statiques
+						document.getElementById('cerebelleuxStatique').addEventListener('change', function() {
+							document.getElementById('cerebelleuxStatiqueDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						// Gestion des détails cinétiques
+						document.getElementById('cerebelleuxCinetique').addEventListener('change', function() {
+							document.getElementById('cerebelleuxCinetiqueDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						function getSyndromeCerebelleuxDescription() {
+							if (document.getElementById('noSyndromeCerebelleux').checked) {
+								return "Pas de syndrome cérébelleux";
+							}
+
+							let description = [];
+							
+							// Côté
+							const side = document.querySelector('input[name="cerebelleuxSide"]:checked').value;
+							description.push(`Syndrome cérébelleux ${side}`);
+							
+							// Syndrome statique
+							if (document.getElementById('cerebelleuxStatique').checked) {
+								let signesStatiques = [];
+								if (document.getElementById('elargissementPolygone').checked) 
+									signesStatiques.push('élargissement du polygone de sustentation');
+								if (document.getElementById('demarcheEbrieuse').checked) 
+									signesStatiques.push('démarche ébrieuse');
+								if (document.getElementById('danseTendons').checked) 
+									signesStatiques.push('danse des tendons');
+								
+								if (signesStatiques.length > 0) {
+									description.push(`statique (${signesStatiques.join(', ')})`);
+								}
+							}
+							
+							// Syndrome cinétique
+							if (document.getElementById('cerebelleuxCinetique').checked) {
+								let signesCinetiques = [];
+								if (document.getElementById('hypermetrie').checked) 
+									signesCinetiques.push('hypermétrie');
+								if (document.getElementById('dysmetrie').checked) 
+									signesCinetiques.push('dysmétrie');
+								if (document.getElementById('adiadococinesie').checked) 
+									signesCinetiques.push('adiadococinésie');
+								if (document.getElementById('dysarthrie').checked) 
+									signesCinetiques.push('dysarthrie cérébelleuse');
+								if (document.getElementById('nystagmus').checked) 
+									signesCinetiques.push('nystagmus');
+								
+								if (signesCinetiques.length > 0) {
+									description.push(`cinétique (${signesCinetiques.join(', ')})`);
+								}
+							}
+							
+							const precisions = document.getElementById('cerebelleuxPrecisions').value;
+							if (precisions) {
+								description.push(precisions);
+							}
+
+							return description.join(', ');
+						}
+						
+					// Gestion du syndrome vestibulaire
+						document.getElementById('yesSyndromeVestibulaire').addEventListener('change', function() {
+							document.getElementById('syndromeVestibulaireDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						document.getElementById('noSyndromeVestibulaire').addEventListener('change', function() {
+							document.getElementById('syndromeVestibulaireDetails').style.display = 'none';
+							document.getElementById('nystagmus').checked = false;
+							document.getElementById('romberg').checked = false;
+							document.getElementById('vestibulairePrecisions').value = '';
+							document.querySelectorAll('input[name="vestibulaireSide"]')[0].checked = true;
+						});
+
+						function getSyndromeVestibulaireDescription() {
+							if (document.getElementById('noSyndromeVestibulaire').checked) {
+								return "Pas de syndrome vestibulaire";
+							}
+
+							let description = "Présence d'un syndrome vestibulaire";
+							
+							const side = document.querySelector('input[name="vestibulaireSide"]:checked').value;
+							description += ` ${side}`;
+							
+							let signes = [];
+							if (document.getElementById('nystagmus').checked) signes.push('nystagmus');
+							if (document.getElementById('romberg').checked) signes.push('manœuvre de Romberg latéralisée');
+							
+							if (signes.length > 0) {
+								description += ` avec ${signes.join(' et ')}`;
+							}
+							
+							const precisions = document.getElementById('vestibulairePrecisions').value;
+							if (precisions) {
+								description += `, ${precisions}`;
+							}
+
+							return description;
+						}
+						
+					// Gestion du syndrome pyramidal
+						document.getElementById('yesSyndromePyramidal').addEventListener('change', function() {
+							document.getElementById('syndromePyramidalDetails').style.display = this.checked ? 'block' : 'none';
+						});
+
+						document.getElementById('noSyndromePyramidal').addEventListener('change', function() {
+							document.getElementById('syndromePyramidalDetails').style.display = 'none';
+							document.getElementById('babinski').checked = false;
+							document.getElementById('hoffman').checked = false;
+							document.getElementById('trepidation').checked = false;
+							document.getElementById('pyramidalPrecisions').value = '';
+							document.querySelectorAll('input[name="pyramidalSide"]')[0].checked = true;
+						});
+
+						function getSyndromePyramidalDescription() {
+							if (document.getElementById('noSyndromePyramidal').checked) {
+								return "Pas de syndrome pyramidal";
+							}
+
+							let description = "Présence d'un syndrome pyramidal";
+							
+							const side = document.querySelector('input[name="pyramidalSide"]:checked').value;
+							description += ` ${side}`;
+							
+							let signes = [];
+							if (document.getElementById('babinski').checked) signes.push('signe de Babinski');
+							if (document.getElementById('hoffman').checked) signes.push('signe de Hoffman');
+							if (document.getElementById('trepidation').checked) signes.push('trépidation épileptoïde');
+							
+							if (signes.length > 0) {
+								description += ` avec ${signes.join(' et ')}`;
+							}
+							
+							const precisions = document.getElementById('pyramidalPrecisions').value;
+							if (precisions) {
+								description += `, ${precisions}`;
+							}
+						
+							return description;
+						}
+						
+						
+					// Affichage trouble des fonctions cognitives
+					document.getElementById('neur11d').style.display = 'none';
+
+					document.getElementById('yesneur11').addEventListener('change', function () {
+						document.getElementById('neur11d').style.display = this.checked ? 'inline' : 'none';
+					});
+
+					document.getElementById('noneur11').addEventListener('change', function () {
+						if (this.checked) {
+							document.getElementById('neur11d').style.display = 'none';
+						}
+					});	
+			
+			
+
+					// Ajustement des input de précision
+					document.querySelectorAll('input[placeholder="Précisez"]').forEach(input => {
+						input.classList.add('precision-input');
+					});
+					
+							// Fonction pour basculer la visibilité d'une section
+					function toggleSection(button) {
+						const section = button.closest('.section');
+						const content = section.querySelector('.section-content');
+						const isHidden = content.classList.contains('hidden');
+						
+						content.classList.toggle('hidden');
+						button.textContent = isHidden ? 'Masquer' : 'Afficher';
+					}
+				
+				
+					function resetSection(button) {
+						const section = button.closest('.section');
+						const sectionContent = section.querySelector('.section-content');
+						
+						// Réinitialisation des inputs text qui ne sont pas masqués par défaut
+						sectionContent.querySelectorAll('input[type="text"]').forEach(input => {
+							if (!input.hasAttribute('style') || !input.getAttribute('style').includes('display: none')) {
+								input.value = '';
+							}
+						});
+
+						// Réinitialisation des radio buttons
+						sectionContent.querySelectorAll('input[type="radio"]').forEach(radio => {
+							if (radio.id.startsWith('no')) {
+								radio.checked = true;
+							} else {
+								radio.checked = false;
+							}
+						});
+
+						// Réinitialisation des checkboxes
+						sectionContent.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+							checkbox.checked = false;
+						});
+
+						// Réinitialisation des select
+						sectionContent.querySelectorAll('select').forEach(select => {
+							// Remettre à la première option
+							if (select.options.length > 0) {
+								select.value = select.options[0].value;
+							}
+						});
+
+						// Masquer seulement les éléments qui devraient être masqués initialement
+						sectionContent.querySelectorAll('[id$="Details"], [id$="d"], [id$="Options"], .side-force, .force').forEach(element => {
+							if (element.hasAttribute('style') && element.getAttribute('style').includes('display: none')) {
+								element.style.display = 'none';
+							}
+						});
+
+						// Réinitialiser les menus déroulants de force à 5/5
+						sectionContent.querySelectorAll('select.force').forEach(select => {
+							select.value = "5";
+						});
+					}
+										
+						
+</script>
+
+
+<div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+    TypixClin Corporation, Décembre 2024, par Jean et Iulia avec l'aide précieuse d'Auxane
+</div>
+
+</body>
+</html>
