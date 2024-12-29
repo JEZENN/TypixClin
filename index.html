@@ -48,13 +48,21 @@
             background-color: #cbd5e1;
         }
 
-        .section-content {
-            transition: all 0.3s ease;
-        }
+			.section-content {
+				max-height: 2000px;
+				overflow: hidden;
+				transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+				opacity: 1;
+			}
 
-        .section-content.hidden {
-            display: none;
-        }
+			.section-content.hidden {
+				max-height: 0;
+				opacity: 0;
+				padding-top: 0;
+				padding-bottom: 0;
+				margin-top: 0;
+				margin-bottom: 0;
+			}
 
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -2427,7 +2435,7 @@
  
 <script>
 
-		document.getElementById('generateText').addEventListener('click', function () {
+	document.getElementById('generateText').addEventListener('click', function () {
 			// constantes
 			const getConstanteDescription = () => {
 				let constantes = [];
@@ -2734,18 +2742,6 @@ const total = [
             console.error("La zone de texte pour afficher le résultat n'a pas été trouvée !");
         }
     });
-	
-		// Copier dans le presse-papier
-		document.getElementById('copyText').addEventListener('click', function () {
-			const textArea = document.getElementById('generatedTextArea');
-			navigator.clipboard.writeText(textArea.value).then(() => {
-				alert('Texte copié dans le presse-papier.');
-			}).catch(err => {
-				console.error('Erreur lors de la copie :', err);
-			});
-		});
-
-
 
 
 		// Affichage Saturation
@@ -4121,7 +4117,7 @@ function getAuscultationDescription() {
 					const checkbox = document.getElementById(`nerve${nerf.id}`);
 					if (checkbox && checkbox.checked) {
 						const desc = document.getElementById(`nerve${nerf.id}Description`).value;
-						anomalies.push(`${nerf.nom}${desc ? ` (${desc})` : ''}. Pas d'anomalie des autres paires craniennes`);
+						anomalies.push(`${nerf.nom}${desc ? ` (${desc})` : ''},`);
 					}
 				});
 
@@ -4390,63 +4386,178 @@ function getAuscultationDescription() {
 					});
 					
 							// Fonction pour basculer la visibilité d'une section
-					function toggleSection(button) {
-						const section = button.closest('.section');
-						const content = section.querySelector('.section-content');
-						const isHidden = content.classList.contains('hidden');
-						
-						content.classList.toggle('hidden');
-						button.textContent = isHidden ? 'Masquer' : 'Afficher';
-					}
+							function toggleSection(button) {
+								const section = button.closest('.section');
+								const content = section.querySelector('.section-content');
+								const isHidden = !content.classList.contains('hidden');
+								
+								content.classList.toggle('hidden');
+								button.textContent = isHidden ? 'Afficher' : 'Masquer';
+								
+								section.setAttribute('data-hidden', isHidden);
+							}
 				
-				
-					function resetSection(button) {
-						const section = button.closest('.section');
-						const sectionContent = section.querySelector('.section-content');
-						
-						// Réinitialisation des inputs text qui ne sont pas masqués par défaut
-						sectionContent.querySelectorAll('input[type="text"]').forEach(input => {
-							if (!input.hasAttribute('style') || !input.getAttribute('style').includes('display: none')) {
-								input.value = '';
-							}
-						});
+function resetSection(button) {
+    const section = button.closest('.section');
+    const sectionContent = section.querySelector('.section-content');
 
-						// Réinitialisation des radio buttons
-						sectionContent.querySelectorAll('input[type="radio"]').forEach(radio => {
-							if (radio.id.startsWith('no')) {
-								radio.checked = true;
-							} else {
-								radio.checked = false;
-							}
-						});
+    // Liste des IDs de constantes
+    const constantFields = ['taille', 'poids', 'IMC', 'FreqResp', 'saturation', 'FreqCard', 
+                          'pas', 'pad', 'map', 'Y/4', 'V/5', 'M/6', 'GSG/15', 'litres'];
 
-						// Réinitialisation des checkboxes
-						sectionContent.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-							checkbox.checked = false;
-						});
+    // 1. Réinitialiser tous les champs de texte, y compris les constantes
+    sectionContent.querySelectorAll('input[type="text"]').forEach(input => {
+        if (constantFields.includes(input.id)) {
+            // Réinitialiser les constantes à vide
+            input.value = '';
+        } else {
+            // Pour les autres champs
+            input.value = '';
+            if (input.id && input.id.includes('d')) {
+                input.style.display = 'none';
+            }
+        }
+    });
 
-						// Réinitialisation des select
-						sectionContent.querySelectorAll('select').forEach(select => {
-							// Remettre à la première option
-							if (select.options.length > 0) {
-								select.value = select.options[0].value;
-							}
-						});
+    // 2. Réinitialiser les boutons radio en sélectionnant les options par défaut
+    const radioGroups = sectionContent.querySelectorAll('input[type="radio"]');
+    const handledNames = new Set();
+    
+    radioGroups.forEach(radio => {
+        if (!handledNames.has(radio.name)) {
+            handledNames.add(radio.name);
+            
+            // Liste des cas spéciaux qui nécessitent une gestion particulière
+            const specialCases = {
+                'saturation-type': '#air-ambiant',
+                'heartSoundType': 'input[name="heartSoundType"][value="normal"]',
+                'pulseType': 'input[name="pulseType"][value="normal"]'
+            };
+            
+            if (specialCases[radio.name]) {
+                // Pour les cas spéciaux, sélectionner l'option spécifiée
+                const defaultOption = sectionContent.querySelector(specialCases[radio.name]);
+                if (defaultOption) {
+                    defaultOption.checked = true;
+                    const event = new Event('change');
+                    defaultOption.dispatchEvent(event);
+                }
+            } else {
+                // Pour tous les autres cas, sélectionner l'option "non"
+                const noOption = sectionContent.querySelector(`input[type="radio"][name="${radio.name}"][id^="no"]`);
+                if (noOption) {
+                    noOption.checked = true;
+                    const event = new Event('change');
+                    noOption.dispatchEvent(event);
+                }
+            }
+        }
+    });
 
-						// Masquer seulement les éléments qui devraient être masqués initialement
-						sectionContent.querySelectorAll('[id$="Details"], [id$="d"], [id$="Options"], .side-force, .force').forEach(element => {
-							if (element.hasAttribute('style') && element.getAttribute('style').includes('display: none')) {
-								element.style.display = 'none';
-							}
-						});
+    // Réinitialiser les checkboxes des pouls périphériques à checked
+    const pulseCheckboxes = [
+        'input[name="radialPulse"][value="right"]',
+        'input[name="radialPulse"][value="left"]',
+        'input[name="poplitealPulse"][value="right"]',
+        'input[name="poplitealPulse"][value="left"]',
+        'input[name="tibialPulse"][value="right"]',
+        'input[name="tibialPulse"][value="left"]',
+        'input[name="pedialPulse"][value="right"]',
+        'input[name="pedialPulse"][value="left"]'
+    ];
 
-						// Réinitialiser les menus déroulants de force à 5/5
-						sectionContent.querySelectorAll('select.force').forEach(select => {
-							select.value = "5";
-						});
-					}
-										
-						
+    pulseCheckboxes.forEach(selector => {
+        const checkbox = sectionContent.querySelector(selector);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+
+    // 3. Décocher toutes les cases à cocher SAUF les pouls
+    sectionContent.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        if (!checkbox.name.includes('Pulse')) {
+            checkbox.checked = false;
+        }
+    });
+
+    // 4. Réinitialiser les menus déroulants
+    sectionContent.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+        select.style.display = 'none';
+    });
+
+    // 5. Masquer les détails conditionnels SAUF les champs de constantes
+    sectionContent.querySelectorAll('[id$="Details"], [id$="Options"]').forEach(element => {
+        if (!constantFields.includes(element.id)) {
+            element.style.display = 'none';
+        }
+    });
+
+    // 6. Masquer les éléments spécifiques
+    const specificElements = [
+        'icgOptions', 'pulseDetails', 'abnormalDetails', 'murmurDetails',
+        'walkingDetails', 'balanceDetails', 'deficitMoteurDetails', 'reflexDetails',
+        'deficitSensitifDetails', 'pairescraniennesDetails', 'syndromeCerebelleuxDetails',
+        'syndromePyramidalDetails', 'syndromeExtrapyramidalDetails', 'syndromeMeningeDetails',
+        'syndromeVestibulaireDetails'
+    ];
+    
+    specificElements.forEach(id => {
+        const element = sectionContent.querySelector(`#${id}`);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+
+    // 7. Masquer les forces et les côtés dans le testing musculaire
+    sectionContent.querySelectorAll('.force, .side-force').forEach(element => {
+        element.style.display = 'none';
+    });
+
+    // 8. Réinitialiser les champs spécifiques au déficit moteur
+    const deficitMS = sectionContent.querySelector('#msDetails');
+    const deficitMI = sectionContent.querySelector('#miDetails');
+    if (deficitMS) deficitMS.style.display = 'none';
+    if (deficitMI) deficitMI.style.display = 'none';
+
+    // 9. Réinitialiser les détails des réflexes
+    const upperLimbDetails = sectionContent.querySelector('#upperLimbDetails');
+    const lowerLimbDetails = sectionContent.querySelector('#lowerLimbDetails');
+    if (upperLimbDetails) upperLimbDetails.style.display = 'none';
+    if (lowerLimbDetails) lowerLimbDetails.style.display = 'none';
+
+    // 10. Réinitialiser les champs de précisions des nerfs crâniens
+    sectionContent.querySelectorAll('[id^="nerve"][id$="Details"]').forEach(element => {
+        element.style.display = 'none';
+    });
+
+    // 11. Réinitialiser les champs de saturation qui ne sont pas des constantes
+    const saturationOptions = sectionContent.querySelector('#saturation-options');
+    if (saturationOptions) saturationOptions.style.display = 'none';
+
+    // 12. Réinitialiser les champs d'inspection thoracique
+    const ampliationSide = sectionContent.querySelector('#ampliationSide');
+    if (ampliationSide) ampliationSide.style.display = 'none';
+
+    // 13. Réinitialiser les champs de percussion
+    ['tympanismeLocation', 'matiteLocation'].forEach(id => {
+        const element = sectionContent.querySelector(`#${id}`);
+        if (element) element.style.display = 'none';
+    });
+}
+
+
+		// Copier dans le presse-papier
+		document.getElementById('copyText').addEventListener('click', function () {
+			const textArea = document.getElementById('generatedTextArea');
+			navigator.clipboard.writeText(textArea.value).then(() => {
+				alert('Texte copié dans le presse-papier.');
+			}).catch(err => {
+				console.error('Erreur lors de la copie :', err);
+			});
+		});
+		
+
 </script>
 
 
