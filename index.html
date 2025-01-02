@@ -2714,13 +2714,249 @@
             </div>
             <div class="section-content">
             <h4>Examen hématologique</h4>
-			
-            <h4>Examen locomoteur</h4>
-			
-            <h4>Examen dermatologique</h4>
+
+			<!-- Section Aires ganglionnaires -->
+			<div class="adenopathies">
+				<p><strong>Aires ganglionnaires :</strong>
+				<label>
+					<input type="radio" name="statusGanglions" id="noAdenopathies" checked> 
+					Aires ganglionnaires libres
+				</label>
+				<label>
+					<input type="radio" name="statusGanglions" id="hasAdenopathies"> 
+					Présence d'adénopathies
+				</label>
+						</p>
+				<!-- Section des localisations -->
+				<div id="adenopathiesDetails" style="display: none; margin-left: 20px;">
+					<div id="localisations">
+						<!-- Les localisations seront générées ici par JavaScript -->
+					</div>
+				</div>
 			</div>
+
 		</div>
+		
+		<!-- ajouter les autre sections ici-->
+		
+		
+	</div>
 </div>
+
+
+
+<script>
+// Liste des localisations
+const localisations = [
+    'occipitale',
+    'jugulo-carotidienne',
+    'sous-angulo-maxillaire',
+    'sus-claviculaire',
+    'axillaire',
+    'épitrochléenne',
+    'inguinale'
+];
+
+// Fonction pour générer le HTML d'une localisation
+function createLocalisationHtml(id) {
+    return `
+        <div class="localisation-group" style="margin-bottom: 10px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="${id}" class="localisation-checkbox">
+                <label for="${id}" style="margin-left: 5px; cursor: pointer;">${id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, ' ')}</label>
+            </div>
+            
+            <div class="side-options" style="display: none; margin-left: 20px; margin-top: 5px;">
+                <label style="margin-right: 15px; cursor: pointer;">
+                    <input type="checkbox" class="side-checkbox" data-side="droite" data-location="${id}"> Droite
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="checkbox" class="side-checkbox" data-side="gauche" data-location="${id}"> Gauche
+                </label>
+                
+				<div class="sides-container" style="display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap;">                  
+				<!-- Détails côté droit -->
+                    <div class="details-droite" style="display: none; flex: 1; min-width: 280px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px;">
+                        <p><strong>Côté droit :</strong></p>
+                        <p>
+                            <label>Consistance : 
+                                <input type="text" class="consistance" placeholder="Précisez" style="width: 150px;">
+                            </label>
+                        </p>
+                        <p>
+                            <label>Taille : 
+                                <input type="text" class="taille" placeholder="Précisez" style="width: 150px;">
+                            </label>
+                        </p>
+                        <p>Adhérence aux plans profonds :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="adherence-${id}-droite" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="adherence-${id}-droite" value="oui"> Oui
+                        </label></p>
+
+                        <p>État inflammatoire :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="inflammatoire-${id}-droite" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="inflammatoire-${id}-droite" value="oui"> Oui
+                        </label></p>
+
+                        <p>Douleur :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="douleur-${id}-droite" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="douleur-${id}-droite" value="oui"> Oui
+                        </label></p>
+                    </div>
+
+                    <!-- Détails côté gauche -->
+                  <div class="details-gauche" style="display: none; flex: 1; min-width: 280px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px;">
+                        <p><strong>Côté gauche :</strong></p>
+                        <p>
+                            <label>Consistance : 
+                                <input type="text" class="consistance" placeholder="Précisez" style="width: 150px;">
+                            </label>
+                        </p>
+                        <p>
+                            <label>Taille : 
+                                <input type="text" class="taille" placeholder="Précisez" style="width: 150px;">
+                            </label>
+                        </p>
+                        <p>Adhérence aux plans profonds :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="adherence-${id}-gauche" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="adherence-${id}-gauche" value="oui"> Oui
+                        </label></p>
+
+                        <p>État inflammatoire :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="inflammatoire-${id}-gauche" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="inflammatoire-${id}-gauche" value="oui"> Oui
+                        </label></p>
+
+                        <p>Douleur :
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="douleur-${id}-gauche" value="non" checked> Non
+                        </label>
+                        <label>
+                            <input type="radio" name="douleur-${id}-gauche" value="oui"> Oui
+                        </label></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Génération des localisations
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('localisations');
+    localisations.forEach(loc => {
+        container.insertAdjacentHTML('beforeend', createLocalisationHtml(loc));
+    });
+
+    // Gestion de l'affichage initial
+    document.querySelectorAll('input[name="statusGanglions"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('adenopathiesDetails').style.display = 
+                document.getElementById('hasAdenopathies').checked ? 'block' : 'none';
+            
+            if (document.getElementById('noAdenopathies').checked) {
+                document.querySelectorAll('.localisation-checkbox').forEach(checkbox => {
+                    checkbox.checked = false;
+                    const sideOptions = checkbox.closest('.localisation-group').querySelector('.side-options');
+                    if (sideOptions) sideOptions.style.display = 'none';
+                });
+            }
+        });
+    });
+
+    // Gestion des localisations
+    document.querySelectorAll('.localisation-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const sideOptions = this.closest('.localisation-group').querySelector('.side-options');
+            sideOptions.style.display = this.checked ? 'block' : 'none';
+            
+            if (!this.checked) {
+                sideOptions.querySelectorAll('.side-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                sideOptions.querySelectorAll('.details-droite, .details-gauche').forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+        });
+    });
+
+    // Gestion des côtés
+    document.querySelectorAll('.side-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const side = this.getAttribute('data-side');
+            const detailsDiv = this.closest('.side-options').querySelector(`.details-${side}`);
+            detailsDiv.style.display = this.checked ? 'block' : 'none';
+            
+            if (!this.checked) {
+                detailsDiv.querySelectorAll('input[type="text"]').forEach(input => {
+                    input.value = '';
+                });
+                detailsDiv.querySelectorAll('input[type="radio"][value="non"]').forEach(radio => {
+                    radio.checked = true;
+                });
+            }
+        });
+    });
+});
+
+function highlight(text) {
+    return `**${text}**`;
+}
+
+// Fonction pour la génération de la description
+window.getAdenopathyDescription = function() {
+    if (document.getElementById('noAdenopathies').checked) {
+        return "Aires ganglionnaires libres";
+    }
+
+    let descriptions = [];
+    document.querySelectorAll('.localisation-group').forEach(group => {
+        const localisationCheckbox = group.querySelector('.localisation-checkbox');
+        if (localisationCheckbox.checked) {
+            const localisation = localisationCheckbox.id.replace(/-/g, ' ');
+            const sideOptions = group.querySelector('.side-options');
+            
+            ['droite', 'gauche'].forEach(side => {
+                const sideCheckbox = sideOptions.querySelector(`[data-side="${side}"]`);
+                if (sideCheckbox.checked) {
+                    const details = group.querySelector(`.details-${side}`);
+                    const consistance = details.querySelector('.consistance').value;
+                    const taille = details.querySelector('.taille').value;
+                    const adherence = details.querySelector(`input[name="adherence-${localisationCheckbox.id}-${side}"]:checked`).value;
+                    const inflammatoire = details.querySelector(`input[name="inflammatoire-${localisationCheckbox.id}-${side}"]:checked`).value;
+                    const douleur = details.querySelector(`input[name="douleur-${localisationCheckbox.id}-${side}"]:checked`).value;
+
+                    descriptions.push(`adénopathie ${localisation} ${side}${consistance ? `, de consistance ${consistance}` : ''}${taille ? `, de taille ${taille}` : ''}, ${adherence === 'oui' ? 'adhérente' : 'non adhérente'} aux plans profonds, ${inflammatoire === 'oui' ? 'inflammatoire' : 'non inflammatoire'} et ${douleur === 'oui' ? 'douloureuse' : 'non douloureuse'}`);
+                }
+            });
+        }
+    });
+
+    return descriptions.length > 0 
+        ? highlight(`Présence d'une ${descriptions.join(' et d\'')}`)
+        : descriptions.length === 0 && document.getElementById('hasAdenopathies').checked 
+            ? highlight("Présence d'une adénopathie")
+            : "Aires ganglionnaires libres";
+}
+</script>
+
+
 
 			
 	<div class="container">
@@ -4118,6 +4354,11 @@ ${getSyndromeCerebelleuxDescription()}. ${getSyndromePyramidalDescription()}. ${
 ${getSyndromeMeningeDescription()}. 
 ${neur11val}.`
 
+// stockage variable aux examens 
+
+const resulthem = 
+`Examen hématologique :
+${getAdenopathyDescription()}`
 
 // Variable qui rassemble tout 
 const total = [
@@ -4125,7 +4366,8 @@ const total = [
     resultcard,
     resultresp,
     resultdig,
-    resultneuro
+    resultneuro,
+	resulthem
 ].filter(Boolean); // Garder uniquement les sections non vides
 
 // Cible l'élément HTML où afficher le contenu
@@ -6100,7 +6342,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
-    TypixClin Corporation, Décembre 2024, par Jean et Iulia avec l'aide précieuse d'Auxane
+    TypixClin © 2025, par Jean et Iulia avec l'aide précieuse d'Auxane
 </div>
 
 </body>
