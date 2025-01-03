@@ -2706,7 +2706,7 @@
         <!-- autres appareils -->
         <div class="section">
             <div class="section-header">
-                <h3><span class="icon">🩸</span>Autres appareils</h3>
+                <h3><span class="icon">🩸</span><span class="icon">🦴</span><span class="icon">🩹</span>Autres appareils</h3>
                     <div class="button-group">
 						<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
 						<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
@@ -2714,6 +2714,167 @@
             </div>
             <div class="section-content">
             <h4>Examen hématologique</h4>
+
+	<!-- Version modifiée pour l'alignement horizontal -->
+    <p><strong>Sueurs nocturnes :</strong>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="nightSweats" id="noNightSweats" value="none" checked> 
+            Pas de sueur nocturne
+        </label>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="nightSweats" id="yesNightSweats" value="present"> 
+            Sueurs nocturnes
+        </label>
+        <input type="text" id="nightSweatsDetails" placeholder="Précisez" 
+               style="display: none; margin-left: 10px; width: 200px;">
+    </p>
+
+    <p><strong>Pâleur :</strong>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="paleness" id="noPaleness" value="none" checked> 
+            Pas de pâleur
+        </label>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="paleness" id="yesPaleness" value="present"> 
+            Pâleur cutanéomuqueuse
+        </label>
+    </p>
+
+    <p><strong>Perte de poids :</strong>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="weightLoss" id="noWeightLoss" value="none" checked> 
+            Pas de perte de poids récente
+        </label>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="weightLoss" id="yesWeightLoss" value="present"> 
+            Perte de poids involontaire récente
+        </label>
+        <input type="text" id="weightLossDetails" placeholder="Quantifiez la perte de poids" 
+               style="display: none; margin-left: 10px; width: 200px;">
+    </p>
+	
+			<p><strong>Purpura :</strong>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="purpura" id="noPurpura" value="none" checked> 
+					Pas de purpura
+				</label>
+				<label style="margin-right: 10px;">
+					<input type="radio" name="purpura" id="yesPurpura" value="present"> 
+					Présence d'un purpura cutanéomuqueux
+				</label>
+				<input type="text" id="purpuraDetails" placeholder="Précisez" 
+					   style="display: none; margin-left: 10px; width: 500px;">
+			</p>
+			
+					<p><strong>Saignement :</strong>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="bleeding" id="noBleeding" value="none" checked> 
+						Pas de saignement
+					</label>
+					<label style="margin-right: 10px;">
+						<input type="radio" name="bleeding" id="yesBleeding" value="present"> 
+						Saignements muqueux
+					</label>
+					<input type="text" id="bleedingDetails" placeholder="Précisez" 
+						   style="display: none; margin-left: 10px; width: 500px;">
+						</p>
+			
+			<script>
+// Gestion des affichages/masquages pour tous les champs de détails
+document.addEventListener('DOMContentLoaded', function() {
+    // Sueurs nocturnes
+    document.querySelectorAll('input[name="nightSweats"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('nightSweatsDetails').style.display = 
+                document.getElementById('yesNightSweats').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesNightSweats').checked) {
+                document.getElementById('nightSweatsDetails').value = '';
+            }
+        });
+    });
+
+    // Perte de poids
+    document.querySelectorAll('input[name="weightLoss"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('weightLossDetails').style.display = 
+                document.getElementById('yesWeightLoss').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesWeightLoss').checked) {
+                document.getElementById('weightLossDetails').value = '';
+            }
+        });
+    });
+
+    // Purpura
+    document.querySelectorAll('input[name="purpura"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('purpuraDetails').style.display = 
+                document.getElementById('yesPurpura').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesPurpura').checked) {
+                document.getElementById('purpuraDetails').value = '';
+            }
+        });
+    });
+
+    // Saignements
+    document.querySelectorAll('input[name="bleeding"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('bleedingDetails').style.display = 
+                document.getElementById('yesBleeding').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesBleeding').checked) {
+                document.getElementById('bleedingDetails').value = '';
+            }
+        });
+    });
+});
+
+// Fonction pour obtenir la description hématologique
+function getHematologicalSignsDescription() {
+    const descriptions = [];
+
+    // Sueurs nocturnes
+    if (document.getElementById('yesNightSweats')?.checked) {
+        const details = document.getElementById('nightSweatsDetails')?.value || '';
+        descriptions.push(highlight(`Sueurs nocturnes${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de sueur nocturne");
+    }
+
+    // Pâleur
+    if (document.getElementById('yesPaleness')?.checked) {
+        descriptions.push(highlight("Pâleur cutanéomuqueuse"));
+    } else {
+        descriptions.push("Pas de pâleur");
+    }
+
+    // Perte de poids
+    if (document.getElementById('yesWeightLoss')?.checked) {
+        const details = document.getElementById('weightLossDetails')?.value || '';
+        descriptions.push(highlight(`Perte de poids involontaire récente${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de perte de poids récente");
+    }
+
+    // Purpura
+    if (document.getElementById('yesPurpura')?.checked) {
+        const details = document.getElementById('purpuraDetails')?.value || '';
+        descriptions.push(highlight(`Purpura cutanéomuqueux${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de purpura");
+    }
+
+    // Saignements
+    if (document.getElementById('yesBleeding')?.checked) {
+        const details = document.getElementById('bleedingDetails')?.value || '';
+        descriptions.push(highlight(`Saignements muqueux${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de saignement");
+    }
+
+    return descriptions.join('. ') + '.';
+}
+
+</script>
+
 
 			<!-- Section Aires ganglionnaires -->
 			<div class="adenopathies">
@@ -2735,16 +2896,7 @@
 				</div>
 			</div>
 
-		</div>
 		
-		<!-- ajouter les autre sections ici-->
-		
-		
-	</div>
-</div>
-
-
-
 <script>
 // Liste des localisations
 const localisations = [
@@ -2957,7 +3109,262 @@ window.getAdenopathyDescription = function() {
 </script>
 
 
+		<!-- ajouter les autre sections ici-->
+	
+		<h4>Examen locomoteur </h4>
+		
 
+		
+					<!-- Examen dermatologique -->
+														
+						<h4>Examen dermatologique</h4>
+						<p><strong>Prurit :</strong>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="pruritus" id="noPruritus" checked> 
+								Pas de prurit
+							</label>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="pruritus" id="yesPruritus"> 
+								Présence de prurit
+							</label>
+							<input type="text" id="pruritusDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 500px;">
+						</p>
+
+						<p><strong>Inspection des plis :</strong>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="folds" id="noFolds" checked> 
+								Pas de lésions des plis
+							</label>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="folds" id="yesFolds"> 
+								Anomalie des plis
+							</label>
+							<input type="text" id="foldsDetails" placeholder="Précisez" 
+								   style="display: none; margin-left: 10px; width: 500px;">
+						</p>
+
+						<p><strong>Inspection des phanères :</strong>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="phaneres" id="noPhaneres" checked> 
+								Pas d'anomalie des phanères
+							</label>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="phaneres" id="yesPhaneres"> 
+								Anomalie des phanères
+							</label>
+						</p>
+						<div id="phaneresDetails" style="display: none; margin-left: 20px;">
+							<p>
+								<input type="checkbox" id="hairAbnormal"> 
+								<label for="hairAbnormal">Cheveux</label>
+								<input type="text" id="hairDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="nailsAbnormal"> 
+								<label for="nailsAbnormal">Ongles</label>
+								<input type="text" id="nailsDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="bodyHairAbnormal"> 
+								<label for="bodyHairAbnormal">Poils</label>
+								<input type="text" id="bodyHairDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+						</div>
+
+						<p><strong>Inspection des muqueuses :</strong>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="mucosa" id="noMucosa" checked> 
+								Pas d'anomalie des muqueuses
+							</label>
+							<label style="margin-right: 10px;">
+								<input type="radio" name="mucosa" id="yesMucosa"> 
+								Anomalie des muqueuses
+							</label>
+						</p>
+						<div id="mucosaDetails" style="display: none; margin-left: 20px;">
+							<p>
+								<input type="checkbox" id="eyeMucosa"> 
+								<label for="eyeMucosa">Muqueuse ophtalmique</label>
+								<input type="text" id="eyeMucosaDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="oralMucosa"> 
+								<label for="oralMucosa">Muqueuse buccale</label>
+								<input type="text" id="oralMucosaDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="genitalMucosa"> 
+								<label for="genitalMucosa">Muqueuse génitale</label>
+								<input type="text" id="genitalMucosaDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="analMucosa"> 
+								<label for="analMucosa">Muqueuse anale</label>
+								<input type="text" id="analMucosaDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+							<p>
+								<input type="checkbox" id="nasalMucosa"> 
+								<label for="nasalMucosa">Muqueuse nasale</label>
+								<input type="text" id="nasalMucosaDetails" placeholder="Précisez" 
+									   style="display: none; margin-left: 10px; width: 300px;">
+							</p>
+						</div>
+			
+			
+<script>
+			// Gestion des affichages/masquages
+document.addEventListener('DOMContentLoaded', function() {
+    // Prurit
+    document.querySelectorAll('input[name="pruritus"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('pruritusDetails').style.display = 
+                document.getElementById('yesPruritus').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesPruritus').checked) {
+                document.getElementById('pruritusDetails').value = '';
+            }
+        });
+    });
+
+    // Plis
+    document.querySelectorAll('input[name="folds"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('foldsDetails').style.display = 
+                document.getElementById('yesFolds').checked ? 'inline' : 'none';
+            if (!document.getElementById('yesFolds').checked) {
+                document.getElementById('foldsDetails').value = '';
+            }
+        });
+    });
+
+    // Phanères
+    document.querySelectorAll('input[name="phaneres"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('phaneresDetails').style.display = 
+                document.getElementById('yesPhaneres').checked ? 'block' : 'none';
+        });
+    });
+
+    // Détails des phanères
+    ['hair', 'nails', 'bodyHair'].forEach(type => {
+        document.getElementById(`${type}Abnormal`).addEventListener('change', function() {
+            document.getElementById(`${type}Details`).style.display = 
+                this.checked ? 'inline' : 'none';
+            if (!this.checked) {
+                document.getElementById(`${type}Details`).value = '';
+            }
+        });
+    });
+
+    // Muqueuses
+    document.querySelectorAll('input[name="mucosa"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('mucosaDetails').style.display = 
+                document.getElementById('yesMucosa').checked ? 'block' : 'none';
+        });
+    });
+
+    // Détails des muqueuses
+    ['eye', 'oral', 'genital', 'anal', 'nasal'].forEach(type => {
+        document.getElementById(`${type}Mucosa`).addEventListener('change', function() {
+            document.getElementById(`${type}MucosaDetails`).style.display = 
+                this.checked ? 'inline' : 'none';
+            if (!this.checked) {
+                document.getElementById(`${type}MucosaDetails`).value = '';
+            }
+        });
+    });
+});
+
+// Fonction pour la description dermatologique
+function getDermatologicalDescription() {
+    const descriptions = [];
+
+    // Prurit
+    if (document.getElementById('yesPruritus')?.checked) {
+        const details = document.getElementById('pruritusDetails')?.value || '';
+        descriptions.push(highlight(`Présence de prurit${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de prurit");
+    }
+
+    // Plis
+    if (document.getElementById('yesFolds')?.checked) {
+        const details = document.getElementById('foldsDetails')?.value || '';
+        descriptions.push(highlight(`Anomalie des plis${details ? ` (${details})` : ''}`));
+    } else {
+        descriptions.push("Pas de lésions des plis");
+    }
+
+    // Phanères
+    if (document.getElementById('yesPhaneres')?.checked) {
+        const phanereAnomalies = [];
+        if (document.getElementById('hairAbnormal').checked) {
+            const details = document.getElementById('hairDetails').value;
+            phanereAnomalies.push(`cheveux${details ? ` (${details})` : ''}`);
+        }
+        if (document.getElementById('nailsAbnormal').checked) {
+            const details = document.getElementById('nailsDetails').value;
+            phanereAnomalies.push(`ongles${details ? ` (${details})` : ''}`);
+        }
+        if (document.getElementById('bodyHairAbnormal').checked) {
+            const details = document.getElementById('bodyHairDetails').value;
+            phanereAnomalies.push(`poils${details ? ` (${details})` : ''}`);
+        }
+        if (phanereAnomalies.length > 0) {
+            descriptions.push(highlight(`Anomalies des phanères : ${phanereAnomalies.join(', ')}`));
+        } else {
+            descriptions.push(highlight("Anomalies des phanères"));
+        }
+    } else {
+        descriptions.push("Pas d'anomalie des phanères");
+    }
+
+    // Muqueuses
+    if (document.getElementById('yesMucosa')?.checked) {
+        const mucosaAnomalies = [];
+        ['eye', 'oral', 'genital', 'anal', 'nasal'].forEach(type => {
+            if (document.getElementById(`${type}Mucosa`).checked) {
+                const details = document.getElementById(`${type}MucosaDetails`).value;
+                const mucosaType = type === 'eye' ? 'ophtalmique' :
+                                 type === 'oral' ? 'buccale' :
+                                 type === 'genital' ? 'génitale' :
+                                 type === 'anal' ? 'anale' : 'nasale';
+                mucosaAnomalies.push(`muqueuse ${mucosaType}${details ? ` (${details})` : ''}`);
+            }
+        });
+        if (mucosaAnomalies.length > 0) {
+            descriptions.push(highlight(`Anomalies des muqueuses : ${mucosaAnomalies.join(', ')}`));
+        } else {
+            descriptions.push(highlight("Anomalies des muqueuses"));
+        }
+    } else {
+        descriptions.push("Pas d'anomalie des muqueuses");
+    }
+
+    return descriptions.join('. ') + '.';
+}
+
+// Dans votre fonction generateText, ajoutez :
+const resultderm = 
+`Examen dermatologique :
+${getDermatologicalDescription()}`
+
+</script>
+		
+	</div>
+</div>
+		</div>
+
+
+		
 			
 	<div class="container">
 <div class="section">
@@ -3103,8 +3510,8 @@ window.getAdenopathyDescription = function() {
                     </label>
                 </p>
 				<p style="margin-left: 40px;">
-                    Précisions :
-                    <input type="text" id="ECG_rythmeprécisions" style="width: 300px;">
+                    Troubles du rythme :
+                    <input type="text" id="ECG_rythmeprécisions" placeholder="Précisez" style="width: 300px;">
                 </p>
 
 <p><strong>Axe QRS</strong></p>
@@ -3197,7 +3604,7 @@ window.getAdenopathyDescription = function() {
 </script>
 
 				
-				<h4>Conduction</h4>
+				<h4>Conduction et repolarisation</h4>
 				<p><strong>PR :</strong> <input type="text" id="ECG_pr" placeholder="ms" style="width: 50px;"></p>
                 <div style="margin-left: 20px;">
                     <p>
@@ -3308,7 +3715,13 @@ window.getAdenopathyDescription = function() {
                         <label>
                             <input type="checkbox" id="ECG_hemiblocposterieur"> Postérieur
                         </label>
+						
                     </div>
+									<!-- Après les options QRS -->
+						<div style="margin-top: 10px;">
+							<label for="ECG_qrs_autres">Autres anomalies du QRS :</label>
+							<input type="text" id="ECG_qrs_autres" placeholder="Précisez" style="width: 300px; margin-left: 10px;">
+						</div>
                 </div>
 
                 <script>
@@ -3365,6 +3778,13 @@ window.getAdenopathyDescription = function() {
                         <span style="margin-left: 10px; color: #666;">(Bazett)</span>
                         <span id="ECG_qtcStatus" style="margin-left: 10px;"></span>
                     </p>
+					
+				<!-- Après le QTc -->
+					<div style="margin-top: 10px;">
+						<label for="ECG_repolarisation">Troubles de la repolarisation :</label>
+						<input type="text" id="ECG_repolarisation" placeholder="Précisez" style="width: 300px; margin-left: 10px;">
+					</div>
+
 					</div>
 
                 <script>
@@ -3878,13 +4298,27 @@ let text = [`<strong>ECG du ${today}</strong> : `];
 						if (document.getElementById('ECG_hemiblocposterieur')?.checked) blocs.push('HBPG');
 					}
 					if (blocs.length) qrsText += `, ${blocs.join(', ')}`;
+				}	
+				
+				const qrsAutres = document.getElementById('ECG_qrs_autres').value;
+				if (qrsText) {
+					text.push(qrsText);
+					if (qrsAutres) {
+						text.push(`, ${qrsAutres}`);
+					}
 				}
-				if (qrsText) text.push(qrsText);
+
 				
 				// QTc
 				const qtc = document.getElementById('ECG_qtc').value;
 				const qtcStatus = document.getElementById('ECG_qtcStatus').textContent;
-				if (qtc) text.push(` ; QTc ${qtc} ms (${qtcStatus.toLowerCase()}) `);
+				const repolarisation = document.getElementById('ECG_repolarisation').value;
+				if (qtc) {
+					text.push(` ; QTc ${qtc} ms (${qtcStatus.toLowerCase()})`);
+					if (repolarisation) {
+						text.push(`, ${repolarisation}`);
+					}
+				}
 				
 				// Hypertrophies
 				let hypertrophies = [];
@@ -4358,7 +4792,15 @@ ${neur11val}.`
 
 const resulthem = 
 `Examen hématologique :
+${getHematologicalSignsDescription()}
 ${getAdenopathyDescription()}`
+
+
+// dermato
+const resultderm = 
+`Examen dermatologique :
+${getDermatologicalDescription()}`
+
 
 // Variable qui rassemble tout 
 const total = [
@@ -4367,7 +4809,8 @@ const total = [
     resultresp,
     resultdig,
     resultneuro,
-	resulthem
+	resulthem,
+	resultderm
 ].filter(Boolean); // Garder uniquement les sections non vides
 
 // Cible l'élément HTML où afficher le contenu
