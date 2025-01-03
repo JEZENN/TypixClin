@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypixClin - ECG</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>TypixClin</h1>
+
+    </header>
+
+	
+    <style>
+	
+	<!-- styles.css -->
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #1e40af;
+    --background-color: #f8fafc;
+    --text-color: #1e293b;
+    --border-color: #e2e8f0;
+}
+
+/* Style de la navigation principale */
+.main-nav {
+    background-color: #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 650px;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.nav-link {
+    background-color: transparent;
+    color: var(--text-color);
+    padding: 0.75rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 250px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-link:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .main-nav {
+        padding: 0.5rem;
+        gap: 0.5rem;
+        width: 95%;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        width: auto;
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        flex-direction: column;
+        width: 100%;
+        border-radius: 25px;
+    }
+
+    .nav-link {
+        width: 100%;
+    }
+}
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f8fafc;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --input-background: #ffffff;
+            --hover-color: #3b82f6;
+        }
+		
+		  /* Styles pour le système de masquage/affichage */
+			.section-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 1rem;
+				padding-bottom: 0.5rem;
+				width: 100%;
+				border-bottom: 2px solid var(--border-color);
+			}
+
+			.section-header h3 {
+				margin: 0;
+				padding: 0;
+			}
+
+        .toggle-button {
+            background-color: #1e40af;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+			margin-left: 10px;
+			display: inline-block;
+}
+        }
+
+        .toggle-button:hover {
+            background-color: #cbd5e1;
+        }
+
+			.section-content {
+				max-height: 2000px;
+				overflow: hidden;
+				transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+				opacity: 1;
+			}
+
+			.section-content.hidden {
+				max-height: 0;
+				opacity: 0;
+				padding-top: 0;
+				padding-bottom: 0;
+				margin-top: 0;
+				margin-bottom: 0;
+			}
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        /* Style pour masquer la scrollbar sur certains navigateurs */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			margin-bottom: 1em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin: 0.5rem 0;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+			 .container {
+			   max-width: 1200px;
+			   margin: 0 auto;
+			   padding: 0.1rem;
+			}
+
+			.section {
+			   background: white;
+			   border-radius: 8px;
+			   padding: 1rem;
+			   margin-bottom: 0.75rem;
+			   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+			}
+
+        .fixed-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .fixed-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+     
+        /* Ajustement de l'espacement pour le contenu fixe */
+        .content-wrapper {
+            padding-bottom: 200px;
+        }
+
+        /* Style pour les champs de texte de précision */
+        .precision-input {
+            width: 300px !important; /* Remplace la largeur standard */
+        }
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    width: 100%; /* Garantit que la largeur ne dépasse pas */
+    box-sizing: border-box; /* Inclut le padding et la bordure dans la largeur totale */
+    border-bottom: 2px solid var(--border-color);
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.section-header h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 1.8rem; /* Augmentation de la taille du texte */
+    color: var(--primary-color);
+    font-weight: bold;
+    letter-spacing: 0.3px; /* Espacement des lettres pour un aspect plus lisible */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header h3 {
+    display: flex; /* Aligne le texte et l'icône */
+    align-items: center; /* Centre verticalement l'icône et le texte */
+    gap: 10px; /* Ajoute un espace entre l'icône et le texte */
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.icon {
+    font-size: 1.5rem; /* Taille de l'icône */
+    color: var(--secondary-color); /* Couleur de l'icône */
+}
+.container {
+    max-width: 1200px; /* Largeur maximale pour centrer le contenu */
+    margin: 0 auto; /* Centre le conteneur horizontalement */
+    padding: 0 1rem; /* Ajoute un espace interne pour éviter le débordement */
+    box-sizing: border-box; /* Garantit que le padding n’affecte pas la largeur */
+}
+
+
+        .section h4 {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            width: 60px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        input[type="text"].wide {
+            width: 120px;
+        }
+
+        .symptom-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+			textarea {
+				width: 100%;
+				padding: 1rem;
+				border: 1px solid var(--border-color);
+				border-radius: 6px;
+				font-size: 1rem;
+				resize: vertical;
+				min-height: 150px;
+				font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+				line-height: 1.6;
+				background-color: #fafafa;
+				letter-spacing: 0.3px;
+				color: #2d3748;
+			}
+
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        /* Styles spécifiques pour les constantes */
+        .constantes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .constante-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Style pour les options conditionnelles */
+        .conditional-options {
+            margin-left: 1.5rem;
+            padding: 0.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+	
+	.toggle-button, .reset-button {
+    background-color: #1e40af;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.text-normal {
+    color: black;
+}
+
+.text-highlight {
+    color: red;
+    font-weight: bold;
+}
+
+/* Animation pour l'apparition progressive */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInAnimation 0.5s ease-out forwards;
+}
+
+@keyframes fadeInAnimation {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+					
+						input[type="checkbox"] {
+							vertical-align: middle;
+							margin-right: 5px;
+						}
+
+						label {
+							cursor: pointer;
+						}
+					
+					
+.section-header {
+    display: flex; /* Alignement Flexbox pour tout l'en-tête */
+    justify-content: space-between; /* Titre et boutons aux extrémités */
+    align-items: center; /* Aligne verticalement le contenu */
+    flex-wrap: wrap; /* Permet de s'ajuster si l'espace est limité */
+}
+
+.button-container {
+    display: flex; /* Flexbox pour les boutons */
+    gap: 10px; /* Ajoute un espace de 10px entre les boutons */
+}
+
+.toggle-button {
+    margin: 0; /* Supprime tout espacement inutile */
+    padding: 8px 16px; /* Taille uniforme des boutons */
+    background-color: #1e40af;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.toggle-button:hover {
+    background-color: #3b82f6;
+}
+
+.tabs-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+    background-color: #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 650px;
+}
+
+.tab-button {
+    background-color: transparent;
+    color: #1e293b;
+    border: none;
+    padding: 0.75rem 2.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 250px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-button:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.tab-button.active {
+    background-color: #2563eb;
+    color: white;
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+    .tabs {
+        padding: 0.5rem;
+        gap: 0.5rem;
+        width: 95%;
+    }
+
+    .tab-button {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        width: auto;
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs {
+        flex-direction: column;
+        width: 100%;
+        border-radius: 25px;
+    }
+
+    .tab-button {
+        width: 100%;
+    }
+}
+.content-section {
+    display: none;
+}
+
+#adult-content {
+    display: block;
+}
+
+/* Styles responsifs pour mobile */
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .section-header h3 {
+        margin-bottom: 10px;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .toggle-button {
+        min-width: 120px;
+        margin: 0;
+        padding: 8px 16px;
+    }
+
+    .section-header .icon {
+        margin-right: 8px;
+    }
+}
+
+/* Ajustements supplémentaires pour très petits écrans */
+@media (max-width: 480px) {
+    .button-group {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .toggle-button {
+        font-size: 13px;
+        padding: 6px 12px;
+        min-width: auto;
+    }
+}
+
+    </style>
+</head>
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+
+<body>
+        <nav class="main-nav">
+            <a href="index.html" class="nav-link">Examen Adulte</a>
+            <a href="examen-pédiatrique.html" class="nav-link">Examen Pédiatrique</a>
+            <a href="ecg.html" class="nav-link active">ECG</a>
+        </nav>
+
+
+
+    <!-- Contenu actuel de la section ECG -->
+    <div class="content">
+
+    <div class="container ECG-section">    
+        <div class="section">
+            <div class="section-header">
+                <h3><span class="icon">⚡</span>Analyse ECG</h3>
+
+							<div class="button-group">
+								<button class="toggle-button" onclick="resetECGSection(this)">Réinitialiser</button>
+								<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+							</div>
+
+            </div>
+            <div class="section-content">
+                
+				<h4>Fréquence Rythme Axe</h4>
+				<p>
+                    <strong>Fréquence cardiaque :</strong> 
+                    <input type="text" id="ECG_frequenceCard" placeholder="bpm" style="width: 50px;">
+                    <label style="margin-left: 10px;">
+                        <input type="radio" name="rythmeCard" class="default" value="normal" checked> Normal
+                    </label>
+                    <label style="margin-left: 10px;">
+                        <input type="radio" name="rythmeCard" value="tachycardie"> Tachycardie
+                    </label>
+                    <label style="margin-left: 10px;">
+                        <input type="radio" name="rythmeCard" value="bradycardie"> Bradycardie
+                    </label>
+                </p>
+
+                <p><strong>Rythme :</strong></p>
+                <p style="margin-left: 20px;">
+                    <label style="margin-right: 20px;">
+                        <input type="radio" name="regularite" class="default" id="ECG_regulier" value="regulier" checked> Régulier
+                    </label>
+                    <label>
+                        <input type="radio" name="regularite" id="ECG_irregulier" value="irregulier"> Irrégulier
+                    </label>
+                </p>
+                <p style="margin-left: 20px;">
+                    <label style="margin-right: 20px;">
+                        <input type="radio" name="typeRythme" class="default" id="ECG_sinusal" value="sinusal" checked> Sinusal
+                    </label>
+                    <label>
+                        <input type="radio" name="typeRythme" id="ECG_nonsinusal" value="nonsinusal"> Non sinusal
+                    </label>
+                </p>
+				<p style="margin-left: 40px;">
+                    Troubles du rythme :
+                    <input type="text" id="ECG_rythmeprécisions" placeholder="Précisez" style="width: 300px;">
+                </p>
+
+<p><strong>Axe QRS</strong></p>
+<div style="margin-left: 20px;">
+    <p>
+        <label style="margin-right: 15px;">D1 :
+            <select id="ECG_d1" style="margin-left: 5px;">
+                <option value="+" class="default" selected>Positif (+)</option>
+                <option value="-">Négatif (-)</option>
+            </select>
+        </label>
+        <label style="margin-right: 15px;">aVf :
+            <select id="ECG_avf" style="margin-left: 5px;">
+                <option value="+" class="default" selected>Positif (+)</option>
+                <option value="-">Négatif (-)</option>
+            </select>
+        </label>
+        <label id="ECG_d2Container" style="display: none; margin-right: 15px;">D2 :
+            <select id="ECG_d2" style="margin-left: 5px;">
+                <option value="+" selected>Positif (+)</option>
+                <option value="-">Négatif (-)</option>
+            </select>
+        </label>
+    </p>
+    <p>
+       Axe calculé :
+        <input type="text" id="ECG_axeCalcule" readonly style="width: 274px; background-color: #d1fae5; color: green;">
+    </p>
+</div>
+
+<script>
+    function calculateAxis() {
+        const d1 = document.getElementById('ECG_d1').value;
+        const avf = document.getElementById('ECG_avf').value;
+        const d2 = document.getElementById('ECG_d2');
+        const d2Container = document.getElementById('ECG_d2Container');
+        const axeCalcule = document.getElementById('ECG_axeCalcule');
+
+        // Afficher ou masquer D2 en fonction de aVf et D1
+        if (avf !== '-') {
+            d2Container.style.display = 'none';
+            d2.value = '+'; // Réinitialiser D2 à la valeur par défaut
+        } else if (d1 === '+') {
+            d2Container.style.display = 'inline';
+            if (!d2.value) {
+                d2.value = '+'; // Définir la valeur par défaut si D2 est vide
+            }
+        }
+
+        // Logique de calcul de l'axe
+        let axe = '';
+        let backgroundColor = '#d1fae5';
+        let color = 'green';
+
+        if (d1 === '+' && avf === '+') {
+            axe = 'Axe normal (entre 0° et +90°)';
+        } else if (d1 === '+' && avf === '-') {
+            if (d2.value === '+') {
+                axe = 'Axe normal limite gauche (entre -30° et 0°)';
+                backgroundColor = '#fef08a';
+                color = 'orange';
+            } else if (d2.value === '-') {
+                axe = 'Axe hypergauche (entre -30° et -90°)';
+                backgroundColor = '#fee2e2';
+                color = 'red';
+            }
+        } else if (d1 === '-' && avf === '+') {
+            axe = 'Axe hyperdroit (entre +90° et +180°)';
+            backgroundColor = '#fee2e2';
+            color = 'red';
+        } else if (d1 === '-' && avf === '-') {
+            axe = 'Axe extrême (entre -90° et -180°)';
+            backgroundColor = '#fee2e2';
+            color = 'red';
+        }
+
+        // Mettre à jour le champ calculé
+        axeCalcule.value = axe;
+        axeCalcule.style.backgroundColor = backgroundColor;
+        axeCalcule.style.color = color;
+    }
+
+    // Ajouter les écouteurs d'événements
+    document.getElementById('ECG_d1').addEventListener('change', calculateAxis);
+    document.getElementById('ECG_avf').addEventListener('change', calculateAxis);
+    document.getElementById('ECG_d2').addEventListener('change', calculateAxis);
+
+    // Initialiser l'axe par défaut
+    calculateAxis();
+</script>
+
+				
+				<h4>Conduction et repolarisation</h4>
+				<p><strong>PR :</strong> <input type="text" id="ECG_pr" placeholder="ms" style="width: 50px;"></p>
+                <div style="margin-left: 20px;">
+                    <p>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="bav" id="ECG_normal" class="default" value="normal" checked> Normal
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="bav" id="ECG_bav1" value="bav1"> BAV 1
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="bav" id="ECG_bav2" value="bav2"> BAV 2
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="bav" id="ECG_bav3" value="bav3"> BAV 3
+                        </label>
+                    </p>
+                    <div id="ECG_bav2Types" style="display: none; margin-left: 20px;">
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="typeBav2" class="default" id="ECG_MOBITZ1" value="mobitz1"> Mobitz 1
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="typeBav2" id="ECG_MOBITZ2" value="mobitz2"> Mobitz 2
+                        </label>
+                        <label style="margin-right: 15px;"> X/1
+                            <input type="radio" name="typeBav2" id="ECG_MOBITZ2/1" value="ratio"> 
+                            <select id="ECG_ratioSelect" style="margin-left: 5px; display: none;">
+                                <option value="2">2:1</option>
+                                <option value="3">3:1</option>
+                                <option value="4">4:1</option>
+                                <option value="5">5:1</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <script>
+                    // Gestion de l'affichage des types de BAV2
+                    document.querySelectorAll('input[name="bav"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const bav2Types = document.getElementById('ECG_bav2Types');
+                            bav2Types.style.display = this.value === 'bav2' ? 'block' : 'none';
+                            
+                            // Réinitialiser les sélections si on change de type de BAV
+                            if (this.value !== 'bav2') {
+                                document.querySelectorAll('input[name="typeBav2"]').forEach(radio => radio.checked = false);
+                                document.getElementById('ECG_ratioSelect').style.display = 'none';
+                            }
+                        });
+                    });
+
+                    // Gestion de l'affichage du menu déroulant pour le ratio
+                    document.querySelectorAll('input[name="typeBav2"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const ratioSelect = document.getElementById('ECG_ratioSelect');
+                            ratioSelect.style.display = this.value === 'ratio' ? 'inline' : 'none';
+                        });
+                    });
+                </script>
+				
+				
+				 <p><strong>QRS :</strong>
+				 <label><input type="text" id="ECG_qrs" placeholder="ms" style="width: 50px;"></label>
+				</p>
+                <div style="margin-left: 20px;">
+
+                    <p>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="typeQRS" class="default" value="normal" checked> Normal
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="typeQRS" value="incomplet"> Bloc de branche incomplet
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="typeQRS" value="complet"> Bloc de branche complet
+                        </label>
+                    </p>
+                    
+                    <!-- Options pour les blocs de branche -->
+                    <div id="ECG_blocOptions" style="display: none; margin-left: 20px;">
+                        <label style="margin-right: 15px;">
+                            <input type="checkbox" id="ECG_blocDroit"> Droit
+                        </label>
+                        <label>
+                            <input type="checkbox" id="ECG_blocGauche"> Gauche
+                        </label>
+                    </div>
+
+                    <!-- Options additionnelles -->
+                    <div style="margin-top: 10px;">
+                        <p>Autres options :
+                            <label style="margin-right: 15px;">
+                            <input type="checkbox" id="ECG_hemibloc"> Hémibloc    
+                        </label>
+						<label style="margin-right: 15px;">
+                            <input type="checkbox" id="ECG_microvoltage"> Microvoltage
+                        </label>
+                        <label style="margin-right: 15px;">
+                            <input type="checkbox" id="ECG_alternance"> Alternance électrique
+                        </label>
+						</p>
+                    </div>
+
+                    <!-- Options pour l'hémibloc -->
+                    <div id="ECG_hemiblocOptions" style="display: none; margin-left: 20px;">
+                        <label style="margin-right: 15px;">
+                            <input type="checkbox" id="ECG_hemiblocanterieur"> Antérieur
+                        </label>
+                        <label>
+                            <input type="checkbox" id="ECG_hemiblocposterieur"> Postérieur
+                        </label>
+						
+                    </div>
+									<!-- Après les options QRS -->
+						<div style="margin-top: 10px;">
+							<label for="ECG_qrs_autres">Autres anomalies du QRS :</label>
+							<input type="text" id="ECG_qrs_autres" placeholder="Précisez" style="width: 300px; margin-left: 10px;">
+						</div>
+                </div>
+
+                <script>
+                    // Gestion de l'affichage des options de bloc
+                    document.querySelectorAll('input[name="typeQRS"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const blocOptions = document.getElementById('ECG_blocOptions');
+                            blocOptions.style.display = (this.value === 'incomplet' || this.value === 'complet') ? 'block' : 'none';
+                            
+                            // Réinitialiser les checkboxes si on revient à normal
+                            if (this.value === 'normal') {
+                                document.getElementById('ECG_blocDroit').checked = false;
+                                document.getElementById('ECG_blocGauche').checked = false;
+                            }
+                        });
+                    });
+
+                    // Gestion de l'affichage des options d'hémibloc
+                    document.getElementById('ECG_hemibloc').addEventListener('change', function() {
+                        const hemiblocOptions = document.getElementById('ECG_hemiblocOptions');
+                        hemiblocOptions.style.display = this.checked ? 'block' : 'none';
+                        
+                        // Réinitialiser les checkboxes si on décoche hémibloc
+                        if (!this.checked) {
+                            document.getElementById('ECG_hemiblocDroit').checked = false;
+                            document.getElementById('ECG_hemiblocGauche').checked = false;
+                        }
+                    });
+                </script>
+				
+                <p><strong>QT :</strong> </p>
+				                   
+                       
+					   
+                   
+					<div style="margin-left: 20px;">
+					
+					<p><label style="margin-right: 10px;">QT mesuré :<input style="margin-left: 10px;" type="text" id="ECG_qtm" placeholder="ms" style="width: 50px;"></label>
+					</p>
+                    <p>
+                        <label style="margin-right: 15px;">
+                            <input type="radio" name="sexe" id="ECG_homme" value="homme" checked> Homme
+                        </label>
+                        <label>
+                            <input type="radio" name="sexe" id="ECG_femme" value="femme"> Femme
+                        </label>
+                    </p>
+ 
+                    <p>
+                        <label>QT calculé : 
+                            <input type="text" id="ECG_qtc" readonly 
+                                   style="width: 50px; background-color: #f3f4f6;">
+                        </label>
+                        <span style="margin-left: 10px; color: #666;">(Bazett)</span>
+                        <span id="ECG_qtcStatus" style="margin-left: 10px;"></span>
+                    </p>
+					
+				<!-- Après le QTc -->
+					<div style="margin-top: 10px;">
+						<label for="ECG_repolarisation">Troubles de la repolarisation :</label>
+						<input type="text" id="ECG_repolarisation" placeholder="Précisez" style="width: 300px; margin-left: 10px;">
+					</div>
+
+					</div>
+
+                <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction de calcul du QTc
+    function calculateQTc() {
+        const qtm = parseFloat(document.getElementById('ECG_qtm').value);
+        const fc = parseFloat(document.getElementById('ECG_frequenceCard').value);
+        const qtcField = document.getElementById('ECG_qtc');
+        const qtcStatus = document.getElementById('ECG_qtcStatus');
+        const isFemme = document.getElementById('ECG_femme').checked;
+        const normalLimit = isFemme ? 460 : 450;
+
+        if (!isNaN(qtm) && !isNaN(fc) && fc > 0) {
+            // Formule de Bazett : QTc = QTm / √(60/FC)
+            const qtc = qtm / Math.sqrt(60 / fc);
+            const qtcValue = Math.round(qtc);
+            qtcField.value = qtcValue;
+
+            // Style et message selon la valeur
+            if (qtcValue < 350) {
+                qtcField.style.backgroundColor = '#fee2e2';
+                qtcField.style.color = '#dc2626';
+                qtcStatus.textContent = 'QTc court';
+                qtcStatus.style.color = '#dc2626';
+            } else if (qtcValue > normalLimit) {
+                qtcField.style.backgroundColor = '#fee2e2';
+                qtcField.style.color = '#dc2626';
+                qtcStatus.textContent = 'QTc long';
+                qtcStatus.style.color = '#dc2626';
+            } else {
+                qtcField.style.backgroundColor = '#dcfce7';
+                qtcField.style.color = '#16a34a';
+                qtcStatus.textContent = 'QTc normal';
+                qtcStatus.style.color = '#16a34a';
+            }
+        } else {
+            qtcField.value = '';
+            qtcField.style.backgroundColor = '#f3f4f6';
+            qtcField.style.color = 'initial';
+            qtcStatus.textContent = '';
+        }
+    }
+
+    // Ajout des écouteurs d'événements
+    const qtmInput = document.getElementById('ECG_qtm');
+    const fcInput = document.getElementById('ECG_frequenceCard');
+    const sexeInputs = document.querySelectorAll('input[name="sexe"]');
+
+    if (qtmInput) qtmInput.addEventListener('input', calculateQTc);
+    if (fcInput) fcInput.addEventListener('input', calculateQTc);
+    sexeInputs.forEach(input => {
+        input.addEventListener('change', calculateQTc);
+    });
+
+    // Calcul initial
+});
+									</script>
+									
+									
+									
+									
+					<h4>Hypertrophie</h4>
+					<div style="margin-left: 20px;">
+						<!-- Durée de l'onde P -->
+						<p>
+							<label for="ECG_pWaveDuration">Durée de l'onde P :</label>
+							<input type="text" id="ECG_pWaveDuration" placeholder="ms" style="margin-left: 10px; width: 50px;">
+							<span id="ECG_pWaveDurationResult" style="margin-left: 10px; font-weight: bold;"></span>
+						</p>
+
+						<!-- Amplitude de l'onde P -->
+						<p>
+							<label for="ECG_pWaveAmplitude">Amplitude de l'onde P :</label>
+							<input type="text" id="ECG_pWaveAmplitude" placeholder="mm" style="margin-left: 10px; width: 50px;">
+							<span id="ECG_pWaveAmplitudeResult" style="margin-left: 10px; font-weight: bold;"></span>
+						</p>
+
+						<!-- SV1, SV5, et indice de Sokolow -->
+						<p>
+							<label for="ECG_sv1">SV1 :</label>
+							<input type="text" id="ECG_sv1" placeholder="ms" style="margin-left: 10px; width: 50px;">
+
+							<label for="ECG_sv5" style="margin-left: 20px;">SV5 :</label>
+							<input type="text" id="ECG_sv5" placeholder="ms" style="margin-left: 10px; width: 50px;">
+
+							<label for="ECG_sokolowIndex" style="margin-left: 20px;">Indice de Sokolow :</label>
+							<input type="text" id="ECG_sokolowIndex" readonly style="margin-left: 10px; width: 50px; background-color: #f3f4f6;">
+							<span id="ECG_sokolowResult" style="margin-left: 10px; font-weight: bold;"></span>
+						</p>
+					</div>
+
+					<script>
+						// Durée de l'onde P
+						document.getElementById("ECG_pWaveDuration").addEventListener("input", function () {
+							const duration = parseFloat(this.value);
+							const resultSpan = document.getElementById("ECG_pWaveDurationResult");
+
+							if (duration > 120) {
+								resultSpan.textContent = "Hypertrophie auriculaire gauche";
+								resultSpan.style.color = "red";
+							} else {
+								resultSpan.textContent = "Pas d'hypertrophie auriculaire gauche";
+								resultSpan.style.color = "green";
+							}
+						});
+
+						// Amplitude de l'onde P
+						document.getElementById("ECG_pWaveAmplitude").addEventListener("input", function () {
+							const amplitude = parseFloat(this.value);
+							const resultSpan = document.getElementById("ECG_pWaveAmplitudeResult");
+
+							if (amplitude > 2.5) {
+								resultSpan.textContent = "Hypertrophie auriculaire droite";
+								resultSpan.style.color = "red";
+							} else {
+								resultSpan.textContent = "Pas d'hypertrophie auriculaire droite";
+								resultSpan.style.color = "green";
+							}
+						});
+
+						// Calcul de l'indice de Sokolow
+						document.getElementById("ECG_sv1").addEventListener("input", calculateSokolow);
+						document.getElementById("ECG_sv5").addEventListener("input", calculateSokolow);
+
+						function calculateSokolow() {
+							const sv1 = parseFloat(document.getElementById("ECG_sv1").value) || 0;
+							const sv5 = parseFloat(document.getElementById("ECG_sv5").value) || 0;
+							const sokolowIndex = sv1 + sv5;
+							const sokolowIndexField = document.getElementById("ECG_sokolowIndex");
+							const resultSpan = document.getElementById("ECG_sokolowResult");
+
+							sokolowIndexField.value = sokolowIndex;
+
+							if (sokolowIndex > 35) {
+								resultSpan.textContent = "Hypertrophie ventriculaire gauche";
+								resultSpan.style.color = "red";
+							} else {
+								resultSpan.textContent = "Pas d'hypertrophie ventriculaire gauche";
+								resultSpan.style.color = "green";
+							}
+						}
+					</script>
+
+
+								
+<h4>Infarctus</h4>
+<div style="margin-left: 20px;">
+    <!-- Case à cocher pour Onde Q de nécrose -->
+    <p>
+        <label>
+            <input type="checkbox" id="ECG_ondeQNecrose"> Onde Q de nécrose
+        </label>
+        <input type="text" placeholder="Localisation" id="ECG_ondeQLocation" style="display: none; margin-left: 10px; width: 150px;">
+    </p>
+
+    <!-- Case à cocher pour Inversion des ondes T -->
+    <p>
+        <label>
+            <input type="checkbox" id="ECG_inversionOndeT"> Inversion des ondes T
+        </label>
+        <input type="text" placeholder="Localisation" id="ECG_inversionTLocation" style="display: none; margin-left: 10px; width: 150px;">
+    </p>
+
+    <!-- Case à cocher sous décallage segment ST -->
+    <p>
+        <label>
+            <input type="checkbox" id="ECG_mirroir"> Sous décalage en miroir du segment ST
+        </label>
+        <input type="text" placeholder="Localisation" id="ECG_mirroirlocation" style="display: none; margin-left: 10px; width: 150px;">
+    </p>
+
+    <!-- Case à cocher pour le segment ST -->
+    <p>
+        <label>
+            <input type="checkbox" id="ECG_stSegment"> Sus décalage du segment ST convexe
+        </label>
+    </p>
+
+    <!-- Cases à cocher pour les territoires (masquées par défaut) -->
+    <div id="ECG_derivationsContainer" style="display: none;">
+        <p>Dérivations :</p>
+        <div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V1"> V1</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V2"> V2</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V3"> V3</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V4"> V4</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V5"> V5</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V6"> V6</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="D1"> D1</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="D2"> D2</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="D3"> D3</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="aVF"> aVF</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="aVR"> aVR</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="aVL"> aVL</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V3R"> V3R</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V4R"> V4R</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V7"> V7</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V8"> V8</label>
+            <label style="margin-right: 10px;"><input type="checkbox" class="derivation" value="V9"> V9</label>
+        </div>
+
+        <!-- Résultat du territoire -->
+        <p>Territoire détecté :</p>
+        <div id="ECG_territoire" style="width: calc(100% - 20px); padding: 8px; border: 1px solid #ccc; background-color: #f9f9f9; color: #333; font-size: 0.9em;">
+            Aucun territoire détecté
+        </div>
+    </div>
+</div>
+
+<script>
+    // Définitions des territoires et de leurs dérivations
+    const territories = {
+        "antérieur": ["V1", "V2", "V3", "V4"],
+        "latéral": ["D1", "aVL", "V5", "V6"],
+        "inférieur": ["D2", "D3", "aVF"],
+        "droit": ["V3R", "V4R"],
+        "postérieur": ["V7", "V8", "V9"],
+    };
+
+    // Couleurs associées aux territoires
+    const colors = {
+        "antérieur": "#ffcccc",
+        "latéral": "#cce5ff",
+        "inférieur": "#d4edda",
+        "droit": "#fff3cd",
+        "postérieur": "#e0d4f1",
+    };
+
+    // Mise à jour du territoire détecté
+    function updateTerritory() {
+        const checkedDerivations = Array.from(document.querySelectorAll(".derivation:checked")).map(cb => cb.value);
+        const territoireDiv = document.getElementById("ECG_territoire");
+
+        let detectedTerritory = "";
+        let detectedColor = "#f9f9f9";
+
+        // Détection du territoire correspondant aux dérivations cochées
+        for (const [territory, leads] of Object.entries(territories)) {
+            if (leads.some(lead => checkedDerivations.includes(lead))) {
+                detectedTerritory = territory;
+                detectedColor = colors[territory];
+                break;
+            }
+        }
+
+        // Mise à jour de l'affichage
+        if (detectedTerritory) {
+            territoireDiv.textContent = detectedTerritory.charAt(0).toUpperCase() + detectedTerritory.slice(1);
+            territoireDiv.style.backgroundColor = detectedColor;
+            territoireDiv.style.color = "#000";
+        } else {
+            territoireDiv.textContent = "Aucun territoire détecté";
+            territoireDiv.style.backgroundColor = "#f9f9f9";
+            territoireDiv.style.color = "#333";
+        }
+    }
+
+    // Gestion de l'affichage des sections spécifiques
+    document.getElementById("ECG_ondeQNecrose").addEventListener("change", function() {
+        const locationInput = document.getElementById("ECG_ondeQLocation");
+        locationInput.style.display = this.checked ? "inline-block" : "none";
+    });
+
+    document.getElementById("ECG_inversionOndeT").addEventListener("change", function() {
+        const locationInput = document.getElementById("ECG_inversionTLocation");
+        locationInput.style.display = this.checked ? "inline-block" : "none";
+    });
+
+    document.getElementById("ECG_mirroir").addEventListener("change", function() {
+        const locationInput = document.getElementById("ECG_mirroirlocation");
+        locationInput.style.display = this.checked ? "inline-block" : "none";
+    });
+
+    document.getElementById("ECG_stSegment").addEventListener("change", function() {
+        const container = document.getElementById("ECG_derivationsContainer");
+        container.style.display = this.checked ? "block" : "none";
+
+        if (!this.checked) {
+            document.querySelectorAll(".derivation:checked").forEach(cb => cb.checked = false);
+            updateTerritory();
+        }
+    });
+
+    document.querySelectorAll(".derivation").forEach(checkbox => {
+        checkbox.addEventListener("change", updateTerritory);
+    });
+</script>
+
+
+
+				<h4>Divers</h4>
+				
+				<p><div style="margin-left: 20px;">
+						<!-- Cases à cocher principales -->
+						
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_pericardite"> Péricardite
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_embolie"> Embolie pulmonaire
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypok"> Hypokaliémie
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hyperk"> Hyperkaliémie
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_hypercalcemie"> Hypercalcémie
+							</label>
+						</p>
+
+						<!-- Sous-options Péricardite -->
+						<div id="ECG_pericarditeSigns" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+							<p><strong>Signes de péricardite :</strong></p>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_peri_st"> sus-décalage ST concave diffus sans miroir
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_peri_micro"> microvoltage
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_peri_pq"> sous-décalage PQ
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_peri_t"> onde T négative
+							</label>
+						</div>
+
+						<!-- Sous-options Embolie pulmonaire -->
+						<div id="ECG_embolieSigns" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+							<p><strong>Signes d'embolie pulmonaire :</strong></p>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_ep_s1q3"> aspect S1Q3
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_ep_bbd"> BBD 
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_ep_t"> onde T négative
+							</label>
+						</div>
+
+						<!-- Sous-options Hypokaliémie -->
+						<div id="ECG_hypokSigns" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+							<p><strong>Signes d'hypokaliémie :</strong></p>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypok_t"> aplatissement onde T diffuse
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypok_u"> onde U
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypok_st"> sous-décalage du ST diffus
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_hypok_qtc"> QTc long
+							</label>
+						</div>
+
+						<!-- Sous-options Hyperkaliémie -->
+						<div id="ECG_hyperkSigns" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+							<p><strong>Signes d'hyperkaliémie :</strong></p>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hyperk_t"> onde T ample, pointue, symétrique, étroite
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hyperk_pr"> allongement du PR
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_hyperk_qrs"> élargissement du QRS
+							</label>
+						</div>
+
+						<!-- Sous-options Hypercalcémie -->
+						<div id="ECG_hypercalcemieSigns" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+							<p><strong>Signes d'hypercalcémie :</strong></p>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypercal_qtc"> QTc court
+							</label>
+							<label style="margin-right: 15px;">
+								<input type="checkbox" id="ECG_hypercal_t"> aplatissement des ondes T
+							</label>
+							<label>
+								<input type="checkbox" id="ECG_hypercal_pr"> PR allongé
+							</label>
+						</div>
+					</div>
+
+					<script>
+						// Gestion de l'affichage des sous-options
+						const pathologies = {
+							'ECG_pericardite': 'ECG_pericarditeSigns',
+							'ECG_embolie': 'ECG_embolieSigns',
+							'ECG_hypok': 'ECG_hypokSigns',
+							'ECG_hyperk': 'ECG_hyperkSigns',
+							'ECG_hypercalcemie': 'ECG_hypercalcemieSigns'
+						};
+
+						Object.entries(pathologies).forEach(([id, signsId]) => {
+							document.getElementById(id).addEventListener('change', function() {
+								const signsDiv = document.getElementById(signsId);
+								signsDiv.style.display = this.checked ? 'block' : 'none';
+								
+								// Réinitialiser les sous-options si on décoche
+								if (!this.checked) {
+									signsDiv.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+										checkbox.checked = false;
+									});
+								}
+							});
+						});
+					</script>
+
+
+
+            </div>
+    </div>
+	
+</div>
+	
+				<div class="container ECG-section">
+				<div class="section">
+					<div class="section-header">
+						<h3><span class="icon">✍️</span>Texte type final</h3>
+						<!-- Conteneur Flex pour aligner les boutons côte à côte -->
+						<div class="button-container">
+							<button class="toggle-button" id="generateECGText">Générer Texte Type</button>
+							<button class="toggle-button" id="copyECGText">Copier dans le presse-papier</button>
+						</div>
+					</div>
+
+					<div id="ECG_generatedTextArea" contenteditable="true" style="border: 1px solid #ccc; padding: 10px; min-height: 70px;"></div>
+				</div>
+	
+			</div>
+
+<script>
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
+
+ function generateECGText() {
+
+
+const today = new Date().toLocaleDateString('fr-FR');
+let text = [`<strong>ECG du ${today}</strong> : `];
+
+				// Fréquence
+				const fc = document.getElementById('ECG_frequenceCard').value;
+				const rythmeCard = document.querySelector('input[name="rythmeCard"]:checked')?.value;
+				text.push(fc ? (rythmeCard === 'normal' ? `FC ${fc}/min` : `${rythmeCard} à ${fc} bpm`) : 'FC XX/min');
+				
+				// Rythme et précisions
+				const isRegulier = document.getElementById('ECG_regulier').checked;
+				const isSinusal = document.getElementById('ECG_sinusal').checked;
+				let rythmeText = ` ; rythme ${isRegulier ? 'régulier' : 'irrégulier'} et ${isSinusal ? 'sinusal' : 'non sinusal'}`;
+				const precisions = document.getElementById("ECG_rythmeprécisions").value;
+				text.push(rythmeText);
+				if (precisions) text.push(`, ${precisions} `);
+				
+				// Axe
+				const axe = document.getElementById('ECG_axeCalcule').value;
+				if (axe) text.push(` ; ${axe.toLowerCase()} `);
+				
+				// PR et BAV
+				const pr = document.getElementById('ECG_pr').value;
+				let bavText = '';
+				const bavType = document.querySelector('input[name="bav"]:checked')?.value;
+				if (bavType && bavType !== 'normal') {
+					if (bavType === 'bav2') {
+						const mobitzType = document.querySelector('input[name="typeBav2"]:checked')?.value;
+						if (mobitzType === 'mobitz1') bavText = ', BAV2 Mobitz 1';
+						else if (mobitzType === 'mobitz2') bavText = ', BAV2 Mobitz 2';
+						else if (mobitzType === 'ratio') bavText = `, BAV2 ${document.getElementById('ECG_ratioSelect').value}:1`;
+					} else {
+						bavText = `, ${bavType.toUpperCase()}`;
+					}
+				}
+				if (pr) text.push(` ; PR ${pr} ms${bavText} `);
+				
+				// QRS et blocs
+				const qrs = document.getElementById('ECG_qrs').value;
+				let qrsText = qrs ? ` ; QRS ${qrs} ms` : '';
+				const typeQRS = document.querySelector('input[name="typeQRS"]:checked')?.value;
+				if (typeQRS && typeQRS !== 'normal') {
+					let blocs = [];
+						if (document.getElementById('ECG_blocDroit')?.checked) {
+							blocs.push(typeQRS === 'incomplet' ? 'BBID' : 'BBD');
+						}
+						if (document.getElementById('ECG_blocGauche')?.checked) {
+							blocs.push(typeQRS === 'incomplet' ? 'BBIG' : 'BBG');
+						}
+					
+					if (document.getElementById('ECG_hemibloc')?.checked) {
+						if (document.getElementById('ECG_hemiblocanterieur')?.checked) blocs.push('HBAG');
+						if (document.getElementById('ECG_hemiblocposterieur')?.checked) blocs.push('HBPG');
+					}
+					if (blocs.length) qrsText += `, ${blocs.join(', ')}`;
+				}	
+				
+				const qrsAutres = document.getElementById('ECG_qrs_autres').value;
+				if (qrsText) {
+					text.push(qrsText);
+					if (qrsAutres) {
+						text.push(`, ${qrsAutres}`);
+					}
+				}
+
+				
+				// QTc
+				const qtc = document.getElementById('ECG_qtc').value;
+				const qtcStatus = document.getElementById('ECG_qtcStatus').textContent;
+				const repolarisation = document.getElementById('ECG_repolarisation').value;
+				if (qtc) {
+					text.push(` ; QTc ${qtc} ms (${qtcStatus.toLowerCase()})`);
+					if (repolarisation) {
+						text.push(`, ${repolarisation}`);
+					}
+				}
+				
+				// Hypertrophies
+				let hypertrophies = [];
+				const pDuration = document.getElementById('ECG_pWaveDuration').value;
+				const pAmplitude = document.getElementById('ECG_pWaveAmplitude').value;
+				const sokolow = document.getElementById('ECG_sokolowIndex').value;
+				
+				if (pDuration > 120) hypertrophies.push(`hypertrophie auriculaire gauche avec durée onde P à ${pDuration} ms`);
+				if (pAmplitude > 2.5) hypertrophies.push(`hypertrophie auriculaire droite avec amplitude onde P à ${pAmplitude} mm`);
+				if (sokolow > 35) hypertrophies.push(`hypertrophie ventriculaire gauche avec sokolow à ${sokolow} mm`);
+				
+				text.push(hypertrophies.length ? ` ; ${hypertrophies.join(', ')} ` : "; pas d'hypertrophie auriculaire et ventriculaire ");
+				
+				// Infarctus
+				let infarctus = [];
+				if (document.getElementById('ECG_ondeQNecrose').checked) {
+				   infarctus.push(`onde Q de nécrose ${document.getElementById('ECG_ondeQLocation').value}`);
+				}
+				if (document.getElementById('ECG_inversionOndeT').checked) {
+				   infarctus.push(`inversion des ondes T ${document.getElementById('ECG_inversionTLocation').value}`);
+				}
+				if (document.getElementById('ECG_mirroir').checked) {
+				   infarctus.push(`sous décalage en miroir ${document.getElementById('ECG_mirroirlocation').value}`);
+				}
+				if (document.getElementById('ECG_stSegment').checked) {
+				   const territoire = document.getElementById('ECG_territoire').textContent;
+				   if (territoire !== "Aucun territoire détecté") {
+					   const derivations = Array.from(document.querySelectorAll('.derivation:checked'))
+						   .map(cb => cb.value)
+						   .join(', ');
+					   infarctus.push(`sus décalage ST dans le territoire ${territoire.toLowerCase()}${derivations ? ` (${derivations})` : ''}`);
+				   }
+				}
+				text.push(infarctus.length ? ` ; signes d'infarctus : ${infarctus.join(', ')}` : "; pas de signe d'infarctus du myocarde");
+								
+				
+				// Divers
+				let divers = [];
+				[['ECG_pericardite', 'signes de péricardite'], ['ECG_embolie', 'signes d\'embolie pulmonaire'], 
+				 ['ECG_hypok', 'signes d\'hypokaliémie'], ['ECG_hyperk', 'signes d\'hyperkaliémie'],
+				 ['ECG_hypercalcemie', 'signes d\'hypercalcémie']].forEach(([id, name]) => {
+					if (document.getElementById(id)?.checked) {
+						const signsDiv = document.getElementById(`${id}Signs`);
+						if (signsDiv) {
+							const signs = Array.from(signsDiv.querySelectorAll('input[type="checkbox"]:checked'))
+								.map(cb => cb.parentElement.textContent.trim());
+							divers.push(`${name}${signs.length ? ` avec ${signs.join(', ')}` : ''}`);
+						}
+					}
+				});
+				if (divers.length) text.push(` ; ${divers.join(' ; ')}`);
+
+        const textArea = document.getElementById('ECG_generatedTextArea');
+        textArea.innerHTML = text.join('');
+        textArea.classList.add('fade-in');
+    }
+
+    document.getElementById('generateECGText')?.addEventListener('click', () => {
+        const textArea = document.getElementById('ECG_generatedTextArea');
+        textArea.innerHTML = '';
+        textArea.classList.remove('fade-in');
+        generateECGText();
+    });
+
+    document.getElementById('copyECGText')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById('ECG_generatedTextArea').textContent)
+            .then(() => alert('Texte copié dans le presse papier.'));
+    });
+});
+
+
+function resetECGSection(button) {
+
+    // Masquer D2 pour l'axe
+    document.getElementById('ECG_d2Container').style.display = 'none';
+    
+    // Masquer les types de BAV2
+    document.getElementById('ECG_bav2Types').style.display = 'none';
+	
+	
+   const section = button.closest('.section');
+   const inputs = section.querySelectorAll('input:not([readonly])');
+   
+   inputs.forEach(input => {
+       if (input.type === 'radio') {
+           if (input.classList.contains('default') || input.parentElement.classList.contains('default')) {
+               input.checked = true;
+           } else {
+               input.checked = false;
+           }
+       } else if (input.type === 'checkbox') {
+           input.checked = false;
+           const event = new Event('change');
+           input.dispatchEvent(event);
+       } else if (input.type === 'text') {
+           input.value = '';
+       }
+   });
+
+   const selects = section.querySelectorAll('select');
+   selects.forEach(select => {
+       select.selectedIndex = 0;
+   });
+
+   const optionalDivs = section.querySelectorAll('[id$="Signs"], [id$="Options"], #ECG_derivationsContainer');
+   optionalDivs.forEach(div => {
+       div.style.display = 'none';
+   });
+   
+      // Recalculer les indices
+   calculateAxis(); // pour l'axe
+   calculateSokolow(); // pour l'indice de Sokolow
+       // Réinitialiser QTc
+    const qtcField = document.getElementById('ECG_qtc');
+    const qtcStatus = document.getElementById('ECG_qtcStatus');
+    qtcField.value = ''; // Effacer la valeur calculée
+    qtcField.style.backgroundColor = '#f3f4f6'; // Couleur par défaut
+    qtcField.style.color = 'initial'; // Couleur par défaut
+    qtcStatus.textContent = ''; // Effacer le statut
+
+    calculateQTc(); // pour recalculer le QTc au besoin
+   
+   
+    // Réinitialiser les hypertrophies
+    const hypertrophies = [
+        { id: 'ECG_pWaveDuration', resultId: 'ECG_pWaveDurationResult' },
+        { id: 'ECG_pWaveAmplitude', resultId: 'ECG_pWaveAmplitudeResult' },
+        { id: 'ECG_sv1', resultId: 'ECG_sokolowIndex', sokolowResultId: 'ECG_sokolowResult' },
+        { id: 'ECG_sv5' }
+    ];
+
+    hypertrophies.forEach(({ id, resultId, sokolowResultId }) => {
+        const input = document.getElementById(id);
+        if (input) input.value = ''; // Réinitialiser la valeur du champ
+
+        if (resultId) {
+            const resultSpan = document.getElementById(resultId);
+            if (resultSpan) {
+                resultSpan.textContent = ''; // Effacer le texte affiché
+                resultSpan.style.color = 'initial'; // Couleur par défaut
+            }
+        }
+
+        if (sokolowResultId) {
+            const sokolowSpan = document.getElementById(sokolowResultId);
+            if (sokolowSpan) {
+                sokolowSpan.textContent = ''; // Effacer le texte affiché
+                sokolowSpan.style.color = 'initial'; // Couleur par défaut
+            }
+        }
+    });
+
+    // Recalculer les hypertrophies si nécessaire
+    calculateSokolow();
+   
+}
+				
+
+// Fonction pour basculer la visibilité d'une section
+function toggleSection(button) {
+    const section = button.closest('.section');
+    const content = section.querySelector('.section-content');
+    const isHidden = !content.classList.contains('hidden');
+    
+    content.classList.toggle('hidden');
+    button.textContent = isHidden ? 'Afficher' : 'Masquer';
+    
+    section.setAttribute('data-hidden', isHidden);
+}
+
+
+		</script>
+
+
+			
+			
+	<div class="container ECG-section">
+        <div class="section">
+            <div class="section-header">
+			<h3><span class="icon">💡</span>Principe</h3></div>
+			
+			<h4>TypixClin est un outil interactif en ligne conçu pour les étudiants en médecine, internes, médecins, afin de faciliter la rédaction d'un examen clinique. Il permet de sélectionner des signes cliniques via des cases à cocher, d'ajouter des précisions dans des zones de texte, et de générer automatiquement un rapport structuré et prêt à l’usage directement dans un logiciel médical (Orbis par exemple). L'objectif est de standardiser, de simplifier et d'accélérer la rédaction des observations cliniques tout en minimisant le risque d’erreur ou les oublis.</h4>
+
+		</div>
+	</div>
+			
+			
+</div>
+
+<div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+    TypixClin © 2025, par Jean et Iulia avec l'aide précieuse d'Auxane
+</div>
+
+</body>
+</html>
