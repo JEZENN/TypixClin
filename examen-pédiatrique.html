@@ -645,6 +645,28 @@ textarea {
     }
 }
 
+
+@keyframes fadeInAnimation {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#generatedTextArea {
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+#generatedTextArea div {
+    margin-bottom: 8px;
+}
+
+
     </style>
 </head>
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -659,12 +681,736 @@ textarea {
 
     <!-- Contenu actuel de la section pédiatrique -->
     <div class="content">
-  
-
+ 
+	
 			<div class="container pediatric-section">
 				<div class="section">
 					<div class="section-header">
-						<h3><span class="icon">🍼</span>Observation aux urgences</h3>
+						<h3><span class="icon">🍼</span>Interrogatoire pédiatrique</h3>
+							<div class="button-group">
+								<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+								<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+							</div>
+							
+					</div>
+					<div class="section-content">
+
+							<div class="interrogatoire-content">
+								<!-- Section Age et Date de naissance -->
+								<div class="form-group" style="margin-bottom: 20px;">
+									<label for="dateNaissance"><strong>Date de naissance :</strong></label>
+									<input type="date" id="dateNaissance" style="margin-left: 10px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+									
+									<span style="margin-left: 20px;"><strong>Age :</strong></span>
+									<input type="text" id="ageCalcule" readonly 
+										   style="margin-left: 10px; width: 200px; background-color: #f3f4f6; color: #666; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+								</div>
+								
+
+								<!-- Section Sexe -->
+								<div class="form-group" style="margin-bottom: 20px;">
+									<strong>Sexe :</strong>
+									<label style="margin-left: 10px; cursor: pointer;">
+										<input type="radio" name="sexe" value="garcon" style="margin-right: 5px;" checked>
+										<span style="color: #4299e1; font-size: 1.2em;">👦 Garçon</span>
+									</label>
+									<label style="margin-left: 20px; cursor: pointer;">
+										<input type="radio" name="sexe" value="fille" style="margin-right: 5px;">
+										<span style="color: #ed64a6; font-size: 1.2em;">👧 Fille</span>
+									</label>
+								</div>
+
+
+
+
+							</div>
+
+							<script>
+							function calculateAge(birthDate) {
+								const today = new Date();
+								const birth = new Date(birthDate);
+								
+								let years = today.getFullYear() - birth.getFullYear();
+								let months = today.getMonth() - birth.getMonth();
+								let days = today.getDate() - birth.getDate();
+								
+								if (days < 0) {
+									months--;
+									const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+									days += lastMonth.getDate();
+								}
+								
+								if (months < 0) {
+									years--;
+									months += 12;
+								}
+								
+								let ageString = '';
+								if (years > 0) ageString += `${years} an${years > 1 ? 's' : ''} `;
+								if (months > 0) ageString += `${months} mois `;
+								if (days > 0) ageString += `${days} jour${days > 1 ? 's' : ''}`;
+								
+								return ageString.trim() || '0 jour';
+							}
+
+							document.getElementById('dateNaissance')?.addEventListener('change', function() {
+								const ageCalcule = document.getElementById('ageCalcule');
+								if (this.value) {
+									ageCalcule.value = calculateAge(this.value);
+								} else {
+									ageCalcule.value = '';
+								}
+							});
+
+							</script>
+					
+						<!-- Section Antécédents Néonataux -->
+						<h4>Antécédents néonataux</h4>
+						
+							<!-- Gestation et Parité -->
+							<div style="margin-bottom: 15px;">
+								<label style="margin-right: 20px;">
+									<strong>Gestation :</strong>
+									<input type="text" id="gestation" style="width: 40px; margin-left: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+								</label>
+								<label>
+									<strong>Parité :</strong>
+									<input type="text" id="parite" style="width: 40px; margin-left: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+								</label>
+							</div>
+
+							<!-- Terme -->
+							<div style="margin-bottom: 15px;">
+								<label>
+									<strong>Terme :</strong>
+									<input type="number" id="terme" min="0" max="45" 
+										   style="width: 60px; margin-left: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+										   placeholder="SA">
+									<span style="margin-left: 5px;">SA</span>
+								</label>
+							</div>
+
+							<!-- Status de prématurité (calculé automatiquement) -->
+							<div style="margin-bottom: 15px;">
+								<label>
+									<strong>Status :</strong>
+									<input type="text" id="prematuriteStatus" readonly 
+										   style="width: 300px; margin-left: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+								</label>
+							</div>
+						
+
+						<script>
+						// Fonction pour calculer le status de prématurité
+						function calculatePrematuriteStatus(terme) {
+							const termeNum = parseFloat(terme);
+							const statusField = document.getElementById('prematuriteStatus');
+							
+							if (!terme || isNaN(termeNum)) {
+								statusField.value = '';
+								statusField.style.backgroundColor = '#f3f4f6';
+								statusField.style.color = '#666';
+								return;
+							}
+
+							let status = '';
+							let color = '';
+							let backgroundColor = '';
+
+							if (termeNum < 28) {
+								status = 'Très grande prématurité (< 28 SA)';
+								color = '#dc2626';  // Rouge
+								backgroundColor = '#fee2e2';
+							} else if (termeNum >= 28 && termeNum < 32) {
+								status = 'Grande prématurité (28-32 SA)';
+								color = '#ea580c';  // Orange
+								backgroundColor = '#ffedd5';
+							} else if (termeNum >= 32 && termeNum < 37) {
+								status = 'Prématurité modérée (32-37 SA)';
+								color = '#ca8a04';  // Jaune foncé
+								backgroundColor = '#fef9c3';
+							} else {
+								status = 'A terme (≥ 37 SA)';
+								color = '#16a34a';  // Vert
+								backgroundColor = '#dcfce7';
+							}
+
+							statusField.value = status;
+							statusField.style.backgroundColor = backgroundColor;
+							statusField.style.color = color;
+						}
+
+						// Écouteur d'événements pour le champ du terme
+						document.getElementById('terme')?.addEventListener('input', function() {
+							calculatePrematuriteStatus(this.value);
+						});
+
+						</script>
+						
+						
+						<!-- Section Déroulement -->
+						<p><strong>Déroulement :</strong></p>
+						<div style="margin-left: 20px;">
+							<!-- HTA -->
+							<div style="margin-bottom: 15px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="hta" id="pasHTA" value="non" checked> Pas d'HTA
+									</label>
+									<label>
+										<input type="radio" name="hta" id="avecHTA" value="oui"> HTA
+									</label>
+									<input type="text" id="htaPrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+
+							<!-- Diabète -->
+							<div style="margin-bottom: 15px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="diabete" id="pasDiabete" value="non" checked> Pas de diabète
+									</label>
+									<label>
+										<input type="radio" name="diabete" id="avecDiabete" value="oui"> Diabète
+									</label>
+									<input type="text" id="diabetePrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+
+							<!-- Echographies -->
+							<div style="margin-bottom: 3px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="echo" id="echoNormales" value="normales" checked> Echographies anténatales normales
+									</label>
+									<label>
+										<input type="radio" name="echo" id="echoAnormales" value="anormales"> Echographies anténatales anormales
+									</label>
+									<input type="text" id="echoPrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+						</div>
+						
+
+						<script>
+						// Gestion de l'affichage du champ HTA
+						document.querySelectorAll('input[name="hta"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('htaPrecisions');
+								precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+								if (this.value === 'non') {
+									precisions.value = '';
+								}
+							});
+						});
+
+						// Gestion de l'affichage du champ Diabète
+						document.querySelectorAll('input[name="diabete"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('diabetePrecisions');
+								precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+								if (this.value === 'non') {
+									precisions.value = '';
+								}
+							});
+						});
+
+						// Gestion de l'affichage du champ Echographies
+						document.querySelectorAll('input[name="echo"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('echoPrecisions');
+								precisions.style.display = this.value === 'anormales' ? 'inline-block' : 'none';
+								if (this.value === 'normales') {
+									precisions.value = '';
+								}
+							});
+						});
+						</script>
+						
+						<!-- Section Accouchement -->
+				<p><strong>Accouchement :</strong></p>
+				<div style="margin-left: 20px;">
+					<!-- Mode de début -->
+					<div style="margin-bottom: 15px;">
+						<p>
+							<label style="margin-right: 3px;">
+								<input type="radio" name="debutAccouchement" id="spontane" value="spontane" checked> Spontané
+							</label>
+							<label>
+								<input type="radio" name="debutAccouchement" id="declenche" value="declenche"> Déclenché
+							</label>
+						</p>
+					</div>
+
+					<!-- Voie d'accouchement -->
+					<div style="margin-bottom: 15px;">
+						<p>
+							<label style="margin-right: 3px;">
+								<input type="radio" name="voieAccouchement" id="voieBasse" value="voieBasse" checked> Par voie basse
+							</label>
+							<label>
+								<input type="radio" name="voieAccouchement" id="cesarienne" value="cesarienne"> Par césarienne
+							</label>
+						</p>
+					</div>
+
+					<!-- Instrumentation -->
+					<div style="margin-bottom: 15px;">
+						<p>
+							<label style="margin-right: 3px;">
+								<input type="radio" name="instrumentation" id="nonInstrumentale" value="non" checked> Non instrumentale
+							</label>
+							<label>
+								<input type="radio" name="instrumentation" id="instrumentale" value="oui"> Instrumentale
+							</label>
+						</p>
+					</div>
+				</div>
+						
+					<!-- Section Infection -->
+					<p><strong>Facteurs de risque d'infection bactérienne néonatale :</strong></p>
+					<div style="margin-left: 20px;">
+						<!-- Risque d'infection -->
+						<div style="margin-bottom: 15px;">
+							<p>
+								<label style="margin-right: 3px;">
+									<input type="radio" name="risqueInfection" id="pasRisqueInfection" value="non" checked> 
+									Pas de facteur de risque 
+								</label>
+								<label>
+									<input type="radio" name="risqueInfection" id="avecRisqueInfection" value="oui"> 
+									Risque d'infection 
+								</label>
+							</p>
+						</div>
+
+						<!-- Facteurs de risque (initialement cachés) -->
+						<div id="facteursRisque" style="margin-left: 20px; display: none;">
+							<p>
+								<label style="display: block; margin-bottom: 10px;">
+									<input type="checkbox" id="rupturePoches"> 
+									Rupture de la poche des eaux > 12 h
+								</label>
+								<label style="display: block; margin-bottom: 10px;">
+									<input type="checkbox" id="streptoB"> 
+									Dépistage portage de streptocoque B positif
+								</label>
+								<label style="display: block; margin-bottom: 10px;">
+									<input type="checkbox" id="liquideTrouble"> 
+									Liquide amniotique trouble
+								</label>
+							</p>
+						</div>
+					</div>
+
+					<script>
+					// Gestion de l'affichage des facteurs de risque
+					document.querySelectorAll('input[name="risqueInfection"]').forEach(radio => {
+						radio.addEventListener('change', function() {
+							const facteursRisque = document.getElementById('facteursRisque');
+							facteursRisque.style.display = this.value === 'oui' ? 'block' : 'none';
+							
+							// Si on repasse à "pas de risque", on décoche toutes les cases
+							if (this.value === 'non') {
+								document.getElementById('rupturePoches').checked = false;
+								document.getElementById('streptoB').checked = false;
+								document.getElementById('liquideTrouble').checked = false;
+							}
+						});
+					});
+					</script>
+
+
+					<!-- Section Antécédents médicaux -->
+					<h4>Antécédents médicaux</h4>
+					<div style="margin-left: 20px;">
+						<!-- Antécédents généraux -->
+						<div style="margin-bottom: 15px;">
+							<p>
+								<label style="margin-right: 3px;">
+									<input type="radio" name="antecedents" id="pasAntecedents" value="non" checked> 
+									Pas d'antécédent
+								</label>
+								<label>
+									<input type="radio" name="antecedents" id="avecAntecedents" value="oui"> 
+									Antécédents médicaux
+								</label>
+								<input type="text" id="antecedentsPrecisions" placeholder="Précisez" 
+									   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+							</p>
+						</div>
+
+						<!-- Bronchiolite -->
+						<div style="margin-bottom: 15px;">
+							<p>
+								<label style="margin-right: 3px;">
+									<input type="radio" name="bronchiolite" id="pasBronchiolite" value="non" checked> 
+									Pas de bronchiolite
+								</label>
+								<label>
+									<input type="radio" name="bronchiolite" id="avecBronchiolite" value="oui"> 
+									Bronchiolite
+								</label>
+								<input type="text" id="bronchiolitePrecisions" placeholder="Précisez" 
+									   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+							</p>
+						</div>
+
+						<!-- Hospitalisation -->
+						<div style="margin-bottom: 15px;">
+							<p>
+								<label style="margin-right: 3px;">
+									<input type="radio" name="hospitalisation" id="pasHospitalisation" value="non" checked> 
+									Pas d'hospitalisation
+								</label>
+								<label>
+									<input type="radio" name="hospitalisation" id="avecHospitalisation" value="oui"> 
+									Hospitalisation
+								</label>
+								<input type="text" id="hospitalisationPrecisions" placeholder="Précisez" 
+									   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+							</p>
+						</div>
+					</div>
+
+					<script>
+					// Gestion des antécédents généraux
+					document.querySelectorAll('input[name="antecedents"]').forEach(radio => {
+						radio.addEventListener('change', function() {
+							const precisions = document.getElementById('antecedentsPrecisions');
+							precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+							if (this.value === 'non') {
+								precisions.value = '';
+							}
+						});
+					});
+
+					// Gestion de la bronchiolite
+					document.querySelectorAll('input[name="bronchiolite"]').forEach(radio => {
+						radio.addEventListener('change', function() {
+							const precisions = document.getElementById('bronchiolitePrecisions');
+							precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+							if (this.value === 'non') {
+								precisions.value = '';
+							}
+						});
+					});
+
+					// Gestion de l'hospitalisation
+					document.querySelectorAll('input[name="hospitalisation"]').forEach(radio => {
+						radio.addEventListener('change', function() {
+							const precisions = document.getElementById('hospitalisationPrecisions');
+							precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+							if (this.value === 'non') {
+								precisions.value = '';
+							}
+						});
+					});
+					</script>
+					
+					
+						<!-- Section Antécédents chirurgicaux -->
+						<h4>Antécédents chirurgicaux :</h4>
+						<div style="margin-left: 20px;">
+							<div style="margin-bottom: 15px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="antChirurgicaux" id="pasAntChirurgicaux" value="non" checked> 
+										Pas d'antécédent
+									</label>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="antChirurgicaux" id="avecAntChirurgicaux" value="oui"> 
+										Antécédents chirurgicaux
+									</label>
+									<input type="text" id="antChirurgicauxPrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+						</div>
+
+						<!-- Section Antécédents familiaux -->
+						<h4>Antécédents familiaux :</h4>
+						<div style="margin-left: 20px;">
+							<!-- Antécédents familiaux généraux -->
+							<div style="margin-bottom: 15px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="antFamiliaux" id="pasAntFamiliaux" value="non" checked> 
+										Pas d'antécédent familiaux
+									</label>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="antFamiliaux" id="avecAntFamiliaux" value="oui"> 
+										Antécédents familiaux
+									</label>
+									<input type="text" id="antFamiliauxPrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+
+							<!-- Terrain atopique -->
+							<div style="margin-bottom: 15px;">
+								<p>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="terrainAtopique" id="pasTerrainAtopique" value="non" checked> 
+										Pas de terrain atopique familial
+									</label>
+									<label style="margin-right: 3px;">
+										<input type="radio" name="terrainAtopique" id="avecTerrainAtopique" value="oui"> 
+										Terrain atopique familial
+									</label>
+									<input type="text" id="terrainAtopiquePrecisions" placeholder="Précisez" 
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+								</p>
+							</div>
+						</div>
+
+						<script>
+						// Gestion des antécédents chirurgicaux
+						document.querySelectorAll('input[name="antChirurgicaux"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('antChirurgicauxPrecisions');
+								precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+								if (this.value === 'non') {
+									precisions.value = '';
+								}
+							});
+						});
+
+						// Gestion des antécédents familiaux
+						document.querySelectorAll('input[name="antFamiliaux"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('antFamiliauxPrecisions');
+								precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+								if (this.value === 'non') {
+									precisions.value = '';
+								}
+							});
+						});
+
+						// Gestion du terrain atopique
+						document.querySelectorAll('input[name="terrainAtopique"]').forEach(radio => {
+							radio.addEventListener('change', function() {
+								const precisions = document.getElementById('terrainAtopiquePrecisions');
+								precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+								if (this.value === 'non') {
+									precisions.value = '';
+								}
+							});
+						});
+						</script>
+
+
+<!-- Section Allergies -->
+                        <h4>Allergies et environnement :</h4>
+                        <div style="margin-left: 20px;">
+                            <!-- Allergies -->
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 3px;">
+                                        <input type="radio" name="allergies" id="pasAllergies" value="non" checked> 
+                                        Pas d'allergie connue
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="allergies" id="avecAllergies" value="oui"> 
+                                        Allergies
+                                    </label>
+                                    <input type="text" id="allergiesPrecisions" placeholder="Précisez" 
+                                           style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+                                </p>
+                            </div>
+
+                            <!-- Moquette -->
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 3px;">
+                                        <input type="radio" name="moquette" id="pasMoquette" value="non" checked> 
+                                        Pas de moquette au domicile
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="moquette" id="avecMoquette" value="oui"> 
+                                        Présence de moquette
+                                    </label>
+                                </p>
+                            </div>
+
+                            <!-- Animaux -->
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 3px;">
+                                        <input type="radio" name="animaux" id="pasAnimaux" value="non" checked> 
+                                        Pas d'animaux de compagnie
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="animaux" id="avecAnimaux" value="oui"> 
+                                        Animaux de compagnie
+                                    </label>
+                                    <input type="text" id="animauxPrecisions" placeholder="Précisez" 
+                                           style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Section Traitements -->
+                        <h4>Traitements :</h4>
+                        <div style="margin-left: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 3px;">
+                                        <input type="radio" name="traitements" id="pasTraitements" value="non" checked> 
+                                        Pas de traitement au long cours
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="traitements" id="avecTraitements" value="oui"> 
+                                        Traitements au long cours
+                                    </label>
+                                    <input type="text" id="traitementsPrecisions" placeholder="Précisez" 
+                                           style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Correspondant médical -->
+                        <h4>Correspondant médical :</h4>
+                        <div style="margin-left: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 10px;">
+                                        Dr. <input type="text" id="nomMedecin" placeholder="Nom du médecin" 
+                                               style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </label>
+                                    <label>
+                                        à <input type="text" id="villeMedecin" placeholder="Ville" 
+                                              style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </label>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Mode de garde -->
+                        <h4>Mode de garde :</h4>
+                        <div style="margin-left: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <p>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="modeGarde" id="parentsGarde" value="parents" checked> 
+                                        Par les parents
+                                    </label>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="modeGarde" id="crecheGarde" value="creche"> 
+                                        À la crèche/à l'école
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="modeGarde" id="nounouGarde" value="nounou"> 
+                                        Par une nounou
+                                    </label>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Alimentation -->
+                        <h4>Alimentation :</h4>
+                        <div style="margin-left: 20px;">
+                            <!-- Diversification -->
+                            <div style="margin-bottom: 15px;">
+                                <p><strong>Diversification :</strong></p>
+                                <p>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="diversification" id="nonDebutee" value="non" checked> 
+                                        Non débutée
+                                    </label>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="diversification" id="enCours" value="encours"> 
+                                        En cours
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="diversification" id="terminee" value="terminee"> 
+                                        Terminée
+                                    </label>
+                                </p>
+                            </div>
+
+                            <!-- Biberon -->
+                            <div style="margin-bottom: 15px;">
+                                <p><strong>Biberon :</strong></p>
+                                <p>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="biberon" id="pasBiberon" value="non" checked> 
+                                        Pas de biberon
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="biberon" id="avecBiberon" value="oui"> 
+                                        Biberon
+                                    </label>
+                                    <div id="biberonDetails" style="display: none; margin-top: 10px;">
+                                        <label style="margin-right: 15px;">
+                                            Quantité (ml) : 
+                                            <input type="number" id="quantiteBiberon" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                        </label>
+                                        <label>
+                                            Nombre par jour : 
+                                            <input type="number" id="nombreBiberons" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                        </label>
+                                    </div>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                    // Gestion des allergies
+                    document.querySelectorAll('input[name="allergies"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const precisions = document.getElementById('allergiesPrecisions');
+                            precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+                            if (this.value === 'non') precisions.value = '';
+                        });
+                    });
+
+                    // Gestion des animaux
+                    document.querySelectorAll('input[name="animaux"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const precisions = document.getElementById('animauxPrecisions');
+                            precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+                            if (this.value === 'non') precisions.value = '';
+                        });
+                    });
+
+                    // Gestion des traitements
+                    document.querySelectorAll('input[name="traitements"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const precisions = document.getElementById('traitementsPrecisions');
+                            precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+                            if (this.value === 'non') precisions.value = '';
+                        });
+                    });
+
+                    // Gestion des biberons
+                    document.querySelectorAll('input[name="biberon"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const details = document.getElementById('biberonDetails');
+                            details.style.display = this.value === 'oui' ? 'block' : 'none';
+                            if (this.value === 'non') {
+                                document.getElementById('quantiteBiberon').value = '';
+                                document.getElementById('nombreBiberons').value = '';
+                            }
+                        });
+                    });
+                    </script>
+
+	
+					
+					</div>
+				</div>
+			</div>
+			
+			
+						<div class="container pediatric-section">
+				<div class="section">
+					<div class="section-header">
+						<h3><span class="icon">🩺</span>Examen général</h3>
 							<div class="button-group">
 								<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
 								<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
@@ -674,6 +1420,13 @@ textarea {
 					<div class="section-content">
 
 					<h4> En cours de développement </h4>
+								<!-- Section Motif de consultation -->
+								<div class="form-group" style="margin-bottom: 20px;">
+									<label for="motifConsultation"><strong>Motif de consultation :</strong></label>
+									<input type="text" id="motifConsultation" placeholder="Précisez"
+										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+								</div>
+								
 					</div>
 				</div>
 			</div>
@@ -690,7 +1443,15 @@ textarea {
 					</div>
 				 <div class="section-content">
 
-					<h4> En cours de développement </h4>
+					<h4>A : Airways</h4>
+					<h4>B : Breathing</h4>
+
+					<h4>C : Circulation</h4>
+
+					<h4>D : Uro-digestif</h4>
+
+					<h4>E : Neurologique</h4>
+
 					</div>
 				</div>
 			</div>
@@ -732,7 +1493,186 @@ function toggleSection(button) {
     section.setAttribute('data-hidden', isHidden);
 }
 
+
+document.getElementById('generateText').addEventListener('click', function() {
+    const textArea = document.getElementById('generatedTextArea');
+    if (!textArea) return;
+
+    let finalText = '';
+	
+	
+	    // Ajout de la mention Sexe / Age / Date de naissance
+    const age = document.getElementById('ageCalcule')?.value || '...';
+    const dateNaissance = document.getElementById('dateNaissance')?.value ? 
+                          new Date(document.getElementById('dateNaissance').value).toLocaleDateString('fr-FR') : 'XX/XX/XX';
+    const sexe = document.querySelector('input[name="sexe"]:checked')?.value;
+
+    if (sexe === 'garcon') {
+        finalText += `Patient de ${age}, né le ${dateNaissance}.\n\n`;
+    } else if (sexe === 'fille') {
+        finalText += `Patiente de ${age}, née le ${dateNaissance}.\n\n`;
+    }
+	
+	
+
+    // Section Antécédents avec style gras et souligné
+    finalText += `<strong>Antécédents :</strong>\n`;
+// Vérification des données néonatales
+const gestation = document.getElementById('gestation')?.value;
+const parite = document.getElementById('parite')?.value;
+const terme = document.getElementById('terme')?.value;
+
+// N'ajouter la section néonatale que si au moins une valeur est renseignée
+if (gestation || parite || terme) {
+    let neonatalText = `Néonataux : G${gestation || 'X'}P${parite || 'X'} ; `;
+
+    // Gestion du terme et prématurité
+    if (terme) {
+        let prematuriteStatus = '';
+        if (terme < 28) prematuriteStatus = 'très grande prématurité';
+        else if (terme < 32) prematuriteStatus = 'grande prématurité';
+        else if (terme < 37) prematuriteStatus = 'prématurité modérée';
+        else prematuriteStatus = 'à terme';
+        
+        neonatalText += `grossesse de ${terme} SA (${prematuriteStatus}) ; `;
+    } else {
+        neonatalText += 'grossesse à terme ; ';
+    }
+
+    // Complications grossesse
+    let complications = [];
+    if (document.getElementById('avecDiabete')?.checked) {
+        complications.push('diabète gestationnel');
+    }
+    if (document.getElementById('avecHTA')?.checked) {
+        complications.push('HTA');
+    }
+    
+    neonatalText += complications.length ? 
+        `grossesse marquée par ${complications.join(', ')}, par ailleurs pas d'${!document.getElementById('avecHTA').checked ? 'HTA' : 'autre complication'} et ` :
+        'grossesse de déroulement normal, pas d\'HTA et ';
+        
+    neonatalText += document.getElementById('echoAnormales').checked ?
+        `échographies anténatales anormales (${document.getElementById('echoPrecisions').value}) ; ` :
+        'échographies anténatales normales ; ';
+
+    // Accouchement
+    const voieAccouchement = document.querySelector('input[name="voieAccouchement"]:checked')?.value === 'voieBasse' ? 
+        'voie basse' : 'césarienne';
+    neonatalText += `accouchement par ${voieAccouchement} `;
+    neonatalText += document.querySelector('input[name="instrumentation"]:checked')?.value === 'oui' ? 
+        'instrumentale' : 'non instrumentale';
+    
+    finalText += neonatalText + '\n';
+}
+    // Antécédents médicaux
+    let medicalText = 'Médicaux : ';
+    let antecedentsMedicaux = [];
+    
+    if (document.getElementById('avecAntecedents')?.checked) {
+        antecedentsMedicaux.push(document.getElementById('antecedentsPrecisions').value);
+    }
+    if (document.getElementById('avecBronchiolite')?.checked) {
+        antecedentsMedicaux.push(`bronchiolite (${document.getElementById('bronchiolitePrecisions').value})`);
+    }
+    if (document.getElementById('avecHospitalisation')?.checked) {
+        antecedentsMedicaux.push(`hospitalisation pour ${document.getElementById('hospitalisationPrecisions').value}`);
+    }
+
+    medicalText += antecedentsMedicaux.length ? antecedentsMedicaux.join(', ') : 'aucun antécédent';
+    finalText += medicalText + '\n';
+
+    // Antécédents chirurgicaux
+    finalText += 'Chirurgicaux : ' + (document.getElementById('avecAntChirurgicaux')?.checked ? 
+        document.getElementById('antChirurgicauxPrecisions').value : 
+        'aucun antécédent') + '\n';
+
+			// Antécédents familiaux
+			let familiauxText = 'Familiaux : ';
+			if (document.getElementById('avecAntFamiliaux')?.checked) {
+				familiauxText += document.getElementById('antFamiliauxPrecisions').value;
+			} else {
+				familiauxText += 'aucun antécédent';
+			}
+			familiauxText += ', ' + (document.getElementById('avecTerrainAtopique')?.checked ? 
+				`terrain atopique familial (${document.getElementById('terrainAtopiquePrecisions').value})` : 
+				'pas de terrain atopique familial');
+			finalText += familiauxText + '\n';
+
+// Allergies
+let allergiesText = 'Allergies : ' + (document.getElementById('avecAllergies')?.checked ? 
+    document.getElementById('allergiesPrecisions').value : 
+    'pas d\'allergie connue') + ', ';
+
+if (document.getElementById('avecAnimaux')?.checked) {
+    allergiesText += `présence d'animaux au domicile, `;
+} else {
+    allergiesText += 'pas d\'animaux au domicile, ';
+}
+
+if (document.getElementById('avecMoquette')?.checked) {
+    allergiesText += 'présence de moquette';
+} else {
+    allergiesText += 'pas de moquette';
+}
+finalText += allergiesText + '\n';
+
+    // Traitements
+    finalText += 'Traitement : ' + (document.getElementById('avecTraitements')?.checked ? 
+        document.getElementById('traitementsPrecisions').value : 
+        'pas de traitement au long cours') + '\n';
+
+    // Médecin traitant
+    const nomMedecin = document.getElementById('nomMedecin')?.value;
+    const villeMedecin = document.getElementById('villeMedecin')?.value;
+    if (nomMedecin || villeMedecin) {
+        finalText += `Pédiatre traitant : Dr ${nomMedecin || ''} à ${villeMedecin || ''}\n`;
+    }
+
+    // Mode de garde
+    const modeGarde = document.querySelector('input[name="modeGarde"]:checked')?.value;
+    finalText += `Mode de garde : ${modeGarde === 'parents' ? 'par les parents' : 
+                                  modeGarde === 'creche' ? 'à la crèche' : 
+                                  'par une nounou'}\n`;
+
+    // Alimentation
+    let alimentationText = 'Alimentation : ';
+    if (document.getElementById('avecBiberon')?.checked) {
+        const quantite = document.getElementById('quantiteBiberon')?.value || 'X';
+        const nombre = document.getElementById('nombreBiberons')?.value || 'X';
+        alimentationText += `${quantite} biberons de ${nombre} mL par jour, `;
+    }
+    
+    const diversification = document.querySelector('input[name="diversification"]:checked')?.value;
+    alimentationText += `diversification ${diversification === 'non' ? 'non débutée' : 
+                                         diversification === 'encours' ? 'en cours' : 
+                                         'terminée'}`;
+    finalText += alimentationText;
+
+    // Affichage du texte avec animation
+    textArea.innerHTML = '';
+    finalText.split('\n').forEach((line, index) => {
+        const div = document.createElement('div');
+        div.style.opacity = '0';
+        div.style.animation = `fadeInAnimation 0.5s ease-out forwards ${index * 0.1}s`;
+        div.innerHTML = line;
+        textArea.appendChild(div);
+    });
+});
+
+// Mettre en place l'événement de copie
+document.getElementById('copyText')?.addEventListener('click', () => {
+    const textArea = document.getElementById('generatedTextArea');
+    if (textArea) {
+        navigator.clipboard.writeText(textArea.textContent)
+            .then(() => alert('Texte copié dans le presse-papier.'));
+    }
+});
 </script>
+
+
+
+
 
 <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
     TypixClin © 2025, par Jean et Iulia avec l'aide précieuse d'Auxane
