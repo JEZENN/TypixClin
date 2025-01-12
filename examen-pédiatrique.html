@@ -701,7 +701,9 @@ textarea {
 									<label for="dateNaissance"><strong>Date de naissance :</strong></label>
 									<input type="date" id="dateNaissance" style="margin-left: 10px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
 									
-									<span style="margin-left: 20px;"><strong>Age :</strong></span>
+								</div>
+								<div class="form-group" style="margin-bottom: 20px;">
+									<span><strong>Age :</strong></span>
 									<input type="text" id="ageCalcule" readonly 
 										   style="margin-left: 10px; width: 200px; background-color: #f3f4f6; color: #666; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
 								</div>
@@ -1283,7 +1285,7 @@ textarea {
                                     </label>
                                     <label>
                                         à <input type="text" id="villeMedecin" placeholder="Ville" 
-                                              style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                              style="margin-top: 10px; width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
                                     </label>
                                 </p>
                             </div>
@@ -1399,6 +1401,163 @@ textarea {
                         });
                     });
                     </script>
+					
+					
+					<!-- Section Vaccins -->
+<h4>Vaccins :</h4>
+<div style="margin-left: 20px;">
+    <!-- Status vaccinal -->
+    <div style="margin-bottom: 15px;">
+        <p>
+            <label style="margin-right: 3px;">
+                <input type="radio" name="vaccins" id="vaccinsAJour" value="ajour" checked> 
+                À jour
+            </label>
+            <label>
+                <input type="radio" name="vaccins" id="vaccinsNonAJour" value="nonajour"> 
+                Non à jour
+            </label>
+            <input type="text" id="vaccinsPrecisions" placeholder="Précisez" 
+                   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        </p>
+    </div>
+
+    <!-- Vaccins exigibles -->
+    <div id="vaccinsExigibles" style="margin-top: 20px;">
+        <p><strong>Vaccins exigibles à cet âge :</strong></p>
+        <div style="display: grid; gap: 10px; margin-top: 10px;">
+            <div style="display: flex; align-items: center;">
+                <span style="width: 150px;">DTP-Ca-Hib :</span>
+                <input type="text" id="dtpDoses" readonly 
+                       style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+                <span style="margin-left: 5px;">doses</span>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <span style="width: 150px;">VHB :</span>
+                <input type="text" id="vhbDoses" readonly 
+                       style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+                <span style="margin-left: 5px;">doses</span>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <span style="width: 150px;">Pneumocoque :</span>
+                <input type="text" id="pneumoDoses" readonly 
+                       style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+                <span style="margin-left: 5px;">doses</span>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <span style="width: 150px;">Méningocoque C :</span>
+                <input type="text" id="meningoDoses" readonly 
+                       style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+                <span style="margin-left: 5px;">doses</span>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <span style="width: 150px;">ROR :</span>
+                <input type="text" id="rorDoses" readonly 
+                       style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background-color: #f3f4f6;">
+                <span style="margin-left: 5px;">doses</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage du champ de précision pour les vaccins
+document.querySelectorAll('input[name="vaccins"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const precisions = document.getElementById('vaccinsPrecisions');
+        precisions.style.display = this.value === 'nonajour' ? 'inline-block' : 'none';
+        if (this.value === 'ajour') {
+            precisions.value = '';
+        }
+    });
+});
+
+// Fonction pour calculer les doses de vaccins requises
+function calculateVaccineDoses(ageInMonths) {
+    const doses = {
+        dtp: 0,
+        vhb: 0,
+        pneumo: 0,
+        meningo: 0,
+        ror: 0
+    };
+
+    if (ageInMonths < 2) return doses;
+
+    if (ageInMonths >= 2 && ageInMonths < 4) {
+        doses.dtp = 1;
+        doses.vhb = 1;
+        doses.pneumo = 1;
+    }
+    else if (ageInMonths >= 4 && ageInMonths < 11) {
+        doses.dtp = 2;
+        doses.vhb = 2;
+        doses.pneumo = 2;
+        if (ageInMonths >= 5) {
+            doses.meningo = 1;
+        }
+    }
+    else if (ageInMonths >= 11 && ageInMonths < 72) {
+        doses.dtp = 3;
+        doses.vhb = 3;
+        doses.pneumo = 3;
+        if (ageInMonths >= 12) {
+            doses.meningo = 2;
+            if (ageInMonths < 16) {
+                doses.ror = 1;
+            } else {
+                doses.ror = 2;
+            }
+        }
+    }
+    else if (ageInMonths >= 72 && ageInMonths < 132) {
+        doses.dtp = 4;
+        doses.vhb = 3;
+        doses.pneumo = 3;
+        doses.meningo = 2;
+        doses.ror = 2;
+    }
+    else if (ageInMonths >= 132 && ageInMonths <= 300) {
+        doses.dtp = 5;
+        doses.vhb = 3;
+        doses.pneumo = 3;
+        doses.meningo = 2;
+        doses.ror = 2;
+    }
+
+    return doses;
+}
+
+// Mise à jour des champs de doses de vaccins
+function updateVaccineDoses(doses) {
+    document.getElementById('dtpDoses').value = doses.dtp;
+    document.getElementById('vhbDoses').value = doses.vhb;
+    document.getElementById('pneumoDoses').value = doses.pneumo;
+    document.getElementById('meningoDoses').value = doses.meningo;
+    document.getElementById('rorDoses').value = doses.ror;
+}
+
+// Écouteur pour la date de naissance
+document.getElementById('dateNaissance')?.addEventListener('change', function() {
+    if (!this.value) {
+        updateVaccineDoses({dtp: 0, vhb: 0, pneumo: 0, meningo: 0, ror: 0});
+        return;
+    }
+
+    const birthDate = new Date(this.value);
+    const today = new Date();
+    let months = (today.getFullYear() - birthDate.getFullYear()) * 12;
+    months -= birthDate.getMonth();
+    months += today.getMonth();
+
+    const doses = calculateVaccineDoses(months);
+    updateVaccineDoses(doses);
+});
+</script>
 
 	
 					
@@ -1418,8 +1577,387 @@ textarea {
 							
 					</div>
 					<div class="section-content">
+					
+					
+					<!-- Section Développement staturopondéral -->
+<h4>Développement staturopondéral :</h4>
+<div style="margin-left: 20px;">
+    <!-- Harmonie du développement -->
+    <div style="margin-bottom: 15px;">
+        <p>
+            <label style="margin-right: 3px;">
+                <input type="radio" name="harmonieDev" id="devHarmonieux" value="harmonieux" checked> 
+                Harmonieux
+            </label>
+            <label>
+                <input type="radio" name="harmonieDev" id="devNonHarmonieux" value="nonharmonieux"> 
+                Non harmonieux
+            </label>
+            <input type="text" id="devNonHarmonieuxPrecisions" placeholder="Précisez" 
+                   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        </p>
+    </div>
 
-					<h4> En cours de développement </h4>
+    <!-- Déviation standard (visible uniquement si harmonieux) -->
+    <div id="deviationStandardSection" style="margin-left: 20px;">
+        <p><strong>Position sur la courbe :</strong></p>
+        <div style="display: grid; gap: 10px; margin-top: 10px;">
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="mediane" checked> 
+                Sur la médiane
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="-1ds"> 
+                Sur -1 DS
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="-2ds"> 
+                Sur -2 DS
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="-3ds"> 
+                Sur -3 DS
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="+1ds"> 
+                Sur +1 DS
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="+2ds"> 
+                Sur +2 DS
+            </label>
+            <label style="display: block;">
+                <input type="radio" name="deviationStandard" value="+3ds"> 
+                Sur +3 DS
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage du champ de précision pour développement non harmonieux
+document.querySelectorAll('input[name="harmonieDev"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const precisions = document.getElementById('devNonHarmonieuxPrecisions');
+        const deviationSection = document.getElementById('deviationStandardSection');
+        
+        if (this.value === 'nonharmonieux') {
+            precisions.style.display = 'inline-block';
+            deviationSection.style.display = 'none';
+            // Décocher toutes les options de déviation standard
+            document.querySelectorAll('input[name="deviationStandard"]').forEach(input => {
+                input.checked = false;
+            });
+        } else {
+            precisions.style.display = 'none';
+            precisions.value = '';
+            deviationSection.style.display = 'block';
+            // Recocher la médiane par défaut
+            document.querySelector('input[name="deviationStandard"][value="mediane"]').checked = true;
+        }
+    });
+});
+</script>
+
+<!-- Section État d'hydratation -->
+<h4>État d'hydratation :</h4>
+<div style="margin-left: 20px;">
+    <div style="margin-bottom: 15px;">
+        <p>
+            <label style="margin-right: 3px;">
+                <input type="radio" name="hydratation" id="pasDeshydratation" value="normal" checked> 
+                Pas de signe de déshydratation
+            </label>
+            <label>
+                <input type="radio" name="hydratation" id="avecDeshydratation" value="deshydratation"> 
+                Signes de déshydratation
+            </label>
+        </p>
+
+        <!-- Signes de déshydratation (initialement cachés) -->
+        <div id="signesDeshydratation" style="margin-left: 20px; margin-top: 10px; display: none;">
+            <p style="display: flex; flex-wrap: wrap; gap: 20px;">
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="pliCutane" style="margin-right: 5px;"> 
+                    Pli cutané
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="oligurie" style="margin-right: 5px;"> 
+                    Oligurie
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="absenceLarme" style="margin-right: 5px;"> 
+                    Absence de larme
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="fontanelleCreusee" style="margin-right: 5px;"> 
+                    Fontanelle creusée
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="yeuxCernes" style="margin-right: 5px;"> 
+                    Yeux cernés
+                </label>
+                <label style="display: flex; align-items: center;">
+                    <input type="checkbox" id="muqueuseSeches" style="margin-right: 5px;"> 
+                    Muqueuses et lèvres sèches
+                </label>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Section Douleur -->
+<h4>Douleur :</h4>
+<div style="margin-left: 20px;">
+    <div style="margin-bottom: 15px;">
+        <p>
+            <label style="margin-right: 3px;">
+                <input type="radio" name="douleur" id="pasDouleur" value="non" checked> 
+                Pas de plainte algique
+            </label>
+            <label>
+                <input type="radio" name="douleur" id="avecDouleur" value="oui"> 
+                Plainte algique
+            </label>
+            <input type="text" id="douleurPrecisions" placeholder="Précisez" 
+                   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        </p>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage des signes de déshydratation
+document.querySelectorAll('input[name="hydratation"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const signesSection = document.getElementById('signesDeshydratation');
+        signesSection.style.display = this.value === 'deshydratation' ? 'block' : 'none';
+        
+        // Si on repasse à "pas de déshydratation", on décoche toutes les cases
+        if (this.value === 'normal') {
+            const checkboxes = signesSection.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+    });
+});
+
+// Gestion de l'affichage du champ de précision pour la douleur
+document.querySelectorAll('input[name="douleur"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const precisions = document.getElementById('douleurPrecisions');
+        precisions.style.display = this.value === 'oui' ? 'inline-block' : 'none';
+        if (this.value === 'non') {
+            precisions.value = '';
+        }
+    });
+});
+</script>
+
+
+<!-- Section Développement psychomoteur -->
+<h4>Développement psychomoteur :</h4>
+<div style="margin-left: 20px;">
+    <div style="margin-bottom: 15px;">
+        <p>
+            <label style="margin-right: 3px;">
+                <input type="radio" name="devPsycho" id="devNormal" value="normal" checked> 
+                Normal pour l'âge
+            </label>
+            <label>
+                <input type="radio" name="devPsycho" id="devAnormal" value="anormal"> 
+                Anormal
+            </label>
+            <input type="text" id="devPsychoPrecisions" placeholder="Précisez" 
+                   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        </p>
+    </div>
+
+    <!-- Zone d'affichage des caractéristiques selon l'âge -->
+    <div id="caracteristiquesAge" style="display: none; margin-top: 15px; padding: 15px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div id="caracteristiquesContenu"></div>
+    </div>
+</div>
+
+<script>
+// Gestionnaire pour le développement psychomoteur
+document.querySelectorAll('input[name="devPsycho"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const precisions = document.getElementById('devPsychoPrecisions');
+        precisions.style.display = this.value === 'anormal' ? 'inline-block' : 'none';
+        if (this.value === 'normal') {
+            precisions.value = '';
+        }
+    });
+});
+
+// Données des caractéristiques par âge
+const caracteristiquesParAge = {
+    2: {
+        titre: "2 mois",
+        caracteristiques: {
+            "Motricité globale": "Soulève la tête et les épaules (sur le ventre), bouge vigoureusement les quatre membres, tenue de tête acquise, s'appuie sur les avant-bras (sur le ventre)",
+            "Motricité fine": "Serre le doigt, joue avec les mains",
+            "Langage": "Réponse vocale à la sollicitation, vocalise",
+            "Développement social et relationnel": "Sourire-réponse, suit des yeux, rit aux éclats, interagit avec ses parents de façon adaptée"
+        }
+    },
+    4: {
+        titre: "4 mois",
+        caracteristiques: {
+            "Motricité globale": "Tient assis avec appui",
+            "Motricité fine": "Passe un objet d'une main à l'autre",
+            "Langage": "Babillage (« ma-ma »)",
+            "Développement social et relationnel": "Attention partagée"
+        }
+    },
+    6: {
+        titre: "6 mois",
+        caracteristiques: {
+            "Motricité globale": "Tient assis sans appui, tient debout avec appui",
+            "Motricité fine": "Saisit un objet avec la pince pouce-index, réactions posturales aux pulsions",
+            "Langage": "Répète une syllabe",
+            "Développement social et relationnel": "Réagit à son prénom, joue à « coucou, le voilà », peur de l'étranger, attention conjointe"
+        }
+    },
+    9: {
+        titre: "9 mois",
+        caracteristiques: {
+            "Motricité globale": "Commence à se tenir debout avec appui",
+            "Motricité fine": "Développement de la coordination avec objets",
+            "Langage": "Répète plus de syllabes",
+            "Développement social et relationnel": "Débuts d'interactions plus complexes avec l'environnement"
+        }
+    },
+    15: {
+        titre: "12 à 18 mois",
+        caracteristiques: {
+            "Motricité globale": "Marche seul",
+            "Motricité fine": "Autonomie pour le verre et la cuillère, empile deux cubes",
+            "Langage": "Deux mots combinés, apparition du « non »",
+            "Développement social et relationnel": "Joue avec d'autres enfants, pointage vers un objet pour avoir un objet, fait semblant"
+        }
+    },
+    24: {
+        titre: "24 mois",
+        caracteristiques: {
+            "Motricité globale": "Court",
+            "Motricité fine": "Imite un trait",
+            "Langage": "Trois mots en phrase",
+            "Développement social et relationnel": "Comprend une consigne simple, jeux symboliques"
+        }
+    },
+    36: {
+        titre: "3 ans",
+        caracteristiques: {
+            "Motricité globale": "Monte les escaliers en alternant les pieds, fait du tricycle",
+            "Motricité fine": "Imite un rond",
+            "Langage": "Dit une petite histoire",
+            "Développement social et relationnel": "S'habille seul"
+        }
+    }
+};
+
+function afficherCaracteristiques(ageEnMois) {
+    const caracteristiquesDiv = document.getElementById('caracteristiquesContenu');
+    const zoneCaracteristiques = document.getElementById('caracteristiquesAge');
+    
+    if (!ageEnMois || isNaN(ageEnMois) || ageEnMois > 60) {
+        zoneCaracteristiques.style.display = 'none';
+        return;
+    }
+
+    // Calculer l'âge en années et mois pour l'affichage
+    const annees = Math.floor(ageEnMois / 12);
+    const moisRestants = ageEnMois % 12;
+    let ageTexte = '';
+    if (annees > 0) {
+        ageTexte += `${annees} an${annees > 1 ? 's' : ''}`;
+        if (moisRestants > 0) ageTexte += ' et ';
+    }
+    if (moisRestants > 0 || annees === 0) {
+        ageTexte += `${moisRestants} mois`;
+    }
+
+    // Début du HTML avec styles mis à jour
+    let html = `
+           <div style="border-left: 4px solid #1e40af; padding-left: 10px;">  
+			<div style="display: flex; align-items: center; margin-bottom: 10px;">
+               
+                    <span style="color: #1e40af; font-size: 1rem; font-weight: 600;">
+                        Âge actuel :
+                    </span>
+                    <span style="color: #2563eb; font-size: 1rem; font-weight: 600; margin-left: 5px;">
+                        ${ageTexte}
+                    </span>
+             </div>
+            
+                <span style="color: #1e40af; font-size: 1rem; font-weight: 600;">
+                    Caractéristiques attendues :
+                </span>
+            </div>
+			
+            <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 10px;">
+    `;
+
+    const ages = Object.keys(caracteristiquesParAge).map(Number);
+    const agesProches = ages
+        .sort((a, b) => Math.abs(a - ageEnMois) - Math.abs(b - ageEnMois))
+        .slice(0, 2);
+
+    agesProches.forEach((age, index) => {
+        if (index === 1 && Math.abs(agesProches[0] - ageEnMois) === Math.abs(age - ageEnMois)) {
+            html += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">`;
+        } else if (index === 1) {
+            return;
+        } else {
+            html += `<div>`;
+        }
+        
+        html += `<h6 style="color: #2563eb; font-size: 1rem; margin: 0 0 10px 0; font-weight: bold; 
+            background: #f8fafc; padding: 6px 10px; border-radius: 6px; display: inline-block;">
+            ${caracteristiquesParAge[age].titre}
+        </h6>`;
+        
+        Object.entries(caracteristiquesParAge[age].caracteristiques).forEach(([domaine, description]) => {
+            html += `<div style="margin: 8px 0; padding-left: 10px; border-left: 2px solid #e2e8f0;">
+                <strong style="color: #334155; margin-bottom: 2px; display: inline-block;">${domaine}</strong> : 
+                <span style="color: #475569; font-size: 0.95rem;">${description}</span>
+            </div>`;
+        });
+        
+        html += '</div>';
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    caracteristiquesDiv.innerHTML = html;
+    zoneCaracteristiques.style.display = 'block';
+}
+
+// Écouteur pour le changement de date de naissance
+document.getElementById('dateNaissance')?.addEventListener('change', function() {
+    if (!this.value) {
+        afficherCaracteristiques(null);
+        return;
+    }
+
+    const birthDate = new Date(this.value);
+    const today = new Date();
+    let months = (today.getFullYear() - birthDate.getFullYear()) * 12;
+    months -= birthDate.getMonth();
+    months += today.getMonth();
+    
+    afficherCaracteristiques(months);
+});
+</script>
+
+
+
+
+
+					<h4> Histoire de la maladie</h4>
 								<!-- Section Motif de consultation -->
 								<div class="form-group" style="margin-bottom: 20px;">
 									<label for="motifConsultation"><strong>Motif de consultation :</strong></label>
@@ -1427,10 +1965,36 @@ textarea {
 										   style="margin-left: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
 								</div>
 								
-					</div>
+<!-- Section Histoire de la maladie -->
+								<div class="form-group" style="margin-bottom: 20px; width: 100%;">
+									<textarea id="histoireMaladie" 
+											placeholder="Notez ici l'histoire de la maladie"
+											style="width: 100%;
+												   min-height: 150px;
+												   padding: 10px;
+												   border: 1px solid #ccc;
+												   border-radius: 4px;
+												   font-family: inherit;
+												   font-size: 1rem;
+												   line-height: 1.5;
+												   resize: none;
+												   box-sizing: border-box;
+												   margin-top: 10px;"></textarea>
+								</div>
+								
+								<script>
+								// Gestionnaire pour réinitialiser le textarea
+								document.getElementById('histoireMaladie')?.addEventListener('input', function() {
+									if (this.value.trim() === '') {
+										this.value = ''; // Réinitialise complètement la valeur
+									}
+								});
+								</script>
+								
+								
 				</div>
 			</div>
-			
+			</div>
 	
 			<div class="container pediatric-section">
 				<div class="section">
@@ -1445,8 +2009,193 @@ textarea {
 
 					<h4>A : Airways</h4>
 					<h4>B : Breathing</h4>
+<div class="breathing-section" style="margin: 20px 0;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="breathingRate"><strong>Fréquence respiratoire (/min) :</strong></label>
+        <input 
+            type="number" 
+            id="breathingRate" 
+            style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+            placeholder="/min"
+        >
+        <span id="breathingStatus" style="margin-left: 10px; font-weight: 500;"></span>
+        <span id="breathingNorms" style="margin-left: 10px; color: #666;"></span>
+    </div>
+</div>
+
+<script>
+// Fonction pour calculer les normes en fonction de l'âge
+function getNormalRangeForAge(ageInMonths) {
+    if (ageInMonths <= 1) return { min: 40, max: 60 };
+    if (ageInMonths <= 6) return { min: 30, max: 50 };
+    if (ageInMonths <= 24) return { min: 20, max: 40 };
+    if (ageInMonths <= 144) return { min: 16, max: 30 };
+    return { min: 12, max: 20 };
+}
+
+// Fonction pour calculer l'âge en mois
+function calculateAgeInMonths(birthDate) {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let months = (today.getFullYear() - birth.getFullYear()) * 12;
+    months -= birth.getMonth();
+    months += today.getMonth();
+    return months;
+}
+
+// Fonction pour valider la fréquence respiratoire
+function validateBreathingRate(rate, ageInMonths) {
+    const range = getNormalRangeForAge(ageInMonths);
+    const numRate = parseInt(rate);
+
+    const input = document.getElementById('breathingRate');
+    const statusElement = document.getElementById('breathingStatus');
+    
+    if (!rate) {
+        input.style.backgroundColor = '';
+        input.style.borderColor = '#ccc';
+        statusElement.textContent = '';
+        return;
+    }
+
+    if (numRate < range.min) {
+        input.style.backgroundColor = '#fef2f2';
+        input.style.borderColor = '#dc2626';
+        statusElement.textContent = 'Bradypnée';
+        statusElement.style.color = '#dc2626';
+    } else if (numRate > range.max) {
+        input.style.backgroundColor = '#fef2f2';
+        input.style.borderColor = '#dc2626';
+        statusElement.textContent = 'Tachypnée';
+        statusElement.style.color = '#dc2626';
+    } else {
+        input.style.backgroundColor = '#f0fdf4';
+        input.style.borderColor = '#22c55e';
+        statusElement.textContent = 'Normal';
+        statusElement.style.color = '#22c55e';
+    }
+}
+
+// Initialisation et gestionnaires d'événements
+document.addEventListener('DOMContentLoaded', function() {
+    const breathingRate = document.getElementById('breathingRate');
+    const birthDateInput = document.getElementById('dateNaissance');
+    const normsElement = document.getElementById('breathingNorms');
+
+    function updateValidation() {
+        if (!birthDateInput.value) return;
+        
+        const ageInMonths = calculateAgeInMonths(birthDateInput.value);
+        const range = getNormalRangeForAge(ageInMonths);
+        normsElement.textContent = `Normes pour l'âge : ${range.min}-${range.max} /min`;
+        
+        validateBreathingRate(breathingRate.value, ageInMonths);
+    }
+
+    // Événement pour la modification de la fréquence respiratoire
+    breathingRate?.addEventListener('input', updateValidation);
+
+    // Événement pour la modification de la date de naissance
+    birthDateInput?.addEventListener('change', updateValidation);
+});
+</script>
+
 
 					<h4>C : Circulation</h4>
+					
+<div class="heart-rate-section" style="margin: 20px 0;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="heartRate"><strong>Fréquence cardiaque (/min) :</strong></label>
+        <input 
+            type="number" 
+            id="heartRate" 
+            style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+            placeholder="/min"
+        >
+        <span id="heartStatus" style="margin-left: 10px; font-weight: 500;"></span>
+        <span id="heartNorms" style="margin-left: 10px; color: #666;"></span>
+    </div>
+</div>
+
+<script>
+// Fonction pour calculer les normes en fonction de l'âge
+function getHeartRateRangeForAge(ageInMonths) {
+    if (ageInMonths <= 6) return { min: 100, max: 170 };
+    if (ageInMonths <= 12) return { min: 90, max: 150 };
+    if (ageInMonths <= 24) return { min: 80, max: 140 };
+    if (ageInMonths <= 48) return { min: 70, max: 130 };
+    if (ageInMonths <= 120) return { min: 55, max: 125 };
+    if (ageInMonths <= 168) return { min: 60, max: 110 };
+    return { min: 50, max: 100 };
+}
+
+// Fonction pour calculer l'âge en mois
+function calculateAgeInMonths(birthDate) {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let months = (today.getFullYear() - birth.getFullYear()) * 12;
+    months -= birth.getMonth();
+    months += today.getMonth();
+    return months;
+}
+
+// Fonction pour valider la fréquence cardiaque
+function validateHeartRate(rate, ageInMonths) {
+    const range = getHeartRateRangeForAge(ageInMonths);
+    const numRate = parseInt(rate);
+    const input = document.getElementById('heartRate');
+    const statusElement = document.getElementById('heartStatus');
+    
+    if (!rate) {
+        input.style.backgroundColor = '';
+        input.style.borderColor = '#ccc';
+        statusElement.textContent = '';
+        return;
+    }
+
+    if (numRate < range.min) {
+        input.style.backgroundColor = '#fef2f2';
+        input.style.borderColor = '#dc2626';
+        statusElement.textContent = 'Bradycardie';
+        statusElement.style.color = '#dc2626';
+    } else if (numRate > range.max) {
+        input.style.backgroundColor = '#fef2f2';
+        input.style.borderColor = '#dc2626';
+        statusElement.textContent = 'Tachycardie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        input.style.backgroundColor = '#f0fdf4';
+        input.style.borderColor = '#22c55e';
+        statusElement.textContent = 'Normal';
+        statusElement.style.color = '#22c55e';
+    }
+}
+
+// Initialisation et gestionnaires d'événements
+document.addEventListener('DOMContentLoaded', function() {
+    const heartRate = document.getElementById('heartRate');
+    const birthDateInput = document.getElementById('dateNaissance');
+    const normsElement = document.getElementById('heartNorms');
+
+    function updateValidation() {
+        if (!birthDateInput.value) return;
+        
+        const ageInMonths = calculateAgeInMonths(birthDateInput.value);
+        const range = getHeartRateRangeForAge(ageInMonths);
+        normsElement.textContent = `Normes pour l'âge : ${range.min}-${range.max} /min`;
+        
+        validateHeartRate(heartRate.value, ageInMonths);
+    }
+
+    // Événement pour la modification de la fréquence cardiaque
+    heartRate?.addEventListener('input', updateValidation);
+
+    // Événement pour la modification de la date de naissance
+    birthDateInput?.addEventListener('change', updateValidation);
+});
+</script>
+
+
 
 					<h4>D : Uro-digestif</h4>
 
@@ -1640,7 +2389,7 @@ finalText += allergiesText + '\n';
     if (document.getElementById('avecBiberon')?.checked) {
         const quantite = document.getElementById('quantiteBiberon')?.value || 'X';
         const nombre = document.getElementById('nombreBiberons')?.value || 'X';
-        alimentationText += `${quantite} biberons de ${nombre} mL par jour, `;
+        alimentationText += `${nombre} biberons de ${quantite} mL par jour, `;
     }
     
     const diversification = document.querySelector('input[name="diversification"]:checked')?.value;
