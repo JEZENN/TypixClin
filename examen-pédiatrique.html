@@ -1423,7 +1423,7 @@ textarea {
     </div>
 
     <!-- Vaccins exigibles -->
-    <div id="vaccinsExigibles" style="margin-top: 20px;">
+<div id="vaccinsExigibles" style="margin-top: 20px; display: none;">
         <p><strong>Vaccins exigibles à cet âge :</strong></p>
         <div style="display: grid; gap: 10px; margin-top: 10px;">
             <div style="display: flex; align-items: center;">
@@ -1541,13 +1541,19 @@ function updateVaccineDoses(doses) {
     document.getElementById('rorDoses').value = doses.ror;
 }
 
-// Écouteur pour la date de naissance
+// Dans votre écouteur d'événement pour la date de naissance
 document.getElementById('dateNaissance')?.addEventListener('change', function() {
+    const vaccinsSection = document.getElementById('vaccinsExigibles');
+    
     if (!this.value) {
+        vaccinsSection.style.display = 'none';
         updateVaccineDoses({dtp: 0, vhb: 0, pneumo: 0, meningo: 0, ror: 0});
         return;
     }
 
+    // Si une date est entrée, on affiche la section et on met à jour les doses
+    vaccinsSection.style.display = 'block';
+    
     const birthDate = new Date(this.value);
     const today = new Date();
     let months = (today.getFullYear() - birthDate.getFullYear()) * 12;
@@ -2008,6 +2014,151 @@ document.getElementById('dateNaissance')?.addEventListener('change', function() 
 				 <div class="section-content">
 
 					<h4>A : Airways</h4>
+				
+<div class="airways-section" style="margin: 20px 0;">
+    <p><strong>Voies aériennes :</strong></p>
+    <div style="margin-left: 20px;">
+        <!-- Choix principal -->
+        <div style="margin-bottom: 15px;">
+            <label style="margin-right: 15px;">
+                <input type="radio" name="airways" value="libre" checked> 
+                Libres et sûres
+            </label>
+            <label>
+                <input type="radio" name="airways" value="dyspnee"> 
+                Dyspnée
+            </label>
+        </div>
+
+        <!-- Détails dyspnée -->
+        <div id="dyspneeDetails" style="display: none;">
+            <!-- Type de dyspnée -->
+            <div style="margin-bottom: 15px;">
+                <div style="margin-left: 15px;">
+                    <label style="margin-right: 15px;">
+                        <input type="radio" name="typeDyspnee" value="inspiratoire" checked> 
+                        Inspiratoire
+                    </label>
+                    <label style="margin-right: 15px;">
+                        <input type="radio" name="typeDyspnee" value="expiratoire"> 
+                        Expiratoire
+                    </label>
+                </div>
+            </div>
+
+            <!-- Bruits associés -->
+            <div style="margin-left: 15px; display: grid; gap: 5px;">
+                <label>
+                    <input type="checkbox" id="stridor"> 
+                    Stridor
+                </label>
+                <label>
+                    <input type="checkbox" id="cornage"> 
+                    Cornage
+                </label>
+                <label>
+                    <input type="checkbox" id="wheezing"> 
+                    Wheezing
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="nasal-section" style="margin: 20px 0;">
+    <p><strong>État nasal :</strong></p>
+    <div style="margin-left: 20px;">
+        <div style="margin-bottom: 15px;">
+            <label style="margin-right: 15px;">
+                <input type="radio" name="etatNasal" value="normal" checked> 
+                Pas d'encombrement nasal
+            </label>
+            <label>
+                <input type="radio" name="etatNasal" value="encombre"> 
+                Encombrement nasal
+            </label>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage des détails de dyspnée
+document.querySelectorAll('input[name="airways"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const dyspneeDetails = document.getElementById('dyspneeDetails');
+        dyspneeDetails.style.display = this.value === 'dyspnee' ? 'block' : 'none';
+        
+        // Réinitialiser les options si on repasse à "libres et sûres"
+        if (this.value === 'libre') {
+            document.querySelectorAll('#dyspneeDetails input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelector('input[name="typeDyspnee"][value="inspiratoire"]').checked = true;
+        }
+    });
+});
+
+// Gestion de l'affichage des détails de rhinorrhée
+document.querySelectorAll('input[name="etatNasal"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const rhinorrheeDetails = document.getElementById('rhinorrheeDetails');
+        rhinorrheeDetails.style.display = this.value === 'encombre' ? 'block' : 'none';
+        
+        if (this.value === 'normal') {
+            document.getElementById('rhinorrhee').checked = false;
+            document.getElementById('rhinorrheePrecisions').style.display = 'none';
+            document.getElementById('rhinorrheePrecisions').value = '';
+        }
+    });
+});
+
+// Gestion de l'affichage des précisions de rhinorrhée
+document.getElementById('rhinorrhee').addEventListener('change', function() {
+    const precisions = document.getElementById('rhinorrheePrecisions');
+    precisions.style.display = this.checked ? 'inline-block' : 'none';
+    if (!this.checked) {
+        precisions.value = '';
+    }
+});
+
+// Fonction pour obtenir la description des voies aériennes
+function getAirwaysDescription() {
+    if (document.querySelector('input[name="airways"]:checked').value === 'libre') {
+        return "Voies aériennes libres et sûres";
+    }
+
+    let description = [];
+
+    // Type de dyspnée
+    const typeDyspnee = document.querySelector('input[name="typeDyspnee"]:checked').value;
+    description.push(`Dyspnée ${typeDyspnee}`);
+
+    // Bruits associés
+    let bruits = [];
+    if (document.getElementById('stridor').checked) bruits.push('stridor');
+    if (document.getElementById('cornage').checked) bruits.push('cornage');
+    if (document.getElementById('wheezing').checked) bruits.push('wheezing');
+    
+    if (bruits.length > 0) {
+        description.push(`avec ${bruits.join(', ')}`);
+    }
+
+    // État nasal
+    if (document.querySelector('input[name="etatNasal"]:checked').value === 'encombre') {
+        let nasalDesc = "encombrement nasal";
+        if (document.getElementById('rhinorrhee').checked) {
+            const precisions = document.getElementById('rhinorrheePrecisions').value;
+            nasalDesc += ` avec rhinorrhée${precisions ? ` (${precisions})` : ''}`;
+        }
+        description.push(nasalDesc);
+    } else {
+        description.push("pas d'encombrement nasal");
+    }
+
+    return description.join(', ');
+}
+</script>
+
+
 					<h4>B : Breathing</h4>
 <div class="breathing-section" style="margin: 20px 0;">
     <div style="display: flex; align-items: center; gap: 10px;">
@@ -2022,6 +2173,51 @@ document.getElementById('dateNaissance')?.addEventListener('change', function() 
         <span id="breathingNorms" style="margin-left: 10px; color: #666;"></span>
     </div>
 </div>
+
+          <p><strong>Saturation en oxygène :</strong> <input type="text" id="saturation" placeholder="%" style="margin-left: 10px; width: 40px;">
+                <span id="saturation-options" style="display: none; margin-left: 20px;">
+                    <label><input type="radio" name="saturation-type" id="air-ambiant" checked> En air ambiant</label>
+                    <label style="margin-left: 10px;"><input type="radio" name="saturation-type" id="sous-oxygene"> Sous oxygène</label>
+                    <input type="text" id="litres" placeholder="L" style="display: none; margin-left: 10px; width: 100px;">
+                </span>
+            </p>
+			<script>
+				const saturationInput = document.getElementById('saturation');
+				const saturationOptions = document.getElementById('saturation-options');
+				const sousOxygeneCheckbox = document.getElementById('sous-oxygene');
+				const airAmbiantCheckbox = document.getElementById('air-ambiant');
+				const litresOxygeneInput = document.getElementById('litres');
+
+				// Afficher les options après saisie d'une valeur
+				saturationInput.addEventListener('input', () => {
+					if (saturationInput.value.trim() !== '') {
+						saturationOptions.style.display = 'inline';
+					} else {
+						saturationOptions.style.display = 'none';
+						sousOxygeneCheckbox.checked = false;
+						airAmbiantCheckbox.checked = true; // Réinitialiser à "En air ambiant"
+						litresOxygeneInput.style.display = 'none';
+					}
+				});
+
+				// Gérer le comportement des boutons radio
+				sousOxygeneCheckbox.addEventListener('change', () => {
+					if (sousOxygeneCheckbox.checked) {
+						litresOxygeneInput.style.display = 'inline';
+						airAmbiantCheckbox.checked = false;
+					} else {
+						litresOxygeneInput.style.display = 'none';
+						airAmbiantCheckbox.checked = true;
+					}
+				});
+
+				airAmbiantCheckbox.addEventListener('change', () => {
+					if (airAmbiantCheckbox.checked) {
+						sousOxygeneCheckbox.checked = false;
+						litresOxygeneInput.style.display = 'none';
+					}
+				});
+			</script>
 
 <script>
 // Fonction pour calculer les normes en fonction de l'âge
@@ -2099,6 +2295,216 @@ document.addEventListener('DOMContentLoaded', function() {
     birthDateInput?.addEventListener('change', updateValidation);
 });
 </script>
+
+<!-- Section Signes de lutte -->
+<div class="signes-lutte-section" style="margin: 20px 0;">
+    <p><strong>Signes de lutte :</strong></p>
+    <div style="margin-left: 20px;">
+        <!-- Choix principal -->
+        <div style="margin-bottom: 15px;">
+            <label style="margin-right: 15px;">
+                <input type="radio" name="signesLutte" value="non" checked> 
+                Pas de signe de lutte
+            </label>
+            <label>
+                <input type="radio" name="signesLutte" value="oui"> 
+                Présence de signes de lutte
+            </label>
+        </div>
+
+        <!-- Détails des signes de lutte (initialement cachés) -->
+        <div id="signesLutteDetails" style="display: none;">
+            <!-- Intensité -->
+            <div style="margin-bottom: 15px;">
+                <div style="margin-left: 15px;">
+                    <label style="margin-right: 15px;">
+                        <input type="radio" name="intensiteLutte" value="legers" checked> 
+                        Légers
+                    </label>
+                    <label style="margin-right: 15px;">
+                        <input type="radio" name="intensiteLutte" value="moderes"> 
+                        Modérés
+                    </label>
+                    <label>
+                        <input type="radio" name="intensiteLutte" value="marques"> 
+                        Marqués
+                    </label>
+                </div>
+            </div>
+
+            <!-- Types de signes -->
+            <div style="margin-bottom: 15px;">
+                <div style="margin-left: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="balancement"> 
+                        <span style="margin-left: 5px;">Balancement thoraco-abdominal</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="tirage-souscostal"> 
+                        <span style="margin-left: 5px;">Tirage sous-costal</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="tirage-intercostal"> 
+                        <span style="margin-left: 5px;">Tirage intercostal</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="tirage-sussternal"> 
+                        <span style="margin-left: 5px;">Tirage sus-sternal</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="tirage-susclaviculaire"> 
+                        <span style="margin-left: 5px;">Tirage sus-claviculaire</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="entonnoir"> 
+                        <span style="margin-left: 5px;">Entonnoir xiphoïdien</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" class="signe-lutte-type" value="battement"> 
+                        <span style="margin-left: 5px;">Battement des ailes du nez</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage des détails des signes de lutte
+document.querySelectorAll('input[name="signesLutte"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const details = document.getElementById('signesLutteDetails');
+        details.style.display = this.value === 'oui' ? 'block' : 'none';
+        
+        if (this.value === 'non') {
+            // Réinitialisation des options
+            document.querySelector('input[name="intensiteLutte"][value="legers"]').checked = true;
+            document.querySelectorAll('.signe-lutte-type').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+    });
+});
+
+// Fonction pour obtenir la description des signes de lutte
+function getSignesLutteDescription() {
+    if (document.querySelector('input[name="signesLutte"]:checked').value === 'non') {
+        return "Pas de signe de lutte respiratoire";
+    }
+
+    const intensite = document.querySelector('input[name="intensiteLutte"]:checked').value;
+    const signesChecked = Array.from(document.querySelectorAll('.signe-lutte-type:checked'))
+        .map(cb => cb.nextElementSibling.textContent.trim().toLowerCase());
+
+    if (signesChecked.length === 0) {
+        return `Présence de signes de lutte ${intensite}`;
+    }
+
+    return `Présence de signes de lutte ${intensite} avec ${signesChecked.join(', ')}`;
+}
+</script>
+
+<!-- Section Inspection -->
+
+ 
+        <!-- Ampliation thoracique -->
+        <div style="margin-bottom: 15px;">
+            <p><strong>Ampliation thoracique :</strong></p>
+            <div style="margin-left: 15px;">
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="ampliation" id="ampliationSymetrique" value="symetrique" checked> 
+                    Symétrique
+                </label>
+                <label>
+                    <input type="radio" name="ampliation" id="ampliationAsymetrique" value="asymetrique"> 
+                    Asymétrique
+                </label>
+                
+                <!-- Options pour l'asymétrie (initialement cachées) -->
+                <div id="asymetrieDetails" style="margin-top: 10px; margin-left: 20px; display: none;">
+                    <p><strong>Diminution de l'ampliation du côté :</strong></p>
+                    <label style="margin-right: 15px;">
+                        <input type="radio" name="coteAsymetrie" value="droit" checked> 
+                        Droit
+                    </label>
+                    <label>
+                        <input type="radio" name="coteAsymetrie" value="gauche"> 
+                        Gauche
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cyanose -->
+        <div style="margin-bottom: 15px;">
+            <p><strong>Cyanose :</strong></p>
+            <div style="margin-left: 15px;">
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="cyanose" id="pasCyanose" value="non" checked> 
+                    Pas de cyanose
+                </label>
+                <label>
+                    <input type="radio" name="cyanose" id="avecCyanose" value="oui"> 
+                    Cyanose
+                </label>
+                
+                <!-- Précisions sur la cyanose (initialement cachées) -->
+                <div id="cyanoseDetails" style="margin-top: 10px; margin-left: 20px; display: none;">
+                    <input type="text" 
+                           id="precisionsCyanose" 
+                           placeholder="Précisez la cyanose" 
+                           style="width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+        </div>
+    
+
+
+<script>
+// Gestion de l'affichage des détails d'asymétrie
+document.querySelectorAll('input[name="ampliation"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const asymetrieDetails = document.getElementById('asymetrieDetails');
+        asymetrieDetails.style.display = this.value === 'asymetrique' ? 'block' : 'none';
+    });
+});
+
+// Gestion de l'affichage des détails de cyanose
+document.querySelectorAll('input[name="cyanose"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const cyanoseDetails = document.getElementById('cyanoseDetails');
+        cyanoseDetails.style.display = this.value === 'oui' ? 'block' : 'none';
+        
+        if (this.value === 'non') {
+            document.getElementById('precisionsCyanose').value = '';
+        }
+    });
+});
+
+// Fonction pour obtenir la description de l'inspection
+function getInspectionDescription() {
+    // Description de l'ampliation
+    let description = 'Ampliation thoracique ';
+    if (document.getElementById('ampliationSymetrique').checked) {
+        description += 'symétrique';
+    } else {
+        const cote = document.querySelector('input[name="coteAsymetrie"]:checked').value;
+        description += `asymétrique avec diminution du côté ${cote}`;
+    }
+
+    // Description de la cyanose
+    description += ', ';
+    if (document.getElementById('pasCyanose').checked) {
+        description += 'pas de cyanose';
+    } else {
+        const precisions = document.getElementById('precisionsCyanose').value.trim();
+        description += `cyanose${precisions ? ` (${precisions})` : ''}`;
+    }
+
+    return description;
+}
+</script>
+
 
 <p><strong>Auscultation pulmonaire :</strong></p>
 <div style="margin-left: 20px;">
@@ -2299,6 +2705,251 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Section Hémodynamique -->
+<p><strong>Hémodynamique :</strong></p>
+<div style="margin-left: 20px;">
+    <!-- Choix principal -->
+    <div style="margin-bottom: 15px;">
+        <label style="margin-right: 10px;">
+            <input type="radio" name="card4" id="nocard4" checked> Hémodynamique stable
+        </label>
+        <label style="margin-right: 10px;">
+            <input type="radio" name="card4" id="yescard4"> Hémodynamique instable
+        </label>
+    </div>
+
+    <!-- Détails hémodynamiques -->
+    <div id="card4Details" style="display: none; margin-left: 20px;">
+        <!-- Signes de choc -->
+        <div class="shock-signs">
+            <input type="checkbox" id="oligurie"> 
+            <label for="oligurie">Oligurie</label>
+            
+            <input type="checkbox" id="confusion"> 
+            <label for="confusion">Confusion</label>
+            
+            <input type="checkbox" id="marbrures"> 
+            <label for="marbrures">Marbrures</label>
+            
+            <input type="checkbox" id="trc"> 
+            <label for="trc">TRC > 3s</label>
+            
+            <input type="checkbox" id="polypnee"> 
+            <label for="polypnee">Polypnée</label>
+        </div>
+
+        <!-- Support vasopresseur -->
+        <div style="margin-top: 10px;">
+            <input type="checkbox" id="vasopresseurs"> 
+            <label for="vasopresseurs">Supports vasopresseurs</label>
+        </div>
+
+        <div id="vasopresseurDetails" style="display: none; margin-left: 20px;">
+            <div>
+                <input type="checkbox" id="noradrenaline">
+                <label for="noradrenaline">Noradrénaline</label>
+                <input type="text" id="noradrenalineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            </div>
+            
+            <div>
+                <input type="checkbox" id="adrenaline">
+                <label for="adrenaline">Adrénaline</label>
+                <input type="text" id="adrenalineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            </div>
+            
+            <div>
+                <input type="checkbox" id="dobutamine">
+                <label for="dobutamine">Dobutamine</label>
+                <input type="text" id="dobutamineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <input type="text" id="vasopresseurPrecisions" placeholder="Précisions supplémentaires" style="width: 300px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion des événements
+document.getElementById('yescard4').addEventListener('change', function() {
+    document.getElementById('card4Details').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('nocard4').addEventListener('change', function() {
+    document.getElementById('card4Details').style.display = 'none';
+    // Réinitialiser tous les champs
+    document.querySelectorAll('#card4Details input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#card4Details input[type="text"]').forEach(input => input.value = '');
+    document.getElementById('vasopresseurDetails').style.display = 'none';
+});
+
+// Gestion des supports vasopresseurs
+document.getElementById('vasopresseurs').addEventListener('change', function() {
+    document.getElementById('vasopresseurDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+// Gestion des doses pour chaque vasopresseur
+['noradrenaline', 'adrenaline', 'dobutamine'].forEach(drug => {
+    document.getElementById(drug).addEventListener('change', function() {
+        document.getElementById(drug + 'Dose').style.display = this.checked ? 'inline' : 'none';
+    });
+});
+
+// Fonction pour la description de l'hémodynamique
+function getHemodynamiqueDescription() {
+    if (document.getElementById('nocard4').checked) {
+        return "Hémodynamique stable";
+    }
+
+    let description = [];
+    let signes = [];
+    
+    // Vérifier les signes de choc
+    if (document.getElementById('oligurie').checked) signes.push('oligurie');
+    if (document.getElementById('confusion').checked) signes.push('confusion');
+    if (document.getElementById('marbrures').checked) signes.push('marbrures');
+    if (document.getElementById('trc').checked) signes.push('TRC > 3s');
+    if (document.getElementById('polypnee').checked) signes.push('polypnée');
+    
+    if (signes.length > 0) {
+        description.push(`Hémodynamique instable avec présence de signes de choc : ${signes.join(', ')}`);
+    } else {
+        description.push('Hémodynamique instable');
+    }
+
+    // Vérifier les supports vasopresseurs
+    if (document.getElementById('vasopresseurs').checked) {
+        let supports = [];
+        
+        if (document.getElementById('noradrenaline').checked) {
+            const dose = document.getElementById('noradrenalineDose').value;
+            supports.push(`noradrénaline${dose ? ` (${dose})` : ''}`);
+        }
+        if (document.getElementById('adrenaline').checked) {
+            const dose = document.getElementById('adrenalineDose').value;
+            supports.push(`adrénaline${dose ? ` (${dose})` : ''}`);
+        }
+        if (document.getElementById('dobutamine').checked) {
+            const dose = document.getElementById('dobutamineDose').value;
+            supports.push(`dobutamine${dose ? ` (${dose})` : ''}`);
+        }
+        
+        if (supports.length > 0) {
+            description.push(`Patient sous ${supports.join(', ')}`);
+        }
+        
+        const precisions = document.getElementById('vasopresseurPrecisions').value;
+        if (precisions) {
+            description.push(precisions);
+        }
+    }
+
+    return highlight(description.join('. '));
+}
+</script>
+
+
+<p><strong>Pouls :</strong>
+    <label style="margin-right: 10px;">
+        <input type="radio" name="pulseType" value="normal" checked> 
+        Pouls périphériques et centraux perçus et bien frappés
+    </label>
+    <label style="margin-right: 10px;">
+        <input type="radio" name="pulseType" value="abnormal">
+        Anomalie des pouls
+    </label>
+</p>
+
+<div id="pulseDetails" style="display: none; margin-left: 20px;">
+    <div>
+        <p>Radiaux :
+            <label style="margin-right: 10px;">
+                <input type="checkbox" name="radialPulse" value="right" checked> Droit
+            </label>
+            <label>
+                <input type="checkbox" name="radialPulse" value="left" checked> Gauche
+            </label>
+        </p>
+    </div>
+
+    <div>
+        <p>Fémoraux :
+            <label style="margin-right: 10px;">
+                <input type="checkbox" name="femoralPulse" value="right" checked> Droit
+            </label>
+            <label>
+                <input type="checkbox" name="femoralPulse" value="left" checked> Gauche
+            </label>
+        </p>
+    </div>
+
+    <div>
+        <p>Tibiaux postérieurs :
+            <label style="margin-right: 10px;">
+                <input type="checkbox" name="tibialPulse" value="right" checked> Droit
+            </label>
+            <label>
+                <input type="checkbox" name="tibialPulse" value="left" checked> Gauche
+            </label>
+        </p>
+    </div>
+
+    <div>
+        <p>Pédieux :
+            <label style="margin-right: 10px;">
+                <input type="checkbox" name="pedialPulse" value="right" checked> Droit
+            </label>
+            <label>
+                <input type="checkbox" name="pedialPulse" value="left" checked> Gauche
+            </label>
+        </p>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage des détails des pouls
+document.querySelectorAll('input[name="pulseType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('pulseDetails').style.display = 
+            this.value === 'abnormal' ? 'block' : 'none';
+    });
+});
+
+function getPulseDescription() {
+    const pulseType = document.querySelector('input[name="pulseType"]:checked').value;
+    
+    if (pulseType === 'normal') {
+        return "Les pouls périphériques sont perçus et bien frappés";
+    }
+
+    const pulseStatus = {
+        radial: {
+            right: document.querySelector('input[name="radialPulse"][value="right"]').checked,
+            left: document.querySelector('input[name="radialPulse"][value="left"]').checked
+        },
+        femoral: {
+            right: document.querySelector('input[name="femoralPulse"][value="right"]').checked,
+            left: document.querySelector('input[name="femoralPulse"][value="left"]').checked
+        },
+        tibial: {
+            right: document.querySelector('input[name="tibialPulse"][value="right"]').checked,
+            left: document.querySelector('input[name="tibialPulse"][value="left"]').checked
+        },
+        pedial: {
+            right: document.querySelector('input[name="pedialPulse"][value="right"]').checked,
+            left: document.querySelector('input[name="pedialPulse"][value="left"]').checked
+        }
+    };
+
+    return highlight(`Pouls périphériques : Radiaux D${pulseStatus.radial.right ? '+' : '-'}/G${pulseStatus.radial.left ? '+' : '-'}, ` +
+               `Fémoraux D${pulseStatus.femoral.right ? '+' : '-'}/G${pulseStatus.femoral.left ? '+' : '-'}, ` +
+               `tibiaux postérieurs D${pulseStatus.tibial.right ? '+' : '-'}/G${pulseStatus.tibial.left ? '+' : '-'}, ` +
+               `pédieux D${pulseStatus.pedial.right ? '+' : '-'}/G${pulseStatus.pedial.left ? '+' : '-'}`);
+}
+</script>
+
+
 
 <p><strong>Bruits du cœur :</strong></p>
 <div style="margin-left: 20px;">
@@ -2497,7 +3148,6 @@ function getHeartSoundsDescription() {
 
 					<h4>D : Uro-digestif</h4>
 
-					<h4>E : Neurologique</h4>
 					
 					<h4>E : Neurologique</h4>
 
