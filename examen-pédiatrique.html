@@ -2705,6 +2705,147 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<div class="blood-pressure-section" style="margin: 20px 0;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <div style="display: flex; align-items: center; min-width: 200px;">
+            <label><strong>Pression artérielle (mmHg) :</strong></label>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label>PAS</label>
+                <input 
+                    type="number" 
+                    id="systolicBP" 
+                    style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                    placeholder="PAS"
+                >
+            </div>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label>PAD</label>
+                <input 
+                    type="number" 
+                    id="diastolicBP" 
+                    style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                    placeholder="PAD"
+                >
+            </div>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label>PAM</label>
+                <input 
+                    type="number" 
+                    id="mapBP" 
+                    style="width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; 
+                           background-color: #f3f4f6;"
+                    placeholder="PAM"
+                    readonly
+                >
+            </div>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
+                <span id="bpStatus" style="font-weight: 500;"></span>
+                <span id="bpNorms" style="color: #666;"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+// Ajouter au-dessus des autres composants
+function getPASRangeForAge(ageInMonths) {
+    if (ageInMonths < 1) { // < 1 semaine (approximation)
+        return { min: 60 };
+    }
+    if (ageInMonths < 2) { // Entre 1 semaine et 1 mois
+        return { min: 65 };
+    }
+    if (ageInMonths <= 12) { // Entre 1 et 12 mois
+        return { min: 70 };
+    }
+    
+    // Pour les enfants de plus d'un an, on calcule en fonction de l'âge
+    const ageInYears = Math.floor(ageInMonths / 12);
+    if (ageInYears >= 10) {
+        return { min: 90 };
+    }
+    
+    // Entre 1 et 9 ans : 72 + (age-1)*2
+    return { min: 72 + ((ageInYears - 1) * 2) };
+}
+
+// Fonction pour calculer la PAM
+function calculateMAP(systolic, diastolic) {
+    if (!systolic || !diastolic) return '';
+    const pas = parseInt(systolic);
+    const pad = parseInt(diastolic);
+    if (isNaN(pas) || isNaN(pad)) return '';
+    
+    const pam = Math.round((pas + 2 * pad) / 3);
+    return pam.toString();
+}
+
+// Fonction pour valider la pression artérielle
+function validateBloodPressure(systolic, ageInMonths) {
+    const range = getPASRangeForAge(ageInMonths);
+    const numSystolic = parseInt(systolic);
+    const input = document.getElementById('systolicBP');
+    const statusElement = document.getElementById('bpStatus');
+    
+    if (!systolic) {
+        input.style.backgroundColor = '';
+        input.style.borderColor = '#ccc';
+        statusElement.textContent = '';
+        return;
+    }
+
+    if (numSystolic < range.min) {
+        input.style.backgroundColor = '#fef2f2';
+        input.style.borderColor = '#dc2626';
+        statusElement.textContent = 'Hypotension';
+        statusElement.style.color = '#dc2626';
+    } else {
+        input.style.backgroundColor = '#f0fdf4';
+        input.style.borderColor = '#22c55e';
+        statusElement.textContent = 'Normal';
+        statusElement.style.color = '#22c55e';
+    }
+}
+
+// Initialisation et gestionnaires d'événements
+document.addEventListener('DOMContentLoaded', function() {
+    const systolicBP = document.getElementById('systolicBP');
+    const diastolicBP = document.getElementById('diastolicBP');
+    const mapBP = document.getElementById('mapBP');
+    const birthDateInput = document.getElementById('dateNaissance');
+    const normsElement = document.getElementById('bpNorms');
+
+    function updateValidation() {
+        if (!birthDateInput.value) return;
+        
+        const ageInMonths = calculateAgeInMonths(birthDateInput.value);
+        const range = getPASRangeForAge(ageInMonths);
+        normsElement.textContent = `PAS pour l'âge > ${range.min} mmHg`;
+        
+        validateBloodPressure(systolicBP.value, ageInMonths);
+    }
+
+    // Événements pour la modification de la pression artérielle
+    systolicBP?.addEventListener('input', function() {
+        updateValidation();
+        mapBP.value = calculateMAP(systolicBP.value, diastolicBP.value);
+    });
+    
+    diastolicBP?.addEventListener('input', function() {
+        mapBP.value = calculateMAP(systolicBP.value, diastolicBP.value);
+    });
+
+    // Événement pour la modification de la date de naissance
+    birthDateInput?.addEventListener('change', updateValidation);
+});
+
+</script>
+
+
 <!-- Section Hémodynamique -->
 <p><strong>Hémodynamique :</strong></p>
 <div style="margin-left: 20px;">
