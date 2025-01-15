@@ -2404,6 +2404,84 @@ function getSignesLutteDescription() {
 }
 </script>
 
+
+<!-- Section Toux -->
+<div class="cough-section" style="margin: 20px 0;">
+    <p><strong>Toux :</strong></p>
+    <div style="margin-left: 20px;">
+        <!-- Choix principal -->
+        <div style="margin-bottom: 15px;">
+            <label style="margin-right: 15px;">
+                <input type="radio" name="toux" value="non" checked> 
+                Pas de toux
+            </label>
+            <label>
+                <input type="radio" name="toux" value="oui"> 
+                Toux
+            </label>
+        </div>
+
+        <!-- Détails de la toux (initialement cachés) -->
+        <div id="touxDetails" style="display: none; margin-left: 20px;">
+            <div style="margin-bottom: 15px;">
+                <p><strong>Type de toux :</strong></p>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="typeToux" value="seche" checked> 
+                    Sèche
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="typeToux" value="grasse"> 
+                    Grasse
+                </label>
+                <label>
+                    <input type="radio" name="typeToux" value="mixte"> 
+                    Mixte
+                </label>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <input type="text" id="touxPrecisions" 
+                       placeholder="Précisions sur la toux" 
+                       style="width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage des détails de la toux
+document.querySelectorAll('input[name="toux"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const details = document.getElementById('touxDetails');
+        details.style.display = this.value === 'oui' ? 'block' : 'none';
+        
+        if (this.value === 'non') {
+            document.querySelector('input[name="typeToux"][value="seche"]').checked = true;
+            document.getElementById('touxPrecisions').value = '';
+        }
+    });
+});
+
+// Fonction pour obtenir la description de la toux
+function getCoughDescription() {
+    if (document.querySelector('input[name="toux"]:checked').value === 'non') {
+        return "Pas de toux";
+    }
+
+    const typeToux = document.querySelector('input[name="typeToux"]:checked').value;
+    const precisions = document.getElementById('touxPrecisions').value.trim();
+
+    let description = `Présence d'une toux ${typeToux}`;
+    if (precisions) {
+        description += ` (${precisions})`;
+    }
+
+    return description;
+}
+</script>
+
+
+
 <!-- Section Inspection -->
 
  
@@ -3288,6 +3366,425 @@ function getHeartSoundsDescription() {
 </script>
 
 					<h4>D : Uro-digestif</h4>
+					
+					<p><strong>Organomégalie :</strong>
+<label style="margin-right: 10px;">
+    <input type="radio" name="organo" id="noOrgano" checked> Pas d'organomégalie
+</label>
+<label style="margin-right: 10px;">
+    <input type="radio" name="organo" id="yesOrgano"> Organomégalie
+</label>
+</p>
+
+<div id="organoDetails" style="display: none; margin-left: 20px;">
+    <div>
+        <input type="checkbox" id="hepatomegaly"> 
+        <label for="hepatomegaly">Hépatomégalie</label>
+        <div id="hepatomegalyDetails" style="display: none; margin-left: 20px;">
+            <p>
+                <label>Flèche hépatique (cm) : 
+                    <input type="number" id="hepatomegalySize" style="width: 60px;"> cm
+                </label>
+            </p>
+            <p>Bord inférieur :
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="hepatomegalyEdge" value="sharp" checked> Tranchant
+                </label>
+                <label>
+                    <input type="radio" name="hepatomegalyEdge" value="smooth"> Mou
+                </label>
+            </p>
+            <p>
+                <label>Consistance : 
+                    <input type="text" id="hepatomegalyConsistency" placeholder="Précisez" style="width: 300px;">
+                </label>
+            </p>
+        </div>
+    </div>
+
+    <div>
+        <input type="checkbox" id="splenomegaly"> 
+        <label for="splenomegaly">Splénomégalie</label>
+        <div id="splenomegalyDetails" style="display: none; margin-left: 20px;">
+            <p>
+                <label>Débord sous-costal (cm) : 
+                    <input type="number" id="splenomegalySize" style="width: 60px;"> cm
+                </label>
+            </p>
+            <p>
+                <label>Consistance : 
+                    <input type="text" id="splenomegalyConsistency" placeholder="Précisez" style="width: 300px;">
+                </label>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Gestion de l'affichage principal des organomégalies
+document.getElementById('yesOrgano').addEventListener('change', function() {
+    document.getElementById('organoDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noOrgano').addEventListener('change', function() {
+    document.getElementById('organoDetails').style.display = 'none';
+});
+
+// Gestion des détails pour l'hépatomégalie
+document.getElementById('hepatomegaly').addEventListener('change', function() {
+    document.getElementById('hepatomegalyDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+// Gestion des détails pour la splénomégalie
+document.getElementById('splenomegaly').addEventListener('change', function() {
+    document.getElementById('splenomegalyDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+
+</script>
+
+
+<p><strong>Douleur à l'ébranlement des fosses lombaires :</strong>
+<label style="margin-right: 10px;">
+    <input type="radio" name="chocLomb" id="noChocLomb" checked> Pas de douleur
+</label>
+<label style="margin-right: 10px;">
+    <input type="radio" name="chocLomb" id="yesChocLomb"> Douleurs
+</label>
+</p>
+
+<div style="margin-left: 20px;">
+    <div class="chocLomb1" id="chocLomb1">
+        <input type="checkbox" id="chocLomb1Input" style="display: none; margin-left: 10px; width: 500px;"> 
+        <label for="chocLomb1Input">Droite</label> 
+    </div>
+    <div class="chocLomb2" id="chocLomb2">
+        <input type="checkbox" id="chocLomb2Input" style="display: none; margin-left: 10px; width: 500px;"> 
+        <label for="chocLomb2Input">Gauche</label> 
+    </div>
+</div>
+
+
+<script>
+
+// Affichage fosses lombaires
+document.getElementById('chocLomb1').style.display = 'none';
+document.getElementById('chocLomb2').style.display = 'none';
+
+document.getElementById('yesChocLomb').addEventListener('change', function () {
+    document.getElementById('chocLomb1').style.display = this.checked ? 'inline' : 'none';
+});
+
+document.getElementById('noChocLomb').addEventListener('change', function () {
+    if (this.checked) {
+        document.getElementById('chocLomb1').style.display = 'none';
+    }
+});
+
+document.getElementById('yesChocLomb').addEventListener('change', function () {
+    document.getElementById('chocLomb2').style.display = this.checked ? 'inline' : 'none';
+});
+
+document.getElementById('noChocLomb').addEventListener('change', function () {
+    if (this.checked) {
+        document.getElementById('chocLomb2').style.display = 'none';
+    }
+});
+
+</script>
+
+<p><strong>Hernies :</strong>
+<label style="margin-right: 10px;">
+    <input type="radio" name="hernie" id="noHernie" checked> Pas de hernie
+</label>
+<label style="margin-right: 10px;">
+    <input type="radio" name="hernie" id="yesHernie"> Présence d'une hernie
+</label>
+</p>
+
+<div id="hernieDetails" style="display: none; margin-left: 20px;">
+    <!-- Hernie Ombilicale -->
+    <div>
+        <input type="checkbox" id="hernieOmbilicale"> 
+        <label for="hernieOmbilicale">Hernie ombilicale</label>
+        <div id="hernieOmbilicaleDetails" style="display: none; margin-left: 20px;">
+            <p>Caractéristiques :</p>
+            <div style="margin-left: 20px;">
+                <p>
+                    <input type="checkbox" id="hernieOmbilicaleImpulsive">
+                    <label for="hernieOmbilicaleImpulsive">Impulsive à la toux</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieOmbilicaleInflammatoire">
+                    <label for="hernieOmbilicaleInflammatoire">Inflammatoire</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieOmbilicaleDouleur">
+                    <label for="hernieOmbilicaleDouleur">Douloureuse</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieOmbilicaleReductible">
+                    <label for="hernieOmbilicaleReductible">Réductible</label>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Hernie Fémorale -->
+    <div>
+        <input type="checkbox" id="hernieFemorale"> 
+        <label for="hernieFemorale">Hernie fémorale</label>
+        <div id="hernieFemoraleDetails" style="display: none; margin-left: 20px;">
+            <p>Côté :
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="hernieFemoraleSide" value="droite" checked> Droite
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="hernieFemoraleSide" value="gauche"> Gauche
+                </label>
+                <label>
+                    <input type="radio" name="hernieFemoraleSide" value="bilaterale"> Bilatérale
+                </label>
+            </p>
+            <p>Caractéristiques :</p>
+            <div style="margin-left: 20px;">
+                <p>
+                    <input type="checkbox" id="hernieFemoraleImpulsive">
+                    <label for="hernieFemoraleImpulsive">Impulsive à la toux</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieFemoraleInflammatoire">
+                    <label for="hernieFemoraleInflammatoire">Inflammatoire</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieFemoraleDouleur">
+                    <label for="hernieFemoraleDouleur">Douloureuse</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieFemoraleReductible">
+                    <label for="hernieFemoraleReductible">Réductible</label>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hernie Inguinale -->
+    <div>
+        <input type="checkbox" id="hernieInguinale"> 
+        <label for="hernieInguinale">Hernie inguinale</label>
+        <div id="hernieInguinaleDetails" style="display: none; margin-left: 20px;">
+            <p>Côté :
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="hernieInguinaleSide" value="droite" checked> Droite
+                </label>
+                <label style="margin-right: 15px;">
+                    <input type="radio" name="hernieInguinaleSide" value="gauche"> Gauche
+                </label>
+                <label>
+                    <input type="radio" name="hernieInguinaleSide" value="bilaterale"> Bilatérale
+                </label>
+            </p>
+            <p>Caractéristiques :</p>
+            <div style="margin-left: 20px;">
+                <p>
+                    <input type="checkbox" id="hernieInguinaleImpulsive">
+                    <label for="hernieInguinaleImpulsive">Impulsive à la toux</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieInguinaleInflammatoire">
+                    <label for="hernieInguinaleInflammatoire">Inflammatoire</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieInguinaleDouleur">
+                    <label for="hernieInguinaleDouleur">Douloureuse</label>
+                </p>
+                <p>
+                    <input type="checkbox" id="hernieInguinaleReductible">
+                    <label for="hernieInguinaleReductible">Réductible</label>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'affichage principal des hernies
+document.getElementById('yesHernie').addEventListener('change', function() {
+    document.getElementById('hernieDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noHernie').addEventListener('change', function() {
+    document.getElementById('hernieDetails').style.display = 'none';
+    resetAllHernies();
+});
+
+// Gestion des détails pour la hernie ombilicale
+document.getElementById('hernieOmbilicale').addEventListener('change', function() {
+    document.getElementById('hernieOmbilicaleDetails').style.display = this.checked ? 'block' : 'none';
+    if (!this.checked) {
+        resetSpecificHernie('Ombilicale');
+    }
+});
+
+// Gestion des détails pour la hernie fémorale
+document.getElementById('hernieFemorale').addEventListener('change', function() {
+    document.getElementById('hernieFemoraleDetails').style.display = this.checked ? 'block' : 'none';
+    if (!this.checked) {
+        resetSpecificHernie('Femorale');
+    }
+});
+
+// Gestion des détails pour la hernie inguinale
+document.getElementById('hernieInguinale').addEventListener('change', function() {
+    document.getElementById('hernieInguinaleDetails').style.display = this.checked ? 'block' : 'none';
+    if (!this.checked) {
+        resetSpecificHernie('Inguinale');
+    }
+});
+
+// Fonction pour réinitialiser toutes les hernies
+function resetAllHernies() {
+    ['Ombilicale', 'Femorale', 'Inguinale'].forEach(type => {
+        document.getElementById(`hernie${type}`).checked = false;
+        document.getElementById(`hernie${type}Details`).style.display = 'none';
+        resetSpecificHernie(type);
+    });
+}
+
+// Fonction pour réinitialiser une hernie spécifique
+function resetSpecificHernie(type) {
+    // Réinitialiser les caractéristiques
+    ['Impulsive', 'Inflammatoire', 'Douleur', 'Reductible'].forEach(carac => {
+        const element = document.getElementById(`hernie${type}${carac}`);
+        if (element) element.checked = false;
+    });
+
+    // Réinitialiser la taille si c'est une hernie ombilicale
+    if (type === 'Ombilicale') {
+        const size = document.getElementById('hernieOmbilicaleSize');
+        if (size) size.value = '';
+    }
+
+    // Réinitialiser les côtés pour les hernies fémorale et inguinale
+    if (type === 'Femorale' || type === 'Inguinale') {
+        document.querySelectorAll(`input[name="hernie${type}Side"]`)[0].checked = true;
+    }
+
+    // Réinitialiser l'extension scrotale pour la hernie inguinale
+    if (type === 'Inguinale') {
+        const bourse = document.getElementById('hernieInguinaleBourse');
+        if (bourse) bourse.checked = false;
+    }
+}
+
+</script>
+
+<p><strong>Abdomen :</strong>
+<label style="margin-right: 10px;">
+    <input type="radio" name="abdomen" id="noAbdomen" checked> 
+    Abdomen souple dépressible et indolore.
+</label>
+<label style="margin-right: 10px;">
+    <input type="radio" name="abdomen" id="yesAbdomen"> 
+    Anomalie à la palpation abdominale.
+</label>
+</p>
+
+<div id="abdomenDetails" style="display: none; margin-left: 20px;">
+    <!-- Météorisme -->
+    <div style="margin-bottom: 10px;">
+        <input type="checkbox" id="meteorisme">
+        <label for="meteorisme">Météorisme abdominal</label>
+    </div>
+
+    <!-- Défense -->
+    <div style="margin-bottom: 10px;">
+        <input type="checkbox" id="defense">
+        <label for="defense">Défense abdominale</label>
+        <input type="text" id="defenseLocation" placeholder="Précisez la localisation" 
+               style="display: none; margin-left: 10px; width: 300px;">
+    </div>
+
+    <!-- Contracture -->
+    <div style="margin-bottom: 10px;">
+        <input type="checkbox" id="contracture">
+        <label for="contracture">Contracture abdominale</label>
+        <input type="text" id="contractureLocation" placeholder="Précisez la localisation" 
+               style="display: none; margin-left: 10px; width: 300px;">
+    </div>
+
+    <!-- Douleur -->
+    <div style="margin-bottom: 10px;">
+        <input type="checkbox" id="douleurAbdo">
+        <label for="douleurAbdo">Douleur à la palpation</label>
+        <input type="text" id="douleurAbdoLocation" placeholder="Précisez la localisation" 
+               style="display: none; margin-left: 10px; width: 300px;">
+    </div>
+
+</div>
+
+<script>
+// Gestion de l'affichage principal des détails de l'abdomen
+document.querySelectorAll('input[name="abdomen"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('abdomenDetails').style.display = 
+            document.getElementById('yesAbdomen').checked ? 'block' : 'none';
+    });
+});
+
+// Gestion des champs de détails pour chaque anomalie
+document.getElementById('defense').addEventListener('change', function() {
+    document.getElementById('defenseLocation').style.display = this.checked ? 'inline' : 'none';
+    if (!this.checked) document.getElementById('defenseLocation').value = '';
+});
+
+document.getElementById('contracture').addEventListener('change', function() {
+    document.getElementById('contractureLocation').style.display = this.checked ? 'inline' : 'none';
+    if (!this.checked) document.getElementById('contractureLocation').value = '';
+});
+
+document.getElementById('douleurAbdo').addEventListener('change', function() {
+    document.getElementById('douleurAbdoLocation').style.display = this.checked ? 'inline' : 'none';
+    if (!this.checked) document.getElementById('douleurAbdoLocation').value = '';
+});
+
+
+// Fonction pour obtenir la description de l'abdomen
+function getAbdomenDescription() {
+    if (document.getElementById('noAbdomen').checked) {
+        return "Abdomen souple dépressible et indolore";
+    }
+
+    let descriptions = [];
+
+    if (document.getElementById('meteorisme').checked) {
+        descriptions.push(highlight("Météorisme abdominal"));
+    }
+
+    if (document.getElementById('defense').checked) {
+        const loc = document.getElementById('defenseLocation').value;
+        descriptions.push(highlight(`Défense abdominale${loc ? ` ${loc}` : ''}`));
+    }
+
+    if (document.getElementById('contracture').checked) {
+        const loc = document.getElementById('contractureLocation').value;
+        descriptions.push(highlight(`Contracture abdominale${loc ? ` ${loc}` : ''}`));
+    }
+
+    if (document.getElementById('douleurAbdo').checked) {
+        const loc = document.getElementById('douleurAbdoLocation').value;
+        descriptions.push(highlight(`Douleur à la palpation${loc ? ` ${loc}` : ''}`));
+    }
+
+    return descriptions.length > 0 
+        ? descriptions.join('. ') 
+        : "Anomalie abdominale non précisée";
+}
+</script>
+
 
 					
 					<h4>E : Neurologique</h4>
