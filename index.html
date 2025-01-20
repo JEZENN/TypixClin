@@ -105,7 +105,7 @@
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
-            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3);
             transform: translateY(50px);
             opacity: 0;
             animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -152,14 +152,14 @@
         .nav-title {
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--primary-dark);
             position: relative;
             z-index: 2;
         }
 
         .nav-description {
             font-size: 1rem;
-            color: var(--text-gray);
+            color: var(--text-dark);
             line-height: 1.6;
             position: relative;
             z-index: 2;
@@ -167,17 +167,17 @@
 
         .description-box {
             background: var(--card-bg);
+            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3);
+            border: 1px solid rgba(37, 99, 235, 0.2);
             border-radius: 1.5rem;
             margin: 2rem auto;
             max-width: 1200px;
             padding: 2.5rem;
-            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.1);
             transform: translateY(30px);
             opacity: 0;
             animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(37, 99, 235, 0.1);
         }
 
         .description-box::before {
@@ -212,7 +212,7 @@
         }
 
         .description-box h4 {
-            color: var(--primary-color);
+            color: var(--primary-dark);
             font-size: 1.8rem;
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
@@ -234,6 +234,8 @@
         .content {
             line-height: 1.8;
             color: var(--text-gray);
+		color: var(--text-dark);
+            text-align: justify;
         }
 
         .updates-list {
@@ -397,6 +399,75 @@
     }
 }
 
+/* Scrollbar styles */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: var(--primary-dark);
+    border-radius: 4px;
+}
+
+
+
+/* Sticky Header */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #1e40af, #0f2167);
+    padding: 0.5rem 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sticky-wrapper header {
+    background: none !important;
+    padding: 0.3rem 0;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+.sticky-wrapper.hiding {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.sticky-wrapper h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+@media (max-width: 768px) {
+    .sticky-wrapper {
+        display: none;
+    }
+}
+
 
     </style>
 </head>
@@ -405,8 +476,71 @@
     <header class="header">
         <h1 class="site-title">TypixClin</h1>
     </header>
+	
+	<!-- Header sticky qui apparaîtra au scroll -->
+<div class="sticky-wrapper">
+    <h1><a href="#" style="color: white; text-decoration: none;" onclick="scrollToTop(event)">TypixClin</a></h1>
+</div>
+
+	<script>
+function scrollToTop(event) {
+    event.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const stickyWrapper = document.querySelector('.sticky-wrapper');
+    const header = document.querySelector('header');
+    let isSticky = false;
+
+    function handleScroll() {
+        if (window.innerWidth <= 768) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+            }
+            return;
+        }
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const threshold = header ? header.offsetTop + header.offsetHeight + 0 : 300;
+        
+        if (scrollTop > threshold && !isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.add('visible');
+                isSticky = true;
+            }
+        } else if (scrollTop <= threshold && isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+                isSticky = false;
+            }
+        }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+});
+</script>
+
+
+
 
     <main class="nav-container">
+	
+		        <div class="description-box">
+            <h4>Présentation</h4>
+            <div class="content">
+                TypixClin est un outil interactif en ligne conçu pour les étudiants en médecine, internes et médecins, afin de faciliter la rédaction d'un examen clinique.
+                Il permet de sélectionner des signes cliniques via des cases à cocher, d'ajouter des précisions dans des zones de texte, et de générer automatiquement un rapport structuré et prêt à l'usage directement dans un logiciel médical (Orbis par exemple).
+                L'objectif est de standardiser, de simplifier et d'accélérer la rédaction des observations cliniques tout en minimisant le risque d'erreur ou les oublis.  
+            </div>
+        </div>
+		
+		
         <div class="nav-grid">
             <a href="examen-adulte.html" class="nav-item">
                 <div class="nav-icon">🧑</div>
@@ -427,15 +561,14 @@
             </a>
         </div>
 
-        <div class="description-box">
-            <h4>Fonctionnement de TypixClin</h4>
-            <div class="content">
-                TypixClin est un outil interactif en ligne conçu pour les étudiants en médecine, internes et médecins, afin de faciliter la rédaction d'un examen clinique.
-                Il permet de sélectionner des signes cliniques via des cases à cocher, d'ajouter des précisions dans des zones de texte, et de générer automatiquement un rapport structuré et prêt à l'usage directement dans un logiciel médical (Orbis par exemple).
-                L'objectif est de standardiser, de simplifier et d'accélérer la rédaction des observations cliniques tout en minimisant le risque d'erreur ou les oublis.
-                Vous pouvez, pour le moment, utiliser le texte type de l'examen clinique de l'adulte, de l'enfant et de l'analyse de l'ECG. Les autres onglets sont en cours de développement. 
-            </div>
+    <div class="description-box">
+        <h4>Supports PDF</h4>
+        <div class="content">
+            J'ai le plaisir de vous présenter ces deux polycopiés concernant l'examen clinique et l'ECG que vous trouverez ci-dessous.
+            Ces documents n'ont pas pour vocation de vous expliquer en détail chaque principe de l'ECG, chaque manœuvre ou chaque signe de l'examen clinique mais plutôt de faire office d'une « Check-list » à consulter avant d'entrer dans la chambre de vos patients ou pendant la lecture d'un ECG.
+            Bien entendu, en pratique, un examen aussi complet que celui présenté me parait quelque peu exagéré, il vous incombe de faire preuve de bon sens et d'esprit critique afin de sélectionner les éléments les plus pertinents à explorer.
         </div>
+    </div>
 
 <div class="nav-grid2">
 <div class="nav-item" onclick="window.open('https://docs.google.com/viewer?url=https://raw.githubusercontent.com/JEZENN/TypixClin/main/Examen%20clinique%20P2%20-%20D1.pdf')" style="cursor: pointer;">
@@ -453,28 +586,17 @@
 </div>
 
 <!-- Structure HTML pour les deux sections -->
-<div class="nav-grid" style="grid-template-columns: 2fr 1fr; margin-top: 2rem;">
-    <div class="description-box" style="margin: 0;">
-        <h4>Supports PDF</h4>
-        <div class="content">
-            J'ai le plaisir de vous présenter ces deux polycopiés concernant l'examen clinique et l'ECG que vous trouverez ci-dessus, j'espère de tout cœur qu'ils pourront vous être utiles.
-            Ces documents n'ont pas pour vocation de vous expliquer en détail chaque principe, chaque manœuvre ou chaque signe de l'examen clinique mais plutôt de faire office d'une « Check-list » à consulter avant d'entrer dans la chambre de vos patients ou pendant la lecture d'un ECG.
-            Bien entendu, en pratique, un examen aussi complet que celui présenté me parait quelque peu exagéré, il vous incombe de faire preuve de bon sens et d'esprit critique afin de sélectionner les éléments les plus pertinents à explorer.
-            Cependant en vue de maitriser au mieux la sémiologie clinique à la fin de votre externat, il me semble être intéressant de vous entrainer à rechercher le maximum de ces signes cliniques lors de vos examens.
-        </div>
-    </div>
 
-    <div class="description-box" style="margin: 0;">
+
+    <div class="description-box">
         <h4>Remerciements</h4>
         <div class="content">
-            Je tiens à addresser mes plus sincères remerciements à Iulia pour son soutien inébranlable et son aide précieuse tout au long de cette aventure.
+            Je tiens à adresser mes plus sincères remerciements à Iulia pour son soutien inébranlable et son aide précieuse tout au long de cette aventure.
             Un immense merci également à Auxane, qui m'a initié au monde de l'informatique et m'a transmis des éléments essentiels pour mener ce projet à bien.
             Enfin, je remercie sincèrement ceux qui ont pris le temps de partager leurs précieux retours sur ce projet.        
         </div>
     </div>
-</div>
-    
-
+	
     </main>
 
     <footer>
