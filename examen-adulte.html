@@ -1082,12 +1082,15 @@ textarea {
 }
 
 #generatedTextArea div {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0,5rem;
+    line-height: 1.6;
 }
 
 #generatedTextArea strong {
-    font-weight: 600;
-    color: #1e40af; /* Bleu foncé pour les titres en gras */
+    color: #1e40af !important;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.2rem;
 }
 
 /* Animation pour l'apparition du texte */
@@ -1415,7 +1418,8 @@ textarea {
                 <input type="radio" name="card5" id="yescard5"> Signes cliniques
             </label> </p>
            </p> 
-		   <div class="card5d1" id="card5d1">
+
+		   <div style="margin-left: 20px; display: flex; gap: 20px;" class="card5d1" id="card5d1">
 		   <input type="checkbox" id="card5d1Input" style=\"display: none; margin-left: 10px; width: 500px;\"> <label for="card5d1Input">Turgescence jugulaire</label> 
 		   </div>
 		   <div class="card5d2" id="card5d2">
@@ -4861,7 +4865,7 @@ function highlight(text) {
 			const cardiovascularDetails = [
 				`${card1val}. ${card2val}. ${card3val}.`, // Trois éléments sur une ligne
 				`${getHemodynamiqueDescription()}.`, // Un élément seul
-				`${card5val} ${getICGDescription()}, ${getPulseDescription()}.`, // Plusieurs sur une ligne
+				`${card5val} ${getICGDescription()}. ${getPulseDescription()}.`, // Plusieurs sur une ligne
 				`${getTVPDescription()}, ${getVascularMurmurDescription()}.`, // Deux sur une ligne
 				`${getHeartSoundsDescription()}` // Un élément seul
 			];
@@ -5113,6 +5117,8 @@ if (textArea) {
                 titleSpan.style.fontWeight = 'bold'; // Mise en forme pour l'intitulé
                 titleSpan.textContent = parts[0] + ':'; // Ajoute les deux points
                 div.appendChild(titleSpan);
+				titleSpan.style.color = '#1e40af';
+
 
                 // Ajoute le contenu après l'intitulé
                 const content = parts.slice(1).join(':').trim(); // Récupère le reste
@@ -5380,7 +5386,7 @@ if (textArea) {
 				}
 				return highlight(description);
 			}
-			return "Pas de signe d'insuffisance cardiaque gauche";
+			return "Pas de signe d'insuffisance cardiaque gauche.";
 		}
 		
 		document.querySelectorAll('input[name="tvp"]').forEach(radio => {
@@ -6994,44 +7000,30 @@ function resetSection(button) {
 }
 
 
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('copyText').addEventListener('click', function () {
-        const textArea = document.getElementById('generatedTextArea');
+document.getElementById('copyText').addEventListener('click', function() {
+    const textArea = document.getElementById('generatedTextArea');
+    if (textArea) {
+        // Crée une sélection de tout le contenu
+        const range = document.createRange();
+        range.selectNodeContents(textArea);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
 
-        if (textArea) {
-            // Vérifier si l'élément est un <div> ou une <textarea>
-            const textToCopy = textArea.value || textArea.innerText || textArea.textContent;
-
-            // Utilisation de l'API Clipboard si disponible
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    alert('Texte copié dans le presse-papier.');
-                }).catch(err => {
-                    console.error('Erreur lors de la copie :', err);
-                    alert('Une erreur est survenue lors de la copie.');
-                });
-            } else {
-                // Alternative pour les navigateurs qui ne supportent pas l'API Clipboard
-                const tempTextArea = document.createElement('textarea');
-                tempTextArea.value = textToCopy;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                try {
-                    document.execCommand('copy');
-                    alert('Texte copié dans le presse-papier.');
-                } catch (err) {
-                    console.error('Erreur lors de la copie avec execCommand :', err);
-                    alert('Une erreur est survenue lors de la copie.');
-                }
-                document.body.removeChild(tempTextArea);
-            }
-        } else {
-            alert("L'élément de texte n'a pas été trouvé.");
+        // Exécute la commande de copie
+        try {
+            document.execCommand('copy');
+            alert('Texte copié dans le presse-papier.');
+        } catch (err) {
+            alert('Une erreur est survenue lors de la copie.');
         }
-    });
+
+        // Supprime la sélection
+        selection.removeAllRanges();
+    } else {
+        alert("L'élément de texte n'a pas été trouvé.");
+    }
 });
-
-
 
 document.addEventListener('DOMContentLoaded', function () {
     const tabs = document.querySelectorAll('.tab-button');
