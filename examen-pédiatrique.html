@@ -1699,7 +1699,7 @@ document.querySelectorAll('input[name="voieAccouchement"]').forEach(radio => {
             <label class="custom-control radio" style="margin-right: 15px;">
                 <input type="radio" name="antFamiliaux" id="pasAntFamiliaux" value="non" checked>
                 <span class="checkmark"></span>
-                Pas d'antécédent familiaux
+                Pas d'antécédent familial
             </label>
             <label class="custom-control radio" style="margin-right: 15px;">
                 <input type="radio" name="antFamiliaux" id="avecAntFamiliaux" value="oui">
@@ -4697,10 +4697,610 @@ function getAbdomenDescription() {
 </script>
 
 </div>
-				<div class="subsection">
-					
-					<h4>E : Neurologique</h4>
+				<!-- Section E : Neurologique -->
+<!-- Section E : Neurologique -->
+<div class="subsection">
+    <h4>E : Neurologique</h4>
+    
+    <div id="examenNeuroAge">
+         <!-- État de conscience -->
+        <p><strong>État de conscience :</strong></p>
+        <div style="margin-left: 20px;">
+            <label class="custom-control radio">
+                <input type="radio" name="conscience" value="normal" checked>
+                <span class="checkmark"></span>
+                Bon contact, éveillé et réactif
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="conscience" value="altere">
+                <span class="checkmark"></span>
+                État de conscience altéré
+            </label>
+            <input type="text" id="consciencePrecisions" placeholder="Précisez" 
+                   style="margin-top: 10px; width: 300px; display: none;">
+        </div>
+		
+            <!-- Marche et équilibre -->
+            <p><strong>Marche et équilibre :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Sans anomalie, pas de trouble de l'équilibre
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="acquisition">
+                        <span class="checkmark"></span>
+                        En cours d'acquisition
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="anomalie">
+                        <span class="checkmark"></span>
+                        Anomalie de la marche ou de l'équilibre
+                    </label>
+                    <input type="text" id="marchePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+
+            <!-- Déficits moteurs -->
+            <p><strong>Déficits moteurs :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="non" checked>
+                        <span class="checkmark"></span>
+                        Pas de déficit moteur
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="oui">
+                        <span class="checkmark"></span>
+                        Présence d'un déficit moteur
+                    </label>
+                    <input type="text" id="deficitMoteurPrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+
+        <!-- Paires crâniennes -->
+        <p><strong>Paires crâniennes :</strong></p>
+        <div style="margin-left: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="faciale" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Pas de paralysie faciale
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="faciale" value="paralysie">
+                    <span class="checkmark"></span>
+                    Paralysie faciale
+                </label>
+                <input type="text" id="facialePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="oculomotricite" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Bonne oculomotricité
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="oculomotricite" value="anormal">
+                    <span class="checkmark"></span>
+                    Anomalie
+                </label>
+                <input type="text" id="oculomotricitePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+        </div>
+
+        <!-- Syndrome méningé -->
+        <p><strong>Syndrome méningé :</strong></p>
+        <div style="margin-left: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="sdmeninge" value="non" checked>
+                    <span class="checkmark"></span>
+                    Pas de syndrome méningé
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="sdmeninge" value="oui">
+                    <span class="checkmark"></span>
+                    Syndrome méningé
+                </label>
+                <input type="text" id="sdmeningePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+        </div>
+		</div>
 </div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Fonction générique pour gérer l'affichage des zones de texte
+    function handleVisibility(radioName, inputId) {
+        const radios = document.getElementsByName(radioName);
+        const input = document.getElementById(inputId);
+
+        radios.forEach((radio) => {
+            radio.addEventListener("change", function () {
+                // Affiche la zone si le bouton sélectionné nécessite une précision
+                if (radio.value === "altere" || radio.value === "acquisition" || 
+                    radio.value === "anomalie" || radio.value === "oui" || 
+                    radio.value === "paralysie" || radio.value === "anormal") {
+                    input.style.display = "block";
+                } else {
+                    input.style.display = "none";
+                }
+            });
+
+            // Initialise la visibilité des champs à l'ouverture
+            if (radio.checked) {
+                if (radio.value === "altere" || 
+                    radio.value === "anomalie" || radio.value === "oui" || 
+                    radio.value === "paralysie" || radio.value === "anormal") {
+                    input.style.display = "block";
+                } else {
+                    input.style.display = "none";
+                }
+            }
+        });
+    }
+
+    // Applique la fonction aux différents groupes de boutons radio
+    handleVisibility("conscience", "consciencePrecisions");
+    handleVisibility("marche", "marchePrecisions");
+    handleVisibility("deficitMoteur", "deficitMoteurPrecisions");
+    handleVisibility("faciale", "facialePrecisions");
+    handleVisibility("oculomotricite", "oculomotricitePrecisions");
+    handleVisibility("sdmeninge", "sdmeningePrecisions");
+});
+
+
+// Fonction principale de mise à jour de l'examen neurologique
+function updateNeuroExam() {
+    const examNeuroAge = document.getElementById('examenNeuroAge');
+    const birthDateInput = document.getElementById('dateNaissance');
+    
+document.addEventListener("DOMContentLoaded", function() {
+    
+    if (!dateNaissance?.value) {
+        examNeuroAge.innerHTML = `
+            <p><strong>État de conscience :</strong></p>
+            <div style="margin-left: 20px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="conscience" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Bon contact, éveillé et réactif
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="conscience" value="altere">
+                    <span class="checkmark"></span>
+                    État de conscience altéré
+                </label>
+                <input type="text" id="consciencePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+        
+            <p><strong>Marche et équilibre :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Sans anomalie, pas de trouble de l'équilibre
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="acquisition">
+                        <span class="checkmark"></span>
+                        En cours d'acquisition
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="anomalie">
+                        <span class="checkmark"></span>
+                        Anomalie de la marche ou de l'équilibre
+                    </label>
+                    <input type="text" id="marchePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        
+            <p><strong>Déficits moteurs :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="non" checked>
+                        <span class="checkmark"></span>
+                        Pas de déficit moteur
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="oui">
+                        <span class="checkmark"></span>
+                        Présence d'un déficit moteur
+                    </label>
+                    <input type="text" id="deficitMoteurPrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        
+            <p><strong>Paires crâniennes :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="faciale" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Pas de paralysie faciale
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="faciale" value="paralysie">
+                        <span class="checkmark"></span>
+                        Paralysie faciale
+                    </label>
+                    <input type="text" id="facialePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+        
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="oculomotricite" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Bonne oculomotricité
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="oculomotricite" value="anormal">
+                        <span class="checkmark"></span>
+                        Anomalie
+                    </label>
+                    <input type="text" id="oculomotricitePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        
+            <p><strong>Syndrome méningé :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="sdmeninge" value="non" checked>
+                        <span class="checkmark"></span>
+                        Pas de syndrome méningé
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="sdmeninge" value="oui">
+                        <span class="checkmark"></span>
+                        Syndrome méningé
+                    </label>
+                    <input type="text" id="sdmeningePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        `;
+        
+        // Rafraîchissement des événements après l'injection du HTML
+        refreshEventListeners();
+        return;
+    }
+
+    // Fonction pour rafraîchir les événements
+    function refreshEventListeners() {
+        // Mettre à jour l'affichage des champs de texte
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function (event) {
+                let inputField = null;
+                
+                // Affichage ou masquage des champs en fonction des boutons radio sélectionnés
+                switch (event.target.name) {
+                    case 'conscience':
+                        inputField = document.getElementById('consciencePrecisions');
+                        inputField.style.display = (event.target.value === 'altere') ? 'block' : 'none';
+                        break;
+                    case 'marche':
+                        inputField = document.getElementById('marchePrecisions');
+                        inputField.style.display = (event.target.value === 'anomalie') ? 'block' : 'none';
+                        break;
+                    case 'deficitMoteur':
+                        inputField = document.getElementById('deficitMoteurPrecisions');
+                        inputField.style.display = (event.target.value === 'oui') ? 'block' : 'none';
+                        break;
+                    case 'faciale':
+                        inputField = document.getElementById('facialePrecisions');
+                        inputField.style.display = (event.target.value === 'paralysie') ? 'block' : 'none';
+                        break;
+                    case 'oculomotricite':
+                        inputField = document.getElementById('oculomotricitePrecisions');
+                        inputField.style.display = (event.target.value === 'anormal') ? 'block' : 'none';
+                        break;
+                    case 'sdmeninge':
+                        inputField = document.getElementById('sdmeningePrecisions');
+                        inputField.style.display = (event.target.value === 'oui') ? 'block' : 'none';
+                        break;
+                    default:
+                        break;
+                }
+            });
+        });
+    }
+});
+
+
+
+    const birthDate = new Date(birthDateInput.value);
+    const today = new Date();
+    let ageInMonths = (today.getFullYear() - birthDate.getFullYear()) * 12;
+    ageInMonths -= birthDate.getMonth();
+    ageInMonths += today.getMonth();
+
+    // Contenu commun pour tous les âges
+    let htmlContent = `
+        <!-- État de conscience -->
+        <p><strong>État de conscience :</strong></p>
+        <div style="margin-left: 20px;">
+            <label class="custom-control radio">
+                <input type="radio" name="conscience" value="normal" checked>
+                <span class="checkmark"></span>
+                Bon contact, éveillé et réactif
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="conscience" value="altere">
+                <span class="checkmark"></span>
+                État de conscience altéré
+            </label>
+            <input type="text" id="consciencePrecisions" placeholder="Précisez" 
+                   style="margin-top: 10px; width: 300px; display: none;">
+        </div>
+    `;
+
+    if (ageInMonths < 12) {
+        // Contenu spécifique nourrisson
+        htmlContent += `
+            <!-- Tonus et motricité -->
+            <p><strong>Tonus et examen moteur :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="tonus" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Bon tonus central et périphérique
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="tonus" value="hypotonie">
+                        <span class="checkmark"></span>
+                        Hypotonie
+                    </label>
+                    <input type="text" id="tonusPrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="motricite" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Quadriflexion spontanée, pas de déficit moteur
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="motricite" value="anormal">
+                        <span class="checkmark"></span>
+                        Anomalie motrice
+                    </label>
+                    <input type="text" id="motricitePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        `;
+
+        // Réflexes archaïques uniquement si ≤ 8 mois
+        if (ageInMonths <= 6) {
+            htmlContent += `
+                <div id="reflexes-section">
+                    <p><strong>Réflexes archaïques :</strong></p>
+                    <div style="margin-left: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <p>Réflexe de Moro :</p>
+                            <div style="margin-left: 20px;">
+                                <label class="custom-control radio">
+                                    <input type="radio" name="moro" value="present" checked>
+                                    <span class="checkmark"></span>
+                                    Présent
+                                </label>
+                                <label class="custom-control radio">
+                                    <input type="radio" name="moro" value="absent">
+                                    <span class="checkmark"></span>
+                                    Absent
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <p>Réflexe de succion :</p>
+                            <div style="margin-left: 20px;">
+                                <label class="custom-control radio">
+                                    <input type="radio" name="succion" value="present" checked>
+                                    <span class="checkmark"></span>
+                                    Présent
+                                </label>
+                                <label class="custom-control radio">
+                                    <input type="radio" name="succion" value="absent">
+                                    <span class="checkmark"></span>
+                                    Absent
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <p>Réflexe de préhension palmaire :</p>
+                            <div style="margin-left: 20px;">
+                                <label class="custom-control radio">
+                                    <input type="radio" name="prehension" value="present" checked>
+                                    <span class="checkmark"></span>
+                                    Présent
+                                </label>
+                                <label class="custom-control radio">
+                                    <input type="radio" name="prehension" value="absent">
+                                    <span class="checkmark"></span>
+                                    Absent
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <p>Réflexe de marche automatique :</p>
+                            <div style="margin-left: 20px;">
+                                <label class="custom-control radio">
+                                    <input type="radio" name="marche" value="present" checked>
+                                    <span class="checkmark"></span>
+                                    Présent
+                                </label>
+                                <label class="custom-control radio">
+                                    <input type="radio" name="marche" value="absent">
+                                    <span class="checkmark"></span>
+                                    Absent
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        // Contenu spécifique enfant > 12 mois
+        htmlContent += `
+            <!-- Marche et équilibre -->
+            <p><strong>Marche et équilibre :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="normal" checked>
+                        <span class="checkmark"></span>
+                        Sans anomalie, pas de trouble de l'équilibre
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="acquisition">
+                        <span class="checkmark"></span>
+                        En cours d'acquisition
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="marche" value="anomalie">
+                        <span class="checkmark"></span>
+                        Anomalie de la marche ou de l'équilibre
+                    </label>
+                    <input type="text" id="marchePrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+
+            <!-- Déficits moteurs -->
+            <p><strong>Déficits moteurs :</strong></p>
+            <div style="margin-left: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="non" checked>
+                        <span class="checkmark"></span>
+                        Pas de déficit moteur
+                    </label>
+                    <label class="custom-control radio">
+                        <input type="radio" name="deficitMoteur" value="oui">
+                        <span class="checkmark"></span>
+                        Présence d'un déficit moteur
+                    </label>
+                    <input type="text" id="deficitMoteurPrecisions" placeholder="Précisez" 
+                           style="margin-top: 10px; width: 300px; display: none;">
+                </div>
+            </div>
+        `;
+    }
+
+    // Contenu commun pour tous les âges (suite)
+    htmlContent += `
+        <!-- Paires crâniennes -->
+        <p><strong>Paires crâniennes :</strong></p>
+        <div style="margin-left: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="faciale" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Pas de paralysie faciale
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="faciale" value="paralysie">
+                    <span class="checkmark"></span>
+                    Paralysie faciale
+                </label>
+                <input type="text" id="facialePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="oculomotricite" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Bonne oculomotricité
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="oculomotricite" value="anormal">
+                    <span class="checkmark"></span>
+                    Anomalie
+                </label>
+                <input type="text" id="oculomotricitePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+        </div>
+
+        <!-- Syndrome méningé -->
+        <p><strong>Syndrome méningé :</strong></p>
+        <div style="margin-left: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="sdmeninge" value="non" checked>
+                    <span class="checkmark"></span>
+                    Pas de syndrome méningé
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="sdmeninge" value="oui">
+                    <span class="checkmark"></span>
+                    Syndrome méningé
+                </label>
+                <input type="text" id="sdmeningePrecisions" placeholder="Précisez" 
+                       style="margin-top: 10px; width: 300px; display: none;">
+            </div>
+        </div>
+    `;
+
+    // Injecter le contenu
+	
+	
+    examNeuroAge.innerHTML = htmlContent;
+	
+    
+
+    // Ajouter les gestionnaires d'événements pour les champs de précision
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const name = this.name;
+            const value = this.value;
+            const precisionField = document.getElementById(`${name}Precisions`);
+            if (precisionField) {
+                precisionField.style.display = 
+                    (value === 'altere' || value === 'hypotonie' || value === 'anormal' || 
+                     value === 'paralysie' || value === 'anomalie' || value === 'oui') ? 'block' : 'none';
+            }
+        });
+    });
+}
+
+// Ajouter l'écouteur d'événements pour la date de naissance
+document.getElementById('dateNaissance')?.addEventListener('change', updateNeuroExam);
+
+// Appeler updateNeuroExam au chargement si une date est déjà sélectionnée
+document.addEventListener('DOMContentLoaded', () => {
+    const birthDateInput = document.getElementById('dateNaissance');
+    if (birthDateInput && birthDateInput.value) {
+        updateNeuroExam();
+    }
+});
+</script>
 				<div class="subsection">
 				
 <h4>Autres appareils</h4>
@@ -4913,7 +5513,7 @@ document.querySelectorAll('input[name="eruptionCutanee"]').forEach(radio => {
     </div>
 
     <!-- Section des localisations -->
-    <div id="adenopathiesDetails" style="display: none; margin-left: 20px;">
+    <div id="adenopathiesDetails" style="display: none; margin-left: 40px;">
         <div id="localisations">
             <!-- Les localisations seront générées ici par JavaScript -->
         </div>
