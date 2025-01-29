@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="Analyse de gaz du sang type proposé par TypixClin. Analysez vos gaz du sang en ligne. ">
+		<meta name="description" content="Analyse et interprétation de gaz du sang en ligne proposé par TypixClin.">
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -2119,14 +2119,57 @@ function checkRequiredFields() {
     const cl = document.getElementById('GDS_cl_plasma').value;
     const trouAnionique = document.getElementById('GDS_trou_anionique').value;
 
-    // Si pH indique une acidose métabolique
-    if (ph && pco2 && hco3 && parseFloat(ph) < 7.38 && parseFloat(pco2) <= 44) {
+    // CAS 1: Acidose métabolique avec PCO2 dans l'intervalle normal
+    if (ph && pco2 && hco3 && 
+        parseFloat(ph) < 7.38 && 
+        parseFloat(pco2) >= 36 && parseFloat(pco2) <= 44) {
+        
+        // Vérifier si les composants du TA plasmatique sont remplis
         if (!na || !cl) {
-            // Faire clignoter seulement les champs du ionogramme plasmatique manquants
             if (!na) document.getElementById('GDS_na_plasma').classList.add('blink');
             if (!cl) document.getElementById('GDS_cl_plasma').classList.add('blink');
+        } 
+        // Si on a le TA plasmatique
+        else if (trouAnionique) {
+            if (parseFloat(trouAnionique) > 16) {
+                // Si TA augmenté, faire clignoter créat, lactate, glycémie
+                const creatinine = document.getElementById('GDS_creatinine').value;
+                const lactate = document.getElementById('GDS_lactate').value;
+                const glycemie = document.getElementById('GDS_glycemie').value;
+
+                if (!creatinine) document.getElementById('GDS_creatinine').classList.add('blink');
+                if (!lactate) document.getElementById('GDS_lactate').classList.add('blink');
+                if (!glycemie) document.getElementById('GDS_glycemie').classList.add('blink');
+            } else {
+                // Si TA normal, vérifier les composants du TA urinaire
+                const naU = document.getElementById('GDS_na_urine').value;
+                const kU = document.getElementById('GDS_k_urine').value;
+                const clU = document.getElementById('GDS_cl_urine').value;
+
+                if (!naU || !kU || !clU || !k) {
+                    if (!naU) document.getElementById('GDS_na_urine').classList.add('blink');
+                    if (!kU) document.getElementById('GDS_k_urine').classList.add('blink');
+                    if (!clU) document.getElementById('GDS_cl_urine').classList.add('blink');
+                    if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+                }
+            }
+        }
+    }
+
+    // CAS 2: Acidose métabolique avec compensation respiratoire
+    else if (ph && pco2 && hco3 && parseFloat(ph) < 7.38 && parseFloat(pco2) < 36) {
+        if (!na || !cl) {
+            if (!na) document.getElementById('GDS_na_plasma').classList.add('blink');
+            if (!cl) document.getElementById('GDS_cl_plasma').classList.add('blink');
+        } else if (trouAnionique && parseFloat(trouAnionique) > 16) {
+            const creatinine = document.getElementById('GDS_creatinine').value;
+            const lactate = document.getElementById('GDS_lactate').value;
+            const glycemie = document.getElementById('GDS_glycemie').value;
+
+            if (!creatinine) document.getElementById('GDS_creatinine').classList.add('blink');
+            if (!lactate) document.getElementById('GDS_lactate').classList.add('blink');
+            if (!glycemie) document.getElementById('GDS_glycemie').classList.add('blink');
         } else if (trouAnionique && parseFloat(trouAnionique) <= 16) {
-            // Si trou anionique normal, vérifier les champs du trou anionique urinaire
             const naU = document.getElementById('GDS_na_urine').value;
             const kU = document.getElementById('GDS_k_urine').value;
             const clU = document.getElementById('GDS_cl_urine').value;
@@ -2135,14 +2178,76 @@ function checkRequiredFields() {
                 if (!naU) document.getElementById('GDS_na_urine').classList.add('blink');
                 if (!kU) document.getElementById('GDS_k_urine').classList.add('blink');
                 if (!clU) document.getElementById('GDS_cl_urine').classList.add('blink');
-				if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+                if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+            }
+        }
+    }
 
+    // CAS 3: Alcalose respiratoire avec acidose métabolique
+    else if (ph && pco2 && hco3 && parseFloat(ph) > 7.42 && parseFloat(pco2) < 36 && parseFloat(hco3) < 22) {
+        if (!na || !cl) {
+            if (!na) document.getElementById('GDS_na_plasma').classList.add('blink');
+            if (!cl) document.getElementById('GDS_cl_plasma').classList.add('blink');
+        } else {
+            if (trouAnionique) {
+                if (parseFloat(trouAnionique) > 16) {
+                    const creatinine = document.getElementById('GDS_creatinine').value;
+                    const lactate = document.getElementById('GDS_lactate').value;
+                    const glycemie = document.getElementById('GDS_glycemie').value;
+
+                    if (!creatinine) document.getElementById('GDS_creatinine').classList.add('blink');
+                    if (!lactate) document.getElementById('GDS_lactate').classList.add('blink');
+                    if (!glycemie) document.getElementById('GDS_glycemie').classList.add('blink');
+                } else {
+                    const naU = document.getElementById('GDS_na_urine').value;
+                    const kU = document.getElementById('GDS_k_urine').value;
+                    const clU = document.getElementById('GDS_cl_urine').value;
+
+                    if (!naU || !kU || !clU || !k) {
+                        if (!naU) document.getElementById('GDS_na_urine').classList.add('blink');
+                        if (!kU) document.getElementById('GDS_k_urine').classList.add('blink');
+                        if (!clU) document.getElementById('GDS_cl_urine').classList.add('blink');
+                        if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+                    }
+                }
+            }
+        }
+    }
+
+    // CAS 4: Acidose respiratoire avec acidose métabolique
+    else if (ph && pco2 && hco3 && parseFloat(ph) < 7.38 && parseFloat(pco2) > 44) {
+        const expectedHCO3Change = (parseFloat(pco2) - 40) / 10;
+        const expectedHCO3 = 24 + expectedHCO3Change * 3;
+        
+        if (parseFloat(hco3) < 21) {
+            if (!na || !cl) {
+                if (!na) document.getElementById('GDS_na_plasma').classList.add('blink');
+                if (!cl) document.getElementById('GDS_cl_plasma').classList.add('blink');
+            } else if (trouAnionique) {
+                if (parseFloat(trouAnionique) > 16) {
+                    const creatinine = document.getElementById('GDS_creatinine').value;
+                    const lactate = document.getElementById('GDS_lactate').value;
+                    const glycemie = document.getElementById('GDS_glycemie').value;
+
+                    if (!creatinine) document.getElementById('GDS_creatinine').classList.add('blink');
+                    if (!lactate) document.getElementById('GDS_lactate').classList.add('blink');
+                    if (!glycemie) document.getElementById('GDS_glycemie').classList.add('blink');
+                } else {
+                    const naU = document.getElementById('GDS_na_urine').value;
+                    const kU = document.getElementById('GDS_k_urine').value;
+                    const clU = document.getElementById('GDS_cl_urine').value;
+
+                    if (!naU || !kU || !clU || !k) {
+                        if (!naU) document.getElementById('GDS_na_urine').classList.add('blink');
+                        if (!kU) document.getElementById('GDS_k_urine').classList.add('blink');
+                        if (!clU) document.getElementById('GDS_cl_urine').classList.add('blink');
+                        if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+                    }
+                }
             }
         }
     }
 }
-
-
 
 function checkDataCoherence() {
     const ph = parseFloat(document.getElementById('GDS_ph').value);
@@ -2232,7 +2337,7 @@ function updateAnalysis() {
             coherenceStatus = '<span class="coherence-check missing">Données manquantes ! </span>';
             break;
         case 'incoherent':
-            coherenceStatus = '<span class="coherence-check invalid">Trouble mixte ou présence d\'un perturbateur exogène</span>';
+            coherenceStatus = '<span class="coherence-check invalid">Trouble mixte et/ou présence d\'un perturbateur exogène ou données incohérentes</span>';
             break;
     }
 
@@ -2298,11 +2403,11 @@ setTimeout(() => {
         const hasHypoxia = parseFloat(po2) < 80;
         
         if (pco2 > 44 && sum > 120) {
-            ventilationAnalysis = `<span class="coherence-check acidemia respiratory">Hypoventilation alvéolaire${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxie'} (pCO2 + pO2 = ${sum.toFixed(0)} mmHg)</span>`;
+            ventilationAnalysis = `<span class="coherence-check acidemia respiratory">Hypoventilation alvéolaire${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxémie'} (pCO2 + pO2 = ${sum.toFixed(0)} mmHg)</span>`;
         } else if (pco2 < 36 && sum < 120) {
-            ventilationAnalysis = `<span class="coherence-check alkalemia respiratory">Shunt gazométrique${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxie'} (pCO2 + pO2 = ${sum.toFixed(1)} mmHg)</span>`;
+            ventilationAnalysis = `<span class="coherence-check alkalemia respiratory">Shunt gazométrique${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxémie'} (pCO2 + pO2 = ${sum.toFixed(0)} mmHg)</span>`;
         } else if (hasHypoxia) {
-            ventilationAnalysis = `<span class="coherence-check ta-high">Hypoxémie isolée</span>`;
+            ventilationAnalysis = `<span class="coherence-check ta-high">Shunt gazométrique avec hypoxémie</span>`;
         } else {
             ventilationAnalysis = `<span class="coherence-check normal">Oxygénation normale</span>`;
         }
@@ -2381,18 +2486,32 @@ setTimeout(() => {
     } else {
         // Garder la logique existante pour pH anormal
         if (phValue < 7.38) {
-            if (pco2Value > 44) {
-                troubleDescription = '<span class="coherence-check acidemia respiratory">Acidose respiratoire (pH ↓ et PCO2 ↑)</span>';
-            } else {
+			if (pco2Value > 44) {
+				// Calcul du HCO3 attendu pour une compensation d'acidose respiratoire
+				const expectedHCO3Change = (pco2Value - 40) / 10;
+				const expectedHCO3 = 24 + expectedHCO3Change * 3;
+				
+				if (hco3Value < 21) {
+					troubleDescription = '<span class="coherence-check mixed">Trouble mixte : Acidose respiratoire et acidose métabolique (pH ↓, PCO2 ↑ et HCO3- ↓↓)</span>';
+				} else {
+					troubleDescription = '<span class="coherence-check acidemia respiratory">Acidose respiratoire (pH ↓ et PCO2 ↑)</span>';
+				}
+		} else {
                 troubleDescription = '<span class="coherence-check acidemia metabolic">Acidose métabolique (pH ↓ et PCO2 ↓)</span>';
             }
-        } else if (phValue > 7.42) {
-            if (pco2Value < 36) {
-                troubleDescription = '<span class="coherence-check alkalemia respiratory">Alcalose respiratoire (pH ↑ et PCO2 ↓)</span>';
-            } else {
-                troubleDescription = '<span class="coherence-check alkalemia metabolic">Alcalose métabolique (pH ↑ et PCO2 ↑)</span>';
-            }
-        }
+			} else if (phValue > 7.42) {
+				if (pco2Value < 36) {
+					if (hco3Value > 26) {
+						troubleDescription = '<span class="coherence-check mixed">Trouble mixte : Alcalose respiratoire et alcalose métabolique (pH ↑, PCO2 ↓ et HCO3- ↑)</span>';
+					} else if (hco3Value < 21) {
+						troubleDescription = '<span class="coherence-check complex">Trouble complexe : Alcalose respiratoire et acidose métabolique (pH ↑, PCO2 ↓ et HCO3- ↓)</span>';
+					} else {
+						troubleDescription = '<span class="coherence-check alkalemia respiratory">Alcalose respiratoire (pH ↑ et PCO2 ↓)</span>';
+					}
+				} else {
+					troubleDescription = '<span class="coherence-check alkalemia metabolic">Alcalose métabolique (pH ↑ et PCO2 ↑)</span>';
+				}
+			}
     }
 
     step3.innerHTML = `
@@ -2428,7 +2547,7 @@ setTimeout(() => {
                 <div>Interprétation</div>
                 <div class="step-values">
                     <div class="diagnostic-container">
-                        <div class="diagnostic-title">Gaz du sang normal</div>
+                        <div class="diagnostic-title">Gaz du sang normal à priori, à interpréter dans le contexte clinique</div>
                         <div class="diagnostic-group">
                             <ul class="diagnostic-list">
                                 <li class="diagnostic-item">pH : ${phValue} (N: 7.38-7.42)</li>
@@ -2437,7 +2556,7 @@ setTimeout(() => {
                             </ul>
                             <div class="diagnostic-subtitle">Conclusion :</div>
                             <ul class="diagnostic-list">
-                                <li class="diagnostic-item">Équilibre acido-basique conservé</li>
+                                <li class="diagnostic-item">Équilibre acido-basique conservé à priori</li>
                             </ul>
                         </div>
                     </div>
@@ -2476,13 +2595,16 @@ setTimeout(() => {
         if (hco3Value > 26 && pco2Value >= 36 && pco2Value <= 44) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Alcalose métabolique non compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-title">Alcalose métabolique non compensée sur le plan respiratoire.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes possibles :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Vomissements et aspiration digestive</li>
                             <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
                             <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
+							<li class="diagnostic-item">Apports alcalins</li>
+							<li class="diagnostic-item">Déplétion volémique, alcalose de contraction</li>
+							<li class="diagnostic-item">Compensation respiratoire incomplète en faveur d'un trouble ventilatoire associé</li>
                         </ul>
                     </div>
                 </div>`;
@@ -2491,13 +2613,15 @@ setTimeout(() => {
         else if (hco3Value < 22 && pco2Value >= 36 && pco2Value <= 44) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Acidose métabolique non compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-title">Acidose métabolique non compensée sur le plan respiratoire.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes possibles :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Acidocétose (diabétique, alcoolique)</li>
-                            <li class="diagnostic-item">Insuffisance rénale</li>
-                            <li class="diagnostic-item">Diarrhées sévères</li>
+                            <li class="diagnostic-item">Insuffisance rénale, intoxication</li>
+                            <li class="diagnostic-item">Diarrhées sévères, acidose tubulaire rénale</li>
+							<li class="diagnostic-item">Compensation respiratoire incomplète en faveur d'un trouble ventilatoire associé</li>
+
                         </ul>
                     </div>
                 </div>`;
@@ -2506,13 +2630,15 @@ setTimeout(() => {
         else if (pco2Value > 44 && hco3Value >= 22 && hco3Value <= 26) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Acidose respiratoire non compensée sur le plan métabolique</div>
+                    <div class="diagnostic-title">Acidose respiratoire non compensée sur le plan métabolique.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes possibles :</div>
                         <ul class="diagnostic-list">
-                            <li class="diagnostic-item">BPCO décompensée</li>
-                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire</li>
                             <li class="diagnostic-item">Dépression respiratoire centrale</li>
+							<li class="diagnostic-item">Compensation métabolique incomplète en faveur d'un trouble métabolique associé</li>
+
                         </ul>
                     </div>
                 </div>`;
@@ -2521,13 +2647,15 @@ setTimeout(() => {
         else if (pco2Value < 36 && hco3Value >= 22 && hco3Value <= 26) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Alcalose respiratoire non compensée sur le plan métabolique</div>
+                    <div class="diagnostic-title">Alcalose respiratoire non compensée sur le plan métabolique.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes possibles :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
-                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Hyperventilation</li>
                             <li class="diagnostic-item">Sepsis</li>
+							<li class="diagnostic-item">Intoxications aux salicylés</li>
+							<li class="diagnostic-item">Compensation métabolique incomplète en faveur d'un trouble métabolique associé</li>
                         </ul>
                     </div>
                 </div>`;
@@ -2536,19 +2664,19 @@ setTimeout(() => {
         else if (pco2Value > 44 && hco3Value > 26) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">État mixte compensé : Acidose respiratoire compensée sur le plan métabolique ou Alcalose métabolique compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-title">État mixte compensé : Acidose respiratoire compensée sur le plan métabolique ou Alcalose métabolique compensée sur le plan respiratoire.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes d'acidose respiratoire chronique :</div>
                         <ul class="diagnostic-list">
-                            <li class="diagnostic-item">BPCO au long cours</li>
-                            <li class="diagnostic-item">Obésité-hypoventilation</li>
+                            <li class="diagnostic-item">BPCO</li>
+                            <li class="diagnostic-item">Obésité-hypoventilation et autres maladies restrictives pulmonaires</li>
                             <li class="diagnostic-item">Maladies neuromusculaires chroniques</li>
                         </ul>
                         <div class="diagnostic-subtitle">Causes d'alcalose métabolique chronique :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Vomissements chroniques</li>
                             <li class="diagnostic-item">Diurétiques au long cours</li>
-                            <li class="diagnostic-item">Syndrome de Cushing</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
                         </ul>
                     </div>
                 </div>`;
@@ -2557,12 +2685,12 @@ setTimeout(() => {
         else if (pco2Value < 36 && hco3Value < 22) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">État mixte compensé : Alcalose respiratoire compensée sur le plan métabolique ou Acidose métabolique compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-title">État mixte compensé : Alcalose respiratoire compensée sur le plan métabolique ou Acidose métabolique compensée sur le plan respiratoire.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes d'alcalose respiratoire chronique :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Hypoxémie chronique</li>
-                            <li class="diagnostic-item">Cirrhose hépatique</li>
+                            <li class="diagnostic-item">Hyperthyroidie</li>
                             <li class="diagnostic-item">Grossesse</li>
                         </ul>
                         <div class="diagnostic-subtitle">Causes d'acidose métabolique chronique :</div>
@@ -2578,19 +2706,22 @@ setTimeout(() => {
         else if (pco2Value < 36 && hco3Value > 26) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Trouble mixte non compensé : Alcalose respiratoire et alcalose métabolique</div>
+                    <div class="diagnostic-title">Trouble mixte non compensé : Alcalose respiratoire et alcalose métabolique.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
-                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
-                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Hyperventilation</li>
+                            <li class="diagnostic-item">Sepsis</li>
+							<li class="diagnostic-item">Intoxications aux salicylés</li>
                         </ul>
                         <div class="diagnostic-subtitle">Causes d'alcalose métabolique associée :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Vomissements et aspiration digestive</li>
                             <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
-                            <li class="diagnostic-item">Hyperaldostéronisme</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
+							<li class="diagnostic-item">Apports alcalins</li>
+							<li class="diagnostic-item">Déplétion volémique, alcalose de contraction</li>
                         </ul>
                     </div>
                 </div>`;
@@ -2599,19 +2730,19 @@ setTimeout(() => {
         else if (pco2Value > 44 && hco3Value < 22) {
             diagnosticContent = `
                 <div class="diagnostic-container">
-                    <div class="diagnostic-title">Trouble mixte non compensé : Acidose respiratoire et acidose métabolique</div>
+                    <div class="diagnostic-title">Trouble mixte non compensé : Acidose respiratoire et acidose métabolique.</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
                         <ul class="diagnostic-list">
-                            <li class="diagnostic-item">BPCO décompensée</li>
-                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
-                            <li class="diagnostic-item">Épuisement respiratoire</li>
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire, épuisement</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
                         </ul>
                         <div class="diagnostic-subtitle">Causes d'acidose métabolique associée :</div>
                         <ul class="diagnostic-list">
-                            <li class="diagnostic-item">Acidocétose</li>
-                            <li class="diagnostic-item">Insuffisance rénale</li>
-                            <li class="diagnostic-item">Hyperlactatémie</li>
+                            <li class="diagnostic-item">Acidocétose (diabétique, alcoolique)</li>
+                            <li class="diagnostic-item">Insuffisance rénale, intoxication</li>
+                            <li class="diagnostic-item">Diarrhées sévères, acidose tubulaire rénale</li>
                         </ul>
                     </div>
                 </div>`;
@@ -2656,9 +2787,9 @@ if (isGazNormal) return;
             formulaDescription = `HCO3 attendu = 24 + 3 × ((PaCO2 - 40) / 10) = ${expectedHCO3.toFixed(0)}`;
             measuredValuesDescription = `HCO3 mesuré : ${hco3Value.toFixed(0)}`;
             if (Math.abs(hco3Value - expectedHCO3) <= 4) {
-                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation métabolique complète</span>';
+                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation métabolique complète.</span>';
             } else {
-                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète</span>';
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète. Attention peut être en faveur d\'une acidose/alcalose métabolique surajouté.</span>';
             }
         } else { // Acidose métabolique
             // Formule de Winter : PaCO2 = (1.5 × [HCO3-]) + 8 ±2
@@ -2670,9 +2801,9 @@ if (isGazNormal) return;
             if (Math.abs(difference) <= 3) {
                 compensationAnalysis = '<span class="coherence-check compensation complete">Compensation respiratoire complète</span>';
             } else if (pco2Value > expectedPCO2 + 3) {
-                compensationAnalysis = '<span class="coherence-check mixed">Trouble acidobasique mixte : Acidose métabolique + Acidose respiratoire</span>';
+                compensationAnalysis = '<span class="coherence-check mixed">Trouble mixte : Acidose métabolique + Acidose respiratoire.</span>';
             } else if (pco2Value < expectedPCO2 - 3) {
-                compensationAnalysis = '<span class="coherence-check complex">Trouble acidobasique complexe : Acidose métabolique + Alcalose respiratoire</span>';
+                compensationAnalysis = '<span class="coherence-check complex">Trouble complexe : Acidose métabolique + Alcalose respiratoire.</span>';
             } else {
                 compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation respiratoire en cours</span>';
             }
@@ -2687,7 +2818,7 @@ if (isGazNormal) return;
             if (Math.abs(hco3Value - expectedHCO3) <= 3) {
                 compensationAnalysis = '<span class="coherence-check compensation complete">Compensation métabolique complète</span>';
             } else {
-                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète</span>';
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète. Attention peut être en faveur d\'une acidose/alcalose métabolique surajouté.</span>';
             }
         } else { // Alcalose métabolique
             // PCO2 attendue = 40 + 0.6(ΔHCO3-)
@@ -2697,7 +2828,7 @@ if (isGazNormal) return;
             if (Math.abs(pco2Value - expectedPCO2) <= 3) {
                 compensationAnalysis = '<span class="coherence-check compensation complete">Compensation respiratoire complète</span>';
             } else {
-                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation respiratoire incomplète</span>';
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation respiratoire incomplète. Attention peut être en faveur d\'une acidose/alcalose respiratoire surajouté.</span>';
             }
         }
     }
@@ -3055,23 +3186,131 @@ if (!isNaN(k) && k !== null) {
 
     // Génération du diagnostic en fonction du trouble
     if (phValue < 7.38) {
-        if (pco2Value > 44) {
+ if (pco2Value > 44) {
+        // Calcul du HCO3 attendu pour une compensation d'acidose respiratoire
+        const expectedHCO3Change = (pco2Value - 40) / 10;
+        const expectedHCO3 = 24 + expectedHCO3Change * 3;
+        
+        if (hco3Value < 21) {
+            // Récupération des valeurs nécessaires
+            const taPlasma = document.getElementById('GDS_trou_anionique').value 
+                ? parseFloat(document.getElementById('GDS_trou_anionique').value) 
+                : null;
+            const tau = document.getElementById('GDS_trou_anioniqueUrinaire').value 
+                ? parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) 
+                : null;
+            const kValue = document.getElementById('GDS_k_plasma').value 
+                ? parseFloat(document.getElementById('GDS_k_plasma').value) 
+                : null;
+            const glycemie = document.getElementById('GDS_glycemie').value 
+                ? parseFloat(document.getElementById('GDS_glycemie').value) 
+                : null;
+            const creatinine = document.getElementById('GDS_creatinine').value 
+                ? parseFloat(document.getElementById('GDS_creatinine').value) 
+                : null;
+            const lactate = document.getElementById('GDS_lactate').value 
+                ? parseFloat(document.getElementById('GDS_lactate').value) 
+                : null;
+
+            // Construction du contexte
+            let contextStr = '';
+            let context = [];
+            if (glycemie > 8) context.push("hyperglycémie");
+            if (creatinine > 120) context.push("insuffisance rénale");
+            if (lactate > 2) context.push("hyperlactatémie");
+            if (context.length > 0) {
+                contextStr = ` dans un contexte d'${context.join(", d'")}`;
+            }
+
+            let acidoseMetaboliqueContent = '';
+            if (taPlasma !== null) {
+                if (taPlasma > 16) {
+                    acidoseMetaboliqueContent = `
+                        <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA augmenté :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+                            <li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+                            <li class="diagnostic-item">Insuffisance rénale sévère</li>
+                            <li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+                        </ul>`;
+                } else {
+                    let kaliemieText = '';
+                    if (kValue !== null) {
+                        kaliemieText = kValue > 5 ? ' avec hyperkaliémie' : ' sans hyperkaliémie';
+                    }
+
+                    if (tau !== null) {
+                        if (tau > 0) {
+                            acidoseMetaboliqueContent = `
+                                <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA normal${kaliemieText}, à TA urinaire positif :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                                    <li class="diagnostic-item">Acidose tubulaire distale${kValue > 5 ? ' avec hyperkaliémie (Type 4)' : ' sans hyperkaliémie (Type 1)'}</li>
+                                </ul>`;
+                        } else {
+                            acidoseMetaboliqueContent = `
+                                <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA normal, à TA urinaire négatif :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Diarrhée</li>
+                                    <li class="diagnostic-item">Iléostomie</li>
+                                </ul>`;
+                        }
+                    } else {
+                        acidoseMetaboliqueContent = `
+                            <div class="diagnostic-subtitle">Causes possibles d'acidose métabolique à TA normal${kaliemieText} :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Pertes digestives (diarrhée, iléostomie)</li>
+                                <li class="diagnostic-item">Acidose tubulaire rénale</li>
+                            </ul>`;
+                    }
+                }
+            } else {
+					// Version modifiée quand le TA n'est pas disponible
+					acidoseMetaboliqueContent = `
+						<div class="diagnostic-subtitle">Causes possibles d'acidose métabolique :</div>
+						<ul class="diagnostic-list">
+							<li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+							<li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+							<li class="diagnostic-item">Insuffisance rénale sévère</li>
+							<li class="diagnostic-item">Pertes digestives (diarrhée, iléostomie)</li>
+							<li class="diagnostic-item">Acidose tubulaire rénale</li>
+						</ul>
+						<div style="margin-top: 1rem; color: #666; font-style: italic;">
+							Note : Le calcul du trou anionique plasmatique et urinaire permettrait d'affiner le diagnostic étiologique
+						</div>`;
+				}
+
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble mixte : Acidose respiratoire associée à une acidose métabolique${contextStr}.</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire, épuisement respiratoire</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
+                            <li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
+                        </ul>
+                        ${acidoseMetaboliqueContent}
+                    </div>
+                </div>`;
+        } else {
+            // Code existant pour acidose respiratoire simple...
             diagnosticContent = `
                 <div class="diagnostic-container">
                     <div class="diagnostic-title">Acidose respiratoire avec compensation métabolique ${compensationStatus}.</div>
                     <div class="diagnostic-group">
-					   <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
+                        <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
                         <ul class="diagnostic-list">
-                            <li class="diagnostic-item">BPCO</li>
-                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
-                            <li class="diagnostic-item">Épuisement respiratoire d'une pathologie aiguë</li>
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire, épuisement respiratoire</li>
+							<li class="diagnostic-item">Insuffisance respiratoire chronique compensée</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
                             <li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
                         </ul>
                     </div>
-                    ${clinicalContext}
                 </div>`;
-				
-				
+        }	
         } else {
 		
 if (!isNaN(taPlasma)) {
@@ -3170,25 +3409,43 @@ if (pco2Value > expectedPCO2 + 3) {
     } else if (parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) > 0) {
         diagnosticContent = `
             <div class="diagnostic-container">
-                <div class="diagnostic-title">${diagTitle}, à TA urinaire positif</div>
+                <div class="diagnostic-title">${diagTitle}, à TA urinaire positif.</div>
                 <div class="diagnostic-group">
                     <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes rénales de bicarbonates :</div>
                     <ul class="diagnostic-list">
                         ${atuList}
                     </ul>
+					
+							<div class="diagnostic-subtitle">Causes d'acidose respiratoire associée :</div>
+								<ul class="diagnostic-list">
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire, épuisement respiratoire</li>
+							<li class="diagnostic-item">Insuffisance respiratoire chronique</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
+									<li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
+								</ul>
                 </div>
             </div>`;
     } else {
         diagnosticContent = `
             <div class="diagnostic-container">
-                <div class="diagnostic-title">${diagTitle}, à TA urinaire négatif</div>
+                <div class="diagnostic-title">${diagTitle}, à TA urinaire négatif.</div>
                 <div class="diagnostic-group">
                     <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes digestives de bicarbonates :</div>
                     <ul class="diagnostic-list">
                         <li class="diagnostic-item">Diarrhée</li>
                         <li class="diagnostic-item">Iléostomie</li>
                     </ul>
+							<div class="diagnostic-subtitle">Causes d'acidose respiratoire associée :</div>
+								<ul class="diagnostic-list">
+                            <li class="diagnostic-item">Détresse respiratoire aigue (asthme, pneumopathie, ...) +/- sur insuffisance chronique (BPCO, ...)</li>
+                            <li class="diagnostic-item">Défaillance de la pompe ventilatoire, épuisement respiratoire</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
+									<li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
+								</ul>
                 </div>
+
+							
             </div>`;
     }
 }
@@ -3384,7 +3641,7 @@ if (pco2Value > expectedPCO2 + 3) {
 					} else if (parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) > 0) {
 						diagnosticContent = `
 							<div class="diagnostic-container">
-								<div class="diagnostic-title">${diagTitle}, à TA urinaire positif</div>
+								<div class="diagnostic-title">${diagTitle}, à TA urinaire positif.</div>
 								<div class="diagnostic-group">
 									<div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes rénales de bicarbonates :</div>
 									<ul class="diagnostic-list">
@@ -3395,7 +3652,7 @@ if (pco2Value > expectedPCO2 + 3) {
 					} else {
 						diagnosticContent = `
 							<div class="diagnostic-container">
-								<div class="diagnostic-title">${diagTitle}, à TA urinaire négatif</div>
+								<div class="diagnostic-title">${diagTitle}, à TA urinaire négatif.</div>
 								<div class="diagnostic-group">
 									<div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes digestives de bicarbonates :</div>
 									<ul class="diagnostic-list">
@@ -3448,14 +3705,125 @@ if (pco2Value > expectedPCO2 + 3) {
 		
 	}
 	
-    } else if (phValue > 7.42) {
-        if (pco2Value < 36) {
+		}else if (phValue > 7.42) {
+    if (pco2Value < 36) {
+        if (hco3Value > 26) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble mixte : Alcalose respiratoire associée à une alcalose métabolique.</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Sepsis</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'alcalose métabolique associée :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Vomissements et aspiration digestive</li>
+                            <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
+							<li class="diagnostic-item">Apports alcalins</li>
+							<li class="diagnostic-item">Déplétion volémique, alcalose de contraction</li>
+                        </ul>
+                    </div>
+                </div>`;
+        } else if (hco3Value < 16) {
+            // Récupération des valeurs nécessaires
+            const taPlasma = document.getElementById('GDS_trou_anionique').value 
+                ? parseFloat(document.getElementById('GDS_trou_anionique').value) 
+                : null;
+            const tau = document.getElementById('GDS_trou_anioniqueUrinaire').value 
+                ? parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) 
+                : null;
+            const kValue = document.getElementById('GDS_k_plasma').value 
+                ? parseFloat(document.getElementById('GDS_k_plasma').value) 
+                : null;
+            const glycemie = document.getElementById('GDS_glycemie').value 
+                ? parseFloat(document.getElementById('GDS_glycemie').value) 
+                : null;
+            const creatinine = document.getElementById('GDS_creatinine').value 
+                ? parseFloat(document.getElementById('GDS_creatinine').value) 
+                : null;
+            const lactate = document.getElementById('GDS_lactate').value 
+                ? parseFloat(document.getElementById('GDS_lactate').value) 
+                : null;
+
+            // Construction du contexte
+            let contextStr = '';
+            let context = [];
+            if (glycemie > 8) context.push("hyperglycémie");
+            if (creatinine > 120) context.push("insuffisance rénale");
+            if (lactate > 2) context.push("hyperlactatémie");
+            if (context.length > 0) {
+                contextStr = ` dans un contexte d'${context.join(", d'")}`;
+            }
+
+            let acidoseMetaboliqueContent = '';
+            if (taPlasma !== null) {
+                if (taPlasma > 16) {
+                    acidoseMetaboliqueContent = `
+                        <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA augmenté :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+                            <li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+                            <li class="diagnostic-item">Insuffisance rénale sévère</li>
+                            <li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+                        </ul>`;
+                } else {
+                    let kaliemieText = '';
+                    if (kValue !== null) {
+                        kaliemieText = kValue > 5 ? ' avec hyperkaliémie' : ' sans hyperkaliémie';
+                    }
+
+                    if (tau !== null) {
+                        if (tau > 0) {
+                            acidoseMetaboliqueContent = `
+                                <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA normal${kaliemieText}, à TA urinaire positif :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                                    <li class="diagnostic-item">Acidose tubulaire distale${kValue > 5 ? ' avec hyperkaliémie (Type 4)' : ' sans hyperkaliémie (Type 1)'}</li>
+                                </ul>`;
+                        } else {
+                            acidoseMetaboliqueContent = `
+                                <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA normal, à TA urinaire négatif :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Diarrhée</li>
+                                    <li class="diagnostic-item">Iléostomie</li>
+                                </ul>`;
+                        }
+                    } else {
+                        acidoseMetaboliqueContent = `
+                            <div class="diagnostic-subtitle">Causes possibles d'acidose métabolique à TA normal${kaliemieText} :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Pertes digestives (diarrhée, iléostomie)</li>
+                                <li class="diagnostic-item">Acidose tubulaire rénale</li>
+                            </ul>`;
+                    }
+                }
+            }
+
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble complexe : Alcalose respiratoire associée à une acidose métabolique${contextStr}.</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Sepsis</li>
+                        </ul>
+                        ${acidoseMetaboliqueContent}
+                    </div>
+                </div>`;
+        } else {
             diagnosticContent = `
                 <div class="diagnostic-container">
                     <div class="diagnostic-title">Alcalose respiratoire avec compensation métabolique ${compensationStatus}.</div>
                     <div class="diagnostic-group">
-					 <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
-
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
                         <ul class="diagnostic-list">
                             <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
                             <li class="diagnostic-item">Encéphalopathie hépatique</li>
@@ -3464,23 +3832,24 @@ if (pco2Value > expectedPCO2 + 3) {
                         </ul>
                     </div>
                 </div>`;
-        } else {
-            diagnosticContent = `
-                <div class="diagnostic-container">
-                    <div class="diagnostic-title">Alcalose métabolique avec compensation respiratoire ${compensationStatus}</div>
-					<div class="diagnostic-subtitle">Causes d'alcalose métabolique :</div>
-
-                    <div class="diagnostic-group">
-                        <ul class="diagnostic-list">
+        }
+    } else {
+        diagnosticContent = `
+            <div class="diagnostic-container">
+                <div class="diagnostic-title">Alcalose métabolique avec compensation respiratoire ${compensationStatus}.</div>
+                <div class="diagnostic-group">
+                    <div class="diagnostic-subtitle">Causes d'alcalose métabolique :</div>
+                    <ul class="diagnostic-list">
                             <li class="diagnostic-item">Vomissements et aspiration digestive</li>
                             <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
-                            <li class="diagnostic-item">Hyperaldostéronisme primaire</li>
-                            <li class="diagnostic-item">Hyperaldostéronisme secondaire</li>
-                        </ul>
-                    </div>
-                </div>`;
-        }
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
+							<li class="diagnostic-item">Apports alcalins</li>
+							<li class="diagnostic-item">Déplétion volémique, alcalose de contraction</li>
+                    </ul>
+                </div>
+            </div>`;
     }
+}
 
     if (diagnosticContent) {
         step7.innerHTML = `
@@ -3555,7 +3924,7 @@ setTimeout(() => {
         } else if (pcoValue < 36 && sum < 120) {
             conclusionText += ` Il existe un shunt gazométrique${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxémie'}.`;
         } else if (hasHypoxia) {
-            conclusionText += ` Il existe une hypoxémie isolée.`;
+            conclusionText += ` Il existe un shunt gazométrique.`;
         } else {
             conclusionText += ` La ventilation et l'oxygénation sont normales.`;
         }
