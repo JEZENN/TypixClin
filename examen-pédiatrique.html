@@ -136,8 +136,8 @@
     </div>
 </header>
 	
-<div style="max-width: 800px; margin: 1rem auto; padding: 0 1rem;">
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
+<div style="max-width: 1160px; margin: 1rem auto; padding: 0 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;">
        
 
 		<!-- Bouton acceuil -->
@@ -185,8 +185,10 @@
             <div style="font-size: 0.875rem; font-weight: 600;">Examen Adulte</div>
         </a>
 
-        <!-- Bouton Examen Pédiatrique -->
-        <a href="examen-pédiatrique.html" class="nav-button active" style="
+
+		
+		        <!-- Bouton Examen Pédiatrique -->
+        <a href="examen-pédiatrique.html" class="nav-button" style="
             background: linear-gradient(135deg, #2563eb, #1e40af);
             border-radius: 0.75rem;
             padding: 0.75rem;
@@ -203,9 +205,32 @@
             overflow: hidden;
             transition: all 0.3s ease;
         ">
-            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">👶</div>
-            <div style="font-size: 0.875rem; font-weight: 600;">Examen Pédiatrique</div>
-        </a>
+			<div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">👶</div>
+			<div class="pediatric-text" style="font-size: 0.875rem; font-weight: 600;">
+				<span class="text-full">Examen Pédiatrique</span>
+				<span class="text-short">Examen Péd.</span>
+			</div>        
+			</a>
+			
+			<style>
+		.pediatric-text .text-short {
+			display: none;
+		}
+
+		.pediatric-text .text-full {
+			display: inline;
+		}
+
+		@media (max-width: 768px) {
+			.pediatric-text .text-full {
+				display: none;
+			}
+			.pediatric-text .text-short {
+				display: inline;
+			}
+		}
+			</style>
+			
 
         <!-- Bouton ECG (actif) -->
         <a href="ecg.html" class="nav-button" style="
@@ -228,6 +253,31 @@
             <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚡</div>
             <div style="font-size: 0.875rem; font-weight: 600;">ECG</div>
         </a>
+		
+		
+						        <!-- Bouton gds -->
+        <a href="gds.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e40af;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🩸</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">GDS</div>
+        </a>
+		
+		
     </div>
 </div>
 
@@ -715,6 +765,9 @@ textarea {
 .nav-button:nth-of-type(4) {
     animation-delay: 0.4s;
 }
+.nav-button:nth-of-type(5) {
+    animation-delay: 0.5s;
+}
 
 /* Style des sections */
 .section {
@@ -1145,6 +1198,24 @@ input[type="text"].large {
         word-break: break-word;
     }
 }
+
+input[type="number"] {
+   background-color: white;
+   color: #1e293b;
+   border: 2px solid #475569;  /* Gris beaucoup plus foncé pour les bordures */
+}
+
+input[type="number"]:hover {
+   border-color: #3b82f6;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+input[type="number"]:focus {
+   border-color: #1d4ed8;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+
+
 
     </style>
 </head>
@@ -7462,6 +7533,53 @@ document.getElementById('copyText')?.addEventListener('click', () => {
             .then(() => alert('Texte copié dans le presse-papier.'));
     }
 });
+
+function resetSection(button) {
+    const section = button.closest('.section');
+    
+    // Réinitialise les radios
+    section.querySelectorAll('input[type="radio"]').forEach(radio => {
+        if (radio.hasAttribute('checked')) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Réinitialise les checkboxes
+    section.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change'));
+    });
+
+    // Réinitialise les inputs texte et nombre
+    section.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(input => {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        input.dispatchEvent(new Event('change'));
+    });
+
+    // Réinitialise les selects
+    section.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event('change'));
+    });
+
+    // Cache les éléments détails
+    section.querySelectorAll('[id$="Details"], [id$="Precisions"]').forEach(el => {
+        if (!el.id.includes('signesLutteDetails')) {
+            el.style.display = 'none';
+        }
+    });
+
+    // Recheck les radios par défaut
+    section.querySelectorAll('input[type="radio"][checked]').forEach(radio => {
+        if (!radio.checked) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
 </script>
 
 

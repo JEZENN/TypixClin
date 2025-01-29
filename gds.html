@@ -1,0 +1,3707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="Analyse de gaz du sang type proposé par TypixClin. Analysez vos gaz du sang en ligne. ">
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <title>TypixClin - Gaz du sang</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="react-root"></div>
+
+<style>
+.header {
+    background: linear-gradient(135deg, #1e40af, #0f2167);
+    padding: 1.5rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1em;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    animation: slideDown 0.8s ease-out forwards;
+}
+
+
+
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Sticky Header */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #1e40af, #0f2167) !important; /* Même gradient que le header */
+    padding: 0.5rem 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sticky-wrapper header {
+    background: none !important; /* Pour s'assurer qu'il n'y a pas de conflit */
+    padding: 0.3rem 0;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Ajout de l'état de disparition */
+.sticky-wrapper.hiding {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.sticky-wrapper h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2rem;
+    }
+    .header {
+        padding: 1.25rem 0;
+    }
+    .sticky-wrapper {
+        display: none;
+    }
+}
+
+/* Ajouter ce container pour aligner le titre */
+.header-container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+/* Style pour l'îlot du titre */
+.header-title {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+</style>
+
+<header class="header">
+
+    <div class="header-container">
+        <div class="header-title">
+            <h1><a href="index.html" style="color: white; text-decoration: none;">TypixClin - Gaz du sang</a></h1>
+        </div>
+    </div>
+</header>
+
+	
+	<div style="max-width: 1160px; margin: 1rem auto; padding: 0 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;">
+        
+		<!-- Bouton acceuil -->
+        <a href="index.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🏠</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">Menu principal</div>
+        </a>
+		
+		
+		
+		<!-- Bouton Examen Adulte -->
+        <a href="examen-adulte.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🧑</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">Examen Adulte</div>
+        </a>
+
+        <!-- Bouton Examen Pédiatrique -->
+        <a href="examen-pédiatrique.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+			<div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">👶</div>
+			<div class="pediatric-text" style="font-size: 0.875rem; font-weight: 600;">
+				<span class="text-full">Examen Pédiatrique</span>
+				<span class="text-short">Examen Péd.</span>
+			</div>        
+			</a>
+			
+			<style>
+		.pediatric-text .text-short {
+			display: none;
+		}
+
+		.pediatric-text .text-full {
+			display: inline;
+		}
+
+		@media (max-width: 768px) {
+			.pediatric-text .text-full {
+				display: none;
+			}
+			.pediatric-text .text-short {
+				display: inline;
+			}
+		}
+			</style>
+
+        <!-- Bouton ECG  -->
+        <a href="ecg.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚡</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">ECG</div>
+        </a>
+		
+		        <!-- Bouton gds (actif) -->
+        <a href="gds.html" class="nav-button active" style="
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🩸</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">GDS</div>
+        </a>
+		
+		
+    </div>
+</div>
+
+<style>
+/* Effets de survol pour les boutons de navigation */
+.nav-button {
+    position: relative;
+    cursor: pointer;
+}
+
+.nav-button:not(.active):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button:not(.active)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #1e40af);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+}
+
+.nav-button:not(.active):hover::before {
+    transform: scaleX(1);
+}
+
+/* Animation pulse pour les icônes */
+.nav-button:hover .nav-icon {
+    animation: pulseIcon 1s infinite;
+}
+
+@keyframes pulseIcon {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-button {
+        min-height: 80px !important;
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+</style>
+
+
+		
+    <!-- Header sticky qui apparaîtra au scroll -->
+    <div class="sticky-wrapper">
+
+        <h1><a href="#" style="color: white; text-decoration: none;">TypixClin - GDS</a></h1>
+    </div>
+
+<script>
+function scrollToTop(event) {
+    event.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+</script>
+
+
+	
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stickyWrapper = document.querySelector('.sticky-wrapper');
+    const header = document.querySelector('header'); // On utilise le header comme référence
+    let isSticky = false;
+
+    function handleScroll() {
+        if (window.innerWidth <= 768) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+            }
+            return;
+        }
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        // On définit un seuil plus bas - par exemple 300px après le header
+        const threshold = header ? header.offsetTop + header.offsetHeight + 0 : 300;
+        
+        if (scrollTop > threshold && !isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.add('visible');
+                isSticky = true;
+            }
+        } else if (scrollTop <= threshold && isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+                isSticky = false;
+            }
+        }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+});
+
+
+
+
+function toggleSection(button) {
+    const section = button.closest('.section');
+    const content = section.querySelector('.section-content');
+    const isHidden = content.classList.contains('hidden');
+    
+    if (isHidden) {
+        content.classList.remove('hidden');
+        button.textContent = 'Masquer';
+    } else {
+        content.classList.add('hidden');
+        button.textContent = 'Afficher';
+    }
+}
+
+
+
+</script>
+
+
+    <style>
+	
+/* Effets de survol pour les boutons de navigation */
+.container a:not([href="gds.html"]):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.container a:not([href="gds.html"]):before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #1e40af);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+}
+
+.container a:not([href="gds.html"]):hover:before {
+    transform: scaleX(1);
+}
+
+/* Style spécifique pour les icônes au survol */
+.container a:hover div:first-child {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container div {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+	
+/* Variables */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #1e40af;
+    --background-color: #f8fafc;
+    --text-color: #1e293b;
+    --border-color: #e2e8f0;
+    --input-background: #ffffff;
+    --hover-color: #3b82f6;
+}
+
+/* Base styles */
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* Scrollbar styles */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+}
+
+/* Header styles */
+header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1em;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Navigation styles - Normal */
+.main-nav {
+    background-color: #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    width: 800px;
+    margin: 0 auto 2rem auto;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    background-color: transparent;
+    color: var(--text-color);
+    padding: 0.75rem 3rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 300px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-link:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Sticky header styles - UPDATED */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 0.5rem 0;
+    opacity: 0;
+    pointer-events: none;
+	
+}
+
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+.sticky-wrapper header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 0.3rem 0;
+    margin-bottom: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-wrapper h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    text-align: center; /* Add this line */
+    width: 100%; /* Add this line */
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+}
+
+.sticky-wrapper .main-nav {
+    background-color: white;
+    margin: 0 auto;
+    padding: 0.25rem;
+    transform: scale(0.9);
+    width: 900px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-wrapper .nav-link {
+    padding: 0.4rem 2rem;
+    font-size: 0.9rem;
+    width: 280px;
+}
+
+/* Container and Section styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+
+.section h4 {
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    margin: 1rem 0;
+}
+
+.icon {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+}
+
+/* Buttons */
+.toggle-button {
+    background-color: #1e40af;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.toggle-button:hover {
+    background-color: #3b82f6;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+/* Form Elements */
+
+/* Style de base pour les inputs texte */
+input[type="text"] {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background-color: white;
+    color: #1e293b;
+}
+
+/* Style spécifique pour les petits inputs */
+input[type="text"].small {
+    width: 60px;
+}
+
+/* Style spécifique pour les inputs moyens */
+input[type="text"].medium {
+    width: 120px;
+}
+
+/* Style spécifique pour les grands inputs */
+input[type="text"].large {
+    width: 300px;
+}
+
+/* Effet de survol */
+input[type="text"]:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Style de focus */
+input[type="text"]:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Style pour les inputs en lecture seule */
+input[type="text"][readonly] {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* Style pour les inputs avec fond coloré (comme pour le QTc normal) */
+input[type="text"].success {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+/* Style pour les inputs avec fond d'erreur (comme pour le QTc anormal) */
+input[type="text"].error {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* Placeholder style */
+input[type="text"]::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 150px;
+    font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+    line-height: 1.6;
+    background-color: #fafafa;
+    letter-spacing: 0.3px;
+    color: #2d3748;
+}
+
+/* Section Content Animations */
+.section-content {
+    max-height: 20000px;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.section-content.hidden {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Animations de base */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Style du header */
+.header {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Style des boutons de navigation */
+.nav-button {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.nav-button:nth-of-type(1) {
+    animation-delay: 0.1s;
+}
+
+.nav-button:nth-of-type(2) {
+    animation-delay: 0.2s;
+}
+
+.nav-button:nth-of-type(3) {
+    animation-delay: 0.3s;
+}
+
+.nav-button:nth-of-type(4) {
+    animation-delay: 0.4s;
+}
+.nav-button:nth-of-type(5) {
+    animation-delay: 0.5s;
+}
+
+/* Style des sections */
+.section {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.section:nth-of-type(1) {
+    animation-delay: 0.4s;
+}
+
+.section:nth-of-type(2) {
+    animation-delay: 0.5s;
+}
+
+.section:nth-of-type(3) {
+    animation-delay: 0.6s;
+}
+
+
+
+/* Responsive styles - UPDATED */
+@media (max-width: 1024px) {
+    .main-nav,
+    .sticky-wrapper .main-nav {
+        width: 95%;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .sticky-wrapper {
+        display: none;
+    }
+
+    .main-nav {
+        width: 90%;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .nav-link {
+        width: 100%;
+        padding: 0.5rem 0;
+        font-size: 1rem;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .section-header h3 {
+        margin-bottom: 10px;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        width: 90%;
+        padding: 0.5rem;
+    }
+
+    .nav-link {
+        font-size: 0.95rem;
+        padding: 0.5rem 0;
+    }
+
+    .button-group {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .toggle-button {
+        font-size: 13px;
+        padding: 6px 12px;
+        min-width: auto;
+    }
+}
+
+/* AJOUTEZ ces nouveaux styles */
+.section {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.section:hover {
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
+    transform: translateY(-10px);
+}
+
+.section-header {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    box-shadow: none;
+}
+
+.section-header h3 {
+    color: white;
+    font-size: 1.25rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-header .icon {
+    color: white;
+}
+
+.section-content {
+    padding: 1.5rem;
+}
+
+.subsection {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.subsection:hover {
+    background: #f1f5f9;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.subsection:last-child {
+    margin-bottom: 0;
+}
+
+.subsection h4 {
+    color: #1e40af;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-button {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.toggle-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Styles communs pour les conteneurs de radio et checkbox */
+.custom-control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding-left: 1.25rem;
+    margin-right: 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+/* Cache l'input original */
+.custom-control input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Style de base pour la checkbox et radio personnalisée */
+.checkmark {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    height: 12px;
+    width: 12px;
+    background-color: #fff;
+    border: 1px solid #2563eb;
+    transition: all 0.2s ease;
+}
+
+/* Style spécifique pour la radio */
+.radio .checkmark {
+    border-radius: 50%;
+}
+
+/* Style spécifique pour la checkbox */
+.checkbox .checkmark {
+    border-radius: 2px;
+}
+
+/* Effet de survol sur le conteneur */
+.custom-control:hover {
+    color: #2563eb;
+}
+
+/* Effet de survol sur la marque */
+.custom-control:hover .checkmark {
+    background-color: rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Style quand coché - commun */
+.custom-control input:checked ~ .checkmark {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Style du point pour radio - petit point blanc centré */
+.radio .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+/* Style du checkmark pour checkbox - style naturel */
+.checkbox .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 3px;
+    top: 0px;
+    width: 3px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Affiche la marque quand coché */
+.custom-control input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Animation de focus */
+.custom-control input:focus ~ .checkmark {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Style désactivé */
+.custom-control.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Styles pour la zone de texte généré */
+#generatedTextArea {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    min-height: 400px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.5;
+    color: #1e293b; /* Couleur de texte foncée pour assurer la lisibilité */
+    white-space: pre-wrap;
+    overflow-y: auto;
+}
+
+#generatedTextArea div {
+    margin-bottom: 0.5rem;
+}
+
+#generatedTextArea strong {
+    font-weight: 600;
+    color: #1e40af; /* Bleu foncé pour les titres en gras */
+}
+
+/* Animation pour l'apparition du texte */
+@keyframes fadeInAnimation {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#generatedTextArea div {
+    opacity: 0;
+    animation: fadeInAnimation 0.5s ease-out forwards;
+}
+
+
+
+#GDS_generatedTextArea {
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #1e293b;
+    background-color: white;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: text;
+    overflow-y: auto;
+}
+
+#GDS_generatedTextArea:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#GDS_generatedTextArea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInContent 0.3s ease-out forwards;
+}
+
+/* Style pour le contenu HTML dans la zone de texte */
+#GDS_generatedTextArea strong {
+    font-weight: 600;
+    color: #1e40af;
+}
+
+
+
+/* Cibler uniquement les champs de texte longs */
+@media (max-width: 900px) {
+    /* Style uniquement pour les longues zones de texte */
+    input[type="text"][style*="width: 300px"],
+    input[type="text"][style*="width: 274px"] {
+        width: 90% !important;
+        max-width: 300px;
+    }
+    
+
+
+@media (max-width: 480px) {
+    input[type="text"][style*="width: 300px"],
+    input[type="text"][style*="width: 274px"] {
+        width: 85% !important;
+    }
+    
+
+
+    </style>
+</head>
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+
+<body>
+
+<div class="container GDS-section">    
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">🩸</span>Analyse des gaz du sang</h3>
+            <div class="button-group">
+                <button class="toggle-button" onclick="resetGDSInputs()">Réinitialiser</button>
+                <button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+            </div>
+        </div>
+        <div class="section-content">
+<div class="subsection">
+    <h4>Données gazométriques</h4>
+	
+<div class="input-group oxygen-group" style="display: flex; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Oxygénothérapie :</strong></label>
+    <div class="radio-container" style="display: flex; gap: 15px;">
+        <label class="custom-control radio">
+            <input type="radio" name="oxygenotherapie" value="aucune" checked>
+            <span class="checkmark"></span>
+            Pas d'oxygénothérapie
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="oxygenotherapie" value="oui">
+            <span class="checkmark"></span>
+            Oxygénothérapie lors du gaz
+        </label>
+    </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    .radio-container {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .oxygen-group {
+        align-items: flex-start !important;
+    }
+}
+
+</style>
+	
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>pH :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="0.01" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_ph">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">7,38 - 7,42</span>
+                <span id="ph-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>pCO2 (mmHg) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_pco2">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">36 - 44</span>
+                <span id="pco2-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+			<label style="width: 200px; min-width: 200px;"><strong>HCO3- (mmol/L) :</strong></label>
+			<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+				<input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_hco3">
+				<span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">22 - 26</span>
+				<span id="hco3-status" style="font-weight: bold;"></span>
+			</div>
+		</div>
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>pO2 (mmHg) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="GDS_po2">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">>80</span>
+                <span id="po2-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+// PH
+document.getElementById('GDS_ph').addEventListener('input', function() {
+    const ph = parseFloat(this.value);
+    const statusElement = document.getElementById('ph-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (ph < 7.38) {
+        statusElement.textContent = 'Acidémie';
+        statusElement.style.color = '#dc2626';
+    } else if (ph > 7.42) {
+        statusElement.textContent = 'Alcalémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+
+// PCO2
+document.getElementById('GDS_pco2').addEventListener('input', function() {
+    const pco2 = parseFloat(this.value);
+    const statusElement = document.getElementById('pco2-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (pco2 < 36) {
+        statusElement.textContent = 'Hypocapnie';
+        statusElement.style.color = '#dc2626';
+    } else if (pco2 > 44) {
+        statusElement.textContent = 'Hypercapnie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// PO2
+document.getElementById('GDS_po2').addEventListener('input', function() {
+    const po2 = parseFloat(this.value);
+    const statusElement = document.getElementById('po2-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (po2 < 80) {
+        statusElement.textContent = 'Hypoxémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+
+// HCO3-
+document.getElementById('GDS_hco3').addEventListener('input', function() {
+    const hco3 = parseFloat(this.value);
+    const statusElement = document.getElementById('hco3-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (hco3 < 22) {
+        statusElement.textContent = 'Hypobicarbonatémie';
+        statusElement.style.color = '#dc2626';
+    } else if (hco3 > 26) {
+        statusElement.textContent = 'Hyperbicarbonatémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+
+
+
+</script>
+
+            <div class="subsection">
+                <h4>Ionogramme sanguin</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Na+ plasm. (mmol/L) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_na_plasma">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">135 - 145</span>
+        <span id="na-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>K+ plasm. (mmol/L) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_k_plasma">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">3,5 - 5</span>
+        <span id="k-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Cl- plasm. (mmol/L) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_cl_plasma">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">100 - 110</span>
+        <span id="cl-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>TA plasmatique :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="GDS_trou_anionique" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">8-16</span>
+				        <span id="ta-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+
+                </div>
+            </div>
+
+<script>
+// Natrémie
+document.getElementById('GDS_na_plasma').addEventListener('input', function() {
+    const na = parseFloat(this.value);
+    const statusElement = document.getElementById('na-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (na < 135) {
+        statusElement.textContent = 'Hyponatrémie';
+        statusElement.style.color = '#dc2626';
+    } else if (na > 145) {
+        statusElement.textContent = 'Hypernatrémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Kaliémie
+document.getElementById('GDS_k_plasma').addEventListener('input', function() {
+    const k = parseFloat(this.value);
+    const statusElement = document.getElementById('k-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (k < 3.5) {
+        statusElement.textContent = 'Hypokaliémie';
+        statusElement.style.color = '#dc2626';
+    } else if (k > 5) {
+        statusElement.textContent = 'Hyperkaliémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Chlorémie
+document.getElementById('GDS_cl_plasma').addEventListener('input', function() {
+    const cl = parseFloat(this.value);
+    const statusElement = document.getElementById('cl-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (cl < 100) {
+        statusElement.textContent = 'Hypochlorémie';
+        statusElement.style.color = '#dc2626';
+    } else if (cl > 110) {
+        statusElement.textContent = 'Hyperchlorémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// trou anionique plasmatique
+function calculateTrouAnionique() {
+    const na = document.getElementById('GDS_na_plasma').value;
+    const hco3 = document.getElementById('GDS_hco3').value;
+    const cl = document.getElementById('GDS_cl_plasma').value;
+    const taInput = document.getElementById('GDS_trou_anionique');
+    const statusElement = document.getElementById('ta-status');
+    
+    if (na === '' || hco3 === '' || cl === '') {
+        taInput.value = '';
+        if (statusElement) statusElement.textContent = '';
+        return;
+    }
+    
+    const result = Math.round(parseFloat(na) - parseFloat(hco3) - parseFloat(cl));
+    taInput.value = result;
+    
+    if (statusElement) {
+        if (result > 16) {
+            statusElement.textContent = 'Augmenté';
+            statusElement.style.color = '#dc2626';
+        } else {
+            statusElement.textContent = '';
+        }
+    }
+}
+
+// Ajoutez les event listeners
+document.getElementById('GDS_na_plasma').addEventListener('input', calculateTrouAnionique);
+document.getElementById('GDS_hco3').addEventListener('input', calculateTrouAnionique);
+document.getElementById('GDS_cl_plasma').addEventListener('input', calculateTrouAnionique);
+
+</script>
+
+            <div class="subsection">
+    <h4>Ionogramme urinaire</h4>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Na+ urinaire (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_na_urine">
+            </div>
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>K+ urinaire (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_k_urine">
+            </div>
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Cl- urinaire (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_cl_urine">
+            </div>
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>TA urinaire :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="GDS_trou_anioniqueUrinaire" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+					<span id="tau-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function calculateTrouAnioniqueUrinaire() {
+   const naU = document.getElementById('GDS_na_urine').value;
+   const kU = document.getElementById('GDS_k_urine').value;
+   const clU = document.getElementById('GDS_cl_urine').value;
+   const statusElement = document.getElementById('tau-status');
+   
+   if (naU === '' || kU === '' || clU === '') {
+       document.getElementById('GDS_trou_anioniqueUrinaire').value = '';
+       statusElement.textContent = '';
+   } else {
+       const result = Math.round(parseFloat(naU) + parseFloat(kU) - parseFloat(clU));
+       document.getElementById('GDS_trou_anioniqueUrinaire').value = result;
+       
+       if (result > 0) {
+           statusElement.textContent = 'Positif';
+           statusElement.style.color = '#dc2626';
+       } else if (result < 0) {
+           statusElement.textContent = 'Négatif';
+           statusElement.style.color = '#dc2626';
+       } else {
+           statusElement.textContent = '';
+           statusElement.style.color = '#16a34a';
+       }
+   }
+}
+
+document.getElementById('GDS_na_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+document.getElementById('GDS_k_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+document.getElementById('GDS_cl_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+
+</script>
+
+<div class="subsection">
+    <h4>Autre</h4>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Glycémie (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_glycemie">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">3,5 - 8</span>
+				        <span id="glycemie-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+			<label style="width: 200px; min-width: 200px;"><strong>Albumine (g/L) :</strong></label>
+			<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+				<input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_albumine">
+				<span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">> 40</span>
+				<span id="albumine-status" style="font-weight: bold;"></span>
+			</div>
+		</div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Créatinine (µmol/L) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_creatinine">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">< 120</span>
+        <span id="creatinine-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+   <label style="width: 200px; min-width: 200px;"><strong>Lactatémie (mmol/L) :</strong></label>
+   <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+       <input type="number" step="0.1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="GDS_lactate">
+       <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">< 2</span>
+       <span id="lactate-status" style="font-weight: bold;"></span>
+   </div>
+</div>
+
+
+
+    </div>
+</div>
+
+<script>
+// Glycémie
+document.getElementById('GDS_glycemie').addEventListener('input', function() {
+    const glycemie = parseFloat(this.value);
+    const statusElement = document.getElementById('glycemie-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (glycemie < 3.5) {
+        statusElement.textContent = 'Hypoglycémie';
+        statusElement.style.color = '#dc2626';
+    } else if (glycemie > 8) {
+        statusElement.textContent = 'Hyperglycémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Albuminémie
+document.getElementById('GDS_albumine').addEventListener('input', function() {
+    const albumine = parseFloat(this.value);
+    const statusElement = document.getElementById('albumine-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (albumine < 40) {
+        statusElement.textContent = 'Hypoalbuminémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Créatininémie
+document.getElementById('GDS_creatinine').addEventListener('input', function() {
+    const creatinine = parseFloat(this.value);
+    const statusElement = document.getElementById('creatinine-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (creatinine > 120) {
+        statusElement.textContent = 'Insuffisance rénale';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Lactatémie
+document.getElementById('GDS_lactate').addEventListener('input', function() {
+    const lactate = parseFloat(this.value);
+    const statusElement = document.getElementById('lactate-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (lactate >= 2) {
+        statusElement.textContent = 'Hyperlactatémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+</script>
+
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">✍️</span>Conclusion</h3>
+            <div class="button-container">
+                <button class="toggle-button" onclick="analyzeGDS()">Analyser</button>
+                <button class="toggle-button" onclick="copyToClipboard()">Copier la conclusion</button>
+            </div>
+        </div>
+        <div class="section-content">
+		 <div class="subsection">
+          <h4>Analyse préliminaire</h4>
+    
+    <div id="analysisSteps" class="analysis-steps">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		
+		<div class="subsection">
+           <h4>Conclusion</h4>
+    
+				<div id="GDS_generatedTextArea" contenteditable="true" 
+                     style="border: 1px solid #ccc; padding: 10px; min-height: 60px; max-height: 150px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+input[type="number"] {
+   background-color: white;
+   color: #1e293b;
+   border: 2px solid #475569;  /* Gris beaucoup plus foncé pour les bordures */
+}
+
+input[type="number"]:hover {
+   border-color: #3b82f6;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+input[type="number"]:focus {
+   border-color: #1d4ed8;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+</style>
+
+
+<style>
+.analysis-steps {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.analysis-step {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInStep 0.5s ease forwards;
+}
+
+.step-number {
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 80px; /* Largeur fixe pour aligner tous les contenus */
+    display: inline-block;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-values {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Assurez-vous que toutes les étapes ont la même structure */
+.step-content > div:first-child {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.coherence-check {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 1rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.coherence-check.valid {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.coherence-check.invalid {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+.coherence-check.missing {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+
+.coherence-check.acidemia {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.alkalemia {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.coherence-check.normal {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* Cases colorées pour les différents types de troubles */
+.coherence-check.acidemia.respiratory {
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.acidemia.metabolic {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.alkalemia.respiratory {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.coherence-check.alkalemia.metabolic {
+    background: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #a5b4fc;
+}
+
+.coherence-check.compensation.complete {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.coherence-check.compensation.incomplete {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.mixed {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fda4af;
+}
+
+.coherence-check.complex {
+    background: #f0f9ff;
+    color: #0c4a6e;
+    border: 1px solid #7dd3fc;
+}
+
+.coherence-check.compensation.incomplete {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.ta-high {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.ta-normal {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+
+.coherence-check.missing {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.coherence-check.ta-positive {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.ta-negative {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* Animation pour l'apparition */
+.analysis-step {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInStep 0.5s ease forwards;
+}
+
+/* Ajustement pour le conteneur des valeurs */
+.step-values {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.check-icon {
+    margin-right: 0.25rem;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation de clignotement */
+@keyframes blinking {
+    0% {
+        border-color: #ef4444;
+        box-shadow: 0 0 5px #ef4444;
+    }
+    50% {
+        border-color: #fee2e2;
+        box-shadow: 0 0 2px #fee2e2;
+    }
+    100% {
+        border-color: #ef4444;
+        box-shadow: 0 0 5px #ef4444;
+    }
+}
+
+.blink {
+    animation: blinking 2s infinite;
+    border-width: 2px !important;
+}
+
+
+</style>
+
+
+
+<script>
+let isGazNormal = false;
+let hasNormalPH = false;
+
+
+
+// réinitialiser 
+function resetGDSInputs() {
+    hasNormalPH = false;
+	isGazNormal = false;
+	
+	
+	const inputs = document.querySelectorAll('.GDS-section input[type="number"]');
+    inputs.forEach(input => input.value = '');
+
+    document.getElementById('GDS_generatedTextArea').textContent = '';
+
+    document.getElementById('GDS_generatedTextArea').textContent = '';
+    
+    document.getElementById('analysisSteps').innerHTML = '';
+
+    document.getElementById('ph-status').textContent = '';
+    document.getElementById('pco2-status').textContent = '';
+    document.getElementById('po2-status').textContent = '';
+    document.getElementById('na-status').textContent = '';
+    document.getElementById('cl-status').textContent = '';
+    document.getElementById('ta-status').textContent = '';
+
+    document.getElementById('k-status').textContent = '';
+    document.getElementById('tau-status').textContent = '';  
+    document.getElementById('glycemie-status').textContent = '';
+    document.getElementById('albumine-status').textContent = '';
+    document.getElementById('creatinine-status').textContent = '';
+    document.getElementById('lactate-status').textContent = '';
+	    document.getElementById('hco3-status').textContent = '';
+		
+		document.querySelector('input[name="oxygenotherapie"][value="aucune"]').checked = true;
+
+    const allInputs = document.querySelectorAll('input[type="number"]');
+    allInputs.forEach(input => input.classList.remove('blink'));
+
+
+	   // Restaurer l'état initial de la conclusion
+    document.getElementById('GDS_generatedTextArea').innerHTML = '<strong style="color: #1e40af;">En attente de données...</strong>';
+    
+    // Restaurer l'étape 0
+    document.getElementById('analysisSteps').innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div>Initialisation de l'analyse</div>
+                <div class="step-values">
+                    <div class="diagnostic-container">
+                        <div class="diagnostic-title" style="color: #666;">Veuillez entrer au minimum les valeurs suivantes :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">pH</li>
+                            <li class="diagnostic-item">pCO2</li>
+                            <li class="diagnostic-item">HCO3-</li>
+                        </ul>
+                        <div style="margin-top: 1rem; color: #666; font-style: italic;">
+                            Cliquez sur "Analyser" une fois les valeurs saisies
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+	
+	
+
+}
+
+// Fonction pour vérifier les champs requis
+// Ajouter les événements input à tous les champs
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            // Arrêter le clignotement sur ce champ spécifique
+            this.classList.remove('blink');
+            
+            // Recalculer le trou anionique si nécessaire
+            if (this.id.includes('plasma') || this.id === 'GDS_hco3') {
+                calculateTrouAnionique();
+            }
+            
+            // Vérifier si nous devons toujours faire clignoter d'autres champs
+            setTimeout(checkRequiredFields, 100); // Petit délai pour laisser le temps aux calculs de se faire
+        });
+    });
+});
+
+function checkRequiredFields() {
+    // D'abord, enlever tous les clignotements
+    const allInputs = document.querySelectorAll('input[type="number"]');
+    allInputs.forEach(input => input.classList.remove('blink'));
+    
+    const ph = document.getElementById('GDS_ph').value;
+    const pco2 = document.getElementById('GDS_pco2').value;
+    const hco3 = document.getElementById('GDS_hco3').value;
+    const na = document.getElementById('GDS_na_plasma').value;
+    const k = document.getElementById('GDS_k_plasma').value;
+    const cl = document.getElementById('GDS_cl_plasma').value;
+    const trouAnionique = document.getElementById('GDS_trou_anionique').value;
+
+    // Si pH indique une acidose métabolique
+    if (ph && pco2 && hco3 && parseFloat(ph) < 7.38 && parseFloat(pco2) <= 44) {
+        if (!na || !cl) {
+            // Faire clignoter seulement les champs du ionogramme plasmatique manquants
+            if (!na) document.getElementById('GDS_na_plasma').classList.add('blink');
+            if (!cl) document.getElementById('GDS_cl_plasma').classList.add('blink');
+        } else if (trouAnionique && parseFloat(trouAnionique) <= 16) {
+            // Si trou anionique normal, vérifier les champs du trou anionique urinaire
+            const naU = document.getElementById('GDS_na_urine').value;
+            const kU = document.getElementById('GDS_k_urine').value;
+            const clU = document.getElementById('GDS_cl_urine').value;
+
+            if (!naU || !kU || !clU || !k) {
+                if (!naU) document.getElementById('GDS_na_urine').classList.add('blink');
+                if (!kU) document.getElementById('GDS_k_urine').classList.add('blink');
+                if (!clU) document.getElementById('GDS_cl_urine').classList.add('blink');
+				if (!k) document.getElementById('GDS_k_plasma').classList.add('blink');
+
+            }
+        }
+    }
+}
+
+
+
+function checkDataCoherence() {
+    const ph = parseFloat(document.getElementById('GDS_ph').value);
+    const hco3 = parseFloat(document.getElementById('GDS_hco3').value);
+    const pco2 = parseFloat(document.getElementById('GDS_pco2').value);
+    
+    // Vérifier si toutes les valeurs sont présentes
+    if (isNaN(ph) || isNaN(hco3) || isNaN(pco2)) {
+        return 'missing';
+    }
+    
+    // Calcul du pH théorique selon Henderson-Hasselbalch
+    const theoreticalPh = 6.1 + Math.log10(hco3 / (0.03 * pco2));
+    
+    // Tolérance de ±0.04 unités pH
+    return Math.abs(ph - theoreticalPh) <= 0.04 ? 'coherent' : 'incoherent';
+}
+
+// Ajouter au début du fichier, juste après les autres event listeners DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+        const conclusionArea = document.getElementById('GDS_generatedTextArea');
+    conclusionArea.innerHTML = `<strong style="color: #1e40af;">En attente de données...</strong>`;
+
+	
+	// Afficher l'étape 0 par défaut
+    const analysisSteps = document.getElementById('analysisSteps');
+    analysisSteps.innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div>Initialisation de l'analyse</div>
+                <div class="step-values">
+                    <div class="diagnostic-container">
+                        <div class="diagnostic-title" style="color: #666;">Veuillez entrer au minimum les valeurs suivantes :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">pH</li>
+                            <li class="diagnostic-item">pCO2</li>
+                            <li class="diagnostic-item">HCO3-</li>
+                        </ul>
+                        <div style="margin-top: 1rem; color: #666; font-style: italic;">
+                            Cliquez sur "Analyser" une fois les valeurs saisies
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+
+function updateAnalysis() {
+    const conclusionArea = document.getElementById('GDS_generatedTextArea');
+    conclusionArea.innerHTML = "<strong style='color: #1e40af;'>Analyse en cours...</strong>";
+    
+    const analysisSteps = document.getElementById('analysisSteps');
+    analysisSteps.innerHTML = ''; // Réinitialiser le contenu
+    
+    // Récupérer les valeurs
+    const ph = parseFloat(document.getElementById('GDS_ph').value);
+    const hco3 = parseFloat(document.getElementById('GDS_hco3').value);
+    const pco2 = parseFloat(document.getElementById('GDS_pco2').value);
+    
+	    // Reset et initialisation des variables de contrôle
+    isGazNormal = false;
+    hasNormalPH = false;
+	
+	analysisSteps.innerHTML = ''; // Ceci effacera l'étape 0
+	
+    // Calcul du pH théorique selon Henderson-Hasselbalch
+    let theoreticalPh = null;
+    if (!isNaN(hco3) && !isNaN(pco2)) {
+        theoreticalPh = (6.1 + Math.log10(hco3 / (0.03 * pco2))).toFixed(2);
+    }
+
+    // Créer l'élément pour l'étape 1
+    const step1 = document.createElement('div');
+    step1.className = 'analysis-step';
+    
+    const coherenceResult = checkDataCoherence();
+    let coherenceStatus;
+    
+    switch (coherenceResult) {
+        case 'coherent':
+            coherenceStatus = '<span class="coherence-check valid">Gaz du sang normal ou trouble simple ou trouble compensé cohérent avec les mécanismes physiologiques normaux</span>';
+            break;
+        case 'missing':
+            coherenceStatus = '<span class="coherence-check missing">Données manquantes ! </span>';
+            break;
+        case 'incoherent':
+            coherenceStatus = '<span class="coherence-check invalid">Trouble mixte ou présence d\'un perturbateur exogène</span>';
+            break;
+    }
+
+    step1.innerHTML = `
+        <div class="step-number">Étape 1</div>
+        <div class="step-content">
+            <div>Vérification de la cohérence des données</div>
+            <div class="step-values">
+                pH attendu = 6,1 + log([HCO3⁻] / (0,03 × PCO2)) = ${theoreticalPh || '?'} <br>
+                pH mesuré = ${ph || '?'}<br><br>
+                ${coherenceStatus}
+            </div>
+        </div>
+    `;
+
+    analysisSteps.appendChild(step1);
+
+
+    if (coherenceResult !== 'missing') {
+        setTimeout(() => {
+            const step2 = document.createElement('div');
+            step2.className = 'analysis-step';
+            
+            // Analyse du pH
+            let phAnalysis = '';
+            if (ph < 7.38) {
+                phAnalysis = '<span class="coherence-check acidemia">Acidémie (pH < 7.38)</span>';
+            } else if (ph > 7.42) {
+                phAnalysis = '<span class="coherence-check alkalemia">Alcalémie (pH > 7.42)</span>';
+            } else {
+                phAnalysis = '<span class="coherence-check normal">pH Normal (7.38 - 7.42)</span>';
+            }
+
+            step2.innerHTML = `
+                <div class="step-number">Étape 2</div>
+                <div class="step-content">
+                    <div>Analyse du pH</div>
+                    <div class="step-values">
+                        ${phAnalysis}
+                    </div>
+                </div>
+            `;
+            
+            analysisSteps.appendChild(step2);
+        }, 800); 
+		
+		// Remplace le setTimeout de l'étape 2bis par ce code
+setTimeout(() => {
+    const po2 = document.getElementById('GDS_po2').value;
+    // Si PO2 est vide, on ne crée pas l'étape
+    if (!po2) return;
+    
+    const step2bis = document.createElement('div');
+    step2bis.className = 'analysis-step';
+    
+    const pco2 = parseFloat(document.getElementById('GDS_pco2').value);
+    const isOxygenotherapy = document.querySelector('input[name="oxygenotherapie"][value="oui"]').checked;
+    
+    let ventilationAnalysis = '';
+    
+    if (!isOxygenotherapy && !isNaN(po2) && !isNaN(pco2)) {
+        const sum = parseFloat(po2) + pco2;
+        const hasHypoxia = parseFloat(po2) < 80;
+        
+        if (pco2 > 44 && sum > 120) {
+            ventilationAnalysis = `<span class="coherence-check acidemia respiratory">Hypoventilation alvéolaire${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxie'} (pCO2 + pO2 = ${sum.toFixed(0)} mmHg)</span>`;
+        } else if (pco2 < 36 && sum < 120) {
+            ventilationAnalysis = `<span class="coherence-check alkalemia respiratory">Shunt gazométrique${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxie'} (pCO2 + pO2 = ${sum.toFixed(1)} mmHg)</span>`;
+        } else if (hasHypoxia) {
+            ventilationAnalysis = `<span class="coherence-check ta-high">Hypoxémie isolée</span>`;
+        } else {
+            ventilationAnalysis = `<span class="coherence-check normal">Oxygénation normale</span>`;
+        }
+    } else if (isOxygenotherapy) {
+        ventilationAnalysis = `<span class="coherence-check missing">Analyse non pertinente sous oxygénothérapie</span>`;
+    }
+
+    if (ventilationAnalysis) {
+        step2bis.innerHTML = `
+            <div class="step-number">Étape 2.2</div>
+            <div class="step-content">
+                <div>Analyse de l'oxygénation</div>
+                <div class="step-values">
+                    ${ventilationAnalysis}
+                </div>
+            </div>
+        `;
+        
+        analysisSteps.appendChild(step2bis);
+    }
+}, 1200);
+
+		
+// Modifier l'étape 3 actuelle avec ce nouveau code
+setTimeout(() => {
+    const step3 = document.createElement('div');
+    step3.className = 'analysis-step';
+    
+    const phValue = parseFloat(ph);
+    const pco2Value = parseFloat(pco2);
+    const hco3Value = parseFloat(hco3);
+
+    let troubleDescription = '';
+
+    // Si pH normal
+    if (phValue >= 7.38 && phValue <= 7.42) {
+			if (pco2Value >= 36 && pco2Value <= 44 && hco3Value >= 22 && hco3Value <= 26) {
+				troubleDescription = '<span class="coherence-check normal">Gaz du sang normal à priori, à interpréter dans le contexte clinique et après le calcul du trou anionique palsmatique</span>';
+				isGazNormal = true;  // Marquer que le gaz est normal
+			}
+
+	   // Cas 1: HCO3 élevé isolé
+        if (hco3Value > 26 && pco2Value >= 36 && pco2Value <= 44) {
+            troubleDescription = '<span class="coherence-check alkalemia metabolic">Alcalose métabolique non compensée sur le plan respiratoire (↑HCO3-)</span>';
+        }
+        // Cas 2: HCO3 bas isolé
+        else if (hco3Value < 22 && pco2Value >= 36 && pco2Value <= 44) {
+            troubleDescription = '<span class="coherence-check acidemia metabolic">Acidose métabolique non compensée sur le plan respiratoire (↓HCO3-)</span>';
+        }
+        // Cas 3: PCO2 élevée isolée
+        else if (pco2Value > 44 && hco3Value >= 22 && hco3Value <= 26) {
+            troubleDescription = '<span class="coherence-check acidemia respiratory">Acidose respiratoire non compensée sur le plan métabolique (↑PCO2)</span>';
+        }
+        // Cas 4: PCO2 basse isolée
+        else if (pco2Value < 36 && hco3Value >= 22 && hco3Value <= 26) {
+            troubleDescription = '<span class="coherence-check alkalemia respiratory">Alcalose respiratoire non compensée sur le plan métabolique (↓PCO2)</span>';
+        }
+        // Cas 5: PCO2 et HCO3 élevés
+        else if (pco2Value > 44 && hco3Value > 26) {
+            troubleDescription = '<span class="coherence-check compensation complete">État mixte compensé : Acidose respiratoire compensée sur le plan métabolique ou Alcalose métabolique compensée sur le plan respiratoire (↑PCO2, ↑HCO3-)</span>';
+        }
+        // Cas 6: PCO2 et HCO3 bas
+        else if (pco2Value < 36 && hco3Value < 22) {
+            troubleDescription = '<span class="coherence-check compensation complete">État mixte compensé : Alcalose respiratoire compensée sur le plan métabolique ou Acidose métabolique compensée sur le plan respiratoire (↓PCO2, ↓HCO3-)</span>';
+        }
+		
+		// Cas 7: PCO2 basse et HCO3 élevés
+		else if (pco2Value < 36 && hco3Value > 26) {
+			troubleDescription = '<span class="coherence-check mixed">Trouble mixte non compensé : Alcalose respiratoire et alcalose métabolique (↓PCO2, ↑HCO3-)</span>';
+		}
+		// Cas 8: PCO2 élevée et HCO3 bas
+		else if (pco2Value > 44 && hco3Value < 22) {
+			troubleDescription = '<span class="coherence-check mixed">Trouble mixte non compensé : Acidose respiratoire et acidose métabolique (↑PCO2, ↓HCO3-)</span>';
+		}
+
+    } else {
+        // Garder la logique existante pour pH anormal
+        if (phValue < 7.38) {
+            if (pco2Value > 44) {
+                troubleDescription = '<span class="coherence-check acidemia respiratory">Acidose respiratoire (pH ↓ et PCO2 ↑)</span>';
+            } else {
+                troubleDescription = '<span class="coherence-check acidemia metabolic">Acidose métabolique (pH ↓ et PCO2 ↓)</span>';
+            }
+        } else if (phValue > 7.42) {
+            if (pco2Value < 36) {
+                troubleDescription = '<span class="coherence-check alkalemia respiratory">Alcalose respiratoire (pH ↑ et PCO2 ↓)</span>';
+            } else {
+                troubleDescription = '<span class="coherence-check alkalemia metabolic">Alcalose métabolique (pH ↑ et PCO2 ↑)</span>';
+            }
+        }
+    }
+
+    step3.innerHTML = `
+        <div class="step-number">Étape 3</div>
+        <div class="step-content">
+            <div>Trouble acidobasique</div>
+            <div class="step-values">
+                ${troubleDescription}
+            </div>
+        </div>
+    `;
+    
+    analysisSteps.appendChild(step3);
+}, 1600);
+	
+	// Après l'étape 3, mais avant l'étape d'analyse des pH normaux avec anomalies
+setTimeout(() => {
+    const phValue = parseFloat(ph);
+    const pco2Value = parseFloat(pco2);
+    const hco3Value = parseFloat(hco3);
+
+    // Ne procéder que si toutes les valeurs sont normales
+    if (phValue >= 7.38 && phValue <= 7.42 && 
+        pco2Value >= 36 && pco2Value <= 44 && 
+        hco3Value >= 22 && hco3Value <= 26) {
+        
+        const stepNormal = document.createElement('div');
+        stepNormal.className = 'analysis-step';
+        
+        stepNormal.innerHTML = `
+            <div class="step-number">Analyse</div>
+            <div class="step-content">
+                <div>Interprétation</div>
+                <div class="step-values">
+                    <div class="diagnostic-container">
+                        <div class="diagnostic-title">Gaz du sang normal</div>
+                        <div class="diagnostic-group">
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">pH : ${phValue} (N: 7.38-7.42)</li>
+                                <li class="diagnostic-item">PCO2 : ${pco2Value} mmHg (N: 36-44)</li>
+                                <li class="diagnostic-item">HCO3- : ${hco3Value} mmol/L (N: 22-26)</li>
+                            </ul>
+                            <div class="diagnostic-subtitle">Conclusion :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Équilibre acido-basique conservé</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        analysisSteps.appendChild(stepNormal);
+        
+        // Mettre à jour la conclusion
+        const conclusionArea = document.getElementById('GDS_generatedTextArea');
+        if (conclusionArea) {
+            let dataSection = document.querySelector('#GDS_generatedTextArea').innerHTML.split('<br>')[0];
+            conclusionArea.innerHTML = `${dataSection}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\nGaz du sang normal avec équilibre acido-basique conservé.`;
+        }
+    }
+}, 	2000);  // 1800ms pour s'insérer entre l'étape 3 et les autres analyses
+
+	
+// Ajouter une nouvelle étape d'analyse pour les cas de pH normal avec anomalies
+setTimeout(() => {
+    const phValue = parseFloat(ph);
+    const pco2Value = parseFloat(pco2);
+    const hco3Value = parseFloat(hco3);
+
+    // Ne procéder que si pH normal mais avec anomalies
+    if (phValue >= 7.38 && phValue <= 7.42 && 
+        (pco2Value < 36 || pco2Value > 44 || hco3Value < 22 || hco3Value > 26)) {
+		hasNormalPH = true;
+        const stepAnalysis = document.createElement('div');
+        stepAnalysis.className = 'analysis-step';
+        
+        let diagnosticContent = '';
+
+        // 1. HCO3 élevé isolé
+        if (hco3Value > 26 && pco2Value >= 36 && pco2Value <= 44) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Alcalose métabolique non compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes possibles :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Vomissements et aspiration digestive</li>
+                            <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire ou secondaire</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 2. HCO3 bas isolé
+        else if (hco3Value < 22 && pco2Value >= 36 && pco2Value <= 44) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Acidose métabolique non compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes possibles :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Acidocétose (diabétique, alcoolique)</li>
+                            <li class="diagnostic-item">Insuffisance rénale</li>
+                            <li class="diagnostic-item">Diarrhées sévères</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 3. PCO2 élevée isolée
+        else if (pco2Value > 44 && hco3Value >= 22 && hco3Value <= 26) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Acidose respiratoire non compensée sur le plan métabolique</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes possibles :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">BPCO décompensée</li>
+                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
+                            <li class="diagnostic-item">Dépression respiratoire centrale</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 4. PCO2 basse isolée
+        else if (pco2Value < 36 && hco3Value >= 22 && hco3Value <= 26) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Alcalose respiratoire non compensée sur le plan métabolique</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes possibles :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Sepsis</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 5. PCO2 et HCO3 élevés
+        else if (pco2Value > 44 && hco3Value > 26) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">État mixte compensé : Acidose respiratoire compensée sur le plan métabolique ou Alcalose métabolique compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'acidose respiratoire chronique :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">BPCO au long cours</li>
+                            <li class="diagnostic-item">Obésité-hypoventilation</li>
+                            <li class="diagnostic-item">Maladies neuromusculaires chroniques</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'alcalose métabolique chronique :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Vomissements chroniques</li>
+                            <li class="diagnostic-item">Diurétiques au long cours</li>
+                            <li class="diagnostic-item">Syndrome de Cushing</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 6. PCO2 et HCO3 bas
+        else if (pco2Value < 36 && hco3Value < 22) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">État mixte compensé : Alcalose respiratoire compensée sur le plan métabolique ou Acidose métabolique compensée sur le plan respiratoire</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire chronique :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Hypoxémie chronique</li>
+                            <li class="diagnostic-item">Cirrhose hépatique</li>
+                            <li class="diagnostic-item">Grossesse</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'acidose métabolique chronique :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance rénale chronique</li>
+                            <li class="diagnostic-item">Acidose tubulaire rénale</li>
+                            <li class="diagnostic-item">Diarrhées chroniques</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 7. PCO2 basse et HCO3 élevés
+        else if (pco2Value < 36 && hco3Value > 26) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble mixte non compensé : Alcalose respiratoire et alcalose métabolique</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'alcalose métabolique associée :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Vomissements et aspiration digestive</li>
+                            <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+        // 8. PCO2 élevée et HCO3 bas
+        else if (pco2Value > 44 && hco3Value < 22) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble mixte non compensé : Acidose respiratoire et acidose métabolique</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">BPCO décompensée</li>
+                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
+                            <li class="diagnostic-item">Épuisement respiratoire</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'acidose métabolique associée :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Acidocétose</li>
+                            <li class="diagnostic-item">Insuffisance rénale</li>
+                            <li class="diagnostic-item">Hyperlactatémie</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+
+        stepAnalysis.innerHTML = `
+            <div class="step-number">Analyse</div>
+            <div class="step-content">
+                <div>Principales étiologies à évoquer</div>
+                <div class="step-values">
+                    ${diagnosticContent}
+                </div>
+            </div>
+        `;
+        
+        analysisSteps.appendChild(stepAnalysis);
+    }
+}, 2000);
+
+
+	
+setTimeout(() => {
+if (hasNormalPH) return;
+if (isGazNormal) return;
+
+    const step4 = document.createElement('div');
+    step4.className = 'analysis-step';
+    
+    let compensationAnalysis = '';
+    let formulaDescription = ''; // Variable pour afficher la formule calculée
+    let measuredValuesDescription = ''; // Variable pour afficher les valeurs mesurées
+    const phValue = parseFloat(ph);
+    const pco2Value = parseFloat(pco2);
+    const hco3Value = parseFloat(hco3);
+    
+    // Calculer la compensation attendue selon le trouble primaire
+    if (phValue < 7.38) { // Acidose
+        if (pco2Value > 44) { // Acidose respiratoire
+            // Pour acidose respiratoire : Augmentation HCO3 attendue
+            const expectedHCO3Change = (pco2Value - 40) / 10;
+            const expectedHCO3 = 24 + expectedHCO3Change * 3; // ±3
+            formulaDescription = `HCO3 attendu = 24 + 3 × ((PaCO2 - 40) / 10) = ${expectedHCO3.toFixed(0)}`;
+            measuredValuesDescription = `HCO3 mesuré : ${hco3Value.toFixed(0)}`;
+            if (Math.abs(hco3Value - expectedHCO3) <= 4) {
+                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation métabolique complète</span>';
+            } else {
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète</span>';
+            }
+        } else { // Acidose métabolique
+            // Formule de Winter : PaCO2 = (1.5 × [HCO3-]) + 8 ±2
+            const expectedPCO2 = (1.5 * hco3Value) + 8;
+            formulaDescription = `PaCO2 attendu = 1.5 × HCO3 + 8 = ${expectedPCO2.toFixed(0)}`;
+            measuredValuesDescription = `PaCO2 mesuré : ${pco2Value.toFixed(0)}`;
+            const difference = pco2Value - expectedPCO2;
+            
+            if (Math.abs(difference) <= 3) {
+                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation respiratoire complète</span>';
+            } else if (pco2Value > expectedPCO2 + 3) {
+                compensationAnalysis = '<span class="coherence-check mixed">Trouble acidobasique mixte : Acidose métabolique + Acidose respiratoire</span>';
+            } else if (pco2Value < expectedPCO2 - 3) {
+                compensationAnalysis = '<span class="coherence-check complex">Trouble acidobasique complexe : Acidose métabolique + Alcalose respiratoire</span>';
+            } else {
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation respiratoire en cours</span>';
+            }
+        }
+    } else if (phValue > 7.42) { // Alcalose
+        if (pco2Value < 36) { // Alcalose respiratoire
+            // Diminution HCO3 attendue = 2(Δ PaCO2/10)
+            const expectedHCO3Change = 2 * ((40 - pco2Value) / 10);
+            const expectedHCO3 = 24 - expectedHCO3Change;
+            formulaDescription = `HCO3 attendu = 24 - 2 × ((40 - PaCO2) / 10) = ${expectedHCO3.toFixed(0)}`;
+            measuredValuesDescription = `HCO3 mesuré : ${hco3Value.toFixed(0)}`;
+            if (Math.abs(hco3Value - expectedHCO3) <= 3) {
+                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation métabolique complète</span>';
+            } else {
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation métabolique incomplète</span>';
+            }
+        } else { // Alcalose métabolique
+            // PCO2 attendue = 40 + 0.6(ΔHCO3-)
+            const expectedPCO2 = 40 + 0.6 * (hco3Value - 24);
+            formulaDescription = `PaCO2 attendu = 40 + 0.6 × (HCO3 - 24) = ${expectedPCO2.toFixed(0)}`;
+            measuredValuesDescription = `PaCO2 mesuré : ${pco2Value.toFixed(0)}`;
+            if (Math.abs(pco2Value - expectedPCO2) <= 3) {
+                compensationAnalysis = '<span class="coherence-check compensation complete">Compensation respiratoire complète</span>';
+            } else {
+                compensationAnalysis = '<span class="coherence-check compensation incomplete">Compensation respiratoire incomplète</span>';
+            }
+        }
+    }
+
+    step4.innerHTML = `
+        <div class="step-number">Étape 4</div>
+        <div class="step-content">
+            <div>Compensation respiratoire / métabolique</div>
+            <div class="step-values">
+                <div class="formula-measured-container">
+                    <div class="formula-row">
+                        <span class="label"></span>
+                        <span class="value">${formulaDescription}</span>
+                    </div>
+                    <div class="measured-row">
+                        <span class="label"></span>
+                        <span class="value">${measuredValuesDescription}</span>
+                    </div>
+                </div>
+                ${compensationAnalysis}
+            </div>
+        </div>
+    `;
+    
+    analysisSteps.appendChild(step4);
+}, 2400);
+
+
+
+// Étape 5 - TA plasmatique si acidose métabolique
+setTimeout(() => {
+    const phValue = parseFloat(ph);
+    const pco2Value = parseFloat(pco2);
+    const naValue = document.getElementById('GDS_na_plasma').value;
+    const clValue = document.getElementById('GDS_cl_plasma').value;
+    const hco3Value = hco3;
+    const albValue = document.getElementById('GDS_albumine').value;
+
+    // Vérifier si c'est une acidose métabolique
+    if (phValue < 7.38 && pco2Value <= 44) {
+        const step5 = document.createElement('div');
+        step5.className = 'analysis-step';
+
+        // Préparer l'affichage de la formule avec les valeurs
+        const formulaDisplay = `TA plasmatique = [Na⁺] - [Cl⁻] - [HCO₃⁻] = ${naValue || '?'} - ${clValue || '?'} - ${hco3Value || '?'}`;
+        
+        let taAnalysis = '';
+        let taResult = '';
+        
+        // Vérifier si toutes les valeurs nécessaires sont présentes
+        if (!naValue || !clValue || !hco3Value) {
+            taAnalysis = '<span class="coherence-check missing">Données manquantes !</span>';
+            taResult = '';
+        } else {
+            // Calcul du TA avec correction par l'albumine si disponible
+            let ta = parseFloat(naValue) - parseFloat(clValue) - parseFloat(hco3Value);
+            let taCorrige = ta;
+            
+            if (albValue && parseFloat(albValue) < 40) {
+                const correctionAlbumine = 2.5 * (40 - parseFloat(albValue)) / 10;
+                taCorrige = ta + correctionAlbumine;
+                taResult = ` = ${Math.round(ta)} (TA corrigé par albumine = ${Math.round(taCorrige)})`;
+            } else {
+                taResult = ` = ${Math.round(ta)}`;
+            }
+
+            if (taCorrige > 16) {
+                taAnalysis = '<span class="coherence-check ta-high">Trou anionique plasmatique augmenté</span>';
+            } else {
+                taAnalysis = '<span class="coherence-check ta-normal">Trou anionique plasmatique normal</span>';
+            }
+        }
+
+        step5.innerHTML = `
+            <div class="step-number">Étape 5</div>
+            <div class="step-content">
+                <div>Acidose métabolique - Calcul du trou anionique plasmatique</div>
+                <div class="step-values">
+                    <div class="formula-display">${formulaDisplay}${taResult}</div>
+                    ${taAnalysis}
+                </div>
+            </div>
+        `;
+        
+        analysisSteps.appendChild(step5);
+    }
+}, 3200);
+
+
+// Modification de l'étape 6 pour gérer correctement l'acidose métabolique à TA normal
+setTimeout(() => {
+    const phValue = parseFloat(document.getElementById('GDS_ph').value);
+    const pco2Value = parseFloat(document.getElementById('GDS_pco2').value);
+    const taPlasma = document.getElementById('GDS_trou_anionique').value 
+        ? parseFloat(document.getElementById('GDS_trou_anionique').value) 
+        : null;
+    const naUrine = document.getElementById('GDS_na_urine').value;
+    const kUrine = document.getElementById('GDS_k_urine').value;
+    const clUrine = document.getElementById('GDS_cl_urine').value;
+
+    // Vérifier si c'est une acidose métabolique à TA normal
+    if (phValue < 7.38 && pco2Value <= 44 && taPlasma !== null && taPlasma <= 16) {
+        const step6 = document.createElement('div');
+        step6.className = 'analysis-step';
+
+        // Préparer l'affichage de la formule avec les valeurs
+        const formulaDisplay = `TA urinaire = [Na⁺]u + [K⁺]u - [Cl⁻]u = ${naUrine || '?'} + ${kUrine || '?'} - ${clUrine || '?'}`;
+        
+        let tauAnalysis = '';
+        let tauResult = '';
+
+        // Vérifier si toutes les valeurs nécessaires sont présentes
+        if (!naUrine || !kUrine || !clUrine) {
+            tauAnalysis = '<span class="coherence-check missing">Données manquantes !</span>';
+            tauResult = '';
+        } else {
+            // Calcul du TA urinaire
+            const tau = Math.round(parseFloat(naUrine) + parseFloat(kUrine) - parseFloat(clUrine));
+            tauResult = ` = ${tau}`;
+
+            if (tau > 0) {
+                tauAnalysis = '<span class="coherence-check ta-positive">Trou anionique urinaire positif</span>';
+            } else {
+                tauAnalysis = '<span class="coherence-check ta-negative">Trou anionique urinaire négatif</span>';
+            }
+        }
+
+        step6.innerHTML = `
+            <div class="step-number">Étape 6</div>
+            <div class="step-content">
+                <div>Acidose métabolique à TA plasmatique normal - Calcul du trou anionique urinaire</div>
+                <div class="step-values">
+                    <div class="formula-display">${formulaDisplay}${tauResult}</div>
+                    ${tauAnalysis}
+                </div>
+            </div>
+        `;
+        
+        const analysisSteps = document.getElementById('analysisSteps');
+        if (analysisSteps) {
+            analysisSteps.appendChild(step6);
+        }
+    }
+}, 4000);
+
+
+setTimeout(() => {
+    const phValue = parseFloat(document.getElementById('GDS_ph').value);
+    const pco2Value = parseFloat(document.getElementById('GDS_pco2').value);
+    const taPlasma = document.getElementById('GDS_trou_anionique').value 
+        ? parseFloat(document.getElementById('GDS_trou_anionique').value) 
+        : null;
+    const glycemie = document.getElementById('GDS_glycemie').value;
+    const creatinine = document.getElementById('GDS_creatinine').value;
+    const lactate = document.getElementById('GDS_lactate').value;
+
+    // Vérifier si c'est une acidose métabolique à TA augmenté
+    if (phValue < 7.38 && pco2Value <= 44 && taPlasma !== null && taPlasma > 16) {
+        const step6bis = document.createElement('div');
+        step6bis.className = 'analysis-step';
+
+        // Définition des paramètres à vérifier
+        const parameters = [
+            { 
+                label: 'Glycémie',
+                value: glycemie,
+                unit: 'mmol/L',
+                threshold: 8,
+                highMessage: 'Hyperglycémie',
+                normalMessage: 'Normoglycémie'
+            },
+            {
+                label: 'Créatininémie',
+                value: creatinine,
+                unit: 'µmol/L',
+                threshold: 120,
+                highMessage: 'Insuffisance rénale',
+                normalMessage: 'Fonction rénale normale'
+            },
+            {
+                label: 'Lactatémie',
+                value: lactate,
+                unit: 'mmol/L',
+                threshold: 2,
+                highMessage: 'Hyperlactatémie',
+                normalMessage: 'Lactatémie normale'
+            }
+        ];
+
+        // Vérifier si des données sont manquantes
+        const missingData = parameters.some(param => !param.value);
+        
+        // Générer le HTML pour les résultats
+        let resultsHtml = '';
+
+
+
+        // Ajouter les résultats pour chaque paramètre
+        resultsHtml += parameters.map(param => {
+            if (param.value) {
+                const value = parseFloat(param.value);
+                const status = value >= param.threshold 
+                    ? `<span class="coherence-check ta-positive">${param.highMessage}</span>`
+                    : `<span class="coherence-check ta-normal">${param.normalMessage}</span>`;
+                return `<div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="min-width: 60px;">${param.label} :</span>
+                    <span style="min-width: 30px;">${value} ${param.unit}</span>
+                    ${status}
+                </div>`;
+            } else {
+                return `<div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="min-width: 60px;">${param.label} :</span>
+                    <span style="min-width: 30px;">? ${param.unit}</span>
+                </div>`;
+            }
+        }).join('');
+		
+        if (missingData) {
+            resultsHtml += `<div style="margin-bottom: 0,1rem;">
+                <span class="coherence-check missing">Contexte clinique incomplet !</span>
+            </div>`;
+        }
+		
+        step6bis.innerHTML = `
+            <div class="step-number">Étape 6</div>
+            <div class="step-content">
+                <div>Acidose métabolique à TA plasmatique augmenté - Données biologiques supplémentaires</div>
+                <div class="step-values">
+                    ${resultsHtml}
+                </div>
+            </div>
+        `;
+
+        const analysisSteps = document.getElementById('analysisSteps');
+        if (analysisSteps) {
+            analysisSteps.appendChild(step6bis);
+        }
+    }
+}, 4000);
+
+
+// Étape finale - Diagnostics différentiels
+setTimeout(() => {
+    const phValue = parseFloat(document.getElementById('GDS_ph').value);
+    const pco2Value = parseFloat(document.getElementById('GDS_pco2').value);
+    const hco3Value = parseFloat(document.getElementById('GDS_hco3').value);
+    const taPlasma = parseFloat(document.getElementById('GDS_trou_anionique').value);
+    const taUrine = parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value);
+    const kValue = parseFloat(document.getElementById('GDS_k_plasma').value);
+    const glycemie = parseFloat(document.getElementById('GDS_glycemie').value);
+    const creatinine = parseFloat(document.getElementById('GDS_creatinine').value);
+	const lactate = parseFloat(document.getElementById('GDS_lactate').value);
+	    const k = parseFloat(document.getElementById('GDS_k_plasma').value); 
+
+	
+    if (!phValue || !pco2Value || !hco3Value) return;
+	
+    const step7 = document.createElement('div');
+    step7.className = 'analysis-step';
+    let diagnosticContent = '';
+
+    // Styles pour les diagnostics
+    const diagnosticStyles = document.createElement('style');
+    diagnosticStyles.textContent = `
+        .diagnostic-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        .diagnostic-group {
+            margin-bottom: 1.2rem;
+        }
+        .diagnostic-subtitle {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .diagnostic-list {
+            list-style: none;
+            padding-left: 1.2rem;
+            margin: 0.5rem 0;
+        }
+        .diagnostic-item {
+            position: relative;
+            padding: 0.3rem 0;
+        }
+        .diagnostic-item::before {
+            content: "•";
+            color: #666;
+            position: absolute;
+            left: -1rem;
+        }
+        .clinical-context {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+    `;
+    document.head.appendChild(diagnosticStyles);
+
+    // Fonction pour générer le contexte clinique
+    function getClinicContext() {
+        let context = [];
+        if (!isNaN(glycemie) && glycemie > 8) {
+            context.push("hyperglycémie");
+        }
+        if (!isNaN(creatinine) && creatinine > 120) {
+            context.push("insuffisance rénale");
+        }
+		if (!isNaN(lactate) && lactate > 2) {
+            context.push("hyperlactatémie");
+        }
+		
+        return context.length > 0 ? `<div class="clinical-context">Dans un contexte d'${context.join(", d'")}.</div>` : "";
+    }
+	
+	    // Analyse de la kaliémie
+if (!isNaN(k) && k !== null) {
+    if (k > 5) {
+        kaliemieText = " avec hyperkaliémie";
+    } else {
+        kaliemieText = " sans hyperkaliémie";
+    }
+} else {
+    kaliemieText = ""; // Pas de mention si kaliémie non spécifiée
+}
+	
+
+    // Évaluation de la compensation
+    function getCompensationStatus() {
+        let compensation = "";
+        if (phValue < 7.38) { // Acidose
+            if (pco2Value > 44) { // Acidose respiratoire
+                const expectedHCO3Change = (pco2Value - 40) / 10;
+                const expectedHCO3 = 24 + expectedHCO3Change * 3;
+                compensation = Math.abs(hco3Value - expectedHCO3) <= 3 ? "complète" : "incomplète";
+            } else { // Acidose métabolique
+                const expectedPCO2 = (1.5 * hco3Value) + 8;
+                compensation = Math.abs(pco2Value - expectedPCO2) <= 3 ? "complète" : "incomplète";
+            }
+        } else if (phValue > 7.42) { // Alcalose
+            if (pco2Value < 36) { // Alcalose respiratoire
+                const expectedHCO3Change = 2 * ((40 - pco2Value) / 10);
+                const expectedHCO3 = 24 - expectedHCO3Change;
+                compensation = Math.abs(hco3Value - expectedHCO3) <= 3 ? "complète" : "incomplète";
+            } else { // Alcalose métabolique
+                const expectedPCO2 = 40 + 0.6 * (hco3Value - 24);
+                compensation = Math.abs(pco2Value - expectedPCO2) <= 3 ? "complète" : "incomplète";
+            }
+        }
+        return compensation;
+    }
+
+    const compensationStatus = getCompensationStatus();
+    const clinicalContext = getClinicContext();
+
+    // Génération du diagnostic en fonction du trouble
+    if (phValue < 7.38) {
+        if (pco2Value > 44) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Acidose respiratoire avec compensation métabolique ${compensationStatus}.</div>
+                    <div class="diagnostic-group">
+					   <div class="diagnostic-subtitle">Causes d'acidose respiratoire :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">BPCO</li>
+                            <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
+                            <li class="diagnostic-item">Épuisement respiratoire d'une pathologie aiguë</li>
+                            <li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
+                        </ul>
+                    </div>
+                    ${clinicalContext}
+                </div>`;
+				
+				
+        } else {
+		
+if (!isNaN(taPlasma)) {
+
+		    // Formule de Winter : PaCO2 = (1.5 × [HCO3-]) + 8 ±2
+			const expectedPCO2 = (1.5 * hco3Value) + 8;
+			const difference = pco2Value - expectedPCO2;
+			
+if (pco2Value > expectedPCO2 + 3) {
+ let taAnalysis = "";
+        if (!isNaN(taPlasma)) {
+            if (taPlasma > 16) {
+                let contextStr = '';
+                let context = [];
+                if (!isNaN(glycemie) && glycemie > 8) {
+                    context.push("hyperglycémie");
+                }
+                if (!isNaN(creatinine) && creatinine > 120) {
+                    context.push("insuffisance rénale");
+                }
+                if (!isNaN(lactate) && lactate > 2) {
+                    context.push("hyperlactatémie");
+                }
+                if (context.length > 0) {
+                    contextStr = ` dans un contexte d'${context.join(" et d'")}`;
+                }
+                
+                diagnosticContent = `
+                    <div class="diagnostic-container">
+                        <div class="diagnostic-title">Acidose mixte : Acidose respiratoire associée à une acidose métabolique à TA plasmatique augmenté${contextStr}</div>
+                        <div class="diagnostic-group">
+                            <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA augmenté :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+                                <li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+                                <li class="diagnostic-item">Insuffisance rénale sévère</li>
+                                <li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+                            </ul>
+                            <div class="diagnostic-subtitle">Causes d'acidose respiratoire associée :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">BPCO décompensée</li>
+                                <li class="diagnostic-item">Syndromes restrictifs pulmonaires</li>
+                                <li class="diagnostic-item">Épuisement respiratoire</li>
+                                <li class="diagnostic-item">Médicaments dépresseurs respiratoires</li>
+                            </ul>
+                        </div>
+                    </div>`;
+} else {  // cas où TA plasmatique est normal
+    let diagTitle = "Acidose métabolique à TA plasmatique normal";
+    const kValue = document.getElementById('GDS_k_plasma').value;
+    if (kValue !== '') {
+        diagTitle += parseFloat(kValue) > 5 ? " avec hyperkaliémie" : " sans hyperkaliémie";
+    }
+
+    let atuList = '';
+    if (kValue === '') {
+        atuList = `
+            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+            <li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>
+            <li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+    } else if (parseFloat(kValue) > 5) {
+        atuList = `
+            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+            <li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+    } else {
+        atuList = `
+            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+            <li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>`;
+    }
+
+    const naUrine = document.getElementById('GDS_na_urine').value;
+    const kUrine = document.getElementById('GDS_k_urine').value;
+    const clUrine = document.getElementById('GDS_cl_urine').value;
+
+    if (!naUrine || !kUrine || !clUrine) {
+        diagnosticContent = `
+            <div class="diagnostic-container">
+                <div class="diagnostic-title">${diagTitle} - analyse incomplète</div>
+                <div class="diagnostic-group">
+                    <div class="diagnostic-subtitle">Causes possibles si trou anionique urinaire positif (pertes rénales de bicarbonates) :</div>
+                    <ul class="diagnostic-list">
+                        ${atuList}
+                    </ul>
+
+                    <div class="diagnostic-subtitle">Causes possibles si trou anionique urinaire négatif (pertes digestives de bicarbonates) :</div>
+                    <ul class="diagnostic-list">
+                        <li class="diagnostic-item">Diarrhée</li>
+                        <li class="diagnostic-item">Iléostomie</li>
+                    </ul>
+                    
+                    <div style="margin-top: 1rem; color: #666; font-style: italic;">
+                        Note : Le calcul du trou anionique urinaire permettrait d'affiner le diagnostic étiologique
+                    </div>
+                </div>
+            </div>`;
+    } else if (parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) > 0) {
+        diagnosticContent = `
+            <div class="diagnostic-container">
+                <div class="diagnostic-title">${diagTitle}, à TA urinaire positif</div>
+                <div class="diagnostic-group">
+                    <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes rénales de bicarbonates :</div>
+                    <ul class="diagnostic-list">
+                        ${atuList}
+                    </ul>
+                </div>
+            </div>`;
+    } else {
+        diagnosticContent = `
+            <div class="diagnostic-container">
+                <div class="diagnostic-title">${diagTitle}, à TA urinaire négatif</div>
+                <div class="diagnostic-group">
+                    <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes digestives de bicarbonates :</div>
+                    <ul class="diagnostic-list">
+                        <li class="diagnostic-item">Diarrhée</li>
+                        <li class="diagnostic-item">Iléostomie</li>
+                    </ul>
+                </div>
+            </div>`;
+    }
+}
+		}
+			
+
+		} else if (pco2Value < expectedPCO2 - 3) {
+ let taAnalysis = "";
+    if (!isNaN(taPlasma)) {
+        if (taPlasma > 16) {
+            let contextStr = '';
+            let context = [];
+            if (!isNaN(glycemie) && glycemie > 8) {
+                context.push("hyperglycémie");
+            }
+            if (!isNaN(creatinine) && creatinine > 120) {
+                context.push("insuffisance rénale");
+            }
+            if (!isNaN(lactate) && lactate > 2) {
+                context.push("hyperlactatémie");
+            }
+            if (context.length > 0) {
+                contextStr = ` dans un contexte d'${context.join(" et d'")}`;
+            }
+
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Trouble complexe : Alcalose respiratoire associée à une acidose métabolique à TA plasmatique augmenté${contextStr}</div>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA augmenté :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+                            <li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+                            <li class="diagnostic-item">Insuffisance rénale sévère</li>
+                            <li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+                        </ul>
+                        <div class="diagnostic-subtitle">Causes d'alcalose respiratoire associée :</div>
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Intoxication aux salicylés</li>
+                        </ul>
+                    </div>
+                </div>`;
+        } else {
+            if (!isNaN(taUrine)) {
+                if (taUrine > 0) {
+                    let atuList = '';
+                    const kValue = document.getElementById('GDS_k_plasma').value;
+                    
+                    if (kValue === '') {
+                        atuList = `
+                            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                            <li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>
+                            <li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+                    } else if (parseFloat(kValue) > 5) {
+                        atuList = `
+                            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                            <li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+                    } else {
+                        atuList = `
+                            <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                            <li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>`;
+                    }
+
+                    diagnosticContent = `
+                        <div class="diagnostic-container">
+                            <div class="diagnostic-title">Trouble complexe : Alcalose respiratoire associée à une acidose métabolique à TA plasmatique normal${kaliemieText}, à TA urinaire positif.</div>
+                            <div class="diagnostic-group">
+                                   <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes rénales de bicarbonates  :</div>
+                                <ul class="diagnostic-list">
+                                    ${atuList}
+                                </ul>
+                                <div class="diagnostic-subtitle">Causes d'alcalose respiratoire associée :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                                    <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                                    <li class="diagnostic-item">Hyperventilation psychogène</li>
+                                    <li class="diagnostic-item">Intoxication aux salicylés</li>
+                                </ul>
+                            </div>
+                        </div>`;
+                } else {
+                    diagnosticContent = `
+                        <div class="diagnostic-container">
+                            <div class="diagnostic-title">Trouble complexe : Alcalose respiratoire associée à une acidose métabolique à TA plasmatique normal, à TA urinaire négatif.</div>
+                            <div class="diagnostic-group">
+                                   <div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes digestives de bicarbonates  :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Diarrhée</li>
+                                    <li class="diagnostic-item">Iléostomie</li>
+                                </ul>
+                                <div class="diagnostic-subtitle">Causes d'alcalose respiratoire associée :</div>
+                                <ul class="diagnostic-list">
+                                    <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                                    <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                                    <li class="diagnostic-item">Hyperventilation psychogène</li>
+                                    <li class="diagnostic-item">Intoxication aux salicylés</li>
+                                </ul>
+                            </div>
+                        </div>`;
+                }
+				
+            }
+        }
+    }
+	} else {
+		
+            let taAnalysis = "";
+            if (!isNaN(taPlasma)) {
+				if (taPlasma > 16) {
+					let contextStr = '';
+					let context = [];
+					if (!isNaN(glycemie) && glycemie > 8) {
+						context.push("hyperglycémie");
+					}
+					if (!isNaN(creatinine) && creatinine > 120) {
+						context.push("insuffisance rénale");
+					}
+					
+					if (!isNaN(lactate) && lactate > 2) {
+						context.push("hyperlactatémie");
+					}
+					
+					if (context.length > 0) {
+						contextStr = ` dans un contexte d'${context.join(", d'")}`;
+					}
+
+					diagnosticContent = `
+						<div class="diagnostic-container">
+							<div class="diagnostic-title">Acidose métabolique à TA plasmatique augmenté avec compensation respiratoire ${compensationStatus}${contextStr}.</div>
+							
+							<div class="diagnostic-group">
+							    <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA augmenté :</div>
+
+								<ul class="diagnostic-list">
+									<li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+									<li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+									<li class="diagnostic-item">Insuffisance rénale sévère</li>
+									<li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+								</ul>
+							</div>
+						</div>`;
+                } else {  // cas où TA plasmatique est normal
+					let diagTitle = "Acidose métabolique à TA plasmatique normal";
+					const kValue = document.getElementById('GDS_k_plasma').value;
+					if (kValue !== '') {
+						diagTitle += parseFloat(kValue) > 5 ? " avec hyperkaliémie" : " sans hyperkaliémie";
+					}
+
+					let atuList = '';
+					if (kValue === '') {
+						atuList = `
+							<li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+							<li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>
+							<li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+					} else if (parseFloat(kValue) > 5) {
+						atuList = `
+							<li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+							<li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>`;
+					} else {
+						atuList = `
+							<li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+							<li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>`;
+					}
+
+					const naUrine = document.getElementById('GDS_na_urine').value;
+					const kUrine = document.getElementById('GDS_k_urine').value;
+					const clUrine = document.getElementById('GDS_cl_urine').value;
+
+					if (!naUrine || !kUrine || !clUrine) {
+						diagnosticContent = `
+							<div class="diagnostic-container">
+								<div class="diagnostic-title">${diagTitle} - analyse incomplète</div>
+								<div class="diagnostic-group">
+									<div class="diagnostic-subtitle">Causes possibles si trou anionique urinaire positif (pertes rénales de bicarbonates) :</div>
+									<ul class="diagnostic-list">
+										${atuList}
+									</ul>
+
+									<div class="diagnostic-subtitle">Causes possibles si trou anionique urinaire négatif (pertes digestives de bicarbonates) :</div>
+									<ul class="diagnostic-list">
+										<li class="diagnostic-item">Diarrhée</li>
+										<li class="diagnostic-item">Iléostomie</li>
+									</ul>
+									
+									<div style="margin-top: 1rem; color: #666; font-style: italic;">
+										Note : Le calcul du trou anionique urinaire permettrait d'affiner le diagnostic étiologique
+									</div>
+								</div>
+							</div>`;
+					} else if (parseFloat(document.getElementById('GDS_trou_anioniqueUrinaire').value) > 0) {
+						diagnosticContent = `
+							<div class="diagnostic-container">
+								<div class="diagnostic-title">${diagTitle}, à TA urinaire positif</div>
+								<div class="diagnostic-group">
+									<div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes rénales de bicarbonates :</div>
+									<ul class="diagnostic-list">
+										${atuList}
+									</ul>
+								</div>
+							</div>`;
+					} else {
+						diagnosticContent = `
+							<div class="diagnostic-container">
+								<div class="diagnostic-title">${diagTitle}, à TA urinaire négatif</div>
+								<div class="diagnostic-group">
+									<div class="diagnostic-subtitle">Causes d'acidose métabolique - pertes digestives de bicarbonates :</div>
+									<ul class="diagnostic-list">
+										<li class="diagnostic-item">Diarrhée</li>
+										<li class="diagnostic-item">Iléostomie</li>
+									</ul>
+								</div>
+							</div>`;
+					}
+				}
+            }
+        }
+		
+		} else {
+		
+		                // Nouveau code pour TA non calculé : afficher toutes les possibilités
+                diagnosticContent = `
+                    <div class="diagnostic-container">
+                        <div class="diagnostic-title">Acidose métabolique - analyse incomplète.</div>
+                        <div class="diagnostic-group">
+                            <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA plasmatique augmenté :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Acidocétose (diabétique, alcoolique, jeûne)</li>
+                                <li class="diagnostic-item">État de choc avec hyperlactatémie</li>
+                                <li class="diagnostic-item">Insuffisance rénale sévère</li>
+                                <li class="diagnostic-item">Intoxications (méthanol, éthylène glycol, aspirine)</li>
+                            </ul>
+                            
+                            <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA plasmatique normal et à TA urinaire positif :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Acidose tubulaire proximale (Type 2)</li>
+                                <li class="diagnostic-item">Acidose tubulaire distale sans hyperkaliémie (Type 1)</li>
+                                <li class="diagnostic-item">Acidose tubulaire distale avec hyperkaliémie (Type 4)</li>
+                            </ul>
+
+                            <div class="diagnostic-subtitle">Causes d'acidose métabolique à TA plasmatique normal et à TA urinaire négatif :</div>
+                            <ul class="diagnostic-list">
+                                <li class="diagnostic-item">Diarrhée</li>
+								<li class="diagnostic-item">Iléostomie</li>
+          
+                            </ul>
+                            
+                            <div style="margin-top: 1rem; color: #666; font-style: italic;">
+                                Note : Le calcul du trou anionique plasmatique et urinaire permettrait d'affiner le diagnostic étiologique
+                            </div>
+                        </div>
+                    </div>`;
+					
+		}
+		
+	}
+	
+    } else if (phValue > 7.42) {
+        if (pco2Value < 36) {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Alcalose respiratoire avec compensation métabolique ${compensationStatus}.</div>
+                    <div class="diagnostic-group">
+					 <div class="diagnostic-subtitle">Causes d'alcalose respiratoire :</div>
+
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Insuffisance respiratoire aiguë hypoxémique</li>
+                            <li class="diagnostic-item">Encéphalopathie hépatique</li>
+                            <li class="diagnostic-item">Hyperventilation psychogène</li>
+                            <li class="diagnostic-item">Intoxication aux salicylés</li>
+                        </ul>
+                    </div>
+                </div>`;
+        } else {
+            diagnosticContent = `
+                <div class="diagnostic-container">
+                    <div class="diagnostic-title">Alcalose métabolique avec compensation respiratoire ${compensationStatus}</div>
+					<div class="diagnostic-subtitle">Causes d'alcalose métabolique :</div>
+
+                    <div class="diagnostic-group">
+                        <ul class="diagnostic-list">
+                            <li class="diagnostic-item">Vomissements et aspiration digestive</li>
+                            <li class="diagnostic-item">Diurétiques (furosémide et thiazidiques)</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme primaire</li>
+                            <li class="diagnostic-item">Hyperaldostéronisme secondaire</li>
+                        </ul>
+                    </div>
+                </div>`;
+        }
+    }
+
+    if (diagnosticContent) {
+        step7.innerHTML = `
+            <div class="step-number">Analyse</div>
+            <div class="step-content">
+                <div>Principales étiologies à évoquer</div>
+                <div class="step-values">
+                    ${diagnosticContent}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('analysisSteps').appendChild(step7);
+    }
+}, (parseFloat(document.getElementById('GDS_ph').value) < 7.38 && 
+    parseFloat(document.getElementById('GDS_pco2').value) <= 44) ? 4800 : 3200);
+	
+	
+setTimeout(() => {
+    // Récupération des données
+    const ph = document.getElementById('GDS_ph').value || null;
+    const pco2 = document.getElementById('GDS_pco2').value || null;
+    const hco3 = document.getElementById('GDS_hco3').value || null;
+    const po2 = document.getElementById('GDS_po2').value || null;
+    const na = document.getElementById('GDS_na_plasma').value || null;
+    const k = document.getElementById('GDS_k_plasma').value || null;
+    const cl = document.getElementById('GDS_cl_plasma').value || null;
+    const tau = document.getElementById('GDS_trou_anioniqueUrinaire').value || null;
+    const anionGap = document.getElementById('GDS_trou_anionique').value || null;
+    const naUrine = document.getElementById('GDS_na_urine').value || null;
+    const kUrine = document.getElementById('GDS_k_urine').value || null;
+    const clUrine = document.getElementById('GDS_cl_urine').value || null;
+    const glycemie = document.getElementById('GDS_glycemie').value || null;
+    const albumine = document.getElementById('GDS_albumine').value || null;
+    const creatinine = document.getElementById('GDS_creatinine').value || null;
+    const lactate = document.getElementById('GDS_lactate').value || null;
+
+    // Formatage des données avec suppression des champs non renseignés
+    let dataSection = `<strong style="color: #1e40af;">Données :</strong>\n`;
+    if (ph) dataSection += `pH : ${ph} ; `;
+    if (pco2) dataSection += `pCO2 : ${pco2} mmHg ; `;
+    if (hco3) dataSection += `HCO3- : ${hco3} mmol/L ; `;
+    if (po2) dataSection += `pO2 : ${po2} mmHg ;\n`;
+    if (na) dataSection += `Na+ : ${na} mmol/L ; `;
+    if (k) dataSection += `K+ : ${k} mmol/L ; `;
+    if (cl) dataSection += `Cl- : ${cl} mmol/L ; `;
+    if (anionGap) dataSection += `Trou anionique plasmatique : ${anionGap} ;\n`;
+    if (naUrine) dataSection += `Na+ u : ${naUrine} mmol/L ; `;
+    if (kUrine) dataSection += `K+ u : ${kUrine} mmol/L ; `;
+    if (clUrine) dataSection += `Cl- u : ${clUrine} mmol/L ; `;
+    if (tau) dataSection += `TA urinaire : ${tau} ;\n`;
+    if (glycemie) dataSection += `Glycémie : ${glycemie} mmol/L ; `;
+    if (albumine) dataSection += `Albumine : ${albumine} g/L ; `;
+    if (creatinine) dataSection += `Créatinine : ${creatinine} µmol/L ; `;
+    if (lactate) dataSection += `Lactate : ${lactate} mmol/L ;\n`;
+
+    // Récupération du titre du diagnostic (qui contient la conclusion souhaitée)
+    const diagnosticTitle = document.querySelector('.diagnostic-title');
+    let conclusionText = diagnosticTitle ? diagnosticTitle.textContent : '';
+
+    // Ajout de l'analyse de l'oxygénation
+    const isOxygenotherapy = document.querySelector('input[name="oxygenotherapie"][value="oui"]').checked;
+    
+    if (po2 && !isOxygenotherapy && pco2) {
+        const poValue = parseFloat(po2);
+        const pcoValue = parseFloat(pco2);
+        const sum = poValue + pcoValue;
+        const hasHypoxia = poValue < 80;
+        
+        if (pcoValue > 44 && sum > 120) {
+            conclusionText += ` Il existe une hypoventilation alvéolaire${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxémie'}.`;
+        } else if (pcoValue < 36 && sum < 120) {
+            conclusionText += ` Il existe un shunt gazométrique${hasHypoxia ? ' avec hypoxémie' : ' sans hypoxémie'}.`;
+        } else if (hasHypoxia) {
+            conclusionText += ` Il existe une hypoxémie isolée.`;
+        } else {
+            conclusionText += ` La ventilation et l'oxygénation sont normales.`;
+        }
+    }
+
+    // Construction de la conclusion finale avec double saut de ligne
+    const conclusionArea = document.getElementById('GDS_generatedTextArea');
+    conclusionArea.innerHTML = `${dataSection}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
+}, 5000);
+    }
+
+
+}
+
+
+
+const originalAnalyzeGDS = window.analyzeGDS;
+window.analyzeGDS = function() {
+	    checkRequiredFields();
+    updateAnalysis(); 
+    if (originalAnalyzeGDS) {
+        originalAnalyzeGDS(); 
+    }
+};
+
+
+// copier la conclusion
+function copyToClipboard() {
+    const textArea = document.getElementById('GDS_generatedTextArea');
+    if (textArea) {
+        // Récupère le texte et normalise les sauts de ligne
+        const textContent = textArea.innerText.replace(/\n+/g, '\n');
+        
+        navigator.clipboard.writeText(textContent)
+            .then(() => alert('Texte copié dans le presse-papier'))
+            .catch(err => console.error('Erreur lors de la copie:', err));
+    }
+}
+
+// calculs du trou anionique plasmatique
+function calculateTrouAnionique() {
+    const na = document.getElementById('GDS_na_plasma').value;
+    const hco3 = document.getElementById('GDS_hco3').value;
+    const cl = document.getElementById('GDS_cl_plasma').value;
+    const albumine = document.getElementById('GDS_albumine').value;
+    const taInput = document.getElementById('GDS_trou_anionique');
+    const statusElement = document.getElementById('ta-status');
+    
+    if (na === '' || hco3 === '' || cl === '') {
+        taInput.value = '';
+        if (statusElement) statusElement.textContent = '';
+        return;
+    }
+    
+    let result = parseFloat(na) - parseFloat(hco3) - parseFloat(cl);
+    
+    // Correction par l'albumine si une valeur est entrée et qu'elle est < 40
+    if (albumine !== '' && parseFloat(albumine) < 40) {
+        const correctionAlbumine = 2.5 * (40 - parseFloat(albumine)) / 10;
+        result = result + correctionAlbumine;
+        if (statusElement) statusElement.textContent = '(Corrigé par l\'albuminémie)';
+    }
+    
+    result = Math.round(result);
+    taInput.value = result;
+    
+    if (statusElement) {
+        let message = '';
+        if (albumine !== '' && parseFloat(albumine) < 40) {
+            message = '(Corrigé par l\'albuminémie)';
+            if (result > 16) {
+                message += ' - Augmenté';
+            }
+        } else if (result > 16) {
+            message = 'Augmenté';
+        }
+        statusElement.textContent = message;
+        statusElement.style.color = message.includes('Augmenté') ? '#dc2626' : '#1e293b';
+    }
+}
+
+document.getElementById('GDS_na_plasma').addEventListener('input', calculateTrouAnionique);
+document.getElementById('GDS_hco3').addEventListener('input', calculateTrouAnionique);
+document.getElementById('GDS_cl_plasma').addEventListener('input', calculateTrouAnionique);
+document.getElementById('GDS_albumine').addEventListener('input', calculateTrouAnionique);
+
+// calcul du trou aninique urinaire
+
+function calculateTrouAnioniqueUrinaire() {
+   const naU = document.getElementById('GDS_na_urine').value;
+   const kU = document.getElementById('GDS_k_urine').value;
+   const clU = document.getElementById('GDS_cl_urine').value;
+   
+   if (naU === '' || kU === '' || clU === '') {
+       document.getElementById('GDS_trou_anioniqueUrinaire').value = '';
+   } else {
+       const result = Math.round(parseFloat(naU) + parseFloat(kU) - parseFloat(clU));
+       document.getElementById('GDS_trou_anioniqueUrinaire').value = result;
+   }
+}
+document.getElementById('GDS_na_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+document.getElementById('GDS_k_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+document.getElementById('GDS_cl_urine').addEventListener('input', calculateTrouAnioniqueUrinaire);
+
+
+
+</script>
+
+<style>
+.diagnostic-subtitle {
+    font-weight: 600;
+    color: #1e40af;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid #1e40af;
+}
+
+/* Mise à jour des styles existants pour une meilleure hiérarchie visuelle */
+.diagnostic-list {
+    margin-bottom: 1.5rem;
+}
+
+.diagnostic-list:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+
+<div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+TypixClin © 2025, Jean ZENNARO
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Les animations sont maintenant gérées par CSS
+    // On garde uniquement la logique métier existante
+    
+    const content = document.querySelector('.content');
+    if (content) {
+        content.style.visibility = 'visible';
+    }
+});
+</script>
+
+
+</body>
+</html>
