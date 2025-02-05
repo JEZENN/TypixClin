@@ -1,0 +1,3554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-C2D5ENP3F1');
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="Analyse et interprétation des troubles hydrélectrolytiques en ligne proposé par TypixClin.">
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <title>TypixClin - Troubles ioniques</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<div id="react-root"></div>
+
+<style>
+/* Ajustements de base pour écrans plus petits */
+@media (max-width: 768px) {
+  /* Ajustement de la taille de base */
+  html {
+    font-size: 14px; /* Réduction de la taille de base de la police */
+  }
+
+
+
+  /* Ajustement des boutons de navigation */
+  .nav-button {
+    min-height: 70px !important; /* Hauteur réduite */
+    padding: 0.5rem !important;
+  }
+
+  .nav-icon {
+    font-size: 1.2rem !important; /* Icônes plus petites */
+    margin-bottom: 0.15rem !important;
+  }
+
+  /* Réduction du padding des sections */
+  .section {
+    margin-bottom: 1rem;
+  }
+
+  .section-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .section-header h3 {
+    font-size: 1rem;
+  }
+
+  .section-content {
+    padding: 1rem;
+  }
+
+  /* Ajustement des input groups */
+  .input-group {
+    gap: 5px;
+  }
+
+  .input-group label {
+    font-size: 0.9rem;
+    min-width: 160px !important;
+  }
+
+  /* Ajustement des valeurs normales */
+  .input-group span {
+    font-size: 0.8rem;
+  }
+
+  /* Ajustement du texte des statuts */
+  [id$="-status"] {
+    font-size: 0.8rem;
+  }
+
+  /* Réduction de la taille des sous-sections */
+  .subsection {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .subsection h4 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Ajustements supplémentaires pour très petits écrans */
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+
+  /* Ajustement de la grille des boutons de navigation */
+  div[style*="grid-template-columns: repeat(5, 1fr)"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  .nav-button {
+    min-height: 60px !important;
+  }
+
+  .input-group label {
+    min-width: 140px !important;
+  }
+
+  /* Optimisation pour les petits écrans */
+  .section-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .button-group {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toggle-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  /* Ajustement des espaces dans l'analyse */
+  .analysis-step {
+    padding: 0.75rem;
+  }
+
+  .step-values {
+    padding: 0.75rem;
+  }
+
+  /* Ajustement des boutons de navigation */
+  .nav-button {
+    font-size: 0.8rem;
+  }
+
+  .nav-icon {
+    font-size: 1rem !important;
+  }
+}
+
+/* Optimisation pour écrans moyens */
+@media (min-width: 481px) and (max-width: 768px) {
+  div[style*="grid-template-columns: repeat(5, 1fr)"] {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  .nav-button {
+    min-height: 65px !important;
+  }
+}
+
+/* Ajout d'une meta viewport pour contrôler le zoom */
+</style>
+
+<script>
+// Ajout dynamique de la meta viewport
+const meta = document.createElement('meta');
+meta.name = 'viewport';
+meta.content = 'width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86';
+document.head.appendChild(meta);
+</script>
+
+<style>
+.header {
+    background: linear-gradient(135deg, #1e40af, #0f2167);
+    padding: 1.5rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1em;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    animation: slideDown 0.8s ease-out forwards;
+}
+
+
+
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Sticky Header */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #1e40af, #0f2167) !important; /* Même gradient que le header */
+    padding: 0.5rem 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sticky-wrapper header {
+    background: none !important; /* Pour s'assurer qu'il n'y a pas de conflit */
+    padding: 0.3rem 0;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Ajout de l'état de disparition */
+.sticky-wrapper.hiding {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.sticky-wrapper h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+@media (max-width: 768px) {
+    .sticky-wrapper {
+        display: none;
+    }
+}
+
+/* Ajouter ce container pour aligner le titre */
+.header-container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+/* Style pour l'îlot du titre */
+.header-title {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+<header class="header">
+    <div class="header-container">
+        <div class="header-content">
+            <div class="header-title">
+                <h1><a href="index.html" style="color: white; text-decoration: none;">TypixClin - Troubles ioniques</a></h1>
+            </div>
+<a href="index.html" class="header-home-button">
+    <i class="fa fa-home nav-icon"></i>
+</a>
+
+        </div>
+    </div>
+</header>
+
+<style>
+
+
+
+.header-container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-title {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-home-button {
+    background: rgba(255, 255, 255, 0.15); /* Nouveau fond semi-transparent */
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    text-align: center;
+    text-decoration: none;
+    color: white; /* Changé en blanc */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px; /* Hauteur réduite */
+    width: 100px; /* Largeur réduite */
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Bordure subtile */
+    backdrop-filter: blur(5px);
+}
+
+.header-home-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.header-home-button .nav-icon {
+    font-size: 2rem; 
+    margin-bottom: 0.25rem;
+}
+
+ 
+.header-home-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.header-home-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.header-home-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    padding: 2px;
+    background: linear-gradient(to right, white, white);
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.header-home-button:hover::after {
+    opacity: 1;
+}
+
+.header-home-button .nav-icon {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0.75rem 0;
+    }
+
+    .header-container {
+        max-width: 1160px;
+        width: auto;
+        margin: 0 1rem;
+        padding: 0;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .header-title {
+        height: 90px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        padding: 0 1rem;
+        margin: 0;
+    }
+
+    .header-title h1 {
+        font-size: 2.3rem;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .header-home-button {
+        height: 20px;
+        width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+    }
+}
+
+
+@media (max-width: 480px) {
+    .header-title h1 {
+        font-size: 2.3rem;
+    }
+
+    .header-home-button {
+        min-height: 36px;
+        min-width: 36px;
+    }
+
+    .nav-icon {
+        font-size: 1rem;
+    }
+}
+
+
+</style>
+
+
+
+	
+<div style="max-width: 1160px; margin: 1rem auto; padding: 0 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;">
+        
+        <!-- Bouton Examen Adulte -->
+        <a href="examen-adulte.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🧑</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">Examen Adulte</div>
+        </a>
+
+        <!-- Bouton Examen Pédiatrique -->
+        <a href="examen-pédiatrique.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">👶</div>
+            <div class="pediatric-text" style="font-size: 0.875rem; font-weight: 600;">
+                <span class="text-full">Examen Pédiatrique</span>
+                <span class="text-short">Examen Péd.</span>
+            </div>
+        </a>
+
+        <!-- Bouton ECG -->
+        <a href="ecg.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚡</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">ECG</div>
+        </a>
+
+        <!-- Bouton GDS -->
+        <a href="gds.html" class="nav-button" style="
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🩸</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">GDS</div>
+        </a>
+
+        <!-- Bouton THE (actif) -->
+        <a href="Troubles ioniques.html" class="nav-button active" style="
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        ">
+            <div class="nav-icon" style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔋</div>
+            <div style="font-size: 0.875rem; font-weight: 600;">Troubles ioniques</div>
+        </a>
+    </div>
+</div>
+
+<!-- Style pour le texte responsive de l'examen pédiatrique -->
+<style>
+.pediatric-text .text-short {
+    display: none;
+}
+
+.pediatric-text .text-full {
+    display: inline;
+}
+
+@media (max-width: 768px) {
+    .pediatric-text .text-full {
+        display: none;
+    }
+    .pediatric-text .text-short {
+        display: inline;
+    }
+}
+
+/* Styles pour les effets de survol */
+.nav-button:not(.active):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button:not(.active)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #1e40af);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+}
+
+.nav-button:not(.active):hover::before {
+    transform: scaleX(1);
+}
+
+/* Animation pulse pour les icônes */
+.nav-button:hover .nav-icon {
+    animation: pulseIcon 1s infinite;
+}
+
+@keyframes pulseIcon {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-button {
+        min-height: 80px !important;
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+
+</style>
+
+
+		
+    <!-- Header sticky qui apparaîtra au scroll -->
+    <div class="sticky-wrapper">
+
+        <h1><a href="#" style="color: white; text-decoration: none;">TypixClin - Troubles ioniques</a></h1>
+    </div>
+
+<script>
+function scrollToTop(event) {
+    event.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+</script>
+
+
+	
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stickyWrapper = document.querySelector('.sticky-wrapper');
+    const header = document.querySelector('header'); // On utilise le header comme référence
+    let isSticky = false;
+
+    function handleScroll() {
+        if (window.innerWidth <= 768) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+            }
+            return;
+        }
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        // On définit un seuil plus bas - par exemple 300px après le header
+        const threshold = header ? header.offsetTop + header.offsetHeight + 0 : 300;
+        
+        if (scrollTop > threshold && !isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.add('visible');
+                isSticky = true;
+            }
+        } else if (scrollTop <= threshold && isSticky) {
+            if (stickyWrapper) {
+                stickyWrapper.classList.remove('visible');
+                isSticky = false;
+            }
+        }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+});
+
+
+
+
+function toggleSection(button) {
+    const section = button.closest('.section');
+    const content = section.querySelector('.section-content');
+    const isHidden = content.classList.contains('hidden');
+    
+    if (isHidden) {
+        content.classList.remove('hidden');
+        button.textContent = 'Masquer';
+    } else {
+        content.classList.add('hidden');
+        button.textContent = 'Afficher';
+    }
+}
+
+
+
+</script>
+
+
+    <style>
+	
+/* Effets de survol pour les boutons de navigation */
+.container a:not([href="gds.html"]):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.container a:not([href="gds.html"]):before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #1e40af);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+}
+
+.container a:not([href="gds.html"]):hover:before {
+    transform: scaleX(1);
+}
+
+/* Style spécifique pour les icônes au survol */
+.container a:hover div:first-child {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container div {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+	
+/* Variables */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #1e40af;
+    --background-color: #f8fafc;
+    --text-color: #1e293b;
+    --border-color: #e2e8f0;
+    --input-background: #ffffff;
+    --hover-color: #3b82f6;
+}
+
+/* Base styles */
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* Scrollbar styles */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+}
+
+/* Header styles */
+header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1em;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Navigation styles - Normal */
+.main-nav {
+    background-color: #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    width: 800px;
+    margin: 0 auto 2rem auto;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    background-color: transparent;
+    color: var(--text-color);
+    padding: 0.75rem 3rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 300px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-link:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Sticky header styles - UPDATED */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 0.5rem 0;
+    opacity: 0;
+    pointer-events: none;
+	
+}
+
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+.sticky-wrapper header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 0.3rem 0;
+    margin-bottom: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-wrapper h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    text-align: center; /* Add this line */
+    width: 100%; /* Add this line */
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+}
+
+.sticky-wrapper .main-nav {
+    background-color: white;
+    margin: 0 auto;
+    padding: 0.25rem;
+    transform: scale(0.9);
+    width: 900px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-wrapper .nav-link {
+    padding: 0.4rem 2rem;
+    font-size: 0.9rem;
+    width: 280px;
+}
+
+/* Container and Section styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+
+.section h4 {
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    margin: 1rem 0;
+}
+
+.icon {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+}
+
+/* Buttons */
+.toggle-button {
+    background-color: #1e40af;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.toggle-button:hover {
+    background-color: #3b82f6;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+/* Form Elements */
+
+/* Style de base pour les inputs texte */
+input[type="text"] {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background-color: white;
+    color: #1e293b;
+}
+
+/* Style spécifique pour les petits inputs */
+input[type="text"].small {
+    width: 60px;
+}
+
+/* Style spécifique pour les inputs moyens */
+input[type="text"].medium {
+    width: 120px;
+}
+
+/* Style spécifique pour les grands inputs */
+input[type="text"].large {
+    width: 300px;
+}
+
+/* Effet de survol */
+input[type="text"]:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Style de focus */
+input[type="text"]:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Style pour les inputs en lecture seule */
+input[type="text"][readonly] {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* Style pour les inputs avec fond coloré (comme pour le QTc normal) */
+input[type="text"].success {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+/* Style pour les inputs avec fond d'erreur (comme pour le QTc anormal) */
+input[type="text"].error {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* Placeholder style */
+input[type="text"]::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 150px;
+    font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+    line-height: 1.6;
+    background-color: #fafafa;
+    letter-spacing: 0.3px;
+    color: #2d3748;
+}
+
+/* Section Content Animations */
+.section-content {
+    max-height: 20000px;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.section-content.hidden {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Animations de base */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Style du header */
+.header {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Style des boutons de navigation */
+.nav-button {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.nav-button:nth-of-type(1) {
+    animation-delay: 0.1s;
+}
+
+.nav-button:nth-of-type(2) {
+    animation-delay: 0.2s;
+}
+
+.nav-button:nth-of-type(3) {
+    animation-delay: 0.3s;
+}
+
+.nav-button:nth-of-type(4) {
+    animation-delay: 0.4s;
+}
+.nav-button:nth-of-type(5) {
+    animation-delay: 0.5s;
+}
+
+/* Style des sections */
+.section {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.section:nth-of-type(1) {
+    animation-delay: 0.4s;
+}
+
+.section:nth-of-type(2) {
+    animation-delay: 0.5s;
+}
+
+.section:nth-of-type(3) {
+    animation-delay: 0.6s;
+}
+
+
+
+/* Responsive styles - UPDATED */
+@media (max-width: 1024px) {
+    .main-nav,
+    .sticky-wrapper .main-nav {
+        width: 95%;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .sticky-wrapper {
+        display: none;
+    }
+
+    .main-nav {
+        width: 90%;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .nav-link {
+        width: 100%;
+        padding: 0.5rem 0;
+        font-size: 1rem;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .section-header h3 {
+        margin-bottom: 10px;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-nav {
+        width: 90%;
+        padding: 0.5rem;
+    }
+
+    .nav-link {
+        font-size: 0.95rem;
+        padding: 0.5rem 0;
+    }
+
+    .button-group {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .toggle-button {
+        font-size: 13px;
+        padding: 6px 12px;
+        min-width: auto;
+    }
+}
+
+/* AJOUTEZ ces nouveaux styles */
+.section {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.section:hover {
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
+    transform: translateY(-10px);
+}
+
+.section-header {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    box-shadow: none;
+}
+
+.section-header h3 {
+    color: white;
+    font-size: 1.25rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-header .icon {
+    color: white;
+}
+
+.section-content {
+    padding: 1.5rem;
+}
+
+.subsection {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.subsection:hover {
+    background: #f1f5f9;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.subsection:last-child {
+    margin-bottom: 0;
+}
+
+.subsection h4 {
+    color: #1e40af;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-button {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.toggle-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Styles communs pour les conteneurs de radio et checkbox */
+.custom-control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding-left: 1.25rem;
+    margin-right: 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+/* Cache l'input original */
+.custom-control input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Style de base pour la checkbox et radio personnalisée */
+.checkmark {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    height: 12px;
+    width: 12px;
+    background-color: #fff;
+    border: 1px solid #2563eb;
+    transition: all 0.2s ease;
+}
+
+/* Style spécifique pour la radio */
+.radio .checkmark {
+    border-radius: 50%;
+}
+
+/* Style spécifique pour la checkbox */
+.checkbox .checkmark {
+    border-radius: 2px;
+}
+
+/* Effet de survol sur le conteneur */
+.custom-control:hover {
+    color: #2563eb;
+}
+
+/* Effet de survol sur la marque */
+.custom-control:hover .checkmark {
+    background-color: rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Style quand coché - commun */
+.custom-control input:checked ~ .checkmark {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Style du point pour radio - petit point blanc centré */
+.radio .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+}
+
+/* Style du checkmark pour checkbox - style naturel */
+.checkbox .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 3px;
+    top: 0px;
+    width: 3px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Affiche la marque quand coché */
+.custom-control input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Animation de focus */
+.custom-control input:focus ~ .checkmark {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Style désactivé */
+.custom-control.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Styles pour la zone de texte généré */
+#generatedTextArea {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    min-height: 400px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.5;
+    color: #1e293b; /* Couleur de texte foncée pour assurer la lisibilité */
+    white-space: pre-wrap;
+    overflow-y: auto;
+}
+
+#generatedTextArea div {
+    margin-bottom: 0.5rem;
+}
+
+#generatedTextArea strong {
+    font-weight: 600;
+    color: #1e40af; /* Bleu foncé pour les titres en gras */
+}
+
+/* Animation pour l'apparition du texte */
+@keyframes fadeInAnimation {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#generatedTextArea div {
+    opacity: 0;
+    animation: fadeInAnimation 0.5s ease-out forwards;
+}
+
+
+
+#THE_generatedTextArea {
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #1e293b;
+    background-color: white;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: text;
+    overflow-y: auto;
+}
+
+#THE_generatedTextArea:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#THE_generatedTextArea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInContent 0.3s ease-out forwards;
+}
+
+/* Style pour le contenu HTML dans la zone de texte */
+#THE_generatedTextArea strong {
+    font-weight: 600;
+    color: #1e40af;
+}
+
+
+
+/* Cibler uniquement les champs de texte longs */
+@media (max-width: 900px) {
+    /* Style uniquement pour les longues zones de texte */
+    input[type="text"][style*="width: 300px"],
+    input[type="text"][style*="width: 274px"] {
+        width: 90% !important;
+        max-width: 300px;
+    }
+    
+
+
+@media (max-width: 480px) {
+    input[type="text"][style*="width: 300px"],
+    input[type="text"][style*="width: 274px"] {
+        width: 85% !important;
+    }
+	
+	
+	
+    
+@keyframes blink {
+    0% {
+        border-color: #1e40af;
+        box-shadow: 0 0 5px #1e40af;
+    }
+    50% {
+        border-color: #dbeafe;
+        box-shadow: 0 0 2px #dbeafe;
+    }
+    100% {
+        border-color: #1e40af;
+        box-shadow: 0 0 5px #1e40af;
+    }
+}
+
+.blink {
+    animation: blink 2s infinite;
+    border-width: 2px !important;
+}
+
+.radio-group-blink {
+    padding: 8px;
+    border-radius: 8px;
+    animation: radioBlink 2s infinite;
+}
+
+@keyframes radioBlink {
+    0% {
+        background-color: transparent;
+        box-shadow: 0 0 5px transparent;
+    }
+    50% {
+        background-color: rgba(30, 64, 175, 0.1);
+        box-shadow: 0 0 5px rgba(30, 64, 175, 0.5);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 5px transparent;
+    }
+}
+
+    </style>
+</head>
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+
+<body>
+
+<div class="container THE-section">    
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">🔋</span>Analyse d'un trouble ionique</h3>
+            <div class="button-group">
+                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>
+                <button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+            </div>
+        </div>
+        <div class="section-content">
+		
+<div class="subsection">
+    <h4>Bilan de l'eau</h4>
+	
+	    <div style="display: flex; flex-direction: column; gap: 10px;">
+		
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Natrémie (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Na">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">135 - 145</span>
+                <span id="Na-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Glycémie (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Gly">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">3,5 - 8</span>
+                <span id="Gly-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Osmolarité plasmatique (mosm/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="Osmp" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">280 - 290</span>
+				        <span id="Osmp-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Natriurèse (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Nau">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Nau-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Kaliurèse (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Ku-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Glycosurie (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Glyu">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Glyu-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Urée urinaire (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Uréeu">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Uréeu-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Osmolarité urinaire (mosm/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="Osmu" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="Osmu-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Secteur extracellulaire :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="secteur_ec" value="diminue">
+                    <span class="checkmark"></span>
+                    Diminué
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="secteur_ec" value="normal" checked>
+                    <span class="checkmark"></span>
+                    Normal
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="secteur_ec" value="augmente">
+                    <span class="checkmark"></span>
+                    Augmenté
+                </label>
+            </div>
+        </div>
+		
+	<div id="deficitSection" style="display: none;">
+	<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Secteur intracellulaire :</strong></label>
+</div>
+    <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <label style="width: 200px; min-width: 200px;">Sexe :</label>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <label class="custom-control radio">
+                <input type="radio" name="sexe" value="homme" checked>
+                <span class="checkmark"></span>
+                Homme
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="sexe" value="femme">
+                <span class="checkmark"></span>
+                Femme
+            </label>
+        </div>
+    </div>
+
+    <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <label style="width: 200px; min-width: 200px;">Type :</label>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <label class="custom-control radio">
+                <input type="radio" name="type" value="adulte" checked>
+                <span class="checkmark"></span>
+                Adulte
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="type" value="age">
+                <span class="checkmark"></span>
+                Âgé
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="type" value="enfant">
+                <span class="checkmark"></span>
+                Enfant
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="type" value="nourrisson">
+                <span class="checkmark"></span>
+                Nourrisson
+            </label>
+        </div>
+    </div>
+
+    <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <label style="width: 200px; min-width: 200px;">Poids (kg) :</label>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <input type="number" step="0.1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_poids">
+        </div>
+    </div>
+
+    <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <label style="width: 200px; min-width: 200px;">Déficit en eau libre (L) :</label>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <input type="number" readonly id="deficit" 
+                style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                class="small">
+        </div>
+    </div>
+</div>
+
+		
+		
+		
+		
+		
+		</div>
+		</div>
+
+<script>
+
+// Natrémie
+document.getElementById('THE_Na').addEventListener('input', function() {
+    const na = parseFloat(this.value);
+    const statusElement = document.getElementById('Na-status');
+    const glycemieInput = document.getElementById('THE_Gly');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        glycemieInput.classList.remove('blink');
+        handleUrinaryFieldsBlinking();
+        return;
+    }
+    
+    if (na < 135) {
+        statusElement.textContent = 'Hyponatrémie';
+        statusElement.style.color = '#dc2626';
+        // Ne faire clignoter que si la glycémie n'a pas de valeur
+        if (!glycemieInput.value) {
+            glycemieInput.classList.add('blink');
+        } else {
+            glycemieInput.classList.remove('blink');
+        }
+    } else if (na > 145) {
+        statusElement.textContent = 'Hypernatrémie';
+        statusElement.style.color = '#dc2626';
+        glycemieInput.classList.remove('blink');
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+        glycemieInput.classList.remove('blink');
+    }
+    
+    handleUrinaryFieldsBlinking();
+});
+
+// Glycémie
+document.getElementById('THE_Gly').addEventListener('input', function() {
+    const gly = parseFloat(this.value);
+    const statusElement = document.getElementById('Gly-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        handleUrinaryFieldsBlinking();
+        return;
+    }
+    
+    if (gly < 5.5) {
+        statusElement.textContent = 'Hypoglycémie';
+        statusElement.style.color = '#dc2626';
+    } else if (gly > 8) {
+        statusElement.textContent = 'Hyperglycémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = '';
+        statusElement.style.color = '#16a34a';
+    }
+    
+    handleUrinaryFieldsBlinking();
+});
+
+// Écouteur pour les champs urinaires
+['THE_Nau', 'THE_Ku', 'THE_Glyu', 'THE_Uréeu'].forEach(fieldId => {
+    document.getElementById(fieldId).addEventListener('input', function() {
+        if (this.value) {
+            this.classList.remove('blink');
+        }
+        handleUrinaryFieldsBlinking();
+    });
+});
+
+// Écouteur pour le secteur EC
+document.querySelectorAll('input[name="secteur_ec"]').forEach(radio => {
+    radio.addEventListener('change', handleUrinaryFieldsBlinking);
+});
+
+// Fonction principale de gestion des clignotements
+function handleUrinaryFieldsBlinking() {
+    const na = parseFloat(document.getElementById('THE_Na').value);
+    const gly = parseFloat(document.getElementById('THE_Gly').value);
+    const volumeEC = document.querySelector('input[name="secteur_ec"]:checked')?.value;
+    const nauInput = document.getElementById('THE_Nau');
+    
+    // Réinitialiser tous les clignotements
+    const fields = ['THE_Nau', 'THE_Ku', 'THE_Glyu', 'THE_Uréeu'];
+    fields.forEach(fieldId => {
+        const input = document.getElementById(fieldId);
+        if (input) {
+            input.classList.remove('blink');
+        }
+    });
+    
+    // Si pas de natrémie, on arrête
+    if (!na) return;
+    
+    // Cas d'hypernatrémie avec secteur EC diminué
+    if (na > 145 && volumeEC === 'diminue' && !nauInput.value) {
+        nauInput.classList.add('blink');
+    }
+    
+    // Cas d'hyponatrémie hypotonique
+    if (na < 135 && gly) {
+        const osmolarity = (2 * na) + gly;
+        if (osmolarity < 280) {
+            fields.forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                if (input && !input.value) {
+                    input.classList.add('blink');
+                }
+            });
+        }
+    }
+}
+
+
+
+// osmolarité plasmatique
+const naInput = document.getElementById('THE_Na');
+const glyInput = document.getElementById('THE_Gly');
+const osmpOutput = document.getElementById('Osmp');
+const osmpStatus = document.getElementById('Osmp-status');
+
+function calculateOsmolarity() {
+    const na = parseFloat(naInput.value) || '';
+    const gly = parseFloat(glyInput.value) || '';
+    
+    // Vérifier si toutes les valeurs sont présentes
+    if (na === '' || gly === '') {
+        osmpOutput.value = '';
+        osmpStatus.textContent = '';
+        handleUrinaryFieldsBlinking(false); // Arrêter le clignotement si valeurs manquantes
+        return;
+    }
+    
+    // Si toutes les valeurs sont présentes, calculer l'osmolarité
+    const osmolarity = (2 * na) + gly;
+    osmpOutput.value = osmolarity.toFixed(0);
+    
+    if (osmolarity < 280) {
+        osmpStatus.textContent = 'Hypoosmolarité';
+        osmpStatus.style.color = '#dc2626';
+        handleUrinaryFieldsBlinking(true);
+    } else if (osmolarity > 290) {
+        osmpStatus.textContent = 'Hyperosmolarité';
+        osmpStatus.style.color = '#dc2626';
+        handleUrinaryFieldsBlinking(false);
+    } else {
+        osmpStatus.textContent = 'Isoosmolarité';
+        osmpStatus.style.color = '#16a34a';
+        handleUrinaryFieldsBlinking(false);
+    }
+}
+
+naInput.addEventListener('input', calculateOsmolarity);
+glyInput.addEventListener('input', calculateOsmolarity);
+
+
+
+// Osmolarité urinaire
+const nauInput = document.getElementById('THE_Nau');
+const kuInput = document.getElementById('THE_Ku');
+const ureeInput = document.getElementById('THE_Uréeu');
+const glyuInput = document.getElementById('THE_Glyu');
+const osmuOutput = document.getElementById('Osmu');
+const osmuStatus = document.getElementById('Osmu-status');
+
+function calculateUrineOsmolarity() {
+    const nau = parseFloat(nauInput.value) || 0;
+    const ku = parseFloat(kuInput.value) || 0;
+    const uree = parseFloat(ureeInput.value) || 0;
+    const glyu = parseFloat(glyuInput.value) || 0;
+    
+    if (nau === 0 && ku === 0 && uree === 0 && glyu === 0) {
+        osmuOutput.value = '';
+        osmuStatus.textContent = '';
+        return;
+    }
+    
+    const osmolarity = (2 * (nau + ku)) + uree + glyu;
+    osmuOutput.value = osmolarity.toFixed(0);
+    
+    const osmp = parseFloat(document.getElementById('Osmp').value) || 0;
+    
+    if (osmp > 0) {
+        if (osmolarity < 100) {
+            osmuStatus.textContent = '< 100 mosm/L';
+            osmuStatus.style.color = '#dc2626';
+        } else if (osmolarity > 100) {
+            osmuStatus.textContent = '> 100 mosm/L';
+            osmuStatus.style.color = '#16a34a';
+        } else {
+            osmuStatus.textContent = '';
+            osmuStatus.style.color = '#2563eb';
+        }
+    }
+}
+
+nauInput.addEventListener('input', calculateUrineOsmolarity);
+kuInput.addEventListener('input', calculateUrineOsmolarity);
+ureeInput.addEventListener('input', calculateUrineOsmolarity);
+glyuInput.addEventListener('input', calculateUrineOsmolarity);
+
+
+//déficit en eau libre
+document.getElementById('THE_Na').addEventListener('input', function() {
+    const na = parseFloat(this.value);
+    const deficitSection = document.getElementById('deficitSection');
+    const poidsInput = document.getElementById('THE_poids');
+    
+    if (na > 145) {
+        deficitSection.style.display = 'block';
+        if (!poidsInput.value) {
+            poidsInput.classList.add('blink');
+        }
+        calculateDeficit();
+    } else {
+        deficitSection.style.display = 'none';
+        poidsInput.classList.remove('blink');
+    }
+});
+
+document.getElementById('THE_poids').addEventListener('input', function() {
+    const na = parseFloat(document.getElementById('THE_Na').value);
+    if (this.value || na <= 145) {
+        this.classList.remove('blink');
+    } else if (na > 145) {
+        this.classList.add('blink');
+    }
+    calculateDeficit();
+});
+
+// Fonction pour calculer le facteur selon le type et le sexe
+function getFacteur() {
+    const sexe = document.querySelector('input[name="sexe"]:checked').value;
+    const type = document.querySelector('input[name="type"]:checked').value;
+    
+    if (type === 'nourrisson') return 0.7;
+    if (type === 'enfant') return 0.6;
+    if (type === 'adulte') {
+        return sexe === 'homme' ? 0.6 : 0.5;
+    }
+    if (type === 'age') {
+        return sexe === 'homme' ? 0.5 : 0.45;
+    }
+}
+
+// Fonction de calcul du déficit
+function calculateDeficit() {
+    const na = parseFloat(document.getElementById('THE_Na').value);
+    const poids = parseFloat(document.getElementById('THE_poids').value);
+    const deficitInput = document.getElementById('deficit');
+    
+    if (!na || !poids || na <= 145) {
+        deficitInput.value = '';
+        return;
+    }
+    
+    const facteur = getFacteur();
+    const deficit = poids * facteur * ((140 - na) / 140);
+    deficitInput.value = Math.abs(deficit).toFixed(1);
+}
+
+// Ajouter les écouteurs d'événements pour recalculer le déficit
+['sexe', 'type'].forEach(name => {
+    document.getElementsByName(name).forEach(radio => {
+        radio.addEventListener('change', calculateDeficit);
+    });
+});
+
+document.getElementById('THE_poids').addEventListener('input', calculateDeficit);
+
+
+
+</script>
+
+		
+<div class="subsection">
+
+<h4>Bilan du potassium</h4>
+
+		<div style="display: flex; flex-direction: column; gap: 10px;">
+
+        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Kaliémie (mmHg) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_K">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">3,5 - 5</span>
+                <span id="K-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Kaliurèse (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku2">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Ku-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+				<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Chlorurie (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Ku-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		
+		
+		</div>
+		</div>
+		
+		
+<script>
+
+
+// Synchronisation des champs de kaliurèse
+function syncKaliurese(sourceId, targetId) {
+    const sourceInput = document.getElementById(sourceId);
+    const targetInput = document.getElementById(targetId);
+    
+    sourceInput.addEventListener('input', function() {
+        targetInput.value = this.value;
+        calculateUrineOsmolarity(); // Recalcule l'osmolarité après la mise à jour
+    });
+}
+
+// Synchronisation bidirectionnelle des champs de kaliurèse
+syncKaliurese('THE_Ku', 'THE_Ku2');
+syncKaliurese('THE_Ku2', 'THE_Ku');
+
+kuInput.addEventListener('input', calculateUrineOsmolarity);
+
+
+</script>
+
+		
+<div class="subsection">
+
+<h4>Bilan du calcium </h4>
+			    <div style="display: flex; flex-direction: column; gap: 10px;">
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+			<label style="width: 200px; min-width: 200px;"><strong>Calcémie mesuré (mmol/L) :</strong></label>
+			<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+				<input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Cam">
+				<span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"> 2,2 - 2,6</span>
+				<span id="Ca-status" style="font-weight: bold;"></span>
+			</div>
+		</div>
+		
+		   <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+		            <label style="width: 200px; min-width: 200px;"><strong>Albumine (g/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_Albu">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">40</span>
+                <span id="Albu-status" style="font-weight: bold;"></span>
+            </div>
+			</div>
+			
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Calcémie corrigée (mmol/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="Osmu" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">1,3 - 1,6</span>
+				        <span id="Cac-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+			
+			<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+		            <label style="width: 200px; min-width: 200px;"><strong>PTH (g/L) :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_PTN">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">40</span>
+                <span id="PTH-status" style="font-weight: bold;"></span>
+            </div>
+			</div>
+			
+			
+		</div>
+		</div>
+		
+	<div class="subsection">
+	
+<h4>Fonction rénale</h4>
+			    
+				<div style="display: flex; flex-direction: column; gap: 10px;">
+
+		
+
+        </div>
+		
+		
+		</div>
+	
+
+</div>
+</div>
+
+
+
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">✍️</span>Conclusion</h3>
+            <div class="button-container">
+                <button class="toggle-button" onclick="analyzeTHE()">Analyser</button>
+                <button class="toggle-button" onclick="copyToClipboard()">Copier la conclusion</button>
+            </div>
+        </div>
+        <div class="section-content">
+		 <div class="subsection">
+          <h4>Analyse préliminaire natrémie</h4>
+    
+    <div id="analysisStepsNa" class="analysis-stepsNa">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		 
+		 <script>
+		 
+// Affichage de l'étape 0 au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const analysisStepsNa = document.getElementById('analysisStepsNa');
+    analysisStepsNa.innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Natrémie +/- Glycémie
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+// Fonction principale d'analyse
+function analyzeNatremia() {
+    const na = parseFloat(document.getElementById('THE_Na').value);
+    const gly = parseFloat(document.getElementById('THE_Gly').value);
+    const osmp = parseFloat(document.getElementById('Osmp').value);
+    const osmu = parseFloat(document.getElementById('Osmu').value);
+    const nau = parseFloat(document.getElementById('THE_Nau').value);
+    const ku = parseFloat(document.getElementById('THE_Ku').value);
+    const ureeu = parseFloat(document.getElementById('THE_Uréeu').value);
+    const glyu = parseFloat(document.getElementById('THE_Glyu').value);
+
+    let volumeEC = '';
+    document.getElementsByName('secteur_ec').forEach(radio => {
+        if (radio.checked) volumeEC = radio.value;
+    });
+
+	if (!na || na < 135) {
+    // Vérifier les données minimales
+    if (!na || !gly) {
+        document.getElementById('analysisStepsNa').innerHTML = `
+            <div class="analysis-step">
+                <div class="step-number">Étape 0</div>
+                <div class="step-content">
+                    <div class="step-values">
+                        <span class="coherence-check missing">Veuillez entrer la natrémie et la glycémie</span>
+                    </div>
+                </div>
+            </div>`;
+        return;
+    }
+
+	}
+
+    // Réinitialiser la zone d'analyse
+    document.getElementById('analysisStepsNa').innerHTML = '';
+
+    // Fonction pour créer une étape avec délai
+    function createStepWithDelay(stepContent, delay) {
+        setTimeout(() => {
+            const stepElement = document.createElement('div');
+            stepElement.className = 'analysis-step';
+            stepElement.innerHTML = stepContent;
+            document.getElementById('analysisStepsNa').appendChild(stepElement);
+        }, delay);
+    }
+
+    // ÉTAPE 1: Analyse de la natrémie et osmolalité plasmatique
+    let step1Content = `
+        <div class="step-number">Étape 1</div>
+        <div class="step-content">
+            <div>Analyse de l'osmolalité plasmatique</div>
+            <div class="step-values">
+                <div class="value-calculation">
+                    Osmolalité plasmatique = 2 × [Na+] + [Glucose]
+                    = (2 × ${na}) + ${gly} 
+                    = ${osmp} mOsm/kg
+                </div>`;
+
+    if (na >= 135 && na <= 145) {
+        step1Content += `
+            <div class="diagnosis-box">
+                <span class="coherence-check normal">Natrémie normale (${na} mmol/L)</span>
+            </div>`;
+} else if (na < 135) {
+    if (osmp >= 280 && osmp <= 290) {
+        step1Content += `
+            <div class="diagnosis-box">
+                <span class="coherence-check normal">Hyponatrémie isoosmolaire</span>
+            </div>`;
+        step1Content += `</div></div>`;
+        createStepWithDelay(step1Content, 0);
+
+        let conclusionContent = `
+            <div class="step-number">Conclusion</div>
+            <div class="step-content">
+                <div>Étiologies et traitement</div>
+                <div class="step-values">
+                    <div class="causes-box">
+                        <strong>Hyponatrémie isoosmolaire</strong>
+                        <ul>
+                            <li>Hyperlipidémie</li>
+                            <li>Hyperprotéinémie</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>`;
+        createStepWithDelay(conclusionContent, 400);
+        return;
+
+    } else if (osmp > 290) {
+        step1Content += `
+            <div class="diagnosis-box">
+                <span class="coherence-check complex">Hyponatrémie hyperosmolaire</span>
+            </div>`;
+        step1Content += `</div></div>`;
+        createStepWithDelay(step1Content, 0);
+
+        let conclusionContent = `
+            <div class="step-number">Conclusion</div>
+            <div class="step-content">
+                <div>Étiologies et traitement</div>
+                <div class="step-values">
+                    <div class="causes-box">
+                        <strong>Hyponatrémie hyperosmolaire</strong>
+                        <ul>
+                            <li>Hyperglycémie</li>
+                            <li>Administration de solutés hyperosmolaires</li>
+                        </ul>
+                    </div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Correction de l'hyperglycémie</li>
+							<li>Arrêt solutés hyperosmolaires</li>
+						</ul>
+					</div>
+                </div>
+            </div>`;
+        createStepWithDelay(conclusionContent, 400);
+        return;
+
+    } else if (osmp < 280) {
+        step1Content += `
+            <div class="diagnosis-box">
+                <span class="coherence-check acidemia">Hyponatrémie hypoosmolaire</span>
+            </div>`;
+	}	
+		
+    } else if (na > 145) {
+    step1Content += `
+        <div class="diagnosis-box">
+            <span class="coherence-check complex">Hypernatrémie (${na} mmol/L)</span>
+        </div>`;
+}
+
+    step1Content += `</div></div>`;
+    createStepWithDelay(step1Content, 0);
+
+    // ÉTAPE 2: Analyse de l'osmolalité urinaire
+    if (na < 135 && osmp < 280) {
+        let step2Content = `
+            <div class="step-number">Étape 2</div>
+            <div class="step-content">
+                <div>Analyse de l'osmolalité urinaire</div>
+                <div class="step-values">
+                    <div class="value-calculation">
+                        Osmolalité urinaire = 2 × ([Na+]u + [K+]u) + [Urée]u + [Glucose]u
+                        = 2 × (${nau || '?'} + ${ku || '?'}) + ${ureeu || '?'} + ${glyu || '?'} 
+                        = ${osmu || '?'} mOsm/kg
+                    </div>`;
+
+        if (!osmu) {
+            step2Content += `
+                <div class="diagnosis-box">
+                    <span class="coherence-check missing">Données manquantes pour le calcul de l'osmolalité urinaire, analyse incomplète</span>
+                </div>`;
+        } else if (osmu <= 100) {
+            step2Content += `
+                <div class="diagnosis-box">
+                    <span class="coherence-check ta-negative">Osmolalité urinaire ≤ 100 mOsm/kg</span>
+                </div>`;
+        } else {
+            step2Content += `
+                <div class="diagnosis-box">
+                    <span class="coherence-check ta-high">Osmolalité urinaire > 100 mOsm/kg</span>
+                </div>`;
+        }
+        step2Content += `</div></div>`;
+        createStepWithDelay(step2Content, 400);
+
+        // ÉTAPE 3: Analyse du volume extracellulaire si osmolalité urinaire > 100
+        if (osmu > 100) {
+            let step3Content = `
+                <div class="step-number">Étape 3</div>
+                <div class="step-content">
+                    <div>Analyse du volume extracellulaire</div>
+                    <div class="step-values">`;
+
+            if (!volumeEC) {
+                step3Content += `
+                    <div class="diagnosis-box">
+                        <span class="coherence-check missing">Évaluation clinique du volume extracellulaire manquante</span>
+                    </div>`;
+            } else {
+                switch (volumeEC) {
+                    case 'diminue':
+                        if (!nau) {
+                            step3Content += `
+                                <div class="diagnosis-box">
+                                    <span class="coherence-check missing">Natriurèse manquante</span>
+                                </div>`;
+                        } else {
+                            if (nau <= 30) {
+                                step3Content += `
+                                    <div class="diagnosis-box">
+                                        <span class="coherence-check ta-negative">Volume extracellulaire diminué avec [Na+]u ≤ 30 mmol/L</span>
+                                    </div>`;
+                            } else {
+                                step3Content += `
+                                    <div class="diagnosis-box">
+                                        <span class="coherence-check ta-high">Volume extracellulaire diminué avec [Na+]u > 30 mmol/L</span>
+                                    </div>`;
+                            }
+                        }
+                        break;
+                    case 'normal':
+                        if (nau <= 30) {
+						step3Content += `
+                            <div class="diagnosis-box">
+                                <span class="coherence-check normal">Volume extracellulaire normal avec [Na+]u < 30 mmol/L</span>
+                            </div>`;
+							} else {
+						step3Content += `
+                            <div class="diagnosis-box">
+                                <span class="coherence-check normal">Volume extracellulaire normal avec [Na+]u > 30 mmol/L</span>
+                            </div>`;							
+							}
+                        break;
+                    case 'augmente':
+                        if (!nau) {
+                            step3Content += `
+                                <div class="diagnosis-box">
+                                    <span class="coherence-check missing">Natriurèse manquante</span>
+                                </div>`;
+                        } else {
+                            if (nau <= 30) {
+                                step3Content += `
+                                    <div class="diagnosis-box">
+                                        <span class="coherence-check ta-negative">Volume extracellulaire augmenté avec [Na+]u < 30 mmol/L</span>
+                                    </div>`;
+                            } else {
+                                step3Content += `
+                                    <div class="diagnosis-box">
+                                        <span class="coherence-check ta-high">Volume extracellulaire augmenté avec [Na+]u ≥ 30 mmol/L</span>
+                                    </div>`;
+                            }
+                        }
+                        break;
+                }
+            }
+            step3Content += `</div></div>`;
+            createStepWithDelay(step3Content, 800);
+        }
+
+        // ÉTAPE 4: Conclusion et étiologies
+        let conclusionContent = `
+            <div class="step-number">Conclusion</div>
+            <div class="step-content">
+                <div>Étiologies et traitement</div>
+                <div class="step-values">`;
+
+        if (osmp >= 280 && osmp <= 290) {
+            conclusionContent += `
+                <div class="causes-box">
+                 <strong>Hyponatrémie isoosmolaire</strong>
+					<ul>
+                        <li>Hyperlipidémie</li>
+                        <li>Hyperprotéinémie</li>
+                    </ul>
+                </div>`;
+        } else if (osmp > 290) {
+            conclusionContent += `
+                <div class="causes-box">
+              <strong>Hyponatrémie hyperosmolaire</strong>
+					<ul>
+                        <li>Hyperglycémie</li>
+                        <li>Administration de solutés hyperosmolaires</li>
+                    </ul>
+					</div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Correction de l'hyperglycémie</li>
+							<li>Arrêt solutés hyperosmolaires</li>
+						</ul>
+					
+					
+                </div>`;
+        } else if (osmp < 280) {
+            if (osmu <= 100) {
+                conclusionContent += `
+                    <div class="causes-box">
+                        <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire < 100 mosm/L</strong>
+						<ul>
+                            <li>Polydipsie primaire ou secondaire</li>
+                            <li>Apports faibles en solutés ("tea and toast syndrome")</li>
+                        </ul>
+						</div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Renutrition</li>
+						</ul>
+					</div>
+                    `;
+            } else if (osmu > 100 && volumeEC) {
+                switch (volumeEC) {
+                    case 'diminue':
+                        if (nau <= 30) {
+                            conclusionContent += `
+                                <div class="causes-box">
+                            <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, déshydratation extracellulaire, Nau < 30 mmol/L</strong>
+									<ul>
+                                        <li>Pertes cutanées (sueur, brûlures)</li>
+                                        <li>Pertes digestives (diarrhée, vomissements)</li>
+                                        <li>Troisième secteur (pancréatite)</li>
+                                    </ul>
+									</div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Apport NaCl</li>
+						</ul>
+					</div>
+
+                                `;
+                        } else {
+                            conclusionContent += `
+                                <div class="causes-box">
+                               <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, déshydratation extracellulaire, Nau > 30 mmol/L</strong>
+									<ul>
+                                        <li>Diurétiques</li>
+                                        <li>Insuffisance surrénalienne</li>
+                                        <li>Cerebral Salt Wasting syndrome</li>
+                                    </ul>
+									</div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Correction insuffisance surrénalienne</li>
+							<li>Apport NaCl</li>
+						</ul>
+					</div>
+                                `;
+                        }
+                        break;
+                    case 'normal':
+					if (nau <= 30) {
+                        conclusionContent += `
+                            <div class="causes-box">
+                            <div>Ce profil est inhabituel et nécessite une réévaluation, la natriurèse dans ce cas de figure devrait être supérieure à 30 mmol/L</div>
+                            </div>`;
+						} else {
+                        conclusionContent += `
+                            <div class="causes-box">
+                         <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L et hydratation extracellulaire normale</strong>
+								<ul>
+                                    <li>SIADH</li>
+                                    <li>Hypothyroïdie</li>
+                                    <li>Hypocortisolisme</li>
+                                </ul>
+								</div>
+						<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Traitement de la cause</li>
+						</ul>
+					</div>
+                            `;						
+						}
+                        break;
+                    case 'augmente':
+                        if (nau <= 30) {
+                            conclusionContent += `
+                                <div class="causes-box">
+                               <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, hyperhydratation extracellulaire et Nau < 30 mmol/L</strong>
+   
+									<ul>
+                                        <li>Insuffisance cardiaque</li>
+                                        <li>Cirrhose hépatique</li>
+                                        <li>Syndrome néphrotique</li>
+                                        <li>Insuffisance rénale</li>
+										<li>Natriurèse < 30 mmol/L en faveur d'une hypovolémie efficace</li>
+                                    </ul>
+									</div>
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Diurétiques</li>
+						</ul>
+					</div>
+					
+                                `;
+                        } else {
+                            conclusionContent += `
+                                <div class="causes-box">
+                               <strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, hyperhydratation extracellulaire et Nau > 30 mmol/L</strong>
+									<ul>
+                                        <li>Insuffisance cardiaque</li>
+                                        <li>Cirrhose hépatique</li>
+                                        <li>Syndrome néphrotique</li>
+                                        <li>Insuffisance rénale</li>
+										<li>Natriurèse > 30 mmol/L inhabituelle dans ce contexte</li>
+                                    </ul>
+</div>									
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Diurétiques</li>
+						</ul>
+					</div>
+					
+								`;
+                        }
+                        break;
+                }
+				
+				} else if (!osmu) {
+                            conclusionContent += `
+                                 <div class="causes-box">
+ 								<strong>Hyponatrémie hypoosmolaire, osmolarité urinaire < 100 mosm/L</strong>
+									<ul>
+                            <li>Polydipsie primaire</li>
+                            <li>Apports faibles en solutés ("tea and toast syndrome")</li>
+                                    </ul>
+								</div>                               
+								
+								<div class="causes-box">
+ 								<strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, déshydratation extracellulaire, Nau < 30 mmol/L</strong>
+									<ul>
+                                       <li>Pertes cutanées (sueur, brûlures)</li>
+                                        <li>Pertes digestives (diarrhée, vomissements)</li>
+                                        <li>Troisième secteur (pancréatite)</li>
+                                    </ul>
+								</div>									
+								<div class="causes-box">	
+								<strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L, déshydratation extracellulaire, Nau > 30 mmol/L</strong>
+									<ul>								
+										<li>Diurétiques</li>
+                                        <li>Insuffisance surrénalienne</li>
+                                        <li>Cerebral Salt Wasting syndrome</li>
+                                    </ul>
+									</div>
+								<div class="causes-box">
+									<strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L et hydratation extracellulaire normale</strong>
+									<ul>								
+										<li>SIADH</li>
+										<li>Hypothyroïdie</li>
+										<li>Hypocortisolisme</li>
+                                    </ul>
+									</div>
+													
+								<div class="causes-box">
+									<strong>Hyponatrémie hypoosmolaire, osmolarité urinaire > 100 mosm/L et hyperhydratation extracellulaire</strong>
+									<ul>								
+										<li>Insuffisance cardiaque</li>
+                                        <li>Cirrhose hépatique</li>
+                                        <li>Syndrome néphrotique</li>
+                                        <li>Insuffisance rénale</li>
+                                    </ul> 
+</div>									
+
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Restriction hydrique</li>
+							<li>Le traitement dépend de la cause</li>
+						</ul>
+					</div>
+					
+								`;				
+				
+            }	
+        }
+
+        conclusionContent += `</div></div>`;
+        createStepWithDelay(conclusionContent, 1200);
+    
+} else if (na > 145) {
+    let step2Content = `
+        <div class="step-number">Étape 2</div>
+        <div class="step-content">
+            <div>Analyse du volume extracellulaire</div>
+            <div class="step-values">`;
+
+    if (!volumeEC) {
+        step2Content += `
+            <div class="diagnosis-box">
+                <span class="coherence-check missing">Évaluation clinique du volume extracellulaire manquante</span>
+            </div>`;
+    } else {
+        switch (volumeEC) {
+            case 'diminue':
+                if (!nau) {
+                    step2Content += `
+                        <div class="diagnosis-box">
+                            <span class="coherence-check missing">Natriurèse manquante</span>
+                        </div>`;
+						
+                } else if (nau < 20) {
+                    step2Content += `
+                        <div class="diagnosis-box">
+                            <span class="coherence-check ta-negative">Volume extracellulaire diminué avec [Na+]u < 20 mmol/L</span>
+                        </div>`;
+                } else {
+                    step2Content += `
+                        <div class="diagnosis-box">
+                            <span class="coherence-check ta-high">Volume extracellulaire diminué avec [Na+]u > 20 mmol/L</span>
+                        </div>`;
+                }
+                break;
+            case 'normal':
+                step2Content += `
+                    <div class="diagnosis-box">
+                        <span class="coherence-check normal">Volume extracellulaire normal</span>
+                    </div>`;
+                break;
+            case 'augmente':
+                step2Content += `
+                    <div class="diagnosis-box">
+                        <span class="coherence-check ta-high">Volume extracellulaire augmenté</span>
+                    </div>`;
+                break;
+        }
+    }
+    step2Content += `</div></div>`;
+    createStepWithDelay(step2Content, 400);
+	
+	    // Étape 3 (déficit en eau libre)
+ let step3Content = `
+        <div class="step-number">Étape 3</div>
+        <div class="step-content" style="padding: 0.5rem;">
+            <div>Calcul du déficit en eau libre</div>
+            <div class="step-values" style="padding: 0.5rem;">`;
+
+    const poids = parseFloat(document.getElementById('THE_poids').value);
+    if (!poids) {
+        step3Content += `
+            <span class="coherence-check missing">Données manquantes, vous devez insérer le poids du patient</span>`;
+    } else {
+        const facteur = getFacteur();
+        const deficit = Math.abs(poids * facteur * ((140 - na) / 140));
+        
+        step3Content += `
+            <div style="font-size: 0.9rem;">
+                D = ${poids} × ${facteur} × ((140 - ${na}) / 140) = ${deficit.toFixed(1)} L
+            </div>
+            <span class="coherence-check complex">Déficit en eau libre : ${deficit.toFixed(1)} L</span>`;
+    }
+
+    step3Content += `</div></div>`;
+    createStepWithDelay(step3Content, 800);
+
+
+
+    // ÉTAPE 3: Conclusion et étiologies pour l'hypernatrémie
+    let conclusionContent = `
+        <div class="step-number">Conclusion</div>
+        <div class="step-content">
+            <div>Étiologies et traitement</div>
+            <div class="step-values">`;
+
+switch (volumeEC) {
+    case 'diminue':
+        if (!nau) {
+            conclusionContent += `
+                <div class="causes-box">
+              <strong>Hypernatrémie, déshydratation extracellulaire</strong>
+					<ul>
+                        <li>Pertes par sueurs excessives (Nau < 20 mmol/L)</li>
+                        <li>Pertes digestives (Nau < 20 mmol/L) </li>
+                        <li>Diurèse osmotique (Nau > 20 mmol/L)</li>
+                    </ul>
+                </div>
+				<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Compensation du déficit en eau libre, apport de G5</li>
+						</ul>
+					</div>`;
+        } else if (nau < 20) {
+            conclusionContent += `
+                <div class="causes-box">
+                   <strong>Hypernatrémie, déshydratation extracellulaire, Nau < 20 mmol/L</strong>
+				   <ul>
+                        <li>Pertes par sueurs excessives</li>
+                        <li>Pertes digestives</li>
+                    </ul>
+                </div>
+				<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Compensation du déficit en eau libre, apport de G5</li>
+							<li>Compensation du déficit extracellulaire, apport de NaCl</li>
+
+						</ul>
+					</div>`;
+        } else {
+            conclusionContent += `
+                <div class="causes-box">
+                <strong>Hypernatrémie, déshydratation extracellulaire, Nau > 20 mmol/L</strong>
+					<ul>
+                        <li>Diurèse osmotique</li>
+                    </ul>
+                </div>
+								<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Compensation du déficit en eau libre, apport de G5</li>
+							<li>Compensation du déficit extracellulaire, apport de NaCl</li>
+						</ul>
+					</div>`;
+        }
+        break;
+        case 'normal':
+            conclusionContent += `
+                <div class="causes-box">
+               <strong>Hypernatrémie, hydratation extracellulaire normale</strong>
+
+					<ul>
+                        <li>Pertes insensibles respiratoires</li>
+                        <li>Pertes insensibles cutanées</li>
+                        <li>Fièvre</li>
+                        <li>Coup de chaleur</li>
+                        <li>Exercice intense</li>
+                        <li>Hyperventilation</li>
+                        <li>Diabète insipide</li>
+                    </ul>
+                </div>
+								<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Compensation du déficit en eau libre, apport de G5</li>
+						</ul>
+					</div>`;
+            break;
+        case 'augmente':
+            conclusionContent += `
+                <div class="causes-box">
+               <strong>Hypernatrémie, hyperhydration extracellulaire</strong>
+
+					<ul>
+                        <li>Apports excessifs en NaCl</li>
+                        <li>Perfusion de solutés hypertoniques</li>
+                    </ul>
+                </div>
+				<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Compensation du déficit en eau libre, apport de G5</li>
+							<li>Diurétiques</li>
+						</ul>
+					</div>
+					`;
+            break;
+    }
+    conclusionContent += `</div></div>`;
+    createStepWithDelay(conclusionContent, 1200);
+}
+
+}
+
+// Fonction d'analyse globale
+function analyzeTHE() {
+    // Réinitialiser la zone d'analyse
+    document.getElementById('analysisStepsNa').innerHTML = '';
+    // Lancer l'analyse
+    analyzeNatremia();
+	
+	setTimeout(generateTHEConclusion, 1500);
+	
+}
+
+</script>
+
+
+<style>
+.value-calculation {
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.diagnosis-box {
+    margin-bottom: 0.5rem;
+}
+
+.coherence-check {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.coherence-check.normal {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.coherence-check.complex {
+    background: #f0f9ff;
+    color: #0c4a6e;
+    border: 1px solid #7dd3fc;
+}
+
+.coherence-check.acidemia {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.missing {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.coherence-check.ta-high {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.ta-negative {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.causes-box {
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-left: 5px solid #1e40af;
+    margin: 0.25rem 0;
+}
+
+.causes-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.causes-box li {
+    position: relative;
+    padding: 0.15rem 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.causes-box li:before {
+    content: "•";
+    color: #1e40af;
+    position: absolute;
+    left: -1rem;
+}
+
+.treatment-box {
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-left: 5px solid #60a5fa;  /* Bleu plus clair */
+    margin: 0.25rem 0;
+}
+
+.treatment-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.treatment-box li {
+    position: relative;
+    padding: 0.15rem 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.treatment-box li:before {
+    content: "•";
+    color: #60a5fa;  /* Points en bleu clair */
+    position: absolute;
+    left: -1rem;
+}
+
+
+
+.analysis-step {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInStep 0.5s ease forwards;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+}
+
+.step-content {
+    margin-top: 0.25rem;
+}
+
+.step-values {
+    margin-top: 0.25rem;
+}
+
+.step-number {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+[class^="analysis-step"]:last-child .step-values {
+    margin-top: 0.15rem;
+}
+
+[class^="analysis-step"]:last-child .step-content > div:first-child {
+    margin-bottom: 0.15rem;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#deficitSection {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+#deficitSection .input-group {
+    margin-bottom: 8px;
+}
+
+#deficitSection input[type="number"] {
+    width: 60px !important;
+}
+
+</style>
+		 
+		 
+	<div class="subsection">
+          <h4>Analyse préliminaire kaliémie</h4>
+    
+    <div id="analysisStepsK" class="analysis-stepsK">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		 
+		 		 <div class="subsection">
+          <h4>Analyse préliminaire calcémie</h4>
+    
+    <div id="analysisStepsCa" class="analysis-stepsCa">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		 
+		 		 <div class="subsection">
+          <h4>Analyse préliminaire fonction rénale</h4>
+    
+    <div id="analysisStepsIRA" class="analysis-stepsIRA">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		 
+		 
+		
+		<div class="subsection">
+           <h4>Conclusion</h4>
+    
+				<div id="THE_generatedTextArea" contenteditable="true" 
+                     style="border: 1px solid #ccc; padding: 10px; min-height: 60px; max-height: 150px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function resetTHEInputs() {
+    // Masquer la section du secteur intracellulaire
+    const deficitSection = document.getElementById('deficitSection');
+    if (deficitSection) {
+        deficitSection.style.display = 'none';
+    }
+	
+	// Réinitialiser tous les champs numériques
+    const numericFields = [
+        'THE_Na', 'THE_Gly', 'THE_Nau', 'THE_Ku', 'THE_Glyu', 'THE_Uréeu',
+        'THE_K', 'THE_Ku2', 'THE_Cam', 'THE_Albu', 'THE_PTN'
+    ];
+    
+    numericFields.forEach(fieldId => {
+        const input = document.getElementById(fieldId);
+        if (input) {
+            input.value = '';
+        }
+    });
+
+    // Réinitialiser les champs calculés
+    const calculatedFields = ['Osmp', 'Osmu'];
+    calculatedFields.forEach(fieldId => {
+        const input = document.getElementById(fieldId);
+        if (input) {
+            input.value = '';
+        }
+    });
+
+    // Réinitialiser tous les statuts (textes colorés à droite)
+    const statusFields = [
+        'Na-status', 'Gly-status', 'Osmp-status', 'Osmu-status',
+        'K-status', 'Ca-status', 'Albu-status', 'PTH-status'
+    ];
+    
+    statusFields.forEach(statusId => {
+        const status = document.getElementById(statusId);
+        if (status) {
+            status.textContent = '';
+            status.style.color = '';
+        }
+    });
+
+    // Remettre le bouton radio "Normal" pour le secteur EC
+    const normalRadio = document.querySelector('input[name="secteur_ec"][value="normal"]');
+    if (normalRadio) {
+        normalRadio.checked = true;
+    }
+
+    // Enlever tous les clignotements
+    const allInputs = document.querySelectorAll('input');
+    allInputs.forEach(input => {
+        input.classList.remove('blink');
+    });
+
+    // Réinitialiser le contenu de la zone de texte de conclusion
+    const conclusionArea = document.getElementById('THE_generatedTextArea');
+    if (conclusionArea) {
+        conclusionArea.innerHTML = '';
+    }
+
+    // Réinitialiser toutes les zones d'analyse à l'étape 0
+    const analysisAreas = ['analysisStepsNa', 'analysisStepsK', 'analysisStepsCa', 'analysisStepsIRA'];
+    analysisAreas.forEach(areaId => {
+        const area = document.getElementById(areaId);
+        if (area) {
+            area.innerHTML = `
+                <div class="analysis-step">
+                    <div class="step-number">Étape 0</div>
+                    <div class="step-content">
+                        <div class="step-values">
+                            <div style="color: #666; font-size: 0.9rem;">
+                                Valeurs requises en attente
+                                <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                                    Cliquez sur "Analyser" pour commencer
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+}
+
+
+// Générer la conclusion. 
+function generateTHEConclusion() {
+   // Récupérer toutes les valeurs
+   const values = {
+       na: document.getElementById('THE_Na').value,
+       gly: document.getElementById('THE_Gly').value,
+       nau: document.getElementById('THE_Nau').value,
+       ku: document.getElementById('THE_Ku').value,
+       glyu: document.getElementById('THE_Glyu').value, 
+       ureeu: document.getElementById('THE_Uréeu').value,
+       k: document.getElementById('THE_K').value,
+       cam: document.getElementById('THE_Cam').value,
+       albu: document.getElementById('THE_Albu').value,
+       ptn: document.getElementById('THE_PTN').value,
+       osmp: document.getElementById('Osmp').value,
+       osmu: document.getElementById('Osmu').value,
+       deficit: document.getElementById('deficit').value
+   };
+
+   // Générer la partie "Données"
+   let donnees = " ";
+   let hasData = false;
+   
+   if (values.na) { donnees += `Na = ${values.na} mmol/L ; `; hasData = true; }
+   if (values.gly) { donnees += `Glycémie = ${values.gly} mmol/L ; `; hasData = true; }
+   if (values.osmp) { donnees += `Osmolarité plasmatique = ${values.osmp} mosm/L ; `; hasData = true; }
+   if (values.nau) { donnees += `Nau = ${values.nau} mmol/L ; `; hasData = true; }
+   if (values.ku) { donnees += `Ku = ${values.ku} mmol/L ; `; hasData = true; }
+   if (values.glyu) { donnees += `Glycosurie = ${values.glyu} mmol/L ; `; hasData = true; }
+   if (values.ureeu) { donnees += `Urée u = ${values.ureeu} mmol/L ; `; hasData = true; }
+   if (values.osmu) { donnees += `Osmolarité urinaire = ${values.osmu} mosm/L ; `; hasData = true; }
+   if (values.k) { donnees += `K = ${values.k} mmol/L ; `; hasData = true; }
+   if (values.cam) { donnees += `Ca mesuré = ${values.cam} mmol/L ; `; hasData = true; }
+   if (values.albu) { donnees += `Albumine = ${values.albu} g/L ; `; hasData = true; }
+   if (values.ptn) { donnees += `PTH = ${values.ptn} pg/mL ; `; hasData = true; }
+   
+   if (!hasData) {
+       donnees = "Aucune donnée saisie";
+   } else {
+       donnees = donnees.slice(0, -2);
+   }
+
+   // Trouver la conclusion basée sur l'analyse
+   const conclusionBoxes = document.querySelectorAll('.causes-box strong');
+   let conclusionText = "";
+   if (conclusionBoxes.length > 0) {
+       conclusionText = conclusionBoxes[0].textContent;
+       
+       // Ajouter le déficit si hypernatrémie
+       if (values.na > 145 && values.deficit) {
+           conclusionText = conclusionText.replace("Hypernatrémie", `Hypernatrémie, déficit en eau libre : ${parseFloat(values.deficit).toFixed(1)} L`);
+       }
+   }
+
+   // Mettre à jour la zone de texte
+   const generatedTextArea = document.getElementById('THE_generatedTextArea');
+   generatedTextArea.innerHTML = `<strong style="color: #1e40af;">Données :</strong>\n${donnees}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
+}
+
+// copier la conclusion
+function copyToClipboard() {
+    const textArea = document.getElementById('THE_generatedTextArea');
+    if (textArea) {
+        // Récupère le texte et normalise les sauts de ligne
+        const textContent = textArea.innerText.replace(/\n+/g, '\n');
+        
+        navigator.clipboard.writeText(textContent)
+            .then(() => alert('Texte copié dans le presse-papier'))
+            .catch(err => console.error('Erreur lors de la copie:', err));
+    }
+}
+
+
+
+</script>
+
+
+<style>
+input[type="number"] {
+   background-color: white;
+   color: #1e293b;
+   border: 2px solid #475569;  /* Gris beaucoup plus foncé pour les bordures */
+}
+
+input[type="number"]:hover {
+   border-color: #3b82f6;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+input[type="number"]:focus {
+   border-color: #1d4ed8;
+   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+</style>
+
+
+<style>
+.analysis-steps {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.analysis-step {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInStep 0.5s ease forwards;
+}
+
+.step-number {
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 80px; /* Largeur fixe pour aligner tous les contenus */
+    display: inline-block;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-values {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Assurez-vous que toutes les étapes ont la même structure */
+.step-content > div:first-child {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.coherence-check {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 1rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.coherence-check.valid {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.coherence-check.invalid {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+.coherence-check.missing {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+
+.coherence-check.acidemia {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.alkalemia {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.coherence-check.normal {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* Cases colorées pour les différents types de troubles */
+.coherence-check.acidemia.respiratory {
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.acidemia.metabolic {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.alkalemia.respiratory {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.coherence-check.alkalemia.metabolic {
+    background: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #a5b4fc;
+}
+
+.coherence-check.compensation.complete {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.coherence-check.compensation.incomplete {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.mixed {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fda4af;
+}
+
+.coherence-check.complex {
+    background: #f0f9ff;
+    color: #0c4a6e;
+    border: 1px solid #7dd3fc;
+}
+
+.coherence-check.compensation.incomplete {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.coherence-check.ta-high {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.ta-normal {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+
+.coherence-check.missing {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+}
+
+.coherence-check.ta-positive {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.coherence-check.ta-negative {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* Animation pour l'apparition */
+.analysis-step {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInStep 0.5s ease forwards;
+}
+
+/* Ajustement pour le conteneur des valeurs */
+.step-values {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.check-icon {
+    margin-right: 0.25rem;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation de clignotement */
+@keyframes blink {
+    0% {
+        border-color: #1e40af; /* Bleu foncé */
+        box-shadow: 0 0 5px #1e40af;
+    }
+    50% {
+        border-color: #dbeafe; /* Bleu très clair */
+        box-shadow: 0 0 2px #dbeafe;
+    }
+    100% {
+        border-color: #1e40af; /* Bleu foncé */
+        box-shadow: 0 0 5px #1e40af;
+    }
+}
+
+.blink {
+    animation: blink 2s infinite;
+    border-width: 2px !important;
+}
+
+
+.diagnostic-subtitle {
+    font-weight: 600;
+    color: #1e40af;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid #1e40af;
+}
+
+/* Mise à jour des styles existants pour une meilleure hiérarchie visuelle */
+.diagnostic-list {
+    margin-bottom: 1.5rem;
+}
+
+.diagnostic-list:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+
+<div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+TypixClin © 2025, Jean ZENNARO
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Les animations sont maintenant gérées par CSS
+    // On garde uniquement la logique métier existante
+    
+    const content = document.querySelector('.content');
+    if (content) {
+        content.style.visibility = 'visible';
+    }
+});
+</script>
+
+
+</body>
+</html>
