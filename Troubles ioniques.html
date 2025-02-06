@@ -1680,19 +1680,21 @@ textarea {
 
 <body>
 
+
 <div class="container THE-section">    
     <div class="section">
         <div class="section-header">
-            <h3><span class="icon">🔋</span>Analyse d'un trouble ionique</h3>
+            <h3><span class="icon">💧</span>Analyse d'une hypo/hypernatrémie</h3>
             <div class="button-group">
+			    <button class="toggle-button" onclick="analyzeTHENa()">Analyser</button>
+				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
                 <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>
-                <button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
             </div>
         </div>
         <div class="section-content">
 		
 <div class="subsection">
-    <h4>Bilan de l'eau</h4>
+    <h4>Données</h4>
 	
 	    <div style="display: flex; flex-direction: column; gap: 10px;">
 		
@@ -1859,14 +1861,23 @@ textarea {
         </div>
     </div>
 </div>
+		
+		</div>
+		</div>
+		
+				 <div class="subsection">
+          <h4>Analyse préliminaire natrémie</h4>
+    
+    <div id="analysisStepsNa" class="analysis-stepsNa">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		 
+	</div>	
+</div>	
+</div>
 
-		
-		
-		
-		
-		
-		</div>
-		</div>
 
 <script>
 
@@ -1909,6 +1920,11 @@ document.getElementById('THE_Na').addEventListener('input', function() {
 document.getElementById('THE_Gly').addEventListener('input', function() {
     const gly = parseFloat(this.value);
     const statusElement = document.getElementById('Gly-status');
+    
+    // Si une valeur est entrée, enlever le clignotement
+    if (this.value) {
+        this.classList.remove('blink');
+    }
     
     if (!this.value) {
         statusElement.textContent = '';
@@ -2144,10 +2160,21 @@ document.getElementById('THE_poids').addEventListener('input', calculateDeficit)
 
 </script>
 
+	
+<div class="container THE-section">    
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">🍌</span>Analyse d'une hypo/hyperkaliémie</h3>
+            <div class="button-group">
+			    <button class="toggle-button" onclick="analyzeTHEK()">Analyser</button>
+				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>            </div>
+        </div>
+        <div class="section-content">
 		
-<div class="subsection">
-
-<h4>Bilan du potassium</h4>
+		<div class="subsection">
+		
+		    <h4>Données</h4>
 
 		<div style="display: flex; flex-direction: column; gap: 10px;">
 
@@ -2169,20 +2196,40 @@ document.getElementById('THE_poids').addEventListener('input', calculateDeficit)
             </div>
         </div>
 		
-				<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-            <label style="width: 200px; min-width: 200px;"><strong>Chlorurie (mmol/L) :</strong></label>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku">
-                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
-                <span id="Ku-status" style="font-weight: bold;"></span>
+		        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;"><strong>Pression artérielle :</strong></label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="pressure" value="normal" checked>
+                    <span class="checkmark"></span>
+                    PA normale/basse
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="pressure" value="high">
+                    <span class="checkmark"></span>
+                    PA augmentée
+                </label>
             </div>
-        </div>
-		
+			</div>
 		
 		
 		</div>
+		
 		</div>
 		
+	<div class="subsection">
+          <h4>Analyse préliminaire kaliémie</h4>
+
+    <div id="analysisStepsK" class="analysis-stepsK">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>
+		
+</div>
+</div>		
+</div>
+
 		
 <script>
 
@@ -2204,13 +2251,86 @@ syncKaliurese('THE_Ku2', 'THE_Ku');
 
 kuInput.addEventListener('input', calculateUrineOsmolarity);
 
+// Add event listener to kaliémie input
+document.getElementById('THE_K').addEventListener('input', function() {
+    const k = parseFloat(this.value);
+    const statusElement = document.getElementById('K-status');
+    
+    if (!this.value) {
+        statusElement.textContent = '';
+        return;
+    }
+    
+    if (k < 3.5) {
+        statusElement.textContent = 'Hypokaliémie';
+        statusElement.style.color = '#dc2626';
+    } else if (k > 5) {
+        statusElement.textContent = 'Hyperkaliémie';
+        statusElement.style.color = '#dc2626';
+    } else {
+        statusElement.textContent = 'Normokaliémie';
+        statusElement.style.color = '#16a34a';
+    }
+});
+
+// Add event listener to kaliémie input
+document.getElementById('THE_K').addEventListener('input', function() {
+   const k = parseFloat(this.value);
+   const statusElement = document.getElementById('K-status');
+   const kaliureseInput = document.getElementById('THE_Ku2');
+   
+   if (!this.value) {
+       statusElement.textContent = '';
+       kaliureseInput.classList.remove('blink');
+       return;
+   }
+   
+   if (k < 3.5) {
+       statusElement.textContent = 'Hypokaliémie';
+       statusElement.style.color = '#dc2626';
+       if (!kaliureseInput.value) {
+           kaliureseInput.classList.add('blink');
+       }
+   } else if (k > 5) {
+       statusElement.textContent = 'Hyperkaliémie';
+       statusElement.style.color = '#dc2626';
+       kaliureseInput.classList.remove('blink');
+   } else {
+       statusElement.textContent = 'Normokaliémie';
+       statusElement.style.color = '#16a34a';
+       kaliureseInput.classList.remove('blink');
+   }
+});
+
+// Add event listener for kaliurèse
+document.getElementById('THE_Ku2').addEventListener('input', function() {
+   const k = parseFloat(document.getElementById('THE_K').value);
+   if (this.value) {
+       this.classList.remove('blink');
+   } else if (k < 3.5) {
+       this.classList.add('blink');
+   }
+});
+
+
 
 </script>
 
+	
+<div class="container THE-section">    
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">🥛</span>Analyse d'une hypo/hypercalcémie</h3>
+            <div class="button-group">
+			    <button class="toggle-button" onclick="analyzeTHECa()">Analyser</button>
+				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>            </div>
+        </div>
+        <div class="section-content">
 		
 <div class="subsection">
 
-<h4>Bilan du calcium </h4>
+<h4>Données</h4>
 			    <div style="display: flex; flex-direction: column; gap: 10px;">
 
 		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
@@ -2256,24 +2376,231 @@ kuInput.addEventListener('input', calculateUrineOsmolarity);
 		</div>
 		</div>
 		
+		 		 <div class="subsection">
+          <h4>Analyse préliminaire calcémie</h4>
+    
+    <div id="analysisStepsCa" class="analysis-stepsCa">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>	
+		
+	</div>	
+</div>
+</div>		
+
+
+<div class="container THE-section">    
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">💦</span>Analyse d'une altération de la fonction rénale</h3>
+            <div class="button-group">
+			    <button class="toggle-button" onclick="analyzeTHEIRA()">Analyser</button>
+				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
+                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>            </div>
+        </div>
+        <div class="section-content">
+		
 	<div class="subsection">
 	
-<h4>Fonction rénale</h4>
+<h4>Données</h4>
 			    
-				<div style="display: flex; flex-direction: column; gap: 10px;">
+	<div style="display: flex; flex-direction: column; gap: 10px;">
 
+			<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+			<label style="width: 200px; min-width: 200px;"><strong>Ionogramme plasmatique</strong></label>
+			</div>
+				        <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Natrémie (mmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Na">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">135 - 145</span>
+                <span id="Na-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Urée plasm. (µmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Urée">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Urée-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Créat. plasm. (µmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Créat">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Créat-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+			<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Ionogramme urinaire</strong></label>
+		</div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Urée urinaire (mmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Uréeu2">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Uréeu2-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Créat. urinaire (mmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Créatu">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Créatu-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Natriurèse (mmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Nau2">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Nau2-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Kaliurèse (mmol/L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku3">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Ku3-status" style="font-weight: bold;"></span>
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Volume urinaire/24h (L) :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku3">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+                <span id="Ku3-status" style="font-weight: bold;"></span>
+            </div>
+        </div>		
+
+			<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Calculs</strong></label>
+		</div>
+	
+
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Clairance créatinine :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="ClrCréat" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="ClrCréat-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Urée/Créat plasm. :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="UCplasm" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="UCplasm-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Fraction d'excrétion Na :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="FENa" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="FENa-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Fraction d'excrétion urée :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="FEurée" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="FEurée-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">Na/K urinaire :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="NaKu" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="NaKu-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+				
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">U/P urée :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="UPurée" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="UPurée-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+		
+		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <label style="width: 200px; min-width: 200px;">U/P créat :</label>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <input type="number" readonly id="UPcréat" 
+                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+                    class="small">
+                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+				        <span id="UPcréat-status" style="font-weight: bold;"></span>
+
+            </div>
+        </div>
+			
+			
+			
 		
 
         </div>
 		
 		
 		</div>
+		
+		<div class="subsection">
+          <h4>Profil de l'insuffisance rénale aigue</h4>
+    
+    <div id="analysisStepsCa" class="analysis-stepsCa">
+        <!-- Le contenu sera injecté dynamiquement ici -->
+    </div>
+	
+         </div>	
 	
 
+
+</div>
 </div>
 </div>
 
 
+<div class="container THE-section">    
 
     <div class="section">
         <div class="section-header">
@@ -2284,14 +2611,16 @@ kuInput.addEventListener('input', calculateUrineOsmolarity);
             </div>
         </div>
         <div class="section-content">
-		 <div class="subsection">
-          <h4>Analyse préliminaire natrémie</h4>
+
+		<div class="subsection">
+           <h4>Conclusion</h4>
     
-    <div id="analysisStepsNa" class="analysis-stepsNa">
-        <!-- Le contenu sera injecté dynamiquement ici -->
-    </div>
-	
+				<div id="THE_generatedTextArea" contenteditable="true" 
+                     style="border: 1px solid #ccc; padding: 10px; min-height: 60px; max-height: 150px;"></div>
          </div>
+	 </div>	 
+	 </div>	  
+	 </div>	 
 		 
 		 <script>
 		 
@@ -2300,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisStepsNa = document.getElementById('analysisStepsNa');
     analysisStepsNa.innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0</div>
+            <div class="step-number">Étape 0 : Natrémie</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -2314,6 +2643,20 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     `;
 });
+
+// Écouteur d'événement pour la natrémie
+document.getElementById('THE_Na').addEventListener('input', function() {
+   const na = parseFloat(document.getElementById('THE_Na').value);
+   const statusElement = document.getElementById('Na-status');
+   const glycemieInput = document.getElementById('THE_Gly');
+   
+   // Arrêter le clignotement si une valeur est entrée
+   if (this.value) {
+       this.classList.remove('blink');
+   }
+});
+
+
 
 // Fonction principale d'analyse
 function analyzeNatremia() {
@@ -2330,6 +2673,27 @@ function analyzeNatremia() {
     document.getElementsByName('secteur_ec').forEach(radio => {
         if (radio.checked) volumeEC = radio.value;
     });
+
+    // Réinitialiser la zone d'analyse
+    document.getElementById('analysisStepsNa').innerHTML = '';
+
+    // Vérifier si la natrémie est vide
+    const naInput = document.getElementById('THE_Na');
+    if (!na) {
+        document.getElementById('analysisStepsNa').innerHTML = `
+            <div class="analysis-step">
+                <div class="step-number">Étape 0</div>
+                <div class="step-content">
+                    <div class="step-values">
+                        <span class="coherence-check missing">Veuillez entrer la natrémie</span>
+                    </div>
+                </div>
+            </div>`;
+        naInput.classList.add('blink');
+        return;
+    } else {
+        naInput.classList.remove('blink');
+    }
 
 	if (!na || na < 135) {
     // Vérifier les données minimales
@@ -2973,12 +3337,387 @@ switch (volumeEC) {
 
 }
 
+
+// Affichage de l'étape 0 au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const analysisStepsK = document.getElementById('analysisStepsK');
+    analysisStepsK.innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0 : Kaliémie</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Kaliémie +/- Kaliurèse
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+
+// Écouteurs d'événements (au même niveau que les autres écouteurs)
+document.getElementById('THE_K').addEventListener('input', function() {
+   const k = parseFloat(document.getElementById('THE_K').value);
+   const statusElement = document.getElementById('K-status');
+   const kaliureseInput = document.getElementById('THE_Ku2');
+   
+   // Arrêter le clignotement si une valeur est entrée
+   if (this.value) {
+       this.classList.remove('blink');
+   }
+});
+
+
+// Ajout de l'écouteur pour l'analyse de la kaliémie
+function analyzeKalemia() {
+    const k = parseFloat(document.getElementById('THE_K').value);
+    const ku = parseFloat(document.getElementById('THE_Ku2').value);
+    const pressure = document.querySelector('input[name="pressure"]:checked')?.value;
+
+    const kInput = document.getElementById('THE_K');
+    let analysisStepsK = document.getElementById('analysisStepsK');
+    analysisStepsK.innerHTML = '';
+
+    // Si kaliémie vide, faire clignoter
+    if (!k) {
+        kInput.classList.add('blink');
+        analysisStepsK.innerHTML = `
+            <div class="analysis-step">
+                <div class="step-number">Étape 0</div>
+                <div class="step-content">
+                    <div class="step-values">
+                        <span class="coherence-check missing">Veuillez entrer la kaliémie</span>
+                    </div>
+                </div>
+            </div>`;
+        return;
+    }
+    kInput.classList.remove('blink');
+
+    // Étape 1: Analyse initiale de la kaliémie
+    setTimeout(() => {
+        const step1 = document.createElement('div');
+        step1.className = 'analysis-step';
+        step1.innerHTML = `
+            <div class="step-number">Étape 1</div>
+            <div class="step-content">
+                <div>Analyse de la kaliémie</div>
+                <div class="step-values">
+                    <div class="diagnosis-box">
+                        ${getKalemiaStatus(k)}
+                    </div>
+                </div>
+            </div>`;
+        analysisStepsK.appendChild(step1);
+
+        // Si kaliémie normale, on s'arrête là
+        if (k >= 3.5 && k <= 5) return;
+
+        // Pour hypokaliémie, continuer avec étape 2
+        if (k < 3.5) {
+            analyzeHypokalemia(k, ku, pressure);
+        }
+        // Pour hyperkaliémie, aller directement à la conclusion
+        else if (k > 5) {
+            analyzeHyperkalemia();
+        }
+    }, 0);
+}
+
+function getKalemiaStatus(k) {
+    if (k < 3.5) {
+        return '<span class="coherence-check ta-high">Hypokaliémie</span>';
+    } else if (k > 5) {
+        return '<span class="coherence-check ta-high">Hyperkaliémie</span>';
+    }
+    return '<span class="coherence-check normal">Kaliémie normale</span>';
+}
+
+function analyzeHypokalemia(k, ku, pressure) {
+    const analysisStepsK = document.getElementById('analysisStepsK');
+
+    // Étape 2: Analyse de la kaliurèse
+    setTimeout(() => {
+        const step2 = document.createElement('div');
+        step2.className = 'analysis-step';
+        
+        if (!ku) {
+            step2.innerHTML = `
+                <div class="step-number">Étape 2</div>
+                <div class="step-content">
+                    <div>Analyse de l'excrétion urinaire de potassium</div>
+                    <div class="step-values">
+                        <span class="coherence-check missing">Kaliurèse manquante - Si renseignée, permettrait d'affiner le diagnostic étiologique</span>
+                    </div>
+                </div>`;
+        } else {
+            step2.innerHTML = `
+                <div class="step-number">Étape 2</div>
+                <div class="step-content">
+                    <div>Analyse de l'excrétion urinaire de potassium</div>
+                    <div class="step-values">
+                        <div class="diagnosis-box">
+                            ${ku < 20 ? 
+                                '<span class="coherence-check ta-negative">Kaliurèse < 20 mmol/24h : Perte extra-rénale</span>' :
+                                '<span class="coherence-check ta-high">Kaliurèse > 20 mmol/24h : Perte rénale</span>'}
+                        </div>
+                    </div>
+                </div>`;
+        }
+        analysisStepsK.appendChild(step2);
+
+        // Si kaliurèse > 20, continuer avec l'analyse de la pression
+        if (ku > 20) {
+            analyzePressure(pressure);
+        }
+
+        // Ajouter la conclusion 
+        setTimeout(() => {
+            const conclusion = document.createElement('div');
+            conclusion.className = 'analysis-step';
+            let conclusionContent = `
+                <div class="step-number">Conclusion</div>
+                <div class="step-content">
+                    <div>Étiologies et traitements</div>
+                    <div class="step-values">`;
+
+            if (!ku) {
+                // Si kaliurèse non précisée, afficher toutes les causes possibles
+                conclusionContent += `
+                    <div class="causes-box" style="margin-bottom: 1rem;">
+                        <strong>1. Hypokaliémie avec pertes extra-rénales (Kaliurèse < 20 mmol/24h)</strong>
+                        <ul>
+                            <li>Carence d'apports (rare)</li>
+                            <li>Diarrhées, laxatifs</li>
+                            <li>Tumeur villeuse</li>
+                            <li>Fistule digestive</li>
+                            <li>Hypersudation majeure</li>
+                            <li>Pertes rénales antérieures (diurétiques)</li>
+                        </ul>
+                    </div>
+                    <div class="causes-box" style="margin-bottom: 1rem;">
+                        <strong>2. Hypokaliémie avec pertes rénales (Kaliurèse > 20 mmol/24h) dans un contexte d'HTA</strong>
+                        <ul>
+                            <li>Rénine basse :
+                                <ul>
+                                    <li>Hyperaldostéronisme primaire (aldo élevée)</li>
+                                    <li>Syndrome de Cushing</li>
+                                    <li>Réglisse ou intoxication</li>
+                                    <li>Syndrome de Liddle (mutation ENaC)</li>
+                                </ul>
+                            </li>
+                            <li>Rénine haute :
+                                <ul>
+                                    <li>HTA rénovasculaire</li>
+                                    <li>Tumeur à rénine</li>
+                                    <li>Infarctus rénal segmentaire</li>
+                                    <li>HTA maligne</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="causes-box">
+                        <strong>3. Hypokaliémie avec pertes rénales (Kaliurèse > 20 mmol/24h) dans un contexte de PA normale ou basse</strong>
+                        <ul>
+                            <li>Acidose métabolique :
+                                <ul>
+                                    <li>Acidocétose</li>
+                                    <li>Acidose tubulaire distale</li>
+                                </ul>
+                            </li>
+                            <li>Alcalose métabolique :
+                                <ul>
+                                    <li>Clu < 10 mmol/L : Pertes extra-rénales de chlore (vomissements, diarrhées "à chlore", mucoviscidose)</li>
+                                    <li>Clu > 20 mmol/L : Pertes rénales (diurétiques, syndrome de Bartter, syndrome de Gitelman, hypomagnésémie, toxiques de la branche large)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>`;
+            } else {
+                // Si kaliurèse précisée, afficher uniquement la cause correspondante
+                if (ku < 20) {
+                    conclusionContent += `
+                        <div class="causes-box">
+                            <strong>Hypokaliémie avec pertes extra-rénales (Kaliurèse < 20 mmol/24h)</strong>
+                            <ul>
+                                <li>Carence d'apports (rare)</li>
+                                <li>Diarrhées, laxatifs</li>
+                                <li>Tumeur villeuse</li>
+                                <li>Fistule digestive</li>
+                                <li>Hypersudation majeure</li>
+                                <li>Pertes rénales antérieures (diurétiques)</li>
+                            </ul>
+                        </div>`;
+                } else if (ku >= 20) {
+                    if (pressure === 'high') {
+                        conclusionContent += `
+                            <div class="causes-box">
+                                <strong>Hypokaliémie avec pertes rénales (Kaliurèse > 20 mmol/24h) dans un contexte d'HTA</strong>
+                                <ul>
+                                    <li>Rénine basse :
+                                        <ul>
+                                            <li>Hyperaldostéronisme primaire (aldo élevée)</li>
+                                            <li>Syndrome de Cushing</li>
+                                            <li>Réglisse ou intoxication</li>
+                                            <li>Syndrome de Liddle (mutation ENaC)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Rénine haute :
+                                        <ul>
+                                            <li>HTA rénovasculaire</li>
+                                            <li>Tumeur à rénine</li>
+                                            <li>Infarctus rénal segmentaire</li>
+                                            <li>HTA maligne</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>`;
+                    } else {
+                        conclusionContent += `
+                            <div class="causes-box">
+                                <strong>Hypokaliémie avec pertes rénales (Kaliurèse > 20 mmol/24h) dans un contexte de PA normale ou basse</strong>
+                                <ul>
+                                    <li>Acidose métabolique :
+                                        <ul>
+                                            <li>Acidocétose</li>
+                                            <li>Acidose tubulaire distale</li>
+                                        </ul>
+                                    </li>
+                                    <li>Alcalose métabolique :
+                                        <ul>
+                                            <li>Clu < 10 mmol/L : Pertes extra-rénales de chlore (vomissements, diarrhées "à chlore", mucoviscidose)</li>
+                                            <li>Clu > 20 mmol/L : Pertes rénales (diurétiques, syndrome de Bartter, syndrome de Gitelman, hypomagnésémie, toxiques de la branche large)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>`;
+                    }
+                }
+            }
+
+            conclusionContent += `</div></div>`;
+            conclusion.innerHTML = conclusionContent;
+            analysisStepsK.appendChild(conclusion);
+        }, 1200);
+    }, 400);
+
+}
+function analyzePressure(pressure) {
+    const analysisStepsK = document.getElementById('analysisStepsK');
+
+    setTimeout(() => {
+        const step3 = document.createElement('div');
+        step3.className = 'analysis-step';
+        
+        if (!pressure) {
+            step3.innerHTML = `
+                <div class="step-number">Étape 3</div>
+                <div class="step-content">
+                    <div>Analyse de la pression artérielle</div>
+                    <div class="step-values">
+                        <span class="coherence-check missing">Pression artérielle non renseignée</span>
+                    </div>
+                </div>`;
+        } else {
+            step3.innerHTML = `
+                <div class="step-number">Étape 3</div>
+                <div class="step-content">
+                    <div>Analyse de la pression artérielle</div>
+                    <div class="step-values">
+                        <div class="diagnosis-box">
+                            ${pressure === 'high' ? 
+                                '<span class="coherence-check ta-high">Pression artérielle augmentée</span>' :
+                                '<span class="coherence-check ta-negative">Pression artérielle normale ou basse</span>'}
+                        </div>
+                    </div>
+                </div>`;
+				
+        }
+        analysisStepsK.appendChild(step3);
+    }, 800);
+}
+
+
+function analyzeHyperkalemia() {
+    const analysisStepsK = document.getElementById('analysisStepsK');
+
+    setTimeout(() => {
+        const conclusion = document.createElement('div');
+        conclusion.className = 'analysis-step';
+        conclusion.innerHTML = `
+            <div class="step-number">Conclusion</div>
+            <div class="step-content">
+                <div>Étiologies et traitements</div>
+                <div class="step-values">
+                    <div class="causes-box">
+                        <strong>1. Excès d'apport</strong>
+                        <ul>
+                            <li>Administration excessive de potassium (orale ou IV)</li>
+                            <li>Diurétiques épargneurs de potassium</li>
+                        </ul>
+                    </div>
+                    <br></br>
+					<div class="causes-box">
+                        <strong>2. Transfert intracellulaire → extracellulaire</strong>
+                        <ul>
+                            <li>Acidose métabolique (augmentation de 0,5 mmol/L pour chaque baisse de 0,1 du pH)</li>
+                            <li>Catabolisme cellulaire (rhabdomyolyse, brûlures, hémolyse, lyse tumorale)</li>
+                            <li>Hyperosmolarité (augmentation de 0,3-0,6 mEq/L pour chaque augmentation de 10 mOsm/kg)</li>
+                            <li>Exercice physique intense</li>
+                            <li>Médicaments (β-bloquants non sélectifs, digitaliques, agonistes α-adrénergiques)</li>
+                        </ul>
+                    </div>
+                    <div class="causes-box">
+                        <strong>3. Réduction de l'excrétion rénale</strong>
+                        <ul>
+                            <li>Insuffisance rénale (aiguë ou chronique)</li>
+                            <li>Déficit en minéralocorticoïdes</li>
+                            <li>Médicaments (AINS, IEC, ARA2, diurétiques épargneurs de potassium)</li>
+                        </ul>
+                    </div>
+					
+					<div class="treatment-box">
+						<strong>Traitement</strong>
+						<ul>
+							<li>Traitement de la cause</li>
+							<li>Gluconate de calcium (ou chlorure de magnésium si traitement par digitaliques)</li>
+							<li>Insuline + Glucose</li>
+							<li>Salbutamol</li>
+							<li>Alcalinisation plasmatique si acidose métabolique aigue à TA normal</li>
+							<li>+/- Diurétiques de l'anse, épuration extra-rénale, résine échangeuse d'ion (Kayexalate)</li>
+						</ul>
+					</div>
+                </div>
+            </div>`;
+        analysisStepsK.appendChild(conclusion);
+    }, 1200);
+}
+
+
+
+
+
 // Fonction d'analyse globale
-function analyzeTHE() {
+function analyzeTHENa() {
     // Réinitialiser la zone d'analyse
     document.getElementById('analysisStepsNa').innerHTML = '';
     // Lancer l'analyse
     analyzeNatremia();
+	
+	setTimeout(generateTHEConclusion, 1500);
+	
+}
+
+// Fonction d'analyse globale
+function analyzeTHEK() {
+    // Réinitialiser la zone d'analyse
+    document.getElementById('analysisStepsK').innerHTML = '';
+    // Lancer l'analyse
+	analyzeKalemia();
 	
 	setTimeout(generateTHEConclusion, 1500);
 	
@@ -3163,45 +3902,14 @@ function analyzeTHE() {
 
 </style>
 		 
-		 
-	<div class="subsection">
-          <h4>Analyse préliminaire kaliémie</h4>
-    
-    <div id="analysisStepsK" class="analysis-stepsK">
-        <!-- Le contenu sera injecté dynamiquement ici -->
-    </div>
-	
-         </div>
-		 
-		 		 <div class="subsection">
-          <h4>Analyse préliminaire calcémie</h4>
-    
-    <div id="analysisStepsCa" class="analysis-stepsCa">
-        <!-- Le contenu sera injecté dynamiquement ici -->
-    </div>
-	
-         </div>
-		 
-		 		 <div class="subsection">
-          <h4>Analyse préliminaire fonction rénale</h4>
-    
-    <div id="analysisStepsIRA" class="analysis-stepsIRA">
-        <!-- Le contenu sera injecté dynamiquement ici -->
-    </div>
-	
-         </div>
-		 
-		 
 		
-		<div class="subsection">
-           <h4>Conclusion</h4>
-    
-				<div id="THE_generatedTextArea" contenteditable="true" 
-                     style="border: 1px solid #ccc; padding: 10px; min-height: 60px; max-height: 150px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
+		 
+
+		  
+		
+
+
+
 
 <script>
 
