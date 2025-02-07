@@ -1688,7 +1688,7 @@ textarea {
             <div class="button-group">
 			    <button class="toggle-button" onclick="analyzeTHENa()">Analyser</button>
 				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
-                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>
+                <button class="toggle-button" onclick="resetNatremia()">Réinitialiser</button>
             </div>
         </div>
         <div class="section-content">
@@ -2048,16 +2048,16 @@ const nauInput = document.getElementById('THE_Nau');
 const kuInput = document.getElementById('THE_Ku');
 const ureeInput = document.getElementById('THE_Uréeu');
 const glyuInput = document.getElementById('THE_Glyu');
-const osmuOutput = document.getElementById('Osmu');
-const osmuStatus = document.getElementById('Osmu-status');
 
 function calculateUrineOsmolarity() {
-    const nau = parseFloat(nauInput.value) || 0;
-    const ku = parseFloat(kuInput.value) || 0;
-    const uree = parseFloat(ureeInput.value) || 0;
-    const glyu = parseFloat(glyuInput.value) || 0;
+    const nau = parseFloat(nauInput.value);
+    const ku = parseFloat(kuInput.value);
+    const uree = parseFloat(ureeInput.value);
+    const glyu = parseFloat(glyuInput.value);
+    const osmuOutput = document.getElementById('Osmu');
+    const osmuStatus = document.getElementById('Osmu-status');
     
-    if (nau === 0 && ku === 0 && uree === 0 && glyu === 0) {
+    if (isNaN(nau) || isNaN(ku) || isNaN(uree) || isNaN(glyu)) {
         osmuOutput.value = '';
         osmuStatus.textContent = '';
         return;
@@ -2066,9 +2066,9 @@ function calculateUrineOsmolarity() {
     const osmolarity = (2 * (nau + ku)) + uree + glyu;
     osmuOutput.value = osmolarity.toFixed(0);
     
-    const osmp = parseFloat(document.getElementById('Osmp').value) || 0;
+    const osmp = parseFloat(document.getElementById('Osmp').value);
     
-    if (osmp > 0) {
+    if (!isNaN(osmp)) {
         if (osmolarity < 100) {
             osmuStatus.textContent = '< 100 mosm/L';
             osmuStatus.style.color = '#dc2626';
@@ -2086,7 +2086,6 @@ nauInput.addEventListener('input', calculateUrineOsmolarity);
 kuInput.addEventListener('input', calculateUrineOsmolarity);
 ureeInput.addEventListener('input', calculateUrineOsmolarity);
 glyuInput.addEventListener('input', calculateUrineOsmolarity);
-
 
 //déficit en eau libre
 document.getElementById('THE_Na').addEventListener('input', function() {
@@ -2168,7 +2167,7 @@ document.getElementById('THE_poids').addEventListener('input', calculateDeficit)
             <div class="button-group">
 			    <button class="toggle-button" onclick="analyzeTHEK()">Analyser</button>
 				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
-                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>            </div>
+                <button class="toggle-button" onclick="resetKalemia()">Réinitialiser</button>            </div>
         </div>
         <div class="section-content">
 		
@@ -2234,22 +2233,7 @@ document.getElementById('THE_poids').addEventListener('input', calculateDeficit)
 <script>
 
 
-// Synchronisation des champs de kaliurèse
-function syncKaliurese(sourceId, targetId) {
-    const sourceInput = document.getElementById(sourceId);
-    const targetInput = document.getElementById(targetId);
-    
-    sourceInput.addEventListener('input', function() {
-        targetInput.value = this.value;
-        calculateUrineOsmolarity(); // Recalcule l'osmolarité après la mise à jour
-    });
-}
 
-// Synchronisation bidirectionnelle des champs de kaliurèse
-syncKaliurese('THE_Ku', 'THE_Ku2');
-syncKaliurese('THE_Ku2', 'THE_Ku');
-
-kuInput.addEventListener('input', calculateUrineOsmolarity);
 
 // Add event listener to kaliémie input
 document.getElementById('THE_K').addEventListener('input', function() {
@@ -2397,7 +2381,7 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
             <div class="button-group">
 			    <button class="toggle-button" onclick="analyzeIRA()">Analyser</button>
 				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
-                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>          
+                <button class="toggle-button" onclick="resetIRA()">Réinitialiser</button>          
 				</div>
         </div>
         <div class="section-content">
@@ -2421,7 +2405,7 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
         </div>
 		
 		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-            <label style="width: 200px; min-width: 200px;">Urée plasm. (µmol/L) :</label>
+            <label style="width: 200px; min-width: 200px;">Urée plasm. (mmol/L) :</label>
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Urée">
                 <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
@@ -2481,9 +2465,9 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
 		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
             <label style="width: 200px; min-width: 200px;">Volume urinaire/24h (L) :</label>
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_Ku3">
+                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="THE_volume">
                 <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
-                <span id="Ku3-status" style="font-weight: bold;"></span>
+                <span id="THEvolume-status" style="font-weight: bold;"></span>
             </div>
         </div>		
 
@@ -2493,7 +2477,7 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
 	
 
 		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-            <label style="width: 200px; min-width: 200px;">Clairance créatinine :</label>
+            <label style="width: 200px; min-width: 200px;">Clairance créat (mL/min) :</label>
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <input type="number" readonly id="ClrCréat" 
                     style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
@@ -2538,14 +2522,14 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Conclusion</h3>
             <div class="button-container">
-                <button class="toggle-button" onclick="analyzeTHE()">Analyser</button>
+                <button class="toggle-button" onclick="generateTHEConclusion()">Générer une conclusion</button>
                 <button class="toggle-button" onclick="copyToClipboard()">Copier la conclusion</button>
             </div>
         </div>
         <div class="section-content">
 
 		<div class="subsection">
-           <h4>Conclusion</h4>
+           <h4>Texte de conclusion</h4>
     
 				<div id="THE_generatedTextArea" contenteditable="true" 
                      style="border: 1px solid #ccc; padding: 10px; min-height: 60px; max-height: 150px;"></div>
@@ -2556,6 +2540,83 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
 		 
 		 <script>
 		 
+		 // Calcul de la clairance de la créatinine
+function calculateCreatinineClearance() {
+   const creatU = parseFloat(document.getElementById('THE_Créatu').value);
+   const creatP = parseFloat(document.getElementById('THE_Créat').value);
+   const volume = parseFloat(document.getElementById('THE_volume').value); // Ajoutez un id="THE_volume" au champ de volume
+   const clrCreat = document.getElementById('ClrCréat');
+
+   if (!creatU || !creatP || !volume) {
+       clrCreat.value = '';
+       return;
+   }
+
+   const clearance = (creatU * volume * Math.pow(10, 6)) / (creatP * 1440);
+   clrCreat.value = clearance.toFixed(0);
+}
+
+// Ajouter les écouteurs d'événements
+document.getElementById('THE_Créatu').addEventListener('input', calculateCreatinineClearance);
+document.getElementById('THE_Créat').addEventListener('input', calculateCreatinineClearance);
+document.getElementById('THE_volume').addEventListener('input', calculateCreatinineClearance);
+
+function handleCreatBlinking() {
+   const volumeInput = document.getElementById('THE_volume');
+   const creatP = document.getElementById('THE_Créat');
+   const creatU = document.getElementById('THE_Créatu');
+
+   // Vérifier le clignotement lors de la saisie du volume
+   volumeInput.addEventListener('input', function() {
+       if (this.value) {
+           // Si volume présent, faire clignoter seulement les champs vides
+           if (!creatP.value) creatP.classList.add('blink');
+           if (!creatU.value) creatU.classList.add('blink');
+       } else {
+           // Si pas de volume, arrêter tout clignotement
+           creatP.classList.remove('blink');
+           creatU.classList.remove('blink');
+       }
+   });
+
+   // Vérifier le volume lors de la saisie des créatinines
+   [creatP, creatU].forEach(input => {
+       input.addEventListener('input', function() {
+           // Ne retirer le clignotement que si une valeur est présente
+           if (volumeInput.value && this.value) {
+               this.classList.remove('blink');
+           }
+       });
+   });
+}
+
+document.addEventListener('DOMContentLoaded', handleCreatBlinking);
+
+
+
+		 // Écouteur pour la natrémie de la partie IRA
+document.getElementById('THE_Na2').addEventListener('input', function() {
+   const na = parseFloat(this.value);
+   const statusElement = document.getElementById('Na2-status');
+   
+   if (!this.value) {
+       statusElement.textContent = '';
+       return;
+   }
+   
+   if (na < 135) {
+       statusElement.textContent = 'Hyponatrémie';
+       statusElement.style.color = '#dc2626';
+   } else if (na > 145) {
+       statusElement.textContent = 'Hypernatrémie';
+       statusElement.style.color = '#dc2626';
+   } else {
+       statusElement.textContent = 'Natrémie normale';
+       statusElement.style.color = '#16a34a';
+   }
+});
+
+
 // Affichage de l'étape 0 au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
     const analysisStepsNa = document.getElementById('analysisStepsNa');
@@ -3674,7 +3735,7 @@ function analyzeIRA() {
             name: "Urée/Créatinine plasmatique",
             calculate: () => {
                 if (!uree || !creat) return null;
-                return (uree/creat).toFixed(0);
+                return (uree*100/creat).toFixed(0);
             },
             evaluate: (value) => {
                 if (value > 100) return { threshold: "> 100", type: "iraF" };
@@ -3729,7 +3790,7 @@ function analyzeIRA() {
             name: "U/P urée",
             calculate: () => {
                 if (!ureeu || !uree) return null;
-                return (ureeu*100/uree).toFixed(0);
+                return (ureeu/uree).toFixed(0);
             },
             evaluate: (value) => {
                 if (value > 10) return { threshold: "> 10", type: "iraF" };
@@ -3835,7 +3896,6 @@ function analyzeTHENa() {
     // Lancer l'analyse
     analyzeNatremia();
 	
-	setTimeout(generateTHEConclusion, 1500);
 	
 }
 
@@ -3846,7 +3906,6 @@ function analyzeTHEK() {
     // Lancer l'analyse
 	analyzeKalemia();
 	
-	setTimeout(generateTHEConclusion, 1500);
 	
 }
 
@@ -3857,7 +3916,6 @@ function analyzeTHEIRA() {
     // Lancer l'analyse
 	analyzeIRA();
 	
-	setTimeout(generateTHEConclusion, 1500);
 	
 }
 
@@ -4188,151 +4246,218 @@ function analyzeTHEIRA() {
 
 
 <script>
-
-function resetTHEInputs() {
-    // Masquer la section du secteur intracellulaire
-    const deficitSection = document.getElementById('deficitSection');
-    if (deficitSection) {
-        deficitSection.style.display = 'none';
-    }
-	
-	// Réinitialiser tous les champs numériques
-    const numericFields = [
-        'THE_Na', 'THE_Gly', 'THE_Nau', 'THE_Ku', 'THE_Glyu', 'THE_Uréeu',
-        'THE_K', 'THE_Ku2', 'THE_Cam', 'THE_Albu', 'THE_PTN'
-    ];
-    
-    numericFields.forEach(fieldId => {
-        const input = document.getElementById(fieldId);
+function resetNatremia() {
+    // Réinitialiser les champs
+    const fields = ['THE_Na', 'THE_Gly', 'THE_Nau', 'THE_Ku', 'THE_Glyu', 'THE_Uréeu'];
+    fields.forEach(id => {
+        const input = document.getElementById(id);
         if (input) {
             input.value = '';
+            input.classList.remove('blink');
         }
     });
 
     // Réinitialiser les champs calculés
-    const calculatedFields = ['Osmp', 'Osmu'];
-    calculatedFields.forEach(fieldId => {
-        const input = document.getElementById(fieldId);
-        if (input) {
-            input.value = '';
-        }
+    ['Osmp', 'Osmu'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.value = '';
     });
 
-    // Réinitialiser tous les statuts (textes colorés à droite)
-    const statusFields = [
-        'Na-status', 'Gly-status', 'Osmp-status', 'Osmu-status',
-        'K-status', 'Ca-status', 'Albu-status', 'PTH-status'
-    ];
-    
-    statusFields.forEach(statusId => {
-        const status = document.getElementById(statusId);
+    // Réinitialiser les statuts
+    ['Na-status', 'Gly-status', 'Osmp-status', 'Osmu-status'].forEach(id => {
+        const status = document.getElementById(id);
         if (status) {
             status.textContent = '';
             status.style.color = '';
         }
     });
 
-    // Remettre le bouton radio "Normal" pour le secteur EC
+    // Remettre "Normal" pour le secteur EC
     const normalRadio = document.querySelector('input[name="secteur_ec"][value="normal"]');
-    if (normalRadio) {
-        normalRadio.checked = true;
-    }
+    if (normalRadio) normalRadio.checked = true;
 
-    // Enlever tous les clignotements
-    const allInputs = document.querySelectorAll('input');
-    allInputs.forEach(input => {
-        input.classList.remove('blink');
-    });
+    // Masquer section déficit
+    const deficitSection = document.getElementById('deficitSection');
+    if (deficitSection) deficitSection.style.display = 'none';
 
-    // Réinitialiser le contenu de la zone de texte de conclusion
-    const conclusionArea = document.getElementById('THE_generatedTextArea');
-    if (conclusionArea) {
-        conclusionArea.innerHTML = '';
-    }
-
-    // Réinitialiser toutes les zones d'analyse à l'étape 0
-    const analysisAreas = ['analysisStepsNa', 'analysisStepsK', 'analysisStepsCa', 'analysisStepsIRA'];
-    analysisAreas.forEach(areaId => {
-        const area = document.getElementById(areaId);
-        if (area) {
-            area.innerHTML = `
-                <div class="analysis-step">
-                    <div class="step-number">Étape 0</div>
-                    <div class="step-content">
-                        <div class="step-values">
-                            <div style="color: #666; font-size: 0.9rem;">
-                                Valeurs requises en attente
-                                <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
-                                    Cliquez sur "Analyser" pour commencer
-                                </div>
-                            </div>
+    // Réinitialiser l'analyse
+    document.getElementById('analysisStepsNa').innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Natrémie +/- Glycémie
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        </div>`;
+}
+
+function resetKalemia() {
+    // Réinitialiser les champs
+    ['THE_K', 'THE_Ku2'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+            input.classList.remove('blink');
         }
     });
+
+    // Réinitialiser le statut
+    const status = document.getElementById('K-status');
+    if (status) {
+        status.textContent = '';
+        status.style.color = '';
+    }
+
+    // Remettre PA normale/basse par défaut
+    const normalPressure = document.querySelector('input[name="pressure"][value="normal"]');
+    if (normalPressure) normalPressure.checked = true;
+
+    // Réinitialiser l'analyse
+    document.getElementById('analysisStepsK').innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Kaliémie +/- Kaliurèse
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function resetIRA() {
+    // Réinitialiser les champs
+    const fields = ['THE_Na2', 'THE_Urée', 'THE_Créat', 'THE_Uréeu2', 
+                   'THE_Créatu', 'THE_Nau2', 'THE_Ku3', 'THE_volume'];
+    fields.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+            input.classList.remove('blink');
+        }
+    });
+
+    // Réinitialiser les champs calculés
+    const clrCreat = document.getElementById('ClrCréat');
+    if (clrCreat) clrCreat.value = '';
+
+    // Réinitialiser l'analyse
+    document.getElementById('analysisStepsIRA').innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Étape 0</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Urée + Créat...
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
 }
 
 
-// Générer la conclusion. 
 function generateTHEConclusion() {
-   // Récupérer toutes les valeurs
-   const values = {
-       na: document.getElementById('THE_Na').value,
-       gly: document.getElementById('THE_Gly').value,
-       nau: document.getElementById('THE_Nau').value,
-       ku: document.getElementById('THE_Ku').value,
-       glyu: document.getElementById('THE_Glyu').value, 
-       ureeu: document.getElementById('THE_Uréeu').value,
-       k: document.getElementById('THE_K').value,
-       cam: document.getElementById('THE_Cam').value,
-       albu: document.getElementById('THE_Albu').value,
-       ptn: document.getElementById('THE_PTN').value,
-       osmp: document.getElementById('Osmp').value,
-       osmu: document.getElementById('Osmu').value,
-       deficit: document.getElementById('deficit').value
-   };
+  const values = {
+      na: document.getElementById('THE_Na').value,
+      gly: document.getElementById('THE_Gly').value,
+      nau: document.getElementById('THE_Nau').value,
+      ku: document.getElementById('THE_Ku').value,
+      glyu: document.getElementById('THE_Glyu').value,
+      ureeu: document.getElementById('THE_Uréeu').value,
+      k: document.getElementById('THE_K').value,
+      ku2: document.getElementById('THE_Ku2').value,
+      osmp: document.getElementById('Osmp').value,
+      osmu: document.getElementById('Osmu').value,
+      deficit: document.getElementById('deficit').value,
+      uree: document.getElementById('THE_Urée').value,
+      creat: document.getElementById('THE_Créat').value,
+      ureeu2: document.getElementById('THE_Uréeu2').value,
+      creatu: document.getElementById('THE_Créatu').value,
+      nau2: document.getElementById('THE_Nau2').value,
+      ku3: document.getElementById('THE_Ku3').value,
+      volume: document.getElementById('THE_volume').value,
+      clrCreat: document.getElementById('ClrCréat').value
+  };
 
-   // Générer la partie "Données"
-   let donnees = " ";
-   let hasData = false;
-   
-   if (values.na) { donnees += `Na = ${values.na} mmol/L ; `; hasData = true; }
-   if (values.gly) { donnees += `Glycémie = ${values.gly} mmol/L ; `; hasData = true; }
-   if (values.osmp) { donnees += `Osmolarité plasmatique = ${values.osmp} mosm/L ; `; hasData = true; }
-   if (values.nau) { donnees += `Nau = ${values.nau} mmol/L ; `; hasData = true; }
-   if (values.ku) { donnees += `Ku = ${values.ku} mmol/L ; `; hasData = true; }
-   if (values.glyu) { donnees += `Glycosurie = ${values.glyu} mmol/L ; `; hasData = true; }
-   if (values.ureeu) { donnees += `Urée u = ${values.ureeu} mmol/L ; `; hasData = true; }
-   if (values.osmu) { donnees += `Osmolarité urinaire = ${values.osmu} mosm/L ; `; hasData = true; }
-   if (values.k) { donnees += `K = ${values.k} mmol/L ; `; hasData = true; }
-   if (values.cam) { donnees += `Ca mesuré = ${values.cam} mmol/L ; `; hasData = true; }
-   if (values.albu) { donnees += `Albumine = ${values.albu} g/L ; `; hasData = true; }
-   if (values.ptn) { donnees += `PTH = ${values.ptn} pg/mL ; `; hasData = true; }
-   
-   if (!hasData) {
-       donnees = "Aucune donnée saisie";
-   } else {
-       donnees = donnees.slice(0, -2);
-   }
+  let donnees = " ";
+  let hasData = false;
+  
+  // Données natrémie
+  if (values.na) { donnees += `Na = ${values.na} mmol/L ; `; hasData = true; }
+  if (values.gly) { donnees += `Glycémie = ${values.gly} mmol/L ; `; hasData = true; }
+  if (values.osmp) { donnees += `Osmolarité plasmatique = ${values.osmp} mosm/L ; `; hasData = true; }
+  if (values.nau) { donnees += `Nau = ${values.nau} mmol/L ; `; hasData = true; }
+  if (values.ku) { donnees += `Ku = ${values.ku} mmol/L ; `; hasData = true; }
+  if (values.glyu) { donnees += `Glycosurie = ${values.glyu} mmol/L ; `; hasData = true; }
+  if (values.ureeu) { donnees += `Urée u = ${values.ureeu} mmol/L ; `; hasData = true; }
+  if (values.osmu) { donnees += `Osmolarité urinaire = ${values.osmu} mosm/L ; `; hasData = true; }
 
-   // Trouver la conclusion basée sur l'analyse
-   const conclusionBoxes = document.querySelectorAll('.causes-box strong');
-   let conclusionText = "";
-   if (conclusionBoxes.length > 0) {
-       conclusionText = conclusionBoxes[0].textContent;
-       
-       // Ajouter le déficit si hypernatrémie
-       if (values.na > 145 && values.deficit) {
-           conclusionText = conclusionText.replace("Hypernatrémie", `Hypernatrémie, déficit en eau libre : ${parseFloat(values.deficit).toFixed(1)} L`);
-       }
-   }
+  // Données kaliémie  
+  if (values.k) { donnees += `K = ${values.k} mmol/L ; `; hasData = true; }
+  if (values.ku2) { donnees += `Ku = ${values.ku2} mmol/L ; `; hasData = true; }
 
-   // Mettre à jour la zone de texte
-   const generatedTextArea = document.getElementById('THE_generatedTextArea');
-   generatedTextArea.innerHTML = `<strong style="color: #1e40af;">Données :</strong>\n${donnees}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
+  // Données IRA
+  if (values.uree) { donnees += `Urée p = ${values.uree} mmol/L ; `; hasData = true; }
+  if (values.creat) { donnees += `Créatinine p = ${values.creat} µmol/L ; `; hasData = true; }
+  if (values.ureeu2) { donnees += `Urée u = ${values.ureeu2} mmol/L ; `; hasData = true; }
+  if (values.creatu) { donnees += `Créatinine u = ${values.creatu} mmol/L ; `; hasData = true; }
+  if (values.nau2) { donnees += `Nau = ${values.nau2} mmol/L ; `; hasData = true; }
+  if (values.ku3) { donnees += `Ku = ${values.ku3} mmol/L ; `; hasData = true; }
+  if (values.volume) { donnees += `Volume = ${values.volume} L/24h ; `; hasData = true; }
+  if (values.clrCreat) { donnees += `Clairance créat = ${values.clrCreat} mL/min ; `; hasData = true; }
+
+  if (!hasData) {
+      donnees = "Aucune donnée saisie";
+  } else {
+      donnees = donnees.slice(0, -2);
+  }
+
+  let conclusionText = "";
+
+  // Conclusion natrémie
+  if (values.na && (values.na < 135 || values.na > 145)) {
+      const conclusionBoxesNa = document.querySelectorAll('.causes-box strong');
+      conclusionBoxesNa.forEach(box => {
+          if (box.textContent.includes('natrémie')) {
+              conclusionText += box.textContent + ".\n";
+          }
+      });
+  }
+
+  // Conclusion kaliémie
+  if (values.k && (values.k < 3.5 || values.k > 5)) {
+      const pressure = document.querySelector('input[name="pressure"]:checked')?.value;
+      if (values.k < 3.5) {
+          conclusionText += `Hypokaliémie${values.ku2 ? ` avec kaliurèse ${values.ku2 > 20 ? '> 20' : '< 20'} mmol/L` : ''}${pressure === 'high' ? ' dans un contexte d\'hypertension artérielle' : ' dans un contexte de PA normale ou basse'}.\n`;
+      } else {
+          conclusionText += 'Hyperkaliémie.\n';
+      }
+  }
+
+  // Conclusion IRA
+  const iraProfile = document.querySelector('.ira-profile');
+  if (iraProfile && !iraProfile.classList.contains('indeterminate')) {
+      conclusionText += iraProfile.textContent.trim() + ".\n";
+  }
+
+  const generatedTextArea = document.getElementById('THE_generatedTextArea');
+  generatedTextArea.innerHTML = `<strong style="color: #1e40af;">Données :</strong>\n${donnees}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
 }
+
+
 
 // copier la conclusion
 function copyToClipboard() {
