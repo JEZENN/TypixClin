@@ -2308,7 +2308,8 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
             <div class="button-group">
 			    <button class="toggle-button" onclick="analyzeTHECa()">Analyser</button>
 				<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
-                <button class="toggle-button" onclick="resetTHEInputs()">Réinitialiser</button>            </div>
+                <button class="toggle-button" onclick="resetCalcemia()">Réinitialiser</button>            
+				</div>
         </div>
         <div class="section-content">
 		
@@ -2335,26 +2336,35 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
             </div>
 			</div>
 			
-		<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-            <label style="width: 200px; min-width: 200px;"><strong>Calcémie corrigée (mmol/L) :</strong></label>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <input type="number" readonly id="Osmu" 
-                    style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
-                    class="small">
-                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">1,3 - 1,6</span>
-				        <span id="Cac-status" style="font-weight: bold;"></span>
-
-            </div>
-        </div>
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>Calcémie corrigée (mmol/L) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" readonly id="Cac" 
+            style="width: 50px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" 
+            class="small">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">2,2 - 2,6</span>
+        <span id="Cac-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+			
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 200px; min-width: 200px;"><strong>PTH (pg/mL) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_PTN">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">15 - 65</span>
+        <span id="PTH-status" style="font-weight: bold;"></span>
+    </div>
+</div>
 			
 			<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-		            <label style="width: 200px; min-width: 200px;"><strong>PTH (g/L) :</strong></label>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_PTN">
-                <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">40</span>
-                <span id="PTH-status" style="font-weight: bold;"></span>
-            </div>
-			</div>
+    <label style="width: 200px; min-width: 200px;"><strong>Vitamine D (ng/mL) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="1" style="width: 50px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;" class="small" id="THE_VitD">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">20 - 80</span>
+        <span id="VitD-status" style="font-weight: bold;"></span>
+    </div>
+</div>
+
 			
 			
 		</div>
@@ -2369,9 +2379,445 @@ document.getElementById('THE_Ku2').addEventListener('input', function() {
 	
          </div>	
 		
-	</div>	
+	</div>
+	
 </div>
-</div>		
+</div>	
+
+<script>
+// Calcul de la calcémie corrigée
+function calculateCorrectedCalcium() {
+    const ca = parseFloat(document.getElementById('THE_Cam').value);
+    const albu = parseFloat(document.getElementById('THE_Albu').value);
+    const cacOutput = document.getElementById('Cac');
+    const cacStatus = document.getElementById('Cac-status');
+    const pthInput = document.getElementById('THE_PTN');
+    
+    // Si calcémie absente, on ne fait rien
+    if (!ca) {
+        cacOutput.value = '';
+        cacStatus.textContent = '';
+        pthInput.classList.remove('blink');
+        return;
+    }
+    
+    // Calculer la calcémie corrigée
+    let correctedCa;
+    if (!isNaN(albu)) {
+        correctedCa = ca + 0.025 * (40 - albu);
+    } else {
+        correctedCa = ca; // Si pas d'albumine, utiliser calcémie mesurée
+    }
+    
+    cacOutput.value = correctedCa.toFixed(2);
+    
+    // Mise à jour du statut et du clignotement PTH
+    if (correctedCa < 2.2) {
+        cacStatus.textContent = 'Hypocalcémie';
+        cacStatus.style.color = '#dc2626';
+        if (!pthInput.value) {
+            pthInput.classList.add('blink');
+        }
+    } else if (correctedCa > 2.6) {
+        cacStatus.textContent = 'Hypercalcémie';
+        cacStatus.style.color = '#dc2626';
+        if (!pthInput.value) {
+            pthInput.classList.add('blink');
+        }
+    } else {
+        cacStatus.textContent = 'Normale';
+        cacStatus.style.color = '#16a34a';
+        pthInput.classList.remove('blink');
+    }
+}
+
+// Ajout des écouteurs d'événements pour la calcémie et l'albumine
+document.getElementById('THE_Cam').addEventListener('input', calculateCorrectedCalcium);
+document.getElementById('THE_Albu').addEventListener('input', calculateCorrectedCalcium);
+
+
+// Écouteurs pour albumine
+document.getElementById('THE_Albu').addEventListener('input', function() {
+    calculateCorrectedCalcium();
+    if (this.value) {
+        this.classList.remove('blink');
+    }
+});
+
+// Écouteur pour PTH
+document.getElementById('THE_PTN').addEventListener('input', function() {
+    if (this.value) {
+        this.classList.remove('blink');
+    }
+});
+
+		
+// Affichage de l'étape 0 au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const analysisStepsCa = document.getElementById('analysisStepsCa');
+    analysisStepsCa.innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Initialisation : Calcémie</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Calcémie +/- Albumine, PTH
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+
+function analyzeTHECa() {
+    const ca = parseFloat(document.getElementById('THE_Cam').value);
+    const albu = parseFloat(document.getElementById('THE_Albu').value);
+    const pth = parseFloat(document.getElementById('THE_PTN').value);
+    const vitD = parseFloat(document.getElementById('THE_VitD').value);
+
+    const analysisStepsCa = document.getElementById('analysisStepsCa');
+    analysisStepsCa.innerHTML = '';
+
+    // Fonction pour créer une étape avec délai
+    function createStepWithDelay(stepContent, delay) {
+        setTimeout(() => {
+            const stepElement = document.createElement('div');
+            stepElement.className = 'analysis-step';
+            stepElement.innerHTML = stepContent;
+            analysisStepsCa.appendChild(stepElement);
+        }, delay);
+    }
+
+    // ÉTAPE 1: Analyse de la calcémie
+    let step1Content = `
+        <div class="step-number">Étape 1</div>
+        <div class="step-content">
+            <div>Analyse de la calcémie</div>
+            <div class="step-values">`;
+
+    if (!ca) {
+        step1Content += `<span class="coherence-check missing">Calcémie non renseignée</span>`;
+        step1Content += `</div></div>`;
+        createStepWithDelay(step1Content, 0);
+        return;
+    }
+
+    // Calculer la calcémie corrigée si l'albumine est disponible
+    let calciumCorrige = ca;
+    if (!isNaN(albu)) {
+        calciumCorrige = ca + 0.025 * (40 - albu);
+        step1Content += `
+            <div class="value-calculation">
+                Calcémie corrigée = ${ca} + 0.025 × (40 - ${albu})
+                = ${calciumCorrige.toFixed(2)} mmol/L
+            </div>`;
+    }
+
+    if (calciumCorrige < 2.2) {
+        step1Content += `<span class="coherence-check ta-high">Hypocalcémie ${!isNaN(albu) ? 'corrigée ' : ''}(${calciumCorrige.toFixed(2)} mmol/L)</span>`;
+    } else if (calciumCorrige > 2.6) {
+        step1Content += `<span class="coherence-check ta-high">Hypercalcémie ${!isNaN(albu) ? 'corrigée ' : ''}(${calciumCorrige.toFixed(2)} mmol/L)</span>`;
+    } else {
+        step1Content += `<span class="coherence-check normal">Calcémie normale (${calciumCorrige.toFixed(2)} mmol/L)</span>`;
+    }
+
+    step1Content += `</div></div>`;
+    createStepWithDelay(step1Content, 0);
+
+    // Si calcémie normale, on s'arrête là
+    if (calciumCorrige >= 2.2 && calciumCorrige <= 2.6) return;
+
+    // ÉTAPE 2: Analyse de la PTH
+    let step2Content = `
+        <div class="step-number">Étape 2</div>
+        <div class="step-content">
+            <div>Analyse de la PTH</div>
+            <div class="step-values">`;
+
+    if (!pth) {
+        step2Content += `<span class="coherence-check missing">PTH non renseignée - Affichage de toutes les étiologies possibles</span>`;
+    } else {
+        if (calciumCorrige < 2.2) {
+            if (pth < 65) {
+                step2Content += `<span class="coherence-check ta-negative">PTH basse ou normale (Inadaptée) : Hypoparathyroïdie</span>`;
+            } else {
+                step2Content += `<span class="coherence-check ta-high">PTH élevée (Adaptée) : Hypocalcémie par perte rénale ou déficit en vitamine D</span>`;
+            }
+        } else if (calciumCorrige > 2.6) {
+            if (pth > 15) {
+                step2Content += `<span class="coherence-check ta-high">PTH normale ou élevée (Inadaptée) : Hyperparathyroïdie primaire</span>`;
+            } else {
+                step2Content += `<span class="coherence-check ta-negative">PTH basse (Adaptée) : Hypercalcémie PTH-indépendante</span>`;
+            }
+        }
+    }
+    
+    step2Content += `</div></div>`;
+    createStepWithDelay(step2Content, 400);
+
+    // ÉTAPE 3: Analyse de la vitamine D
+    let step3Content = `
+        <div class="step-number">Étape 3</div>
+        <div class="step-content">
+            <div>Analyse de la vitamine D</div>
+            <div class="step-values">`;
+
+    if (!vitD) {
+        step3Content += `<span class="coherence-check missing">Vitamine D non renseignée</span>`;
+    } else {
+        if (calciumCorrige > 2.6) {
+            if (vitD > 80) {
+                step3Content += `<span class="coherence-check ta-high">Vitamine D élevée (> 80 ng/mL) : Intoxication</span>`;
+            } else {
+                step3Content += `<span class="coherence-check ta-negative">Vitamine D normale (< 80 ng/mL)</span>`;
+            }
+        } else if (calciumCorrige < 2.2) {
+            if (vitD < 20) {
+                step3Content += `<span class="coherence-check ta-high">Vitamine D basse (< 20 ng/mL) : Carence</span>`;
+            } else {
+                step3Content += `<span class="coherence-check ta-negative">Vitamine D normale (> 20 ng/mL)</span>`;
+            }
+        }
+    }
+    
+    step3Content += `</div></div>`;
+    createStepWithDelay(step3Content, 800);
+
+    // ÉTAPE 4: Conclusion et étiologies
+    let conclusionContent = `
+        <div class="step-number">Conclusion</div>
+        <div class="step-content">
+            <div>Étiologies et traitement</div>
+            <div class="step-values">`;
+
+    if (calciumCorrige < 2.2) {
+        if (!pth) {
+            conclusionContent += `
+                <div class="causes-box">
+                    <strong>Causes d'hypocalcémie avec PTH basse (Hypoparathyroïdie)</strong>
+                    <ul>
+                        <li>Post-chirurgicale (thyroïdectomie, parathyroïdectomie)</li>
+                        <li>Auto-immune (Syndrome polyendocrinien de type 1)</li>
+                        <li>Infiltrative (hémochromatose, Wilson, métastases)</li>
+                        <li>Génétique (DiGeorge, mutation CaSR)</li>
+                    </ul>
+                </div>
+                <div class="causes-box">
+                    <strong>Causes d'hypocalcémie avec PTH élevée</strong>
+                    <ul>
+                        <li>Carence en vitamine D</li>
+                        <li>Malabsorption</li>
+                        <li>Insuffisance rénale chronique</li>
+                        <li>Hypomagnésémie</li>
+                        <li>Syndrome de lyse tumorale</li>
+                    </ul>
+                </div>`;
+        } else {
+            if (pth < 65) {
+                conclusionContent += `
+                    <div class="causes-box">
+                        <strong>Hypoparathyroïdie</strong>
+                        <ul>
+                            <li>Post-chirurgicale (thyroïdectomie, parathyroïdectomie)</li>
+                            <li>Auto-immune (Syndrome polyendocrinien de type 1)</li>
+                            <li>Infiltrative (hémochromatose, Wilson, métastases)</li>
+                            <li>Génétique (DiGeorge, mutation CaSR)</li>
+                        </ul>
+                    </div>`;
+            } else {
+                conclusionContent += `
+                    <div class="causes-box">
+                        <strong>PTH élevée adaptée</strong>
+                        <ul>
+                            <li>Insuffisance rénale chronique</li>
+                            <li>Hypomagnésémie</li>
+                            <li>Syndrome de lyse tumorale</li>
+                        </ul>
+                    </div>`;
+            }
+        }
+
+        // Ajouter section vitamine D pour hypocalcémie si vitD < 20
+        if (vitD && vitD < 20) {
+            conclusionContent += `
+                <div class="causes-box">
+                    <strong>Carence en vitamine D</strong>
+                    <ul>
+                        <li>Déficit d'apport</li>
+                        <li>Malabsorption</li>
+                        <li>Manque d'exposition solaire</li>
+                        <li>Insuffisance hépatique</li>
+                        <li>Médicaments inducteurs enzymatiques</li>
+                    </ul>
+                </div>`;
+        }
+
+    } else if (calciumCorrige > 2.6) {
+        if (!pth) {
+            conclusionContent += `
+                <div class="causes-box">
+                    <strong>Causes d'hypercalcémie avec PTH élevée</strong>
+                    <ul>
+                        <li>Hyperparathyroïdie primaire :</li>
+                        <ul>
+                            <li>Adénome parathyroïdien</li>
+                            <li>Hyperplasie des 4 glandes</li>
+                            <li>Carcinome parathyroïdien (rare)</li>
+                        </ul>
+                    </ul>
+                </div>
+                <div class="causes-box">
+                    <strong>Causes d'hypercalcémie avec PTH basse</strong>
+                    <ul>
+                        <li>Hypercalcémie maligne :</li>
+                        <ul>
+                            <li>Métastases ostéolytiques</li>
+                            <li>Myélome</li>
+                            <li>Production de PTHrp</li>
+                        </ul>
+                    </ul>
+                </div>`;
+        } else {
+            if (pth > 15) {
+                conclusionContent += `
+                    <div class="causes-box">
+                        <strong>Hyperparathyroïdie primaire</strong>
+                        <ul>
+                            <li>Adénome parathyroïdien</li>
+                            <li>Hyperplasie des 4 glandes</li>
+                            <li>Carcinome parathyroïdien (rare)</li>
+                        </ul>
+                    </div>`;
+            } else {
+                conclusionContent += `
+                    <div class="causes-box">
+                        <strong>Hypercalcémie maligne</strong>
+                        <ul>
+                            <li>Métastases ostéolytiques</li>
+                            <li>Myélome</li>
+                            <li>Production de PTHrp</li>
+                        </ul>
+                    </div>`;
+            }
+        }
+
+        // Ajouter section vitamine D pour hypercalcémie si vitD > 80
+        if (vitD && vitD > 80) {
+            conclusionContent += `
+                <div class="causes-box">
+                    <strong>Intoxication à la vitamine D</strong>
+                    <ul>
+                        <li>Surdosage en vitamine D</li>
+                        <li>Granulomatoses</li>
+                        <ul>
+                            <li>Sarcoïdose</li>
+                            <li>Tuberculose</li>
+                        </ul>
+                        <li>Lymphomes</li>
+                    </ul>
+                </div>`;
+        }
+    }
+
+    // Ajouter la section traitement
+    if (calciumCorrige < 2.2) {
+        conclusionContent += `
+            <div class="treatment-box">
+                <strong>Traitement de l'hypocalcémie</strong>
+                <ul>
+                    <li>Apport de calcium IV si symptomatique</li>
+                    <li>Supplémentation vitamino-calcique per os</li>
+                    <li>Correction d'une éventuelle hypomagnésémie</li>
+                    <li>Traitement de la cause</li>
+                </ul>
+            </div>`;
+    } else if (calciumCorrige > 2.6) {
+        conclusionContent += `
+            <div class="treatment-box">
+                <strong>Traitement de l'hypercalcémie</strong>
+                <ul>
+                    <li>Hydratation par sérum physiologique</li>
+                    <li>Biphosphonates</li>
+                    <li>Calcitonine si urgence</li>
+                    <li>Traitement de la cause</li>
+                </ul>
+            </div>`;
+    }
+
+    // Ajouter les signes ECG
+    if (calciumCorrige < 2.2) {
+        conclusionContent += `
+            <div class="ecg-signs-box">
+                <strong>Signes ECG</strong>
+                <ul>
+                    <li>Allongement du QT</li>
+                </ul>
+            </div>`;
+    } else if (calciumCorrige > 2.6) {
+        conclusionContent += `
+            <div class="ecg-signs-box">
+                <strong>Signes ECG</strong>
+                <ul>
+                    <li>Tachycardie sinusale</li>
+                    <li>Raccourcissement du QT</li>
+                    <li>Aplatissement des ondes T</li>
+                    <li>PR allongé (BAV de tout degré)</li>
+                </ul>
+            </div>`;
+    }
+
+    conclusionContent += `</div></div>`;
+    createStepWithDelay(conclusionContent, 1200);
+}		
+
+function resetCalcemia() {
+    // Réinitialiser les champs de saisie
+    const fields = ['THE_Cam', 'THE_Albu', 'THE_PTN', 'THE_VitD'];
+    fields.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+            input.classList.remove('blink');
+        }
+    });
+
+    // Réinitialiser les statuts
+    ['Ca-status', 'Albu-status', 'PTH-status', 'VitD-status', 'Cac-status'].forEach(id => {
+        const status = document.getElementById(id);
+        if (status) {
+            status.textContent = '';
+            status.style.color = '';
+        }
+    });
+
+    // Réinitialiser le champ de calcémie corrigée
+    const calcCorrigee = document.getElementById('Cac');
+    if (calcCorrigee) calcCorrigee.value = '';
+
+    // Réinitialiser l'analyse
+    document.getElementById('analysisStepsCa').innerHTML = `
+        <div class="analysis-step">
+            <div class="step-number">Initialisation : Calcémie</div>
+            <div class="step-content">
+                <div class="step-values">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        Valeurs requises : Calcémie +/- Albumine, PTH
+                        <div style="margin-top: 0.25rem; font-style: italic; font-size: 0.85rem;">
+                            Cliquez sur "Analyser" pour commencer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+
+
+</script>	
 
 
 <div class="container THE-section">    
@@ -2622,7 +3068,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisStepsNa = document.getElementById('analysisStepsNa');
     analysisStepsNa.innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0 : Natrémie</div>
+            <div class="step-number">Initialisation : Natrémie</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -2675,7 +3121,7 @@ function analyzeNatremia() {
     if (!na) {
         document.getElementById('analysisStepsNa').innerHTML = `
             <div class="analysis-step">
-                <div class="step-number">Étape 0</div>
+                <div class="step-number">Initialisation : Natrémie</div>
                 <div class="step-content">
                     <div class="step-values">
                         <span class="coherence-check missing">Veuillez entrer la natrémie</span>
@@ -2693,7 +3139,7 @@ function analyzeNatremia() {
     if (!na || !gly) {
         document.getElementById('analysisStepsNa').innerHTML = `
             <div class="analysis-step">
-                <div class="step-number">Étape 0</div>
+                <div class="step-number">Initialisation : Kaliémie</div>
                 <div class="step-content">
                     <div class="step-values">
                         <span class="coherence-check missing">Veuillez entrer la natrémie et la glycémie</span>
@@ -3336,7 +3782,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisStepsK = document.getElementById('analysisStepsK');
     analysisStepsK.innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0 : Kaliémie</div>
+            <div class="step-number">Initialisation : Kaliémie</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -3380,7 +3826,7 @@ function analyzeKalemia() {
         kInput.classList.add('blink');
         analysisStepsK.innerHTML = `
             <div class="analysis-step">
-                <div class="step-number">Étape 0</div>
+                <div class="step-number">Initialisation : Kaliémie</div>
                 <div class="step-content">
                     <div class="step-values">
                         <span class="coherence-check missing">Veuillez entrer la kaliémie</span>
@@ -3529,7 +3975,18 @@ function analyzeHypokalemia(k, ku, pressure) {
                                 </ul>
                             </li>
                         </ul>
-                    </div>`;
+                    </div>
+					        <div class="ecg-signs-box">
+            <strong>Signes ECG</strong>
+            <ul>
+                <li>Aplatissement onde T diffuse</li>
+                <li>Apparition d'une onde U</li>
+                <li>Sous décalage du ST diffus</li>
+                <li>Torsade de pointe par allongement du QT</li>
+                <li>Troubles du rythme</li>
+                <li>Allongement de la repolarisation</li>
+            </ul>
+        </div>`;
             } else {
                 // Si kaliurèse précisée, afficher uniquement la cause correspondante
                 if (ku < 20) {
@@ -3544,7 +4001,19 @@ function analyzeHypokalemia(k, ku, pressure) {
                                 <li>Hypersudation majeure</li>
                                 <li>Pertes rénales antérieures (diurétiques)</li>
                             </ul>
-                        </div>`;
+                        </div>
+						        <div class="ecg-signs-box">
+            <strong>Signes ECG</strong>
+            <ul>
+                <li>Aplatissement onde T diffuse</li>
+                <li>Apparition d'une onde U</li>
+                <li>Sous décalage du ST diffus</li>
+                <li>Torsade de pointe par allongement du QT</li>
+                <li>Troubles du rythme</li>
+                <li>Allongement de la repolarisation</li>
+            </ul>
+        </div>
+		`;
                 } else if (ku >= 20) {
                     if (pressure === 'high') {
                         conclusionContent += `
@@ -3568,7 +4037,18 @@ function analyzeHypokalemia(k, ku, pressure) {
                                         </ul>
                                     </li>
                                 </ul>
-                            </div>`;
+                            </div>
+							        <div class="ecg-signs-box">
+            <strong>Signes ECG</strong>
+            <ul>
+                <li>Aplatissement onde T diffuse</li>
+                <li>Apparition d'une onde U</li>
+                <li>Sous décalage du ST diffus</li>
+                <li>Torsade de pointe par allongement du QT</li>
+                <li>Troubles du rythme</li>
+                <li>Allongement de la repolarisation</li>
+            </ul>
+        </div>`;
                     } else {
                         conclusionContent += `
                             <div class="causes-box">
@@ -3587,7 +4067,18 @@ function analyzeHypokalemia(k, ku, pressure) {
                                         </ul>
                                     </li>
                                 </ul>
-                            </div>`;
+                            </div>
+							        <div class="ecg-signs-box">
+            <strong>Signes ECG</strong>
+            <ul>
+                <li>Aplatissement onde T diffuse</li>
+                <li>Apparition d'une onde U</li>
+                <li>Sous décalage du ST diffus</li>
+                <li>Torsade de pointe par allongement du QT</li>
+                <li>Troubles du rythme</li>
+                <li>Allongement de la repolarisation</li>
+            </ul>
+        </div>`;
                     }
                 }
             }
@@ -3653,7 +4144,7 @@ function analyzeHyperkalemia() {
                             <li>Diurétiques épargneurs de potassium</li>
                         </ul>
                     </div>
-                    <br></br>
+                   
 					<div class="causes-box">
                         <strong>2. Transfert intracellulaire → extracellulaire</strong>
                         <ul>
@@ -3684,8 +4175,24 @@ function analyzeHyperkalemia() {
 							<li>+/- Diurétiques de l'anse, épuration extra-rénale, résine échangeuse d'ion (Kayexalate)</li>
 						</ul>
 					</div>
+					
+						<div class="ecg-signs-box">
+							<strong>Signes ECG</strong>
+							<ul>
+								<li>Onde T ample, pointue, symétrique, étroite</li>
+								<li>Allongement du PR (BAV) et dysfonction sinusale</li>
+								<li>Élargissement du QRS</li>
+								<li>Troubles de la conduction</li>
+								<li>Accélération de la repolarisation</li>
+							</ul>
+						</div>
                 </div>
+				
             </div>`;
+			
+			
+			
+			
         analysisStepsK.appendChild(conclusion);
     }, 1200);
 }
@@ -3697,7 +4204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const analysisStepsIRA = document.getElementById('analysisStepsIRA');
     analysisStepsIRA.innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0 : IRA</div>
+            <div class="step-number">Initialisation : IRA</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -3729,7 +4236,7 @@ function analyzeIRA() {
     let iraOCount = 0;
     let results = [];
 
-    // Liste de tous les rapports à afficher
+    // Liste de tous les rapports à afficher GLOIRE à notre mère nation
     const allReports = [
         {
             name: "Urée/Créatinine plasmatique",
@@ -3908,6 +4415,9 @@ function analyzeTHEK() {
 	
 	
 }
+
+//pas besoin pour la calcémie car fonction = ID bouton
+
 
 // Fonction d'analyse globale
 function analyzeTHEIRA() {
@@ -4234,15 +4744,37 @@ function analyzeTHEIRA() {
     }
 }
 
+.ecg-signs-box {
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-left: 5px solid #dc2626;  /* Rouge pour la barre latérale */
+    margin: 0.25rem 0;
+}
+
+.ecg-signs-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.ecg-signs-box li {
+    position: relative;
+    padding: 0.15rem 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.ecg-signs-box li:before {
+    content: "•";  /* Tiret long pour les signes ECG */
+    color: #dc2626;  /* Rouge pour les tirets */
+    position: absolute;
+    left: -1rem;
+}
+
+
+
 </style>
-		 
-		
-		 
-
-		  
-		
-
-
 
 
 <script>
@@ -4283,7 +4815,7 @@ function resetNatremia() {
     // Réinitialiser l'analyse
     document.getElementById('analysisStepsNa').innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0</div>
+            <div class="step-number">Initialisation : Natrémie<div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -4321,7 +4853,7 @@ function resetKalemia() {
     // Réinitialiser l'analyse
     document.getElementById('analysisStepsK').innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0</div>
+            <div class="step-number">Initialisation : Kaliémie</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -4354,7 +4886,7 @@ function resetIRA() {
     // Réinitialiser l'analyse
     document.getElementById('analysisStepsIRA').innerHTML = `
         <div class="analysis-step">
-            <div class="step-number">Étape 0</div>
+            <div class="step-number">Initialisation : IRA</div>
             <div class="step-content">
                 <div class="step-values">
                     <div style="color: #666; font-size: 0.9rem;">
@@ -4368,95 +4900,149 @@ function resetIRA() {
         </div>`;
 }
 
-
 function generateTHEConclusion() {
-  const values = {
-      na: document.getElementById('THE_Na').value,
-      gly: document.getElementById('THE_Gly').value,
-      nau: document.getElementById('THE_Nau').value,
-      ku: document.getElementById('THE_Ku').value,
-      glyu: document.getElementById('THE_Glyu').value,
-      ureeu: document.getElementById('THE_Uréeu').value,
-      k: document.getElementById('THE_K').value,
-      ku2: document.getElementById('THE_Ku2').value,
-      osmp: document.getElementById('Osmp').value,
-      osmu: document.getElementById('Osmu').value,
-      deficit: document.getElementById('deficit').value,
-      uree: document.getElementById('THE_Urée').value,
-      creat: document.getElementById('THE_Créat').value,
-      ureeu2: document.getElementById('THE_Uréeu2').value,
-      creatu: document.getElementById('THE_Créatu').value,
-      nau2: document.getElementById('THE_Nau2').value,
-      ku3: document.getElementById('THE_Ku3').value,
-      volume: document.getElementById('THE_volume').value,
-      clrCreat: document.getElementById('ClrCréat').value
-  };
+    const values = {
+        // Données natrémie
+        na: document.getElementById('THE_Na').value,
+        gly: document.getElementById('THE_Gly').value,
+        nau: document.getElementById('THE_Nau').value,
+        ku: document.getElementById('THE_Ku').value,
+        glyu: document.getElementById('THE_Glyu').value,
+        ureeu: document.getElementById('THE_Uréeu').value,
+        osmp: document.getElementById('Osmp').value,
+        osmu: document.getElementById('Osmu').value,
+        deficit: document.getElementById('deficit').value,
+        
+        // Données kaliémie
+        k: document.getElementById('THE_K').value,
+        ku2: document.getElementById('THE_Ku2').value,
 
-  let donnees = " ";
-  let hasData = false;
-  
-  // Données natrémie
-  if (values.na) { donnees += `Na = ${values.na} mmol/L ; `; hasData = true; }
-  if (values.gly) { donnees += `Glycémie = ${values.gly} mmol/L ; `; hasData = true; }
-  if (values.osmp) { donnees += `Osmolarité plasmatique = ${values.osmp} mosm/L ; `; hasData = true; }
-  if (values.nau) { donnees += `Nau = ${values.nau} mmol/L ; `; hasData = true; }
-  if (values.ku) { donnees += `Ku = ${values.ku} mmol/L ; `; hasData = true; }
-  if (values.glyu) { donnees += `Glycosurie = ${values.glyu} mmol/L ; `; hasData = true; }
-  if (values.ureeu) { donnees += `Urée u = ${values.ureeu} mmol/L ; `; hasData = true; }
-  if (values.osmu) { donnees += `Osmolarité urinaire = ${values.osmu} mosm/L ; `; hasData = true; }
+        // Données calcémie
+        ca: document.getElementById('THE_Cam').value,
+        cac: document.getElementById('Cac').value,
+        albu: document.getElementById('THE_Albu').value,
+        pth: document.getElementById('THE_PTN').value,
+        vitD: document.getElementById('THE_VitD').value,
+        
+        // Données IRA
+        uree: document.getElementById('THE_Urée').value,
+        creat: document.getElementById('THE_Créat').value,
+        ureeu2: document.getElementById('THE_Uréeu2').value,
+        creatu: document.getElementById('THE_Créatu').value,
+        nau2: document.getElementById('THE_Nau2').value,
+        ku3: document.getElementById('THE_Ku3').value,
+        volume: document.getElementById('THE_volume').value,
+        clrCreat: document.getElementById('ClrCréat').value
+    };
 
-  // Données kaliémie  
-  if (values.k) { donnees += `K = ${values.k} mmol/L ; `; hasData = true; }
-  if (values.ku2) { donnees += `Ku = ${values.ku2} mmol/L ; `; hasData = true; }
+    let donnees = "";
+    let conclusionText = "";
+    let hasData = false;
 
-  // Données IRA
-  if (values.uree) { donnees += `Urée p = ${values.uree} mmol/L ; `; hasData = true; }
-  if (values.creat) { donnees += `Créatinine p = ${values.creat} µmol/L ; `; hasData = true; }
-  if (values.ureeu2) { donnees += `Urée u = ${values.ureeu2} mmol/L ; `; hasData = true; }
-  if (values.creatu) { donnees += `Créatinine u = ${values.creatu} mmol/L ; `; hasData = true; }
-  if (values.nau2) { donnees += `Nau = ${values.nau2} mmol/L ; `; hasData = true; }
-  if (values.ku3) { donnees += `Ku = ${values.ku3} mmol/L ; `; hasData = true; }
-  if (values.volume) { donnees += `Volume = ${values.volume} L/24h ; `; hasData = true; }
-  if (values.clrCreat) { donnees += `Clairance créat = ${values.clrCreat} mL/min ; `; hasData = true; }
+    // Construction des données
+    if (values.na) { donnees += `Na = ${values.na} mmol/L ; `; hasData = true; }
+    if (values.gly) { donnees += `Glycémie = ${values.gly} mmol/L ; `; hasData = true; }
+    if (values.osmp) { donnees += `Osmolarité plasmatique = ${values.osmp} mosm/L ; `; hasData = true; }
+    if (values.nau) { donnees += `Nau = ${values.nau} mmol/L ; `; hasData = true; }
+    if (values.ku) { donnees += `Ku = ${values.ku} mmol/L ; `; hasData = true; }
+    if (values.glyu) { donnees += `Glycosurie = ${values.glyu} mmol/L ; `; hasData = true; }
+    if (values.ureeu) { donnees += `Urée u = ${values.ureeu} mmol/L ; `; hasData = true; }
+    if (values.osmu) { donnees += `Osmolarité urinaire = ${values.osmu} mosm/L ; `; hasData = true; }
 
-  if (!hasData) {
-      donnees = "Aucune donnée saisie";
-  } else {
-      donnees = donnees.slice(0, -2);
-  }
+    // Données kaliémie
+    if (values.k) { donnees += `K = ${values.k} mmol/L ; `; hasData = true; }
+    if (values.ku2) { donnees += `Ku = ${values.ku2} mmol/L ; `; hasData = true; }
 
-  let conclusionText = "";
+    // Données calcémie
+    if (values.ca) {
+        donnees += `Ca mesuré = ${values.ca} mmol/L ; `;
+        hasData = true;
+        if (values.cac) { donnees += `Ca corrigé = ${values.cac} mmol/L ; `; }
+        if (values.albu) { donnees += `Albumine = ${values.albu} g/L ; `; }
+        if (values.pth) { donnees += `PTH = ${values.pth} pg/mL ; `; }
+        if (values.vitD) { donnees += `Vitamine D = ${values.vitD} ng/mL ; `; }
+    }
 
-  // Conclusion natrémie
-  if (values.na && (values.na < 135 || values.na > 145)) {
-      const conclusionBoxesNa = document.querySelectorAll('.causes-box strong');
-      conclusionBoxesNa.forEach(box => {
-          if (box.textContent.includes('natrémie')) {
-              conclusionText += box.textContent + ".\n";
-          }
-      });
-  }
+    // Données IRA
+    if (values.uree) { donnees += `Urée p = ${values.uree} mmol/L ; `; hasData = true; }
+    if (values.creat) { donnees += `Créatinine p = ${values.creat} µmol/L ; `; hasData = true; }
+    if (values.ureeu2) { donnees += `Urée u = ${values.ureeu2} mmol/L ; `; hasData = true; }
+    if (values.creatu) { donnees += `Créatinine u = ${values.creatu} mmol/L ; `; hasData = true; }
+    if (values.nau2) { donnees += `Nau = ${values.nau2} mmol/L ; `; hasData = true; }
+    if (values.ku3) { donnees += `Ku = ${values.ku3} mmol/L ; `; hasData = true; }
+    if (values.volume) { donnees += `Volume = ${values.volume} L/24h ; `; hasData = true; }
+    if (values.clrCreat) { donnees += `Clairance créat = ${values.clrCreat} mL/min ; `; hasData = true; }
 
-  // Conclusion kaliémie
-  if (values.k && (values.k < 3.5 || values.k > 5)) {
-      const pressure = document.querySelector('input[name="pressure"]:checked')?.value;
-      if (values.k < 3.5) {
-          conclusionText += `Hypokaliémie${values.ku2 ? ` avec kaliurèse ${values.ku2 > 20 ? '> 20' : '< 20'} mmol/L` : ''}${pressure === 'high' ? ' dans un contexte d\'hypertension artérielle' : ' dans un contexte de PA normale ou basse'}.\n`;
-      } else {
-          conclusionText += 'Hyperkaliémie.\n';
-      }
-  }
+    // Construction des conclusions
+    // Conclusion natrémie
+    if (values.na && (parseFloat(values.na) < 135 || parseFloat(values.na) > 145)) {
+        const conclusionBoxesNa = document.querySelectorAll('#analysisStepsNa .causes-box strong');
+        conclusionBoxesNa.forEach(box => {
+            if (box.textContent.includes('natrémie')) {
+                conclusionText += box.textContent + ".\n";
+            }
+        });
+    }
 
-  // Conclusion IRA
-  const iraProfile = document.querySelector('.ira-profile');
-  if (iraProfile && !iraProfile.classList.contains('indeterminate')) {
-      conclusionText += iraProfile.textContent.trim() + ".\n";
-  }
+    // Conclusion kaliémie
+    if (values.k && (parseFloat(values.k) < 3.5 || parseFloat(values.k) > 5)) {
+        const conclusionBoxesK = document.querySelectorAll('#analysisStepsK .causes-box strong');
+        conclusionBoxesK.forEach(box => {
+            conclusionText += box.textContent + ".\n";
+        });
+    }
 
-  const generatedTextArea = document.getElementById('THE_generatedTextArea');
-  generatedTextArea.innerHTML = `<strong style="color: #1e40af;">Données :</strong>\n${donnees}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
+    // Conclusion calcémie
+    if (values.ca) {
+        let caValue = values.cac ? parseFloat(values.cac) : parseFloat(values.ca);
+        let caType = values.cac ? "corrigée" : "mesurée";
+
+        if (caValue < 2.2) {
+            let conclusion = `Hypocalcémie`;
+            if (values.pth) {
+                conclusion += parseFloat(values.pth) > 65 ? " à PTH adaptée" : " à PTH inadaptée";
+            }
+            if (values.vitD) {
+                if (parseFloat(values.vitD) < 20) {
+                    conclusion += " avec carence en vitamine D";
+                } else if (parseFloat(values.vitD) > 80) {
+                    conclusion += " avec intoxication en vitamine D";
+                }
+            }
+            conclusionText += conclusion + ".\n";
+        } 
+        else if (caValue > 2.6) {
+            let conclusion = `Hypercalcémie`;
+            if (values.pth) {
+                conclusion += parseFloat(values.pth) < 15 ? " à PTH adaptée" : " à PTH inadaptée";
+            }
+            if (values.vitD) {
+                if (parseFloat(values.vitD) < 20) {
+                    conclusion += " avec carence en vitamine D";
+                } else if (parseFloat(values.vitD) > 80) {
+                    conclusion += " avec intoxication en vitamine D";
+                }
+            }
+            conclusionText += conclusion + ".\n";
+        }
+	
+    }
+
+    // Conclusion IRA
+    const iraProfile = document.querySelector('.ira-profile');
+    if (iraProfile && !iraProfile.classList.contains('indeterminate')) {
+        conclusionText += iraProfile.textContent.trim() + ".\n";
+    }
+
+    if (!hasData) {
+        donnees = "Aucune donnée saisie";
+    } else {
+        donnees = donnees.slice(0, -2);
+    }
+
+    const generatedTextArea = document.getElementById('THE_generatedTextArea');
+    generatedTextArea.innerHTML = `<strong style="color: #1e40af;">Données :</strong>\n${donnees}\n<br><strong style="color: #1e40af;">Conclusion :</strong>\n${conclusionText}`;
 }
-
 
 
 // copier la conclusion
@@ -4739,6 +5325,96 @@ input[type="number"]:focus {
 
 .diagnostic-list:last-child {
     margin-bottom: 0;
+}
+/* Style commun pour toutes les box */
+.causes-box,
+.treatment-box,
+.ecg-signs-box {
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    margin: 0.35rem 0;  /* Marge réduite entre les box */
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+}
+
+/* Style spécifique pour chaque type de box */
+.causes-box {
+    border-left: 5px solid #1e40af;
+}
+
+.treatment-box {
+    border-left: 5px solid #60a5fa;
+}
+
+.ecg-signs-box {
+    border-left: 5px solid #dc2626;
+}
+
+/* Styles communs pour les listes */
+.causes-box ul,
+.treatment-box ul,
+.ecg-signs-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.causes-box li,
+.treatment-box li,
+.ecg-signs-box li {
+    position: relative;
+    padding: 0.15rem 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Points colorés pour chaque type de liste */
+.causes-box li:before {
+    content: "•";
+    color: #1e40af;
+    position: absolute;
+    left: -1rem;
+}
+
+.treatment-box li:before {
+    content: "•";
+    color: #60a5fa;
+    position: absolute;
+    left: -1rem;
+}
+
+.ecg-signs-box li:before {
+    content: "•";
+    color: #dc2626;
+    position: absolute;
+    left: -1rem;
+}
+
+/* Style pour les titres de box */
+.causes-box strong,
+.treatment-box strong,
+.ecg-signs-box strong {
+    display: block;
+    margin-bottom: 0.25rem;  /* Marge réduite sous les titres */
+    font-size: 0.95rem;
+}
+
+/* Step values conteneur */
+.step-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;  /* Espacement réduit entre les éléments */
+    width: 100%;
+}
+
+/* Ajustement des marges internes des listes */
+.causes-box ul,
+.treatment-box ul,
+.ecg-signs-box ul {
+    margin-top: 0.25rem;  /* Marge réduite au-dessus des listes */
+    margin-bottom: 0.25rem;  /* Marge réduite en-dessous des listes */
 }
 </style>
 

@@ -1429,7 +1429,7 @@ textarea {
 .checkmark {
     position: absolute;
     top: 50%;
-    left: 0;
+    left: 3px;
     transform: translateY(-50%);
     height: 12px;
     width: 12px;
@@ -2385,29 +2385,33 @@ document.querySelectorAll('input[name="voieAccouchement"]').forEach(radio => {
 
 </div>
 
+<!-- Section Vaccins -->
 <div class="subsection">
 <h4>Vaccins :</h4>
 <div style="margin-left: 20px;">
     <!-- Status vaccinal -->
-    <div style="margin-bottom: 15px;">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-            <label class="custom-control radio" style="margin-right: 15px;">
-                <input type="radio" name="vaccins" id="vaccinsAJour" value="ajour" checked>
-                <span class="checkmark"></span>
-                À jour
-            </label>
-            <label class="custom-control radio" style="margin-right: 15px;">
-                <input type="radio" name="vaccins" id="vaccinsNonAJour" value="nonajour">
-                <span class="checkmark"></span>
-                Non à jour
-            </label>
-            <input type="text" id="vaccinsPrecisions" placeholder="Précisez" 
-                   style="margin-left: 0px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        <div style="margin-bottom: 15px; display: block;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                <label class="custom-control radio" style="margin-right: 15px;">
+                    <input type="radio" name="vaccins" id="vaccinsAJour" value="ajour" checked>
+                    <span class="checkmark"></span>
+                    À jour
+                </label>
+                <label class="custom-control radio" style="margin-right: 15px;">
+                    <input type="radio" name="vaccins" id="vaccinsNonAJour" value="nonajour">
+                    <span class="checkmark"></span>
+                    Non à jour
+                </label>
+            </div>
+            <input type="text" id="vaxinsPrecisions" placeholder="Précisez" 
+                   style="margin-top: 10px; width: 300px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: block !important;">
         </div>
-		</div>
+        </div>
+
+<div style="margin-left: 20px;">
 
     <!-- Vaccins exigibles -->
-<div id="vaccinsExigibles" style="margin-top: 20px; display: none;">
+    <div id="vaccinsExigibles" style="margin-top: 20px;">
         <p><strong>Vaccins exigibles à cet âge :</strong></p>
         <div style="display: grid; gap: 10px; margin-top: 10px;">
             <div style="display: flex; align-items: center;">
@@ -2447,19 +2451,11 @@ document.querySelectorAll('input[name="voieAccouchement"]').forEach(radio => {
         </div>
     </div>
 </div>
+</div>
+        </div>
+
 
 <script>
-// Gestion de l'affichage du champ de précision pour les vaccins
-document.querySelectorAll('input[name="vaccins"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const precisions = document.getElementById('vaccinsPrecisions');
-        precisions.style.display = this.value === 'nonajour' ? 'inline-block' : 'none';
-        if (this.value === 'ajour') {
-            precisions.value = '';
-        }
-    });
-});
-
 // Fonction pour calculer les doses de vaccins requises
 function calculateVaccineDoses(ageInMonths) {
     const doses = {
@@ -2517,12 +2513,17 @@ function calculateVaccineDoses(ageInMonths) {
 }
 
 // Mise à jour des champs de doses de vaccins
-function updateVaccineDoses(doses) {
+function updateVaccinDoses(doses) {
     document.getElementById('dtpDoses').value = doses.dtp;
     document.getElementById('vhbDoses').value = doses.vhb;
     document.getElementById('pneumoDoses').value = doses.pneumo;
     document.getElementById('meningoDoses').value = doses.meningo;
     document.getElementById('rorDoses').value = doses.ror;
+    
+    // S'assurer que le champ précisions reste visible
+    if (document.getElementById('vaxinsPrecisions')) {
+        document.getElementById('vaxinsPrecisions').style.display = 'block';
+    }
 }
 
 // Dans votre écouteur d'événement pour la date de naissance
@@ -2530,14 +2531,11 @@ document.getElementById('dateNaissance')?.addEventListener('change', function() 
     const vaccinsSection = document.getElementById('vaccinsExigibles');
     
     if (!this.value) {
-        vaccinsSection.style.display = 'none';
-        updateVaccineDoses({dtp: 0, vhb: 0, pneumo: 0, meningo: 0, ror: 0});
+        updateVaccinDoses({dtp: 0, vhb: 0, pneumo: 0, meningo: 0, ror: 0});
         return;
     }
 
     // Si une date est entrée, on affiche la section et on met à jour les doses
-    vaccinsSection.style.display = 'block';
-    
     const birthDate = new Date(this.value);
     const today = new Date();
     let months = (today.getFullYear() - birthDate.getFullYear()) * 12;
@@ -2545,7 +2543,21 @@ document.getElementById('dateNaissance')?.addEventListener('change', function() 
     months += today.getMonth();
 
     const doses = calculateVaccineDoses(months);
-    updateVaccineDoses(doses);
+    updateVaccinDoses(doses);
+    
+    // S'assurer que le champ précisions reste visible
+    if (document.getElementById('vaxinsPrecisions')) {
+        document.getElementById('vaxinsPrecisions').style.display = 'block';
+    }
+});
+
+// Assurer que le champ reste visible lors du changement de statut vaccinal
+document.querySelectorAll('input[name="vaccins"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (document.getElementById('vaxinsPrecisions')) {
+            document.getElementById('vaxinsPrecisions').style.display = 'block';
+        }
+    });
 });
 
 </script>
@@ -4246,6 +4258,64 @@ function getHemodynamiqueDescription() {
 }
 </script>
 
+<!-- Section Insuffisance Cardiaque -->
+<p><strong>Insuffisance cardiaque :</strong></p>
+<div style="margin-left: 20px;">
+   <!-- Choix principal -->
+   <div style="margin-bottom: 15px;">
+       <label class="custom-control radio" style="margin-right: 10px;">
+           <input type="radio" name="card5" id="nocard5" checked>
+           <span class="checkmark"></span>
+           Pas de signe
+       </label>
+       <label class="custom-control radio" style="margin-right: 10px;">
+           <input type="radio" name="card5" id="yescard5">
+           <span class="checkmark"></span>
+           Signes cliniques
+       </label>
+   </div>
+
+   <!-- Détails insuffisance cardiaque -->
+   <div id="card5Details" style="display: none; margin-left: 20px;">
+       <div class="cardiac-signs" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 15px;">
+           
+           <label class="custom-control checkbox">
+               <input type="checkbox" id="refluxHepatojugulaire">
+               <span class="checkmark"></span>
+               Reflux hépatojugulaire
+           </label>
+           
+           <label class="custom-control checkbox">
+               <input type="checkbox" id="hepatomegalie">
+               <span class="checkmark"></span>
+               Hépatomégalie
+           </label>
+           
+           <label class="custom-control checkbox">
+               <input type="checkbox" id="omi">
+               <span class="checkmark"></span>
+               OMI
+           </label>
+       </div>
+   </div>
+</div>
+
+			
+			
+<script>
+
+			
+document.getElementById("yescard5").addEventListener("change", function() {
+    document.getElementById("card5Details").style.display = "block";
+});
+document.getElementById("nocard5").addEventListener("change", function() {
+    document.getElementById("card5Details").style.display = "none";
+});
+			
+
+			
+			</script>
+			
 
 <p><strong>Pouls :</strong></p>
 <div style="margin-left: 20px;">
@@ -6656,7 +6726,7 @@ let vaccinsText = '';
 if (document.querySelector('#vaccinsAJour')?.checked) {
    vaccinsText = 'Vaccinations à jour.';
 } else if (document.querySelector('#vaccinsNonAJour')?.checked) {
-   const precisions = document.querySelector('#vaccinsPrecisions')?.value.trim();
+   const precisions = document.querySelector('#vaxinsPrecisions')?.value.trim();
    vaccinsText = 'Vaccinations non à jour';
    if (precisions) {
        vaccinsText += ` : ${precisions}.`;
@@ -7126,6 +7196,27 @@ if (document.querySelector('#nocard4')?.checked) {
 }
 
 finalText += hemoText;
+
+// IC DROITE 
+let ICGDText = '';
+
+if (document.querySelector('#nocard5')?.checked) {
+    ICGDText += ' Pas de signe d\'insuffisance cardiaque.';
+} else if (document.querySelector('#yescard5')?.checked) {
+    ICGDText += ' Insuffisance cardiaque';
+	
+    const signesICGD = [];
+    if (document.querySelector('#refluxHepatojugulaire')?.checked) signesICGD.push('reflux hépatojugulaire');
+    if (document.querySelector('#hepatomegalie')?.checked) signesICGD.push('hépatomégalie');
+    if (document.querySelector('#omi')?.checked) signesICGD.push('oedèmes des membres inférieurs');
+
+    ICGDText += signesICGD.length > 0
+        ? ` avec : ${signesICGD.join(', ')}.`
+        : '.';
+		
+}
+
+finalText += ICGDText;
 
 
 // pouls 
