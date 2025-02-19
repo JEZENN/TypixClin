@@ -1704,6 +1704,8 @@ textarea {
 					<label>Poids (kg) : <input type="text" id="poids" placeholder="kg" style="width: 50px; margin-right: 10px;"></label>
 					<label>IMC : <input type="text" id="IMC" readonly placeholder="kg/m²" style="width: 80px; background-color: #e9e9e9; margin-left: 10px;"></label>
 				</p>
+				
+				
 				<script>
 					document.getElementById('taille').addEventListener('input', calculateIMC);
 					document.getElementById('poids').addEventListener('input', calculateIMC);
@@ -6389,6 +6391,28 @@ document.querySelectorAll('input[name="skinLesions"]').forEach(radio => {
 
     </div>
 	
+<div class="container">
+    <div class="section">
+        <div class="section-header">
+            <h3><span class="icon">🤖</span>Aide diagnostique avec l'IA</h3>
+            <div class="button-container">
+                <button class="toggle-button" id="generateConclusionIA">Générer une conclusion</button>
+                <button class="toggle-button" id="copyConclusionIA">Copier dans le presse-papier</button>
+            </div>
+        </div>
+        <div class="section-content">
+            <div class="subsection-grid">
+                <div class="subsection">
+                    <div id="aiConclusionArea"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+	
+	
+	
    </div>
  </div>	
 </div>
@@ -6504,7 +6528,7 @@ function highlight(text) {
 		: 'Pas d\'hémoptysie';
 
 		const resp2val = document.getElementById('yesresp2').checked 
-		? highlight(`Toux (${document.getElementById('resp1d').value || ''})`)
+		? highlight(`Toux (${document.getElementById('resp2d').value || ''})`)
 		: 'Pas de toux';
 		
 		const resp3val = document.getElementById('yesresp3').checked 
@@ -8702,7 +8726,7 @@ TypixClin © 2025, Jean ZENNARO
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Les animations sont maintenant gérées par CSS
-    // On garde uniquement la logique métier existante
+    // Ongarde uniquement la logique métier existante
     
     const content = document.querySelector('.content');
     if (content) {
@@ -8710,6 +8734,537 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<script>
+
+// Configuration de l'API
+const API_CONFIG = {
+  URL: "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+  KEY: "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",
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 3000
+};
+
+
+
+const STYLES = `
+  .medical-result {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+  }
+  
+  .medical-result .section-title {
+    color: #1e40af;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  // Ajout du style pour le message d'instruction
+  .instruction-message {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    font-size: 1.1rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    margin: 1rem 0;
+  }
+  
+  .diagnostic-item {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .diagnostic-item:hover {
+    background: #f1f5f9;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .diagnostic-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: #1e40af;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+  }
+  
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 1rem auto;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #1e40af;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .error {
+    padding: 1.5rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 0.75rem;
+    border: 1px solid #fecaca;
+    margin: 1rem 0;
+    font-weight: 500;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .diagnostic-item {
+    animation: fadeIn 0.5s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .diagnostic-item:nth-child(1) { animation-delay: 0.1s; }
+  .diagnostic-item:nth-child(2) { animation-delay: 0.2s; }
+  .diagnostic-item:nth-child(3) { animation-delay: 0.3s; }
+  
+  @media (max-width: 768px) {
+    .section {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+      padding: 0.5rem 0;
+    }
+    
+    .diagnostic-item {
+      padding: 1rem;
+    }
+  }
+`;
+
+// Templates pour les messages
+const TEMPLATES = {
+  PROMPT: "[INST]Tu es un assistant médical expert. Analyse cet examen clinique et fournis EN FRANCAIS :\n1. Les 3 diagnostics les plus probables, bases toi sur des sources médicales fiables comme les PNDS, reste concis dans tes explications\n2. Les examens complémentaires pertinents dans le contexte, reste concis\n3. Les traitements recommandés en plus ou moins urgences en fonction des diagnostiques, reste très concis. Très concis stp \n\nExamen clinique :\n{examText}[/INST]",
+
+  LOADING: (attempt) => {
+    const attemptText = attempt > 1 ? ` (tentative ${attempt}/${API_CONFIG.MAX_RETRIES})` : "";
+    const retryText = attempt > 1 ? "<div style=\"margin-top: 10px; color: #6b7280;\">Le service est occupé, nouvelle tentative en cours...</div>" : "";
+    
+    return `
+      <div class="loading">
+        <div>Analyse de l'examen clinique en cours${attemptText}...</div>
+        <div class="loading-spinner"></div>
+        ${retryText}
+      </div>
+    `;
+  },
+
+  ERROR: (message, attempt) => {
+    const suggestions = attempt >= API_CONFIG.MAX_RETRIES ? `
+      <div style="margin-top: 16px; font-size: 0.95em;">
+        <div style="font-weight: 500; margin-bottom: 8px;">Suggestions :</div>
+        <ol style="margin: 0; padding-left: 20px;">
+          <li>Attendez quelques minutes et réessayez</li>
+          <li>Rafraîchissez la page</li>
+          <li>Vérifiez votre connexion internet</li>
+        </ol>
+      </div>
+    ` : "";
+
+    return `
+      <div class="error">
+        <div style="font-weight: 500; margin-bottom: 8px;">Erreur lors de l'analyse</div>
+        <div>${message}</div>
+        ${suggestions}
+      </div>
+    `;
+  },
+
+  formatSection: (title, items) => {
+    const formattedItems = items.map(item => 
+      `<div class="diagnostic-item">${item.replace(/^\d+\.\s*/, "").trim()}</div>`
+    ).join("");
+
+    return `
+      <div class="section">
+        <div class="section-title">${title}</div>
+        ${formattedItems}
+      </div>
+    `;
+  }
+};
+
+class MedicalAnalysisAssistant {
+  constructor() {
+    this.conclusionArea = document.getElementById("aiConclusionArea");
+    this.textArea = document.getElementById("generatedTextArea");
+    this.button = document.getElementById("generateConclusionIA");
+    this.currentAttempt = 1;
+    this.isProcessing = false;
+    this.setupEventListeners();
+  }
+  
+  
+
+  setupEventListeners() {
+    this.button.addEventListener("click", async () => {
+      if (this.isProcessing) return;
+      
+      this.currentAttempt = 1;
+      this.isProcessing = true;
+      this.button.disabled = true;
+      
+      try {
+        await this.generateAnalysis();
+      } finally {
+        this.isProcessing = false;
+        this.button.disabled = false;
+      }
+    });
+  }
+
+  async generateAnalysis() {
+    try {
+      const examText = this.validateInput();
+      await this.processAnalysis(examText);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  validateInput() {
+    const text = this.textArea.innerText.trim();
+    if (!text) {
+      throw new Error("Veuillez entrer un texte avant de générer l'analyse.");
+    }
+    return text;
+  }
+
+  async processAnalysis(examText) {
+    while (this.currentAttempt <= API_CONFIG.MAX_RETRIES) {
+      try {
+        this.showLoading();
+        const result = await this.fetchAnalysis(examText);
+        return this.displayResult(result);
+      } catch (error) {
+        if (error.status === 503 && this.currentAttempt < API_CONFIG.MAX_RETRIES) {
+          await this.wait();
+          this.currentAttempt++;
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
+  showLoading() {
+    this.conclusionArea.innerHTML = TEMPLATES.LOADING(this.currentAttempt);
+  }
+
+  async wait() {
+    await new Promise(resolve => setTimeout(resolve, API_CONFIG.RETRY_DELAY));
+  }
+
+  async fetchAnalysis(examText) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const response = await fetch(API_CONFIG.URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${API_CONFIG.KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          inputs: TEMPLATES.PROMPT.replace("{examText}", examText),
+          parameters: {
+            max_new_tokens: 1000,
+            temperature: 0.3,
+            top_p: 0.9,
+            do_sample: true
+          }
+        }),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const error = new Error(`Erreur API (${response.status}): ${response.statusText}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      return response.json();
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  parseResponse(result) {
+    let text = "";
+    
+    if (Array.isArray(result) && result.length > 0 && result[0].generated_text) {
+      text = result[0].generated_text;
+    } else if (result && result.generated_text) {
+      text = result.generated_text;
+    } else if (typeof result === "string") {
+      text = result;
+    } else {
+      throw new Error("Format de réponse non reconnu");
+    }
+
+    const promptEnd = text.indexOf("[/INST]");
+    if (promptEnd !== -1) {
+      text = text.substring(promptEnd + 7).trim();
+    }
+
+    return text;
+  }
+
+  displayResult(result) {
+    const generatedText = this.parseResponse(result);
+    if (!generatedText) {
+      throw new Error("L'IA n'a pas généré de réponse valide.");
+    }
+
+    // Séparer le texte en sections
+    const sections = {
+      diagnostics: [],
+      examens: [],
+      traitements: []
+    };
+
+    const lines = generatedText.split("\n");
+    let currentSection = null;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+
+      if (trimmedLine.match(/^1\./)) {
+        currentSection = "diagnostics";
+        sections.diagnostics.push(trimmedLine);
+      } else if (trimmedLine.match(/^2\./)) {
+        currentSection = "examens";
+        sections.examens.push(trimmedLine);
+      } else if (trimmedLine.match(/^3\./)) {
+        currentSection = "traitements";
+        sections.traitements.push(trimmedLine);
+      } else if (currentSection && trimmedLine) {
+        sections[currentSection].push(trimmedLine);
+      }
+    }
+
+    const html = `
+      <style>${STYLES}</style>
+      <div class="medical-result">
+        ${TEMPLATES.formatSection("Diagnostics probables", sections.diagnostics)}
+        ${TEMPLATES.formatSection("Examens complémentaires", sections.examens)}
+        ${TEMPLATES.formatSection("Traitements recommandés", sections.traitements)}
+      </div>
+    `;
+
+    this.conclusionArea.innerHTML = html;
+  }
+
+  handleError(error) {
+    console.error("Erreur :", error);
+    this.conclusionArea.innerHTML = TEMPLATES.ERROR(
+      error.message, 
+      this.currentAttempt
+    );
+  }
+}
+
+// Initialisation
+document.addEventListener("DOMContentLoaded", () => {
+  new MedicalAnalysisAssistant();
+});
+
+</script>
+
+<style>
+
+/* Styles pour la section IA */
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: #1e40af;
+}
+
+.loading-spinner {
+  margin: 1rem auto;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #1e40af;
+  border-radius: 50%;
+  animation: spinner 1s linear infinite;
+}
+
+.medical-conclusion {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.conclusion-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.conclusion-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.conclusion-section h4 {
+  color: #1e40af;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.conclusion-section p {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.error {
+  padding: 1rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* Styles pour la section IA */
+.ai-conclusion-area {
+    min-height: 200px;
+    border-radius: 0.75rem;
+    background: white;
+}
+
+.medical-result {
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.medical-result .section {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.medical-result .section:last-child {
+    margin-bottom: 0;
+}
+
+
+.medical-result .diagnostic-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.medical-result .diagnostic-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Style de chargement */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    margin: 1rem auto;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #1e40af;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Style d'erreur */
+.error {
+    padding: 1.5rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 0.75rem;
+    border: 1px solid #fecaca;
+    margin: 1rem 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Animation d'apparition pour les résultats */
+.diagnostic-item {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Délai d'animation pour chaque item */
+.diagnostic-item:nth-child(1) { animation-delay: 0.1s; }
+.diagnostic-item:nth-child(2) { animation-delay: 0.2s; }
+.diagnostic-item:nth-child(3) { animation-delay: 0.3s; }
+
+
+
+</style>
+
+
+
 
 
 </body>
