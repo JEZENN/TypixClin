@@ -856,7 +856,8 @@ input[type="number"]:focus {
 
 		<!-- Sticky Navigation Bar -->
     <nav class="main-nav2">
-        <a href="#Interrogatoire" class="nav-link"><span>📋</span></a>
+        
+		<a href="#Interrogatoire" class="nav-link"><span>📋</span></a>
         <a href="#examen-general" class="nav-link"><span>🏥</span></a>
         <a href="#examen-cardiovasculaire" class="nav-link"><span>🫀</span></a>
         <a href="#examen-respiratoire" class="nav-link"><span>🫁</span></a>
@@ -1113,12 +1114,6 @@ section[id] {
     text-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin: 0;
 }
-
-.header h1 {
-    font-size: 2.5rem;
-    animation: slideDown 0.8s ease-out forwards;
-}
-
 .sticky-wrapper h1 {
     font-size: 1.8rem;
     letter-spacing: 1px;
@@ -3093,86 +3088,205 @@ function getInterrogatoireDescription() {
 </div>
 			
 			
+<!-- Pour l'hypercapnie -->
 <p><strong>Hypercapnie :</strong>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="resp4" id="noresp4" checked>
-        <span class="checkmark"></span> Pas de signe
+        <span class="checkmark"></span>
+        Pas de signe
     </label>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="resp4" id="yesresp4">
-        <span class="checkmark"></span> Signes cliniques
+        <span class="checkmark"></span>
+        Signes cliniques
     </label>
 </p>
-<div class="resp4d1" id="resp4d1">
+
+<div id="resp4d1" style="margin-left: 20px;">
     <label class="custom-control checkbox" style="margin-right: 10px;">
         <input type="checkbox" id="resp4d1Input">
-        <span class="checkmark"></span> Sueurs
+        <span class="checkmark"></span>
+        Sueurs
     </label>
 </div>
-<div class="resp4d2" id="resp4d2">
+<div id="resp4d2" style="margin-left: 20px;">
     <label class="custom-control checkbox" style="margin-right: 10px;">
         <input type="checkbox" id="resp4d2Input">
-        <span class="checkmark"></span> Astéririx
+        <span class="checkmark"></span>
+        Astéririx
     </label>
 </div>
-<div class="resp4d3" id="resp4d3">
+<div id="resp4d3" style="margin-left: 20px;">
     <label class="custom-control checkbox" style="margin-right: 10px;">
         <input type="checkbox" id="resp4d3Input">
-        <span class="checkmark"></span> Céphalées
+        <span class="checkmark"></span>
+        Céphalées
     </label>
 </div>
-<div class="resp4d4" id="resp4d4">
+<div id="resp4d4" style="margin-left: 20px;">
     <label class="custom-control checkbox" style="margin-right: 10px;">
         <input type="checkbox" id="resp4d4Input">
-        <span class="checkmark"></span> HTA
+        <span class="checkmark"></span>
+        HTA
     </label>
 </div>
-<div class="resp4d5" id="resp4d5">
+<div id="resp4d5" style="margin-left: 20px;">
     <label class="custom-control checkbox" style="margin-right: 10px;">
         <input type="checkbox" id="resp4d5Input">
-        <span class="checkmark"></span> Agitation/confusion
+        <span class="checkmark"></span>
+        Agitation/confusion
     </label>
 </div>
 
-
+<!-- Pour les signes de lutte -->
 <p><strong>Signes de lutte :</strong>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="resp5" id="noresp5" checked>
-        <span class="checkmark"></span> Pas de signe
+        <span class="checkmark"></span>
+        Pas de signe
     </label>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="resp5" id="yesresp5">
-        <span class="checkmark"></span> Signes cliniques
-        <select id="resp5Intensity" style="display: none; margin-left: 10px;">
-            <option value="léger">Léger</option>
-            <option value="modéré">Modéré</option>
-            <option value="majeur">Majeur</option>
-        </select>
+        <span class="checkmark"></span>
+        Signes cliniques
+<!-- Remplacer le select original par : -->
+			<div class="custom-select" style="display: none; margin-left: 10px;">
+				<button type="button" class="select-button" onclick="toggleSelect(this)">
+					<span class="intensity-dot"></span>
+					<span class="selected-text">Léger</span>
+					<span class="select-arrow">▼</span>
+				</button>
+				<div class="select-dropdown">
+					<div class="select-option" data-value="léger" onclick="selectIntensity(this)">
+						<span class="intensity-dot light"></span>Léger
+					</div>
+					<div class="select-option" data-value="modéré" onclick="selectIntensity(this)">
+						<span class="intensity-dot medium"></span>Modéré
+					</div>
+					<div class="select-option" data-value="majeur" onclick="selectIntensity(this)">
+						<span class="intensity-dot severe"></span>Majeur
+					</div>
+				</div>
+				<select id="resp5Intensity" style="display: none;">
+					<option value="léger">Léger</option>
+					<option value="modéré">Modéré</option>
+					<option value="majeur">Majeur</option>
+				</select>
+			</div>
     </label>
 </p>
-<div style="display: none;" id="signeLutteDetails">
-    <div class="resp5d1" id="resp5d1">
+
+<style>
+.custom-select {
+    position: relative;
+    display: inline-block;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.select-button {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 120px;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.select-button:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.intensity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #22c55e;
+}
+
+.selected-text {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.select-arrow {
+    margin-left: 8px;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+.select-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.select-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.select-option:hover {
+    background-color: #f8fafc;
+}
+
+.intensity-dot.light { background-color: #22c55e; }
+.intensity-dot.medium { background-color: #f59e0b; }
+.intensity-dot.severe { background-color: #ef4444; }
+
+.custom-select.open .select-arrow {
+    transform: rotate(180deg);
+}
+
+.custom-select.open .select-dropdown {
+    display: block;
+}
+</style>
+
+<div id="signeLutteDetails" style="display: none; margin-left: 20px;">
+    <div id="resp5d1">
         <label class="custom-control checkbox" style="margin-right: 10px;">
             <input type="checkbox" id="resp5d1Input">
-            <span class="checkmark"></span> Tirage intercostal
+            <span class="checkmark"></span>
+            Tirage intercostal
         </label>
     </div>
-    <div class="resp5d2" id="resp5d2">
+    <div id="resp5d2">
         <label class="custom-control checkbox" style="margin-right: 10px;">
             <input type="checkbox" id="resp5d2Input">
-            <span class="checkmark"></span> Tirage susclaviculaire
+            <span class="checkmark"></span>
+            Tirage susclaviculaire
         </label>
     </div>
-    <div class="resp5d3" id="resp5d3">
+    <div id="resp5d3">
         <label class="custom-control checkbox" style="margin-right: 10px;">
             <input type="checkbox" id="resp5d3Input">
-            <span class="checkmark"></span> Tirage souscostal
+            <span class="checkmark"></span>
+            Tirage souscostal
         </label>
     </div>
-    <div class="resp5d4" id="resp5d4">
+    <div id="resp5d4">
         <label class="custom-control checkbox" style="margin-right: 10px;">
             <input type="checkbox" id="resp5d4Input">
-            <span class="checkmark"></span> Balancement thoracoabdominal
+            <span class="checkmark"></span>
+            Balancement thoracoabdominal
         </label>
     </div>
 </div>
@@ -7910,18 +8024,60 @@ function getTVPDescription() {
 			});
 						
 			
-			// Affichage signe de lutte
-			document.getElementById('yesresp5').addEventListener('change', function () {
-				document.getElementById('resp5Intensity').style.display = this.checked ? 'inline' : 'none';
-				document.getElementById('signeLutteDetails').style.display = this.checked ? 'block' : 'none';
-			});
+// Ajouter ces fonctions JavaScript
+function toggleSelect(button) {
+    const select = button.closest('.custom-select');
+    select.classList.toggle('open');
+    
+    // Fermer au clic en dehors
+    document.addEventListener('click', function closeSelect(e) {
+        if (!select.contains(e.target)) {
+            select.classList.remove('open');
+            document.removeEventListener('click', closeSelect);
+        }
+    });
+}
 
-			document.getElementById('noresp5').addEventListener('change', function () {
-				if (this.checked) {
-					document.getElementById('resp5Intensity').style.display = 'none';
-					document.getElementById('signeLutteDetails').style.display = 'none';
-				}
-			});
+function selectIntensity(option) {
+    const select = option.closest('.custom-select');
+    const button = select.querySelector('.select-button');
+    const hiddenSelect = select.querySelector('select');
+    const selectedText = button.querySelector('.selected-text');
+    const dot = button.querySelector('.intensity-dot');
+    
+    const value = option.dataset.value;
+    selectedText.textContent = value;
+    
+    // Mettre à jour la couleur du point
+    dot.className = 'intensity-dot';
+    if (value === 'léger') dot.classList.add('light');
+    if (value === 'modéré') dot.classList.add('medium');
+    if (value === 'majeur') dot.classList.add('severe');
+    
+    // Mettre à jour le select caché
+    hiddenSelect.value = value;
+    
+    // Fermer le dropdown
+    select.classList.remove('open');
+    
+    // Déclencher l'événement change
+    hiddenSelect.dispatchEvent(new Event('change'));
+}
+
+// Modifier les event listeners existants
+document.getElementById('yesresp5').addEventListener('change', function() {
+    const customSelect = document.querySelector('.custom-select');
+    customSelect.style.display = this.checked ? 'inline-block' : 'none';
+    document.getElementById('signeLutteDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noresp5').addEventListener('change', function() {
+    if (this.checked) {
+        const customSelect = document.querySelector('.custom-select');
+        customSelect.style.display = 'none';
+        document.getElementById('signeLutteDetails').style.display = 'none';
+    }
+});
 			
 			
 			// Gestion de l'affichage pour la Percussion
@@ -9062,7 +9218,52 @@ function resetSection(button) {
     const constantFields = ['taille', 'poids', 'IMC', 'FreqResp', 'saturation', 'FreqCard', 
                           'pas', 'pad', 'map', 'Y/4', 'V/5', 'M/6', 'GSG/15', 'litres'];
 
-    // 1. Réinitialiser tous les champs de texte, y compris les constantes
+    // 1. Réinitialiser la date de naissance et l'âge pour l'interrogatoire
+    const dateNaissance = sectionContent.querySelector('#dateNaissanceAdulte');
+    if (dateNaissance) dateNaissance.value = '';
+    
+    const ageCalcule = sectionContent.querySelector('#ageCalculeAdulte');
+    if (ageCalcule) ageCalcule.value = '';
+
+    // 2. Réinitialiser les boutons radio du sexe
+    const hommeRadio = sectionContent.querySelector('input[name="sexeAdulte"][value="homme"]');
+    if (hommeRadio) hommeRadio.checked = true;
+
+    // 3. Réinitialiser tous les champs textarea de l'interrogatoire
+    const textareaFields = [
+        'motifHospitalisation',
+        'socialFamilial',
+        'professionnel',
+        'loisirs',
+        'intoxications',
+        'conduitesSexuelles',
+        'animaux',
+        'voyages',
+        'personneConfiance',
+        'atcdMedicaux',
+        'atcdChirurgicaux',
+        'atcdGynecologiques',
+        'atcdFamiliaux',
+        'allergies',
+        'vaccins',
+        'traitements',
+        'histoireMaladie'
+    ];
+
+    textareaFields.forEach(fieldId => {
+        const textarea = sectionContent.querySelector(`#${fieldId}`);
+        if (textarea) textarea.value = '';
+    });
+
+    // 4. Réinitialiser les boutons radio de latéralité
+    const lateraliteRadios = sectionContent.querySelectorAll('input[name="lateralite"]');
+    lateraliteRadios.forEach(radio => radio.checked = false);
+
+    // 5. Masquer les sections spécifiques au sexe féminin
+    const atcdGyneco = sectionContent.querySelector('#atcdGyneco');
+    if (atcdGyneco) atcdGyneco.style.display = 'none';
+
+    // 6. Réinitialiser tous les champs de texte, y compris les constantes
     sectionContent.querySelectorAll('input[type="text"]').forEach(input => {
         if (constantFields.includes(input.id)) {
             // Réinitialiser les constantes à vide
@@ -9076,7 +9277,7 @@ function resetSection(button) {
         }
     });
 
-    // 2. Réinitialiser les boutons radio en sélectionnant les options par défaut
+    // 7. Réinitialiser les boutons radio en sélectionnant les options par défaut
     const radioGroups = sectionContent.querySelectorAll('input[type="radio"]');
     const handledNames = new Set();
     
@@ -9111,7 +9312,7 @@ function resetSection(button) {
         }
     });
 
-    // Réinitialiser les checkboxes des pouls périphériques à checked
+    // 8. Réinitialiser les checkboxes des pouls périphériques à checked
     const pulseCheckboxes = [
         'input[name="radialPulse"][value="right"]',
         'input[name="radialPulse"][value="left"]',
@@ -9130,77 +9331,65 @@ function resetSection(button) {
         }
     });
 
-    // 3. Décocher toutes les cases à cocher SAUF les pouls
+    // 9. Décocher toutes les cases à cocher SAUF les pouls
     sectionContent.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         if (!checkbox.name.includes('Pulse')) {
             checkbox.checked = false;
         }
     });
 
-    // 4. Réinitialiser les menus déroulants
+    // 10. Réinitialiser les menus déroulants
     sectionContent.querySelectorAll('select').forEach(select => {
         select.selectedIndex = 0;
         select.style.display = 'none';
     });
 
-    // 5. Masquer les détails conditionnels SAUF les champs de constantes
-    sectionContent.querySelectorAll('[id$="Details"], [id$="Options"]').forEach(element => {
-        if (!constantFields.includes(element.id)) {
-            element.style.display = 'none';
-        }
-    });
-
-    // 6. Masquer les éléments spécifiques
-    const specificElements = [
+    // 11. Masquer les détails conditionnels
+    [
         'icgOptions', 'pulseDetails', 'abnormalDetails', 'murmurDetails',
         'walkingDetails', 'balanceDetails', 'deficitMoteurDetails', 'reflexDetails',
         'deficitSensitifDetails', 'pairescraniennesDetails', 'syndromeCerebelleuxDetails',
         'syndromePyramidalDetails', 'syndromeExtrapyramidalDetails', 'syndromeMeningeDetails',
-        'syndromeVestibulaireDetails'
-    ];
-    
-    specificElements.forEach(id => {
+        'syndromeVestibulaireDetails', 'ampliationSide', 'tympanismeLocation', 'matiteLocation'
+    ].forEach(id => {
         const element = sectionContent.querySelector(`#${id}`);
         if (element) {
             element.style.display = 'none';
         }
     });
 
-    // 7. Masquer les forces et les côtés dans le testing musculaire
+    // 12. Masquer les forces et les côtés dans le testing musculaire
     sectionContent.querySelectorAll('.force, .side-force').forEach(element => {
         element.style.display = 'none';
     });
 
-    // 8. Réinitialiser les champs spécifiques au déficit moteur
-    const deficitMS = sectionContent.querySelector('#msDetails');
-    const deficitMI = sectionContent.querySelector('#miDetails');
-    if (deficitMS) deficitMS.style.display = 'none';
-    if (deficitMI) deficitMI.style.display = 'none';
+    // 13. Réinitialiser les champs spécifiques au déficit moteur
+    ['msDetails', 'miDetails'].forEach(id => {
+        const element = sectionContent.querySelector(`#${id}`);
+        if (element) element.style.display = 'none';
+    });
 
-    // 9. Réinitialiser les détails des réflexes
-    const upperLimbDetails = sectionContent.querySelector('#upperLimbDetails');
-    const lowerLimbDetails = sectionContent.querySelector('#lowerLimbDetails');
-    if (upperLimbDetails) upperLimbDetails.style.display = 'none';
-    if (lowerLimbDetails) lowerLimbDetails.style.display = 'none';
+    // 14. Réinitialiser les détails des réflexes
+    ['upperLimbDetails', 'lowerLimbDetails'].forEach(id => {
+        const element = sectionContent.querySelector(`#${id}`);
+        if (element) element.style.display = 'none';
+    });
 
-    // 10. Réinitialiser les champs de précisions des nerfs crâniens
+    // 15. Réinitialiser les champs de précisions des nerfs crâniens
     sectionContent.querySelectorAll('[id^="nerve"][id$="Details"]').forEach(element => {
         element.style.display = 'none';
     });
 
-    // 11. Réinitialiser les champs de saturation qui ne sont pas des constantes
+    // 16. Réinitialiser les champs de saturation
     const saturationOptions = sectionContent.querySelector('#saturation-options');
     if (saturationOptions) saturationOptions.style.display = 'none';
 
-    // 12. Réinitialiser les champs d'inspection thoracique
-    const ampliationSide = sectionContent.querySelector('#ampliationSide');
-    if (ampliationSide) ampliationSide.style.display = 'none';
-
-    // 13. Réinitialiser les champs de percussion
-    ['tympanismeLocation', 'matiteLocation'].forEach(id => {
-        const element = sectionContent.querySelector(`#${id}`);
-        if (element) element.style.display = 'none';
+    // 17. Déclencher un événement de réinitialisation
+    const event = new CustomEvent('sectionReset', {
+        bubbles: true,
+        detail: { section: section }
     });
+    section.dispatchEvent(event);
 }
 
 
