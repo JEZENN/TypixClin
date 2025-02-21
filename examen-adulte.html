@@ -21,6 +21,7 @@
 <link rel="manifest" href="/site.webmanifest" />
 
 
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="Examen clinique type chez l'adulte proposé par TypixClin. Faites votre examen clinique en ligne. ">
@@ -7405,10 +7406,9 @@ document.querySelectorAll('input[name="skinLesions"]').forEach(radio => {
 <div class="container">
     <div class="section">
         <div class="section-header">
-            <h3><span class="icon">🤖</span>Aide diagnostique avec l'IA</h3>
+            <h3><span class="icon">🤖</span>Aide diagnostique et à la prise en charge : généré par l'IA (Béta)</h3>
             <div class="button-container">
                 <button class="toggle-button" id="generateConclusionIA">Générer une conclusion</button>
-                <button class="toggle-button" id="copyConclusionIA">Copier dans le presse-papier</button>
             </div>
         </div>
         <div class="section-content">
@@ -10033,9 +10033,26 @@ const STYLES = `
   }
 `;
 
+const sections = {
+    signescliniques: [],
+    hypothèses: [],
+    examens: [],
+    traitements: [],
+    conclusion: []
+};
+
 // Templates pour les messages
 const TEMPLATES = {
-  PROMPT: "[INST]Tu es un assistant médical expert. Analyse cet examen clinique et fournis EN FRANCAIS :\n1. Les 3 diagnostics les plus probables, bases toi sur des sources médicales fiables comme les PNDS, reste concis dans tes explications\n2. Les examens complémentaires pertinents dans le contexte, reste concis\n3. Les traitements recommandés en plus ou moins urgences en fonction des diagnostiques, reste très concis. Très concis stp \n\nExamen clinique :\n{examText}[/INST]",
+  PROMPT: `[INST]En tant que médecin français spécialiste, analyser le cas suivant.
+    Utiliser uniquement les recommandations PNDS et gouvernementales françaises.
+    Ne pas inventer d'éléments non mentionnés. :
+  \n1. ANALYSE DES SIGNES CLINIQUES. Cite uniquement les éléments pertinents, mets en avant les signes anormaux aussi bien sur l'examen clinique que dans l'interrogatoire ou sur les constantes
+  \n2. HYPOTHÈSES DIAGNOSTIQUES (max 3). Par probabilité décroissante. Avec justification courte. Mentionner si éléments insuffisants, à noter que l'examen peut également être normal
+  \n3. EXAMENS COMPLÉMENTAIRES. Prioriser (urgent/non urgent). Justifier chaque examen. Maximum 5 examens.
+  \n4. PRISE EN CHARGE. Mesures immédiates si urgence. Traitements (classe thérapeutique). Points de surveillance.
+  \n5. CONCLUSION. 2-3 phrases maximum. Hypothèse principale.
+  \n Examen clinique :
+  \n{examText}[/INST]`,
 
   LOADING: (attempt) => {
     const attemptText = attempt > 1 ? ` (tentative ${attempt}/${API_CONFIG.MAX_RETRIES})` : "";
@@ -10072,6 +10089,7 @@ const TEMPLATES = {
   },
 
   formatSection: (title, items) => {
+    if (!Array.isArray(items) || items.length === 0) return ""; // Evite les erreurs si la section est vide
     const formattedItems = items.map(item => 
       `<div class="diagnostic-item">${item.replace(/^\d+\.\s*/, "").trim()}</div>`
     ).join("");
@@ -10092,10 +10110,14 @@ class MedicalAnalysisAssistant {
     this.button = document.getElementById("generateConclusionIA");
     this.currentAttempt = 1;
     this.isProcessing = false;
+    
+    if (!this.conclusionArea || !this.textArea || !this.button) {
+      console.error("Un ou plusieurs éléments HTML sont introuvables.");
+      return;
+    }
+
     this.setupEventListeners();
   }
-  
-  
 
   setupEventListeners() {
     this.button.addEventListener("click", async () => {
@@ -10180,37 +10202,35 @@ class MedicalAnalysisAssistant {
       });
 
       if (!response.ok) {
-        const error = new Error(`Erreur API (${response.status}): ${response.statusText}`);
-        error.status = response.status;
-        throw error;
+        throw new Error(`Erreur API (${response.status}): ${response.statusText}`);
       }
 
-      return response.json();
+      return await response.json();
     } finally {
       clearTimeout(timeoutId);
     }
   }
 
-  parseResponse(result) {
+parseResponse(result) {
     let text = "";
-    
+
     if (Array.isArray(result) && result.length > 0 && result[0].generated_text) {
-      text = result[0].generated_text;
+        text = result[0].generated_text;
     } else if (result && result.generated_text) {
-      text = result.generated_text;
-    } else if (typeof result === "string") {
-      text = result;
+        text = result.generated_text;
     } else {
-      throw new Error("Format de réponse non reconnu");
+        throw new Error("Format de réponse non reconnu");
     }
 
+    // Supprimer la consigne en trouvant la fin du prompt
     const promptEnd = text.indexOf("[/INST]");
     if (promptEnd !== -1) {
-      text = text.substring(promptEnd + 7).trim();
+        text = text.substring(promptEnd + 7).trim(); // Prend uniquement la partie après [/INST]
     }
 
     return text;
-  }
+}
+
 
   displayResult(result) {
     const generatedText = this.parseResponse(result);
@@ -10220,9 +10240,11 @@ class MedicalAnalysisAssistant {
 
     // Séparer le texte en sections
     const sections = {
-      diagnostics: [],
+      signescliniques: [],
+      hypothèses: [],
       examens: [],
-      traitements: []
+      traitements: [],
+      conclusion: []
     };
 
     const lines = generatedText.split("\n");
@@ -10232,38 +10254,27 @@ class MedicalAnalysisAssistant {
       const trimmedLine = line.trim();
       if (!trimmedLine) continue;
 
-      if (trimmedLine.match(/^1\./)) {
-        currentSection = "diagnostics";
-        sections.diagnostics.push(trimmedLine);
-      } else if (trimmedLine.match(/^2\./)) {
-        currentSection = "examens";
-        sections.examens.push(trimmedLine);
-      } else if (trimmedLine.match(/^3\./)) {
-        currentSection = "traitements";
-        sections.traitements.push(trimmedLine);
-      } else if (currentSection && trimmedLine) {
+      if (trimmedLine.match(/^1\./)) currentSection = "signescliniques";
+      else if (trimmedLine.match(/^2\./)) currentSection = "hypothèses";
+      else if (trimmedLine.match(/^3\./)) currentSection = "examens";
+      else if (trimmedLine.match(/^4\./)) currentSection = "traitements";
+      else if (trimmedLine.match(/^5\./)) currentSection = "conclusion";
+
+      if (currentSection && sections[currentSection]) {
         sections[currentSection].push(trimmedLine);
       }
     }
 
-    const html = `
+    this.conclusionArea.innerHTML = `
       <style>${STYLES}</style>
       <div class="medical-result">
-        ${TEMPLATES.formatSection("Diagnostics probables", sections.diagnostics)}
+        ${TEMPLATES.formatSection("Analyse des signes cliniques", sections.signescliniques)}
+        ${TEMPLATES.formatSection("Hypothèses diagnostiques", sections.hypothèses)}
         ${TEMPLATES.formatSection("Examens complémentaires", sections.examens)}
-        ${TEMPLATES.formatSection("Traitements recommandés", sections.traitements)}
+        ${TEMPLATES.formatSection("Prise en charge", sections.traitements)}
+        ${TEMPLATES.formatSection("Conclusion", sections.conclusion)}
       </div>
     `;
-
-    this.conclusionArea.innerHTML = html;
-  }
-
-  handleError(error) {
-    console.error("Erreur :", error);
-    this.conclusionArea.innerHTML = TEMPLATES.ERROR(
-      error.message, 
-      this.currentAttempt
-    );
   }
 }
 
@@ -10432,10 +10443,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 </style>
-
-
-
-
 
 </body>
 </html>
