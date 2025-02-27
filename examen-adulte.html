@@ -2127,14 +2127,14 @@ function getInterrogatoireDescription() {
     // Fonction utilitaire pour ajouter une ligne si la valeur n'est pas vide
     function ajouterLigne(label, valeur) {
         if (valeur.trim() !== "") {
-            contenuInterrogatoire += `${label}\n${valeur}\n\n`;
+            contenuInterrogatoire += `###${label}###\n${valeur}\n\n`;
         }
     }
 
     // Motif d'hospitalisation/de consultation
     let motifHospitalisation = document.getElementById('motifHospitalisation').value.trim();
     if (motifHospitalisation !== "") {
-        contenuInterrogatoire += `<< Motif d'hospitalisation / consultation >> \n${motifHospitalisation}\n\n`;
+        contenuInterrogatoire += `###Motif d'hospitalisation / consultation###\n${motifHospitalisation}\n\n`;
     }
 
     // Mode de vie
@@ -2152,7 +2152,7 @@ function getInterrogatoireDescription() {
     modeDeVie += document.getElementById('personneConfiance').value.trim() !== "" ? `- Personne de confiance : ${document.getElementById('personneConfiance').value}\n` : "";
 
     if (modeDeVie.trim() !== "") {
-        contenuInterrogatoire += `<< Mode de vie >> \n${modeDeVie}\n`;
+        contenuInterrogatoire += `###Mode de vie###\n${modeDeVie}\n`;
     }
 
     // Antécédents
@@ -2167,14 +2167,14 @@ function getInterrogatoireDescription() {
     antecedents += document.getElementById('vaccins').value.trim() !== "" ? `- Vaccins : ${document.getElementById('vaccins').value}\n` : "";
 
     if (antecedents.trim() !== "") {
-        contenuInterrogatoire += `<< Antécédents >>\n${antecedents}\n`;
+        contenuInterrogatoire += `###Antécédents###\n${antecedents}\n`;
     }
 
     // Traitements
-    ajouterLigne("<< Traitements >>", document.getElementById('traitements').value);
+    ajouterLigne("Traitements", document.getElementById('traitements').value);
 
     // Histoire de la maladie
-    ajouterLigne("<< Histoire de la maladie >>", document.getElementById('histoireMaladie').value);
+    ajouterLigne("Histoire de la maladie", document.getElementById('histoireMaladie').value);
 
     // Ajouter "Interrogatoire" uniquement si au moins une ligne a été remplie
     if (contenuInterrogatoire.trim() !== "") {
@@ -7816,28 +7816,45 @@ const textArea = document.getElementById('generatedTextArea');
 if (textArea) {
     textArea.innerHTML = ''; // Efface le contenu précédent
 
-    total.forEach((section, index) => {
-        // Utiliser un setTimeout pour créer un délai progressif
-        setTimeout(() => {
-            const parts = section.split(':'); // Divise en deux parties : l'intitulé et le contenu
-            const div = document.createElement('div'); // Conteneur pour la section
+total.forEach((section, index) => {
+    // Utiliser un setTimeout pour créer un délai progressif
+    setTimeout(() => {
+        const parts = section.split(':'); // Divise en deux parties : l'intitulé et le contenu
+        const div = document.createElement('div'); // Conteneur pour la section
 
-            // Gestion de l'intitulé (exemple : "Examen respiratoire :")
-            if (parts.length > 1) {
-                const titleSpan = document.createElement('span');
-                titleSpan.style.fontWeight = 'bold'; // Mise en forme pour l'intitulé
-                titleSpan.textContent = parts[0] + ':'; // Ajoute les deux points
-                div.appendChild(titleSpan);
-				titleSpan.style.color = '#1e40af';
+        // Gestion de l'intitulé (exemple : "Examen respiratoire :")
+        if (parts.length > 1) {
+            const titleSpan = document.createElement('span');
+            titleSpan.style.fontWeight = 'bold'; // Mise en forme pour l'intitulé
+            titleSpan.textContent = parts[0] + ':'; // Ajoute les deux points
+            div.appendChild(titleSpan);
+            titleSpan.style.color = '#1e40af';
 
-
-                // Ajoute le contenu après l'intitulé
-                const content = parts.slice(1).join(':').trim(); // Récupère le reste
-                const contentParts = content.split('\n'); // Sépare les lignes du contenu
-                contentParts.forEach(line => {
-                    const lineDiv = document.createElement('div'); // Conteneur pour chaque ligne
+            // Ajoute le contenu après l'intitulé
+            const content = parts.slice(1).join(':').trim(); // Récupère le reste
+            const contentParts = content.split('\n'); // Sépare les lignes du contenu
+            
+            contentParts.forEach(line => {
+                const lineDiv = document.createElement('div'); // Conteneur pour chaque ligne
+                
+                // Si la ligne contient nos marqueurs spéciaux pour les titres
+                if (line.includes('###')) {
+                    const titleParts = line.split('###');
+                    if (titleParts.length >= 3) { // S'assurer qu'il y a un texte entre les ###
+                        const titleText = titleParts[1]; // Le texte entre les ###
+                        
+                        const titleElement = document.createElement('span');
+                        titleElement.style.fontWeight = 'bold';
+                        titleElement.style.color = 'black'; // S'assurer que la couleur est noire
+                        titleElement.textContent = titleText;
+                        
+                        lineDiv.appendChild(titleElement);
+                    } else {
+                        lineDiv.textContent = line; // Fallback si le format n'est pas celui attendu
+                    }
+                } else {
+                    // Traitement normal pour les autres lignes avec **
                     const lineParts = line.split('**'); // Découpe par les marqueurs **
-
                     lineParts.forEach((linePart, i) => {
                         if (i % 2 === 1) { // Les parties entre ** sont en rouge
                             const span = document.createElement('span');
@@ -7848,27 +7865,28 @@ if (textArea) {
                             lineDiv.appendChild(document.createTextNode(linePart));
                         }
                     });
+                }
 
-                    div.appendChild(lineDiv); // Ajoute la ligne au conteneur
-                });
-            } else {
-                // Cas où il n'y a pas de ":" pour diviser l'intitulé et le contenu
-                div.textContent = section;
-            }
+                div.appendChild(lineDiv); // Ajoute la ligne au conteneur
+            });
+        } else {
+            // Cas où il n'y a pas de ":" pour diviser l'intitulé et le contenu
+            div.textContent = section;
+        }
 
-            // Applique la classe d'animation
-            div.classList.add('fade-in');
+        // Applique la classe d'animation
+        div.classList.add('fade-in');
 
-            // Ajouter la section formatée à la zone de texte
-            textArea.appendChild(div);
+        // Ajouter la section formatée à la zone de texte
+        textArea.appendChild(div);
 
-            // Ajouter une ligne vide après chaque section, sauf la dernière
-            if (index < total.length - 1) {
-                const separator = document.createElement('br'); // Saut de ligne unique
-                textArea.appendChild(separator);
-            }
-        }, index * 400); // Délai progressif : 400ms entre chaque section
-    });
+        // Ajouter une ligne vide après chaque section, sauf la dernière
+        if (index < total.length - 1) {
+            const separator = document.createElement('br'); // Saut de ligne unique
+            textArea.appendChild(separator);
+        }
+    }, index * 400); // Délai progressif : 400ms entre chaque section
+});
 } else {
     console.error("La zone de texte pour afficher le résultat n'a pas été trouvée !");
 }
