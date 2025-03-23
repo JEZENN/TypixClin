@@ -2679,6 +2679,7 @@ input[type="number"]:focus {
     <label style="width: 250px; min-width: 200px;"><strong>Temps d'acc. pulm. (ms) :</strong></label>
     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
         <input type="number" step="1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="temps_acceleration">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < 130 ms</span>
         <span id="temps-acceleration-status" style="font-weight: bold;"></span>
     </div>
 </div>
@@ -3438,6 +3439,25 @@ document.querySelectorAll('input[name="retrecissement_mitral"]').forEach(radio =
 });
 
 
+function validateTempsAcceleration() {
+    const tempsAcc = parseFloat(document.getElementById('temps_acceleration').value);
+    const statusElement = document.getElementById('temps-acceleration-status');
+    
+    if (!isNaN(tempsAcc)) {
+        if (tempsAcc > 130) {
+            statusElement.textContent = 'HTAP';
+            statusElement.style.color = '#dc2626';
+        } else {
+            statusElement.textContent = '';
+        }
+    } else {
+        statusElement.textContent = '';
+    }
+}
+
+// Ajouter l'écouteur d'événement pour le temps d'accélération
+document.getElementById('temps_acceleration').addEventListener('input', validateTempsAcceleration);
+
 
 
 function resetETTInputs() {
@@ -4078,16 +4098,17 @@ textType += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissementAo
     const tacc = valueOrDash(document.getElementById('temps_acceleration').value);
     const septumParadoxal = document.querySelector('input[name="septum_paradoxal"]:checked').value;
     
-    // Déterminer s'il y a une HTAP
-    let htap = false;
-    if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value) {
-        const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
-        const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
-        
-        if (papsValue > 25 || vmaxITValue > 2.8) {
-            htap = true;
-        }
+// Déterminer s'il y a une HTAP
+let htap = false;
+if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
+    const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
+    const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
+    const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
+    
+    if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
+        htap = true;
     }
+}
     
     // Récupérer la valeur de la POD estimée
     const podEstimee = document.getElementById('POD_estimee').value || "?";
