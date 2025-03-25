@@ -1946,7 +1946,6 @@ input[type="number"]:focus {
         <div class="section-content">
             <!-- Caractéristiques du patient -->
             <div class="subsection">
-                <h4>Caractéristiques</h4>
                 <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label style="min-width: 60px;"><strong>Sexe :</strong></label>
@@ -1964,6 +1963,42 @@ input[type="number"]:focus {
                         </div>
                     </div>
                 </div>
+				
+				<div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
+					<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; width: 100%;">
+						<label style="min-width: 120px;"><strong>Mensurations :</strong></label>
+						<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+							<label style="white-space: nowrap;">Taille (cm)</label>
+							<input type="number" id="taille" step="1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" oninput="calculerSurfaceCorporelle()">
+							
+							<label style="margin-left: 10px; white-space: nowrap;">Poids (kg)</label>
+							<input type="number" id="poids" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" oninput="calculerSurfaceCorporelle()">
+							
+							<label style="margin-left: 10px; white-space: nowrap;">SC (Formule de Dubois) (m²)</label>
+							<input type="number" id="surface_corporelle" readonly step="0.01" style="width: 60px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;">
+						</div>
+					</div>
+				</div>
+				
+				<script>
+				// Fonction pour calculer la surface corporelle selon la formule de Dubois
+					function calculerSurfaceCorporelle() {
+						const taille = parseFloat(document.getElementById('taille').value);
+						const poids = parseFloat(document.getElementById('poids').value);
+						const scElement = document.getElementById('surface_corporelle');
+						
+						if (!isNaN(taille) && !isNaN(poids) && taille > 0 && poids > 0) {
+							// Formule de DuBois : SC = 0,007184 × poids (kg)^0,425 × taille (cm)^0,725
+							const sc = 0.007184 * Math.pow(poids, 0.425) * Math.pow(taille, 0.725);
+							scElement.value = sc.toFixed(2);
+						} else {
+							scElement.value = '';
+						}
+					}
+					</script>
+
+
+
 						
 						<div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
 				<div style="display: flex; align-items: center; gap: 10px;">
@@ -2353,7 +2388,7 @@ input[type="number"]:focus {
     <label style="width: 250px; min-width: 200px;"><strong>Volume OG indexé (ml/m²) :</strong></label>
     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
         <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="volume_OG_indexe">
-        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < 34 ml/m²</span>
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < 34 mL/m²</span>
     </div>
 </div>
 
@@ -2379,9 +2414,11 @@ input[type="number"]:focus {
     <div id="interpretation_profil_mitral" style="font-weight: 600; display: none;"></div>
 </div>
 
-                
+ </div>               
+		<div class="subsection">
+                <h4>Débit cardiaque</h4>
+				
                 <!-- Débit cardiaque -->
-                <h5 style="color: #3b82f6; margin-top: 15px; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Débit cardiaque</h5>
                 
                 <!-- ITV -->
                 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
