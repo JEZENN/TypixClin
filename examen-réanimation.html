@@ -2880,6 +2880,10 @@ input[type="number"]:focus {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-group">
+                <!-- Ajoutez ce nouveau bouton avant le bouton "Générer Texte Type" -->
+    <button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
+                    <i class="fas fa-file-pdf"></i> Générer PDF
+                </button>
                 <button class="toggle-button" id="generateText">Générer Texte Type</button>
                 <button class="toggle-button" id="copyText">Copier dans le presse-papier</button>
             </div>
@@ -3939,6 +3943,19 @@ function generateTextType() {
     function valueOrDash(value) {
         return value && value !== "" ? value : "?";
     }
+	
+	const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
+
+// Déterminer si l'OG est dilatée
+let ogDilatee = false;
+if (document.getElementById('surface_OG').value) {
+    const ogValue = parseFloat(document.getElementById('surface_OG').value);
+    if (ogValue >= 20) {
+        ogDilatee = true;
+    }
+}
+
+
     
     // 1. Ventricule gauche : dimensions et hypertrophie
     const siv = valueOrDash(document.getElementById('paroi_anteroseptale').value);
@@ -3974,7 +3991,7 @@ function generateTextType() {
     else if (vgHypertrophie) vgDescription = "VG non dilaté et hypertrophié";
     else vgDescription = "VG non dilaté et non hypertrophié";
     
-    textType += `<div class="text-line">- ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
+    textType += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (OG ${surfaceOG} cm²). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
     
     // 2. Fonction diastolique
     const rapportEE = valueOrDash(document.getElementById('rapport_EE').value);
@@ -4105,7 +4122,7 @@ textType += `<div class="text-line">- FEVG (${methodeFEVG === 'simpson' ? 'simps
         }
     }
     
-textType += `<div class="text-line">- Oreillette droite ${odDilatee ? 'dilatée' : 'non dilatée'} (OD ${surfaceOD} cm²), ventricule droit ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
+textType += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
     
 // 7. Valves aortique et mitrale
 const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
@@ -4328,9 +4345,148 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-	
+
+
+
+// Fonction pour générer le PDF
+document.getElementById('generatePdf').addEventListener('click', function() {
+    // Vérifier si le texte a été généré
+    const textArea = document.getElementById('generatedTextArea');
+    if (!textArea.innerHTML.trim()) {
+        alert('Veuillez d\'abord générer le texte type avant de créer un PDF.');
+        return;
+    }
+    
+    // Afficher l'indicateur de chargement
+    const pdfButton = this;
+    const originalText = pdfButton.innerHTML;
+    pdfButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+    pdfButton.disabled = true;
+    
+    try {
+        // Créer une nouvelle instance de jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // Configurer les couleurs
+        const primaryColor = [30, 64, 175]; // #1e40af en RGB
+        const textColor = [30, 41, 59]; // #1e293b en RGB
+        
+        // Définir les styles de base
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9); // Taille de police réduite
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+        
+        // Créer l'en-tête
+        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.rect(0, 0, 210, 18, 'F');
+        
+        // Titre principal
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('TypixClin - Examen en réanimation', 105, 12, { align: 'center' });
+        
+        // Ligne de séparation
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setLineWidth(0.3);
+        doc.line(15, 23, 195, 23);
+        
+        // Extraire le texte du contenu HTML
+        const lines = Array.from(textArea.querySelectorAll('.text-line')).map(line => {
+            return line.textContent || '';
+        });
+        
+        // Titre du document (première ligne)
+        if (lines.length > 0) {
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(lines[0], 15, 30);
+            
+            // Ligne sous le titre principal
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(0.2);
+            doc.line(15, 32, 195, 32);
+            
+            // Contenu du document (reste des lignes)
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            
+            let yPosition = 38;
+            const lineSpacing = 3.5;
+            
+            for (let i = 1; i < lines.length; i++) {
+                // Scinder les lignes trop longues
+                const splitText = doc.splitTextToSize(lines[i], 175);
+                
+                // Vérifier si on a besoin d'une nouvelle page
+                if (yPosition > 275) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Tout le texte en noir normal
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                doc.setFont('helvetica', 'normal');
+                doc.text(splitText, 15, yPosition);
+                
+                // Ajuster la position Y
+                yPosition += (splitText.length * lineSpacing) + 1;
+            }
+        }
+        
+        // Ajouter le pied de page
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(15, pageHeight - 12, 195, pageHeight - 12);
+        
+        // Date de génération
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = today.toLocaleDateString('fr-FR', options);
+        
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('TypixClin © 2025, Jean ZENNARO - Document généré le ' + formattedDate, 105, pageHeight - 8, { align: 'center' });
+        
+        // Générer le PDF et l'ouvrir dans une nouvelle fenêtre
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        window.open(pdfUrl, '_blank');
+        
+    } catch (error) {
+        console.error('Erreur lors de la génération du PDF:', error);
+        alert('Une erreur est survenue lors de la génération du PDF. Veuillez réessayer.');
+    } finally {
+        // Restaurer le bouton
+        setTimeout(() => {
+            pdfButton.innerHTML = originalText;
+            pdfButton.disabled = false;
+        }, 1000);
+    }
+});
+
+document.getElementById('generatePdf').addEventListener('mouseover', function() {
+    this.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
+    this.style.transform = 'translateY(-2px)';
+});
+
+document.getElementById('generatePdf').addEventListener('mouseout', function() {
+    this.style.backgroundColor = 'rgba(220, 38, 38, 0.8)';
+    this.style.transform = 'translateY(0)';
+});
+
+
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </body>
 </html>
