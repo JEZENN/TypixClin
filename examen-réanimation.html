@@ -2880,7 +2880,6 @@ input[type="number"]:focus {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-group">
-                <!-- Ajoutez ce nouveau bouton avant le bouton "Générer Texte Type" -->
     <button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
                     <i class="fas fa-file-pdf"></i> Générer PDF
                 </button>
@@ -4346,9 +4345,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
-
-// Fonction pour générer le PDF
+//PFD	
 document.getElementById('generatePdf').addEventListener('click', function() {
     // Vérifier si le texte a été généré
     const textArea = document.getElementById('generatedTextArea');
@@ -4396,65 +4393,88 @@ document.getElementById('generatePdf').addEventListener('click', function() {
         doc.setLineWidth(0.3);
         doc.line(15, 23, 195, 23);
         
-        // Extraire le texte du contenu HTML
-        const lines = Array.from(textArea.querySelectorAll('.text-line')).map(line => {
-            return line.textContent || '';
-        });
+        // Extraire le contenu du generatedTextArea
+        const contentText = textArea.innerText;
         
-        // Titre du document (première ligne)
-        if (lines.length > 0) {
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.text(lines[0], 15, 30);
+        // Diviser en lignes en préservant les sauts de ligne
+        const contentLines = contentText.split('\n');
+        
+        // Afficher le contenu
+        let yPosition = 30;
+        const lineHeight = 5.5;
+        
+        // Titres à mettre en gras (exactement comme demandé)
+        const boldTitles = ["Examen réanimation :", "ETT du"];
+        
+        // Traiter chaque ligne
+        for (let i = 0; i < contentLines.length; i++) {
+            const line = contentLines[i];
             
-            // Ligne sous le titre principal
-            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setLineWidth(0.2);
-            doc.line(15, 32, 195, 32);
-            
-            // Contenu du document (reste des lignes)
-            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            
-            let yPosition = 38;
-            const lineSpacing = 3.5;
-            
-            for (let i = 1; i < lines.length; i++) {
-                // Scinder les lignes trop longues
-                const splitText = doc.splitTextToSize(lines[i], 175);
-                
-                // Vérifier si on a besoin d'une nouvelle page
-                if (yPosition > 275) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                // Tout le texte en noir normal
-                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-                doc.setFont('helvetica', 'normal');
-                doc.text(splitText, 15, yPosition);
-                
-                // Ajuster la position Y
-                yPosition += (splitText.length * lineSpacing) + 1;
+            // Sauter les lignes vides mais augmenter l'espacement
+            if (line.trim() === '') {
+                yPosition += lineHeight;
+                continue;
             }
+            
+            // Vérifier si c'est un titre à mettre en gras
+            const isBoldTitle = boldTitles.some(title => line.trim().startsWith(title));
+            
+            // Nouvelle page si nécessaire
+            if (yPosition > 270) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            // Formater selon le type de ligne
+            if (isBoldTitle) {
+                // Titre de section en gras
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.text(line, 15, yPosition);
+            } else {
+                // Texte normal
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                
+                // Diviser la ligne en morceaux gérables
+                const maxWidth = 180;
+                const splitText = doc.splitTextToSize(line, maxWidth);
+                
+                // Dessiner le texte
+                for (let j = 0; j < splitText.length; j++) {
+                    if (j > 0) yPosition += lineHeight;
+                    doc.text(splitText[j], 15, yPosition);
+                }
+            }
+            
+            // Avancer à la ligne suivante
+            yPosition += lineHeight;
         }
         
         // Ajouter le pied de page
-        const pageHeight = doc.internal.pageSize.height;
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.3);
-        doc.line(15, pageHeight - 12, 195, pageHeight - 12);
-        
-        // Date de génération
-        const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const formattedDate = today.toLocaleDateString('fr-FR', options);
-        
-        doc.setTextColor(100, 100, 100);
-        doc.setFontSize(8);
-        doc.text('TypixClin © 2025, Jean ZENNARO - Document généré le ' + formattedDate, 105, pageHeight - 8, { align: 'center' });
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.line(15, pageHeight - 12, 195, pageHeight - 12);
+            
+            // Date de génération
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = today.toLocaleDateString('fr-FR', options);
+            
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(8);
+            doc.text('TypixClin © 2025, Jean ZENNARO - Document généré le ' + formattedDate, 105, pageHeight - 8, { align: 'center' });
+            
+            // Numéro de page
+            doc.text('Page ' + i + '/' + pageCount, 185, pageHeight - 8);
+        }
         
         // Générer le PDF et l'ouvrir dans une nouvelle fenêtre
         const pdfBlob = doc.output('blob');

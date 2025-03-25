@@ -6553,6 +6553,11 @@ function getAdenopathyDescription() {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-group">
+			    <button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
+        <i class="fas fa-file-pdf"></i> Générer PDF
+    </button>
+
+	
                 <button class="toggle-button" id="generateText">Générer Texte Type</button>
                 <button class="toggle-button" id="copyText">Copier dans le presse-papier</button>
             </div>
@@ -8256,9 +8261,178 @@ function resetSection(button) {
     });
 }
 
+//pdf
+
+document.getElementById('generatePdf').addEventListener('click', function() {
+    // Vérifier si le texte a été généré
+    const textArea = document.getElementById('generatedTextArea');
+    if (!textArea.innerHTML.trim()) {
+        alert('Veuillez d\'abord générer le texte type avant de créer un PDF.');
+        return;
+    }
+    
+    // Afficher l'indicateur de chargement
+    const pdfButton = this;
+    const originalText = pdfButton.innerHTML;
+    pdfButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+    pdfButton.disabled = true;
+    
+    try {
+        // Créer une nouvelle instance de jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // Configurer les couleurs
+        const primaryColor = [30, 64, 175]; // #1e40af en RGB
+        const textColor = [30, 41, 59]; // #1e293b en RGB
+        
+        // Définir les styles de base
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9); // Taille de police réduite
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+        
+        // Créer l'en-tête
+        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.rect(0, 0, 210, 18, 'F');
+        
+        // Titre principal
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('TypixClin - Examen Pédiatrique', 105, 12, { align: 'center' });
+        
+        // Ligne de séparation
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setLineWidth(0.3);
+        doc.line(15, 23, 195, 23);
+        
+        // Extracting content from textArea
+        let contentLines = [];
+        // Récupérer le contenu et le diviser en lignes
+        const contentText = textArea.innerText.trim();
+        contentLines = contentText.split('\n');
+        
+        // Afficher le contenu
+        let yPosition = 30;
+        const lineHeight = 5.5;
+        
+        // Liste des titres à mettre en gras
+        const boldKeywords = [
+            "Antécédents :", 
+            "Traitements, correspondant médical et vaccins :", 
+            "Mode de vie :", 
+            "Histoire de la maladie :", 
+            "Examen clinique :"
+        ];
+        
+        // Traiter chaque ligne
+        for (let i = 0; i < contentLines.length; i++) {
+            const line = contentLines[i].trim();
+            
+            // Traiter les lignes vides (sauts de ligne)
+            if (line === '') {
+                yPosition += lineHeight;
+                continue;
+            }
+            
+            // Vérifier si c'est un titre à mettre en gras
+            const isBoldTitle = boldKeywords.includes(line);
+            
+            // Nouvelle page si nécessaire
+            if (yPosition > 260) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            // Formater selon le type de ligne
+            if (isBoldTitle) {
+                // Titre de section en gras
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.text(line, 15, yPosition);
+            } else {
+                // Texte normal
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                
+                // Diviser la ligne en morceaux gérables
+                const maxWidth = 180;
+                const splitText = doc.splitTextToSize(line, maxWidth);
+                
+                // Dessiner le texte
+                for (let j = 0; j < splitText.length; j++) {
+                    if (j > 0) yPosition += lineHeight;
+                    doc.text(splitText[j], 15, yPosition);
+                }
+            }
+            
+            // Avancer à la ligne suivante
+            yPosition += lineHeight;
+        }
+        
+        // Ajouter le pied de page
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.line(15, pageHeight - 12, 195, pageHeight - 12);
+            
+            // Date de génération
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = today.toLocaleDateString('fr-FR', options);
+            
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(8);
+            doc.text('TypixClin © 2025, Jean ZENNARO - Document généré le ' + formattedDate, 105, pageHeight - 8, { align: 'center' });
+            
+            // Numéro de page
+            doc.text('Page ' + i + '/' + pageCount, 185, pageHeight - 8);
+        }
+        
+        // Générer le PDF et l'ouvrir dans une nouvelle fenêtre
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        window.open(pdfUrl, '_blank');
+        
+    } catch (error) {
+        console.error('Erreur lors de la génération du PDF:', error);
+        alert('Une erreur est survenue lors de la génération du PDF. Veuillez réessayer.');
+    } finally {
+        // Restaurer le bouton
+        setTimeout(() => {
+            pdfButton.innerHTML = originalText;
+            pdfButton.disabled = false;
+        }, 1000);
+    }
+});
+
+// Ajout des effets de survol pour le bouton PDF
+document.getElementById('generatePdf').addEventListener('mouseover', function() {
+    this.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
+    this.style.transform = 'translateY(-2px)';
+});
+
+document.getElementById('generatePdf').addEventListener('mouseout', function() {
+    this.style.backgroundColor = 'rgba(220, 38, 38, 0.8)';
+    this.style.transform = 'translateY(0)';
+});
+
+
+
 </script>
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
         footer {
