@@ -1738,6 +1738,59 @@ textarea {
     cursor: not-allowed;
 }
 
+@media (max-width: 768px) {
+  .custom-control {
+    padding-left: 1.5rem;
+    margin-right: 0.6rem;
+    font-size: 0.85rem;
+  }
+  
+  .checkmark {
+    height: 10px;
+    width: 10px;
+    left: 3px;
+  }
+  
+  .checkbox .checkmark:after {
+    left: 2.5px;
+    top: 0px;
+    width: 2.5px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-control {
+    padding-left: 1.4rem;
+    margin-right: 0.4rem;
+    font-size: 0.8rem;
+  }
+  
+  .checkbox, .radio {
+    margin-bottom: 0.3rem;
+  }
+  
+  div[style*="display: flex; flex-wrap: wrap"] label.custom-control {
+    margin-bottom: 0.4rem;
+  }
+  
+  .subsection p {
+    margin-bottom: 0.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-control span.checkmark + span,
+  .custom-control input + span + span {
+    vertical-align: middle;
+    line-height: 1.2;
+  }
+  
+  .subsection label.custom-control {
+    padding-right: 0.2rem;
+  }
+}
+
 <!-- Remplacez la section de style du texte généré par ceci -->
 
 /* Styles pour la zone de texte généré */
@@ -2278,7 +2331,7 @@ function getInterrogatoireDescription() {
 
 			
 				<p><strong>Mensurations :</strong>
-					<label>Taille (m) : <input type="text" id="taille" placeholder="m" style="width: 50px; margin-right: 10px;"></label>
+<label>Taille (cm) : <input type="text" id="taille" placeholder="cm" style="width: 50px; margin-right: 10px;"></label>
 					<label>Poids (kg) : <input type="text" id="poids" placeholder="kg" style="width: 50px; margin-right: 10px;"></label>
 					<label>IMC : <input type="text" id="IMC" readonly placeholder="kg/m²" style="width: 80px; background-color: #e9e9e9; margin-left: 10px;"></label>
 				</p>
@@ -2293,7 +2346,7 @@ function getInterrogatoireDescription() {
 						const poidsval = parseFloat(document.getElementById('poids').value) || 0;
 						
 						if (tailleval > 0) { // Vérifie que la taille est valide pour éviter la division par 0
-							const IMCval = (poidsval / (tailleval * tailleval)).toFixed(1);
+							const IMCval = (poidsval / ((tailleval/100) * (tailleval/100))).toFixed(1);
 							document.getElementById('IMC').value = IMCval;
 						} else {
 							document.getElementById('IMC').value = ''; // Remet à zéro si la taille est invalide
@@ -2484,7 +2537,7 @@ function getInterrogatoireDescription() {
 		
 			<h4>Signes physiques</h4>
 			
-				<p style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
+	<p style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
     <strong>Hémodynamique :</strong>
     <label class="custom-control radio" style="margin-left: 10px; display: inline-flex; align-items: center;">
         <input type="radio" name="card4" id="nocard4" checked>
@@ -3571,6 +3624,7 @@ function getInterrogatoireDescription() {
 		</div>
 				<div class="subsection">		
 			<h4>Signes physiques</h4>
+			
 <p><strong>Signes d'hypertension portale :</strong>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="dig6" id="nodig6" checked>
@@ -7570,7 +7624,7 @@ const resultinterrogatoire = getInterrogatoireDescription();
 				const tailleval = document.getElementById('taille').value;
 				const poidsval = document.getElementById('poids').value;
 				const IMCval = document.getElementById('IMC').value;
-				if (tailleval && poidsval && IMCval) constantes.push(`Taille : ${tailleval}m, Poids : ${poidsval}kg (IMC : ${IMCval})`);
+				if (tailleval && poidsval && IMCval) constantes.push(`Taille : ${tailleval} cm, Poids : ${poidsval} kg (IMC : ${IMCval})`);
 					
 				const fr = document.getElementById('FreqResp').value;
 				if (fr) constantes.push(`FR ${fr}/min`);
@@ -10467,15 +10521,26 @@ document.getElementById('generatePdf').addEventListener('click', function() {
         let yPosition = 30;
         const lineHeight = 5.5;
         
-        // Liste des titres à mettre en gras
+        // Liste des titres à mettre en gras et en couleur
         const boldKeywords = [
+            "Interrogatoire :",
+            "Examen général et Paramètres vitaux :",
             "Examen cardiovasculaire :", 
             "Examen respiratoire :", 
             "Examen uro-digestif :", 
             "Examen neurologique :",
-			"Examen hématologique :", 
-			"Examen orthopédique et rhumatologique :", 			
+            "Examen hématologique :", 
+            "Examen orthopédique et rhumatologique :", 			
             "Examen dermatologique :"
+        ];
+        
+        // Liste des sous-titres à mettre en gras seulement (sans couleur)
+        const boldBlackKeywords = [
+            "Motif d'hospitalisation / consultation",
+            "Mode de vie",
+            "Antécédents",
+            "Traitements",
+            "Histoire de la maladie"
         ];
         
         // Traiter chaque ligne
@@ -10505,19 +10570,39 @@ document.getElementById('generatePdf').addEventListener('click', function() {
                 doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
                 doc.text(line, 15, yPosition);
             } else {
-                // Texte normal
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                // Vérifier si la ligne contient un des sous-titres à mettre en gras et noir
+                let isBoldBlack = false;
+                let boldBlackText = '';
                 
-                // Diviser la ligne en morceaux gérables
-                const maxWidth = 180;
-                const splitText = doc.splitTextToSize(line, maxWidth);
+                for (const keyword of boldBlackKeywords) {
+                    if (line.includes(keyword)) {
+                        isBoldBlack = true;
+                        boldBlackText = keyword;
+                        break;
+                    }
+                }
                 
-                // Dessiner le texte
-                for (let j = 0; j < splitText.length; j++) {
-                    if (j > 0) yPosition += lineHeight;
-                    doc.text(splitText[j], 15, yPosition);
+                if (isBoldBlack) {
+                    // Sous-titre en gras et noir
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9); // Garde la même taille
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]); // Noir
+                    doc.text(line, 15, yPosition);
+                } else {
+                    // Texte normal
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    
+                    // Diviser la ligne en morceaux gérables
+                    const maxWidth = 180;
+                    const splitText = doc.splitTextToSize(line, maxWidth);
+                    
+                    // Dessiner le texte
+                    for (let j = 0; j < splitText.length; j++) {
+                        if (j > 0) yPosition += lineHeight;
+                        doc.text(splitText[j], 15, yPosition);
+                    }
                 }
             }
             
