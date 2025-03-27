@@ -2079,7 +2079,7 @@ input[type="number"]:focus {
                 <span class="checkmark"></span>
                 Noradrénaline
             </label>
-            <input type="text" id="noradrenalineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            <input type="text" id="noradrenalineDose" placeholder="Posologie (mg/h)" style="display: none; margin-left: 10px; width: 150px;">
         </div>
         
         <div>
@@ -2088,7 +2088,7 @@ input[type="number"]:focus {
                 <span class="checkmark"></span>
                 Adrénaline
             </label>
-            <input type="text" id="adrenalineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            <input type="text" id="adrenalineDose" placeholder="Posologie (mg/h)" style="display: none; margin-left: 10px; width: 150px;">
         </div>
         
         <div>
@@ -2097,7 +2097,7 @@ input[type="number"]:focus {
                 <span class="checkmark"></span>
                 Dobutamine
             </label>
-            <input type="text" id="dobutamineDose" placeholder="Posologie" style="display: none; margin-left: 10px; width: 150px;">
+            <input type="text" id="dobutamineDose" placeholder="Posologie (µg/kg/min)" style="display: none; margin-left: 10px; width: 150px;">
         </div>
         
         <div style="margin-top: 10px;">
@@ -3463,11 +3463,15 @@ function selectIntensity(option) {
     const value = option.dataset.value;
     selectedText.textContent = value;
     
-    // Mettre à jour la couleur du point
+    // Réinitialiser toutes les classes du point
     dot.className = 'intensity-dot';
-    if (value === 'léger') dot.classList.add('light');
-    if (value === 'modéré') dot.classList.add('medium');
-    if (value === 'majeur') dot.classList.add('severe');
+    
+    // Ajouter la classe appropriée en fonction de la valeur
+    if (value === 'légère') dot.classList.add('light');
+    else if (value === 'modérée') dot.classList.add('medium');
+	    else if (value === 'modéré') dot.classList.add('medium');
+    else if (value === 'sévère') dot.classList.add('severe');
+    else if (value === 'majeur') dot.classList.add('severe');
     
     // Mettre à jour le select caché
     hiddenSelect.value = value;
@@ -4336,8 +4340,675 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
+<p><strong>Déficit sensitif :</strong>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitSensitif" id="noDeficitSensitif" checked>
+        <span class="checkmark"></span>
+        Pas de déficit sensitif
+    </label>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitSensitif" id="yesDeficitSensitif">
+        <span class="checkmark"></span>
+        Présence d'un déficit sensitif
+    </label>
+	<label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitSensitif" id="NEDeficitSensitif">
+        <span class="checkmark"></span>
+        Non évaluable
+    </label>
+</p>
+<div id="deficitSensitifDetails" style="display: none; margin-left: 20px;">
+    <!-- Membres supérieurs -->
+    <div>
+        <label class="custom-control checkbox" style="margin-right: 10px;">
+            <input type="checkbox" id="deficitMSS">
+            <span class="checkmark"></span>
+            Déficit sensitif aux membres supérieurs
+        </label>
+    </div>
+    <div id="deficitMSSDetails" style="display: none; margin-left: 20px;">
+        <input type="text" id="deficitMSSDescription" placeholder="Précisez la localisation et le type" style="width: 300px;">
+    </div>
+    <!-- Membres inférieurs -->
+    <div>
+        <label class="custom-control checkbox" style="margin-right: 10px;">
+            <input type="checkbox" id="deficitMIS">
+            <span class="checkmark"></span>
+            Déficit sensitif aux membres inférieurs
+        </label>
+    </div>
+    <div id="deficitMISDetails" style="display: none; margin-left: 20px;">
+        <input type="text" id="deficitMISDescription" placeholder="Précisez la localisation et le type" style="width: 300px;">
+    </div>
+</div>
+	
 
+<p><strong>Déficit moteur :</strong>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitMoteur" id="noDeficitMoteur" checked>
+        <span class="checkmark"></span> Pas de déficit moteur
+    </label>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitMoteur" id="yesDeficitMoteur">
+        <span class="checkmark"></span> Présence d'un déficit moteur
+    </label>
+	<label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="deficitMoteur" id="NEDeficitMoteur">
+        <span class="checkmark"></span> Non évaluable
+    </label>
+</p>
+
+<div id="deficitMoteurDetails" style="display: none; margin-left: 20px;">
+
+<!-- Membres supérieurs -->
+<div class="membres-superieurs">
+    <p><strong>Testing des membres supérieurs</strong></p>
+    <div>
+        <label class="custom-control checkbox">
+            <input type="checkbox" id="deficitMS">
+            <span class="checkmark"></span>
+            Présence d'un déficit moteur aux membres supérieurs
+        </label>
+    </div>
+    <div id="msDetails" style="display: none; margin-left: 20px;">
+        <!-- Deltoïde -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="deltoide">
+        <span class="checkmark"></span>
+        Deltoïde : Abduction d'épaule > 90°
+    </label>
+    
+    <!-- Nouveau sélecteur pour le côté droit -->
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <!-- Nouveau sélecteur pour le côté gauche -->
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+
+
+        <!-- Biceps brachial -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="biceps">
+        <span class="checkmark"></span>
+        Biceps brachial : Flexion de coude en supination
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Triceps -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="triceps">
+        <span class="checkmark"></span>
+        Triceps : Extension de coude
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Extenseurs radiaux -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="extenseursradiaux">
+        <span class="checkmark"></span>
+        Extenseurs radiaux : Extension du poignet
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+<!-- Fléchisseurs du carpe -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="flechisseurscarpe">
+        <span class="checkmark"></span>
+        Fléchisseurs du carpe : Flexion du poignet
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+       
 		
+    </div>
+</div>
+
+<div class="membres-inferieurs">
+    <p><strong>Testing des membres inférieurs</strong></p>
+    <div>
+        <label class="custom-control checkbox">
+            <input type="checkbox" id="deficitMI">
+            <span class="checkmark"></span>
+            Présence d'un déficit moteur aux membres inférieurs
+        </label>
+    </div>
+    <div id="miDetails" style="display: none; margin-left: 20px;">
+        <!-- Psoas iliaque -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="psoas">
+        <span class="checkmark"></span>
+        Psoas iliaque : Flexion de hanche
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Quadriceps -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="quadriceps">
+        <span class="checkmark"></span>
+        Quadriceps : Extension de genoux
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Ischiojambiers -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="ischiojambiers">
+        <span class="checkmark"></span>
+        Ischiojambiers : Flexion de genoux
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+<!-- Adducteurs -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="adducteurs">
+        <span class="checkmark"></span>
+        Adducteurs : Adduction de hanche
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tibial antérieur -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="tibialant">
+        <span class="checkmark"></span>
+        Tibial antérieur : Dorsiflexion de cheville
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Triceps sural -->
+<div class="muscle-group">
+    <label class="custom-control checkbox" style="margin-right: 10px; display: inline-flex; align-items: center;">
+        <input type="checkbox" id="tricepssural">
+        <span class="checkmark"></span>
+        Triceps sural : Extension de cheville
+    </label>
+
+    <div class="force-selector right" style="display: none; margin: 0 10px;">
+        <span>D</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+
+    <div class="force-selector left" style="display: none; margin-left: 10px;">
+        <span>G</span>
+        <button type="button" class="force-select-button" onclick="toggleForceSelect(this)">
+            <span class="force-value" data-value="5">5/5</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="force-dropdown">
+            <div class="force-option" data-value="5" onclick="selectForce(this)">5/5</div>
+            <div class="force-option" data-value="4" onclick="selectForce(this)">4/5</div>
+            <div class="force-option" data-value="3" onclick="selectForce(this)">3/5</div>
+            <div class="force-option" data-value="2" onclick="selectForce(this)">2/5</div>
+            <div class="force-option" data-value="1" onclick="selectForce(this)">1/5</div>
+            <div class="force-option" data-value="0" onclick="selectForce(this)">0/5</div>
+        </div>
+    </div>
+</div>
+
+						</div>
+					</div>			
+				</div>	
+				
+
+<p><strong>Syndrome méningé :</strong>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="syndromeninge" id="noSyndromeMeningé" checked>
+        <span class="checkmark"></span>
+        Pas de syndrome méningé
+    </label>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="syndromeninge" id="yesSyndromeMeningé">
+        <span class="checkmark"></span>
+        Présence d'un syndrome méningé
+    </label>
+	    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="syndromeninge" id="NESyndromeMeningé">
+        <span class="checkmark"></span>
+        Non évaluable
+    </label>
+</p>
+<div id="syndromeMeningeDetails" style="display: none; margin-left: 20px;">
+    <div style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+        <div>
+            <label class="custom-control checkbox" style="margin-right: 10px;">
+                <input type="checkbox" id="kernig">
+                <span class="checkmark"></span>
+                Signe de Kernig
+            </label>
+        </div>
+        <div>
+            <label class="custom-control checkbox" style="margin-right: 10px;">
+                <input type="checkbox" id="brudzinski">
+                <span class="checkmark"></span>
+                Signe de Brudzinski
+            </label>
+        </div>
+        <div>
+            <label class="custom-control checkbox" style="margin-right: 10px;">
+                <input type="checkbox" id="photophonophobie">
+                <span class="checkmark"></span>
+                Photophonophobie
+            </label>
+        </div>
+        <div>
+            <label class="custom-control checkbox" style="margin-right: 10px;">
+                <input type="checkbox" id="raideurNucale">
+                <span class="checkmark"></span>
+                Raideur nucale
+            </label>
+        </div>
+        <div>
+            <label class="custom-control checkbox" style="margin-right: 10px;">
+                <input type="checkbox" id="purpura">
+                <span class="checkmark"></span>
+                Purpura
+            </label>
+        </div>
+        <div>
+            <p>Précisions :
+            <input type="text" id="meningePrecisions" placeholder="Précisions éventuelles" style="width: 300px;"></p>
+        </div>
+    </div>
+</div>
+
+
+
+<p><strong>Nerf facial :</strong>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="nerf_facial" id="no_paralysie_faciale" checked>
+        <span class="checkmark"></span>
+        Pas de paralysie faciale
+    </label>
+    <label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="nerf_facial" id="yes_paralysie_faciale">
+        <span class="checkmark"></span>
+        Paralysie faciale
+    </label>
+    
+    <!-- Menu d'intensité séparé du label pour éviter les problèmes d'affichage -->
+    <div id="facial_intensity_selector" class="custom-select" style="display: none; margin-left: 10px; vertical-align: middle;">
+        <button type="button" class="select-button" onclick="toggleSelect(this)">
+            <span class="intensity-dot light"></span>
+            <span class="selected-text">Légère</span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="select-dropdown">
+            <div class="select-option" data-value="légère" onclick="selectIntensity(this)">
+                <span class="intensity-dot light"></span>Légère
+            </div>
+            <div class="select-option" data-value="modérée" onclick="selectIntensity(this)">
+                <span class="intensity-dot medium"></span>Modérée
+            </div>
+            <div class="select-option" data-value="sévère" onclick="selectIntensity(this)">
+                <span class="intensity-dot severe"></span>Sévère
+            </div>
+        </div>
+        <select id="facial_paralysis_intensity" style="display: none;">
+            <option value="légère">Légère</option>
+            <option value="modérée">Modérée</option>
+            <option value="sévère">Sévère</option>
+        </select>
+    </div>
+</p>
+
+<div id="paralysie_faciale_details" style="display: none; margin-left: 20px;">
+    <div style="margin-top: 10px;">
+        <label class="custom-control radio" style="margin-right: 15px;">
+            <input type="radio" name="type_paralysie_faciale" value="centrale" checked>
+            <span class="checkmark"></span>
+            Centrale
+        </label>
+        <label class="custom-control radio" style="margin-right: 15px;">
+            <input type="radio" name="type_paralysie_faciale" value="peripherique">
+            <span class="checkmark"></span>
+            Périphérique
+        </label>
+    </div>
+</div>
 		
 	
 	</div>					
@@ -4499,8 +5170,317 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+//sensitif
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Récupération des éléments radio
+    const noDeficitSensitif = document.getElementById('noDeficitSensitif');
+    const yesDeficitSensitif = document.getElementById('yesDeficitSensitif');
+    const NEDeficitSensitif = document.getElementById('NEDeficitSensitif');
+    const deficitSensitifDetails = document.getElementById('deficitSensitifDetails');
+    
+    // Fonctions pour gérer l'affichage du menu détaillé
+    function updateDetailsVisibility() {
+        if (yesDeficitSensitif.checked) {
+            deficitSensitifDetails.style.display = 'block';
+        } else {
+            deficitSensitifDetails.style.display = 'none';
+            
+            // Réinitialiser les checkboxes et les champs texte
+            document.getElementById('deficitMSS').checked = false;
+            document.getElementById('deficitMIS').checked = false;
+            document.getElementById('deficitMSSDetails').style.display = 'none';
+            document.getElementById('deficitMISDetails').style.display = 'none';
+            document.getElementById('deficitMSSDescription').value = '';
+            document.getElementById('deficitMISDescription').value = '';
+        }
+    }
+    
+    // Ajout des écouteurs d'événements
+    noDeficitSensitif.addEventListener('change', updateDetailsVisibility);
+    yesDeficitSensitif.addEventListener('change', updateDetailsVisibility);
+    NEDeficitSensitif.addEventListener('change', updateDetailsVisibility);
+    
+    // Gestion des détails supplémentaires pour les membres supérieurs et inférieurs
+    document.getElementById('deficitMSS').addEventListener('change', function() {
+        document.getElementById('deficitMSSDetails').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    document.getElementById('deficitMIS').addEventListener('change', function() {
+        document.getElementById('deficitMISDetails').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Initialisation de l'état à l'ouverture de la page
+    updateDetailsVisibility();
+});
+
+	
+	// Gestion des groupes musculaires
+document.addEventListener('DOMContentLoaded', function() {
+    // Pour chaque groupe musculaire
+    document.querySelectorAll('.muscle-group').forEach(group => {
+        const mainCheckbox = group.querySelector('input[type="checkbox"]');
+        const forceRight = group.querySelector('.force-right');
+        const forceLeft = group.querySelector('.force-left');
+
+        mainCheckbox.addEventListener('change', function() {
+            // Afficher/masquer les options de force droite et gauche
+            if (forceRight) forceRight.style.display = this.checked ? 'inline-block' : 'none';
+            if (forceLeft) forceLeft.style.display = this.checked ? 'inline-block' : 'none';
+            
+            // Si on décoche, réinitialiser les valeurs des selecteurs
+            if (!this.checked) {
+                const selects = group.querySelectorAll('select.force-value');
+                selects.forEach(select => select.value = "5");
+            }
+        });
+    });
+});
+
+// Gestion des groupes musculaires
+document.addEventListener('DOMContentLoaded', function() {
+    // Pour chaque groupe musculaire
+    document.querySelectorAll('.muscle-group').forEach(group => {
+        const mainCheckbox = group.querySelector('input[type="checkbox"]');
+        const forceSelectorRight = group.querySelector('.force-selector.right');
+        const forceSelectorLeft = group.querySelector('.force-selector.left');
+
+        mainCheckbox.addEventListener('change', function() {
+            // Afficher/masquer les sélecteurs de force droite et gauche
+            if (forceSelectorRight) forceSelectorRight.style.display = this.checked ? 'inline-flex' : 'none';
+            if (forceSelectorLeft) forceSelectorLeft.style.display = this.checked ? 'inline-flex' : 'none';
+            
+            // Si on décoche, réinitialiser les valeurs
+            if (!this.checked) {
+                if (forceSelectorRight) {
+                    const valueSpanRight = forceSelectorRight.querySelector('.force-value');
+                    valueSpanRight.textContent = '5/5';
+                    valueSpanRight.setAttribute('data-value', '5');
+                }
+                if (forceSelectorLeft) {
+                    const valueSpanLeft = forceSelectorLeft.querySelector('.force-value');
+                    valueSpanLeft.textContent = '5/5';
+                    valueSpanLeft.setAttribute('data-value', '5');
+                }
+            }
+        });
+    });
+});
+
+// Fonctions pour gérer les sélecteurs de force
+function toggleForceSelect(button) {
+    const selector = button.closest('.force-selector');
+    
+    // Fermer tous les autres sélecteurs ouverts
+    document.querySelectorAll('.force-selector.open').forEach(sel => {
+        if (sel !== selector) sel.classList.remove('open');
+    });
+    
+    selector.classList.toggle('open');
+    
+    // Fermer au clic en dehors
+    document.addEventListener('click', function closeForceSelect(e) {
+        if (!selector.contains(e.target)) {
+            selector.classList.remove('open');
+            document.removeEventListener('click', closeForceSelect);
+        }
+    });
+}
+
+function selectForce(option) {
+    const selector = option.closest('.force-selector');
+    const button = selector.querySelector('.force-select-button');
+    const valueSpan = button.querySelector('.force-value');
+    const value = option.dataset.value;
+    
+    valueSpan.textContent = value + '/5';
+    valueSpan.setAttribute('data-value', value);
+    
+    // Fermer le dropdown
+    selector.classList.remove('open');
+}
 
 
+			// TESTING MOTEUR ZBI
+			
+			
+// Gestion du déficit moteur principal
+document.getElementById('yesDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = 'none';
+});
+
+// Ajoutez cet écouteur pour l'option "Non évaluable"
+document.getElementById('NEDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = 'none';
+});
+
+// Gestion des membres supérieurs
+document.getElementById('deficitMS').addEventListener('change', function() {
+    document.getElementById('msDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+// Gestion des membres inférieurs
+document.getElementById('deficitMI').addEventListener('change', function() {
+    document.getElementById('miDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+// Gestion de chaque groupe musculaire
+document.querySelectorAll('.muscle-group input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const forceRight = this.parentElement.querySelector('.force-right');
+        const forceLeft = this.parentElement.querySelector('.force-left');
+        
+        if (this.checked) {
+            forceRight.style.display = 'inline-block';
+            forceLeft.style.display = 'inline-block';
+        } else {
+            forceRight.style.display = 'none';
+            forceLeft.style.display = 'none';
+            // Réinitialiser les valeurs
+            forceRight.querySelector('select').selectedIndex = 0;
+            forceLeft.querySelector('select').selectedIndex = 0;
+        }
+    });
+});
+
+
+
+
+
+// si patient sédaté alors par défaut tout ce qui est non évaluable devient non évaluable, c'est une option pour les bousillés de réanimation seulement 
+// Fonction pour gérer l'état de sédation et mettre à jour les examens neurologiques
+document.getElementById('sedate').addEventListener('change', function() {
+    if (this.checked) {
+        // Si le patient est sédaté, cocher toutes les options "Non évaluable"
+        document.getElementById('NEDeficitMoteur').checked = true;
+        document.getElementById('NEDeficitSensitif').checked = true;
+        
+        // Sélectionner "Non évaluable" pour le syndrome méningé (3ème radio button dans le groupe)
+        const NEsyndromeMeningé = document.querySelectorAll('input[name="syndromeninge"]')[2];
+        if (NEsyndromeMeningé) NEsyndromeMeningé.checked = true;
+        
+        // Déclencher l'événement change pour appliquer les effets visuels
+        triggerChangeEvent(document.getElementById('NEDeficitMoteur'));
+        triggerChangeEvent(document.getElementById('NEDeficitSensitif'));
+        if (NEsyndromeMeningé) triggerChangeEvent(NEsyndromeMeningé);
+    }
+});
+
+// Lorsqu'on passe de sédaté à non sédaté
+document.getElementById('non-sedate').addEventListener('change', function() {
+    if (this.checked) {
+        // Si le patient est non sédaté, cocher toutes les options "Pas de déficit"
+        document.getElementById('noDeficitMoteur').checked = true;
+        document.getElementById('noDeficitSensitif').checked = true;
+        
+        // Sélectionner "Pas de syndrome méningé" (1er radio button dans le groupe)
+        const noSyndromeMeningé = document.querySelectorAll('input[name="syndromeninge"]')[0];
+        if (noSyndromeMeningé) noSyndromeMeningé.checked = true;
+        
+        // Déclencher l'événement change pour appliquer les effets visuels
+        triggerChangeEvent(document.getElementById('noDeficitMoteur'));
+        triggerChangeEvent(document.getElementById('noDeficitSensitif'));
+        if (noSyndromeMeningé) triggerChangeEvent(noSyndromeMeningé);
+    }
+});
+
+// Fonction pour déclencher un événement "change" sur un élément
+function triggerChangeEvent(element) {
+    const event = new Event('change', { bubbles: true });
+    element.dispatchEvent(event);
+}
+
+// Maintenir la possibilité de modifier manuellement les options même après le réglage automatique
+document.getElementById('yesDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = 'none';
+});
+
+document.getElementById('NEDeficitMoteur').addEventListener('change', function() {
+    document.getElementById('deficitMoteurDetails').style.display = 'none';
+});
+
+document.getElementById('yesDeficitSensitif').addEventListener('change', function() {
+    document.getElementById('deficitSensitifDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noDeficitSensitif').addEventListener('change', function() {
+    document.getElementById('deficitSensitifDetails').style.display = 'none';
+});
+
+document.getElementById('NEDeficitSensitif').addEventListener('change', function() {
+    document.getElementById('deficitSensitifDetails').style.display = 'none';
+});
+
+// Ajouter ces lignes pour le syndrome méningé
+document.getElementById('yesSyndromeMeningé').addEventListener('change', function() {
+    document.getElementById('syndromeMeningeDetails').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('noSyndromeMeningé').addEventListener('change', function() {
+    document.getElementById('syndromeMeningeDetails').style.display = 'none';
+});
+
+// Pour l'option "Non évaluable" du syndrome méningé
+document.querySelectorAll('input[name="syndromeninge"]')[2].addEventListener('change', function() {
+    document.getElementById('syndromeMeningeDetails').style.display = 'none';
+});
+
+
+// Gestion du syndrome méningé avec l'option non évaluable
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="syndromeninge"]');
+    const syndromeMeningeDetails = document.getElementById('syndromeMeningeDetails');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.id === 'yesSyndromeMeningé') {
+                syndromeMeningeDetails.style.display = 'block';
+            } else {
+                syndromeMeningeDetails.style.display = 'none';
+                
+                syndromeMeningeDetails.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                document.getElementById('meningePrecisions').value = '';
+            }
+        });
+    });
+});
+
+
+// Gestion de l'affichage des détails de la paralysie faciale
+document.getElementById('yes_paralysie_faciale').addEventListener('change', function() {
+    // Afficher les détails du type de paralysie
+    document.getElementById('paralysie_faciale_details').style.display = 'block';
+    
+    // Afficher le sélecteur d'intensité
+    document.getElementById('facial_intensity_selector').style.display = 'inline-block';
+});
+
+document.getElementById('no_paralysie_faciale').addEventListener('change', function() {
+    // Masquer les détails du type de paralysie
+    document.getElementById('paralysie_faciale_details').style.display = 'none';
+    
+    // Masquer le sélecteur d'intensité
+    document.getElementById('facial_intensity_selector').style.display = 'none';
+});
+
+
+
+// Ajoutez aussi cette initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // S'assurer que le menu est caché au démarrage
+    document.getElementById('facial_intensity_selector').style.display = 'none';
+});
 			
 			</script>
 			
@@ -4544,6 +5524,96 @@ document.addEventListener('DOMContentLoaded', function() {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
+
+
+
+/* Style pour les sélecteurs de force */
+.force-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.force-selector span {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.force-select-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 60px;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.force-select-button:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.force-value {
+    flex-grow: 1;
+    text-align: left;
+	    color: #22c55e; /* Couleur verte par défaut pour 5/5 */
+
+}
+
+.select-arrow {
+    margin-left: 4px;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+.force-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 100%;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.force-option {
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: #1e293b;
+}
+
+.force-option:hover {
+    background-color: #f8fafc;
+}
+
+/* Classe pour le dropdown ouvert */
+.force-selector.open .force-dropdown {
+    display: block;
+}
+
+.force-selector.open .select-arrow {
+    transform: rotate(180deg);
+}
+
+/* Style des valeurs de force */
+.force-value[data-value="5"] { color: #22c55e; }
+.force-value[data-value="4"] { color: #84cc16; }
+.force-value[data-value="3"] { color: #eab308; }
+.force-value[data-value="2"] { color: #f97316; }
+.force-value[data-value="1"] { color: #ef4444; }
+.force-value[data-value="0"] { color: #dc2626; }
+
 
 
 
@@ -4781,8 +5851,212 @@ document.addEventListener('DOMContentLoaded', function() {
 						
 						<div class="subsection">
 						<h4>Autrement</h4>
-												
+	
+  <!-- Température -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Température (°C) :</strong></p>
+    <input type="number" id="temperature" placeholder="°C" step="0.1" style="padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; width: 70px;">
+    <span id="temperature-status" style="margin-left: 10px; font-weight: bold;"></span>
+  </div>
+
+  <!-- Glycémie -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Glycémie (g/L) :</strong></p>
+    <input type="number" id="glycemie" placeholder="g/L" step="0.01" style="padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; width: 70px;">
+    <span id="glycemie-status" style="margin-left: 10px; font-weight: bold;"></span>
+  </div>
+  
+                <textarea id="CliniqueAutre" class="form-textarea" style="width: 90%; min-height: 50px;"
+                    placeholder="Décrivez le reste de l'examen clinique..."></textarea>
+
+
+  <!-- Information aux proches avec menu déroulant -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Information aux proches :</strong></p>
+    <select id="infoProches" style="padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #e2e8f0; width: 200px; font-size: 0.95rem;">
+      <option value="informes" style="background-color: #dcfce7; color: #166534;">Proches informés</option>
+      <option value="noninformes" style="background-color: #fee2e2; color: #b91c1c;">Proches non informés</option>
+    </select>
+  </div>
+
+  <!-- Personne de confiance désignée -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Personne de confiance désignée :</strong></p>
+    <select id="personneConfiance" style="padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #e2e8f0; width: 200px; font-size: 0.95rem;">
+      <option value="nonconnue" style="background-color: #fee2e2; color: #b91c1c;">Non connue</option>
+      <option value="oralement" style="background-color: #dcfce7; color: #166534;">Oui (oralement)</option>
+      <option value="ecrit" style="background-color: #dcfce7; color: #166534;">Oui (par écrit)</option>
+      <option value="impossible" style="background-color: #fef9c3; color: #854d0e;">Recueil impossible</option>
+    </select>
+    
+    <!-- Champ pour le nom de la personne de confiance -->
+    <div id="personneConfianceNom" style="display: none; margin-left: 15px;">
+      <label style="margin-right: 10px;">Nom/statut/coordonées  :</label>
+      <input type="text" id="nomPersonneConfiance" style="padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; width: 250px;">
+    </div>
+  </div>
+
+  <!-- Directives anticipées -->
+  <div style="display: flex; align-items: center; margin-bottom: 15px;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Directives anticipées :</strong></p>
+    <select id="directivesAnticipees" style="padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #e2e8f0; width: 200px; font-size: 0.95rem;">
+      <option value="nonconnue" style="background-color: #fee2e2; color: #b91c1c;">Non connue</option>
+      <option value="oralement" style="background-color: #dcfce7; color: #166534;">Oui (oralement)</option>
+      <option value="ecrit" style="background-color: #dcfce7; color: #166534;">Oui (par écrit)</option>
+      <option value="impossible" style="background-color: #fef9c3; color: #854d0e;">Recueil impossible</option>
+    </select>
+  </div>
+							
 						</div>
+						
+		<script>
+
+
+// Script pour gérer l'évaluation de la température et de la glycémie
+document.addEventListener('DOMContentLoaded', function() {
+  // Évaluation de la température
+  const temperatureInput = document.getElementById('temperature');
+  const temperatureStatus = document.getElementById('temperature-status');
+  
+  temperatureInput.addEventListener('input', function() {
+    const temp = parseFloat(this.value);
+    if (!isNaN(temp)) {
+      if (temp < 36) {
+        temperatureStatus.textContent = 'Hypothermie';
+        temperatureStatus.style.color = '#1d4ed8'; // Bleu pour l'hypothermie
+      } else if (temp >= 38) {
+        temperatureStatus.textContent = 'Hyperthermie';
+        temperatureStatus.style.color = '#dc2626'; // Rouge pour l'hyperthermie
+      } else {
+        temperatureStatus.textContent = 'Normothermie';
+        temperatureStatus.style.color = '#16a34a'; // Vert pour la normale
+      }
+    } else {
+      temperatureStatus.textContent = '';
+    }
+  });
+  
+  // Évaluation de la glycémie
+  const glycemieInput = document.getElementById('glycemie');
+  const glycemieStatus = document.getElementById('glycemie-status');
+  
+  glycemieInput.addEventListener('input', function() {
+    const glyc = parseFloat(this.value);
+    if (!isNaN(glyc)) {
+      if (glyc < 0.7) {
+        glycemieStatus.textContent = 'Hypoglycémie';
+        glycemieStatus.style.color = '#dc2626'; // Rouge pour l'hypoglycémie
+      } else if (glyc > 1.4) {
+        glycemieStatus.textContent = 'Hyperglycémie';
+        glycemieStatus.style.color = '#dc2626'; // Rouge pour l'hyperglycémie
+      } else {
+        glycemieStatus.textContent = 'Normale';
+        glycemieStatus.style.color = '#16a34a'; // Vert pour la normale
+      }
+    } else {
+      glycemieStatus.textContent = '';
+    }
+  });
+});
+
+
+// Script pour gérer les couleurs du sélecteur d'information aux proches
+document.addEventListener('DOMContentLoaded', function() {
+  const infoProchesSelect = document.getElementById('infoProches');
+  
+  function updateSelectColor() {
+    if (infoProchesSelect.value === 'informes') {
+      infoProchesSelect.style.backgroundColor = '#dcfce7';
+      infoProchesSelect.style.color = '#166534';
+      infoProchesSelect.style.borderColor = '#86efac';
+    } else {
+      infoProchesSelect.style.backgroundColor = '#fee2e2';
+      infoProchesSelect.style.color = '#b91c1c';
+      infoProchesSelect.style.borderColor = '#fca5a5';
+    }
+  }
+  
+  // Appliquer les couleurs initiales
+  updateSelectColor();
+  
+  // Mettre à jour les couleurs à chaque changement
+  infoProchesSelect.addEventListener('change', updateSelectColor);
+});
+
+
+// Script pour gérer les couleurs et affichages conditionnels des sélecteurs
+document.addEventListener('DOMContentLoaded', function() {
+  // Sélecteur d'information aux proches
+  const infoProchesSelect = document.getElementById('infoProches');
+  
+  function updateInfoProchesColor() {
+    if (infoProchesSelect.value === 'informes') {
+      infoProchesSelect.style.backgroundColor = '#dcfce7';
+      infoProchesSelect.style.color = '#166534';
+      infoProchesSelect.style.borderColor = '#86efac';
+    } else {
+      infoProchesSelect.style.backgroundColor = '#fee2e2';
+      infoProchesSelect.style.color = '#b91c1c';
+      infoProchesSelect.style.borderColor = '#fca5a5';
+    }
+  }
+  
+  // Personne de confiance
+  const personneConfianceSelect = document.getElementById('personneConfiance');
+  const personneConfianceNom = document.getElementById('personneConfianceNom');
+  
+  function updatePersonneConfianceColor() {
+    if (personneConfianceSelect.value === 'nonconnue') {
+      personneConfianceSelect.style.backgroundColor = '#fee2e2';
+      personneConfianceSelect.style.color = '#b91c1c';
+      personneConfianceSelect.style.borderColor = '#fca5a5';
+      personneConfianceNom.style.display = 'none';
+    } else if (personneConfianceSelect.value === 'impossible') {
+      personneConfianceSelect.style.backgroundColor = '#fef9c3';
+      personneConfianceSelect.style.color = '#854d0e';
+      personneConfianceSelect.style.borderColor = '#fcd34d';
+      personneConfianceNom.style.display = 'none';
+    } else {
+      personneConfianceSelect.style.backgroundColor = '#dcfce7';
+      personneConfianceSelect.style.color = '#166534';
+      personneConfianceSelect.style.borderColor = '#86efac';
+      personneConfianceNom.style.display = 'flex';
+    }
+  }
+  
+  // Directives anticipées
+  const directivesAntSelect = document.getElementById('directivesAnticipees');
+  
+  function updateDirectivesAntColor() {
+    if (directivesAntSelect.value === 'nonconnue') {
+      directivesAntSelect.style.backgroundColor = '#fee2e2';
+      directivesAntSelect.style.color = '#b91c1c';
+      directivesAntSelect.style.borderColor = '#fca5a5';
+    } else if (directivesAntSelect.value === 'impossible') {
+      directivesAntSelect.style.backgroundColor = '#fef9c3';
+      directivesAntSelect.style.color = '#854d0e';
+      directivesAntSelect.style.borderColor = '#fcd34d';
+    } else {
+      directivesAntSelect.style.backgroundColor = '#dcfce7';
+      directivesAntSelect.style.color = '#166534';
+      directivesAntSelect.style.borderColor = '#86efac';
+    }
+  }
+  
+  // Appliquer les couleurs initiales
+  updateInfoProchesColor();
+  updatePersonneConfianceColor();
+  updateDirectivesAntColor();
+  
+  // Mettre à jour les couleurs à chaque changement
+  infoProchesSelect.addEventListener('change', updateInfoProchesColor);
+  personneConfianceSelect.addEventListener('change', updatePersonneConfianceColor);
+  directivesAntSelect.addEventListener('change', updateDirectivesAntColor);
+});
+
+</script>		
+						
+						
 						</div>
 						
 						
@@ -4790,6 +6064,55 @@ document.addEventListener('DOMContentLoaded', function() {
 				</div>
 				</div>
 </div>	
+
+<style>
+/* Styles pour les textarea */
+.form-textarea {
+    width: 90%; /* Réduit la largeur */
+    height: 25px; /* Hauteur fixe */
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-family: inherit;
+    resize: none; /* Supprime le bouton de redimensionnement */
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0.5rem 0;
+}
+
+/* Exception pour l'histoire de la maladie */
+#CliniqueAutre {
+    width: 100%;
+    height: 200px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-textarea {
+        width: 100%;
+    }
+}
+.form-textarea:hover {
+    border-color: #93c5fd;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Style responsive pour les textarea */
+@media (max-width: 768px) {
+    .form-textarea {
+        min-height: 10px;
+    }
+}
+
+
+</style>
+
+
 
 
 			 <section id="ETT">
@@ -6366,6 +7689,107 @@ function validateTempsAcceleration() {
 document.getElementById('temps_acceleration').addEventListener('input', validateTempsAcceleration);
 
 
+function resetExamenReaInputs() {
+    // Réinitialiser tous les champs numériques
+    document.querySelectorAll('#examen-réanimation input[type="number"]').forEach(input => {
+        input.value = '';
+    });
+    
+    // Réinitialiser tous les champs texte
+    document.querySelectorAll('#examen-réanimation input[type="text"]').forEach(input => {
+        input.value = '';
+    });
+    
+    // Réinitialiser toutes les zones de texte
+    document.querySelectorAll('#examen-réanimation textarea').forEach(textarea => {
+        textarea.value = '';
+    });
+    
+    // Réinitialiser les statuts
+    document.querySelectorAll('#examen-réanimation [id$="-status"]').forEach(span => {
+        span.textContent = '';
+    });
+    
+    // Réinitialiser les cases à cocher
+    document.querySelectorAll('#examen-réanimation input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Réinitialiser les boutons radio - remettre les premiers de chaque groupe à coché
+    const radioGroups = {};
+    document.querySelectorAll('#examen-réanimation input[type="radio"]').forEach(radio => {
+        if (!radioGroups[radio.name]) {
+            radioGroups[radio.name] = true;
+            const firstRadio = document.querySelector(`#examen-réanimation input[name="${radio.name}"]`);
+            if (firstRadio) firstRadio.checked = true;
+        }
+    });
+    
+    // Masquer les sections conditionnelles
+    document.querySelectorAll('#examen-réanimation [id$="Details"], #examen-réanimation [id$="_section"], #examen-réanimation [id$="d1"], #examen-réanimation [id$="d2"], #examen-réanimation [id$="d3"], #examen-réanimation [id$="d4"], #examen-réanimation [id$="d5"]').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Réinitialiser les valeurs spécifiques de formulaire
+    if (document.getElementById('map')) document.getElementById('map').value = '';
+    if (document.getElementById('glasgow-total')) document.getElementById('glasgow-total').value = '15';
+    if (document.getElementById('glasgow-anterieur')) document.getElementById('glasgow-anterieur').value = '15';
+    
+    // Vérifier si l'élément existe avant de définir readOnly
+    const glasgowTotal = document.getElementById('glasgow-total');
+    if (glasgowTotal) {
+        glasgowTotal.style.backgroundColor = '#dcfce7';
+        glasgowTotal.style.color = '#166534';
+    }
+    
+    // Réinitialiser l'état de l'élément de sédation
+    if (document.getElementById('sedation-field')) {
+        document.getElementById('sedation-field').style.display = 'none';
+    }
+    
+    // Réinitialiser les sélecteurs RCP et RPM
+    ['rpm-direct-droit', 'rpm-direct-gauche', 'rpm-consensuel-droit', 'rpm-consensuel-gauche'].forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            select.value = 'present';
+            select.style.backgroundColor = '#dcfce7';
+            select.style.color = '#166534';
+            select.style.borderColor = '#86efac';
+        }
+    });
+    
+    ['rcp-droit', 'rcp-gauche'].forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            select.value = 'flexion';
+            select.style.backgroundColor = '#dcfce7';
+            select.style.color = '#166534';
+            select.style.borderColor = '#86efac';
+        }
+    });
+    
+    // Déclencher des événements pour mettre à jour les calculs dynamiques
+    ['FC', 'pas', 'pad'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            const event = new Event('input', { bubbles: true });
+            element.dispatchEvent(event);
+        }
+    });
+    
+    // Mettre à jour les champs de Glasgow
+    updateGlasgowTotal();
+}
+
+// Ajouter un écouteur d'événement au bouton de réinitialisation
+document.addEventListener('DOMContentLoaded', function() {
+    const resetButton = document.querySelector('#examen-réanimation .section-header .toggle-button[onclick="resetSection(this)"]');
+    if (resetButton) {
+        resetButton.removeAttribute('onclick');
+        resetButton.addEventListener('click', resetExamenReaInputs);
+    }
+});
+
 
 function resetETTInputs() {
     // Réinitialiser tous les champs numériques
@@ -6773,7 +8197,7 @@ document.getElementById('generateText').addEventListener('click', function() {
     generateTextType();
 });
 
-// Fonction pour générer le texte type avec effet d'animation
+// Fonction principale pour générer le texte type final complet
 function generateTextType() {
     // Récupérer la zone de texte
     const textArea = document.getElementById('generatedTextArea');
@@ -6781,6 +8205,31 @@ function generateTextType() {
     // Vider d'abord la zone de texte
     textArea.innerHTML = '';
     
+    // Générer la première partie: EXAMEN RÉANIMATION
+    let textType = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">Examen clinique réanimation :</div>`;
+    
+    // Ajouter les différentes sections de l'examen de réanimation
+    textType += generateCardiovascularSection();
+    textType += generateRespiratorySection();
+    textType += generateDigestiveSection();
+    textType += generateNeurologicalSection();
+    textType += generateAdditionalSection();
+    
+    // Ajouter un séparateur entre les deux examens
+    textType += `<div class="text-line" style="border-top: 1px solid #ddd; margin: 20px 0;"></div>`;
+    
+    // Générer la deuxième partie: ÉCHOGRAPHIE TRANSTHORACIQUE
+    textType += generateEchocardiographySection();
+    
+    // Afficher le texte généré dans la zone de texte
+    textArea.innerHTML = textType;
+    
+    // Appliquer les animations
+    applyTextAnimations();
+}
+
+// Fonction pour générer la section d'échographie transthoracique
+function generateEchocardiographySection() {
     // Récupérer la date du jour au format français
     const today = new Date();
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -6798,31 +8247,28 @@ function generateTextType() {
     const statutOperateurElem = document.querySelector('input[name="statut_operateur"]:checked');
     const statutOperateur = statutOperateurElem ? statutOperateurElem.value : "interne";
     
-    // Générer le titre avec style
-    let textType = `<div class="text-line" style="color: #1e40af; font-weight: bold;">ETT du ${formattedDate} : ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc}/min ; ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)})</div>`;
+    // Générer le titre de la section ETT
+    let ettSection = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">ETT du ${formattedDate} : ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc}/min ; ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)})</div>`;
     
     // Fonction utilitaire pour vérifier si une valeur est définie
     function valueOrDash(value) {
         return value && value !== "" ? value : "?";
     }
-	
-	const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
-
-// Déterminer si l'OG est dilatée
-let ogDilatee = false;
-if (document.getElementById('surface_OG').value) {
-    const ogValue = parseFloat(document.getElementById('surface_OG').value);
-    if (ogValue >= 20) {
-        ogDilatee = true;
-    }
-}
-
-
     
-    // 1. Ventricule gauche : dimensions et hypertrophie
+    // Ventricule gauche : dimensions et hypertrophie
+    const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
     const siv = valueOrDash(document.getElementById('paroi_anteroseptale').value);
     const dtdvg = valueOrDash(document.getElementById('diametre_VG').value);
     const pil = valueOrDash(document.getElementById('paroi_inferolaterale').value);
+    
+    // Déterminer si l'OG est dilatée
+    let ogDilatee = false;
+    if (document.getElementById('surface_OG').value) {
+        const ogValue = parseFloat(document.getElementById('surface_OG').value);
+        if (ogValue >= 20) {
+            ogDilatee = true;
+        }
+    }
     
     // Déterminer si le VG est dilaté
     let vgDilate = false;
@@ -6853,42 +8299,42 @@ if (document.getElementById('surface_OG').value) {
     else if (vgHypertrophie) vgDescription = "VG non dilaté et hypertrophié";
     else vgDescription = "VG non dilaté et non hypertrophié";
     
-    textType += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (OG ${surfaceOG} cm²). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
+    ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (OG ${surfaceOG} cm²). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
     
-    // 2. Fonction diastolique
+    // Fonction diastolique
     const rapportEE = valueOrDash(document.getElementById('rapport_EE').value);
     const ondeE = valueOrDash(document.getElementById('onde_E').value);
     const ondeESept = valueOrDash(document.getElementById('onde_E_sept').value);
     const ondeELat = valueOrDash(document.getElementById('onde_E_lat').value);
     const volumeOG = valueOrDash(document.getElementById('volume_OG_indexe').value);
     
-    // Récupérer l'interprétation de la fonction diastolique du div
+    // Récupérer l'interprétation de la fonction diastolique
     let fonctionDiastolique = "Fonction diastolique non évaluée";
     const interpretationElem = document.getElementById('interpretation_fonction_diastolique');
     if (interpretationElem && interpretationElem.style.display !== 'none' && interpretationElem.textContent) {
         fonctionDiastolique = interpretationElem.textContent.replace('Conclusion: ', '');
     }
     
-    textType += `<div class="text-line">- ${fonctionDiastolique} (E/E' ${rapportEE} ; E ${ondeE} cm/s ; E' sept ${ondeESept} cm/s ; E' lat ${ondeELat} cm/s ; Volume OG ${volumeOG} mL/m²)</div>`;
+    ettSection += `<div class="text-line">- ${fonctionDiastolique} (E/E' ${rapportEE} ; E ${ondeE} cm/s ; E' sept ${ondeESept} cm/s ; E' lat ${ondeELat} cm/s ; Volume OG ${volumeOG} mL/m²)</div>`;
     
-    // 3. Profil mitral
+    // Profil mitral
     const rapportEA = valueOrDash(document.getElementById('rapport_EA').value);
     const tde = valueOrDash(document.getElementById('TDE').value);
     
-    // Récupérer l'interprétation du profil mitral du div
+    // Récupérer l'interprétation du profil mitral
     let profilMitral = "Profil mitral non évalué";
     const interpretationProfilElem = document.getElementById('interpretation_profil_mitral');
     if (interpretationProfilElem && interpretationProfilElem.style.display !== 'none' && interpretationProfilElem.textContent) {
         profilMitral = interpretationProfilElem.textContent.replace('Conclusion: ', '');
     }
     
-    textType += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE ${tde} ms)</div>`;
+    ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE ${tde} ms)</div>`;
     
-    // 4. Cinétique segmentaire
+    // Cinétique segmentaire
     const cinetiqueSegmentaire = document.querySelector('input[name="cinetique_segmentaire"]:checked').value;
     
     if (cinetiqueSegmentaire === 'normale') {
-        textType += `<div class="text-line">- Cinétique segmentaire normale</div>`;
+        ettSection += `<div class="text-line">- Cinétique segmentaire normale</div>`;
     } else {
         // Récupérer les troubles de cinétique sélectionnés
         let troubles4C = Array.from(document.querySelectorAll('input[name="trouble_4c"]:checked')).map(cb => cb.value);
@@ -6924,44 +8370,43 @@ if (document.getElementById('surface_OG').value) {
             troublesListe.push(`Parasternal petit axe: ${ppaTroubles.join('; ')}`);
         }
         
-        textType += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}</div>`;
+        ettSection += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}</div>`;
     }
     
-// 5. FEVG et ITV
-const fevg = valueOrDash(document.getElementById('FEVG').value);
-const itv = valueOrDash(document.getElementById('ITV').value);
-const methodeFEVG = document.querySelector('input[name="methode_fevg"]:checked').value;
-
-// Déterminer si la FEVG est normale
-let fevgNormale = true;
-if (document.getElementById('FEVG').value) {
-    const fevgValue = parseFloat(document.getElementById('FEVG').value);
-    const sexe = document.querySelector('input[name="sexe"]:checked').value;
+    // FEVG et ITV
+    const fevg = valueOrDash(document.getElementById('FEVG').value);
+    const itv = valueOrDash(document.getElementById('ITV').value);
+    const methodeFEVG = document.querySelector('input[name="methode_fevg"]:checked').value;
     
-    if ((sexe === 'homme' && fevgValue < 52) || (sexe === 'femme' && fevgValue < 54)) {
-        fevgNormale = false;
+    // Déterminer si la FEVG est normale
+    let fevgNormale = true;
+    if (document.getElementById('FEVG').value) {
+        const fevgValue = parseFloat(document.getElementById('FEVG').value);
+        const sexe = document.querySelector('input[name="sexe"]:checked').value;
+        
+        if ((sexe === 'homme' && fevgValue < 52) || (sexe === 'femme' && fevgValue < 54)) {
+            fevgNormale = false;
+        }
     }
-}
-
-textType += `<div class="text-line">- FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'normale' : 'altérée'} à ${fevg}%, ITV à ${itv} cm</div>`;
-
-
-    // 6. Ventricule droit
+    
+    ettSection += `<div class="text-line">- FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'normale' : 'altérée'} à ${fevg}%, ITV à ${itv} cm</div>`;
+    
+    // Ventricule droit
     const diamBasalVD = valueOrDash(document.getElementById('diametre_basal_VD').value);
     const diamMedianVD = valueOrDash(document.getElementById('diametre_median_VD').value);
     const tapse = valueOrDash(document.getElementById('TAPSE').value);
     const ondeS = valueOrDash(document.getElementById('onde_S').value);
-		const surfaceOD = valueOrDash(document.getElementById('surface_OD').value);
-
-		// Déterminer si l'OD est dilatée
-		let odDilatee = false;
-		if (document.getElementById('surface_OD').value) {
-			const odValue = parseFloat(document.getElementById('surface_OD').value);
-			if (odValue >= 18) {
-				odDilatee = true;
-			}
-		}
-
+    const surfaceOD = valueOrDash(document.getElementById('surface_OD').value);
+    
+    // Déterminer si l'OD est dilatée
+    let odDilatee = false;
+    if (document.getElementById('surface_OD').value) {
+        const odValue = parseFloat(document.getElementById('surface_OD').value);
+        if (odValue >= 18) {
+            odDilatee = true;
+        }
+    }
+    
     // Déterminer si le VD est dilaté
     let vdDilate = false;
     if (document.getElementById('diametre_basal_VD').value || document.getElementById('diametre_median_VD').value) {
@@ -6984,81 +8429,81 @@ textType += `<div class="text-line">- FEVG (${methodeFEVG === 'simpson' ? 'simps
         }
     }
     
-textType += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
+    ettSection += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
     
-// 7. Valves aortique et mitrale
-const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
-const retrecissementAortique = document.querySelector('input[name="retrecissement_aortique"]:checked').value;
-const fuiteMitrale = document.querySelector('input[name="fuite_mitrale"]:checked').value;
-const retrecissementMitral = document.querySelector('input[name="retrecissement_mitral"]:checked').value;
-
-// Valve aortique
-let texteAortique = "Pas de fuite aortique significative";
-if (fuiteAortique === 'oui') {
-    const gradeAortique = document.querySelector('input[name="grade_fuite_aortique"]:checked').value;
-    const precisionsAortique = document.getElementById('precisions_fuite_aortique').value;
-    texteAortique = `Fuite aortique ${gradeAortique}${precisionsAortique ? ', ' + precisionsAortique : ''}`;
-}
-
-let texteRetrecissementAortique = "pas de rétrécissement aortique";
-if (retrecissementAortique === 'oui') {
-    const precisionsRetrecissementAortique = document.getElementById('precisions_retrecissement_aortique').value;
-    texteRetrecissementAortique = `rétrécissement aortique${precisionsRetrecissementAortique ? ' : ' + precisionsRetrecissementAortique : ''}`;
-}
-
-// Valve mitrale
-let texteMitrale = "Pas de fuite mitrale significative";
-if (fuiteMitrale === 'oui') {
-    const gradeMitrale = document.querySelector('input[name="grade_fuite_mitrale"]:checked').value;
-    const precisionsMitrale = document.getElementById('precisions_fuite_mitrale').value;
-    texteMitrale = `Fuite mitrale ${gradeMitrale}${precisionsMitrale ? ', ' + precisionsMitrale : ''}`;
-}
-
-let texteRetrecissementMitral = "pas de rétrécissement mitral";
-if (retrecissementMitral === 'oui') {
-    const precisionsRetrecissementMitral = document.getElementById('precisions_retrecissement_mitral').value;
-    texteRetrecissementMitral = `rétrécissement mitral${precisionsRetrecissementMitral ? ' : ' + precisionsRetrecissementMitral : ''}`;
-}
-
-textType += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissementAortique}. ${texteMitrale} ; ${texteRetrecissementMitral}.</div>`;
+    // Valves aortique et mitrale
+    const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
+    const retrecissementAortique = document.querySelector('input[name="retrecissement_aortique"]:checked').value;
+    const fuiteMitrale = document.querySelector('input[name="fuite_mitrale"]:checked').value;
+    const retrecissementMitral = document.querySelector('input[name="retrecissement_mitral"]:checked').value;
     
-    // 8. HTAP et septum paradoxal
+    // Valve aortique
+    let texteAortique = "Pas de fuite aortique significative";
+    if (fuiteAortique === 'oui') {
+        const gradeAortique = document.querySelector('input[name="grade_fuite_aortique"]:checked').value;
+        const precisionsAortique = document.getElementById('precisions_fuite_aortique').value;
+        texteAortique = `Fuite aortique ${gradeAortique}${precisionsAortique ? ', ' + precisionsAortique : ''}`;
+    }
+    
+    let texteRetrecissementAortique = "pas de rétrécissement aortique";
+    if (retrecissementAortique === 'oui') {
+        const precisionsRetrecissementAortique = document.getElementById('precisions_retrecissement_aortique').value;
+        texteRetrecissementAortique = `rétrécissement aortique${precisionsRetrecissementAortique ? ' : ' + precisionsRetrecissementAortique : ''}`;
+    }
+    
+    // Valve mitrale
+    let texteMitrale = "Pas de fuite mitrale significative";
+    if (fuiteMitrale === 'oui') {
+        const gradeMitrale = document.querySelector('input[name="grade_fuite_mitrale"]:checked').value;
+        const precisionsMitrale = document.getElementById('precisions_fuite_mitrale').value;
+        texteMitrale = `Fuite mitrale ${gradeMitrale}${precisionsMitrale ? ', ' + precisionsMitrale : ''}`;
+    }
+    
+    let texteRetrecissementMitral = "pas de rétrécissement mitral";
+    if (retrecissementMitral === 'oui') {
+        const precisionsRetrecissementMitral = document.getElementById('precisions_retrecissement_mitral').value;
+        texteRetrecissementMitral = `rétrécissement mitral${precisionsRetrecissementMitral ? ' : ' + precisionsRetrecissementMitral : ''}`;
+    }
+    
+    ettSection += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissementAortique}. ${texteMitrale} ; ${texteRetrecissementMitral}.</div>`;
+    
+    // HTAP et septum paradoxal
     const paps = valueOrDash(document.getElementById('PAPS').value);
     const vmaxIT = valueOrDash(document.getElementById('Vmax_IT').value);
     const tacc = valueOrDash(document.getElementById('temps_acceleration').value);
     const septumParadoxal = document.querySelector('input[name="septum_paradoxal"]:checked').value;
     
-// Déterminer s'il y a une HTAP
-let htap = false;
-if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
-    const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
-    const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
-    const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
-    
-    if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
-        htap = true;
+    // Déterminer s'il y a une HTAP
+    let htap = false;
+    if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
+        const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
+        const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
+        const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
+        
+        if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
+            htap = true;
+        }
     }
-}
     
     // Récupérer la valeur de la POD estimée
     const podEstimee = document.getElementById('POD_estimee').value || "?";
     
-    textType += `<div class="text-line">- ${htap ? 'HTAP' : 'Pas d\'HTAP'} (PAPS estimées à ${paps} + ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
+    ettSection += `<div class="text-line">- ${htap ? 'HTAP' : 'Pas d\'HTAP'} (PAPS estimées à ${paps} + ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
     
-    // 9. Péricarde
+    // Péricarde
     const pericarde = document.querySelector('input[name="pericarde"]:checked').value;
     
     if (pericarde === 'sec') {
-        textType += `<div class="text-line">- Péricarde sec</div>`;
+        ettSection += `<div class="text-line">- Péricarde sec</div>`;
     } else {
         const abondance = document.querySelector('input[name="abondance_epanchement"]:checked').value;
         const decollement = valueOrDash(document.getElementById('decollement_pericardique').value);
         const precisionsPericarde = document.getElementById('precisions_pericarde').value;
         
-        textType += `<div class="text-line">- Épanchement péricardique de ${abondance} abondance (${decollement} mm)${precisionsPericarde ? ', ' + precisionsPericarde : ''}</div>`;
+        ettSection += `<div class="text-line">- Épanchement péricardique de ${abondance} abondance (${decollement} mm)${precisionsPericarde ? ', ' + precisionsPericarde : ''}</div>`;
     }
     
-    // 10. Aorte
+    // Aorte
     const sinus = valueOrDash(document.getElementById('sinus_valsalva').value);
     const jonction = valueOrDash(document.getElementById('jonction_sinoaortique').value);
     const aorte = valueOrDash(document.getElementById('aorte_ascendante').value);
@@ -7077,17 +8522,1006 @@ if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').
         }
     }
     
-    textType += `<div class="text-line">- ${aorteDilatee ? 'Dilatation aortique' : 'Pas de dilatation aortique proximale'} (Sinus ${sinus} mm ; Jonction S/Ao ${jonction} mm ; Ao ${aorte} mm)</div>`;
+    ettSection += `<div class="text-line">- ${aorteDilatee ? 'Dilatation aortique' : 'Pas de dilatation aortique proximale'} (Sinus ${sinus} mm ; Jonction S/Ao ${jonction} mm ; Ao ${aorte} mm)</div>`;
     
-    // 11. VCI
+    // VCI
     const vciCompliance = document.querySelector('input[name="compliance_VCI"]:checked').value;
     const vciMesure = valueOrDash(document.getElementById('VCI_mesure').value);
     
-    textType += `<div class="text-line">- VCI ${vciCompliance === 'sup50' ? 'compliante' : 'non compliante'} (${vciCompliance === 'sup50' ? '> 50' : '< 50'}%) mesurée à ${vciMesure} mm</div>`;
+    ettSection += `<div class="text-line">- VCI ${vciCompliance === 'sup50' ? 'compliante' : 'non compliante'} (${vciCompliance === 'sup50' ? '> 50' : '< 50'}%) mesurée à ${vciMesure} mm</div>`;
     
-    // Afficher le texte généré dans la zone de texte
-    textArea.innerHTML = textType;
+    return ettSection;
+}
+
+// Fonction utilitaire pour vérifier si une valeur est définie
+function valueOrEmpty(value) {
+    return value && value !== "" ? value : "";
+}
+
+// Fonction pour formater les valeurs numériques avec une décimale
+function formatNumeric(value) {
+    if (!value || value === "") return "";
+    const numValue = parseFloat(value);
+    return isNaN(numValue) ? "" : numValue.toFixed(1).replace(/\.0$/, '');
+}
+
+// Section cardiovasculaire
+function generateCardiovascularSection() {
+let section = `<div class="text-line"><strong style="color: black;">Sur le plan hémodynamique et cardiovasculaire :</strong></div>`;    
+    // Hémodynamique
+    const hemodynStatus = document.getElementById('yescard4').checked ? 
+        "Hémodynamique instable" : "Hémodynamique stable";
     
+    // Récupérer FC, PAS, PAD, PAM
+    const fc = valueOrEmpty(document.getElementById('FreqCard').value);
+    const pas = valueOrEmpty(document.getElementById('pas').value);
+    const pad = valueOrEmpty(document.getElementById('pad').value);
+    const pam = valueOrEmpty(document.getElementById('map').value);
+    
+    // Ligne hémodynamique avec FC et PA
+    let hemodynamicLine = `<div class="text-line">${hemodynStatus}.`;
+    if (fc) hemodynamicLine += ` FC ${fc}/min`;
+    if (pas && pad) {
+        if (fc) hemodynamicLine += " ;";
+        hemodynamicLine += ` PA ${pas}/${pad}`;
+        if (pam) hemodynamicLine += ` (${pam})`;
+        hemodynamicLine += " mmHg";
+    }
+    hemodynamicLine += "</div>";
+    section += hemodynamicLine;
+    
+    // Détails de l'instabilité hémodynamique si présente
+    if (document.getElementById('yescard4').checked) {
+        let instabilityDetails = [];
+        if (document.getElementById('oligurie').checked) instabilityDetails.push("oligurie");
+        if (document.getElementById('confusion').checked) instabilityDetails.push("confusion");
+        if (document.getElementById('marbrures').checked) instabilityDetails.push("marbrures");
+        if (document.getElementById('trc').checked) instabilityDetails.push("TRC > 3s");
+        if (document.getElementById('polypnee').checked) instabilityDetails.push("polypnée");
+        
+        if (instabilityDetails.length > 0) {
+            section += `<div class="text-line">Signes d'hypoperfusion périphérique : ${instabilityDetails.join(', ')}.</div>`;
+        }
+        
+        // Support vasopresseur si présent
+        if (document.getElementById('vasopresseurs').checked) {
+            let vasopressors = [];
+            
+            if (document.getElementById('noradrenaline').checked) {
+                const dose = document.getElementById('noradrenalineDose').value;
+                vasopressors.push(`noradrénaline${dose ? ' ' + dose : ''}`);
+            }
+            
+            if (document.getElementById('adrenaline').checked) {
+                const dose = document.getElementById('adrenalineDose').value;
+                vasopressors.push(`adrénaline${dose ? ' ' + dose : ''}`);
+            }
+            
+            if (document.getElementById('dobutamine').checked) {
+                const dose = document.getElementById('dobutamineDose').value;
+                vasopressors.push(`dobutamine${dose ? ' ' + dose : ''}`);
+            }
+            
+            const precisionsVP = document.getElementById('vasopresseurPrecisions').value;
+            
+            if (vasopressors.length > 0) {
+                section += `<div class="text-line">Sous support vasopresseur : ${vasopressors.join(', ')}${precisionsVP ? ' (' + precisionsVP + ')' : ''}.</div>`;
+            }
+        }
+    }
+    
+    // Insuffisance cardiaque droite
+    let icdText = document.getElementById('yescard5').checked ? 
+        "Présence de signes d'insuffisance cardiaque droite" : "Pas de signe d'insuffisance cardiaque droite";
+    
+    // Détails de l'ICD si présente
+    if (document.getElementById('yescard5').checked) {
+        let icdSigns = [];
+        if (document.getElementById('card5d1Input').checked) icdSigns.push("turgescence jugulaire");
+        if (document.getElementById('card5d2Input').checked) icdSigns.push("reflux hépatojugulaire");
+        if (document.getElementById('card5d3Input').checked) icdSigns.push("hépatomégalie");
+        if (document.getElementById('card5d4Input').checked) icdSigns.push("OMI");
+        
+        if (icdSigns.length > 0) {
+            icdText += ` (${icdSigns.join(', ')})`;
+        }
+    }
+    
+    // Insuffisance cardiaque gauche
+    let icgText = document.getElementById('yesicg').checked ? 
+        "Présence de signes d'insuffisance cardiaque gauche" : "Pas de signe d'insuffisance cardiaque gauche";
+    
+    // Détails de l'ICG si présente
+    if (document.getElementById('yesicg').checked) {
+        let icgSigns = [];
+        if (document.getElementById('crepitants').checked) {
+            let location = "";
+            if (document.getElementById('bases').checked) location = "aux bases";
+            else if (document.getElementById('miChamps').checked) location = "jusqu'aux mi-champs pulmonaires";
+            else if (document.getElementById('totalite').checked) location = "sur la totalité des champs pulmonaires";
+            
+            icgSigns.push(`crépitants bilatéraux et symétriques${location ? ' ' + location : ''}`);
+        }
+        if (document.getElementById('orthopnee').checked) icgSigns.push("orthopnée");
+        
+        if (icgSigns.length > 0) {
+            icgText += ` (${icgSigns.join(', ')})`;
+        }
+    }
+    
+    section += `<div class="text-line">${icdText}. ${icgText}.</div>`;
+    
+    // Pouls
+    const pulseAbnormal = document.querySelector('input[name="pulseType"][value="abnormal"]').checked;
+    let pulseText = "";
+    
+    if (pulseAbnormal) {
+        // Récupérer les anomalies des pouls
+        const radialRight = document.querySelector('input[name="radialPulse"][value="right"]').checked;
+        const radialLeft = document.querySelector('input[name="radialPulse"][value="left"]').checked;
+        const poplitealRight = document.querySelector('input[name="poplitealPulse"][value="right"]').checked;
+        const poplitealLeft = document.querySelector('input[name="poplitealPulse"][value="left"]').checked;
+        const tibialRight = document.querySelector('input[name="tibialPulse"][value="right"]').checked;
+        const tibialLeft = document.querySelector('input[name="tibialPulse"][value="left"]').checked;
+        const pedialRight = document.querySelector('input[name="pedialPulse"][value="right"]').checked;
+        const pedialLeft = document.querySelector('input[name="pedialPulse"][value="left"]').checked;
+        
+        // Construire le texte des anomalies
+        let absentPulses = [];
+        
+        if (!radialRight || !radialLeft) {
+            const side = !radialRight && !radialLeft ? "bilatéralement" : (!radialRight ? "à droite" : "à gauche");
+            absentPulses.push(`pouls radiaux absents ${side}`);
+        }
+        
+        if (!poplitealRight || !poplitealLeft) {
+            const side = !poplitealRight && !poplitealLeft ? "bilatéralement" : (!poplitealRight ? "à droite" : "à gauche");
+            absentPulses.push(`pouls poplités absents ${side}`);
+        }
+        
+        if (!tibialRight || !tibialLeft) {
+            const side = !tibialRight && !tibialLeft ? "bilatéralement" : (!tibialRight ? "à droite" : "à gauche");
+            absentPulses.push(`pouls tibiaux postérieurs absents ${side}`);
+        }
+        
+        if (!pedialRight || !pedialLeft) {
+            const side = !pedialRight && !pedialLeft ? "bilatéralement" : (!pedialRight ? "à droite" : "à gauche");
+            absentPulses.push(`pouls pédieux absents ${side}`);
+        }
+        
+        pulseText = `Anomalie des pouls périphériques : ${absentPulses.join(', ')}.`;
+    } else {
+        pulseText = "Les pouls périphériques sont perçus et bien frappés.";
+    }
+    
+    section += `<div class="text-line">${pulseText}`;
+    
+    // Thrombose veineuse profonde
+    const tvpPresent = document.getElementById('yestvp').checked;
+    if (tvpPresent) {
+        let tvpDetails = "Présence d'une thrombose veineuse profonde ";
+        
+        // Côté
+        const tvpSide = document.querySelector('input[name="tvpSide"]:checked').value;
+        tvpDetails += tvpSide;
+        
+        // Localisation
+        let locations = [];
+        if (document.getElementById('mollet').checked) locations.push("mollet");
+        if (document.getElementById('cuisse').checked) locations.push("cuisse");
+        
+        if (locations.length > 0) {
+            tvpDetails += ` au niveau du ${locations.join(' et de la ')}`;
+        }
+        
+        // Signes
+        let signs = [];
+        if (document.getElementById('douleur').checked) signs.push("douleur");
+        if (document.getElementById('oedeme').checked) signs.push("œdème inflammatoire");
+        if (document.getElementById('cordon').checked) signs.push("cordon induré");
+        if (document.getElementById('homans').checked) signs.push("signe de Homans");
+        
+        if (signs.length > 0) {
+            tvpDetails += ` avec ${signs.join(', ')}`;
+        }
+        
+        section += ` ${tvpDetails}.`;
+    } else {
+        section += " Pas de signe de thrombose veineuse profonde.";
+    }
+    
+    // Souffles vasculaires
+    const vascularMurmur = document.getElementById('yesVascularMurmur').checked;
+    if (vascularMurmur) {
+        let murmurDetails = [];
+        
+        // Souffle fémoral
+        if (document.getElementById('femoralMurmur').checked) {
+            const side = document.querySelector('input[name="femoralSide"]:checked').value;
+            let sideText = "";
+            if (side === "bilateral") sideText = "bilatéral";
+            else sideText = side;
+            murmurDetails.push(`souffle fémoral ${sideText}`);
+        }
+        
+        // Souffle carotidien
+        if (document.getElementById('carotidMurmur').checked) {
+            const side = document.querySelector('input[name="carotidSide"]:checked').value;
+            let sideText = "";
+            if (side === "bilateral") sideText = "bilatéral";
+            else sideText = side;
+            murmurDetails.push(`souffle carotidien ${sideText}`);
+        }
+        
+        section += ` Présence de souffles vasculaires : ${murmurDetails.join(', ')}.`;
+    } else {
+        section += " Pas de souffle vasculaire.";
+    }
+    section += "</div>";
+    
+    // Auscultation cardiaque
+    const abnormalHeartSound = document.querySelector('input[name="heartSoundType"][value="abnormal"]').checked;
+    let heartText = "L'auscultation met en évidence : ";
+    
+    if (abnormalHeartSound) {
+        // Rythme
+        const rhythm = document.querySelector('input[name="rhythm"]:checked').value;
+        heartText += `Bruits du cœur ${rhythm === "regular" ? "réguliers" : "irréguliers"}`;
+        
+        // Souffle
+        if (document.getElementById('hasMurmur').checked) {
+            // Caractéristiques du souffle
+            let locations = Array.from(document.querySelectorAll('input[name="location"]:checked')).map(cb => cb.value);
+            let timbres = Array.from(document.querySelectorAll('input[name="timbre"]:checked')).map(cb => cb.value);
+            let timings = Array.from(document.querySelectorAll('input[name="timing"]:checked')).map(cb => cb.value);
+            const intensity = document.querySelector('select[name="intensity"]').value;
+            let radiations = Array.from(document.querySelectorAll('input[name="radiation"]:checked')).map(cb => cb.value);
+            
+            // Construction du texte du souffle
+            heartText += " avec souffle";
+            
+            // Localisation
+            if (locations.length > 0) {
+                heartText += ` ${locations.join(', ')}`;
+            }
+            
+            // Timing
+            if (timings.length > 0) {
+                heartText += ` ${timings.join(' et ')}`;
+            }
+            
+            // Intensité
+            heartText += ` d'intensité ${intensity}/6`;
+            
+            // Timbre
+            if (timbres.length > 0) {
+                heartText += `, ${timbres.join(', ')}`;
+            }
+            
+            // Irradiation
+            if (radiations.length > 0 && !radiations.includes("none")) {
+                heartText += `, à irradiation ${radiations.join(' et ')}`;
+            }
+        } else {
+            heartText += " sans souffle perçu";
+        }
+    } else {
+        heartText += "Bruits du cœur réguliers sans souffle perçu";
+    }
+    
+    section += `<div class="text-line">${heartText}.</div>`;
+    
+	    section += `<br>`;
+
+
+    return section;
+}
+
+// Section respiratoire
+function generateRespiratorySection() {
+let section = `<div class="text-line"><strong style="color: black;">Sur le plan respiratoire :</strong></div>`;    
+    // Fréquence respiratoire
+    const fr = valueOrEmpty(document.getElementById('FreqResp').value);
+    if (fr) {
+        section += `<div class="text-line">Fréquence respiratoire à ${fr}/min.</div>`;
+    }
+    
+    // Type de ventilation
+    let ventilationText = "";
+    if (document.getElementById('ventSpontanee').checked) {
+        ventilationText = "Ventilation spontanée";
+        if (document.getElementById('oxygenOui').checked) {
+            const debitO2 = valueOrEmpty(document.getElementById('debitO2').value);
+            ventilationText += ` sous oxygénothérapie${debitO2 ? ' à ' + debitO2 + ' L/min' : ''}`;
+        }
+        const sao2Spontanee = valueOrEmpty(document.getElementById('sao2Spontanee').value);
+        if (sao2Spontanee) {
+            ventilationText += `, SaO2 à ${sao2Spontanee}%`;
+        }
+    } else if (document.getElementById('ventNonInvasive').checked) {
+        ventilationText = "Ventilation non invasive";
+        
+        const aideInspiratoire = valueOrEmpty(document.getElementById('aideInspiratoire').value);
+        const peepNonInvasive = valueOrEmpty(document.getElementById('peepNonInvasive').value);
+        const fio2NonInvasive = valueOrEmpty(document.getElementById('fio2NonInvasive').value);
+        const sao2NonInvasive = valueOrEmpty(document.getElementById('sao2NonInvasive').value);
+        
+        let parameters = [];
+        if (aideInspiratoire) parameters.push(`AI ${aideInspiratoire} cmH2O`);
+        if (peepNonInvasive) parameters.push(`PEP ${peepNonInvasive} cmH2O`);
+        if (fio2NonInvasive) parameters.push(`FiO2 ${fio2NonInvasive}%`);
+        if (sao2NonInvasive) parameters.push(`SaO2 ${sao2NonInvasive}%`);
+        
+        if (parameters.length > 0) {
+            ventilationText += ` (${parameters.join(', ')})`;
+        }
+    } else if (document.getElementById('ventInvasive').checked) {
+        ventilationText = "Ventilation invasive";
+        
+        const volumeCourant = valueOrEmpty(document.getElementById('volumeCourant').value);
+        const peepInvasive = valueOrEmpty(document.getElementById('peepInvasive').value);
+        const pressionPlateau = valueOrEmpty(document.getElementById('pressionPlateau').value);
+        const fio2Invasive = valueOrEmpty(document.getElementById('fio2Invasive').value);
+        const sao2Invasive = valueOrEmpty(document.getElementById('sao2Invasive').value);
+        
+        let parameters = [];
+        if (volumeCourant) parameters.push(`Vt ${volumeCourant} ml`);
+        if (peepInvasive) parameters.push(`PEP ${peepInvasive} cmH2O`);
+        if (pressionPlateau) parameters.push(`Pplat ${pressionPlateau} cmH2O`);
+        if (fio2Invasive) parameters.push(`FiO2 ${fio2Invasive}%`);
+        if (sao2Invasive) parameters.push(`SaO2 ${sao2Invasive}%`);
+        
+        if (parameters.length > 0) {
+            ventilationText += ` (${parameters.join(', ')})`;
+        }
+    }
+    
+    if (ventilationText) {
+        section += `<div class="text-line">${ventilationText}.</div>`;
+    }
+    
+    // Hypercapnie
+    const hypercapnie = document.getElementById('yesresp4').checked;
+    if (hypercapnie) {
+        let hypercapnieSigns = [];
+        if (document.getElementById('resp4d1Input').checked) hypercapnieSigns.push("sueurs");
+        if (document.getElementById('resp4d2Input').checked) hypercapnieSigns.push("astérixis");
+        if (document.getElementById('resp4d3Input').checked) hypercapnieSigns.push("céphalées");
+        if (document.getElementById('resp4d4Input').checked) hypercapnieSigns.push("HTA");
+        if (document.getElementById('resp4d5Input').checked) hypercapnieSigns.push("agitation/confusion");
+        
+        if (hypercapnieSigns.length > 0) {
+            section += `<div class="text-line">Signes d'hypercapnie : ${hypercapnieSigns.join(', ')}.</div>`;
+        } else {
+            section += `<div class="text-line">Présence de signes d'hypercapnie.</div>`;
+        }
+    } else {
+        section += `<div class="text-line">Pas de signe d'hypercapnie.`;
+    }
+    
+    // Signes de lutte
+    const signesLutte = document.getElementById('yesresp5').checked;
+    if (signesLutte) {
+        let lutteDetails = [];
+        if (document.getElementById('resp5d1Input').checked) lutteDetails.push("tirage intercostal");
+        if (document.getElementById('resp5d2Input').checked) lutteDetails.push("tirage susclaviculaire");
+        if (document.getElementById('resp5d3Input').checked) lutteDetails.push("tirage souscostal");
+        if (document.getElementById('resp5d4Input').checked) lutteDetails.push("balancement thoracoabdominal");
+        
+        const intensite = document.getElementById('resp5Intensity') ? 
+            document.getElementById('resp5Intensity').value : "";
+        
+        if (lutteDetails.length > 0) {
+            section += ` Signes de lutte${intensite ? ' ' + intensite + 's' : ''} : ${lutteDetails.join(', ')}.`;
+        } else {
+            section += ` Présence de signes de lutte${intensite ? ' ' + intensite + 's' : ''}.`;
+        }
+    } else {
+        section += " Pas de signe de lutte.";
+    }
+    section += "</div>";
+    
+    // Inspection thoracique
+    let inspectionText = "Ampliation thoracique ";
+    if (document.getElementById('abnormalInspection').checked) {
+        const ampliationType = document.querySelector('input[name="ampliation"]:checked').value;
+        if (ampliationType === "asymetrique") {
+            const side = document.querySelector('input[name="ampliationSideChoice"]:checked').value;
+            inspectionText += `asymétrique ${side}`;
+        } else {
+            inspectionText += "symétrique";
+        }
+        
+        let thoraxSigns = [];
+        if (document.getElementById('hippocratisme').checked) thoraxSigns.push("hippocratisme digital");
+        if (document.getElementById('cyanose').checked) thoraxSigns.push("cyanose des extrémités");
+        if (document.getElementById('distension').checked) thoraxSigns.push("distension thoracique");
+        
+        if (thoraxSigns.length > 0) {
+            inspectionText += `. Présence de ${thoraxSigns.join(', ')}.`;
+        } else {
+            inspectionText += ". Pas d'hippocratisme digital. Pas de cyanose des extrémités. Pas de distension thoracique.";
+        }
+    } else {
+        inspectionText += "symétrique. Pas d'hippocratisme digital. Pas de cyanose des extrémités. Pas de distension thoracique.";
+    }
+    
+    section += `<div class="text-line">${inspectionText}</div>`;
+    
+    // Percussion
+    let percussionText = "";
+    if (document.getElementById('abnormalPercussion').checked) {
+        let percussionAbnormalities = [];
+        
+        if (document.getElementById('tympanisme').checked) {
+            const tympanismeLocation = document.getElementById('tympanismeLocation').value;
+            percussionAbnormalities.push(`tympanisme${tympanismeLocation ? ' ' + tympanismeLocation : ''}`);
+        }
+        
+        if (document.getElementById('matite').checked) {
+            const matiteLocation = document.getElementById('matiteLocation').value;
+            percussionAbnormalities.push(`matité${matiteLocation ? ' ' + matiteLocation : ''}`);
+        }
+        
+        percussionText = `Percussion anormale avec ${percussionAbnormalities.join(' et ')}.`;
+    } else {
+        percussionText = "Percussion sans anomalie.";
+    }
+    
+    // Vibrations vocales
+    let vibrationsText = "";
+    if (document.getElementById('abnormalVibrations').checked) {
+        let vibrationsAbnormalities = [];
+        
+        if (document.getElementById('diminutionVibrations').checked) {
+            const diminutionLocation = document.getElementById('diminutionLocation').value;
+            vibrationsAbnormalities.push(`abolition des vibrations vocales${diminutionLocation ? ' ' + diminutionLocation : ''}`);
+        }
+        
+        if (document.getElementById('augmentationVibrations').checked) {
+            const augmentationLocation = document.getElementById('augmentationLocation').value;
+            vibrationsAbnormalities.push(`augmentation des vibrations vocales${augmentationLocation ? ' ' + augmentationLocation : ''}`);
+        }
+        
+        vibrationsText = `Anomalie des vibrations vocales : ${vibrationsAbnormalities.join(' et ')}.`;
+    } else {
+        vibrationsText = "Vibrations vocales perçues et symétriques.";
+    }
+    
+    section += `<div class="text-line">${percussionText} ${vibrationsText}</div>`;
+    
+    // Auscultation pulmonaire
+    let auscultationText = "L'auscultation met en évidence : ";
+    if (document.getElementById('yesresp6').checked) {
+        let auscAbnormalities = [];
+        
+        if (document.getElementById('resp6d1Input').checked) {
+            const crepitantsLocation = document.getElementById('resp6d1Text').value;
+            auscAbnormalities.push(`crépitants${crepitantsLocation ? ' ' + crepitantsLocation : ''}`);
+        }
+        
+        if (document.getElementById('resp6d2Input').checked) {
+            const sibilantsLocation = document.getElementById('resp6d2Text').value;
+            auscAbnormalities.push(`sibilants${sibilantsLocation ? ' ' + sibilantsLocation : ''}`);
+        }
+        
+        if (document.getElementById('resp6d3Input').checked) {
+            const souffleLocation = document.getElementById('resp6d3Text').value;
+            auscAbnormalities.push(`souffle tubaire${souffleLocation ? ' ' + souffleLocation : ''}`);
+        }
+        
+        if (document.getElementById('resp6d4Input').checked) {
+            const ronchisLocation = document.getElementById('resp6d4Text').value;
+            auscAbnormalities.push(`ronchis${ronchisLocation ? ' ' + ronchisLocation : ''}`);
+        }
+        
+        if (document.getElementById('resp6d5Input').checked) {
+            const abolitionLocation = document.getElementById('resp6d5Text').value;
+            auscAbnormalities.push(`abolition du murmure vésiculaire${abolitionLocation ? ' ' + abolitionLocation : ''}`);
+        }
+        
+        if (auscAbnormalities.length > 0) {
+            auscultationText += auscAbnormalities.join(', ') + '.';
+        } else {
+            auscultationText += "Anomalie auscultatoire sans précision.";
+        }
+    } else {
+        auscultationText += "Murmure vésiculaire bilatéral et symétrique sans bruit surajouté.";
+    }
+    
+    section += `<div class="text-line">${auscultationText}</div>`;
+    
+	    section += `<br>`;
+
+
+    return section;
+}
+
+// Section digestive
+function generateDigestiveSection() {
+let section = `<div class="text-line"><strong style="color: black;">Sur le plan uro-digestif :</strong></div>`;
+    
+    // Hypertension portale
+    let htpText = "";
+    if (document.getElementById('yesdig6').checked) {
+        let htpSigns = [];
+        if (document.getElementById('dig6d1Input').checked) htpSigns.push("circulation veineuse collatérale");
+        if (document.getElementById('dig6d2Input').checked) htpSigns.push("ascite");
+        if (document.getElementById('dig6d3Input').checked) htpSigns.push("splénomégalie");
+        
+        if (htpSigns.length > 0) {
+            htpText = `Présence de signes d'hypertension portale : ${htpSigns.join(', ')}.`;
+        } else {
+            htpText = "Présence de signes d'hypertension portale.";
+        }
+    } else {
+        htpText = "Pas de signe d'hypertension portale.";
+    }
+    
+    // Insuffisance hépatocellulaire
+    let ihcText = "";
+    if (document.getElementById('yesdig7').checked) {
+        let ihcSigns = [];
+        if (document.getElementById('dig7d1Input').checked) ihcSigns.push("angiomes stellaires");
+        if (document.getElementById('dig7d2Input').checked) ihcSigns.push("astérixis");
+        if (document.getElementById('dig7d3Input').checked) ihcSigns.push("ictère");
+        if (document.getElementById('dig7d4Input').checked) ihcSigns.push("encéphalopathie");
+        
+        if (ihcSigns.length > 0) {
+            ihcText = `Présence de signes d'insuffisance hépatocellulaire : ${ihcSigns.join(', ')}.`;
+        } else {
+            ihcText = "Présence de signes d'insuffisance hépatocellulaire.";
+        }
+    } else {
+        ihcText = "Pas de signe d'insuffisance hépatocellulaire.";
+    }
+    
+    section += `<div class="text-line">${htpText} ${ihcText}</div>`;
+    
+    // Organomégalie
+    let organoText = "";
+    if (document.getElementById('yesdig9').checked) {
+        const organomegalieDetails = document.getElementById('dig9d').value;
+        organoText = `Organomégalie${organomegalieDetails ? ' : ' + organomegalieDetails : ''}.`;
+    } else {
+        organoText = "Pas d'organomégalie palpée.";
+    }
+  
+  // Globe vésical
+const globeVesical = document.getElementById('yesdig10').checked;
+const globeText = globeVesical ? "Présence d'un globe vésical." : "Pas de globe vésical.";
+
+// Douleur fosses lombaires
+let fosseText = "";
+if (document.getElementById('yesdig8').checked) {
+    let sides = [];
+    if (document.getElementById('dig8d1Input').checked) sides.push("droite");
+    if (document.getElementById('dig8d2Input').checked) sides.push("gauche");
+    
+    if (sides.length > 0) {
+        fosseText = `Douleur à l'ébranlement ${sides.length > 1 ? 'des fosses lombaires' : 'de la fosse lombaire ' + sides[0]}.`;
+    } else {
+        fosseText = "Douleur à l'ébranlement des fosses lombaires.";
+    }
+} else {
+    fosseText = "Pas de douleur à l'ébranlement des fosses lombaires.";
+}
+
+section += `<div class="text-line">${globeText} ${fosseText}</div>`;
+
+// Abdomen
+let abdomenText = "";
+if (document.getElementById('yesdig11').checked) {
+    const abdomenDetails = document.getElementById('dig11d').value;
+    abdomenText = `Anomalie à la palpation abdominale${abdomenDetails ? ' : ' + abdomenDetails : ''}.`;
+} else {
+    abdomenText = "Abdomen souple dépressible et indolore.";
+}
+
+section += `<div class="text-line">${abdomenText}</div>`;
+
+    section += `<br>`;
+
+
+return section;
+}
+
+// Section neurologique
+function generateNeurologicalSection() {
+let section = `<div class="text-line"><strong style="color: black;">Sur le plan neurologique :</strong></div>`;    
+    // Score de Glasgow
+    const glasgow = document.getElementById('glasgow-total').value;
+    const patientSedate = document.getElementById('sedate').checked;
+    let glasgowText = `<div class="text-line">Score de Glasgow ${glasgow}/15`;
+    
+    if (patientSedate) {
+        const glasgowAnterieur = document.getElementById('glasgow-anterieur').value;
+        if (glasgowAnterieur) {
+            glasgowText += ` sous sédation (score antérieur à la sédation : ${glasgowAnterieur}/15)`;
+        } else {
+            glasgowText += " sous sédation";
+        }
+    }
+    glasgowText += ".</div>";
+    
+    section += glasgowText;
+    
+    // Pupilles
+    let pupilleGauche = document.getElementById('pupille-gauche-taille').value;
+    let pupilleDroite = document.getElementById('pupille-droite-taille').value;
+    let rpmDirectGauche = document.getElementById('rpm-direct-gauche').value;
+    let rpmDirectDroit = document.getElementById('rpm-direct-droit').value;
+    
+    let pupillesText = "Pupilles ";
+    
+    // Taille
+    if (pupilleGauche === pupilleDroite) {
+        pupillesText += pupilleGauche + "s symétriques";
+    } else {
+        pupillesText += `asymétriques (gauche ${pupilleGauche}, droite ${pupilleDroite})`;
+    }
+    
+    // Réactivité
+    if (rpmDirectGauche === 'present' && rpmDirectDroit === 'present') {
+        pupillesText += " réactives bilatéralement";
+    } else if (rpmDirectGauche === 'present' && rpmDirectDroit === 'absent') {
+        pupillesText += " avec réactivité conservée à gauche, abolie à droite";
+    } else if (rpmDirectGauche === 'absent' && rpmDirectDroit === 'present') {
+        pupillesText += " avec réactivité abolie à gauche, conservée à droite";
+    } else if (rpmDirectGauche === 'absent' && rpmDirectDroit === 'absent') {
+        pupillesText += " aréactives bilatéralement";
+    }
+    
+    section += `<div class="text-line">${pupillesText}.</div>`;
+    
+    // ROT
+    let rotText = "";
+    if (document.getElementById('abnormalReflex').checked) {
+        let rotAbnormalities = [];
+        
+        // Check each reflex group
+        const reflexGroups = ['bicipital', 'tricipital', 'rotulien', 'achilléen'];
+        for (const reflex of reflexGroups) {
+            if (document.getElementById(reflex).checked) {
+                let sidedReflex = "";
+                
+                // Get affected sides for this reflex
+                const rightChecked = document.querySelector(`.side-checkbox[data-side="droite"][data-reflex="${reflex}"]`).checked;
+                const leftChecked = document.querySelector(`.side-checkbox[data-side="gauche"][data-reflex="${reflex}"]`).checked;
+                
+                if (rightChecked && leftChecked) {
+                    sidedReflex = `${reflex} bilatéral`;
+                } else if (rightChecked) {
+                    sidedReflex = `${reflex} droit`;
+                } else if (leftChecked) {
+                    sidedReflex = `${reflex} gauche`;
+                } else {
+                    continue; // No side checked, skip
+                }
+                
+                // Collect anomalies for this reflex
+                let reflexDetails = [];
+                
+                // Right side anomalies
+                if (rightChecked) {
+                    if (document.getElementById(`${reflex}-vif-droit`).checked) reflexDetails.push("vif à droite");
+                    if (document.getElementById(`${reflex}-diffuse-droit`).checked) reflexDetails.push("diffusé à droite");
+                    if (document.getElementById(`${reflex}-poly-droit`).checked) reflexDetails.push("polycinétique à droite");
+                    if (document.getElementById(`${reflex}-zone-droit`).checked) reflexDetails.push("extension zone réflexogène à droite");
+                    if (document.getElementById(`${reflex}-aboli-droit`).checked) reflexDetails.push("aboli à droite");
+                }
+                
+                // Left side anomalies
+                if (leftChecked) {
+                    if (document.getElementById(`${reflex}-vif-gauche`).checked) reflexDetails.push("vif à gauche");
+                    if (document.getElementById(`${reflex}-diffuse-gauche`).checked) reflexDetails.push("diffusé à gauche");
+                    if (document.getElementById(`${reflex}-poly-gauche`).checked) reflexDetails.push("polycinétique à gauche");
+                    if (document.getElementById(`${reflex}-zone-gauche`).checked) reflexDetails.push("extension zone réflexogène à gauche");
+                    if (document.getElementById(`${reflex}-aboli-gauche`).checked) reflexDetails.push("aboli à gauche");
+                }
+                
+                if (reflexDetails.length > 0) {
+                    rotAbnormalities.push(`ROT ${sidedReflex} : ${reflexDetails.join(', ')}`);
+                } else {
+                    rotAbnormalities.push(`Anomalie ROT ${sidedReflex} sans précision`);
+                }
+            }
+        }
+        
+        if (rotAbnormalities.length > 0) {
+            rotText = `Anomalies des ROT : ${rotAbnormalities.join(' ; ')}.`;
+        } else {
+            rotText = "Anomalies des ROT non précisées.";
+        }
+    } else {
+        rotText = "ROT symétriques non diffusés non polycinétiques et non vifs.";
+    }
+    
+    section += `<div class="text-line">${rotText}</div>`;
+    
+    // RCP
+    const rcpDroit = document.getElementById('rcp-droit').value;
+    const rcpGauche = document.getElementById('rcp-gauche').value;
+    
+    let rcpText = "RCP ";
+    
+    if (rcpDroit === rcpGauche) {
+        if (rcpDroit === 'flexion') {
+            rcpText += "en flexion bilatérale";
+        } else if (rcpDroit === 'indifferent') {
+            rcpText += "indifférent bilatéral";
+        } else if (rcpDroit === 'extension') {
+            rcpText += "en extension bilatérale";
+        }
+    } else {
+        rcpText += `à droite en ${rcpDroit}, à gauche en ${rcpGauche}`;
+    }
+    
+    section += `<div class="text-line">${rcpText}.</div>`;
+    
+    // Déficit moteur
+    let moteurText = "";
+    if (document.getElementById('yesDeficitMoteur').checked) {
+        let deficits = [];
+        
+        // Déficit MS
+        if (document.getElementById('deficitMS').checked) {
+            let msDeficits = [];
+            
+            // Parcourir chaque groupe musculaire
+            const muscleGroups = ['deltoide', 'biceps', 'triceps', 'extenseursradiaux', 'flechisseurscarpe'];
+            for (const muscle of muscleGroups) {
+                if (document.getElementById(muscle).checked) {
+                    // Récupérer les valeurs de force
+                    const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
+                    const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
+                    
+                    const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
+                    const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
+                    
+                    // Ne décrire que si différent de 5/5
+                    if (rightForce !== "5" || leftForce !== "5") {
+                        let muscleText = muscle;
+                        
+                        if (rightForce !== "5" && leftForce !== "5") {
+                            msDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
+                        } else if (rightForce !== "5") {
+                            msDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
+                        } else if (leftForce !== "5") {
+                            msDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
+                        }
+                    }
+                }
+            }
+            
+            if (msDeficits.length > 0) {
+                deficits.push(`Déficit moteur aux membres supérieurs : ${msDeficits.join(' ; ')}`);
+            } else {
+                deficits.push("Déficit moteur aux membres supérieurs non précisé");
+            }
+        }
+        
+        // Déficit MI
+        if (document.getElementById('deficitMI').checked) {
+            let miDeficits = [];
+            
+            // Parcourir chaque groupe musculaire
+            const muscleGroups = ['psoas', 'quadriceps', 'ischiojambiers', 'adducteurs', 'tibialant', 'tricepssural'];
+            for (const muscle of muscleGroups) {
+                if (document.getElementById(muscle).checked) {
+                    // Récupérer les valeurs de force
+                    const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
+                    const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
+                    
+                    const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
+                    const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
+                    
+                    // Ne décrire que si différent de 5/5
+                    if (rightForce !== "5" || leftForce !== "5") {
+                        let muscleText = muscle;
+                        
+                        if (rightForce !== "5" && leftForce !== "5") {
+                            miDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
+                        } else if (rightForce !== "5") {
+                            miDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
+                        } else if (leftForce !== "5") {
+                            miDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
+                        }
+                    }
+                }
+            }
+            
+            if (miDeficits.length > 0) {
+                deficits.push(`Déficit moteur aux membres inférieurs : ${miDeficits.join(' ; ')}`);
+            } else {
+                deficits.push("Déficit moteur aux membres inférieurs non précisé");
+            }
+        }
+        
+        if (deficits.length > 0) {
+            moteurText = deficits.join('. ') + '.';
+        } else {
+            moteurText = "Présence d'un déficit moteur non précisé.";
+        }
+    } else if (document.getElementById('NEDeficitMoteur').checked) {
+        moteurText = "Déficit moteur non évaluable.";
+    } else {
+        moteurText = "Pas de déficit moteur.";
+    }
+    
+    section += `<div class="text-line">${moteurText}</div>`;
+    
+    // Déficit sensitif
+    let sensitifText = "";
+    if (document.getElementById('yesDeficitSensitif').checked) {
+        let deficits = [];
+        
+        // MS
+        if (document.getElementById('deficitMSS').checked) {
+            const description = document.getElementById('deficitMSSDescription').value;
+            deficits.push(`déficit sensitif aux membres supérieurs${description ? ' : ' + description : ''}`);
+        }
+        
+        // MI
+        if (document.getElementById('deficitMIS').checked) {
+            const description = document.getElementById('deficitMISDescription').value;
+            deficits.push(`déficit sensitif aux membres inférieurs${description ? ' : ' + description : ''}`);
+        }
+        
+        if (deficits.length > 0) {
+            sensitifText = `Présence d'un ${deficits.join(' et d\'un ')}.`;
+        } else {
+            sensitifText = "Présence d'un déficit sensitif non précisé.";
+        }
+    } else if (document.getElementById('NEDeficitSensitif').checked) {
+        sensitifText = "Déficit sensitif non évaluable.";
+    } else {
+        sensitifText = "Pas de déficit sensitif.";
+    }
+    
+    section += `<div class="text-line">${sensitifText}</div>`;
+    
+    // Paralysie faciale
+    let facialText = "";
+    if (document.getElementById('yes_paralysie_faciale').checked) {
+        const intensity = document.getElementById('facial_paralysis_intensity').value;
+        const type = document.querySelector('input[name="type_paralysie_faciale"]:checked').value;
+        facialText = `Présence d'une paralysie faciale ${type} ${intensity}.`;
+    } else {
+        facialText = "Pas de paralysie faciale.";
+    }
+    
+    section += `<div class="text-line">${facialText}</div>`;
+    
+    // Syndrome méningé
+    let meningeText = "";
+    if (document.getElementById('yesSyndromeMeningé').checked) {
+        let signes = [];
+        if (document.getElementById('kernig').checked) signes.push("signe de Kernig");
+        if (document.getElementById('brudzinski').checked) signes.push("signe de Brudzinski");
+        if (document.getElementById('photophonophobie').checked) signes.push("photophonophobie");
+        if (document.getElementById('raideurNucale').checked) signes.push("raideur nucale");
+        if (document.getElementById('purpura').checked) signes.push("purpura");
+        
+        const precisions = document.getElementById('meningePrecisions').value;
+        
+        if (signes.length > 0) {
+            meningeText = `Présence d'un syndrome méningé : ${signes.join(', ')}${precisions ? ' (' + precisions + ')' : ''}.`;
+        } else {
+            meningeText = `Présence d'un syndrome méningé${precisions ? ' (' + precisions + ')' : ''}.`;
+        }
+    } else if (document.getElementById('NESyndromeMeningé').checked) {
+        meningeText = "Syndrome méningé non évaluable.";
+    } else {
+        meningeText = "Pas de syndrome méningé.";
+    }
+    
+    section += `<div class="text-line">${meningeText}</div>`;
+    
+	    section += `<br>`;
+
+
+    return section;
+}
+
+// Section supplémentaire
+function generateAdditionalSection() {
+let section = `<div class="text-line"><strong style="color: black;">Par ailleurs :</strong></div>`;    
+    // Température
+    const temperature = valueOrEmpty(document.getElementById('temperature').value);
+    if (temperature) {
+        let tempStatus = "";
+        const tempNum = parseFloat(temperature);
+        if (!isNaN(tempNum)) {
+            if (tempNum < 36) tempStatus = " (hypothermie)";
+            else if (tempNum >= 38) tempStatus = " (hyperthermie)";
+        }
+        section += `<div class="text-line">Température ${temperature}°C${tempStatus}</div>`;
+    }
+    
+    // Glycémie
+    const glycemie = valueOrEmpty(document.getElementById('glycemie').value);
+    if (glycemie) {
+        let glycStatus = "";
+        const glycNum = parseFloat(glycemie);
+        if (!isNaN(glycNum)) {
+            if (glycNum < 0.7) glycStatus = " (hypoglycémie)";
+            else if (glycNum > 1.4) glycStatus = " (hyperglycémie)";
+        }
+        section += `<div class="text-line">Glycémie ${glycemie} g/L${glycStatus}</div>`;
+    }
+    
+    // Autres informations cliniques
+    const autresInfos = document.getElementById('CliniqueAutre').value;
+    if (autresInfos) {
+        section += `<div class="text-line">Le reste de l'examen clinique retrouve : ${autresInfos}</div>`;
+    }
+    
+    // Information aux proches
+    const infoProches = document.getElementById('infoProches').value;
+    let infoPText = "Informations aux proches : ";
+    if (infoProches === "informes") {
+        infoPText += "Proches informés";
+    } else {
+        infoPText += "Proches non informés";
+    }
+    
+    section += `<div class="text-line">${infoPText}</div>`;
+    
+    // Personne de confiance
+    const personneConfiance = document.getElementById('personneConfiance').value;
+    let pcText = "Personne de confiance : ";
+    
+    switch (personneConfiance) {
+        case "nonconnue":
+            pcText += "Non connue";
+            break;
+        case "oralement":
+            pcText += "Désignée oralement";
+            const nomPCOral = document.getElementById('nomPersonneConfiance').value;
+            if (nomPCOral) pcText += ` (${nomPCOral})`;
+            break;
+        case "ecrit":
+            pcText += "Désignée par écrit";
+            const nomPCEcrit = document.getElementById('nomPersonneConfiance').value;
+            if (nomPCEcrit) pcText += ` (${nomPCEcrit})`;
+            break;
+        case "impossible":
+            pcText += "Recueil impossible";
+            break;
+    }
+    
+    section += `<div class="text-line">${pcText}</div>`;
+    
+    // Directives anticipées
+    const directivesAnticipees = document.getElementById('directivesAnticipees').value;
+    let daText = "Directives anticipées : ";
+    
+    switch (directivesAnticipees) {
+        case "nonconnue":
+            daText += "Non connues";
+            break;
+        case "oralement":
+            daText += "Exprimées oralement";
+            break;
+        case "ecrit":
+            daText += "Rédigées par écrit";
+            break;
+        case "impossible":
+            daText += "Recueil impossible";
+            break;
+    }
+    
+    section += `<div class="text-line">${daText}</div>`;
+    
+	    section += `<br>`;
+
+
+    return section;
+}
+
+// Fonction pour appliquer les animations au texte généré
+function applyTextAnimations() {
     // Ajouter les styles d'animation si ce n'est pas déjà fait
     if (!document.getElementById('animation-styles')) {
         const styleSheet = document.createElement('style');
@@ -7095,9 +9529,9 @@ if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').
         styleSheet.textContent = `
             .text-line {
                 transform: translateY(20px);
-				font-size: 1rem;
                 opacity: 0;
                 transition: all 0.5s ease;
+                margin-bottom: 8px;
             }
             .text-line.animate-in {
                 transform: translateY(0);
@@ -7110,7 +9544,7 @@ if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').
     // Ajouter un délai pour que les animations se déclenchent après le rendu initial
     setTimeout(() => {
         // Sélectionner toutes les lignes et ajouter la classe d'animation avec un délai croissant
-        const lines = textArea.querySelectorAll('.text-line');
+        const lines = document.querySelectorAll('.text-line');
         lines.forEach((line, index) => {
             setTimeout(() => {
                 line.classList.add('animate-in');
@@ -7118,6 +9552,61 @@ if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').
         });
     }, 50);
 }
+
+// Fonction pour copier le texte généré dans le presse-papier
+document.getElementById('copyText').addEventListener('click', function() {
+    const textArea = document.getElementById('generatedTextArea');
+    
+    // Vérifier s'il y a du contenu à copier
+    if (!textArea.innerHTML.trim()) {
+        alert('Aucun texte à copier !');
+        return;
+    }
+    
+    // Créer une sélection du contenu
+    const range = document.createRange();
+    range.selectNodeContents(textArea);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    // Copier le texte avec la commande document.execCommand
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            alert('Texte copié dans le presse-papier !');
+        } else {
+            throw new Error('La commande de copie a échoué');
+        }
+    } catch (err) {
+        console.error('Erreur lors de la copie: ', err);
+        alert('Erreur lors de la copie du texte.');
+    } finally {
+        // Désélectionner le texte
+        selection.removeAllRanges();
+    }
+});
+
+// Initialiser les écouteurs d'événements au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Associer la fonction de génération au bouton
+    document.getElementById('generateText').addEventListener('click', generateTextType);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Fonction pour copier le texte généré dans le presse-papier
 document.getElementById('copyText').addEventListener('click', function() {
@@ -7208,7 +9697,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-//PFD	
+//pdf
 document.getElementById('generatePdf').addEventListener('click', function() {
     // Vérifier si le texte a été généré
     const textArea = document.getElementById('generatedTextArea');
@@ -7249,41 +9738,53 @@ document.getElementById('generatePdf').addEventListener('click', function() {
         doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text('TypixClin - Examen en réanimation', 105, 12, { align: 'center' });
+        doc.text('TypixClin - Examen Adulte', 105, 12, { align: 'center' });
         
         // Ligne de séparation
         doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.setLineWidth(0.3);
         doc.line(15, 23, 195, 23);
         
-        // Extraire le contenu du generatedTextArea
-        const contentText = textArea.innerText;
-        
-        // Diviser en lignes en préservant les sauts de ligne
-        const contentLines = contentText.split('\n');
+        // Extracting content from textArea
+        let contentLines = [];
+        // Récupérer le contenu et le diviser en lignes
+        const contentText = textArea.innerText.trim();
+        contentLines = contentText.split('\n');
         
         // Afficher le contenu
         let yPosition = 30;
         const lineHeight = 5.5;
         
-        // Titres à mettre en gras (exactement comme demandé)
-        const boldTitles = ["Examen réanimation :", "ETT du"];
+        // Liste des titres à mettre en gras et en couleur
+        const boldKeywords = [
+            "Examen clinique réanimation :",
+            "ETT du"
+        ];
+        
+        // Liste des sous-titres à mettre en gras seulement (sans couleur)
+        const boldBlackKeywords = [
+            "Sur le plan hémodynamique et cardiovasculaire :",
+            "Sur le plan respiratoire :",
+            "Sur le plan uro-digestif :",
+            "Sur le plan neurologique :",
+            "Par ailleurs :"
+        ];
         
         // Traiter chaque ligne
         for (let i = 0; i < contentLines.length; i++) {
-            const line = contentLines[i];
+            const line = contentLines[i].trim();
             
-            // Sauter les lignes vides mais augmenter l'espacement
-            if (line.trim() === '') {
+            // Traiter les lignes vides (sauts de ligne)
+            if (line === '') {
                 yPosition += lineHeight;
                 continue;
             }
             
             // Vérifier si c'est un titre à mettre en gras
-            const isBoldTitle = boldTitles.some(title => line.trim().startsWith(title));
+const isBoldTitle = boldKeywords.some(keyword => line.startsWith(keyword));
             
             // Nouvelle page si nécessaire
-            if (yPosition > 270) {
+            if (yPosition > 260) {
                 doc.addPage();
                 yPosition = 20;
             }
@@ -7296,19 +9797,39 @@ document.getElementById('generatePdf').addEventListener('click', function() {
                 doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
                 doc.text(line, 15, yPosition);
             } else {
-                // Texte normal
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                // Vérifier si la ligne contient un des sous-titres à mettre en gras et noir
+                let isBoldBlack = false;
+                let boldBlackText = '';
                 
-                // Diviser la ligne en morceaux gérables
-                const maxWidth = 180;
-                const splitText = doc.splitTextToSize(line, maxWidth);
+                for (const keyword of boldBlackKeywords) {
+                    if (line.includes(keyword)) {
+                        isBoldBlack = true;
+                        boldBlackText = keyword;
+                        break;
+                    }
+                }
                 
-                // Dessiner le texte
-                for (let j = 0; j < splitText.length; j++) {
-                    if (j > 0) yPosition += lineHeight;
-                    doc.text(splitText[j], 15, yPosition);
+                if (isBoldBlack) {
+                    // Sous-titre en gras et noir
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9); // Garde la même taille
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]); // Noir
+                    doc.text(line, 15, yPosition);
+                } else {
+                    // Texte normal
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    
+                    // Diviser la ligne en morceaux gérables
+                    const maxWidth = 180;
+                    const splitText = doc.splitTextToSize(line, maxWidth);
+                    
+                    // Dessiner le texte
+                    for (let j = 0; j < splitText.length; j++) {
+                        if (j > 0) yPosition += lineHeight;
+                        doc.text(splitText[j], 15, yPosition);
+                    }
                 }
             }
             
@@ -7356,6 +9877,7 @@ document.getElementById('generatePdf').addEventListener('click', function() {
     }
 });
 
+// Ajout des effets de survol pour le bouton PDF
 document.getElementById('generatePdf').addEventListener('mouseover', function() {
     this.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
     this.style.transform = 'translateY(-2px)';
@@ -7365,6 +9887,8 @@ document.getElementById('generatePdf').addEventListener('mouseout', function() {
     this.style.backgroundColor = 'rgba(220, 38, 38, 0.8)';
     this.style.transform = 'translateY(0)';
 });
+
+
 
 
 </script>
