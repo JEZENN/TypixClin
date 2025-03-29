@@ -1992,7 +1992,7 @@ input[type="number"]:focus {
 					<div class="section-header">
 						<h3><span class="icon">🚑</span>Examen clinique en réanimation</h3>
 							<div class="button-group">
-								<button class="toggle-button" onclick="resetSection(this)">Réinitialiser</button>
+								<button class="toggle-button" onclick="resetExamenReaInputs()">Réinitialiser</button>
 								<button class="toggle-button" onclick="toggleSection(this)">Masquer</button>
 							</div>
 					</div>
@@ -3714,7 +3714,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Taille</span>
                         <select id="pupille-gauche-taille" style="width: 120px;">
                             <option value="myosis">Myosis</option>
-                            <option value="intermediaire" selected>Intermédiaire</option>
+                            <option value="intermédiaire" selected>Intermédiaire</option>
                             <option value="mydriase">Mydriase</option>
                         </select>
                     </div>
@@ -3745,7 +3745,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Taille</span>
                         <select id="pupille-droite-taille" style="width: 120px;">
                             <option value="myosis">Myosis</option>
-                            <option value="intermediaire" selected>Intermédiaire</option>
+                            <option value="intermédiaire" selected>Intermédiaire</option>
                             <option value="mydriase">Mydriase</option>
                         </select>
                     </div>
@@ -5348,113 +5348,112 @@ document.querySelectorAll('.muscle-group input[type="checkbox"]').forEach(checkb
 });
 
 
-
-
-
-// si patient sédaté alors par défaut tout ce qui est non évaluable devient non évaluable, c'est une option pour les bousillés de réanimation seulement 
-// Fonction pour gérer l'état de sédation et mettre à jour les examens neurologiques
-document.getElementById('sedate').addEventListener('change', function() {
-    if (this.checked) {
-        // Si le patient est sédaté, cocher toutes les options "Non évaluable"
-        document.getElementById('NEDeficitMoteur').checked = true;
-        document.getElementById('NEDeficitSensitif').checked = true;
-        
-        // Sélectionner "Non évaluable" pour le syndrome méningé (3ème radio button dans le groupe)
-        const NEsyndromeMeningé = document.querySelectorAll('input[name="syndromeninge"]')[2];
-        if (NEsyndromeMeningé) NEsyndromeMeningé.checked = true;
-        
-        // Déclencher l'événement change pour appliquer les effets visuels
-        triggerChangeEvent(document.getElementById('NEDeficitMoteur'));
-        triggerChangeEvent(document.getElementById('NEDeficitSensitif'));
-        if (NEsyndromeMeningé) triggerChangeEvent(NEsyndromeMeningé);
-    }
-});
-
-// Lorsqu'on passe de sédaté à non sédaté
-document.getElementById('non-sedate').addEventListener('change', function() {
-    if (this.checked) {
-        // Si le patient est non sédaté, cocher toutes les options "Pas de déficit"
-        document.getElementById('noDeficitMoteur').checked = true;
-        document.getElementById('noDeficitSensitif').checked = true;
-        
-        // Sélectionner "Pas de syndrome méningé" (1er radio button dans le groupe)
-        const noSyndromeMeningé = document.querySelectorAll('input[name="syndromeninge"]')[0];
-        if (noSyndromeMeningé) noSyndromeMeningé.checked = true;
-        
-        // Déclencher l'événement change pour appliquer les effets visuels
-        triggerChangeEvent(document.getElementById('noDeficitMoteur'));
-        triggerChangeEvent(document.getElementById('noDeficitSensitif'));
-        if (noSyndromeMeningé) triggerChangeEvent(noSyndromeMeningé);
-    }
-});
-
-// Fonction pour déclencher un événement "change" sur un élément
-function triggerChangeEvent(element) {
-    const event = new Event('change', { bubbles: true });
-    element.dispatchEvent(event);
-}
-
-// Maintenir la possibilité de modifier manuellement les options même après le réglage automatique
-document.getElementById('yesDeficitMoteur').addEventListener('change', function() {
-    document.getElementById('deficitMoteurDetails').style.display = this.checked ? 'block' : 'none';
-});
-
-document.getElementById('noDeficitMoteur').addEventListener('change', function() {
-    document.getElementById('deficitMoteurDetails').style.display = 'none';
-});
-
-document.getElementById('NEDeficitMoteur').addEventListener('change', function() {
-    document.getElementById('deficitMoteurDetails').style.display = 'none';
-});
-
-document.getElementById('yesDeficitSensitif').addEventListener('change', function() {
-    document.getElementById('deficitSensitifDetails').style.display = this.checked ? 'block' : 'none';
-});
-
-document.getElementById('noDeficitSensitif').addEventListener('change', function() {
-    document.getElementById('deficitSensitifDetails').style.display = 'none';
-});
-
-document.getElementById('NEDeficitSensitif').addEventListener('change', function() {
-    document.getElementById('deficitSensitifDetails').style.display = 'none';
-});
-
-// Ajouter ces lignes pour le syndrome méningé
-document.getElementById('yesSyndromeMeningé').addEventListener('change', function() {
-    document.getElementById('syndromeMeningeDetails').style.display = this.checked ? 'block' : 'none';
-});
-
-document.getElementById('noSyndromeMeningé').addEventListener('change', function() {
-    document.getElementById('syndromeMeningeDetails').style.display = 'none';
-});
-
-// Pour l'option "Non évaluable" du syndrome méningé
-document.querySelectorAll('input[name="syndromeninge"]')[2].addEventListener('change', function() {
-    document.getElementById('syndromeMeningeDetails').style.display = 'none';
-});
-
-
-// Gestion du syndrome méningé avec l'option non évaluable
 document.addEventListener('DOMContentLoaded', function() {
-    const radioButtons = document.querySelectorAll('input[name="syndromeninge"]');
-    const syndromeMeningeDetails = document.getElementById('syndromeMeningeDetails');
+    const sedate = document.getElementById('sedate');
+    const nonSedate = document.getElementById('non-sedate');
     
-    radioButtons.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.id === 'yesSyndromeMeningé') {
-                syndromeMeningeDetails.style.display = 'block';
-            } else {
-                syndromeMeningeDetails.style.display = 'none';
-                
-                syndromeMeningeDetails.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-                
-                document.getElementById('meningePrecisions').value = '';
+    // Fonction pour mettre à jour les champs neurologiques en fonction de l'état de sédation
+    function updateNeurologicalFields() {
+        // Vérifier si le patient est sédaté
+        const isSedate = sedate && sedate.checked;
+        
+        if (isSedate) {
+            // Déficit moteur
+            const NEDeficitMoteur = document.getElementById('NEDeficitMoteur');
+            if (NEDeficitMoteur) {
+                NEDeficitMoteur.checked = true;
+                const deficitMoteurDetails = document.getElementById('deficitMoteurDetails');
+                if (deficitMoteurDetails) deficitMoteurDetails.style.display = 'none';
             }
-        });
-    });
+            
+            // Déficit sensitif
+            const NEDeficitSensitif = document.getElementById('NEDeficitSensitif');
+            if (NEDeficitSensitif) {
+                NEDeficitSensitif.checked = true;
+                const deficitSensitifDetails = document.getElementById('deficitSensitifDetails');
+                if (deficitSensitifDetails) deficitSensitifDetails.style.display = 'none';
+            }
+            
+            // Syndrome méningé
+            const NESyndromeMeningé = document.getElementById('NESyndromeMeningé');
+            if (NESyndromeMeningé) {
+                NESyndromeMeningé.checked = true;
+                const syndromeMeningeDetails = document.getElementById('syndromeMeningeDetails');
+                if (syndromeMeningeDetails) syndromeMeningeDetails.style.display = 'none';
+            }
+            
+            // Douleurs lombaires - ajout important
+            const NEdig8 = document.getElementById('NEdig8');
+            if (NEdig8) {
+                NEdig8.checked = true;
+                const dig8d1 = document.getElementById('dig8d1');
+                const dig8d2 = document.getElementById('dig8d2');
+                if (dig8d1) dig8d1.style.display = 'none';
+                if (dig8d2) dig8d2.style.display = 'none';
+                
+                // Décocher les checkboxes de latéralité
+                const dig8d1Input = document.getElementById('dig8d1Input');
+                const dig8d2Input = document.getElementById('dig8d2Input');
+                if (dig8d1Input) dig8d1Input.checked = false;
+                if (dig8d2Input) dig8d2Input.checked = false;
+            }
+            
+            // Déclencher les événements change pour appliquer les effets visuels
+            const event = new Event('change', { bubbles: true });
+            if (NEDeficitMoteur) NEDeficitMoteur.dispatchEvent(event);
+            if (NEDeficitSensitif) NEDeficitSensitif.dispatchEvent(event);
+            if (NESyndromeMeningé) NESyndromeMeningé.dispatchEvent(event);
+            if (NEdig8) NEdig8.dispatchEvent(event);
+        }
+    }
+    
+    // Gestion du retour à l'état non sédaté
+    function resetNeurologicalFields() {
+        // Déficit moteur
+        const noDeficitMoteur = document.getElementById('noDeficitMoteur');
+        if (noDeficitMoteur) {
+            noDeficitMoteur.checked = true;
+            const event = new Event('change', { bubbles: true });
+            noDeficitMoteur.dispatchEvent(event);
+        }
+        
+        // Déficit sensitif
+        const noDeficitSensitif = document.getElementById('noDeficitSensitif');
+        if (noDeficitSensitif) {
+            noDeficitSensitif.checked = true;
+            const event = new Event('change', { bubbles: true });
+            noDeficitSensitif.dispatchEvent(event);
+        }
+        
+        // Syndrome méningé
+        const noSyndromeMeningé = document.getElementById('noSyndromeMeningé');
+        if (noSyndromeMeningé) {
+            noSyndromeMeningé.checked = true;
+            const event = new Event('change', { bubbles: true });
+            noSyndromeMeningé.dispatchEvent(event);
+        }
+        
+        // Douleurs lombaires
+        const nodig8 = document.getElementById('nodig8');
+        if (nodig8) {
+            nodig8.checked = true;
+            const event = new Event('change', { bubbles: true });
+            nodig8.dispatchEvent(event);
+        }
+    }
+    
+    // Ajouter des écouteurs d'événements
+    if (sedate) sedate.addEventListener('change', updateNeurologicalFields);
+    if (nonSedate) nonSedate.addEventListener('change', resetNeurologicalFields);
+    
+    // Vérifier l'état initial au chargement
+    if (sedate && sedate.checked) {
+        updateNeurologicalFields();
+    } else if (nonSedate && nonSedate.checked) {
+        resetNeurologicalFields();
+    }
 });
+
 
 
 // Gestion de l'affichage des détails de la paralysie faciale
@@ -5712,7 +5711,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <input type="radio" name="dig8" id="yesdig8">
         <span class="checkmark"></span> Douleurs
     </label>
+	<label class="custom-control radio" style="margin-right: 10px;">
+        <input type="radio" name="dig8" id="NEdig8">
+        <span class="checkmark"></span> Non évaluable
+    </label>
 </p>
+
 <div style="margin-left: 20px;">
     <div class="dig8d1" id="dig8d1">
         <label class="custom-control checkbox" style="margin-right: 10px;">
@@ -5789,19 +5793,50 @@ document.getElementById('nodig7').addEventListener('change', function() {
     }
 });
 
-// Affichage de l'ébranlement des fosses lombaires
-document.getElementById('yesdig8').addEventListener('change', function() {
-    document.getElementById('dig8d1').style.display = this.checked ? 'inline' : 'none';
-    document.getElementById('dig8d2').style.display = this.checked ? 'inline' : 'none';
-});
-
-document.getElementById('nodig8').addEventListener('change', function() {
-    if (this.checked) {
-        document.getElementById('dig8d1').style.display = 'none';
-        document.getElementById('dig8d2').style.display = 'none';
+// Script corrigé pour gérer correctement les douleurs lombaires
+document.addEventListener('DOMContentLoaded', function() {
+    // Assurons-nous d'avoir tous les éléments nécessaires
+    const nodig8 = document.getElementById('nodig8'); // Pas de douleur
+    const yesdig8 = document.getElementById('yesdig8'); // Douleurs
+    const NEdig8 = document.getElementById('NEdig8'); // Non évaluable
+    
+    const dig8d1 = document.getElementById('dig8d1'); // Checkbox droite
+    const dig8d2 = document.getElementById('dig8d2'); // Checkbox gauche
+    
+    // Sécurité: s'assurer que les éléments existent
+    if (!nodig8 || !yesdig8 || !NEdig8 || !dig8d1 || !dig8d2) {
+        console.error("Éléments manquants pour la gestion des douleurs lombaires");
+        return;
     }
+    
+    // Fonction pour mettre à jour l'affichage des options de latéralité
+    function updateFossesLombairesDisplay() {
+        if (yesdig8.checked) {
+            // Si "Douleurs" est sélectionné, afficher les options de latéralité
+            dig8d1.style.display = 'block';
+            dig8d2.style.display = 'block';
+        } else {
+            // Si "Pas de douleur" ou "Non évaluable" est sélectionné, masquer les options
+            dig8d1.style.display = 'none';
+            dig8d2.style.display = 'none';
+            
+            // Décocher les checkboxes de latéralité
+            const dig8d1Input = document.getElementById('dig8d1Input');
+            const dig8d2Input = document.getElementById('dig8d2Input');
+            
+            if (dig8d1Input) dig8d1Input.checked = false;
+            if (dig8d2Input) dig8d2Input.checked = false;
+        }
+    }
+    
+    // Ajouter des écouteurs d'événements à tous les boutons radio
+    nodig8.addEventListener('change', updateFossesLombairesDisplay);
+    yesdig8.addEventListener('change', updateFossesLombairesDisplay);
+    NEdig8.addEventListener('change', updateFossesLombairesDisplay);
+    
+    // Exécuter la fonction au chargement initial pour s'assurer du bon état
+    updateFossesLombairesDisplay();
 });
-
 // Affichage organomégalie
 document.getElementById('yesdig9').addEventListener('change', function() {
     document.getElementById('dig9d').style.display = this.checked ? 'inline' : 'none';
@@ -7690,64 +7725,121 @@ document.getElementById('temps_acceleration').addEventListener('input', validate
 
 
 function resetExamenReaInputs() {
-    // Réinitialiser tous les champs numériques
+    // 1. Réinitialiser tous les champs numériques
     document.querySelectorAll('#examen-réanimation input[type="number"]').forEach(input => {
         input.value = '';
     });
     
-    // Réinitialiser tous les champs texte
+    // 2. Réinitialiser tous les champs texte
     document.querySelectorAll('#examen-réanimation input[type="text"]').forEach(input => {
         input.value = '';
     });
     
-    // Réinitialiser toutes les zones de texte
+    // 3. Réinitialiser toutes les zones de texte
     document.querySelectorAll('#examen-réanimation textarea').forEach(textarea => {
         textarea.value = '';
     });
     
-    // Réinitialiser les statuts
+    // 4. Cibler spécifiquement tous les champs de saisie sans type spécifié
+    document.querySelectorAll('#examen-réanimation input:not([type])').forEach(input => {
+        input.value = '';
+    });
+    
+    // 5. Réinitialiser les statuts
     document.querySelectorAll('#examen-réanimation [id$="-status"]').forEach(span => {
         span.textContent = '';
     });
     
-    // Réinitialiser les cases à cocher
+    // 6. Réinitialiser les cases à cocher
     document.querySelectorAll('#examen-réanimation input[type="checkbox"]').forEach(checkbox => {
         checkbox.checked = false;
     });
     
-    // Réinitialiser les boutons radio - remettre les premiers de chaque groupe à coché
-    const radioGroups = {};
-    document.querySelectorAll('#examen-réanimation input[type="radio"]').forEach(radio => {
-        if (!radioGroups[radio.name]) {
-            radioGroups[radio.name] = true;
-            const firstRadio = document.querySelector(`#examen-réanimation input[name="${radio.name}"]`);
-            if (firstRadio) firstRadio.checked = true;
+    // 7. Cocher spécifiquement les boutons radio "par défaut"
+    const defaultRadioButtons = [
+        // Cardiovasculaire
+        'nocard4', 'nocard5', 'noicg', 'notvp', 'noVascularMurmur', 
+        'normalReflex', 'no_paralysie_faciale',
+        
+        // Respiratoire
+        'ventSpontanee', 'oxygenNon', 'normalInspection', 'noresp4', 'noresp5', 
+        'normalPercussion', 'normalVibrations', 'noresp6',
+        
+        // Digestif
+        'nodig6', 'nodig7', 'nodig9', 'nodig8', 'nodig10', 'nodig11',
+        
+        // Neurologique
+        'non-sedate', 'noDeficitMoteur', 'noDeficitSensitif', 'noSyndromeMeningé'
+    ];
+    
+    defaultRadioButtons.forEach(id => {
+        const radio = document.getElementById(id);
+        if (radio) {
+            radio.checked = true;
         }
     });
     
-    // Masquer les sections conditionnelles
-    document.querySelectorAll('#examen-réanimation [id$="Details"], #examen-réanimation [id$="_section"], #examen-réanimation [id$="d1"], #examen-réanimation [id$="d2"], #examen-réanimation [id$="d3"], #examen-réanimation [id$="d4"], #examen-réanimation [id$="d5"]').forEach(section => {
-        section.style.display = 'none';
+    // 8. Auscultation cardiaque - s'assurer que le bouton normal est coché
+    const normalHeartSound = document.querySelector('input[name="heartSoundType"][value="normal"]');
+    if (normalHeartSound) {
+        normalHeartSound.checked = true;
+        
+        // Masquer la section des détails d'auscultation cardiaque
+        const abnormalDetails = document.getElementById('abnormalDetails');
+        if (abnormalDetails) {
+            abnormalDetails.style.display = 'none';
+        }
+        
+        // Réinitialiser les cases à cocher pour le souffle
+        const hasMurmur = document.getElementById('hasMurmur');
+        if (hasMurmur) {
+            hasMurmur.checked = false;
+        }
+        
+        // Masquer les détails du souffle
+        const murmurDetails = document.getElementById('murmurDetails');
+        if (murmurDetails) {
+            murmurDetails.style.display = 'none';
+        }
+        
+        // Réinitialiser le rythme à "régulier"
+        const regularRhythm = document.querySelector('input[name="rhythm"][value="regular"]');
+        if (regularRhythm) {
+            regularRhythm.checked = true;
+        }
+    }
+    
+    // 9. Forcer le masquage des sections conditionnelles
+    const sectionsToHide = [
+        '#card4Details', '#signeLutteDetails', '#percussionDetails', '#vibrationsDetails', 
+        '#deficitSensitifDetails', '#deficitMoteurDetails', '#syndromeMeningeDetails', 
+        '#paralysie_faciale_details', '#deficitMSSDetails', '#deficitMISDetails', 
+        '#msDetails', '#miDetails', '#pulseDetails', '.tvpDetails', '#vascularMurmurDetails',
+        '#abnormalDetails', '#femoralDetails', '#carotidDetails', '#murmurDetails',
+        '#dig6d1', '#dig6d2', '#dig6d3', '#dig7d1', '#dig7d2', '#dig7d3', '#dig7d4',
+        '#dig8d1', '#dig8d2', '#resp4d1', '#resp4d2', '#resp4d3', '#resp4d4', '#resp4d5',
+        '#resp5d1', '#resp5d2', '#resp5d3', '#resp5d4', 
+        '#dig9d', '#dig11d', '#debitO2Section', '#icgOptions', '#crepitantsLevel',
+        '#sedation-field', '#facial_intensity_selector', '#vasopresseurDetails',
+        '#card5d1', '#card5d2', '#card5d3', '#card5d4'
+    ];
+    
+    sectionsToHide.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            if (el) el.style.display = 'none';
+        });
     });
     
-    // Réinitialiser les valeurs spécifiques de formulaire
-    if (document.getElementById('map')) document.getElementById('map').value = '';
-    if (document.getElementById('glasgow-total')) document.getElementById('glasgow-total').value = '15';
-    if (document.getElementById('glasgow-anterieur')) document.getElementById('glasgow-anterieur').value = '15';
+    // 10. Masquer toutes les sections des tableaux d'auscultation
+    document.querySelectorAll('.resp6d1, .resp6d2, .resp6d3, .resp6d4, .resp6d5').forEach(el => {
+        if (el) el.style.display = 'none';
+    });
     
-    // Vérifier si l'élément existe avant de définir readOnly
-    const glasgowTotal = document.getElementById('glasgow-total');
-    if (glasgowTotal) {
-        glasgowTotal.style.backgroundColor = '#dcfce7';
-        glasgowTotal.style.color = '#166534';
-    }
+    // S'assurer que le conteneur des div d'auscultation reste visible
+    const auscContainer = document.getElementById('monénormechibre');
+    if (auscContainer) auscContainer.style.display = 'block';
     
-    // Réinitialiser l'état de l'élément de sédation
-    if (document.getElementById('sedation-field')) {
-        document.getElementById('sedation-field').style.display = 'none';
-    }
-    
-    // Réinitialiser les sélecteurs RCP et RPM
+    // 11. Réinitialiser les sélecteurs RCP et RPM
     ['rpm-direct-droit', 'rpm-direct-gauche', 'rpm-consensuel-droit', 'rpm-consensuel-gauche'].forEach(id => {
         const select = document.getElementById(id);
         if (select) {
@@ -7768,17 +7860,63 @@ function resetExamenReaInputs() {
         }
     });
     
-    // Déclencher des événements pour mettre à jour les calculs dynamiques
-    ['FC', 'pas', 'pad'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            const event = new Event('input', { bubbles: true });
-            element.dispatchEvent(event);
-        }
+    // 12. Réinitialiser l'état des sélecteurs de force
+    document.querySelectorAll('.force-selector').forEach(el => {
+        el.style.display = 'none';
     });
     
-    // Mettre à jour les champs de Glasgow
+    // 13. Réinitialiser les valeurs spécifiques
+    if (document.getElementById('map')) document.getElementById('map').value = '';
+    if (document.getElementById('glasgow-total')) {
+        document.getElementById('glasgow-total').value = '15';
+        document.getElementById('glasgow-total').style.backgroundColor = '#dcfce7';
+        document.getElementById('glasgow-total').style.color = '#166534';
+    }
+    if (document.getElementById('glasgow-anterieur')) document.getElementById('glasgow-anterieur').value = '15';
+    
+    // 14. Cibler spécifiquement tous les champs de valeurs
+    const valueInputIds = [
+        // Hémodynamique
+        'FreqCard', 'pas', 'pad', 'map',
+        
+        // Respiratoire
+        'FreqResp', 'volumeCourant', 'peepInvasive', 'pressionPlateau', 'fio2Invasive', 'sao2Invasive',
+        'aideInspiratoire', 'peepNonInvasive', 'fio2NonInvasive', 'sao2NonInvasive',
+        'debitO2', 'sao2Spontanee',
+        
+        // Neurologique
+        'glasgow-total', 'glasgow-anterieur',
+        
+        // Autres
+        'temperature', 'glycemie'
+    ];
+    
+    valueInputIds.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+    
+    // 15. Réinitialiser les inputs pour les rétrécissements et fuites cardiaques
+    [
+        'noradrenalineDose', 'adrenalineDose', 'dobutamineDose', 'vasopresseurPrecisions',
+        'tympanismeLocation', 'matiteLocation', 'diminutionLocation', 'augmentationLocation',
+        'resp6d1Text', 'resp6d2Text', 'resp6d3Text', 'resp6d4Text', 'resp6d5Text'
+    ].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
+    
+    // 16. Mettre à jour les calculs
     updateGlasgowTotal();
+    
+    // 17. Déclencher des événements input sur certains champs pour mettre à jour les statuts
+    ['FreqCard', 'pas', 'pad', 'FreqResp', 'temperature', 'glycemie'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+    });
 }
 
 // Ajouter un écouteur d'événement au bouton de réinitialisation
@@ -8545,9 +8683,10 @@ function formatNumeric(value) {
     return isNaN(numValue) ? "" : numValue.toFixed(1).replace(/\.0$/, '');
 }
 
-// Section cardiovasculaire
+// Function pour générer la section cardiovasculaire avec pouls améliorés
 function generateCardiovascularSection() {
-let section = `<div class="text-line"><strong style="color: black;">Sur le plan hémodynamique et cardiovasculaire :</strong></div>`;    
+    let section = `<div class="text-line"><strong style="color: black;">Sur le plan hémodynamique et cardiovasculaire :</strong></div>`;
+    
     // Hémodynamique
     const hemodynStatus = document.getElementById('yescard4').checked ? 
         "Hémodynamique instable" : "Hémodynamique stable";
@@ -8558,17 +8697,24 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
     const pad = valueOrEmpty(document.getElementById('pad').value);
     const pam = valueOrEmpty(document.getElementById('map').value);
     
-    // Ligne hémodynamique avec FC et PA
-    let hemodynamicLine = `<div class="text-line">${hemodynStatus}.`;
-    if (fc) hemodynamicLine += ` FC ${fc}/min`;
-    if (pas && pad) {
-        if (fc) hemodynamicLine += " ;";
-        hemodynamicLine += ` PA ${pas}/${pad}`;
-        if (pam) hemodynamicLine += ` (${pam})`;
-        hemodynamicLine += " mmHg";
+    // Statut FC
+    let fcStatus = "";
+    if (fc) {
+        const fcValue = parseFloat(fc);
+        if (fcValue > 100) fcStatus = "Tachycardie : ";
+        else if (fcValue < 60) fcStatus = "Bradycardie : ";
     }
-    hemodynamicLine += "</div>";
-    section += hemodynamicLine;
+    
+    // Statut PA
+    let paStatus = "";
+    if (pas && pad) {
+        const pamValue = parseFloat(pam || ((parseInt(pas) + 2 * parseInt(pad)) / 3).toFixed(0));
+        if (pamValue < 65) paStatus = "hypotension";
+        else paStatus = "normotension";
+    }
+    
+    // Ligne hémodynamique avec FC et PA
+    let hemodynamicLine = `<div class="text-line">${hemodynStatus}`;
     
     // Détails de l'instabilité hémodynamique si présente
     if (document.getElementById('yescard4').checked) {
@@ -8580,35 +8726,55 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('polypnee').checked) instabilityDetails.push("polypnée");
         
         if (instabilityDetails.length > 0) {
-            section += `<div class="text-line">Signes d'hypoperfusion périphérique : ${instabilityDetails.join(', ')}.</div>`;
-        }
-        
-        // Support vasopresseur si présent
-        if (document.getElementById('vasopresseurs').checked) {
-            let vasopressors = [];
-            
-            if (document.getElementById('noradrenaline').checked) {
-                const dose = document.getElementById('noradrenalineDose').value;
-                vasopressors.push(`noradrénaline${dose ? ' ' + dose : ''}`);
-            }
-            
-            if (document.getElementById('adrenaline').checked) {
-                const dose = document.getElementById('adrenalineDose').value;
-                vasopressors.push(`adrénaline${dose ? ' ' + dose : ''}`);
-            }
-            
-            if (document.getElementById('dobutamine').checked) {
-                const dose = document.getElementById('dobutamineDose').value;
-                vasopressors.push(`dobutamine${dose ? ' ' + dose : ''}`);
-            }
-            
-            const precisionsVP = document.getElementById('vasopresseurPrecisions').value;
-            
-            if (vasopressors.length > 0) {
-                section += `<div class="text-line">Sous support vasopresseur : ${vasopressors.join(', ')}${precisionsVP ? ' (' + precisionsVP + ')' : ''}.</div>`;
-            }
+            hemodynamicLine += ` avec présence de signes de choc à type de : ${instabilityDetails.join(', ')}`;
         }
     }
+    
+    // Ajouter FC et PA
+    if (fc && fcStatus) {
+        hemodynamicLine += `. ${fcStatus}FC ${fc} bpm`;
+    } else if (fc) {
+        hemodynamicLine += `. FC ${fc}/min`;
+    }
+    
+    if (pas && pad) {
+        if (fc || hemodynamicLine.includes("choc")) hemodynamicLine += " et ";
+        hemodynamicLine += `${paStatus} : PA ${pas}/${pad}`;
+        if (pam) hemodynamicLine += ` (${pam})`;
+        hemodynamicLine += " mmHg";
+    }
+    
+    hemodynamicLine += ".";
+    section += hemodynamicLine;
+    
+    // Support vasopresseur si présent
+    if (document.getElementById('vasopresseurs').checked) {
+        let vasopressors = [];
+        
+        if (document.getElementById('noradrenaline').checked) {
+            const dose = document.getElementById('noradrenalineDose').value;
+            vasopressors.push(`noradrénaline${dose ? ' ' + dose : ''} mg/h`);
+        }
+        
+        if (document.getElementById('adrenaline').checked) {
+            const dose = document.getElementById('adrenalineDose').value;
+            vasopressors.push(`adrénaline${dose ? ' ' + dose : ''} mg/h`);
+        }
+        
+        if (document.getElementById('dobutamine').checked) {
+            const dose = document.getElementById('dobutamineDose').value;
+            vasopressors.push(`dobutamine${dose ? ' ' + dose : ''} µg/kg/min`);
+        }
+        
+        const precisionsVP = document.getElementById('vasopresseurPrecisions').value;
+        
+        if (vasopressors.length > 0) {
+            section += ` Le patient est sous support vasopresseur par : ${vasopressors.join(', ')}${precisionsVP ? ' (' + precisionsVP + ')' : ''}.`;
+        }
+    } else {
+        section += ` Pas d'amine vasopressive.`;
+    }
+    section += "</div>";
     
     // Insuffisance cardiaque droite
     let icdText = document.getElementById('yescard5').checked ? 
@@ -8651,12 +8817,12 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
     
     section += `<div class="text-line">${icdText}. ${icgText}.</div>`;
     
-    // Pouls
+    // POULS - NOUVELLE VERSION AMÉLIORÉE
     const pulseAbnormal = document.querySelector('input[name="pulseType"][value="abnormal"]').checked;
     let pulseText = "";
     
     if (pulseAbnormal) {
-        // Récupérer les anomalies des pouls
+        // Récupérer l'état des pouls (présent/absent)
         const radialRight = document.querySelector('input[name="radialPulse"][value="right"]').checked;
         const radialLeft = document.querySelector('input[name="radialPulse"][value="left"]').checked;
         const poplitealRight = document.querySelector('input[name="poplitealPulse"][value="right"]').checked;
@@ -8666,30 +8832,21 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         const pedialRight = document.querySelector('input[name="pedialPulse"][value="right"]').checked;
         const pedialLeft = document.querySelector('input[name="pedialPulse"][value="left"]').checked;
         
-        // Construire le texte des anomalies
-        let absentPulses = [];
+        // Format: Nom du pouls: G/D avec + pour présent et - pour absent
+        const formatPouls = (name, gauche, droit) => {
+            const g = gauche ? "+" : "-";
+            const d = droit ? "+" : "-";
+            return `${name}: ${g}/${d}`;
+        };
         
-        if (!radialRight || !radialLeft) {
-            const side = !radialRight && !radialLeft ? "bilatéralement" : (!radialRight ? "à droite" : "à gauche");
-            absentPulses.push(`pouls radiaux absents ${side}`);
-        }
+        // Construire le texte pour chaque pouls
+        const radialStatus = formatPouls("radiaux", radialLeft, radialRight);
+        const poplitealStatus = formatPouls("poplités", poplitealLeft, poplitealRight);
+        const tibialStatus = formatPouls("tibiaux postérieurs", tibialLeft, tibialRight);
+        const pedialStatus = formatPouls("pédieux", pedialLeft, pedialRight);
         
-        if (!poplitealRight || !poplitealLeft) {
-            const side = !poplitealRight && !poplitealLeft ? "bilatéralement" : (!poplitealRight ? "à droite" : "à gauche");
-            absentPulses.push(`pouls poplités absents ${side}`);
-        }
-        
-        if (!tibialRight || !tibialLeft) {
-            const side = !tibialRight && !tibialLeft ? "bilatéralement" : (!tibialRight ? "à droite" : "à gauche");
-            absentPulses.push(`pouls tibiaux postérieurs absents ${side}`);
-        }
-        
-        if (!pedialRight || !pedialLeft) {
-            const side = !pedialRight && !pedialLeft ? "bilatéralement" : (!pedialRight ? "à droite" : "à gauche");
-            absentPulses.push(`pouls pédieux absents ${side}`);
-        }
-        
-        pulseText = `Anomalie des pouls périphériques : ${absentPulses.join(', ')}.`;
+        // Combiner tous les pouls en une ligne
+        pulseText = `Pouls périphériques : ${radialStatus} ; ${poplitealStatus} ; ${tibialStatus} ; ${pedialStatus}.`;
     } else {
         pulseText = "Les pouls périphériques sont perçus et bien frappés.";
     }
@@ -8771,11 +8928,49 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         // Souffle
         if (document.getElementById('hasMurmur').checked) {
             // Caractéristiques du souffle
-            let locations = Array.from(document.querySelectorAll('input[name="location"]:checked')).map(cb => cb.value);
-            let timbres = Array.from(document.querySelectorAll('input[name="timbre"]:checked')).map(cb => cb.value);
-            let timings = Array.from(document.querySelectorAll('input[name="timing"]:checked')).map(cb => cb.value);
+            let locations = Array.from(document.querySelectorAll('input[name="location"]:checked')).map(cb => {
+                // Traduction des localisations
+                switch(cb.value) {
+                    case "aortic": return "aortique";
+                    case "mitral": return "mitral";
+                    case "tricuspid": return "tricuspidien";
+                    case "pulmonary": return "pulmonaire";
+                    default: return cb.value;
+                }
+            });
+            
+            let timbres = Array.from(document.querySelectorAll('input[name="timbre"]:checked')).map(cb => {
+                // Traduction des timbres
+                switch(cb.value) {
+                    case "soft": return "doux humé aspiratif";
+                    case "harsh": return "rude râpeux";
+                    case "musical": return "en jet de vapeur piaulant";
+                    case "friction": return "frottement péricardique";
+                    default: return cb.value;
+                }
+            });
+            
+            let timings = Array.from(document.querySelectorAll('input[name="timing"]:checked')).map(cb => {
+                // Traduction des temps
+                switch(cb.value) {
+                    case "systolic": return "systolique";
+                    case "diastolic": return "diastolique";
+                    case "continuous": return "systolo-diastolique";
+                    default: return cb.value;
+                }
+            });
+            
             const intensity = document.querySelector('select[name="intensity"]').value;
-            let radiations = Array.from(document.querySelectorAll('input[name="radiation"]:checked')).map(cb => cb.value);
+            
+            let radiations = Array.from(document.querySelectorAll('input[name="radiation"]:checked')).map(cb => {
+                // Traduction des irradiations
+                switch(cb.value) {
+                    case "carotid": return "carotidienne";
+                    case "axillary": return "axillaire";
+                    case "none": return ""; // Ne pas inclure "sans irradiation"
+                    default: return cb.value;
+                }
+            }).filter(r => r !== ""); // Filtrer les valeurs vides
             
             // Construction du texte du souffle
             heartText += " avec souffle";
@@ -8799,7 +8994,7 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
             }
             
             // Irradiation
-            if (radiations.length > 0 && !radiations.includes("none")) {
+            if (radiations.length > 0) {
                 heartText += `, à irradiation ${radiations.join(' et ')}`;
             }
         } else {
@@ -8811,25 +9006,34 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
     
     section += `<div class="text-line">${heartText}.</div>`;
     
-	    section += `<br>`;
-
-
+    section += `<br>`;
+    
     return section;
+}
+
+// Fonction utilitaire pour vérifier si une valeur est définie
+function valueOrEmpty(value) {
+    return value && value !== "" ? value : "";
 }
 
 // Section respiratoire
 function generateRespiratorySection() {
-let section = `<div class="text-line"><strong style="color: black;">Sur le plan respiratoire :</strong></div>`;    
+    let section = `<div class="text-line"><strong style="color: black;">Sur le plan respiratoire :</strong></div>`;    
+    
     // Fréquence respiratoire
     const fr = valueOrEmpty(document.getElementById('FreqResp').value);
+    let frStatus = "";
     if (fr) {
-        section += `<div class="text-line">Fréquence respiratoire à ${fr}/min.</div>`;
+        const frValue = parseFloat(fr);
+        if (frValue > 20) frStatus = "Polypnée";
+        else if (frValue < 12) frStatus = "Bradypnée";
+        else frStatus = "Normopnée";
     }
     
     // Type de ventilation
     let ventilationText = "";
     if (document.getElementById('ventSpontanee').checked) {
-        ventilationText = "Ventilation spontanée";
+        ventilationText = "en ventilation spontanée";
         if (document.getElementById('oxygenOui').checked) {
             const debitO2 = valueOrEmpty(document.getElementById('debitO2').value);
             ventilationText += ` sous oxygénothérapie${debitO2 ? ' à ' + debitO2 + ' L/min' : ''}`;
@@ -8839,7 +9043,7 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
             ventilationText += `, SaO2 à ${sao2Spontanee}%`;
         }
     } else if (document.getElementById('ventNonInvasive').checked) {
-        ventilationText = "Ventilation non invasive";
+        ventilationText = "en ventilation non invasive";
         
         const aideInspiratoire = valueOrEmpty(document.getElementById('aideInspiratoire').value);
         const peepNonInvasive = valueOrEmpty(document.getElementById('peepNonInvasive').value);
@@ -8856,7 +9060,7 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
             ventilationText += ` (${parameters.join(', ')})`;
         }
     } else if (document.getElementById('ventInvasive').checked) {
-        ventilationText = "Ventilation invasive";
+        ventilationText = "en ventilation invasive";
         
         const volumeCourant = valueOrEmpty(document.getElementById('volumeCourant').value);
         const peepInvasive = valueOrEmpty(document.getElementById('peepInvasive').value);
@@ -8876,12 +9080,27 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         }
     }
     
-    if (ventilationText) {
-        section += `<div class="text-line">${ventilationText}.</div>`;
+    // Première ligne : fréquence respiratoire et ventilation
+    let respiratoryLine = "";
+    if (fr) {
+        respiratoryLine = `${frStatus} à ${fr}/min ${ventilationText}`;
+    } else if (ventilationText) {
+        respiratoryLine = `Patient ${ventilationText}`;
+    }
+    
+    if (respiratoryLine) {
+        section += `<div class="text-line">${respiratoryLine}.</div>`;
     }
     
     // Hypercapnie
     const hypercapnie = document.getElementById('yesresp4').checked;
+    
+    // Signes de lutte
+    const signesLutte = document.getElementById('yesresp5').checked;
+    
+    let secondLine = "";
+    
+    // Détails des signes d'hypercapnie
     if (hypercapnie) {
         let hypercapnieSigns = [];
         if (document.getElementById('resp4d1Input').checked) hypercapnieSigns.push("sueurs");
@@ -8891,16 +9110,13 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('resp4d5Input').checked) hypercapnieSigns.push("agitation/confusion");
         
         if (hypercapnieSigns.length > 0) {
-            section += `<div class="text-line">Signes d'hypercapnie : ${hypercapnieSigns.join(', ')}.</div>`;
+            secondLine += `Présence de signes d'hypercapnie à type de : ${hypercapnieSigns.join(', ')}`;
         } else {
-            section += `<div class="text-line">Présence de signes d'hypercapnie.</div>`;
+            secondLine += "Présence de signes d'hypercapnie";
         }
-    } else {
-        section += `<div class="text-line">Pas de signe d'hypercapnie.`;
     }
     
-    // Signes de lutte
-    const signesLutte = document.getElementById('yesresp5').checked;
+    // Détails des signes de lutte
     if (signesLutte) {
         let lutteDetails = [];
         if (document.getElementById('resp5d1Input').checked) lutteDetails.push("tirage intercostal");
@@ -8908,42 +9124,46 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('resp5d3Input').checked) lutteDetails.push("tirage souscostal");
         if (document.getElementById('resp5d4Input').checked) lutteDetails.push("balancement thoracoabdominal");
         
-        const intensite = document.getElementById('resp5Intensity') ? 
-            document.getElementById('resp5Intensity').value : "";
+        // Récupérer l'intensité
+        const intensitySelect = document.getElementById('resp5Intensity');
+        const intensity = intensitySelect ? intensitySelect.value : "";
         
         if (lutteDetails.length > 0) {
-            section += ` Signes de lutte${intensite ? ' ' + intensite + 's' : ''} : ${lutteDetails.join(', ')}.`;
+            if (secondLine) secondLine += " et ";
+            secondLine += `signes de lutte ${intensity}s à type de : ${lutteDetails.join(', ')}`;
         } else {
-            section += ` Présence de signes de lutte${intensite ? ' ' + intensite + 's' : ''}.`;
+            if (secondLine) secondLine += " et ";
+            secondLine += `présence de signes de lutte ${intensity}s`;
         }
-    } else {
-        section += " Pas de signe de lutte.";
     }
-    section += "</div>";
+    
+    if (secondLine) {
+        section += `<div class="text-line">${secondLine}.</div>`;
+    }
     
     // Inspection thoracique
-    let inspectionText = "Ampliation thoracique ";
+    let inspectionText = "";
     if (document.getElementById('abnormalInspection').checked) {
         const ampliationType = document.querySelector('input[name="ampliation"]:checked').value;
         if (ampliationType === "asymetrique") {
             const side = document.querySelector('input[name="ampliationSideChoice"]:checked').value;
-            inspectionText += `asymétrique ${side}`;
+            inspectionText += `Ampliation thoracique asymétrique à ${side}`;
         } else {
-            inspectionText += "symétrique";
+            inspectionText += "Ampliation thoracique symétrique";
         }
         
         let thoraxSigns = [];
-        if (document.getElementById('hippocratisme').checked) thoraxSigns.push("hippocratisme digital");
-        if (document.getElementById('cyanose').checked) thoraxSigns.push("cyanose des extrémités");
-        if (document.getElementById('distension').checked) thoraxSigns.push("distension thoracique");
+        if (document.getElementById('hippocratisme').checked) thoraxSigns.push("d'un hippocratisme digital");
+        if (document.getElementById('cyanose').checked) thoraxSigns.push("d'une cyanose des extrémités");
+        if (document.getElementById('distension').checked) thoraxSigns.push("d'une distension thoracique");
         
         if (thoraxSigns.length > 0) {
-            inspectionText += `. Présence de ${thoraxSigns.join(', ')}.`;
+            inspectionText += `. Présence ${thoraxSigns.join(', ')}.`;
         } else {
-            inspectionText += ". Pas d'hippocratisme digital. Pas de cyanose des extrémités. Pas de distension thoracique.";
+            inspectionText += ".";
         }
     } else {
-        inspectionText += "symétrique. Pas d'hippocratisme digital. Pas de cyanose des extrémités. Pas de distension thoracique.";
+        inspectionText = "Ampliation thoracique symétrique. Pas d'hippocratisme digital ni de cyanose des extrémités.";
     }
     
     section += `<div class="text-line">${inspectionText}</div>`;
@@ -9031,15 +9251,14 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
     
     section += `<div class="text-line">${auscultationText}</div>`;
     
-	    section += `<br>`;
-
+    section += `<br>`;
 
     return section;
 }
 
-// Section digestive
+//Section digestif
 function generateDigestiveSection() {
-let section = `<div class="text-line"><strong style="color: black;">Sur le plan uro-digestif :</strong></div>`;
+    let section = `<div class="text-line"><strong style="color: black;">Sur le plan uro-digestif :</strong></div>`;
     
     // Hypertension portale
     let htpText = "";
@@ -9050,7 +9269,7 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('dig6d3Input').checked) htpSigns.push("splénomégalie");
         
         if (htpSigns.length > 0) {
-            htpText = `Présence de signes d'hypertension portale : ${htpSigns.join(', ')}.`;
+            htpText = `Présence de signes d'hypertension portale à type de : ${htpSigns.join(', ')}.`;
         } else {
             htpText = "Présence de signes d'hypertension portale.";
         }
@@ -9068,7 +9287,7 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('dig7d4Input').checked) ihcSigns.push("encéphalopathie");
         
         if (ihcSigns.length > 0) {
-            ihcText = `Présence de signes d'insuffisance hépatocellulaire : ${ihcSigns.join(', ')}.`;
+            ihcText = `Présence de signes d'insuffisance hépatocellulaire à type de : ${ihcSigns.join(', ')}.`;
         } else {
             ihcText = "Présence de signes d'insuffisance hépatocellulaire.";
         }
@@ -9076,63 +9295,103 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         ihcText = "Pas de signe d'insuffisance hépatocellulaire.";
     }
     
-    section += `<div class="text-line">${htpText} ${ihcText}</div>`;
+    // Première ligne : HTP et IHC
+    let hepatoLine = "";
+    if (document.getElementById('yesdig6').checked || document.getElementById('yesdig7').checked) {
+        if (htpText.startsWith("Présence") && ihcText.startsWith("Présence")) {
+            hepatoLine = `${htpText} ${ihcText}`;
+        } else {
+            hepatoLine = `${htpText} ${ihcText}`;
+        }
+    } else {
+        hepatoLine = `${htpText} ${ihcText}`;
+    }
+    
+    section += `<div class="text-line">${hepatoLine}</div>`;
+    
+    // Globe vésical
+    const globeVesical = document.getElementById('yesdig10').checked;
+    const globeText = globeVesical ? "Présence d'un globe vésical" : "Pas de globe vésical";
+    
+    // Douleur fosses lombaires - CORRIGÉ pour gérer "Non évaluable"
+    let fosseText = "";
+    
+    // Vérifier l'option sélectionnée pour les douleurs lombaires
+    const yesdig8 = document.getElementById('yesdig8');
+    const NEdig8 = document.getElementById('NEdig8');
+    
+    if (yesdig8 && yesdig8.checked) {
+        // Option "Douleurs" est sélectionnée
+        let sides = [];
+        if (document.getElementById('dig8d1Input').checked) sides.push("droite");
+        if (document.getElementById('dig8d2Input').checked) sides.push("gauche");
+        
+        if (sides.length > 0) {
+            if (sides.length === 2) {
+                fosseText = "Douleur à l'ébranlement des fosses lombaires";
+            } else {
+                fosseText = `Douleur à l'ébranlement de la fosse lombaire ${sides[0]}`;
+            }
+        } else {
+            fosseText = "Douleur à l'ébranlement des fosses lombaires";
+        }
+    } else if (NEdig8 && NEdig8.checked) {
+        // Option "Non évaluable" est sélectionnée
+        fosseText = "Douleur à l'ébranlement des fosses lombaires non évaluable";
+    } else {
+        // Option "Pas de douleur" est sélectionnée (par défaut)
+        fosseText = "Pas de douleur à l'ébranlement des fosses lombaires";
+    }
+    
+    // Deuxième ligne : globe vésical et fosses lombaires
+    section += `<div class="text-line">${globeText}. ${fosseText}.</div>`;
+    
+    // Abdomen
+    let abdomenText = "";
+    if (document.getElementById('yesdig11').checked) {
+        const abdomenDetails = document.getElementById('dig11d').value;
+        abdomenText = `Anomalie à la palpation abdominale${abdomenDetails ? ' : ' + abdomenDetails : ''}.`;
+    } else {
+        abdomenText = "Abdomen souple dépressible et indolore.";
+    }
     
     // Organomégalie
     let organoText = "";
     if (document.getElementById('yesdig9').checked) {
         const organomegalieDetails = document.getElementById('dig9d').value;
-        organoText = `Organomégalie${organomegalieDetails ? ' : ' + organomegalieDetails : ''}.`;
-    } else {
-        organoText = "Pas d'organomégalie palpée.";
+        organoText = `Présence d'une organomégalie${organomegalieDetails ? ' : ' + organomegalieDetails : ''}.`;
     }
-  
-  // Globe vésical
-const globeVesical = document.getElementById('yesdig10').checked;
-const globeText = globeVesical ? "Présence d'un globe vésical." : "Pas de globe vésical.";
-
-// Douleur fosses lombaires
-let fosseText = "";
-if (document.getElementById('yesdig8').checked) {
-    let sides = [];
-    if (document.getElementById('dig8d1Input').checked) sides.push("droite");
-    if (document.getElementById('dig8d2Input').checked) sides.push("gauche");
     
-    if (sides.length > 0) {
-        fosseText = `Douleur à l'ébranlement ${sides.length > 1 ? 'des fosses lombaires' : 'de la fosse lombaire ' + sides[0]}.`;
+    // Troisième ligne : abdomen et organomégalie
+    if (organoText) {
+        section += `<div class="text-line">${abdomenText} ${organoText}</div>`;
     } else {
-        fosseText = "Douleur à l'ébranlement des fosses lombaires.";
+        section += `<div class="text-line">${abdomenText}</div>`;
     }
-} else {
-    fosseText = "Pas de douleur à l'ébranlement des fosses lombaires.";
-}
-
-section += `<div class="text-line">${globeText} ${fosseText}</div>`;
-
-// Abdomen
-let abdomenText = "";
-if (document.getElementById('yesdig11').checked) {
-    const abdomenDetails = document.getElementById('dig11d').value;
-    abdomenText = `Anomalie à la palpation abdominale${abdomenDetails ? ' : ' + abdomenDetails : ''}.`;
-} else {
-    abdomenText = "Abdomen souple dépressible et indolore.";
-}
-
-section += `<div class="text-line">${abdomenText}</div>`;
-
+    
     section += `<br>`;
-
-
-return section;
+    
+    return section;
 }
 
 // Section neurologique
 function generateNeurologicalSection() {
-let section = `<div class="text-line"><strong style="color: black;">Sur le plan neurologique :</strong></div>`;    
+    let section = `<div class="text-line"><strong style="color: black;">Sur le plan neurologique :</strong></div>`;    
+    
     // Score de Glasgow
-    const glasgow = document.getElementById('glasgow-total').value;
+    const glasgow = document.getElementById('glasgow-total').value || "15";
+    const yeux = document.getElementById('yeux-score').value || "4";
+    const verbal = document.getElementById('verbal-score').value || "5";
+    const moteur = document.getElementById('moteur-score').value || "6";
     const patientSedate = document.getElementById('sedate').checked;
-    let glasgowText = `<div class="text-line">Score de Glasgow ${glasgow}/15`;
+    
+    // Conscience et Glasgow
+    let glasgowText = "";
+    if (parseInt(glasgow) < 15) {
+        glasgowText = `Trouble de la conscience avec score de Glasgow à ${glasgow}/15 (Y${yeux} V${verbal} M${moteur})`;
+    } else {
+        glasgowText = `Patient conscient, score de Glasgow à ${glasgow}/15 (Y${yeux} V${verbal} M${moteur})`;
+    }
     
     if (patientSedate) {
         const glasgowAnterieur = document.getElementById('glasgow-anterieur').value;
@@ -9141,41 +9400,43 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         } else {
             glasgowText += " sous sédation";
         }
+    } else {
+        glasgowText += " sans sédation";
     }
-    glasgowText += ".</div>";
     
-    section += glasgowText;
+    section += `<div class="text-line">${glasgowText}.</div>`;
     
     // Pupilles
     let pupilleGauche = document.getElementById('pupille-gauche-taille').value;
     let pupilleDroite = document.getElementById('pupille-droite-taille').value;
     let rpmDirectGauche = document.getElementById('rpm-direct-gauche').value;
     let rpmDirectDroit = document.getElementById('rpm-direct-droit').value;
+    let rpmConsensuelGauche = document.getElementById('rpm-consensuel-gauche').value;
+    let rpmConsensuelDroit = document.getElementById('rpm-consensuel-droit').value;
     
-    let pupillesText = "Pupilles ";
+    // Format les signes +/- pour la réactivité
+    const formatReactivite = (valeur) => valeur === 'present' ? '+' : '-';
+    
+    let pupillesText = "";
     
     // Taille
     if (pupilleGauche === pupilleDroite) {
-        pupillesText += pupilleGauche + "s symétriques";
+        pupillesText = `Pupilles ${pupilleGauche}s symétriques`;
     } else {
-        pupillesText += `asymétriques (gauche ${pupilleGauche}, droite ${pupilleDroite})`;
+        pupillesText = `Pupilles asymétriques (gauche ${pupilleGauche}, droite ${pupilleDroite})`;
     }
     
     // Réactivité
-    if (rpmDirectGauche === 'present' && rpmDirectDroit === 'present') {
-        pupillesText += " réactives bilatéralement";
-    } else if (rpmDirectGauche === 'present' && rpmDirectDroit === 'absent') {
-        pupillesText += " avec réactivité conservée à gauche, abolie à droite";
-    } else if (rpmDirectGauche === 'absent' && rpmDirectDroit === 'present') {
-        pupillesText += " avec réactivité abolie à gauche, conservée à droite";
-    } else if (rpmDirectGauche === 'absent' && rpmDirectDroit === 'absent') {
-        pupillesText += " aréactives bilatéralement";
-    }
+    pupillesText += ` avec RPM direct ${formatReactivite(rpmDirectGauche)}/${formatReactivite(rpmDirectDroit)} et RPM consensuel ${formatReactivite(rpmConsensuelGauche)}/${formatReactivite(rpmConsensuelDroit)}`;
     
     section += `<div class="text-line">${pupillesText}.</div>`;
     
-    // ROT
+    // ROT et RCP
     let rotText = "";
+    const rcpDroit = document.getElementById('rcp-droit').value;
+    const rcpGauche = document.getElementById('rcp-gauche').value;
+    
+    // ROT
     if (document.getElementById('abnormalReflex').checked) {
         let rotAbnormalities = [];
         
@@ -9183,66 +9444,57 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         const reflexGroups = ['bicipital', 'tricipital', 'rotulien', 'achilléen'];
         for (const reflex of reflexGroups) {
             if (document.getElementById(reflex).checked) {
-                let sidedReflex = "";
-                
                 // Get affected sides for this reflex
                 const rightChecked = document.querySelector(`.side-checkbox[data-side="droite"][data-reflex="${reflex}"]`).checked;
                 const leftChecked = document.querySelector(`.side-checkbox[data-side="gauche"][data-reflex="${reflex}"]`).checked;
                 
-                if (rightChecked && leftChecked) {
-                    sidedReflex = `${reflex} bilatéral`;
-                } else if (rightChecked) {
-                    sidedReflex = `${reflex} droit`;
-                } else if (leftChecked) {
-                    sidedReflex = `${reflex} gauche`;
-                } else {
-                    continue; // No side checked, skip
-                }
+                if (!rightChecked && !leftChecked) continue; // Skip if no side selected
                 
-                // Collect anomalies for this reflex
-                let reflexDetails = [];
+                let reflexDescription = `ROT ${reflex}`;
+                let rightDetails = [];
+                let leftDetails = [];
                 
-                // Right side anomalies
+                // Collect right side anomalies
                 if (rightChecked) {
-                    if (document.getElementById(`${reflex}-vif-droit`).checked) reflexDetails.push("vif à droite");
-                    if (document.getElementById(`${reflex}-diffuse-droit`).checked) reflexDetails.push("diffusé à droite");
-                    if (document.getElementById(`${reflex}-poly-droit`).checked) reflexDetails.push("polycinétique à droite");
-                    if (document.getElementById(`${reflex}-zone-droit`).checked) reflexDetails.push("extension zone réflexogène à droite");
-                    if (document.getElementById(`${reflex}-aboli-droit`).checked) reflexDetails.push("aboli à droite");
+                    if (document.getElementById(`${reflex}-vif-droit`).checked) rightDetails.push("vif");
+                    if (document.getElementById(`${reflex}-diffuse-droit`).checked) rightDetails.push("diffusé");
+                    if (document.getElementById(`${reflex}-poly-droit`).checked) rightDetails.push("polycinétique");
+                    if (document.getElementById(`${reflex}-zone-droit`).checked) rightDetails.push("zone réflexogène étendue");
+                    if (document.getElementById(`${reflex}-aboli-droit`).checked) rightDetails.push("aboli");
                 }
                 
-                // Left side anomalies
+                // Collect left side anomalies
                 if (leftChecked) {
-                    if (document.getElementById(`${reflex}-vif-gauche`).checked) reflexDetails.push("vif à gauche");
-                    if (document.getElementById(`${reflex}-diffuse-gauche`).checked) reflexDetails.push("diffusé à gauche");
-                    if (document.getElementById(`${reflex}-poly-gauche`).checked) reflexDetails.push("polycinétique à gauche");
-                    if (document.getElementById(`${reflex}-zone-gauche`).checked) reflexDetails.push("extension zone réflexogène à gauche");
-                    if (document.getElementById(`${reflex}-aboli-gauche`).checked) reflexDetails.push("aboli à gauche");
+                    if (document.getElementById(`${reflex}-vif-gauche`).checked) leftDetails.push("vif");
+                    if (document.getElementById(`${reflex}-diffuse-gauche`).checked) leftDetails.push("diffusé");
+                    if (document.getElementById(`${reflex}-poly-gauche`).checked) leftDetails.push("polycinétique");
+                    if (document.getElementById(`${reflex}-zone-gauche`).checked) leftDetails.push("zone réflexogène étendue");
+                    if (document.getElementById(`${reflex}-aboli-gauche`).checked) leftDetails.push("aboli");
                 }
                 
-                if (reflexDetails.length > 0) {
-                    rotAbnormalities.push(`ROT ${sidedReflex} : ${reflexDetails.join(', ')}`);
-                } else {
-                    rotAbnormalities.push(`Anomalie ROT ${sidedReflex} sans précision`);
+                // Format the description for this reflex
+                if (rightDetails.length > 0 && leftDetails.length > 0) {
+                    reflexDescription += ` : ${rightDetails.join(', ')} à droite, ${leftDetails.join(', ')} à gauche`;
+                } else if (rightDetails.length > 0) {
+                    reflexDescription += ` : ${rightDetails.join(', ')} à droite`;
+                } else if (leftDetails.length > 0) {
+                    reflexDescription += ` : ${leftDetails.join(', ')} à gauche`;
                 }
+                
+                rotAbnormalities.push(reflexDescription);
             }
         }
         
         if (rotAbnormalities.length > 0) {
-            rotText = `Anomalies des ROT : ${rotAbnormalities.join(' ; ')}.`;
+            rotText = `Anomalies des ROT : ${rotAbnormalities.join('. ')}`;
         } else {
-            rotText = "Anomalies des ROT non précisées.";
+            rotText = "Anomalies des ROT non précisées";
         }
     } else {
-        rotText = "ROT symétriques non diffusés non polycinétiques et non vifs.";
+        rotText = "ROT symétriques non diffusés non polycinétiques et non vifs";
     }
     
-    section += `<div class="text-line">${rotText}</div>`;
-    
     // RCP
-    const rcpDroit = document.getElementById('rcp-droit').value;
-    const rcpGauche = document.getElementById('rcp-gauche').value;
-    
     let rcpText = "RCP ";
     
     if (rcpDroit === rcpGauche) {
@@ -9254,12 +9506,12 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
             rcpText += "en extension bilatérale";
         }
     } else {
-        rcpText += `à droite en ${rcpDroit}, à gauche en ${rcpGauche}`;
+        rcpText += `à droite en ${rcpDroit}, à gauche ${rcpGauche === 'flexion' ? 'en flexion' : rcpGauche === 'extension' ? 'en extension' : 'indifférent'}`;
     }
     
-    section += `<div class="text-line">${rcpText}.</div>`;
+    section += `<div class="text-line">${rotText}. ${rcpText}.</div>`;
     
-    // Déficit moteur
+    // Déficit moteur et Déficit sensitif
     let moteurText = "";
     if (document.getElementById('yesDeficitMoteur').checked) {
         let deficits = [];
@@ -9268,34 +9520,48 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('deficitMS').checked) {
             let msDeficits = [];
             
-            // Parcourir chaque groupe musculaire
+            // Vérifier si des groupes musculaires sont sélectionnés
             const muscleGroups = ['deltoide', 'biceps', 'triceps', 'extenseursradiaux', 'flechisseurscarpe'];
+            let hasDetailedDeficit = false;
+            
             for (const muscle of muscleGroups) {
-                if (document.getElementById(muscle).checked) {
-                    // Récupérer les valeurs de force
-                    const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
-                    const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
-                    
-                    const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
-                    const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
-                    
-                    // Ne décrire que si différent de 5/5
-                    if (rightForce !== "5" || leftForce !== "5") {
-                        let muscleText = muscle;
-                        
-                        if (rightForce !== "5" && leftForce !== "5") {
-                            msDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
-                        } else if (rightForce !== "5") {
-                            msDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
-                        } else if (leftForce !== "5") {
-                            msDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
-                        }
-                    }
+                if (document.getElementById(muscle) && document.getElementById(muscle).checked) {
+                    hasDetailedDeficit = true;
+                    break;
                 }
             }
             
-            if (msDeficits.length > 0) {
-                deficits.push(`Déficit moteur aux membres supérieurs : ${msDeficits.join(' ; ')}`);
+            if (hasDetailedDeficit) {
+                // Il y a des détails spécifiques à inclure
+                for (const muscle of muscleGroups) {
+                    if (document.getElementById(muscle) && document.getElementById(muscle).checked) {
+                        // Récupérer les valeurs de force
+                        const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
+                        const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
+                        
+                        const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
+                        const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
+                        
+                        // Ne décrire que si différent de 5/5
+                        if (rightForce !== "5" || leftForce !== "5") {
+                            let muscleText = muscle;
+                            
+                            if (rightForce !== "5" && leftForce !== "5") {
+                                msDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
+                            } else if (rightForce !== "5") {
+                                msDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
+                            } else if (leftForce !== "5") {
+                                msDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
+                            }
+                        }
+                    }
+                }
+                
+                if (msDeficits.length > 0) {
+                    deficits.push(`Déficit moteur aux membres supérieurs : ${msDeficits.join(' ; ')}`);
+                } else {
+                    deficits.push("Déficit moteur aux membres supérieurs non précisé");
+                }
             } else {
                 deficits.push("Déficit moteur aux membres supérieurs non précisé");
             }
@@ -9305,51 +9571,67 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         if (document.getElementById('deficitMI').checked) {
             let miDeficits = [];
             
-            // Parcourir chaque groupe musculaire
+            // Vérifier si des groupes musculaires sont sélectionnés
             const muscleGroups = ['psoas', 'quadriceps', 'ischiojambiers', 'adducteurs', 'tibialant', 'tricepssural'];
+            let hasDetailedDeficit = false;
+            
             for (const muscle of muscleGroups) {
-                if (document.getElementById(muscle).checked) {
-                    // Récupérer les valeurs de force
-                    const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
-                    const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
-                    
-                    const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
-                    const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
-                    
-                    // Ne décrire que si différent de 5/5
-                    if (rightForce !== "5" || leftForce !== "5") {
-                        let muscleText = muscle;
-                        
-                        if (rightForce !== "5" && leftForce !== "5") {
-                            miDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
-                        } else if (rightForce !== "5") {
-                            miDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
-                        } else if (leftForce !== "5") {
-                            miDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
-                        }
-                    }
+                if (document.getElementById(muscle) && document.getElementById(muscle).checked) {
+                    hasDetailedDeficit = true;
+                    break;
                 }
             }
             
-            if (miDeficits.length > 0) {
-                deficits.push(`Déficit moteur aux membres inférieurs : ${miDeficits.join(' ; ')}`);
+            if (hasDetailedDeficit) {
+                // Il y a des détails spécifiques à inclure
+                for (const muscle of muscleGroups) {
+                    if (document.getElementById(muscle) && document.getElementById(muscle).checked) {
+                        // Récupérer les valeurs de force
+                        const rightForceSelector = document.querySelector(`#${muscle} + div.force-selector.right .force-value`);
+                        const leftForceSelector = document.querySelector(`#${muscle} + div.force-selector.left .force-value`);
+                        
+                        const rightForce = rightForceSelector ? rightForceSelector.getAttribute('data-value') : "5";
+                        const leftForce = leftForceSelector ? leftForceSelector.getAttribute('data-value') : "5";
+                        
+                        // Ne décrire que si différent de 5/5
+                        if (rightForce !== "5" || leftForce !== "5") {
+                            let muscleText = muscle;
+                            
+                            if (rightForce !== "5" && leftForce !== "5") {
+                                miDeficits.push(`${muscleText} côté droit ${rightForce}/5, côté gauche ${leftForce}/5`);
+                            } else if (rightForce !== "5") {
+                                miDeficits.push(`${muscleText} côté droit ${rightForce}/5`);
+                            } else if (leftForce !== "5") {
+                                miDeficits.push(`${muscleText} côté gauche ${leftForce}/5`);
+                            }
+                        }
+                    }
+                }
+                
+                if (miDeficits.length > 0) {
+                    deficits.push(`Déficit moteur aux membres inférieurs : ${miDeficits.join(' ; ')}`);
+                } else {
+                    deficits.push("Déficit moteur aux membres inférieurs non précisé");
+                }
             } else {
                 deficits.push("Déficit moteur aux membres inférieurs non précisé");
             }
         }
         
+        if (!document.getElementById('deficitMS').checked && !document.getElementById('deficitMI').checked) {
+            deficits.push("Déficit moteur non précisé");
+        }
+        
         if (deficits.length > 0) {
-            moteurText = deficits.join('. ') + '.';
+            moteurText = deficits.join('. ');
         } else {
-            moteurText = "Présence d'un déficit moteur non précisé.";
+            moteurText = "Déficit moteur non précisé";
         }
     } else if (document.getElementById('NEDeficitMoteur').checked) {
-        moteurText = "Déficit moteur non évaluable.";
+        moteurText = "Déficit moteur non évaluable";
     } else {
-        moteurText = "Pas de déficit moteur.";
+        moteurText = "Pas de déficit moteur";
     }
-    
-    section += `<div class="text-line">${moteurText}</div>`;
     
     // Déficit sensitif
     let sensitifText = "";
@@ -9369,29 +9651,27 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         }
         
         if (deficits.length > 0) {
-            sensitifText = `Présence d'un ${deficits.join(' et d\'un ')}.`;
+            sensitifText = `Présence d'un ${deficits.join(' et d\'un ')}`;
         } else {
-            sensitifText = "Présence d'un déficit sensitif non précisé.";
+            sensitifText = "Déficit sensitif non précisé";
         }
     } else if (document.getElementById('NEDeficitSensitif').checked) {
-        sensitifText = "Déficit sensitif non évaluable.";
+        sensitifText = "Déficit sensitif non évaluable";
     } else {
-        sensitifText = "Pas de déficit sensitif.";
+        sensitifText = "Pas de déficit sensitif";
     }
-    
-    section += `<div class="text-line">${sensitifText}</div>`;
     
     // Paralysie faciale
     let facialText = "";
     if (document.getElementById('yes_paralysie_faciale').checked) {
         const intensity = document.getElementById('facial_paralysis_intensity').value;
         const type = document.querySelector('input[name="type_paralysie_faciale"]:checked').value;
-        facialText = `Présence d'une paralysie faciale ${type} ${intensity}.`;
+        facialText = `Présence d'une paralysie faciale ${type} ${intensity}`;
     } else {
-        facialText = "Pas de paralysie faciale.";
+        facialText = "Pas de paralysie faciale";
     }
     
-    section += `<div class="text-line">${facialText}</div>`;
+    section += `<div class="text-line">${moteurText}. ${sensitifText}. ${facialText}.</div>`;
     
     // Syndrome méningé
     let meningeText = "";
@@ -9406,20 +9686,19 @@ let section = `<div class="text-line"><strong style="color: black;">Sur le plan 
         const precisions = document.getElementById('meningePrecisions').value;
         
         if (signes.length > 0) {
-            meningeText = `Présence d'un syndrome méningé : ${signes.join(', ')}${precisions ? ' (' + precisions + ')' : ''}.`;
+            meningeText = `Présence d'un syndrome méningé : ${signes.join(', ')}${precisions ? ' (' + precisions + ')' : ''}`;
         } else {
-            meningeText = `Présence d'un syndrome méningé${precisions ? ' (' + precisions + ')' : ''}.`;
+            meningeText = `Présence d'un syndrome méningé${precisions ? ' (' + precisions + ')' : ''}`;
         }
     } else if (document.getElementById('NESyndromeMeningé').checked) {
-        meningeText = "Syndrome méningé non évaluable.";
+        meningeText = "Syndrome méningé non évaluable";
     } else {
-        meningeText = "Pas de syndrome méningé.";
+        meningeText = "Pas de syndrome méningé";
     }
     
-    section += `<div class="text-line">${meningeText}</div>`;
+    section += `<div class="text-line">${meningeText}.</div>`;
     
-	    section += `<br>`;
-
+    section += `<br>`;
 
     return section;
 }
@@ -9433,10 +9712,11 @@ let section = `<div class="text-line"><strong style="color: black;">Par ailleurs
         let tempStatus = "";
         const tempNum = parseFloat(temperature);
         if (!isNaN(tempNum)) {
-            if (tempNum < 36) tempStatus = " (hypothermie)";
-            else if (tempNum >= 38) tempStatus = " (hyperthermie)";
+            if (tempNum < 36) tempStatus = "Hypothermie à";
+            else if (tempNum >= 38) tempStatus = "Hyperthermie à";
+			else if (tempNum >= 38) tempStatus = "Température à";
         }
-        section += `<div class="text-line">Température ${temperature}°C${tempStatus}</div>`;
+        section += `<div class="text-line">${tempStatus} ${temperature} °C</div>`;
     }
     
     // Glycémie
@@ -9445,10 +9725,11 @@ let section = `<div class="text-line"><strong style="color: black;">Par ailleurs
         let glycStatus = "";
         const glycNum = parseFloat(glycemie);
         if (!isNaN(glycNum)) {
-            if (glycNum < 0.7) glycStatus = " (hypoglycémie)";
-            else if (glycNum > 1.4) glycStatus = " (hyperglycémie)";
+            if (glycNum < 0.7) glycStatus = "Hypoglycémie à";
+            else if (glycNum > 1.3) glycStatus = "Hyperglycémie à";
+			else if (glycNum >= 0,7 && glycNum <= 1,3) glycStatus = "Glycémie à";
         }
-        section += `<div class="text-line">Glycémie ${glycemie} g/L${glycStatus}</div>`;
+        section += `<div class="text-line">${glycStatus} ${glycemie} g/L</div>`;
     }
     
     // Autres informations cliniques
@@ -9461,9 +9742,9 @@ let section = `<div class="text-line"><strong style="color: black;">Par ailleurs
     const infoProches = document.getElementById('infoProches').value;
     let infoPText = "Informations aux proches : ";
     if (infoProches === "informes") {
-        infoPText += "Proches informés";
+        infoPText += "Les membres de la famille/les proches ont été informés de la situation.";
     } else {
-        infoPText += "Proches non informés";
+        infoPText += "Les membres de la famille/les proches n'ont pas encore pu être informés de la situation.";
     }
     
     section += `<div class="text-line">${infoPText}</div>`;
@@ -9479,12 +9760,12 @@ let section = `<div class="text-line"><strong style="color: black;">Par ailleurs
         case "oralement":
             pcText += "Désignée oralement";
             const nomPCOral = document.getElementById('nomPersonneConfiance').value;
-            if (nomPCOral) pcText += ` (${nomPCOral})`;
+            if (nomPCOral) pcText += `, ${nomPCOral}`;
             break;
         case "ecrit":
             pcText += "Désignée par écrit";
             const nomPCEcrit = document.getElementById('nomPersonneConfiance').value;
-            if (nomPCEcrit) pcText += ` (${nomPCEcrit})`;
+            if (nomPCEcrit) pcText += `, ${nomPCEcrit}`;
             break;
         case "impossible":
             pcText += "Recueil impossible";
@@ -9592,19 +9873,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Associer la fonction de génération au bouton
     document.getElementById('generateText').addEventListener('click', generateTextType);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
