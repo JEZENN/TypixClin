@@ -1297,5 +1297,207 @@ Nous sommes au tout début du développement de ce site, et de nouvelles fonctio
     <footer>
         TypixClin © 2025, Jean ZENNARO
     </footer>
+	
+	<!-- Ajoutez ce code CSS dans la section <style> existante -->
+<style>
+    /* Variables pour le mode clair (par défaut) */
+    :root {
+        --primary-color: #2563eb;
+        --primary-light: #3b82f6;
+        --primary-dark: #1d4ed8;
+        --background: #f0f5ff;
+        --card-bg: #ffffff;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --header-gradient-start: #1e40af;
+        --header-gradient-end: #0f2167;
+    }
+
+    /* Variables pour le mode sombre */
+    [data-theme="dark"] {
+        --primary-color: #3b82f6;
+        --primary-light: #60a5fa;
+        --primary-dark: #2563eb;
+        --background: #0f172a;
+        --card-bg: #1e293b;
+        --text-dark: #f1f5f9;
+        --text-gray: #cbd5e1;
+        --header-gradient-start: #0f172a;
+        --header-gradient-end: #1e293b;
+    }
+
+    /* Mise à jour des styles existants pour utiliser les variables */
+    body {
+        background-color: var(--background);
+        color: var(--text-dark);
+    }
+
+    .header, .sticky-wrapper {
+        background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
+    }
+
+    .nav-item, .description-box {
+        background: var(--card-bg);
+        color: var(--text-dark);
+    }
+
+    .description-box h4 {
+        color: var(--primary-dark);
+    }
+
+    .content {
+        color: var(--text-dark);
+    }
+
+    /* Style pour le bouton de changement de thème */
+    .theme-switch-wrapper {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .theme-switch {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 48px;
+        width: 48px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .theme-switch:hover {
+        transform: scale(1.1);
+        background-color: var(--primary-light);
+    }
+
+    .theme-switch i {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    /* Animation de rotation pour l'icône */
+    .theme-switch.rotate i {
+        animation: rotate 0.5s ease;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Transitions fluides lors du changement de thème */
+    body, .header, .sticky-wrapper, .nav-item, .description-box,
+    .description-box h4, .content, .source-item, .source-icon {
+        transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Ajustements spécifiques pour le mode sombre */
+    [data-theme="dark"] .nav-item {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .description-box {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .source-item {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="dark"] .source-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .source-icon {
+        background: rgba(59, 130, 246, 0.2);
+    }
+
+    [data-theme="dark"] footer {
+        background: var(--card-bg);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Styles responsifs pour le bouton de thème */
+    @media (max-width: 768px) {
+        .theme-switch-wrapper {
+            bottom: 15px;
+            right: 15px;
+        }
+        
+        .theme-switch {
+            height: 40px;
+            width: 40px;
+        }
+        
+        .theme-switch i {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+
+<!-- Ajoutez ce bouton juste avant la fermeture du body -->
+<div class="theme-switch-wrapper">
+    <div class="theme-switch" id="themeSwitch">
+        <i class="fas fa-sun"></i>
+    </div>
+</div>
+
+<!-- Ajoutez ce script juste avant la fermeture du body -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeSwitch = document.getElementById('themeSwitch');
+        const themeIcon = themeSwitch.querySelector('i');
+        
+        // Vérifie si un thème est déjà enregistré dans le localStorage
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Applique le thème enregistré au chargement de la page
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+        }
+        
+        // Fonction pour basculer entre les thèmes
+        function toggleTheme() {
+            themeSwitch.classList.add('rotate');
+            
+            // Timeout pour permettre à l'animation de se terminer avant de changer l'icône
+            setTimeout(() => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                
+                if (currentTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                }
+                
+                // Retire la classe pour permettre de futures animations
+                setTimeout(() => {
+                    themeSwitch.classList.remove('rotate');
+                }, 500);
+            }, 250);
+        }
+        
+        // Ajoute l'écouteur d'événement pour le clic sur le bouton
+        themeSwitch.addEventListener('click', toggleTheme);
+    });
+</script>
+
 </body>
 </html>
