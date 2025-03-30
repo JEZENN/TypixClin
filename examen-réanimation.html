@@ -8682,7 +8682,7 @@ function formatNumeric(value) {
 
 // Function pour générer la section cardiovasculaire avec pouls améliorés
 function generateCardiovascularSection() {
-    let section = `<div class="text-line"><strong style="color: black;">Sur le plan hémodynamique et cardiovasculaire :</strong></div>`;
+let section = `<div class="text-line"><strong class="section-title">Sur le plan hémodynamique et cardiovasculaire :</strong></div>`;
     
     // Hémodynamique
     const hemodynStatus = document.getElementById('yescard4').checked ? 
@@ -9015,8 +9015,7 @@ function valueOrEmpty(value) {
 
 // Section respiratoire
 function generateRespiratorySection() {
-    let section = `<div class="text-line"><strong style="color: black;">Sur le plan respiratoire :</strong></div>`;    
-    
+let section = `<div class="text-line"><strong class="section-title">Sur le plan respiratoire :</strong></div>`;    
     // Fréquence respiratoire
     const fr = valueOrEmpty(document.getElementById('FreqResp').value);
     let frStatus = "";
@@ -9255,8 +9254,7 @@ function generateRespiratorySection() {
 
 //Section digestif
 function generateDigestiveSection() {
-    let section = `<div class="text-line"><strong style="color: black;">Sur le plan uro-digestif :</strong></div>`;
-    
+let section = `<div class="text-line"><strong class="section-title">Sur le plan uro-digestif :</strong></div>`;    
     // Hypertension portale
     let htpText = "";
     if (document.getElementById('yesdig6').checked) {
@@ -9373,8 +9371,7 @@ function generateDigestiveSection() {
 
 // Section neurologique
 function generateNeurologicalSection() {
-    let section = `<div class="text-line"><strong style="color: black;">Sur le plan neurologique :</strong></div>`;    
-    
+let section = `<div class="text-line"><strong class="section-title">Sur le plan neurologique :</strong></div>`;    
     // Score de Glasgow
     const glasgow = document.getElementById('glasgow-total').value || "15";
     const yeux = document.getElementById('yeux-score').value || "4";
@@ -9702,7 +9699,7 @@ function generateNeurologicalSection() {
 
 // Section supplémentaire
 function generateAdditionalSection() {
-let section = `<div class="text-line"><strong style="color: black;">Par ailleurs :</strong></div>`;    
+let section = `<div class="text-line"><strong class="section-title">Par ailleurs :</strong></div>`;
     // Température
     const temperature = valueOrEmpty(document.getElementById('temperature').value);
     if (temperature) {
@@ -10102,6 +10099,276 @@ document.getElementById('generatePdf').addEventListener('mouseout', function() {
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Ajoutez ce style plus spécifique pour résoudre le problème de survol -->
+<style>
+    /* Variables pour le mode clair (par défaut) */
+    :root {
+        --primary-color: #2563eb;
+        --primary-light: #3b82f6;
+        --primary-dark: #1d4ed8;
+        --secondary-color: #0f2167;
+        --background: #f8fafc;
+        --card-bg: #ffffff;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --border-color: #e2e8f0;
+        --input-background: #ffffff;
+        --section-background: white;
+        --subsection-background: #f8fafc;
+        --subsection-border: #e5e7eb;
+        --header-gradient-start: #1e40af;
+        --header-gradient-end: #0f2167;
+        --diagnostic-border: #1e40af;
+        --nav-button-bg: #ffffff;
+        --nav-button-text: #1e293b;
+        --nav-button-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Variables pour le mode sombre */
+    [data-theme="dark"] {
+        --primary-color: #3b82f6;
+        --primary-light: #60a5fa;
+        --primary-dark: #93c5fd;
+        --secondary-color: #2563eb;
+        --background: #0f172a;
+        --card-bg: #1e293b;
+        --text-dark: #f1f5f9;
+        --text-gray: #cbd5e1;
+        --border-color: #334155;
+        --input-background: #1e293b;
+        --section-background: #1e293b;
+        --subsection-background: #0f172a;
+        --subsection-border: #334155;
+        --header-gradient-start: #0f172a;
+        --header-gradient-end: #1e293b;
+        --diagnostic-border: #60a5fa;
+        --nav-button-bg: #1e293b;
+        --nav-button-text: #f1f5f9;
+        --nav-button-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Style pour le bouton de changement de thème */
+    .theme-switch-wrapper {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .theme-switch {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 48px;
+        width: 48px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .theme-switch:hover {
+        transform: scale(1.1);
+        background-color: var(--primary-light);
+    }
+
+    .theme-switch i {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    /* Animation de rotation pour l'icône */
+    .theme-switch.rotate i {
+        animation: rotate 0.5s ease;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Styles responsifs pour le bouton de thème */
+    @media (max-width: 768px) {
+        .theme-switch-wrapper {
+            bottom: 15px;
+            right: 15px;
+        }
+        
+        .theme-switch {
+            height: 40px;
+            width: 40px;
+        }
+        
+        .theme-switch i {
+            font-size: 1.2rem;
+        }
+    }
+
+    /* Application des variables générales */
+    [data-theme="dark"] body {
+        background-color: var(--background);
+        color: var(--text-dark);
+    }
+
+    [data-theme="dark"] .header, 
+    [data-theme="dark"] .sticky-wrapper {
+        background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)) !important;
+    }
+
+    /* Styles spécifiques pour corriger les boutons de navigation */
+    [data-theme="dark"] .nav-button:not(.active) {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .nav-button:not(.active):hover {
+        background-color: #2d3748 !important;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    [data-theme="dark"] .nav-button.active {
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    /* SOLUTION RADICALE pour les sections en survol */
+    [data-theme="dark"] .section {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    [data-theme="dark"] .section:hover {
+        background-color: #1e293b !important;
+        box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -5px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    [data-theme="dark"] .section-header {
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    }
+
+    [data-theme="dark"] .section-content {
+        background-color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .subsection {
+        background-color: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] .subsection h4 {
+        color: #93c5fd !important;
+        border-bottom-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #GDS_generatedTextArea {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] input[type="number"], 
+    [data-theme="dark"] input[type="text"] {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] input[type="number"]:hover, 
+    [data-theme="dark"] input[type="text"]:hover {
+        border-color: #3b82f6 !important;
+    }
+
+    [data-theme="dark"] label {
+        color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] .step-values {
+        background-color: #0f172a !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] footer {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-top: 1px solid #334155 !important;
+    }
+	
+	.section-title {
+    color: black;
+}
+
+[data-theme="dark"] .section-title {
+    color: white;
+}
+
+</style>
+
+
+
+<!-- Ajoutez ce bouton juste avant la fermeture du body -->
+<div class="theme-switch-wrapper">
+    <div class="theme-switch" id="themeSwitch">
+        <i class="fas fa-sun"></i>
+    </div>
+</div>
+
+<!-- Ajoutez ce script juste avant la fermeture du body -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeSwitch = document.getElementById('themeSwitch');
+        const themeIcon = themeSwitch.querySelector('i');
+        
+        // Vérifie si un thème est déjà enregistré dans le localStorage
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Applique le thème enregistré au chargement de la page
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+        }
+        
+        // Fonction pour basculer entre les thèmes
+        function toggleTheme() {
+            themeSwitch.classList.add('rotate');
+            
+            // Timeout pour permettre à l'animation de se terminer avant de changer l'icône
+            setTimeout(() => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                
+                if (currentTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                }
+                
+                // Retire la classe pour permettre de futures animations
+                setTimeout(() => {
+                    themeSwitch.classList.remove('rotate');
+                }, 500);
+            }, 250);
+        }
+        
+        // Ajoute l'écouteur d'événement pour le clic sur le bouton
+        themeSwitch.addEventListener('click', toggleTheme);
+    });
+</script>
+
 
 </body>
 </html>
