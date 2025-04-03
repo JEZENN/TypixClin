@@ -231,7 +231,6 @@ document.head.appendChild(meta);
     z-index: 2;
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    animation: slideDown 0.8s ease-out forwards;
 }
 
 .waves {
@@ -3066,7 +3065,51 @@ function getInterrogatoireDescription() {
 </p>
 
 
+<div id="card3d-mmrc-container" style="margin-top: 10px; margin-bottom: 15px; margin-left: 25px; display: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label>mMRC :</label>
+        <select id="mmrc-select" style="padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease; width: 50%;">
+            <option value="0">Stade 0 : pour des efforts soutenus</option>
+            <option value="1">Stade 1 : lors de la marche rapide ou pente</option>
+            <option value="2">Stade 2 : à la marche sur terrain plat en suivant quelqu'un de son âge</option>
+            <option value="3">Stade 3 : arrêt après quelques minutes ou une centaine de mètres</option>
+            <option value="4">Stade 4 : au moindre effort</option>
+        </select>
+    </div>
+</div>
 
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Récupérer les éléments
+    const noDyspnoe = document.getElementById('nocard3');
+    const yesDyspnoe = document.getElementById('yescard3');
+    const mmrcContainer = document.getElementById('card3d-mmrc-container');
+    const card3d = document.getElementById('card3d');
+    
+    // Fonction pour afficher/masquer le score mMRC
+    function toggleMMRCScore() {
+        if (yesDyspnoe.checked) {
+            mmrcContainer.style.display = 'block';
+            card3d.style.display = 'inline';
+        } else {
+            mmrcContainer.style.display = 'none';
+            card3d.style.display = 'none';
+            // Réinitialiser à 0 lorsqu'on désactive la dyspnée
+            document.getElementById('mmrc-select').value = "0";
+        }
+    }
+    
+    // Ajouter les écouteurs d'événements
+    noDyspnoe.addEventListener('change', toggleMMRCScore);
+    yesDyspnoe.addEventListener('change', toggleMMRCScore);
+    
+    // État initial
+    toggleMMRCScore();
+});
+
+
+</script>
 
 
 			
@@ -8215,9 +8258,26 @@ const resultinterrogatoire = getInterrogatoireDescription();
 		const card2val = document.getElementById('yescard2').checked 
 		? highlight(`Douleur thoracique (${document.getElementById('card2d').value || ''})`)
 		: 'Pas de douleur thoracique';
-		const card3val = document.getElementById('yescard3').checked 
-		? highlight(`Dyspnée (${document.getElementById('card3d').value || ''})`)
-		: 'Pas de dyspnée';
+		
+		
+// Dyspnée
+let dyspneeText = "";
+if (document.getElementById('yescard3').checked) {
+    const dyspneeDetails = document.getElementById('card3d').value;
+    
+    // Récupérer le score mMRC du menu déroulant
+    const mmrcSelect = document.getElementById('mmrc-select');
+    const mmrcValue = mmrcSelect ? mmrcSelect.value : "0";
+    
+    // Ajouter seulement le stade mMRC si une valeur > 0 est sélectionnée
+    if (parseInt(mmrcValue) > 0) {
+        dyspneeText = `Présence d'une dyspnée (mMRC ${mmrcValue}) :${dyspneeDetails ? ' ' + dyspneeDetails : ''}`;
+    } else {
+        dyspneeText = `Présence d'une dyspnée${dyspneeDetails ? ' ' + dyspneeDetails : ''}`;
+    }
+} else {
+    dyspneeText = "Pas de dyspnée";
+}
 			
 		const card4val = getHemodynamiqueDescription();
 		
@@ -8238,7 +8298,7 @@ const resultinterrogatoire = getInterrogatoireDescription();
 		}
 		
 			const cardiovascularDetails = [
-				`${card1val}. ${card2val}. ${card3val}.`, // Trois éléments sur une ligne
+				`${card1val}. ${card2val}. ${dyspneeText}.`, // Trois éléments sur une ligne
 				`${getHemodynamiqueDescription()}.`, // Un élément seul
 				`${card5val} ${getICGDescription()}. ${getPulseDescription()}.`, // Plusieurs sur une ligne
 				`${getTVPDescription()} ${getVascularMurmurDescription()}.`, // Deux sur une ligne
@@ -10300,6 +10360,8 @@ function resetSection(button) {
     const constantFields = ['taille', 'poids', 'IMC', 'FreqResp', 'saturation', 'FreqCard', 
                           'pas', 'pad', 'map', 'Y/4', 'V/5', 'M/6', 'GSG/15', 'litres', 'ageCalculeAdulte'];
 
+
+
     // 1. Réinitialiser la date de naissance et l'âge pour l'interrogatoire
     const dateNaissance = sectionContent.querySelector('#dateNaissanceAdulte');
     if (dateNaissance) dateNaissance.value = '';
@@ -10330,7 +10392,7 @@ function resetSection(button) {
         'vaccins',
         'traitements',
         'histoireMaladie',
-		'aidesADomicile'
+        'aidesADomicile'
     ];
 
     textareaFields.forEach(fieldId => {
@@ -10423,8 +10485,11 @@ function resetSection(button) {
 
     // 10. Réinitialiser les menus déroulants
     sectionContent.querySelectorAll('select').forEach(select => {
-        select.selectedIndex = 0;
-        select.style.display = 'none';
+        // Ne pas réinitialiser le menu déroulant mMRC
+        if (select.id !== 'mmrc-select') {
+            select.selectedIndex = 0;
+            select.style.display = 'none';
+        }
     });
 
     // 11. Masquer les détails conditionnels
@@ -10467,13 +10532,84 @@ function resetSection(button) {
     const saturationOptions = sectionContent.querySelector('#saturation-options');
     if (saturationOptions) saturationOptions.style.display = 'none';
 
-    // 17. Déclencher un événement de réinitialisation
+    // 17. CORRECTION: Gérer spécifiquement le cas de la dyspnée et du score mMRC
+    const noDyspnoe = document.getElementById('nocard3');
+    const yesDyspnoe = document.getElementById('yescard3');
+    const mmrcContainer = document.getElementById('card3d-mmrc-container');
+    const card3d = document.getElementById('card3d');
+    
+    if (noDyspnoe && yesDyspnoe) {
+        // Cocher "Pas de dyspnée" et décocher "Dyspnée"
+        noDyspnoe.checked = true;
+        yesDyspnoe.checked = false;
+        
+        // Masquer explicitement les conteneurs
+        if (mmrcContainer) mmrcContainer.style.display = 'none';
+        if (card3d) card3d.style.display = 'none';
+        
+        // Ne pas réinitialiser le sélecteur mmrc, mais assurer qu'il est bien associé aux événements
+        if (mmrcContainer) {
+            const mmrcSelect = document.getElementById('mmrc-select');
+            if (mmrcSelect) {
+                // Garder la valeur du sélecteur, ne pas la réinitialiser
+                mmrcSelect.disabled = false;
+            }
+        }
+    }
+    
+    // 18. Déclencher un événement de réinitialisation
     const event = new CustomEvent('sectionReset', {
         bubbles: true,
         detail: { section: section }
     });
     section.dispatchEvent(event);
 }
+
+
+// Ajoutez ce nouveau code:
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation des gestionnaires de dyspnée et du score mMRC
+    setupDyspnoeHandlers();
+});
+
+// Fonction séparée pour configurer les gestionnaires d'événements de la dyspnée
+function setupDyspnoeHandlers() {
+    const noDyspnoe = document.getElementById('nocard3');
+    const yesDyspnoe = document.getElementById('yescard3');
+    const mmrcContainer = document.getElementById('mmrc-score-container');
+    const dyspneeDetails = document.getElementById('card3d');
+    
+    if (noDyspnoe && yesDyspnoe && mmrcContainer) {
+        // Supprimez tous les écouteurs existants
+        noDyspnoe.onclick = null;
+        yesDyspnoe.onclick = null;
+        
+        // Ajouter de nouveaux écouteurs directs avec onclick pour éviter les doublons
+        noDyspnoe.onclick = function() {
+            if (mmrcContainer) mmrcContainer.style.display = 'none';
+            if (dyspneeDetails) dyspneeDetails.style.display = 'none';
+            
+            // Réinitialiser le sélecteur
+            const mmrcSelect = document.getElementById('mmrc-select');
+            if (mmrcSelect) mmrcSelect.value = "0";
+        };
+        
+        yesDyspnoe.onclick = function() {
+            if (mmrcContainer) mmrcContainer.style.display = 'block';
+            if (dyspneeDetails) dyspneeDetails.style.display = 'inline';
+        };
+        
+        // Appliquer l'état initial
+        if (yesDyspnoe.checked) {
+            mmrcContainer.style.display = 'block';
+            if (dyspneeDetails) dyspneeDetails.style.display = 'inline';
+        } else {
+            mmrcContainer.style.display = 'none';
+            if (dyspneeDetails) dyspneeDetails.style.display = 'none';
+        }
+    }
+}
+
 
 
 document.getElementById('copyText').addEventListener('click', function() {
