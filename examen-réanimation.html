@@ -13,6 +13,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1"></script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+
+
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -7102,12 +7107,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-group">
-    <button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
-                    <i class="fas fa-file-pdf"></i> Générer PDF
-                </button>
-                <button class="toggle-button" id="generateText">Générer Texte Type</button>
-                <button class="toggle-button" id="copyText">Copier dans le presse-papier</button>
-            </div>
+				<button class="toggle-button" id="generateText">Générer Texte Type</button>
+				<button class="toggle-button" id="copyText">Copier dans le presse-papier</button>
+				<button class="toggle-button" id="emailText" style="background-color: #ffd700; color: white;">
+					<i class="fas fa-envelope"></i> Envoyer par mail
+				</button>
+				<button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
+					<i class="fas fa-file-pdf"></i> Générer PDF
+				</button>
+			</div>
         </div>
         <div class="section-content">
             <div class="subsection-grid">
@@ -7120,6 +7128,350 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
+<!-- Boîte de dialogue modale pour l'envoi d'e-mail -->
+<div id="emailModal" class="email-modal">
+    <div class="email-modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Envoyer par mail</h2>
+        <div class="email-form">
+            <div class="form-group">
+                <label for="recipientEmail">Adresse email du destinataire :</label>
+                <input type="email" id="recipientEmail" placeholder="exemple@domaine.com" required>
+            </div>
+            <div class="form-group">
+                <label for="emailSubject">Sujet du mail :</label>
+                <input type="text" id="emailSubject" placeholder="Compte-rendu médical" value="TypixClin - Compte-rendu médical" readonly>
+            </div>
+            <div class="form-message" id="emailMessage"></div>
+            <div class="form-buttons">
+                <button id="sendEmailBtn" class="email-send-btn">
+                    <i class="fas fa-paper-plane"></i> Envoyer
+                </button>
+                <button id="cancelEmailBtn" class="email-cancel-btn">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+
+/* Styles pour la boîte de dialogue d'envoi d'e-mail */
+.email-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    overflow: auto;
+}
+
+.email-modal-content {
+    background-color: var(--card-bg);
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-gray);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: var(--primary-color);
+}
+
+.email-modal h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.email-form .form-group {
+    margin-bottom: 15px;
+}
+
+.email-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.email-form input {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: var(--input-background);
+    color: var(--text-dark);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.email-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.email-send-btn {
+    background-color: #ffd700; /* Couleur jaune dorée */
+    color: black;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.email-send-btn:hover {
+    background-color: #ffec8b; /* Jaune plus clair au survol */
+    transform: scale(1.05); /* Effet de légère augmentation de taille */
+}
+
+.email-cancel-btn {
+    background-color: transparent;
+    color: var(--text-gray);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.email-cancel-btn:hover {
+    background-color: var(--border-color);
+}
+
+.form-message {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    display: none;
+}
+
+.form-message.success {
+    display: block;
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.form-message.error {
+    display: block;
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.email-send-btn.sending {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Animations pour le bouton d'envoi */
+@keyframes sendingPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.email-send-btn.sending {
+    animation: sendingPulse 1.5s infinite;
+}
+
+/* Support du mode sombre */
+[data-theme="dark"] .email-modal-content {
+    background-color: #1e293b;
+}
+
+[data-theme="dark"] .email-form label {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .email-form input {
+    background-color: #0f172a;
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .email-form input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .email-cancel-btn {
+    color: #cbd5e1;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .email-cancel-btn:hover {
+    background-color: #334155;
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+    .email-modal-content {
+        margin: 15% auto;
+        padding: 20px;
+        width: 95%;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .email-send-btn, .email-cancel-btn {
+        width: 100%;
+    }
+}
+
+</style>
+
+
+<script>
+
+// Configuration pour l'envoi d'email
+document.addEventListener('DOMContentLoaded', function() {
+    const emailButton = document.getElementById('emailText');
+    const emailModal = document.getElementById('emailModal');
+    const closeModal = document.querySelector('.close-modal');
+    const cancelButton = document.getElementById('cancelEmailBtn');
+    const sendButton = document.getElementById('sendEmailBtn');
+    const emailForm = document.querySelector('.email-form');
+    const emailMessage = document.getElementById('emailMessage');
+    
+    // Ouvrir la boîte de dialogue
+    emailButton.addEventListener('click', function() {
+        // Vérifier si le texte a été généré
+        const textArea = document.getElementById('generatedTextArea');
+        if (!textArea.innerHTML.trim()) {
+            alert('Veuillez d\'abord générer le texte type avant de l\'envoyer par email.');
+            return;
+        }
+        
+        // Ouvrir la boîte de dialogue
+        emailModal.style.display = 'block';
+        document.getElementById('recipientEmail').focus();
+    });
+    
+    // Fermer la boîte de dialogue
+    function closeEmailModal() {
+        emailModal.style.display = 'none';
+        emailMessage.style.display = 'none';
+        emailMessage.className = 'form-message';
+        document.getElementById('recipientEmail').value = '';
+    }
+    
+    closeModal.addEventListener('click', closeEmailModal);
+    cancelButton.addEventListener('click', closeEmailModal);
+    
+    // Fermer la boîte de dialogue en cliquant à l'extérieur
+    window.addEventListener('click', function(event) {
+        if (event.target === emailModal) {
+            closeEmailModal();
+        }
+    });
+    
+    // Envoyer l'email
+    sendButton.addEventListener('click', function() {
+        const recipientEmail = document.getElementById('recipientEmail').value.trim();
+        const emailSubject = document.getElementById('emailSubject').value.trim();
+        const textContent = document.getElementById('generatedTextArea').innerText;
+        
+        // Validation simple de l'adresse email
+        if (!recipientEmail || !recipientEmail.includes('@') || !recipientEmail.includes('.')) {
+            emailMessage.textContent = 'Veuillez entrer une adresse email valide.';
+            emailMessage.className = 'form-message error';
+            emailMessage.style.display = 'block';
+            return;
+        }
+        
+        // Indiquer que l'envoi est en cours
+        sendButton.classList.add('sending');
+        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+        emailMessage.style.display = 'none';
+        
+
+        emailjs.send(
+            'service_cj4hb6g', 
+            'template_6tu5dvl', 
+            {
+                to_email: recipientEmail,
+                subject: emailSubject,
+                message: textContent
+            },
+            'hWtvQ4c3v7OtIlAti'      // Remplacez par votre User ID
+        )
+        .then(function(response) {
+            console.log('Email envoyé avec succès!', response);
+            emailMessage.textContent = 'Email envoyé avec succès!';
+            emailMessage.className = 'form-message success';
+            emailMessage.style.display = 'block';
+            
+            // Réinitialiser le bouton
+            sendButton.classList.remove('sending');
+            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer';
+            
+            // Fermer la boîte de dialogue après 2 secondes
+            setTimeout(closeEmailModal, 2000);
+        })
+        .catch(function(error) {
+            console.error('Erreur lors de l\'envoi de l\'email:', error);
+            emailMessage.textContent = 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.';
+            emailMessage.className = 'form-message error';
+            emailMessage.style.display = 'block';
+            
+            // Réinitialiser le bouton
+            sendButton.classList.remove('sending');
+            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer';
+        });
+    });
+});
+
+
+    (function() {
+        // https://dashboard.emailjs.com/admin/account
+        emailjs.init('hWtvQ4c3v7OtIlAti'); // Remplacez par votre User ID EmailJS
+    })();
+
+</script>
 
 	
 
@@ -10094,7 +10446,16 @@ document.getElementById('generatePdf').addEventListener('mouseout', function() {
     this.style.transform = 'translateY(0)';
 });
 
+// Ajout des effets de survol pour le bouton email text
+document.getElementById('emailText').addEventListener('mouseover', function() {
+    this.style.backgroundColor = 'rgb(255, 230, 0)';
+    this.style.transform = 'translateY(-2px)';
+});
 
+document.getElementById('emailText').addEventListener('mouseout', function() {
+    this.style.backgroundColor = 'rgb(255, 215, 0)';
+    this.style.transform = 'translateY(0)';
+});
 
 
 </script>
@@ -10347,7 +10708,36 @@ document.getElementById('generatePdf').addEventListener('mouseout', function() {
     color: #60a5fa !important;
 }
 
+/* Correction pour le textarea en mode sombre */
+[data-theme="dark"] textarea,
+[data-theme="dark"] .form-textarea,
+[data-theme="dark"] #CliniqueAutre {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
 
+[data-theme="dark"] textarea:hover,
+[data-theme="dark"] .form-textarea:hover,
+[data-theme="dark"] #CliniqueAutre:hover {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] .form-textarea:focus,
+[data-theme="dark"] #CliniqueAutre:focus {
+    outline: none !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Correction pour la zone de texte générée */
+[data-theme="dark"] #generatedTextArea {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
 
 </style>
 
