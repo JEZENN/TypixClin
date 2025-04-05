@@ -6287,6 +6287,753 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span id="surface-OG-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
+		
+<!-- Calcul du volume de l'OG (méthode ellipsoïde) -->
+<h5 style="color: #3b82f6; margin-top: 15px; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Volume de l'oreillette gauche</h5>
+
+		
+<!-- Calcul du volume de l'OG (méthode ellipsoïde) -->
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Longueur OG (L) (cm) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="longueur_OG">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Longueur de l'OG entre anneau mitral et fond OG (4 cav)</span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Diamètre OG longitudinal (D) (cm) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="diametre_long_OG">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Diamètre parasternal gauche grand axe</span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Diamètre OG transversal (d) (cm) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="diametre_trans_OG">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Diamètre parasternal gauche petit axe</span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+    <label style="width: 250px; min-width: 200px; display: flex; align-items: center;">
+        <strong>Vol. OG (m. ellipsoïde) :</strong>
+        <span id="evaluation-ellipsoide" style="margin-left: 10px; font-weight: bold;"></span>
+    </label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="text" readonly style="width: 80px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" id="volume_OG_calcule">
+        <span id="volume-ellipsoide-unite" style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">mL</span>
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">
+            <span class="norme-info">H: Normal ≤58mL, Modérée 59-68mL, Moyenne 69-78mL, Importante ≥79mL</span>
+            <span class="norme-info-indexed" style="display: none;">H: OK ≤28mL/m², + 29-33mL/m², ++ 34-39mL/m², +++ ≥40mL/m²</span>
+        </span>
+    </div>
+</div>
+
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+    <label style="width: 250px; min-width: 200px; display: flex; align-items: center;">
+        <strong>Vol. OG (m. cubique) :</strong>
+        <span id="evaluation-cubique" style="margin-left: 10px; font-weight: bold;"></span>
+    </label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="text" readonly style="width: 80px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" id="volume_OG_cubique">
+        <span id="volume-cubique-unite" style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">mL</span>
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">
+            <span class="norme-info">H: Normal ≤58mL, Modérée 59-68mL, Moyenne 69-78mL, Importante ≥79mL</span>
+            <span class="norme-info-indexed" style="display: none;">H: OK ≤28mL/m², + 29-33mL/m², ++ 34-39mL/m², +++ ≥40mL/m²</span>
+        </span>
+    </div>
+</div>
+
+<style>
+/* Style pour l'affichage des normes */
+@media (max-width: 768px) {
+    .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .norme-info, .norme-info-indexed {
+        display: block;
+        margin-top: 5px;
+        margin-left: 0;
+        font-size: 0.8rem;
+    }
+}
+
+/* Style pour les champs de volume */
+#volume_OG_calcule, #volume_OG_cubique {
+    transition: all 0.3s ease;
+}
+
+/* Gestion de l'affichage des normes selon la surface corporelle */
+
+/* Styles pour l'affichage des résultats d'évaluation du volume OG */
+
+/* Styles pour les évaluations de volume */
+#evaluation-ellipsoide, #evaluation-cubique {
+    transition: all 0.3s ease;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Couleurs selon l'évaluation */
+.evaluation-normal {
+    color: #22c55e !important; /* Vert */
+}
+
+.evaluation-moderee {
+    color: #eab308 !important; /* Jaune */
+}
+
+.evaluation-moyenne {
+    color: #f97316 !important; /* Orange */
+}
+
+.evaluation-importante {
+    color: #ef4444 !important; /* Rouge */
+}
+
+/* Style des bordures de champs lorsqu'une évaluation est faite */
+.input-normal {
+    border-color: #86efac !important; /* Vert clair */
+    background-color: rgba(34, 197, 94, 0.05) !important;
+}
+
+.input-moderee {
+    border-color: #fcd34d !important; /* Jaune clair */
+    background-color: rgba(234, 179, 8, 0.05) !important;
+}
+
+.input-moyenne {
+    border-color: #fdba74 !important; /* Orange clair */
+    background-color: rgba(249, 115, 22, 0.05) !important;
+}
+
+.input-importante {
+    border-color: #fca5a5 !important; /* Rouge clair */
+    background-color: rgba(239, 68, 68, 0.05) !important;
+}
+
+/* Styles responsifs pour les écrans plus petits */
+@media (max-width: 768px) {
+    .input-group {
+        margin-bottom: 20px;
+    }
+    
+    #evaluation-ellipsoide, #evaluation-cubique {
+        display: block;
+        margin: 5px 0 0 0;
+        font-size: 0.8rem;
+        text-align: center;
+        width: fit-content;
+    }
+    
+    /* Pour les normes et les unités */
+    #volume-ellipsoide-unite, #volume-cubique-unite {
+        margin-right: 10px;
+    }
+    
+    .norme-info, .norme-info-indexed {
+        width: 100%;
+        margin-top: 5px;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+}
+
+/* Style pour le mode sombre */
+[data-theme="dark"] #evaluation-ellipsoide, 
+[data-theme="dark"] #evaluation-cubique {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .input-normal {
+    border-color: #4ade80 !important;
+    background-color: rgba(22, 163, 74, 0.05) !important;
+}
+
+[data-theme="dark"] .input-moderee {
+    border-color: #facc15 !important;
+    background-color: rgba(202, 138, 4, 0.05) !important;
+}
+
+[data-theme="dark"] .input-moyenne {
+    border-color: #fb923c !important;
+    background-color: rgba(234, 88, 12, 0.05) !important;
+}
+
+[data-theme="dark"] .input-importante {
+    border-color: #f87171 !important;
+    background-color: rgba(220, 38, 38, 0.05) !important;
+}
+
+
+</style>
+
+<script>
+// Script pour gérer l'affichage des normes selon la présence de la surface corporelle
+document.addEventListener('DOMContentLoaded', function() {
+    const surfaceCorporelleInput = document.getElementById('surface_corporelle');
+    const normeInfoElements = document.querySelectorAll('.norme-info');
+    const normeInfoIndexedElements = document.querySelectorAll('.norme-info-indexed');
+    const sexeRadios = document.querySelectorAll('input[name="sexe"]');
+    
+    // Fonction pour mettre à jour l'affichage des normes
+    function updateNormeDisplay() {
+        const hasSC = surfaceCorporelleInput && surfaceCorporelleInput.value !== '';
+        const sexe = document.querySelector('input[name="sexe"]:checked').value;
+        
+        normeInfoElements.forEach(el => {
+            el.style.display = hasSC ? 'none' : 'inline';
+            // Mettre à jour le texte selon le sexe
+            if (sexe === 'femme') {
+                el.textContent = 'F: OK ≤52mL, + 53-62mL, ++ 63-72mL, +++ ≥73mL';
+            } else {
+                el.textContent = 'H: OK ≤58mL, + 59-68mL, ++ 69-78mL, +++ ≥79mL';
+            }
+        });
+        
+        normeInfoIndexedElements.forEach(el => {
+            el.style.display = hasSC ? 'inline' : 'none';
+            // Les normes indexées sont les mêmes pour H/F
+            el.textContent = (sexe === 'femme' ? 'F' : 'H') + ': OK ≤28mL/m², + 29-33mL/m², ++ 34-39mL/m², +++ ≥40mL/m²';
+        });
+    }
+    
+    // Écouter les changements de la surface corporelle
+    if (surfaceCorporelleInput) {
+        surfaceCorporelleInput.addEventListener('input', updateNormeDisplay);
+    }
+    
+    // Écouter les changements de sexe
+    sexeRadios.forEach(radio => {
+        radio.addEventListener('change', updateNormeDisplay);
+    });
+    
+    // Initialiser l'affichage des normes
+    updateNormeDisplay();
+});
+</script>
+
+<script>
+
+// Fonction pour calculer et évaluer le volume de l'oreillette gauche (méthodes ellipsoïde et cubique)
+function calculerVolumeOG() {
+    // Récupérer les valeurs
+    const longueurOG = parseFloat(document.getElementById('longueur_OG').value);
+    const diametreLongOG = parseFloat(document.getElementById('diametre_long_OG').value);
+    const diametreTransOG = parseFloat(document.getElementById('diametre_trans_OG').value);
+    
+    // Récupérer les éléments pour afficher les résultats
+    const volumeOGEllipsoide = document.getElementById('volume_OG_calcule');
+    const volumeOGCubique = document.getElementById('volume_OG_cubique');
+    const evaluationEllipsoide = document.getElementById('evaluation-ellipsoide');
+    const evaluationCubique = document.getElementById('evaluation-cubique');
+    
+    // Récupérer le sexe du patient
+    const sexe = document.querySelector('input[name="sexe"]:checked').value;
+    
+    // Récupérer la surface corporelle pour l'indexation des volumes
+    const surfaceCorporelle = parseFloat(document.getElementById('surface_corporelle').value);
+    
+    // Définir les normes selon le sexe
+    const normes = {
+        homme: {
+            volumeAbsolu: {
+                normal: [18, 58],
+                moderee: [59, 68],
+                moyenne: [69, 78],
+                severe: 79
+            },
+            volumeIndexe: {
+                normal: [16, 28], // 22 ± 6
+                moderee: [29, 33],
+                moyenne: [34, 39],
+                severe: 40
+            }
+        },
+        femme: {
+            volumeAbsolu: {
+                normal: [22, 52],
+                moderee: [53, 62],
+                moyenne: [63, 72],
+                severe: 73
+            },
+            volumeIndexe: {
+                normal: [16, 28], // 22 ± 6
+                moderee: [29, 33],
+                moyenne: [34, 39],
+                severe: 40
+            }
+        }
+    };
+    
+    // Mettre à jour l'affichage des normes (visible/caché)
+    const hasSC = !isNaN(surfaceCorporelle) && surfaceCorporelle > 0;
+    
+    document.querySelectorAll('.norme-info').forEach(el => {
+        el.style.display = hasSC ? 'none' : 'inline';
+    });
+    
+    document.querySelectorAll('.norme-info-indexed').forEach(el => {
+        el.style.display = hasSC ? 'inline' : 'none';
+    });
+    
+    // 1. Calcul du volume par méthode ellipsoïde si toutes les valeurs sont disponibles
+    if (!isNaN(longueurOG) && !isNaN(diametreLongOG) && !isNaN(diametreTransOG)) {
+        // Calculer le volume en mL: V = 4/3 * π * (L/2) * (D/2) * (d/2)
+        const volumeEllipsoide = (4/3) * Math.PI * (longueurOG/2) * (diametreLongOG/2) * (diametreTransOG/2);
+        
+        // Déterminer si on utilise le volume absolu ou indexé
+        let volumeAffiche, volumeType, normesApplicables;
+        
+        if (hasSC) {
+            // Volume indexé à la surface corporelle (mL/m²)
+            volumeAffiche = volumeEllipsoide / surfaceCorporelle;
+            volumeType = 'indexe';
+            if (document.getElementById('volume-ellipsoide-unite')) {
+                document.getElementById('volume-ellipsoide-unite').textContent = 'mL/m²';
+            }
+            
+            // Mettre à jour le champ volumeOGIndexe s'il existe
+            const volumeOGIndexeElem = document.getElementById('volume_OG_indexe');
+            if (volumeOGIndexeElem) {
+                volumeOGIndexeElem.value = volumeAffiche.toFixed(1);
+            }
+        } else {
+            // Volume absolu (mL)
+            volumeAffiche = volumeEllipsoide;
+            volumeType = 'absolu';
+            if (document.getElementById('volume-ellipsoide-unite')) {
+                document.getElementById('volume-ellipsoide-unite').textContent = 'mL';
+            }
+        }
+        
+        // Appliquer les normes selon le sexe
+        normesApplicables = normes[sexe]['volume' + (volumeType === 'indexe' ? 'Indexe' : 'Absolu')];
+        
+        // Évaluer le volume
+        let evaluation = '', couleur = '', classeCSS = '';
+        
+        if (volumeAffiche <= normesApplicables.normal[1]) {
+            evaluation = 'OK';
+            couleur = '#22c55e'; // Vert
+            classeCSS = 'input-normal';
+        } else if (volumeAffiche <= normesApplicables.moderee[1]) {
+            evaluation = '+';
+            couleur = '#eab308'; // Jaune
+            classeCSS = 'input-moderee';
+        } else if (volumeAffiche <= normesApplicables.moyenne[1]) {
+            evaluation = '++';
+            couleur = '#f97316'; // Orange
+            classeCSS = 'input-moyenne';
+        } else {
+            evaluation = '+++';
+            couleur = '#ef4444'; // Rouge
+            classeCSS = 'input-importante';
+        }
+        
+        // Afficher le volume et son évaluation
+        volumeOGEllipsoide.value = volumeAffiche.toFixed(1);
+        
+        // Mettre à jour l'évaluation si l'élément existe
+        if (evaluationEllipsoide) {
+            evaluationEllipsoide.textContent = evaluation;
+            evaluationEllipsoide.style.color = couleur;
+            evaluationEllipsoide.style.fontWeight = 'bold';
+            
+            // Appliquer la classe CSS pour la couleur de fond du champ
+            // Supprimer d'abord toutes les classes de statut
+            volumeOGEllipsoide.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+            volumeOGEllipsoide.classList.add(classeCSS);
+        }
+        
+        // Créer ou mettre à jour l'élément d'évaluation s'il n'existe pas
+        else if (volumeOGEllipsoide) {
+            const labelElement = volumeOGEllipsoide.closest('.input-group').querySelector('label');
+            if (!document.getElementById('evaluation-ellipsoide') && labelElement) {
+                const span = document.createElement('span');
+                span.id = 'evaluation-ellipsoide';
+                span.textContent = evaluation;
+                span.style.color = couleur;
+                span.style.fontWeight = 'bold';
+                span.style.marginLeft = '10px';
+                labelElement.appendChild(span);
+            }
+        }
+    } else {
+        if (volumeOGEllipsoide) volumeOGEllipsoide.value = '';
+        if (evaluationEllipsoide) evaluationEllipsoide.textContent = '';
+        
+        // Nettoyer les classes CSS
+        if (volumeOGEllipsoide) {
+            volumeOGEllipsoide.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+        }
+    }
+    
+    // 2. Calcul du volume par méthode cubique si le diamètre long est disponible
+    if (!isNaN(diametreLongOG) && volumeOGCubique) {
+        // Formule cubique : V = 0.523 * D³
+        const volumeCubique = 0.523 * Math.pow(diametreLongOG, 3);
+        
+        // Déterminer si on utilise le volume absolu ou indexé
+        let volumeAffiche, volumeType, normesApplicables;
+        
+        if (hasSC) {
+            // Volume indexé à la surface corporelle (mL/m²)
+            volumeAffiche = volumeCubique / surfaceCorporelle;
+            volumeType = 'indexe';
+            if (document.getElementById('volume-cubique-unite')) {
+                document.getElementById('volume-cubique-unite').textContent = 'mL/m²';
+            }
+        } else {
+            // Volume absolu (mL)
+            volumeAffiche = volumeCubique;
+            volumeType = 'absolu';
+            if (document.getElementById('volume-cubique-unite')) {
+                document.getElementById('volume-cubique-unite').textContent = 'mL';
+            }
+        }
+        
+        // Appliquer les normes selon le sexe
+        normesApplicables = normes[sexe]['volume' + (volumeType === 'indexe' ? 'Indexe' : 'Absolu')];
+        
+        // Évaluer le volume
+        let evaluation = '', couleur = '', classeCSS = '';
+        
+        if (volumeAffiche <= normesApplicables.normal[1]) {
+            evaluation = 'OK';
+            couleur = '#22c55e'; // Vert
+            classeCSS = 'input-normal';
+        } else if (volumeAffiche <= normesApplicables.moderee[1]) {
+            evaluation = '+';
+            couleur = '#eab308'; // Jaune
+            classeCSS = 'input-moderee';
+        } else if (volumeAffiche <= normesApplicables.moyenne[1]) {
+            evaluation = '++';
+            couleur = '#f97316'; // Orange
+            classeCSS = 'input-moyenne';
+        } else {
+            evaluation = '+++';
+            couleur = '#ef4444'; // Rouge
+            classeCSS = 'input-importante';
+        }
+        
+        // Afficher le volume et son évaluation
+        volumeOGCubique.value = volumeAffiche.toFixed(1);
+        
+        // Mettre à jour l'évaluation si l'élément existe
+        if (evaluationCubique) {
+            evaluationCubique.textContent = evaluation;
+            evaluationCubique.style.color = couleur;
+            evaluationCubique.style.fontWeight = 'bold';
+            
+            // Appliquer la classe CSS pour la couleur de fond du champ
+            // Supprimer d'abord toutes les classes de statut
+            volumeOGCubique.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+            volumeOGCubique.classList.add(classeCSS);
+        }
+        
+        // Créer ou mettre à jour l'élément d'évaluation s'il n'existe pas
+        else if (volumeOGCubique) {
+            const labelElement = volumeOGCubique.closest('.input-group').querySelector('label');
+            if (!document.getElementById('evaluation-cubique') && labelElement) {
+                const span = document.createElement('span');
+                span.id = 'evaluation-cubique';
+                span.textContent = evaluation;
+                span.style.color = couleur;
+                span.style.fontWeight = 'bold';
+                span.style.marginLeft = '10px';
+                labelElement.appendChild(span);
+            }
+        }
+    } else if (volumeOGCubique) {
+        volumeOGCubique.value = '';
+        if (evaluationCubique) evaluationCubique.textContent = '';
+        
+        // Nettoyer les classes CSS
+        volumeOGCubique.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+    }
+}
+
+// Configurer les écouteurs d'événements pour le calcul automatique
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter des écouteurs pour calculer automatiquement le volume lorsque les valeurs changent
+    const inputsOG = ['longueur_OG', 'diametre_long_OG', 'diametre_trans_OG'];
+    inputsOG.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', calculerVolumeOG);
+        }
+    });
+    
+    // Ajouter un écouteur pour la surface corporelle
+    const surfaceCorporelleInput = document.getElementById('surface_corporelle');
+    if (surfaceCorporelleInput) {
+        surfaceCorporelleInput.addEventListener('input', calculerVolumeOG);
+    }
+    
+    // Ajouter un écouteur pour le sexe
+    document.querySelectorAll('input[name="sexe"]').forEach(radio => {
+        radio.addEventListener('change', calculerVolumeOG);
+    });
+    
+    // Ajouter également des écouteurs pour le calcul de la surface corporelle
+    const tailleInput = document.getElementById('taille');
+    const poidsInput = document.getElementById('poids');
+    
+    if (tailleInput && poidsInput) {
+        tailleInput.addEventListener('input', function() {
+            // Attendre que la surface corporelle soit calculée puis recalculer le volume OG
+            setTimeout(calculerVolumeOG, 150);
+        });
+        
+        poidsInput.addEventListener('input', function() {
+            // Attendre que la surface corporelle soit calculée puis recalculer le volume OG
+            setTimeout(calculerVolumeOG, 150);
+        });
+    }
+    
+    // S'assurer que le calcul du volume est inclus lors de la réinitialisation des champs
+    const resetButton = document.querySelector('button[onclick="resetETTInputs()"]');
+    if (resetButton) {
+        const originalResetFunction = resetButton.onclick;
+        resetButton.onclick = function() {
+            // Exécuter la fonction originale
+            if (originalResetFunction) originalResetFunction();
+            
+            // Réinitialiser les champs spécifiques au volume OG
+            document.getElementById('longueur_OG').value = '';
+            document.getElementById('diametre_long_OG').value = '';
+            document.getElementById('diametre_trans_OG').value = '';
+            document.getElementById('volume_OG_calcule').value = '';
+            if (document.getElementById('volume_OG_cubique')) {
+                document.getElementById('volume_OG_cubique').value = '';
+            }
+            if (document.getElementById('evaluation-ellipsoide')) {
+                document.getElementById('evaluation-ellipsoide').textContent = '';
+            }
+            if (document.getElementById('evaluation-cubique')) {
+                document.getElementById('evaluation-cubique').textContent = '';
+            }
+            
+            // Nettoyer les classes CSS
+            const volumeOGEllipsoide = document.getElementById('volume_OG_calcule');
+            const volumeOGCubique = document.getElementById('volume_OG_cubique');
+            
+            if (volumeOGEllipsoide) {
+                volumeOGEllipsoide.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+            }
+            
+            if (volumeOGCubique) {
+                volumeOGCubique.classList.remove('input-normal', 'input-moderee', 'input-moyenne', 'input-importante');
+            }
+            
+            // Réinitialiser les unités
+            if (document.getElementById('volume-ellipsoide-unite')) {
+                document.getElementById('volume-ellipsoide-unite').textContent = 'mL';
+            }
+            if (document.getElementById('volume-cubique-unite')) {
+                document.getElementById('volume-cubique-unite').textContent = 'mL';
+            }
+            
+            // Mettre à jour l'affichage des normes
+            document.querySelectorAll('.norme-info').forEach(el => {
+                el.style.display = 'inline';
+            });
+            
+            document.querySelectorAll('.norme-info-indexed').forEach(el => {
+                el.style.display = 'none';
+            });
+        };
+    }
+    
+    // Exécuter une première fois pour initialiser
+    calculerVolumeOG();
+});
+
+
+// Configurer les écouteurs d'événements pour le calcul automatique
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter des écouteurs pour calculer automatiquement le volume lorsque les valeurs changent
+    const inputsOG = ['longueur_OG', 'diametre_long_OG', 'diametre_trans_OG'];
+    inputsOG.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', calculerVolumeOG);
+        }
+    });
+    
+    // Ajouter un écouteur pour la surface corporelle
+    const surfaceCorporelleInput = document.getElementById('surface_corporelle');
+    if (surfaceCorporelleInput) {
+        surfaceCorporelleInput.addEventListener('input', calculerVolumeOG);
+    }
+    
+    // Ajouter également des écouteurs pour le calcul de la surface corporelle
+    const tailleInput = document.getElementById('taille');
+    const poidsInput = document.getElementById('poids');
+    
+    if (tailleInput && poidsInput) {
+        tailleInput.addEventListener('input', function() {
+            // Attendre que la surface corporelle soit calculée puis recalculer le volume OG
+            setTimeout(calculerVolumeOG, 100);
+        });
+        
+        poidsInput.addEventListener('input', function() {
+            // Attendre que la surface corporelle soit calculée puis recalculer le volume OG
+            setTimeout(calculerVolumeOG, 100);
+        });
+    }
+    
+    // S'assurer que le calcul du volume est inclus lors de la réinitialisation des champs
+    const resetButton = document.querySelector('button[onclick="resetETTInputs()"]');
+    if (resetButton) {
+        const originalResetFunction = resetButton.onclick;
+        resetButton.onclick = function() {
+            // Exécuter la fonction originale
+            if (originalResetFunction) originalResetFunction();
+            
+            // Réinitialiser les champs spécifiques au volume OG
+            document.getElementById('longueur_OG').value = '';
+            document.getElementById('diametre_long_OG').value = '';
+            document.getElementById('diametre_trans_OG').value = '';
+            document.getElementById('volume_OG_calcule').value = '';
+            document.getElementById('volume-unite').textContent = 'mL';
+        };
+    }
+});
+
+
+// Fonction améliorée pour mettre à jour le volume OG indexé
+function updateVolumeOGIndexe() {
+    // Récupérer les éléments nécessaires
+    const volumeOGEllipsoide = document.getElementById('volume_OG_calcule');
+    const volumeOGCubique = document.getElementById('volume_OG_cubique');
+    const surfaceCorporelle = document.getElementById('surface_corporelle');
+    const volumeOGIndexe = document.getElementById('volume_OG_indexe');
+    const methodeLabel = document.getElementById('methode-volume-label');
+    
+    // Vérifier si la surface corporelle est renseignée
+    const scValide = surfaceCorporelle && 
+                      surfaceCorporelle.value && 
+                      !isNaN(parseFloat(surfaceCorporelle.value)) && 
+                      parseFloat(surfaceCorporelle.value) > 0;
+    
+    // Vérifier si au moins une méthode de calcul a des valeurs
+    const ellipsoideValide = volumeOGEllipsoide && 
+                              volumeOGEllipsoide.value && 
+                              !isNaN(parseFloat(volumeOGEllipsoide.value));
+    
+    const cubiqueValide = volumeOGCubique && 
+                           volumeOGCubique.value && 
+                           !isNaN(parseFloat(volumeOGCubique.value));
+    
+    // Si aucune méthode n'a de valeur ou si la surface corporelle n'est pas valide, réinitialiser
+    if (!scValide || (!ellipsoideValide && !cubiqueValide)) {
+        if (volumeOGIndexe) {
+            volumeOGIndexe.value = '';
+        }
+        if (methodeLabel) {
+            methodeLabel.textContent = '';
+        }
+        return;
+    }
+    
+    // Surface corporelle valide et au moins une méthode valide
+    const sc = parseFloat(surfaceCorporelle.value);
+    
+    // Déterminer quelle méthode utiliser
+    let volumeAffiche = null;
+    let methodeUtilisee = '';
+    
+    // Si la méthode ellipsoïde a une valeur, l'utiliser en priorité
+    if (ellipsoideValide) {
+        volumeAffiche = parseFloat(volumeOGEllipsoide.value);
+        methodeUtilisee = '';
+    } 
+    // Sinon, utiliser la méthode cubique si disponible
+    else if (cubiqueValide) {
+        volumeAffiche = parseFloat(volumeOGCubique.value);
+        methodeUtilisee = '';
+    }
+    
+    // Mettre à jour le volume OG indexé
+    if (volumeOGIndexe && volumeAffiche !== null) {
+        volumeOGIndexe.value = volumeAffiche.toFixed(1);
+        
+        // Ajouter l'indication de la méthode
+        if (methodeLabel) {
+            methodeLabel.textContent = methodeUtilisee;
+        }
+    }
+}
+
+// Ajouter une fonction pour s'assurer que le champ est réinitialisé lors du reset
+function resetVolumeOGIndexe() {
+    const volumeOGIndexe = document.getElementById('volume_OG_indexe');
+    const methodeLabel = document.getElementById('methode-volume-label');
+    
+    if (volumeOGIndexe) {
+        volumeOGIndexe.value = '';
+    }
+    if (methodeLabel) {
+        methodeLabel.textContent = '';
+    }
+}
+
+// Modifier la fonction de réinitialisation des champs ETT pour inclure notre réinitialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Récupérer le bouton de réinitialisation ETT
+    const resetButton = document.querySelector('button[onclick="resetETTInputs()"]');
+    
+    if (resetButton) {
+        // Sauvegarder la fonction originale
+        const originalResetFunction = window.resetETTInputs || function() {};
+        
+        // Remplacer par notre fonction améliorée
+        window.resetETTInputs = function() {
+            // Appeler la fonction originale
+            originalResetFunction.call(this);
+            
+            // Puis réinitialiser le volume OG indexé
+            resetVolumeOGIndexe();
+        };
+    }
+    
+    // Configurer les écouteurs d'événements pour les champs qui peuvent être vidés manuellement
+    const inputsToWatch = [
+        'longueur_OG', 'diametre_long_OG', 'diametre_trans_OG', 
+        'taille', 'poids'
+    ];
+    
+    inputsToWatch.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            // Ajouter un écouteur qui vérifie si le champ a été vidé
+            input.addEventListener('input', function() {
+                if (!this.value || this.value === '') {
+                    // Déclencher le recalcul pour potentiellement réinitialiser le volume indexé
+                    setTimeout(updateVolumeOGIndexe, 50);
+                }
+            });
+        }
+    });
+    
+    // Déclencher une première fois pour initialiser
+    updateVolumeOGIndexe();
+});
+</script>
+
+
+
                 
                 <!-- Dilatation et hypertrophie ventriculaire -->
                 <h5 style="color: #3b82f6; margin-top: 15px; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Ventricule gauche</h5>
@@ -6296,7 +7043,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label style="width: 250px; min-width: 200px;"><strong>Paroi antéro-septale (mm) :</strong></label>
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="paroi_anteroseptale">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_anteroseptale">Normes: H (6-10 mm) / F (6-9 mm)</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_anteroseptale">Normes: H (6-10 mm)</span>
                         <span id="anteroseptale-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
@@ -6306,7 +7053,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label style="width: 250px; min-width: 200px;"><strong>Diamètre télédiastolique VG (mm) :</strong></label>
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="diametre_VG">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_diametre">Normes: H (42-59 mm) / F (39-53 mm)</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_diametre">Normes: H (42-59 mm)</span>
                         <span id="diametre-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
@@ -6316,7 +7063,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label style="width: 250px; min-width: 200px;"><strong>Paroi inféro-latérale (mm) :</strong></label>
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="paroi_inferolaterale">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_inferolaterale">Normes: H (6-10 mm) / F (6-9 mm)</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_inferolaterale">Normes: H (6-10 mm)</span>
                         <span id="inferolaterale-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
@@ -6543,7 +7290,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <label style="width: 250px; min-width: 200px;"><strong>Fraction d'éjection du VG (%) :</strong></label>
     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
         <input type="number" step="1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="FEVG">
-        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_FEVG">Normes: H (52-72%) / F (54-74%)</span>
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_FEVG">Normes: H (52-72%)</span>
         <span id="FEVG-status" style="font-weight: bold;"></span>
     </div>
 </div>
@@ -6611,10 +7358,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+
 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; margin-top: 15px;">
     <label style="width: 250px; min-width: 200px;"><strong>Volume OG indexé (ml/m²) :</strong></label>
     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="volume_OG_indexe">
+        <input type="text" readonly style="width: 60px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" id="volume_OG_indexe">
+        <span id="methode-volume-label" style="font-style: italic; color: #64748b; font-size: 0.85rem;"></span>
         <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < 34 mL/m²</span>
     </div>
 </div>
@@ -6652,7 +7401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label style="width: 250px; min-width: 200px;"><strong>ITV (cm) :</strong></label>
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="ITV">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_ITV">Normes: H (18-26 cm) / F (16-24 cm)</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_ITV">Normes: H (18-26 cm)</span>
                         <span id="ITV-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
@@ -7023,7 +7772,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <label style="width: 250px; min-width: 200px;"><strong>Sinus de Valsalva (mm) :</strong></label>
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="sinus_valsalva">
-            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_valsalva">Normes: H (34 ± 3 mm) / F (30 ± 3 mm)</span>
+            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_valsalva">Normes: H (34 ± 3 mm)</span>
             <span id="valsalva-status" style="font-weight: bold;"></span>
         </div>
     </div>
@@ -7033,7 +7782,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <label style="width: 250px; min-width: 200px;"><strong>Jonction sino-aortique (mm) :</strong></label>
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="jonction_sinoaortique">
-            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_jonction">Normes: H (29 ± 3 mm) / F (26 ± 3 mm)</span>
+            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_jonction">Normes: H (29 ± 3 mm)</span>
             <span id="jonction-status" style="font-weight: bold;"></span>
         </div>
     </div>
@@ -7043,7 +7792,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <label style="width: 250px; min-width: 200px;"><strong>Aorte ascendante (mm) :</strong></label>
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <input type="number" step="0.1" style="width: 60px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="aorte_ascendante">
-            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_aorte">Normes: H (30 ± 4 mm) / F (27 ± 4 mm)</span>
+            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;" id="norme_aorte">Normes: H (30 ± 4 mm)</span>
             <span id="aorte-status" style="font-weight: bold;"></span>
         </div>
     </div>
@@ -8743,52 +9492,95 @@ function generateEchocardiographySection() {
         return value && value !== "" ? value : "?";
     }
     
-    // Ventricule gauche : dimensions et hypertrophie
-    const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
-    const siv = valueOrDash(document.getElementById('paroi_anteroseptale').value);
-    const dtdvg = valueOrDash(document.getElementById('diametre_VG').value);
-    const pil = valueOrDash(document.getElementById('paroi_inferolaterale').value);
-    
-    // Déterminer si l'OG est dilatée
-    let ogDilatee = false;
-    if (document.getElementById('surface_OG').value) {
-        const ogValue = parseFloat(document.getElementById('surface_OG').value);
-        if (ogValue >= 20) {
-            ogDilatee = true;
-        }
+   // Ventricule gauche : dimensions et hypertrophie
+const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
+const siv = valueOrDash(document.getElementById('paroi_anteroseptale').value);
+const dtdvg = valueOrDash(document.getElementById('diametre_VG').value);
+const pil = valueOrDash(document.getElementById('paroi_inferolaterale').value);
+
+// Récupération du volume OG
+let volumeOGText = "";
+const surfaceCorporelle = document.getElementById('surface_corporelle').value;
+const volumeOGIndexe = document.getElementById('volume_OG_indexe').value;
+const volumeOGEllipsoide = document.getElementById('volume_OG_calcule').value;
+const volumeOGCubique = document.getElementById('volume_OG_cubique').value;
+
+// Construction du texte pour le volume OG - avec valeur par défaut "? mL" si aucune valeur
+if (surfaceCorporelle && volumeOGIndexe) {
+    // Si la surface corporelle est indiquée et volume indexé disponible
+    volumeOGText = `, V OG ${volumeOGIndexe} mL/m²`;
+} else if (volumeOGEllipsoide) {
+    // Si pas de surface corporelle mais volume ellipsoïde disponible
+    volumeOGText = `, V OG ${volumeOGEllipsoide} mL`;
+} else if (volumeOGCubique) {
+    // Si pas de surface corporelle mais volume cubique disponible
+    volumeOGText = `, V OG ${volumeOGCubique} mL`;
+} else {
+    // Si aucune valeur n'est disponible, afficher quand même "V OG ? mL"
+    volumeOGText = `, V OG ? mL`;
+}
+
+// Déterminer si l'OG est dilatée - en tenant compte de la surface ET du volume
+let ogDilatee = false;
+const sexe = document.querySelector('input[name="sexe"]:checked').value;
+
+// 1. Vérification par la surface
+if (document.getElementById('surface_OG').value) {
+    const ogValue = parseFloat(document.getElementById('surface_OG').value);
+    if (ogValue >= 20) {
+        ogDilatee = true;
     }
-    
-    // Déterminer si le VG est dilaté
-    let vgDilate = false;
-    if (document.getElementById('diametre_VG').value) {
-        const diametreVG = parseFloat(document.getElementById('diametre_VG').value);
-        const sexe = document.querySelector('input[name="sexe"]:checked').value;
-        
-        if (sexe === 'homme' && diametreVG > 59) vgDilate = true;
-        else if (sexe === 'femme' && diametreVG > 53) vgDilate = true;
+}
+
+// 2. Vérification par le volume indexé si disponible
+if (volumeOGIndexe && !ogDilatee) {
+    const volumeOGIndexeValue = parseFloat(volumeOGIndexe);
+    if (volumeOGIndexeValue > 34) { // Norme identique pour H/F
+        ogDilatee = true;
     }
+}
+
+// 3. Vérification par le volume absolu si pas de surface corporelle
+if (!volumeOGIndexe && !ogDilatee) {
+    // Volumes absolus selon le sexe
+    const volumeLimit = sexe === 'homme' ? 58 : 52;
     
-    // Déterminer si le VG est hypertrophié
-    let vgHypertrophie = false;
-    if (document.getElementById('paroi_anteroseptale').value || document.getElementById('paroi_inferolaterale').value) {
-        const sivValue = parseFloat(document.getElementById('paroi_anteroseptale').value) || 0;
-        const pilValue = parseFloat(document.getElementById('paroi_inferolaterale').value) || 0;
-        const sexe = document.querySelector('input[name="sexe"]:checked').value;
-        
-        if ((sexe === 'homme' && (sivValue > 10 || pilValue > 10)) || 
-            (sexe === 'femme' && (sivValue > 9 || pilValue > 9))) {
-            vgHypertrophie = true;
-        }
+    if (volumeOGEllipsoide && parseFloat(volumeOGEllipsoide) > volumeLimit) {
+        ogDilatee = true;
+    } else if (volumeOGCubique && parseFloat(volumeOGCubique) > volumeLimit) {
+        ogDilatee = true;
     }
+}
+
+// Déterminer si le VG est dilaté
+let vgDilate = false;
+if (document.getElementById('diametre_VG').value) {
+    const diametreVG = parseFloat(document.getElementById('diametre_VG').value);
     
-    let vgDescription = "";
-    if (vgDilate && vgHypertrophie) vgDescription = "VG dilaté et hypertrophié";
-    else if (vgDilate) vgDescription = "VG dilaté et non hypertrophié";
-    else if (vgHypertrophie) vgDescription = "VG non dilaté et hypertrophié";
-    else vgDescription = "VG non dilaté et non hypertrophié";
+    if (sexe === 'homme' && diametreVG > 59) vgDilate = true;
+    else if (sexe === 'femme' && diametreVG > 53) vgDilate = true;
+}
+
+// Déterminer si le VG est hypertrophié
+let vgHypertrophie = false;
+if (document.getElementById('paroi_anteroseptale').value || document.getElementById('paroi_inferolaterale').value) {
+    const sivValue = parseFloat(document.getElementById('paroi_anteroseptale').value) || 0;
+    const pilValue = parseFloat(document.getElementById('paroi_inferolaterale').value) || 0;
     
-    ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (OG ${surfaceOG} cm²). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
-    
+    if ((sexe === 'homme' && (sivValue > 10 || pilValue > 10)) || 
+        (sexe === 'femme' && (sivValue > 9 || pilValue > 9))) {
+        vgHypertrophie = true;
+    }
+}
+
+let vgDescription = "";
+if (vgDilate && vgHypertrophie) vgDescription = "VG dilaté et hypertrophié";
+else if (vgDilate) vgDescription = "VG dilaté et non hypertrophié";
+else if (vgHypertrophie) vgDescription = "VG non dilaté et hypertrophié";
+else vgDescription = "VG non dilaté et non hypertrophié";
+
+ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (S OG ${surfaceOG} cm²${volumeOGText}). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
+
     // Fonction diastolique
     const rapportEE = valueOrDash(document.getElementById('rapport_EE').value);
     const ondeE = valueOrDash(document.getElementById('onde_E').value);
@@ -8917,7 +9709,7 @@ function generateEchocardiographySection() {
         }
     }
     
-    ettSection += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
+    ettSection += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (S OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
     
     // Valves aortique et mitrale
     const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
