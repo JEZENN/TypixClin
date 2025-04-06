@@ -1576,5 +1576,155 @@ body {
     });
 </script>
 
+
+<!-- HTML pour l'animation de chargement -->
+<div id="loader-wrapper">
+    <div class="loader">
+        <svg class="circular" viewBox="25 25 50 50">
+            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/>
+        </svg>
+        <div class="loader-text">TypixClin</div>
+    </div>
+</div>
+
+<!-- CSS pour l'animation de chargement -->
+<style>
+    #loader-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1e40af, #0f2167);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    #loader-wrapper.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .circular {
+        width: 50px;
+        height: 50px;
+        animation: rotate 2s linear infinite;
+    }
+    
+    .path {
+        stroke: #ffffff;
+        stroke-linecap: round;
+        animation: dash 1.5s ease-in-out infinite;
+    }
+    
+    .loader-text {
+        margin-top: 20px;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes rotate {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    @keyframes dash {
+        0% {
+            stroke-dasharray: 1, 150;
+            stroke-dashoffset: 0;
+        }
+        50% {
+            stroke-dasharray: 90, 150;
+            stroke-dashoffset: -35;
+        }
+        100% {
+            stroke-dasharray: 90, 150;
+            stroke-dashoffset: -124;
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+</style>
+
+<!-- JavaScript pour gérer l'affichage du loader -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Référence au loader
+        const loader = document.getElementById('loader-wrapper');
+        
+        // Variables pour suivre l'état de chargement
+        let loadStarted = false;
+        let loadCompleted = false;
+        let loaderTimeout = null;
+        
+        // Fonction pour afficher le loader seulement si le chargement prend du temps
+        function showLoaderIfSlow() {
+            // Si le chargement a commencé mais n'est pas terminé après un délai (ex. 400ms)
+            if (loadStarted && !loadCompleted) {
+                loader.classList.add('active');
+            }
+        }
+        
+        // Marquer le début du chargement
+        loadStarted = true;
+        
+        // Définir un délai avant d'afficher le loader
+        loaderTimeout = setTimeout(showLoaderIfSlow, 400);
+        
+        // Attendre que la page soit prête pour cacher le loader
+        window.addEventListener('load', function() {
+            loadCompleted = true;
+            
+            // Annuler le timeout si la page charge rapidement
+            if (loaderTimeout) {
+                clearTimeout(loaderTimeout);
+            }
+            
+            // Si le loader est visible, le faire disparaître progressivement
+            if (loader.classList.contains('active')) {
+                // Attendre un court instant pour permettre aux animations de page de se préparer
+                setTimeout(function() {
+                    loader.classList.remove('active');
+                    
+                    // Attendre la fin de la transition avant de cacher complètement
+                    setTimeout(function() {
+                        loader.style.display = 'none';
+                    }, 300);
+                }, 300);
+            } else {
+                // Si le loader n'a jamais été affiché, s'assurer qu'il reste caché
+                loader.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+
+
+
 </body>
 </html>
