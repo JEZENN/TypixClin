@@ -870,45 +870,229 @@ html {
 
 		
     <!-- Header sticky qui apparaîtra au scroll -->
-    <div class="sticky-wrapper">
-
+<!-- Header sticky qui apparaîtra au scroll -->
+<div class="sticky-wrapper">
+    <!-- Sticky Navigation Bar -->
     <nav class="main-nav2">
-        <a href="#GDS" class="nav-link"><span><i class="fas fa-tint" style="color: red;"></i></span></a>
-        <a href="#Texte-Type" class="nav-link"><span>✍️</span></a>
-
+        <a href="#GDS" class="nav-link" data-section-title="Analyse des gaz Du Sang"><span><i class="fas fa-tint" style="color: red;"></i></span></a>
+        <a href="#Texte-Type" class="nav-link" data-section-title="Conclusion"><span>✍️</span></a>
     </nav>
+</div>
+
+<!-- Nouveau sticky wrapper pour afficher le titre de la section actuelle -->
+<div class="section-title-wrapper">
+    <div class="section-title-container">
+        <h2 id="current-section-title">Analyse des Gaz Du Sang</h2>
     </div>
+</div>
 
-<script>
-function scrollToTop(event) {
-    event.preventDefault();
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
+<!-- Styles pour les deux sticky wrappers -->
+<style>
+/* Style original pour le premier sticky wrapper */
+.sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001; /* Z-index plus élevé que le second sticky wrapper */
+    transform: translateY(-100%);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 0.2rem 0.3rem;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
-</script>
 
+/* Style pour le sticky wrapper du titre de section */
+.section-title-wrapper {
+    position: fixed;
+    top: 60px; /* Position juste en dessous du premier sticky wrapper */
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-	
+.section-title-container {
+    max-width: 1160px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* Style du titre pour qu'il s'accorde avec le fond bleu */
+.section-title-wrapper h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: white; /* Texte blanc pour contraster avec le fond bleu */
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.1); /* Fond légèrement plus clair */
+    padding: 0.25rem 1.5rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+}
+
+/* Pour le mode sombre */
+[data-theme="dark"] .section-title-wrapper {
+    background: linear-gradient(135deg, #1e40af, #0f2167);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .section-title-wrapper h2 {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Classes visible pour les deux sticky wrappers */
+.sticky-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+.section-title-wrapper.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Style pour l'indicateur visuel sur l'onglet actif - amélioré pour les boutons ronds */
+.nav-link {
+    position: relative;
+}
+
+/* Point blanc parfaitement centré */
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -5px; /* Légèrement ajusté pour être bien visible mais pas trop bas */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0.9;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3); /* Léger ombrage pour une meilleure visibilité */
+    transition: all 0.3s ease;
+}
+
+/* Animation pour l'apparition du point */
+@keyframes pointAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+    }
+    to {
+        opacity: 0.9;
+        transform: translateX(-50%) scale(1);
+    }
+}
+
+.nav-link.active::after {
+    animation: pointAppear 0.3s ease forwards;
+}
+
+/* Adaptation pour le mode sombre */
+[data-theme="dark"] .nav-link.active::after {
+    background-color: white;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+    .sticky-wrapper,
+    .section-title-wrapper {
+        display: none;
+    }
+}
+</style>
+
+<!-- Script pour gérer le comportement des deux sticky wrappers -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const stickyWrapper = document.querySelector('.sticky-wrapper');
-    const header = document.querySelector('header'); // On utilise le header comme référence
+    const sectionTitleWrapper = document.querySelector('.section-title-wrapper');
+    const header = document.querySelector('header:not(.sticky-wrapper header)'); // Le header principal, pas celui du sticky
+    const currentSectionTitle = document.getElementById('current-section-title');
+    const navLinks = document.querySelectorAll('.nav-link');
     let isSticky = false;
-
+    let isSectionTitleVisible = false;
+    
+    // Configuration de l'offset d'anticipation (en pixels)
+    const ANTICIPATION_OFFSET = 200;
+    
+    // Créer un tableau des sections avec leurs positions
+    const sectionPositions = [];
+    
+    function updateSectionPositions() {
+        sectionPositions.length = 0;
+        
+        // Ajouter chaque section avec son ID et sa position
+        const sectionContainers = document.querySelectorAll('section[id]');
+        sectionContainers.forEach(section => {
+            const id = section.getAttribute('id');
+            // Trouver le premier élément .section qui suit notre section anchor
+            const sectionElement = section.nextElementSibling;
+            let title = id; // Titre par défaut si on ne trouve pas la section header
+            
+            // Si on a trouvé la section, chercher son header
+            if (sectionElement && sectionElement.classList.contains('section')) {
+                const sectionHeader = sectionElement.querySelector('.section-header h3');
+                if (sectionHeader) {
+                    title = sectionHeader.textContent;
+                }
+            }
+            
+            // Chercher le titre complet dans les attributs data-section-title des liens de navigation
+            const navLink = document.querySelector(`.nav-link[href="#${id}"]`);
+            let fullTitle = title;
+            if (navLink && navLink.getAttribute('data-section-title')) {
+                fullTitle = navLink.getAttribute('data-section-title');
+            }
+            
+            sectionPositions.push({
+                id: id,
+                position: section.offsetTop,
+                title: fullTitle
+            });
+        });
+        
+        // Trier par position (du haut de la page vers le bas)
+        sectionPositions.sort((a, b) => a.position - b.position);
+    }
+    
     function handleScroll() {
         if (window.innerWidth <= 768) {
-            if (stickyWrapper) {
-                stickyWrapper.classList.remove('visible');
-            }
+            // Cacher les deux wrappers sur mobile
+            if (stickyWrapper) stickyWrapper.classList.remove('visible');
+            if (sectionTitleWrapper) sectionTitleWrapper.classList.remove('visible');
             return;
         }
-
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        // On définit un seuil plus bas - par exemple 300px après le header
-        const threshold = header ? header.offsetTop + header.offsetHeight + 0 : 300;
         
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const threshold = header ? header.offsetTop + header.offsetHeight : 300;
+        
+        // Gérer l'affichage du premier sticky wrapper
         if (scrollTop > threshold && !isSticky) {
             if (stickyWrapper) {
                 stickyWrapper.classList.add('visible');
@@ -920,15 +1104,91 @@ document.addEventListener('DOMContentLoaded', function() {
                 isSticky = false;
             }
         }
+        
+        // Déterminer la section actuelle basée sur la position de défilement
+        let currentSection = null;
+        
+        // Parcourir les sections du bas vers le haut de la page
+        for (let i = sectionPositions.length - 1; i >= 0; i--) {
+            // Si la position de défilement + zone d'anticipation dépasse la position de la section
+            if (scrollTop + ANTICIPATION_OFFSET >= sectionPositions[i].position) {
+                currentSection = sectionPositions[i];
+                break;
+            }
+        }
+        
+        // Si aucune section n'est trouvée, utiliser la première
+        if (!currentSection && sectionPositions.length > 0) {
+            currentSection = sectionPositions[0];
+        }
+        
+        // Mettre à jour le titre de la section actuelle et afficher le second sticky wrapper
+        if (currentSection) {
+            // Mettre à jour le titre
+            if (currentSectionTitle) {
+                currentSectionTitle.textContent = currentSection.title;
+            }
+            
+            // Afficher le wrapper du titre de section si on n'est pas tout en haut de la page
+            if (scrollTop > threshold + 50) {
+                // Ajouter un décalage supplémentaire pour ne pas le montrer immédiatement après le premier wrapper
+                if (!isSectionTitleVisible) {
+                    sectionTitleWrapper.classList.add('visible');
+                    isSectionTitleVisible = true;
+                }
+            } else {
+                // Cacher le wrapper du titre près du haut de la page
+                if (isSectionTitleVisible) {
+                    sectionTitleWrapper.classList.remove('visible');
+                    isSectionTitleVisible = false;
+                }
+            }
+            
+            // Mettre à jour la classe active sur les liens de navigation
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === `#${currentSection.id}`) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
     }
-
+    
+    // Mettre à jour les positions des sections lors du chargement et du redimensionnement
+    window.addEventListener('load', updateSectionPositions);
+    window.addEventListener('resize', updateSectionPositions);
+    
+    // Gérer le défilement pour mettre à jour le titre et l'affichage
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
+    
+    // Initialiser l'état au chargement
+    updateSectionPositions();
     handleScroll();
+    
+    // Ajouter des écouteurs d'événements aux liens de navigation
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const sectionTitle = this.getAttribute('data-section-title');
+            if (sectionTitle && currentSectionTitle) {
+                currentSectionTitle.textContent = sectionTitle;
+                
+                // Mettre à jour la classe active
+                navLinks.forEach(navLink => navLink.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
 });
 
 
-
+function scrollToTop(event) {
+    event.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 
 function toggleSection(button) {
     const section = button.closest('.section');
@@ -5093,9 +5353,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /* Header spécifique pour le mode sombre */
-    [data-theme="dark"] .header {
-        background: #0d1526 !important;
-    }
+[data-theme="dark"] .header {
+    background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)) !important;
+}
 
     [data-theme="dark"] .header-title {
         background: rgba(255, 255, 255, 0.1) !important;
