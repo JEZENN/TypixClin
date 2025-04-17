@@ -2345,12 +2345,7 @@ input[type="number"]:focus {
             Confusion
         </label>
         
-        <label class="custom-control checkbox" style="margin-right: 15px;">
-            <input type="checkbox" id="marbrures">
-            <span class="checkmark"></span>
-            Marbrures
-        </label>
-        
+       
         <label class="custom-control checkbox" style="margin-right: 15px;">
             <input type="checkbox" id="trc">
             <span class="checkmark"></span>
@@ -2362,6 +2357,73 @@ input[type="number"]:focus {
             <span class="checkmark"></span>
             Polypnée
         </label>
+		
+		        <label class="custom-control checkbox" style="margin-right: 15px;">
+            <input type="checkbox" id="marbrures">
+            <span class="checkmark"></span>
+            Marbrures
+        </label>
+		
+					<div id="marbruresDetails" style="display: none; margin-left: 40px;">
+				<div style="margin-top: 5px; margin-bottom: 5px;">
+					<label style="display: block; margin-bottom: 5px;"><strong>Localisation :</strong></label>
+					<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+						<label class="custom-control checkbox" style="margin-right: 15px;">
+							<input type="checkbox" id="marbruresInferieures">
+							<span class="checkmark"></span>
+							Membres inférieurs
+						</label>
+						<label class="custom-control checkbox" style="margin-right: 15px;">
+							<input type="checkbox" id="marbruresGeneralisees">
+							<span class="checkmark"></span>
+							Généralisées
+						</label>
+						<label class="custom-control checkbox">
+							<input type="checkbox" id="marbruresAbdominales">
+							<span class="checkmark"></span>
+							Abdominales
+						</label>
+					</div>
+				</div>
+			</div>
+			
+			<script>
+			
+			// Gestion des détails des marbrures
+document.getElementById('marbrures').addEventListener('change', function() {
+    const marbruresDetails = document.getElementById('marbruresDetails');
+    if (marbruresDetails) {
+        marbruresDetails.style.display = this.checked ? 'block' : 'none';
+    }
+    
+    // Si on décoche, réinitialiser les sous-options
+    if (!this.checked) {
+        document.getElementById('marbruresInferieures').checked = false;
+        document.getElementById('marbruresGeneralisees').checked = false;
+        document.getElementById('marbruresAbdominales').checked = false;
+    }
+});
+
+// Assurons-nous également de réinitialiser lors de la désélection de l'instabilité hémodynamique
+document.getElementById('nocard4').addEventListener('change', function() {
+    if (this.checked) {
+        // On utilise le code existant mais on ajoute la réinitialisation des marbrures
+        const marbruresDetails = document.getElementById('marbruresDetails');
+        if (marbruresDetails) {
+            marbruresDetails.style.display = 'none';
+        }
+        
+        document.getElementById('marbruresInferieures').checked = false;
+        document.getElementById('marbruresGeneralisees').checked = false;
+        document.getElementById('marbruresAbdominales').checked = false;
+    }
+});
+
+</script>
+
+
+
+
     </div>
 
     <div style="margin-top: 10px;">
@@ -3149,6 +3211,13 @@ document.getElementById('hasMurmur').addEventListener('change', function() {
             <span class="checkmark"></span>
             Distension thoracique
         </label>
+		
+		<label class="custom-control checkbox" style="margin-right: 10px;">
+			<input type="checkbox" id="freinExpiratoire">
+			<span class="checkmark"></span>
+			Frein expiratoire
+		</label>
+
     </p>
 </div>
 			
@@ -8499,8 +8568,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="section-header">
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-group">
-				<button class="toggle-button" id="generateText">Générer Texte Type</button>
-				<button class="toggle-button" id="copyText">Copier dans le presse-papier</button>
+				<button class="toggle-button" id="generateTextExamClin">Générer exam. clin.</button>
+				<button class="toggle-button" id="generateTextETT">Générer ETT</button>
+
+				<button class="toggle-button" id="copyText">Copier texte</button>
 				<button class="toggle-button" id="emailText" style="background-color: #ffd700; color: white;">
 					<i class="fas fa-envelope"></i> Envoyer par mail
 				</button>
@@ -9524,6 +9595,19 @@ function resetExamenReaInputs() {
         }
     });
 	
+// Réinitialiser correctement l'inspection thoracique
+document.getElementById('normalInspection').checked = true;
+document.getElementById('inspectionDetails').style.display = 'none';
+
+// S'assurer que toutes les options d'inspection sont également réinitialisées
+document.querySelector('input[name="ampliation"][value="symetrique"]').checked = true;
+document.getElementById('ampliationSide').style.display = 'none';
+document.getElementById('hippocratisme').checked = false;
+document.getElementById('cyanose').checked = false;
+document.getElementById('distension').checked = false;
+document.getElementById('freinExpiratoire').checked = false;
+
+	
 	
 	// Réinitialisation des cathéters
     if (document.getElementById('noCatheters')) {
@@ -9602,6 +9686,7 @@ function resetExamenReaInputs() {
         '#deficitSensitifDetails', '#deficitMoteurDetails', '#syndromeMeningeDetails', 
         '#paralysie_faciale_details', '#deficitMSSDetails', '#deficitMISDetails', 
         '#msDetails', '#miDetails', '#pulseDetails', '.tvpDetails', 
+		 '#marbruresDetails',
         '#abnormalDetails', '#femoralDetails', '#carotidDetails', '#murmurDetails',
         '#dig6d1', '#dig6d2', '#dig6d3', '#dig7d1', '#dig7d2', '#dig7d3', '#dig7d4',
         '#dig8d1', '#dig8d2', '#resp4d1', '#resp4d2', '#resp4d3', '#resp4d4', '#resp4d5',
@@ -10118,12 +10203,16 @@ function validateVCIMesure() {
 
 
 
-document.getElementById('generateText').addEventListener('click', function() {
-    generateTextType();
+document.getElementById('generateTextExamClin').addEventListener('click', function() {
+    generateTextTypeExamClin();
+});
+
+document.getElementById('generateTextETT').addEventListener('click', function() {
+    generateTextTypeETT();
 });
 
 // Fonction principale pour générer le texte type final complet
-function generateTextType() {
+function generateTextTypeExamClin() {
     // Récupérer la zone de texte
     const textArea = document.getElementById('generatedTextArea');
     
@@ -10139,7 +10228,25 @@ function generateTextType() {
     textType += generateDigestiveSection();
     textType += generateNeurologicalSection();
     textType += generateAdditionalSection();
-        
+          
+    // Afficher le texte généré dans la zone de texte
+    textArea.innerHTML = textType;
+    
+    // Appliquer les animations
+    applyTextAnimations();
+}
+
+// Fonction principale pour générer le texte type final complet
+function generateTextTypeETT() {
+    // Récupérer la zone de texte
+    const textArea = document.getElementById('generatedTextArea');
+    
+    // Vider d'abord la zone de texte
+    textArea.innerHTML = '';
+    
+    // Générer la première partie: EXAMEN RÉANIMATION
+    let textType = ``;
+          
     // Générer la deuxième partie: ÉCHOGRAPHIE TRANSTHORACIQUE
     textType += generateEchocardiographySection();
     
@@ -10149,6 +10256,8 @@ function generateTextType() {
     // Appliquer les animations
     applyTextAnimations();
 }
+
+
 
 // Fonction pour générer la section d'échographie transthoracique
 function generateEchocardiographySection() {
@@ -10543,19 +10652,35 @@ let section = `<div class="text-line"><strong class="section-title">Sur le plan 
     // Ligne hémodynamique avec FC et PA
     let hemodynamicLine = `<div class="text-line">${hemodynStatus}`;
     
-    // Détails de l'instabilité hémodynamique si présente
-    if (document.getElementById('yescard4').checked) {
-        let instabilityDetails = [];
-        if (document.getElementById('oligurie').checked) instabilityDetails.push("oligurie");
-        if (document.getElementById('confusion').checked) instabilityDetails.push("confusion");
-        if (document.getElementById('marbrures').checked) instabilityDetails.push("marbrures");
-        if (document.getElementById('trc').checked) instabilityDetails.push("TRC > 3s");
-        if (document.getElementById('polypnee').checked) instabilityDetails.push("polypnée");
+// Détails de l'instabilité hémodynamique si présente
+if (document.getElementById('yescard4').checked) {
+    let instabilityDetails = [];
+    if (document.getElementById('oligurie').checked) instabilityDetails.push("oligurie");
+    if (document.getElementById('confusion').checked) instabilityDetails.push("confusion");
+    
+    // Modification pour les marbrures avec détails de localisation
+    if (document.getElementById('marbrures').checked) {
+        let marbruresLocalisations = [];
+        let marbruresText = "marbrures";
         
-        if (instabilityDetails.length > 0) {
-            hemodynamicLine += ` avec présence de signes de choc à type de : ${instabilityDetails.join(', ')}`;
+        if (document.getElementById('marbruresInferieures').checked) marbruresLocalisations.push("aux membres inférieurs");
+        if (document.getElementById('marbruresGeneralisees').checked) marbruresLocalisations.push("généralisées");
+        if (document.getElementById('marbruresAbdominales').checked) marbruresLocalisations.push("abdominales");
+        
+        if (marbruresLocalisations.length > 0) {
+            marbruresText += ` ${marbruresLocalisations.join(', ')}`;
         }
+        
+        instabilityDetails.push(marbruresText);
     }
+    
+    if (document.getElementById('trc').checked) instabilityDetails.push("TRC > 3s");
+    if (document.getElementById('polypnee').checked) instabilityDetails.push("polypnée");
+    
+    if (instabilityDetails.length > 0) {
+        hemodynamicLine += ` avec présence de signes de choc à type de : ${instabilityDetails.join(', ')}`;
+    }
+}
     
     // Ajouter FC et PA
     if (fc && fcStatus) {
@@ -10941,30 +11066,31 @@ let section = `<div class="text-line"><strong class="section-title">Sur le plan 
         section += `<div class="text-line">${secondLine}.</div>`;
     }
     
-    // Inspection thoracique
-    let inspectionText = "";
-    if (document.getElementById('abnormalInspection').checked) {
-        const ampliationType = document.querySelector('input[name="ampliation"]:checked').value;
-        if (ampliationType === "asymetrique") {
-            const side = document.querySelector('input[name="ampliationSideChoice"]:checked').value;
-            inspectionText += `Ampliation thoracique asymétrique à ${side}`;
-        } else {
-            inspectionText += "Ampliation thoracique symétrique";
-        }
-        
-        let thoraxSigns = [];
-        if (document.getElementById('hippocratisme').checked) thoraxSigns.push("d'un hippocratisme digital");
-        if (document.getElementById('cyanose').checked) thoraxSigns.push("d'une cyanose des extrémités");
-        if (document.getElementById('distension').checked) thoraxSigns.push("d'une distension thoracique");
-        
-        if (thoraxSigns.length > 0) {
-            inspectionText += `. Présence ${thoraxSigns.join(', ')}.`;
-        } else {
-            inspectionText += ".";
-        }
+// Inspection thoracique
+let inspectionText = "";
+if (document.getElementById('abnormalInspection').checked) {
+    const ampliationType = document.querySelector('input[name="ampliation"]:checked').value;
+    if (ampliationType === "asymetrique") {
+        const side = document.querySelector('input[name="ampliationSideChoice"]:checked').value;
+        inspectionText += `Ampliation thoracique asymétrique à ${side}`;
     } else {
-        inspectionText = "Ampliation thoracique symétrique. Pas d'hippocratisme digital ni de cyanose des extrémités.";
+        inspectionText += "Ampliation thoracique symétrique";
     }
+    
+    let thoraxSigns = [];
+    if (document.getElementById('hippocratisme').checked) thoraxSigns.push("d'un hippocratisme digital");
+    if (document.getElementById('cyanose').checked) thoraxSigns.push("d'une cyanose des extrémités");
+    if (document.getElementById('distension').checked) thoraxSigns.push("d'une distension thoracique");
+    if (document.getElementById('freinExpiratoire').checked) thoraxSigns.push("d'un frein expiratoire");
+    
+    if (thoraxSigns.length > 0) {
+        inspectionText += `. Présence ${thoraxSigns.join(', ')}.`;
+    } else {
+        inspectionText += ".";
+    }
+} else {
+    inspectionText = "Ampliation thoracique symétrique. Pas d'hippocratisme digital ni de cyanose des extrémités.";
+}
     
     section += `<div class="text-line">${inspectionText}</div>`;
     
@@ -11605,7 +11731,6 @@ function generateAdditionalSection() {
     
     section += `<div class="text-line">${daText}</div>`;
     
-    section += `<br>`;
 
     return section;
 }
@@ -11996,6 +12121,9 @@ document.getElementById('emailText').addEventListener('mouseout', function() {
     this.style.backgroundColor = 'rgb(255, 215, 0)';
     this.style.transform = 'translateY(0)';
 });
+
+
+
 
 
 </script>
@@ -12411,6 +12539,12 @@ document.getElementById('emailText').addEventListener('mouseout', function() {
         // Ajoute l'écouteur d'événement pour le clic sur le bouton
         themeSwitch.addEventListener('click', toggleTheme);
     });
+	
+	
+	
+
+
+
 </script>
 
 
