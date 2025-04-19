@@ -8574,12 +8574,12 @@ document.addEventListener('DOMContentLoaded', function() {
 				<button class="toggle-button" id="generateTextETT">Générer ETT</button>
 
 				<button class="toggle-button" id="copyText">Copier texte</button>
-				<button class="toggle-button" id="emailText" style="background-color: #ffd700; color: white;">
-					<i class="fas fa-envelope"></i> Mail
-				</button>
-				<button class="toggle-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
-					<i class="fas fa-file-pdf"></i> PDF
-				</button>
+<button class="toggle-button email-button" id="emailText" style="background-color: #ffd700; color: white;">
+  <i class="fas fa-envelope"></i> <span class="button-text-full">Envoyer par mail</span><span class="button-text-short">Mail</span>
+</button>
+<button class="toggle-button pdf-button" id="generatePdf" style="background: rgba(220, 38, 38, 0.8); color: white;">
+  <i class="fas fa-file-pdf"></i> <span class="button-text-full">Créer un PDF</span><span class="button-text-short">PDF</span>
+</button>
 			</div>
         </div>
         <div class="section-content">
@@ -8591,6 +8591,49 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+
+
+<style>
+/* Style pour les boutons responsifs */
+.email-button, .pdf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Sur grands écrans, on affiche le texte complet */
+.button-text-full {
+  display: inline;
+}
+.button-text-short {
+  display: none;
+}
+
+/* Sur petits écrans, on affiche le texte court */
+@media (max-width: 768px) {
+  .button-text-full {
+    display: none;
+  }
+  .button-text-short {
+    display: inline;
+  }
+  
+  /* Ajuster le padding pour les textes courts */
+  .email-button, .pdf-button {
+    padding: 8px 12px;
+  }
+}
+
+/* Style supplémentaire pour les petits écrans */
+@media (max-width: 480px) {
+  .toggle-button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+</style>
 
 
 <!-- Boîte de dialogue modale pour l'envoi d'e-mail -->
@@ -10393,18 +10436,30 @@ ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilat
     
     ettSection += `<div class="text-line">- ${fonctionDiastolique} (E/E' ${rapportEE} ; E ${ondeE} cm/s ; E' sept ${ondeESept} cm/s ; E' lat ${ondeELat} cm/s ; Volume OG ${volumeOG} mL/m²)</div>`;
     
-    // Profil mitral
-    const rapportEA = valueOrDash(document.getElementById('rapport_EA').value);
-    const tde = valueOrDash(document.getElementById('TDE').value);
+// Profil mitral
+const rapportEA = valueOrDash(document.getElementById('rapport_EA').value);
+const tde = valueOrDash(document.getElementById('TDE').value);
+
+// Récupérer l'interprétation du profil mitral et la simplifier
+let profilMitral = "Profil mitral non évalué";
+const interpretationProfilElem = document.getElementById('interpretation_profil_mitral');
+if (interpretationProfilElem && interpretationProfilElem.style.display !== 'none' && interpretationProfilElem.textContent) {
+    // Récupérer le texte complet
+    let texteComplet = interpretationProfilElem.textContent.replace('Conclusion: ', '');
     
-    // Récupérer l'interprétation du profil mitral
-    let profilMitral = "Profil mitral non évalué";
-    const interpretationProfilElem = document.getElementById('interpretation_profil_mitral');
-    if (interpretationProfilElem && interpretationProfilElem.style.display !== 'none' && interpretationProfilElem.textContent) {
-        profilMitral = interpretationProfilElem.textContent.replace('Conclusion: ', '');
+    // Simplifier le texte en gardant uniquement la partie "Profil mitral de Type X"
+    if (texteComplet.includes('Profil mitral de Type 1')) {
+        profilMitral = "Profil mitral de Type 1";
+    } else if (texteComplet.includes('Profil mitral de Type 2')) {
+        profilMitral = "Profil mitral de Type 2";
+    } else if (texteComplet.includes('Profil mitral de Type 3')) {
+        profilMitral = "Profil mitral de Type 3";
+    } else {
+        profilMitral = texteComplet;
     }
-    
-    ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE ${tde} ms)</div>`;
+}
+
+ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE ${tde} ms)</div>`;
     
     // Cinétique segmentaire
     const cinetiqueSegmentaire = document.querySelector('input[name="cinetique_segmentaire"]:checked').value;
