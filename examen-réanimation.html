@@ -3921,6 +3921,205 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span>/15</span>
             </div>
         </div>
+		
+		<!-- Option pour calculer le score de Liège -->
+<div class="liege-option" style="margin-top: 10px;">
+    <label class="custom-control checkbox">
+        <input type="checkbox" id="calculate-liege" onchange="toggleLiegeScore()">
+        <span class="checkmark"></span>
+        Calculer le score de Liège
+    </label>
+</div>
+
+<!-- Sélecteur du score de Liège - masqué par défaut -->
+<div id="liege-score-section" style="display: none; margin-top: 10px; margin-left: 20px; margin-bottom: 10px">
+    <label style="display: inline-block; width: 130px;"><strong>Score de Liège</strong></label>
+    <select id="liege-score" onchange="updateLiegeTotal()">
+        <option value="0">0 - Aucun</option>
+        <option value="1">1 - Réflexe oculo-cardiaque</option>
+        <option value="2">2 - Réflexe oculo-céphalogyre horizontal</option>
+        <option value="3">3 - Réflexe photomoteur</option>
+        <option value="4">4 - Réflexe oculo-céphalogyre vertical</option>
+        <option value="5" selected>5 - Réflexe fronto-orbiculaire</option>
+    </select>
+    <div class="liege-explainer" style="margin-top: 5px; font-size: 0.9rem; color: #64748b; font-style: italic;">
+        Le score sélectionné représente le niveau le plus élevé des réflexes du tronc cérébral
+    </div>
+	    <span><strong>Score total Glasgow-Liège</strong></span>
+    <input type="text" id="glasgow-liege-total" readonly value="20" 
+        style="width: 50px; background-color: #f0f0f0; text-align: center; font-weight: bold;">
+    <span>/20</span>
+</div>
+
+<style>
+/* Styles pour le score de Liège */
+.liege-option {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+#liege-score-section {
+    background-color: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #3b82f6;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+#liege-score {
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 0.9rem;
+    min-width: 250px;
+    transition: all 0.2s ease;
+}
+
+#liege-score:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+#liege-score:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.liege-explainer {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+#glasgow-liege-total-section {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f0f9ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+#glasgow-liege-total {
+    width: 50px;
+    background-color: #f0f0f0;
+    text-align: center;
+    font-weight: bold;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* Mode sombre pour le score de Liège */
+[data-theme="dark"] #liege-score-section {
+    background-color: #0f172a;
+    border-left: 3px solid #3b82f6;
+}
+
+[data-theme="dark"] #liege-score {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+[data-theme="dark"] #glasgow-liege-total-section {
+    background-color: #0f172a;
+}
+
+[data-theme="dark"] .liege-explainer {
+    color: #94a3b8;
+}
+
+</style>
+
+<script>
+
+// Fonction pour afficher/masquer la section du score de Liège
+function toggleLiegeScore() {
+    const calculateLiege = document.getElementById('calculate-liege').checked;
+    const liegeScoreSection = document.getElementById('liege-score-section');
+    const glasgowLiegeTotalSection = document.getElementById('glasgow-liege-total-section');
+    
+    if (calculateLiege) {
+        liegeScoreSection.style.display = 'block';
+        glasgowLiegeTotalSection.style.display = 'block';
+        updateLiegeTotal();
+    } else {
+        liegeScoreSection.style.display = 'none';
+        glasgowLiegeTotalSection.style.display = 'none';
+    }
+}
+
+// Fonction pour mettre à jour le score total de Glasgow-Liège
+function updateLiegeTotal() {
+    // Récupérer les scores de Glasgow
+    const yeux = parseInt(document.getElementById('yeux-score').value) || 4;
+    const verbal = parseInt(document.getElementById('verbal-score').value) || 5;
+    const moteur = parseInt(document.getElementById('moteur-score').value) || 6;
+    const glasgowTotal = yeux + verbal + moteur;
+    
+    // Récupérer le score de Liège
+    const liegeScore = parseInt(document.getElementById('liege-score').value) || 5;
+    
+    // Calculer le score total de Glasgow-Liège
+    const totalScore = glasgowTotal + liegeScore;
+    
+    // Mettre à jour l'affichage
+    document.getElementById('glasgow-liege-total').value = totalScore;
+    
+    // Appliquer une couleur selon le score
+    const glasgowLiegeInput = document.getElementById('glasgow-liege-total');
+    
+    if (totalScore >= 18) {
+        glasgowLiegeInput.style.backgroundColor = '#dcfce7'; // Vert clair
+        glasgowLiegeInput.style.color = '#166534'; // Vert foncé
+    } else if (totalScore >= 13) {
+        glasgowLiegeInput.style.backgroundColor = '#fef9c3'; // Jaune clair
+        glasgowLiegeInput.style.color = '#854d0e'; // Brun
+    } else {
+        glasgowLiegeInput.style.backgroundColor = '#fee2e2'; // Rouge clair
+        glasgowLiegeInput.style.color = '#b91c1c'; // Rouge foncé
+    }
+}
+
+
+
+// Modifier la fonction de réinitialisation des entrées d'examen pour inclure le score de Liège
+const originalResetExamenReaInputs = window.resetExamenReaInputs || function() {};
+window.resetExamenReaInputs = function() {
+    // Appeler la fonction originale
+    originalResetExamenReaInputs.apply(this, arguments);
+    
+    // Réinitialiser les éléments du score de Liège
+    const calculateLiege = document.getElementById('calculate-liege');
+    if (calculateLiege) {
+        calculateLiege.checked = false;
+        toggleLiegeScore();
+    }
+    
+    // Remettre le score de Liège à 5 par défaut
+    const liegeScore = document.getElementById('liege-score');
+    if (liegeScore) {
+        liegeScore.value = '5';
+    }
+    
+    // Réinitialiser le score total de Glasgow-Liège à 20
+    const glasgowLiegeTotal = document.getElementById('glasgow-liege-total');
+    if (glasgowLiegeTotal) {
+        glasgowLiegeTotal.value = '20';
+    }
+};
+
+</script>
         
         <!-- État de sédation -->
         <div style="margin-bottom: 15px;">
@@ -3937,14 +4136,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </label>
             </div>
             
-            <!-- Score antérieur (visible uniquement si patient sédaté) -->
-            <div id="sedation-field" style="display: none; margin-left: 25px;">
-                <label style="display: inline-block; min-width: 200px;">
-                   Score de Glasgow antérieur à la sédation :
-                </label>
-                <input type="number" id="glasgow-anterieur" min="3" max="15" value="15" style="width: 30px;">
-                <span>/15</span>
-            </div>
+<!-- Score antérieur (visible uniquement si patient sédaté) -->
+<div id="sedation-field" style="display: none; margin-left: 15px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label style="min-width: 200px;">Score Glasgow avant sédation :</label>
+        <input type="number" id="glasgow-anterieur" min="3" max="15" value="15" 
+               style="width: 50px; background-color: white; text-align: center; font-weight: bold; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <span>/15</span>
+    </div>
+</div>
         </div>
 
 		
@@ -5284,6 +5484,11 @@ function updateGlasgowTotal() {
     } else {
         glasgowInput.style.backgroundColor = '#fee2e2'; // Rouge clair
         glasgowInput.style.color = '#b91c1c'; // Rouge foncé
+    }
+    
+    // Mettre à jour également le score de Glasgow-Liège si activé
+    if (document.getElementById('calculate-liege') && document.getElementById('calculate-liege').checked) {
+        updateLiegeTotal();
     }
 }
 
@@ -11366,24 +11571,39 @@ let section = `<div class="text-line"><strong class="section-title">Sur le plan 
     const moteur = document.getElementById('moteur-score').value || "6";
     const patientSedate = document.getElementById('sedate').checked;
     
-    // Conscience et Glasgow
-    let glasgowText = "";
+// Conscience et Glasgow
+let glasgowText = "";
+const calculateLiege = document.getElementById('calculate-liege').checked;
+const liegeScore = document.getElementById('liege-score').value || "5";
+
+if (calculateLiege) {
+    // Version avec score de Liège
+    const glasgowLiegeTotal = document.getElementById('glasgow-liege-total').value || "20";
+    
+    if (parseInt(glasgow) < 15) {
+        glasgowText = `Trouble de la conscience avec score de Glasgow-Liège à ${glasgowLiegeTotal}/20 (Y${yeux} V${verbal} M${moteur} Liège ${liegeScore})`;
+    } else {
+        glasgowText = `Patient conscient, score de Glasgow-Liège à ${glasgowLiegeTotal}/20 (Y${yeux} V${verbal} M${moteur} Liège ${liegeScore})`;
+    }
+} else {
+    // Version standard sans score de Liège
     if (parseInt(glasgow) < 15) {
         glasgowText = `Trouble de la conscience avec score de Glasgow à ${glasgow}/15 (Y${yeux} V${verbal} M${moteur})`;
     } else {
         glasgowText = `Patient conscient, score de Glasgow à ${glasgow}/15 (Y${yeux} V${verbal} M${moteur})`;
     }
-    
-    if (patientSedate) {
-        const glasgowAnterieur = document.getElementById('glasgow-anterieur').value;
-        if (glasgowAnterieur) {
-            glasgowText += ` sous sédation (score antérieur à la sédation : ${glasgowAnterieur}/15)`;
-        } else {
-            glasgowText += " sous sédation";
-        }
+}
+
+if (patientSedate) {
+    const glasgowAnterieur = document.getElementById('glasgow-anterieur').value;
+    if (glasgowAnterieur) {
+        glasgowText += ` sous sédation (score avant sédation : ${glasgowAnterieur}/15)`;
     } else {
-        glasgowText += " sans sédation";
+        glasgowText += " sous sédation";
     }
+} else {
+    glasgowText += " sans sédation";
+}
     
     section += `<div class="text-line">${glasgowText}.</div>`;
     
