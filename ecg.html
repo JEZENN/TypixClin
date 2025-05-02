@@ -3131,7 +3131,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3><span class="icon">✍️</span>Texte type final</h3>
             <div class="button-container">
                 <button class="toggle-button" id="generateECGText">Générer Texte Type</button>
-                <button class="toggle-button" id="copyECGText">Copier dans le presse-papier</button>
+				<button class="toggle-button" id="copyECGText">
+					<i class="fas fa-clipboard"></i> Copier dans le presse-papier
+				</button>
             </div>
         </div>
                <div class="section-content">
@@ -3145,8 +3147,87 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 
+<style>
+
+/* Animation pour l'icône du bouton copier */
+@keyframes clipboard-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+#copyECGText.copying i {
+    animation: clipboard-pulse 0.6s ease;
+    color: #4ade80; /* Couleur verte pendant l'animation */
+}
+
+/* Ajout de style pour le mode sombre */
+[data-theme="dark"] #copyECGText.copying i {
+    color: #a3e635; /* Couleur vert clair pour le mode sombre */
+}
+
+
+</style>
+
 
 <script>
+
+document.getElementById('copyECGText')?.addEventListener('click', function() {
+    const textArea = document.getElementById('ECG_generatedTextArea');
+    if (textArea) {
+        navigator.clipboard.writeText(textArea.textContent)
+            .then(() => {
+                // Ajouter la classe pour l'animation
+                this.classList.add('copying');
+                
+                // Créer un élément pour la notification de copie
+                const notification = document.createElement('div');
+                notification.textContent = 'Texte copié !';
+                notification.style.position = 'fixed';
+                notification.style.right = '20px';
+                notification.style.bottom = '100px';
+                notification.style.padding = '10px 20px';
+                notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '5px';
+                notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                notification.style.zIndex = '1000';
+                notification.style.fontWeight = '500';
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                notification.style.transform = 'translateY(20px)';
+                
+                // Ajuster pour le mode sombre
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+                }
+                
+                // Ajouter au DOM
+                document.body.appendChild(notification);
+                
+                // Animation d'apparition
+                setTimeout(() => {
+                    notification.style.opacity = '1';
+                    notification.style.transform = 'translateY(0)';
+                }, 10);
+                
+                // Retirer la classe et la notification après l'animation
+                setTimeout(() => {
+                    this.classList.remove('copying');
+                    
+                    // Faire disparaître la notification
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateY(-20px)';
+                    
+                    // Supprimer du DOM après la disparition
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 1500);
+            });
+    }
+});
+
 
 document.addEventListener('DOMContentLoaded', function() {
     const styleSheet = document.createElement('style');
@@ -3320,10 +3401,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('copyECGText')?.addEventListener('click', () => {
         const textArea = document.getElementById('ECG_generatedTextArea');
-        if (textArea) {
-            navigator.clipboard.writeText(textArea.textContent)
-                .then(() => alert('Texte copié dans le presse-papier.'));
-        }
+  //      if (textArea) {
+   //         navigator.clipboard.writeText(textArea.textContent)
+      //          .then(() => alert('Texte copié dans le presse-papier.'));
+     //   }
     });
 });
 
@@ -3414,6 +3495,74 @@ function resetECGSection(button) {
 }
 		
 
+// Ajouter les icônes aux boutons de réinitialisation
+document.addEventListener('DOMContentLoaded', function() {
+  // Trouver tous les boutons de réinitialisation
+  const resetButtons = document.querySelectorAll('.toggle-button[onclick*="reset"]');
+  
+  // Ajouter l'icône Font Awesome à chaque bouton
+  resetButtons.forEach(button => {
+    if (button.textContent.trim() === 'Réinitialiser') {
+      button.innerHTML = '<i class="fas fa-sync-alt"></i> Réinitialiser';
+    }
+  });
+  
+  // Intercepter les clics sur les boutons de réinitialisation pour ajouter l'animation
+  resetButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const icon = this.querySelector('.fa-sync-alt');
+      if (icon) {
+        icon.classList.add('spinning');
+        setTimeout(() => {
+          icon.classList.remove('spinning');
+        }, 800);
+      }
+      
+      // Créer un élément pour la notification de réinitialisation
+      const notification = document.createElement('div');
+      notification.textContent = 'Réinitialisation effectuée !';
+      notification.style.position = 'fixed';
+      notification.style.right = '20px';
+      notification.style.bottom = '100px';
+      notification.style.padding = '10px 20px';
+      notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+      notification.style.color = 'white';
+      notification.style.borderRadius = '5px';
+      notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+      notification.style.zIndex = '1000';
+      notification.style.fontWeight = '500';
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      notification.style.transform = 'translateY(20px)';
+      
+      // Ajuster pour le mode sombre
+      if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+      }
+      
+      // Ajouter au DOM
+      document.body.appendChild(notification);
+      
+      // Animation d'apparition
+      setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateY(0)';
+      }, 10);
+      
+      // Retirer la notification après l'animation
+      setTimeout(() => {
+        // Faire disparaître la notification
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+        
+        // Supprimer du DOM après la disparition
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 1500);
+    });
+  });
+});
 	
 
 // Fonction pour basculer la visibilité d'une section
@@ -3423,10 +3572,35 @@ function toggleSection(button) {
     const isHidden = !content.classList.contains('hidden');
     
     content.classList.toggle('hidden');
-    button.textContent = isHidden ? 'Afficher' : 'Masquer';
+    
+    // Mise à jour du texte et de l'icône du bouton
+    if (isHidden) {
+        button.innerHTML = '<i class="fas fa-eye"></i> Afficher';
+    } else {
+        button.innerHTML = '<i class="fas fa-eye-slash"></i> Masquer';
+    }
     
     section.setAttribute('data-hidden', isHidden);
+    
+    // Ajout d'une classe pour animer l'icône lors du changement
+    button.classList.add('icon-transition');
+    setTimeout(() => {
+        button.classList.remove('icon-transition');
+    }, 300);
 }
+
+// Initialiser les boutons au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButtons = document.querySelectorAll('.toggle-button:not(.ficheECG):not([onclick*="reset"])');
+    
+    toggleButtons.forEach(button => {
+        if (button.textContent.trim() === 'Masquer') {
+            button.innerHTML = '<i class="fas fa-eye-slash"></i> Masquer';
+        } else if (button.textContent.trim() === 'Afficher') {
+            button.innerHTML = '<i class="fas fa-eye"></i> Afficher';
+        }
+    });
+});
 
 
 		</script>
@@ -3436,6 +3610,15 @@ function toggleSection(button) {
 			
 <STYLE>
 
+/* Animation pour l'icône de réinitialisation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 0.8s ease-in-out;
+}
 
         footer {
             margin-top: auto;
