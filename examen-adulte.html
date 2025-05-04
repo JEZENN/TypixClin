@@ -3240,20 +3240,112 @@ function getInterrogatoireDescription() {
 				
 				
 				<script>
-					document.getElementById('taille').addEventListener('input', calculateIMC);
-					document.getElementById('poids').addEventListener('input', calculateIMC);
+document.getElementById('taille').addEventListener('input', calculateIMC);
+document.getElementById('poids').addEventListener('input', calculateIMC);
 
-					function calculateIMC() {
-						const tailleval = parseFloat(document.getElementById('taille').value) || 0;
-						const poidsval = parseFloat(document.getElementById('poids').value) || 0;
-						
-						if (tailleval > 0) { // Vérifie que la taille est valide pour éviter la division par 0
-							const IMCval = (poidsval / ((tailleval/100) * (tailleval/100))).toFixed(1);
-							document.getElementById('IMC').value = IMCval;
-						} else {
-							document.getElementById('IMC').value = ''; // Remet à zéro si la taille est invalide
-						}
-					}
+
+// Fonction pour supprimer complètement l'élément de statut IMC
+function removeIMCStatus() {
+    const statusElement = document.getElementById('imc-status');
+    if (statusElement && statusElement.parentNode) {
+        statusElement.parentNode.removeChild(statusElement);
+    }
+}
+
+function calculateIMC() {
+    const tailleval = parseFloat(document.getElementById('taille').value) || 0;
+    const poidsval = parseFloat(document.getElementById('poids').value) || 0;
+    
+    if (tailleval > 0) { // Vérifie que la taille est valide pour éviter la division par 0
+        const IMCval = (poidsval / ((tailleval/100) * (tailleval/100))).toFixed(1);
+        document.getElementById('IMC').value = IMCval;
+        
+        // Afficher le statut IMC
+        showIMCStatus(IMCval);
+    } else {
+        document.getElementById('IMC').value = ''; // Remet à zéro si la taille est invalide
+        // Cacher le statut IMC
+        hideIMCStatus();
+    }
+}
+
+function showIMCStatus(imc) {
+    // Créer ou récupérer l'élément de statut
+    let statusElement = document.getElementById('imc-status');
+    if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'imc-status';
+        
+        // Insérer après le champ IMC
+        const imcField = document.getElementById('IMC');
+        imcField.parentNode.insertAdjacentElement('afterend', statusElement);
+    }
+    
+    // Déterminer le statut en fonction de l'IMC
+    let status, color;
+    
+    if (imc < 18.5) {
+        status = "MAIGREUR";
+        color = "#3b82f6"; // bleu
+    } else if (imc >= 18.5 && imc < 25) {
+        status = "NORMAL";
+        color = "#22c55e"; // vert
+    } else if (imc >= 25 && imc < 30) {
+        status = "SURPOIDS";
+        color = "#f59e0b"; // orange
+    } else if (imc >= 30 && imc < 35) {
+        status = "OBÉSITÉ I";
+        color = "#ef4444"; // rouge
+    } else if (imc >= 35 && imc < 40) {
+        status = "OBÉSITÉ II";
+        color = "#dc2626"; // rouge plus foncé
+    } else {
+        status = "OBÉSITÉ III";
+        color = "#b91c1c"; // rouge très foncé
+    }
+    
+    // Styles pour l'élément de statut
+    statusElement.style.display = "inline-block";
+    statusElement.style.marginLeft = "10px";
+    statusElement.style.padding = "4px 8px";
+    statusElement.style.borderRadius = "4px";
+    statusElement.style.fontWeight = "bold";
+    statusElement.style.fontSize = "0.85rem";
+    statusElement.style.color = "white";
+    statusElement.style.backgroundColor = color;
+    statusElement.textContent = status;
+    
+    // S'adapter aux écrans mobiles
+    adjustStatusPosition();
+    
+    // Ajouter un écouteur de redimensionnement pour ajuster la position
+    window.addEventListener('resize', adjustStatusPosition);
+}
+
+function hideIMCStatus() {
+    const statusElement = document.getElementById('imc-status');
+    if (statusElement) {
+        statusElement.style.display = "none";
+    }
+}
+
+function adjustStatusPosition() {
+    const statusElement = document.getElementById('imc-status');
+    if (!statusElement) return;
+    
+    // Si l'écran est petit (< 768px), placer en dessous
+    if (window.innerWidth < 768) {
+        statusElement.style.display = "block";
+        statusElement.style.marginLeft = "0";
+        statusElement.style.marginTop = "5px";
+        statusElement.style.width = "fit-content";
+    } else {
+        // Sur grand écran, placer à droite
+        statusElement.style.display = "inline-block";
+        statusElement.style.marginLeft = "10px";
+        statusElement.style.marginTop = "0";
+    }
+}
 				</script>
 				</div>
 				
@@ -8703,6 +8795,63 @@ document.querySelectorAll('input[name="skinLesions"]').forEach(radio => {
     }
 }
 	
+	
+	
+/* Animation de grossissement-réduction pour l'icône */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+
+
+/* Styles pour le mode sombre */
+[data-theme="dark"] .notification {
+  background-color: rgba(59, 130, 246, 0.9) !important;
+}
+
+
+/* Assurer que l'icône est correctement alignée pour le bouton IA */
+#generateConclusionIA i {
+  margin-right: 8px;
+}
+
+/* Animation de grossissement-réduction pour l'icône (si l'animation iconPulse n'existe pas déjà) */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+
+/* Assurer que l'icône est correctement alignée pour le bouton copier */
+#copyText i, #generateText i {
+  margin-right: 8px;
+}
+
+/* Animation de grossissement-réduction pour l'icône (si l'animation iconPulse n'existe pas déjà) */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
 	</style>
 	
 	
@@ -8711,10 +8860,260 @@ document.querySelectorAll('input[name="skinLesions"]').forEach(radio => {
  </div>	
 </div>
 
-
-
 	
 <script>
+
+
+// Animation de l'icône et notification pour le bouton générer conclusion IA
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const iaConclusionButton = document.getElementById('generateConclusionIA');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (iaConclusionButton) {
+    iaConclusionButton.innerHTML = '<i class="fas fa-brain"></i> Générer une conclusion';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton générer conclusion IA
+  if (iaConclusionButton) {
+    iaConclusionButton.addEventListener('click', function(e) {
+      animateIcon(this);
+      showNotification('Analyse IA en cours...');
+    });
+  }
+});
+
+
+// Animation de l'icône et notification pour le bouton copier
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const copyButton = document.getElementById('copyText');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (copyButton) {
+    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copier dans le presse-papier';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateCopyIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton copier
+  if (copyButton) {
+    // Sauvegarder le gestionnaire de clic existant
+    const originalClick = copyButton.onclick;
+    
+    // Créer un nouveau gestionnaire qui exécute l'animation et la fonction originale
+    copyButton.onclick = function(e) {
+      animateCopyIcon(this);
+      showNotification('Texte copié !');
+      
+      // Exécuter la fonction originale si elle existe
+      if (typeof originalClick === 'function') {
+        originalClick.call(this, e);
+      }
+    };
+  }
+});
+
+
+
+
+
+// Animation de l'icône et notification pour le bouton générer texte type
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const generateButton = document.getElementById('generateText');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (generateButton) {
+    generateButton.innerHTML = '<i class="fas fa-file-medical"></i> Générer Texte Type';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton générer texte type
+  if (generateButton) {
+    generateButton.addEventListener('click', function(e) {
+      animateIcon(this);
+      showNotification('Texte type généré');
+    });
+  }
+});
 
 
 
@@ -10983,7 +11382,7 @@ function resetSection(button) {
     const constantFields = ['taille', 'poids', 'IMC', 'FreqResp', 'saturation', 'FreqCard', 
                           'pas', 'pad', 'map', 'Y/4', 'V/5', 'M/6', 'GSG/15', 'litres', 'ageCalculeAdulte'];
 
-
+removeIMCStatus();
 
     // 1. Réinitialiser la date de naissance et l'âge pour l'interrogatoire
     const dateNaissance = sectionContent.querySelector('#dateNaissanceAdulte');
@@ -11022,6 +11421,8 @@ function resetSection(button) {
         const textarea = sectionContent.querySelector(`#${fieldId}`);
         if (textarea) textarea.value = '';
     });
+
+
 
     // 4. Réinitialiser les boutons radio de latéralité
     const lateraliteRadios = sectionContent.querySelectorAll('input[name="lateralite"]');
@@ -11189,6 +11590,7 @@ function resetSection(button) {
 }
 
 
+
 // Ajoutez ce nouveau code:
 document.addEventListener('DOMContentLoaded', function() {
     // Initialisation des gestionnaires de dyspnée et du score mMRC
@@ -11248,7 +11650,6 @@ document.getElementById('copyText').addEventListener('click', function() {
         // Exécute la commande de copie
         try {
             document.execCommand('copy');
-            alert('Texte copié dans le presse-papier.');
         } catch (err) {
             alert('Une erreur est survenue lors de la copie.');
         }

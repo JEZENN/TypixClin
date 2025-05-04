@@ -6851,6 +6851,27 @@ function getAdenopathyDescription() {
     width: 100%;
     box-sizing: border-box;
 }
+
+/* Assurer que l'icône est correctement alignée pour les boutons */
+#copyText i, #generateText i {
+  margin-right: 8px;
+}
+
+/* Animation de grossissement-réduction pour l'icône */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+
+
+
 </style>
 
 					</div>
@@ -6892,6 +6913,171 @@ function getAdenopathyDescription() {
 </div>
 
 <script>
+
+// Animation de l'icône et notification pour le bouton génération texte type
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const generateButton = document.getElementById('generateText');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (generateButton) {
+    generateButton.innerHTML = '<i class="fas fa-file-alt"></i> Générer Texte Type';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton génération
+  if (generateButton) {
+    // Ajouter notre gestionnaire avant le gestionnaire existant
+    generateButton.addEventListener('click', function(e) {
+      // e.stopImmediatePropagation(); // Empêche l'exécution des autres listeners pour cet événement
+      animateIcon(this);
+      showNotification('Texte type généré');
+    }, true); // Utiliser capture phase pour exécuter en premier
+  }
+});
+
+
+
+// Animation de l'icône et notification pour le bouton copier
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const copyButton = document.getElementById('copyText');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (copyButton) {
+    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copier dans le presse-papier';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateCopyIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton copier
+  if (copyButton) {
+    // Ajouter notre gestionnaire avant le gestionnaire existant
+    copyButton.addEventListener('click', function(e) {
+      animateCopyIcon(this);
+      showNotification('Texte copié !');
+    }, true); // Utiliser capture phase pour exécuter en premier
+  }
+});
+
+
 // Fonction pour basculer la visibilité d'une section
 function toggleSection(button) {
     const section = button.closest('.section');
@@ -8549,8 +8735,7 @@ document.getElementById('copyText')?.addEventListener('click', () => {
     const textArea = document.getElementById('generatedTextArea');
     if (textArea) {
         const textContent = textArea.innerText.replace(/\n+/g, '\n');
-        navigator.clipboard.writeText(textContent)
-            .then(() => alert('Texte copié dans le presse-papier.'));
+        
     }
 });
 

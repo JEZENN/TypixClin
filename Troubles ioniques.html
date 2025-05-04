@@ -3336,6 +3336,9 @@ function analyzeTHECa() {
                 <strong>Signes ECG</strong>
                 <ul>
                     <li>Allongement du QT</li>
+					<li>BAV, fibrillation ventriculaire</li>
+                    <li>Troubles de l’excitabilité ou de la conduction cardiaque</li>
+
                 </ul>
             </div>`;
     } else if (calciumCorrige > 2.6) {
@@ -5021,10 +5024,123 @@ function analyzeTHEIRA() {
 	
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter les icônes Font Awesome aux boutons de conclusion
+  const generateConclusionButton = document.querySelector('button[onclick="generateTHEConclusion()"]');
+  const copyConclusionButton = document.querySelector('button[onclick="copyToClipboard()"]');
+  
+  // Vérifier si les boutons existent avant de les modifier
+  if (generateConclusionButton) {
+    generateConclusionButton.innerHTML = '<i class="fas fa-file-medical"></i> Générer une conclusion';
+  }
+  
+  if (copyConclusionButton) {
+    copyConclusionButton.innerHTML = '<i class="fas fa-copy"></i> Copier la conclusion';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showConclusionNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    // Ajouter au DOM
+    document.body.appendChild(notification);
+    
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône
+  function animateConclusionIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Modifier le comportement du bouton Générer
+  if (generateConclusionButton) {
+    generateConclusionButton.addEventListener('click', function(e) {
+      animateConclusionIcon(this);
+      showConclusionNotification('Conclusion générée !');
+    }, true);
+  }
+  
+  // Modifier le comportement du bouton Copier
+  if (copyConclusionButton) {
+    copyConclusionButton.addEventListener('click', function(e) {
+      animateConclusionIcon(this);
+      showConclusionNotification('Conclusion copiée !');
+    }, true);
+  }
+});
+
+
 </script>
 
 
 <style>
+
+
+/* Animation de grossissement-réduction pour les icônes */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* Assurer que l'icône est correctement alignée pour les boutons */
+button i {
+  margin-right: 8px;
+}
+
+
+
 .value-calculation {
     background: #f8fafc;
     padding: 0.5rem 0.75rem;
@@ -5645,10 +5761,118 @@ function copyToClipboard() {
         const textContent = textArea.innerText.replace(/\n+/g, '\n');
         
         navigator.clipboard.writeText(textContent)
-            .then(() => alert('Texte copié dans le presse-papier'))
             .catch(err => console.error('Erreur lors de la copie:', err));
     }
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter la même icône et animation à tous les boutons d'analyse
+  const analyzeButtons = [
+    {
+      onclick: 'analyzeTHENa()',
+      text: 'Analyser'
+    },
+    {
+      onclick: 'analyzeTHEK()',
+      text: 'Analyser'
+    },
+    {
+      onclick: 'analyzeTHECa()',
+      text: 'Analyser'
+    },
+    {
+      onclick: 'analyzeIRA()',
+      text: 'Analyser'
+    }
+  ];
+  
+  // Ajouter la même icône (fa-microscope) à tous les boutons d'analyse
+  analyzeButtons.forEach(btn => {
+    const button = document.querySelector(`button[onclick="${btn.onclick}"]`);
+    if (button) {
+      button.innerHTML = `<i class="fas fa-microscope"></i> ${btn.text}`;
+    }
+  });
+  
+  // Fonction pour créer et afficher la notification
+  function showAnalysisNotification(message) {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
+    
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône
+  function animateAnalysisIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      icon.classList.add('icon-pulse');
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Ajouter les écouteurs d'événements pour chaque bouton d'analyse
+  analyzeButtons.forEach(btn => {
+    const button = document.querySelector(`button[onclick="${btn.onclick}"]`);
+    if (button) {
+      button.addEventListener('click', function(e) {
+        animateAnalysisIcon(this);
+        
+        let notificationMessage = '';
+        switch(btn.onclick) {
+          case 'analyzeTHENa()':
+            notificationMessage = 'Analyse de la natrémie en cours...';
+            break;
+          case 'analyzeTHEK()':
+            notificationMessage = 'Analyse de la kaliémie en cours...';
+            break;
+          case 'analyzeTHECa()':
+            notificationMessage = 'Analyse de la calcémie en cours...';
+            break;
+          case 'analyzeIRA()':
+            notificationMessage = 'Analyse de l\'IRA en cours...';
+            break;
+        }
+        
+        showAnalysisNotification(notificationMessage);
+      }, true);
+    }
+  });
+});
 
 
 
@@ -5656,6 +5880,26 @@ function copyToClipboard() {
 
 
 <style>
+
+/* Animation de grossissement-réduction pour les icônes */
+.icon-pulse {
+  animation: iconPulse 0.5s ease-in-out;
+  display: inline-block;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* Assurer que l'icône est correctement alignée pour les boutons */
+button i {
+  margin-right: 8px;
+  transition: transform 0.3s ease;
+}
+
+
 input[type="number"] {
    background-color: white;
    color: #1e293b;
