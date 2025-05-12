@@ -7015,8 +7015,13 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
         <div class="section-content">
+		
+
             <!-- Caractéristiques du patient -->
             <div class="subsection">
+					                <h4>Conditions d'examen</h4>
+
+
                 <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label style="min-width: 60px;"><strong>Sexe :</strong></label>
@@ -7115,8 +7120,164 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 	
 	
+<!-- Options de ventilation -->
+<div style="margin-top: 15px; margin-bottom: 15px; display: flex; align-items: center;">
+    <p style="margin: 0; margin-right: 15px;"><strong>Ventilation :</strong></p>
+    <div style="display: flex; align-items: center;">
+        <label class="custom-control radio" style="margin-right: 15px;">
+            <input type="radio" name="ventilation_ett" id="ventSpont_ett" checked>
+            <span class="checkmark"></span>
+            Spontanée
+        </label>
+        <label class="custom-control radio" style="margin-right: 15px;">
+            <input type="radio" name="ventilation_ett" id="ventNI_ett">
+            <span class="checkmark"></span>
+            Non invasive
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="ventilation_ett" id="ventInv_ett">
+            <span class="checkmark"></span>
+            Invasive
+        </label>
+    </div>
+</div>
+<!-- Options d'amines -->
+<div style="margin-top: 15px; margin-bottom: 15px;">
+    <div style="display: flex; align-items: center;">
+        <p style="margin: 0; margin-right: 15px;"><strong>Amines :</strong></p>
+        <div style="display: flex; align-items: center;">
+            <label class="custom-control radio" style="margin-right: 15px;">
+                <input type="radio" name="amines_ett" id="noAmines_ett" checked>
+                <span class="checkmark"></span>
+                Pas d'amine
+            </label>
+            <label class="custom-control radio">
+                <input type="radio" name="amines_ett" id="yesAmines_ett">
+                <span class="checkmark"></span>
+                Amines
+            </label>
+        </div>
+    </div>
+    
+    <!-- Section détails amines - masquée par défaut -->
+    <div id="amines_details_ett" style="display: none; margin-left: 40px; margin-top: 10px; padding-left: 10px; border-left: 2px solid #3b82f6;">
+        <div style="margin-bottom: 8px;">
+            <label class="custom-control checkbox" style="margin-right: 15px;">
+                <input type="checkbox" id="noradrenaline_ett">
+                <span class="checkmark"></span>
+                Noradrénaline
+            </label>
+            <input type="text" id="noradrenaline_dose_ett" placeholder="Posologie (mg/h)" style="display: none; margin-left: 10px; width: 150px;">
+        </div>
+        <div style="margin-bottom: 8px;">
+            <label class="custom-control checkbox" style="margin-right: 15px;">
+                <input type="checkbox" id="dobutamine_ett">
+                <span class="checkmark"></span>
+                Dobutamine
+            </label>
+            <input type="text" id="dobutamine_dose_ett" placeholder="Posologie (µg/kg/min)" style="display: none; margin-left: 10px; width: 150px;">
+        </div>
+    </div>
+</div>
+
 		
             </div>
+			
+			<script>
+			
+			// Gestion des options d'amines dans la partie ETT
+document.addEventListener('DOMContentLoaded', function() {
+    // Afficher/masquer les détails des amines
+    const yesAmines = document.getElementById('yesAmines_ett');
+    const noAmines = document.getElementById('noAmines_ett');
+    const aminesDetails = document.getElementById('amines_details_ett');
+    
+    if (yesAmines && noAmines && aminesDetails) {
+        yesAmines.addEventListener('change', function() {
+            if (this.checked) {
+                aminesDetails.style.display = 'block';
+            }
+        });
+        
+        noAmines.addEventListener('change', function() {
+            if (this.checked) {
+                aminesDetails.style.display = 'none';
+                // Réinitialiser les checkboxes
+                document.getElementById('noradrenaline_ett').checked = false;
+                document.getElementById('dobutamine_ett').checked = false;
+                // Masquer et réinitialiser les champs de posologie
+                document.getElementById('noradrenaline_dose_ett').style.display = 'none';
+                document.getElementById('noradrenaline_dose_ett').value = '';
+                document.getElementById('dobutamine_dose_ett').style.display = 'none';
+                document.getElementById('dobutamine_dose_ett').value = '';
+            }
+        });
+    }
+    
+    // Afficher/masquer les champs de posologie pour chaque amine
+    const noradrenalineCheckbox = document.getElementById('noradrenaline_ett');
+    const dobutamineCheckbox = document.getElementById('dobutamine_ett');
+    
+    if (noradrenalineCheckbox) {
+        noradrenalineCheckbox.addEventListener('change', function() {
+            const doseField = document.getElementById('noradrenaline_dose_ett');
+            if (doseField) {
+                doseField.style.display = this.checked ? 'inline' : 'none';
+                if (!this.checked) doseField.value = '';
+            }
+        });
+    }
+    
+    if (dobutamineCheckbox) {
+        dobutamineCheckbox.addEventListener('change', function() {
+            const doseField = document.getElementById('dobutamine_dose_ett');
+            if (doseField) {
+                doseField.style.display = this.checked ? 'inline' : 'none';
+                if (!this.checked) doseField.value = '';
+            }
+        });
+    }
+    
+    // Ajout à la fonction de réinitialisation
+    const originalResetETTInputs = window.resetETTInputs || function() {};
+    window.resetETTInputs = function() {
+        // Appeler la fonction originale
+        originalResetETTInputs();
+        
+        // Réinitialiser les options de ventilation
+        if (document.getElementById('ventSpont_ett')) {
+            document.getElementById('ventSpont_ett').checked = true;
+        }
+        
+        // Réinitialiser les options d'amines
+        if (document.getElementById('noAmines_ett')) {
+            document.getElementById('noAmines_ett').checked = true;
+        }
+        
+        // Réinitialiser les détails des amines
+        if (document.getElementById('amines_details_ett')) {
+            document.getElementById('amines_details_ett').style.display = 'none';
+        }
+        
+        // Décocher et réinitialiser les champs d'amines
+        if (document.getElementById('noradrenaline_ett')) {
+            document.getElementById('noradrenaline_ett').checked = false;
+            document.getElementById('noradrenaline_dose_ett').style.display = 'none';
+            document.getElementById('noradrenaline_dose_ett').value = '';
+        }
+        
+        if (document.getElementById('dobutamine_ett')) {
+            document.getElementById('dobutamine_ett').checked = false;
+            document.getElementById('dobutamine_dose_ett').style.display = 'none';
+            document.getElementById('dobutamine_dose_ett').value = '';
+        }
+    };
+});
+
+</script>
+
+			
+			
 
             <!-- Cavités gauches -->
             <div class="subsection">
@@ -10631,9 +10792,44 @@ function generateEchocardiographySection() {
     const statutOperateurElem = document.querySelector('input[name="statut_operateur"]:checked');
     const statutOperateur = statutOperateurElem ? statutOperateurElem.value : "interne";
     
-    // Générer le titre de la section ETT
-    let ettSection = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">ETT du ${formattedDate} : ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc}/min ; ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)})</div>`;
+	
+	// Récupérer le type de ventilation
+let ventilationText = "";
+if (document.getElementById('ventSpont_ett').checked) {
+    ventilationText = "en ventilation spontanée";
+} else if (document.getElementById('ventNI_ett').checked) {
+    ventilationText = "en ventilation non invasive";
+} else if (document.getElementById('ventInv_ett').checked) {
+    ventilationText = "en ventilation invasive";
+}
+
+// Récupérer le statut des amines
+let aminesText = "";
+if (document.getElementById('yesAmines_ett').checked) {
+    let aminesDetails = [];
     
+    if (document.getElementById('noradrenaline_ett').checked) {
+        const dose = document.getElementById('noradrenaline_dose_ett').value;
+        aminesDetails.push(`noradrénaline${dose ? ' ' + dose + ' mg/h' : ''}`);
+    }
+    
+    if (document.getElementById('dobutamine_ett').checked) {
+        const dose = document.getElementById('dobutamine_dose_ett').value;
+        aminesDetails.push(`dobutamine${dose ? ' ' + dose + ' µg/kg/min' : ''}`);
+    }
+    
+    if (aminesDetails.length > 0) {
+        aminesText = `sous ${aminesDetails.join(' et ')}`;
+    } else {
+        aminesText = "sous amines";
+    }
+} else {
+    aminesText = "sans amine";
+}
+
+
+// Générer le titre de la section ETT
+let ettSection = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">ETT du ${formattedDate} : ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc}/min ; ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)}) ; ${ventilationText} ; ${aminesText}</div>`;    
     // Fonction utilitaire pour vérifier si une valeur est définie
     function valueOrDash(value) {
         return value && value !== "" ? value : "?";
