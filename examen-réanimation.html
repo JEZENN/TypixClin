@@ -7057,20 +7057,33 @@ document.addEventListener('DOMContentLoaded', function() {
 				</div>
 				
 				<script>
-				// Fonction pour calculer la surface corporelle selon la formule de Dubois
-					function calculerSurfaceCorporelle() {
-						const taille = parseFloat(document.getElementById('taille').value);
-						const poids = parseFloat(document.getElementById('poids').value);
-						const scElement = document.getElementById('surface_corporelle');
-						
-						if (!isNaN(taille) && !isNaN(poids) && taille > 0 && poids > 0) {
-							// Formule de DuBois : SC = 0,007184 × poids (kg)^0,425 × taille (cm)^0,725
-							const sc = 0.007184 * Math.pow(poids, 0.425) * Math.pow(taille, 0.725);
-							scElement.value = sc.toFixed(2);
-						} else {
-							scElement.value = '';
-						}
-					}
+function calculerSurfaceCorporelle() {
+    const taille = parseFloat(document.getElementById('taille').value);
+    const poids = parseFloat(document.getElementById('poids').value);
+    const surfaceCorporelle = document.getElementById('surface_corporelle');
+    const debitIndexe = document.getElementById('debit_indexe');
+    const debitIndexeStatus = document.getElementById('debit-indexe-status');
+    
+    if (!isNaN(taille) && !isNaN(poids) && taille > 0 && poids > 0) {
+        // Formule de Dubois
+        const sc = 0.007184 * Math.pow(taille, 0.725) * Math.pow(poids, 0.425);
+        surfaceCorporelle.value = sc.toFixed(2);
+        
+        // Mettre à jour le débit indexé si nécessaire
+        if (typeof updateDebitCardiaque === 'function') {
+            updateDebitCardiaque();
+        }
+    } else {
+        // Réinitialisation si la surface corporelle ne peut pas être calculée
+        surfaceCorporelle.value = '';
+        
+        // Réinitialiser également le débit indexé et son statut
+        if (debitIndexe) debitIndexe.value = '';
+        if (debitIndexeStatus) debitIndexeStatus.textContent = '';
+    }
+}
+					
+					
 					</script>
 
 
@@ -7099,27 +7112,17 @@ document.addEventListener('DOMContentLoaded', function() {
 				</div>
 				</div>
 				
-				    <!-- Ligne pour le nom de l'opérateur et son statut -->
-    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
-        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; width: 100%;">
-            <label style="min-width: 120px;"><strong>Opérateur :</strong></label>
-            <input type="text" id="nom_operateur" placeholder="Nom de l'opérateur" style="width: 200px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;">
-            <div style="display: flex; gap: 15px; margin-left: 10px;">
-                <label class="custom-control radio">
-                    <input type="radio" name="statut_operateur" value="interne" checked>
-                    <span class="checkmark"></span>
-                    Interne
-                </label>
-                <label class="custom-control radio">
-                    <input type="radio" name="statut_operateur" value="externe">
-                    <span class="checkmark"></span>
-                    Externe
-                </label>
-            </div>
-        </div>
-    </div>
-	
-	
+				                <!-- Fréquence cardiaque -->
+                <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <label style="width: 250px; min-width: 200px;"><strong>Fréquence cardiaque (bpm) :</strong></label>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <input type="number" step="1" style="width: 40px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="FC">
+                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes: 60-100 bpm</span>
+                        <span id="FC-status" style="font-weight: bold;"></span>
+                    </div>
+                </div>
+				
+				
 <!-- Options de ventilation -->
 <div style="margin-top: 15px; margin-bottom: 15px; display: flex; align-items: center;">
     <p style="margin: 0; margin-right: 15px;"><strong>Ventilation :</strong></p>
@@ -7179,6 +7182,27 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+				    <!-- Ligne pour le nom de l'opérateur et son statut -->
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; width: 100%;">
+            <label style="min-width: 120px;"><strong>Opérateur :</strong></label>
+            <input type="text" id="nom_operateur" placeholder="Nom de l'opérateur" style="width: 200px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;">
+            <div style="display: flex; gap: 15px; margin-left: 10px;">
+                <label class="custom-control radio">
+                    <input type="radio" name="statut_operateur" value="interne" checked>
+                    <span class="checkmark"></span>
+                    Interne
+                </label>
+                <label class="custom-control radio">
+                    <input type="radio" name="statut_operateur" value="externe">
+                    <span class="checkmark"></span>
+                    Externe
+                </label>
+            </div>
+        </div>
+    </div>
+	
 
 		
             </div>
@@ -8484,17 +8508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span id="ITV-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
-                
-                <!-- Fréquence cardiaque -->
-                <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <label style="width: 250px; min-width: 200px;"><strong>Fréquence cardiaque (bpm) :</strong></label>
-                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <input type="number" step="1" style="width: 35px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="FC">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes: 60-100 bpm</span>
-                        <span id="FC-status" style="font-weight: bold;"></span>
-                    </div>
-                </div>
-                
+                                
                 <!-- Surface de la chambre de chasse -->
                 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                     <label style="width: 250px; min-width: 200px;"><strong>Surface chambre de chasse (cm²) :</strong></label>
@@ -8513,6 +8527,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span id="debit-status" style="font-weight: bold;"></span>
                     </div>
                 </div>
+				
+				    <!-- Débit indexé calculé (NOUVELLE LIGNE) -->
+					<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+						<label style="width: 250px; min-width: 200px;"><strong>Débit calculé indexé (L/min/m²) :</strong></label>
+						<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+							<input type="number" readonly step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" class="small" id="debit_indexe">
+							<span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes: 2,6-4,2 L/min/m²</span>
+							<span id="debit-indexe-status" style="font-weight: bold;"></span>
+						</div>
+					</div>
+	
+				
+				
+				
             </div>
             
             <!-- Cavités droites -->
@@ -8669,6 +8697,39 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Section aspect de la valve aortique - à ajouter dans la section retrecissement_aortique_section -->
+<div style="margin-top: 15px;">
+    <label style="display: block; margin-bottom: 5px;"><strong>Aspect des valvules :</strong></label>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;">
+        <label class="custom-control radio">
+            <input type="radio" name="aspect_valve_aortique" value="fines" checked>
+            <span class="checkmark"></span>
+            Fines
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="aspect_valve_aortique" value="epaissies">
+            <span class="checkmark"></span>
+            Épaissies
+        </label>
+    </div>
+    
+    <label style="display: block; margin-bottom: 5px;"><strong>Morphologie :</strong></label>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+        <label class="custom-control radio">
+            <input type="radio" name="morphologie_valve_aortique" value="tricuspide" checked>
+            <span class="checkmark"></span>
+            Trois valvules sigmoïdes
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="morphologie_valve_aortique" value="bicuspide">
+            <span class="checkmark"></span>
+            Bicuspidie
+        </label>
+    </div>
+</div>
+
+
+
 
 <h5 style="color: #3b82f6; margin-top: 15px; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Valve mitrale</h5>
 
@@ -8739,7 +8800,25 @@ document.addEventListener('DOMContentLoaded', function() {
 <div style="margin-top: 10px;">
     <label style="display: block; margin-bottom: 5px;"><strong>Précisions rétrécissement mitral :</strong></label>
     <input type="text" id="precisions_retrecissement_mitral" placeholder="Précisez" style="width: 80%; margin-left: 10px;">
-</div>    </div>
+</div>    
+</div>
+</div>
+
+<!-- Section aspect de la valve mitrale - à ajouter dans la section retrecissement_mitral_section -->
+<div style="margin-top: 15px;">
+    <label style="display: block; margin-bottom: 5px;"><strong>Aspect des valvules :</strong></label>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;">
+        <label class="custom-control radio">
+            <input type="radio" name="aspect_valve_mitrale" value="fines" checked>
+            <span class="checkmark"></span>
+            Fines
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="aspect_valve_mitrale" value="epaissies">
+            <span class="checkmark"></span>
+            Épaissies
+        </label>
+    </div>
 </div>
 
 
@@ -9730,19 +9809,49 @@ document.querySelectorAll('input[name="compliance_VCI"]').forEach(radio => {
     radio.addEventListener('change', updatePODEstimee);
 });
 
-// Calcul du débit cardiaque
 function updateDebitCardiaque() {
     const itv = parseFloat(document.getElementById('ITV').value);
     const surface = parseFloat(document.getElementById('surface_CC').value);
     const fc = parseFloat(document.getElementById('FC').value);
     const debitCalcule = document.getElementById('debit_calcule');
+    const debitIndexe = document.getElementById('debit_indexe');
+    const debitIndexeStatus = document.getElementById('debit-indexe-status');
+    const surfaceCorporelle = parseFloat(document.getElementById('surface_corporelle').value);
     
     if (!isNaN(itv) && !isNaN(surface) && !isNaN(fc)) {
         // Débit (L/min) = FC x ITV x Surface (conversion cm² en cm²)
         const debit = (fc * itv * surface) / 1000;
         debitCalcule.value = debit.toFixed(1);
+        
+        // Calcul du débit indexé uniquement si la surface corporelle est valide
+        if (!isNaN(surfaceCorporelle) && surfaceCorporelle > 0) {
+            const debitIdx = debit / surfaceCorporelle;
+            debitIndexe.value = debitIdx.toFixed(1);
+            
+            // Ajout d'indicateur visuel pour les valeurs normales/anormales
+            if (debitIdx >= 2.6 && debitIdx <= 4.2) {
+                debitIndexeStatus.textContent = "Normal";
+                debitIndexeStatus.style.color = "green";
+            } else if (debitIdx < 1.9) {
+                debitIndexeStatus.textContent = "Bas débit (<1.9)";
+                debitIndexeStatus.style.color = "red";
+            } else if (debitIdx < 2.6) {
+                debitIndexeStatus.textContent = "Limite basse";
+                debitIndexeStatus.style.color = "orange";
+            } else {
+                debitIndexeStatus.textContent = "Élevé";
+                debitIndexeStatus.style.color = "red";
+            }
+        } else {
+            // Si pas de surface corporelle, réinitialiser le débit indexé
+            debitIndexe.value = '';
+            debitIndexeStatus.textContent = '';
+        }
     } else {
+        // Si les données pour calculer le débit sont manquantes
         debitCalcule.value = '';
+        debitIndexe.value = '';
+        debitIndexeStatus.textContent = '';
     }
 }
 
@@ -9936,7 +10045,7 @@ function validateTempsAcceleration() {
     
     if (!isNaN(tempsAcc)) {
         if (tempsAcc > 130) {
-            statusElement.textContent = 'HTAP';
+            statusElement.textContent = 'HTP';
             statusElement.style.color = '#dc2626';
         } else {
             statusElement.textContent = '';
@@ -10566,7 +10675,7 @@ function validatePAPS() {
     
     if (!isNaN(paps)) {
         if (paps > 25) {
-            statusElement.textContent = 'HTAP';
+            statusElement.textContent = 'HTP';
             statusElement.style.color = '#dc2626';
         } else {
             statusElement.textContent = '';
@@ -10582,7 +10691,7 @@ function validateVmaxIT() {
     
     if (!isNaN(vmaxIT)) {
         if (vmaxIT > 2.8) {
-            statusElement.textContent = 'HTAP';
+            statusElement.textContent = 'HTP';
             statusElement.style.color = '#dc2626';
         } else {
             statusElement.textContent = '';
@@ -10803,6 +10912,11 @@ if (document.getElementById('ventSpont_ett').checked) {
     ventilationText = "en ventilation invasive";
 }
 
+    // Récupérer les mesures du patient
+    const poids = document.getElementById('poids').value || "?";
+    const taille = document.getElementById('taille').value || "?";
+    const sc = document.getElementById('surface_corporelle').value || "?";
+
 // Récupérer le statut des amines
 let aminesText = "";
 if (document.getElementById('yesAmines_ett').checked) {
@@ -10829,11 +10943,15 @@ if (document.getElementById('yesAmines_ett').checked) {
 
 
 // Générer le titre de la section ETT
-let ettSection = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">ETT du ${formattedDate} : ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc}/min ; ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)}) ; ${ventilationText} ; ${aminesText}</div>`;    
+    let ettSection = `<div class="text-line" style="color: #1e40af; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">Echographie transthoracique du ${formattedDate} : ${nomOperateur.toUpperCase()} (${statutOperateur.charAt(0).toUpperCase() + statutOperateur.slice(1)})</div>`;
     // Fonction utilitaire pour vérifier si une valeur est définie
     function valueOrDash(value) {
         return value && value !== "" ? value : "?";
     }
+	
+	
+	ettSection += `<div class="text-line">- ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc} bpm ; ${ventilationText} ; ${aminesText} ; ${poids} kg - ${taille} cm - SC ${sc} m²</div>`;
+
     
    // Ventricule gauche : dimensions et hypertrophie
 const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
@@ -10965,11 +11083,29 @@ if (interpretationProfilElem && interpretationProfilElem.style.display !== 'none
 
 ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE ${tde} ms)</div>`;
     
+	
+	    // FEVG et ITV
+    const fevg = valueOrDash(document.getElementById('FEVG').value);
+    const itv = valueOrDash(document.getElementById('ITV').value);
+    const methodeFEVG = document.querySelector('input[name="methode_fevg"]:checked').value;
+    
+    // Déterminer si la FEVG est normale
+    let fevgNormale = true;
+    if (document.getElementById('FEVG').value) {
+        const fevgValue = parseFloat(document.getElementById('FEVG').value);
+        const sexe = document.querySelector('input[name="sexe"]:checked').value;
+        
+        if ((sexe === 'homme' && fevgValue < 52) || (sexe === 'femme' && fevgValue < 54)) {
+            fevgNormale = false;
+        }
+    }
+	
+	
     // Cinétique segmentaire
     const cinetiqueSegmentaire = document.querySelector('input[name="cinetique_segmentaire"]:checked').value;
     
     if (cinetiqueSegmentaire === 'normale') {
-        ettSection += `<div class="text-line">- Cinétique segmentaire normale</div>`;
+        ettSection += `<div class="text-line">- Pas de trouble de la cinétique segmentaire. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%.</div>`;
     } else {
         // Récupérer les troubles de cinétique sélectionnés
         let troubles4C = Array.from(document.querySelectorAll('input[name="trouble_4c"]:checked')).map(cb => cb.value);
@@ -11005,27 +11141,54 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
             troublesListe.push(`Parasternal petit axe: ${ppaTroubles.join('; ')}`);
         }
         
-        ettSection += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}</div>`;
+        ettSection += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%.</div>`;
     }
+   	
+	
+// Débit cardiaque
+const debitCalcule = valueOrDash(document.getElementById('debit_calcule').value);
+const debitIndexe = valueOrDash(document.getElementById('debit_indexe').value);
+const surfaceCC = valueOrDash(document.getElementById('surface_CC').value);
+
+// Déterminer si le débit cardiaque est bas
+let debitBas = false;
+if (document.getElementById('debit_calcule').value) {
+    const debitValue = parseFloat(document.getElementById('debit_calcule').value);
     
-    // FEVG et ITV
-    const fevg = valueOrDash(document.getElementById('FEVG').value);
-    const itv = valueOrDash(document.getElementById('ITV').value);
-    const methodeFEVG = document.querySelector('input[name="methode_fevg"]:checked').value;
-    
-    // Déterminer si la FEVG est normale
-    let fevgNormale = true;
-    if (document.getElementById('FEVG').value) {
-        const fevgValue = parseFloat(document.getElementById('FEVG').value);
-        const sexe = document.querySelector('input[name="sexe"]:checked').value;
-        
-        if ((sexe === 'homme' && fevgValue < 52) || (sexe === 'femme' && fevgValue < 54)) {
-            fevgNormale = false;
+    // Si on a un débit indexé (donc une surface corporelle)
+    if (document.getElementById('debit_indexe').value) {
+        const debitIndexeValue = parseFloat(document.getElementById('debit_indexe').value);
+        if (debitIndexeValue < 2.6) {
+            debitBas = true;
         }
+    } 
+    // Sinon on utilise la valeur absolue
+    else if (debitValue < 4.5) {
+        debitBas = true;
     }
-    
-    ettSection += `<div class="text-line">- FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%, ITV à ${itv} cm</div>`;
-    
+}
+
+// Construire la phrase pour le débit cardiaque
+let debitPhrase = "";
+// Vérifier si des données de débit sont disponibles pour déterminer le statut
+if (document.getElementById('debit_calcule').value) {
+    debitPhrase = `${debitBas ? 'Bas débit cardiaque' : 'Débit cardiaque conservé'}`;
+} else {
+    debitPhrase = "Débit cardiaque";  // Si aucune donnée n'est disponible, utiliser un texte neutre
+}
+
+// Ajouter les valeurs, en utilisant des "?" si non disponibles
+if (surfaceCorporelle && document.getElementById('debit_indexe').value) {
+    debitPhrase += ` calculé à ${debitCalcule} L/min soit ${debitIndexe} L/min/m² (ITV ${itv} cm ; Surface chambre chasse ${surfaceCC} cm²)`;
+} else {
+    debitPhrase += ` calculé à ${debitCalcule} L/min (ITV ${itv} cm ; Surface chambre chasse ${surfaceCC} cm²)`;
+}
+
+// Ajouter la ligne de débit cardiaque, qu'il y ait des données ou non
+ettSection += `<div class="text-line">- ${debitPhrase}</div>`;
+
+	
+	
     // Ventricule droit
     const diamBasalVD = valueOrDash(document.getElementById('diametre_basal_VD').value);
     const diamMedianVD = valueOrDash(document.getElementById('diametre_median_VD').value);
@@ -11064,43 +11227,60 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
         }
     }
     
-    ettSection += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (S OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'normocontractile' : 'avec trouble de la fonction contractile'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
+    ettSection += `<div class="text-line">- OD ${odDilatee ? 'dilatée' : 'non dilatée'} (S OD ${surfaceOD} cm²). VD ${vdDilate ? 'dilaté' : 'non dilaté'} (Diam basal ${diamBasalVD} mm ; Diam médian ${diamMedianVD} mm) et ${vdFonctionNormale ? 'fonction systolique longitudinale conservée' : 'avec trouble de la fonction systolique longitudinale'} (TAPSE ${tapse} mm ; Onde S' ${ondeS} cm/s)</div>`;
     
-    // Valves aortique et mitrale
-    const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
-    const retrecissementAortique = document.querySelector('input[name="retrecissement_aortique"]:checked').value;
-    const fuiteMitrale = document.querySelector('input[name="fuite_mitrale"]:checked').value;
-    const retrecissementMitral = document.querySelector('input[name="retrecissement_mitral"]:checked').value;
-    
-    // Valve aortique
-    let texteAortique = "Pas de fuite aortique significative";
-    if (fuiteAortique === 'oui') {
-        const gradeAortique = document.querySelector('input[name="grade_fuite_aortique"]:checked').value;
-        const precisionsAortique = document.getElementById('precisions_fuite_aortique').value;
-        texteAortique = `Fuite aortique ${gradeAortique}${precisionsAortique ? ', ' + precisionsAortique : ''}`;
-    }
-    
-    let texteRetrecissementAortique = "pas de rétrécissement aortique";
-    if (retrecissementAortique === 'oui') {
-        const precisionsRetrecissementAortique = document.getElementById('precisions_retrecissement_aortique').value;
-        texteRetrecissementAortique = `rétrécissement aortique${precisionsRetrecissementAortique ? ' : ' + precisionsRetrecissementAortique : ''}`;
-    }
-    
-    // Valve mitrale
-    let texteMitrale = "Pas de fuite mitrale significative";
-    if (fuiteMitrale === 'oui') {
-        const gradeMitrale = document.querySelector('input[name="grade_fuite_mitrale"]:checked').value;
-        const precisionsMitrale = document.getElementById('precisions_fuite_mitrale').value;
-        texteMitrale = `Fuite mitrale ${gradeMitrale}${precisionsMitrale ? ', ' + precisionsMitrale : ''}`;
-    }
-    
-    let texteRetrecissementMitral = "pas de rétrécissement mitral";
-    if (retrecissementMitral === 'oui') {
-        const precisionsRetrecissementMitral = document.getElementById('precisions_retrecissement_mitral').value;
-        texteRetrecissementMitral = `rétrécissement mitral${precisionsRetrecissementMitral ? ' : ' + precisionsRetrecissementMitral : ''}`;
-    }
-    
-    ettSection += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissementAortique}. ${texteMitrale} ; ${texteRetrecissementMitral}.</div>`;
+// Valves aortique et mitrale
+const fuiteAortique = document.querySelector('input[name="fuite_aortique"]:checked').value;
+const retrecissementAortique = document.querySelector('input[name="retrecissement_aortique"]:checked').value;
+const fuiteMitrale = document.querySelector('input[name="fuite_mitrale"]:checked').value;
+const retrecissementMitral = document.querySelector('input[name="retrecissement_mitral"]:checked').value;
+
+// Récupérer l'aspect et la morphologie de la valve aortique
+const aspectValveAortique = document.querySelector('input[name="aspect_valve_aortique"]:checked')?.value || "fines";
+const morphologieValveAortique = document.querySelector('input[name="morphologie_valve_aortique"]:checked')?.value || "tricuspide";
+
+// Valve aortique
+let texteAortique = "Pas de fuite aortique significative";
+if (fuiteAortique === 'oui') {
+    const gradeAortique = document.querySelector('input[name="grade_fuite_aortique"]:checked').value;
+    const precisionsAortique = document.getElementById('precisions_fuite_aortique').value;
+    texteAortique = `Fuite aortique ${gradeAortique}${precisionsAortique ? ', ' + precisionsAortique : ''}`;
+}
+
+let texteRetrecissementAortique = "pas de rétrécissement aortique";
+if (retrecissementAortique === 'oui') {
+    const precisionsRetrecissementAortique = document.getElementById('precisions_retrecissement_aortique').value;
+    texteRetrecissementAortique = `rétrécissement aortique${precisionsRetrecissementAortique ? ' : ' + precisionsRetrecissementAortique : ''}`;
+}
+
+// Texte pour l'aspect et la morphologie de la valve aortique
+let texteAspectMorphologieAortique = `${morphologieValveAortique === 'tricuspide' ? 'trois sigmoïdes' : 'deux sigmoïdes'} ${aspectValveAortique === 'fines' ? 'fines' : 'épaissies'} visualisées`;
+
+// Valve mitrale
+let texteMitrale = "Pas de fuite mitrale significative";
+if (fuiteMitrale === 'oui') {
+    const gradeMitrale = document.querySelector('input[name="grade_fuite_mitrale"]:checked').value;
+    const precisionsMitrale = document.getElementById('precisions_fuite_mitrale').value;
+    texteMitrale = `Fuite mitrale ${gradeMitrale}${precisionsMitrale ? ', ' + precisionsMitrale : ''}`;
+}
+
+let texteRetrecissementMitral = "pas de rétrécissement mitral";
+if (retrecissementMitral === 'oui') {
+    const precisionsRetrecissementMitral = document.getElementById('precisions_retrecissement_mitral').value;
+    texteRetrecissementMitral = `rétrécissement mitral${precisionsRetrecissementMitral ? ' : ' + precisionsRetrecissementMitral : ''}`;
+}
+
+const aspectValveMitrale = document.querySelector('input[name="aspect_valve_mitrale"]:checked')?.value || "fines";
+
+// Texte pour l'aspect de la valve mitrale
+let texteAspectMitrale = `valve ${aspectValveMitrale === 'fines' ? 'fine' : 'épaissie'}`;
+
+
+ettSection += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissementAortique} ; ${texteAspectMorphologieAortique}.</div>`;
+ettSection += `<div class="text-line">- ${texteMitrale} ; ${texteRetrecissementMitral} ; ${texteAspectMitrale}.</div>`;
+
+
+
     
     // HTAP et septum paradoxal
     const paps = valueOrDash(document.getElementById('PAPS').value);
@@ -11109,21 +11289,21 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
     const septumParadoxal = document.querySelector('input[name="septum_paradoxal"]:checked').value;
     
     // Déterminer s'il y a une HTAP
-    let htap = false;
+    let htp = false;
     if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
         const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
         const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
         const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
         
         if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
-            htap = true;
+            htp = true;
         }
     }
     
     // Récupérer la valeur de la POD estimée
     const podEstimee = document.getElementById('POD_estimee').value || "?";
     
-    ettSection += `<div class="text-line">- ${htap ? 'HTAP' : 'Pas d\'HTAP'} (PAPS estimées à ${paps} + ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
+    ettSection += `<div class="text-line">- ${htp ? 'HTP' : 'Pas d\'HTP'} (PAPS estimées à ${paps} + ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
     
     // Péricarde
     const pericarde = document.querySelector('input[name="pericarde"]:checked').value;
@@ -11157,16 +11337,18 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
         }
     }
     
-    ettSection += `<div class="text-line">- ${aorteDilatee ? 'Dilatation aortique' : 'Pas de dilatation aortique proximale'} (Sinus ${sinus} mm ; Jonction S/Ao ${jonction} mm ; Ao ${aorte} mm)</div>`;
+    ettSection += `<div class="text-line">- ${aorteDilatee ? 'Dilatation aortique initiale sur la portion visualisée' : 'Pas de dilatation aortique initiale sur la portion visualisée'} (Sinus ${sinus} mm ; Jonction S/Ao ${jonction} mm ; Ao ${aorte} mm)</div>`;
     
     // VCI
     const vciCompliance = document.querySelector('input[name="compliance_VCI"]:checked').value;
     const vciMesure = valueOrDash(document.getElementById('VCI_mesure').value);
     
-    ettSection += `<div class="text-line">- VCI ${vciCompliance === 'sup50' ? 'compliante' : 'non compliante'} (${vciCompliance === 'sup50' ? '> 50' : '< 50'}%) mesurée à ${vciMesure} mm</div>`;
+    ettSection += `<div class="text-line">- VCI ${vciCompliance === 'sup50' ? 'compliante' : 'non compliante'} mesurée à ${vciMesure} mm</div>`;
     
     return ettSection;
 }
+
+
 
 // Fonction utilitaire pour vérifier si une valeur est définie
 function valueOrEmpty(value) {
