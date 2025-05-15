@@ -9014,24 +9014,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Modifier le comportement du bouton copier
+  // Remplacer complètement le gestionnaire d'événements du bouton copier
   if (copyButton) {
-    // Sauvegarder le gestionnaire de clic existant
-    const originalClick = copyButton.onclick;
+    // Supprimer tous les écouteurs d'événements existants
+    const newCopyButton = copyButton.cloneNode(true);
+    copyButton.parentNode.replaceChild(newCopyButton, copyButton);
     
-    // Créer un nouveau gestionnaire qui exécute l'animation et la fonction originale
-    copyButton.onclick = function(e) {
-      animateCopyIcon(this);
-      showNotification('Texte copié !');
-      
-      // Exécuter la fonction originale si elle existe
-      if (typeof originalClick === 'function') {
-        originalClick.call(this, e);
+    // Ajouter notre nouveau gestionnaire d'événements
+    newCopyButton.addEventListener('click', function() {
+      const textArea = document.getElementById('generatedTextArea');
+      if (textArea) {
+        // Animation de l'icône
+        animateCopyIcon(this);
+        
+        // Nettoyage des sauts de ligne excessifs tout en préservant la mise en forme
+        const textContent = textArea.innerText.replace(/\n\s*\n\s*\n/g, '\n\n');
+        
+        // Tentative de copie avec l'API Clipboard moderne
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(textContent)
+            .then(() => {
+              showNotification('Texte copié !');
+            })
+            .catch(err => {
+              console.error('Erreur lors de la copie: ', err);
+              // Méthode de secours si l'API Clipboard échoue
+              fallbackCopy(textContent);
+            });
+        } else {
+          // Pour les navigateurs qui ne supportent pas l'API Clipboard
+          fallbackCopy(textContent);
+        }
+      } else {
+        alert("L'élément de texte n'a pas été trouvé.");
       }
-    };
+    });
+    
+    // Fonction de secours utilisant la méthode traditionnelle
+    function fallbackCopy(text) {
+      // Créer un textarea temporaire
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = text;
+      
+      // Styles pour le textarea temporaire
+      tempTextArea.style.position = 'fixed';
+      tempTextArea.style.left = '0';
+      tempTextArea.style.top = '0';
+      tempTextArea.style.opacity = '0';
+      tempTextArea.style.width = '100%';
+      tempTextArea.style.height = '100%';
+      
+      document.body.appendChild(tempTextArea);
+      
+      // Sélectionner tout le texte
+      tempTextArea.focus();
+      tempTextArea.select();
+      
+      try {
+        // Spécial pour les appareils iOS
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          tempTextArea.contentEditable = true;
+          tempTextArea.readOnly = false;
+          
+          const range = document.createRange();
+          range.selectNodeContents(tempTextArea);
+          
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          tempTextArea.setSelectionRange(0, 999999);
+        }
+        
+        // Tenter de copier
+        const successful = document.execCommand('copy');
+        if (successful) {
+          showNotification('Texte copié !');
+        } else {
+          alert('La copie a échoué. Veuillez réessayer ou copier manuellement.');
+        }
+      } catch (err) {
+        console.error('Erreur lors de la copie de secours: ', err);
+        alert('La copie a échoué. Veuillez réessayer ou copier manuellement.');
+      }
+      
+      // Nettoyer
+      document.body.removeChild(tempTextArea);
+    }
   }
 });
-
 
 
 
@@ -11637,29 +11708,6 @@ function setupDyspnoeHandlers() {
 
 
 
-document.getElementById('copyText').addEventListener('click', function() {
-    const textArea = document.getElementById('generatedTextArea');
-    if (textArea) {
-        // Crée une sélection de tout le contenu
-        const range = document.createRange();
-        range.selectNodeContents(textArea);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        // Exécute la commande de copie
-        try {
-            document.execCommand('copy');
-        } catch (err) {
-            alert('Une erreur est survenue lors de la copie.');
-        }
-
-        // Supprime la sélection
-        selection.removeAllRanges();
-    } else {
-        alert("L'élément de texte n'a pas été trouvé.");
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function () {
     const tabs = document.querySelectorAll('.tab-button');
