@@ -8859,6 +8859,31 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Précisions sur les flux d'IT et d'IP -->
+<div class="input-group" style="display: flex; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-top: 15px; margin-bottom: 15px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Précisions sur les flux :</strong></label>
+    <div class="radio-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <label class="custom-control radio">
+            <input type="radio" name="flux_precisions" value="IT_exploite" checked>
+            <span class="checkmark"></span>
+            Flux d'IT exploité
+        </label>
+        <label class="custom-control radio">
+            <input type="radio" name="flux_precisions" value="IP_exploite">
+            <span class="checkmark"></span>
+            Flux d'IP exploité
+        </label>
+		
+		<label class="custom-control radio">
+            <input type="radio" name="flux_precisions" value="non_exploitable" >
+            <span class="checkmark"></span>
+            Pas de flux d'IP et d'IT exploitable
+        </label>
+
+    </div>
+</div>
+
+
 </div>
 
 <!-- Autres paramètres -->
@@ -11280,31 +11305,60 @@ ettSection += `<div class="text-line">- ${texteAortique} ; ${texteRetrecissement
 ettSection += `<div class="text-line">- ${texteMitrale} ; ${texteRetrecissementMitral} ; ${texteAspectMitrale}.</div>`;
 
 
+// Récupérer les précisions sur les flux IT et IP
+const fluxPrecisions = document.querySelector('input[name="flux_precisions"]:checked').value;
+const septumParadoxal = document.querySelector('input[name="septum_paradoxal"]:checked').value;
+let htpTexte = "";
 
+// Déterminer s'il y a une HTAP
+let htp = false;
+
+// Vérifier d'abord si un septum paradoxal est présent
+if (septumParadoxal === 'oui') {
+    htp = true; // Si septum paradoxal coché, alors HTP = true
+} else if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
+    // Si pas de septum paradoxal, vérifier les autres valeurs
+    const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
+    const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
+    const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
     
-    // HTAP et septum paradoxal
-    const paps = valueOrDash(document.getElementById('PAPS').value);
-    const vmaxIT = valueOrDash(document.getElementById('Vmax_IT').value);
-    const tacc = valueOrDash(document.getElementById('temps_acceleration').value);
-    const septumParadoxal = document.querySelector('input[name="septum_paradoxal"]:checked').value;
-    
-    // Déterminer s'il y a une HTAP
-    let htp = false;
-    if (document.getElementById('PAPS').value || document.getElementById('Vmax_IT').value || document.getElementById('temps_acceleration').value) {
-        const papsValue = parseFloat(document.getElementById('PAPS').value) || 0;
-        const vmaxITValue = parseFloat(document.getElementById('Vmax_IT').value) || 0;
-        const taccValue = parseFloat(document.getElementById('temps_acceleration').value) || 0;
-        
-        if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
-            htp = true;
-        }
+    if (papsValue > 25 || vmaxITValue > 2.8 || taccValue > 130) {
+        htp = true;
+    }
+}
+
+// Récupérer la valeur de la POD estimée
+const podEstimee = document.getElementById('POD_estimee').value || "?";
+const tacc = valueOrDash(document.getElementById('temps_acceleration').value);
+
+// Construire le texte final en fonction de l'exploitabilité des flux
+if (fluxPrecisions === 'non_exploitable') {
+    // Si les flux ne sont pas exploitables
+    ettSection += `<div class="text-line">- ${htp ? 'Arguments en faveur d\'une HTP' : 'Pas d\'argument en faveur d\'une HTP'} (pas de flux d'IP et d'IT exploitable ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
+} else {
+    // Si les flux sont exploitables
+    let fluxTexte = "";
+    switch(fluxPrecisions) {
+        case 'IT_exploite':
+            fluxTexte = "sur un flux d'IT";
+            break;
+        case 'IP_exploite':
+            fluxTexte = "sur un flux d'IP";
+            break;
+        case 'IT_IP_exploites':
+            fluxTexte = "flux d'IT et d'IP exploités";
+            break;
+        default:
+            fluxTexte = "";
     }
     
-    // Récupérer la valeur de la POD estimée
-    const podEstimee = document.getElementById('POD_estimee').value || "?";
+    const paps = valueOrDash(document.getElementById('PAPS').value);
+    const vmaxIT = valueOrDash(document.getElementById('Vmax_IT').value);
     
-    ettSection += `<div class="text-line">- ${htp ? 'HTP' : 'Pas d\'HTP'} (PAPS estimées à ${paps} + ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
-    
+    ettSection += `<div class="text-line">- ${htp ? 'Arguments en faveur d\'une HTP' : 'Pas d\'argument en faveur d\'une HTP'} (PAPs estimées ${fluxTexte} à ${paps} mmHg pour une POD entre ${podEstimee} mmHg ; Vmax IT ${vmaxIT} m/s ; Tacc pulm ${tacc} ms), ${septumParadoxal === 'oui' ? 'présence d\'un' : 'pas de'} septum paradoxal</div>`;
+}
+
+
     // Péricarde
     const pericarde = document.querySelector('input[name="pericarde"]:checked').value;
     
@@ -12604,46 +12658,185 @@ function applyTextAnimations() {
     }, 50);
 }
 
+
 // Fonction pour copier le texte généré dans le presse-papier
-document.getElementById('copyText').addEventListener('click', function() {
-    const textArea = document.getElementById('generatedTextArea');
+document.addEventListener('DOMContentLoaded', function() {
+  // Ajouter l'icône Font Awesome au bouton
+  const copyButton = document.getElementById('copyText');
+  
+  // Vérifier si le bouton existe avant de le modifier
+  if (copyButton) {
+    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copier texte';
+  }
+  
+  // Fonction pour créer et afficher la notification
+  function showNotification(message) {
+    // Créer un élément pour la notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.right = '20px';
+    notification.style.bottom = '100px';
+    notification.style.padding = '10px 20px';
+    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.fontWeight = '500';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    notification.style.transform = 'translateY(20px)';
     
-    // Vérifier s'il y a du contenu à copier
-    if (!textArea.innerHTML.trim()) {
-        return;
+    // Ajuster pour le mode sombre
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
     }
     
-    // Créer une sélection du contenu
-    const range = document.createRange();
-    range.selectNodeContents(textArea);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
+    // Ajouter au DOM
+    document.body.appendChild(notification);
     
-    // Copier le texte avec la commande document.execCommand
-    try {
+    // Animation d'apparition
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Retirer la notification après l'animation
+    setTimeout(() => {
+      // Faire disparaître la notification
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      
+      // Supprimer du DOM après la disparition
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 1500);
+  }
+  
+  // Fonction d'animation de l'icône seulement
+  function animateCopyIcon(button) {
+    const icon = button.querySelector('i');
+    if (icon) {
+      // Ajouter la classe d'animation à l'icône uniquement
+      icon.classList.add('icon-pulse');
+      
+      // Retirer la classe d'animation après la fin de l'animation
+      setTimeout(() => {
+        icon.classList.remove('icon-pulse');
+      }, 500);
+    }
+  }
+  
+  // Associer la fonction de génération au bouton si nécessaire
+  const generateButton = document.getElementById('generateText');
+  if (generateButton) {
+    generateButton.addEventListener('click', function() {
+      if (typeof generateTextType === 'function') {
+        generateTextType();
+      }
+    });
+  }
+  
+  // Ajouter notre gestionnaire d'événements optimisé pour mobile
+  if (copyButton) {
+    copyButton.addEventListener('click', function() {
+      const textArea = document.getElementById('generatedTextArea');
+      
+      // Vérifier s'il y a du contenu à copier
+      if (!textArea || !textArea.textContent.trim()) {
+        return;
+      }
+      
+      // Animation de l'icône
+      animateCopyIcon(this);
+      
+      // Récupérer le texte avec mise en forme préservée
+      // Utiliser innerText au lieu de textContent pour conserver les retours à la ligne
+      let textToCopy = textArea.innerText;
+      
+      // Nettoyer les retours à la ligne excessifs tout en préservant la mise en forme
+      textToCopy = textToCopy.replace(/\n\s*\n\s*\n/g, '\n\n');
+      
+      // Méthode moderne : API Clipboard (fonctionne sur la plupart des navigateurs modernes)
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy)
+          .then(() => {
+            showNotification('Texte copié !');
+          })
+          .catch(err => {
+            console.error('Erreur API Clipboard: ', err);
+            // Utiliser la méthode de secours
+            fallbackCopy(textToCopy);
+          });
+      } else {
+        // Méthode de secours pour les navigateurs qui ne supportent pas l'API ou contextes non sécurisés
+        fallbackCopy(textToCopy);
+      }
+    });
+    
+    // Fonction de secours améliorée pour mobile
+    function fallbackCopy(text) {
+      // Créer un textarea temporaire
+      const tempTextArea = document.createElement('textarea');
+      // Assigner la valeur pour préserver les retours à la ligne
+      tempTextArea.value = text;
+      
+      // Styles pour rendre le textarea accessible mais invisible
+      tempTextArea.style.position = 'fixed';
+      tempTextArea.style.left = '0';
+      tempTextArea.style.top = '0';
+      tempTextArea.style.opacity = '0';
+      tempTextArea.style.width = '100%';
+      tempTextArea.style.height = '100%';
+      tempTextArea.style.zIndex = '-1';
+      // Ajouter ça pour éviter un scroll indésirable
+      tempTextArea.style.pointerEvents = 'none';
+      
+      // Spécial pour iOS
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        tempTextArea.contentEditable = true;
+        tempTextArea.readOnly = false;
+      }
+      
+      document.body.appendChild(tempTextArea);
+      
+      // Focus et sélection spécifiques pour iOS
+      tempTextArea.focus();
+      tempTextArea.select();
+      
+      try {
+        // Pour les appareils iOS
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          const range = document.createRange();
+          range.selectNodeContents(tempTextArea);
+          
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          // Sélection iOS spécifique
+          tempTextArea.setSelectionRange(0, 999999);
+        }
+        
+        // Tentative de copie via execCommand
         const successful = document.execCommand('copy');
         if (successful) {
+          showNotification('Texte copié !');
         } else {
-            throw new Error('La commande de copie a échoué');
+          throw new Error('La commande copy a échoué');
         }
-    } catch (err) {
+      } catch (err) {
         console.error('Erreur lors de la copie: ', err);
-        alert('Erreur lors de la copie du texte.');
-    } finally {
-        // Désélectionner le texte
-        selection.removeAllRanges();
+        alert('La copie a échoué. Essayez de sélectionner et copier manuellement.');
+      } finally {
+        // Nettoyer
+        document.body.removeChild(tempTextArea);
+      }
     }
+  }
 });
-
-// Initialiser les écouteurs d'événements au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    // Associer la fonction de génération au bouton
-    document.getElementById('generateText').addEventListener('click', generateTextType);
-});
-
-
-
 
 
 
@@ -12972,87 +13165,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-
-
-// Animation de l'icône et notification pour le bouton copier
-document.addEventListener('DOMContentLoaded', function() {
-  // Ajouter l'icône Font Awesome au bouton
-  const copyButton = document.getElementById('copyText');
-  
-  // Vérifier si le bouton existe avant de le modifier
-  if (copyButton) {
-    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copier texte';
-  }
-  
-  // Fonction pour créer et afficher la notification
-  function showNotification(message) {
-    // Créer un élément pour la notification
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.right = '20px';
-    notification.style.bottom = '100px';
-    notification.style.padding = '10px 20px';
-    notification.style.backgroundColor = 'rgba(37, 99, 235, 0.9)';
-    notification.style.color = 'white';
-    notification.style.borderRadius = '5px';
-    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    notification.style.zIndex = '1000';
-    notification.style.fontWeight = '500';
-    notification.style.opacity = '0';
-    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-    notification.style.transform = 'translateY(20px)';
-    
-    // Ajuster pour le mode sombre
-    if (document.documentElement.getAttribute('data-theme') === 'dark') {
-      notification.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
-    }
-    
-    // Ajouter au DOM
-    document.body.appendChild(notification);
-    
-    // Animation d'apparition
-    setTimeout(() => {
-      notification.style.opacity = '1';
-      notification.style.transform = 'translateY(0)';
-    }, 10);
-    
-    // Retirer la notification après l'animation
-    setTimeout(() => {
-      // Faire disparaître la notification
-      notification.style.opacity = '0';
-      notification.style.transform = 'translateY(-20px)';
-      
-      // Supprimer du DOM après la disparition
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 1500);
-  }
-  
-  // Fonction d'animation de l'icône seulement
-  function animateCopyIcon(button) {
-    const icon = button.querySelector('i');
-    if (icon) {
-      // Ajouter la classe d'animation à l'icône uniquement
-      icon.classList.add('icon-pulse');
-      
-      // Retirer la classe d'animation après la fin de l'animation
-      setTimeout(() => {
-        icon.classList.remove('icon-pulse');
-      }, 500);
-    }
-  }
-  
-  // Modifier le comportement du bouton copier uniquement quand il est cliqué
-  if (copyButton) {
-    copyButton.addEventListener('click', function(e) {
-      // Ne pas empêcher le comportement par défaut - laisser la fonction copy existante s'exécuter
-      animateCopyIcon(this);
-      showNotification('Texte copié !');
-    });
-  }
-});
 
 
 </script>
