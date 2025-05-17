@@ -2347,11 +2347,39 @@ input[type="number"]:focus {
         </label>
         
        
-        <label class="custom-control checkbox" style="margin-right: 15px;">
-            <input type="checkbox" id="trc">
-            <span class="checkmark"></span>
-            TRC > 3s
-        </label>
+<label class="custom-control checkbox" style="margin-right: 15px;">
+    <input type="checkbox" id="trc">
+    <span class="checkmark"></span>
+    TRC > 3s
+</label>
+
+<!-- Zone de valeur TRC qui apparaît quand la case est cochée -->
+<div id="trcValueContainer" style="display: none; margin-left: 20px; margin-top: 10px; margin-bottom: 10px;">
+    <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <label style="width: 150px; min-width: 150px;"><strong>Valeur du TRC :</strong></label>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <input type="number" step="0.5" min="3" value="3" style="width: 40px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="trcValue">
+            <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;"></span>
+        </div>
+    </div>
+</div>
+		
+		<script>
+		
+		document.getElementById('trc').addEventListener('change', function() {
+    const trcValueContainer = document.getElementById('trcValueContainer');
+    if (trcValueContainer) {
+        trcValueContainer.style.display = this.checked ? 'block' : 'none';
+    }
+    
+    // Réinitialiser la valeur si décochée
+    if (!this.checked) {
+        document.getElementById('trcValue').value = 3;
+    }
+});
+
+</script>
+
         
         <label class="custom-control checkbox">
             <input type="checkbox" id="polypnee">
@@ -2427,46 +2455,111 @@ document.getElementById('nocard4').addEventListener('change', function() {
 
     </div>
 
-    <div style="margin-top: 10px;">
-        <label class="custom-control checkbox">
-            <input type="checkbox" id="vasopresseurs">
-            <span class="checkmark"></span>
-            Supports vasopresseurs
-        </label>
-    </div>
-
-    <div id="vasopresseurDetails" style="display: none; margin-left: 20px;">
-        <div>
+<div style="margin-top: 10px;">
+    <label class="custom-control checkbox">
+        <input type="checkbox" id="vasopresseurs">
+        <span class="checkmark"></span>
+        Supports vasopresseurs
+    </label>
+</div>
+<div id="vasopresseurDetails" style="display: none; margin-left: 20px; margin-top: 10px; padding-left: 10px; border-left: 2px solid #3b82f6;">
+    <div style="margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <label class="custom-control checkbox">
                 <input type="checkbox" id="noradrenaline">
                 <span class="checkmark"></span>
                 Noradrénaline
             </label>
-            <input type="text" id="noradrenalineDose" placeholder="Posologie (mg/h)" style="display: none; margin-left: 10px; width: 150px;">
+            <div id="noradrenalineInputGroup" style="display: none; align-items: center; flex-wrap: nowrap;">
+                <input type="text" id="noradrenalineDose" placeholder="Posologie" style="width: 100px; margin-right: 5px;">
+                <span style="color: #64748b; font-size: 0.9rem;">mg/h</span>
+            </div>
         </div>
-        
-        <div>
+    </div>
+    
+    <div style="margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <label class="custom-control checkbox">
                 <input type="checkbox" id="adrenaline">
                 <span class="checkmark"></span>
                 Adrénaline
             </label>
-            <input type="text" id="adrenalineDose" placeholder="Posologie (mg/h)" style="display: none; margin-left: 10px; width: 150px;">
+            <div id="adrenalineInputGroup" style="display: none; align-items: center; flex-wrap: nowrap;">
+                <input type="text" id="adrenalineDose" placeholder="Posologie" style="width: 100px; margin-right: 5px;">
+                <span style="color: #64748b; font-size: 0.9rem;">mg/h</span>
+            </div>
         </div>
-        
-        <div>
+    </div>
+    
+    <div style="margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <label class="custom-control checkbox">
                 <input type="checkbox" id="dobutamine">
                 <span class="checkmark"></span>
                 Dobutamine
             </label>
-            <input type="text" id="dobutamineDose" placeholder="Posologie (µg/kg/min)" style="display: none; margin-left: 10px; width: 150px;">
-        </div>
-        
-        <div style="margin-top: 10px;">
-            <input type="text" id="vasopresseurPrecisions" placeholder="Précisions supplémentaires" style="width: 300px;">
+            <div id="dobutamineInputGroup" style="display: none; align-items: center; flex-wrap: nowrap;">
+                <input type="text" id="dobutamineDose" placeholder="Posologie" style="width: 100px; margin-right: 5px;">
+                <span style="color: #64748b; font-size: 0.9rem;">µg/kg/min</span>
+            </div>
         </div>
     </div>
+    
+    <div style="margin-top: 10px;">
+        <input type="text" id="vasopresseurPrecisions" placeholder="Précisions supplémentaires" style="width: 300px;">
+    </div>
+</div>
+
+<script>
+// Afficher/masquer les détails des vasopresseurs
+document.getElementById('vasopresseurs').addEventListener('change', function() {
+    const details = document.getElementById('vasopresseurDetails');
+    details.style.display = this.checked ? 'block' : 'none';
+    
+    // Si on décoche, réinitialiser les champs
+    if (!this.checked) {
+        document.getElementById('noradrenaline').checked = false;
+        document.getElementById('adrenaline').checked = false;
+        document.getElementById('dobutamine').checked = false;
+        document.getElementById('noradrenalineDose').value = '';
+        document.getElementById('adrenalineDose').value = '';
+        document.getElementById('dobutamineDose').value = '';
+        document.getElementById('vasopresseurPrecisions').value = '';
+        
+        // Masquer les groupes d'inputs
+        document.getElementById('noradrenalineInputGroup').style.display = 'none';
+        document.getElementById('adrenalineInputGroup').style.display = 'none';
+        document.getElementById('dobutamineInputGroup').style.display = 'none';
+    }
+});
+
+// Gestion de l'affichage des champs de posologie avec unités
+document.getElementById('noradrenaline').addEventListener('change', function() {
+    const inputGroup = document.getElementById('noradrenalineInputGroup');
+    inputGroup.style.display = this.checked ? 'flex' : 'none';
+    if (!this.checked) {
+        document.getElementById('noradrenalineDose').value = '';
+    }
+});
+
+document.getElementById('adrenaline').addEventListener('change', function() {
+    const inputGroup = document.getElementById('adrenalineInputGroup');
+    inputGroup.style.display = this.checked ? 'flex' : 'none';
+    if (!this.checked) {
+        document.getElementById('adrenalineDose').value = '';
+    }
+});
+
+document.getElementById('dobutamine').addEventListener('change', function() {
+    const inputGroup = document.getElementById('dobutamineInputGroup');
+    inputGroup.style.display = this.checked ? 'flex' : 'none';
+    if (!this.checked) {
+        document.getElementById('dobutamineDose').value = '';
+    }
+});
+</script>
+
+
 </div>
 			
 <p style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
@@ -2909,7 +3002,7 @@ document.addEventListener('DOMContentLoaded', function() {
             status = "Bradycardie";
             color = "red";
         } else {
-            status = "Normocardie";
+            status = "Normocarde";
             color = "green";
         }
         
@@ -3452,34 +3545,7 @@ document.getElementById('hasMurmur').addEventListener('change', function() {
         <input type="text" id="matiteLocation" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
     </div>
 </div>
-
-<p><strong>Vibrations vocales :</strong>
-    <label class="custom-control radio" style="margin-right: 10px;">
-        <input type="radio" name="vibrations" id="normalVibrations" checked>
-        <span class="checkmark"></span> Sans anomalie
-    </label>
-    <label class="custom-control radio" style="margin-right: 10px;">
-        <input type="radio" name="vibrations" id="abnormalVibrations">
-        <span class="checkmark"></span> Anomalie
-        <div id="vibrationsDetails" style="display: none; margin-left: 20px;">
-            <div>
-                <label class="custom-control checkbox" style="margin-right: 10px;">
-                    <input type="checkbox" id="diminutionVibrations">
-                    <span class="checkmark"></span> Abolition des vibrations vocales
-                </label>
-                <input type="text" id="diminutionLocation" class="locationInput" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
-            </div>
-            <div>
-                <label class="custom-control checkbox" style="margin-right: 10px;">
-                    <input type="checkbox" id="augmentationVibrations">
-                    <span class="checkmark"></span> Augmentation des vibrations vocales
-                </label>
-                <input type="text" id="augmentationLocation" class="locationInput" placeholder="Localisation" style="display: none; margin-left: 10px; width: 300px;">
-            </div>
-        </div>
-    </label>
-</p>
-			
+	
 <p><strong>Auscultation pulmonaire :</strong>
     <label class="custom-control radio" style="margin-right: 10px;">
         <input type="radio" name="resp6" id="noresp6" checked>
@@ -3786,22 +3852,7 @@ document.getElementById('matite').addEventListener('change', function() {
     document.getElementById('matiteLocation').style.display = this.checked ? 'inline' : 'none';
 });
 
-// Gestion des vibrations vocales
-document.getElementById('abnormalVibrations').addEventListener('change', function() {
-    document.getElementById('vibrationsDetails').style.display = this.checked ? 'block' : 'none';
-});
 
-document.getElementById('normalVibrations').addEventListener('change', function() {
-    document.getElementById('vibrationsDetails').style.display = 'none';
-});
-
-document.getElementById('diminutionVibrations').addEventListener('change', function() {
-    document.getElementById('diminutionLocation').style.display = this.checked ? 'inline' : 'none';
-});
-
-document.getElementById('augmentationVibrations').addEventListener('change', function() {
-    document.getElementById('augmentationLocation').style.display = this.checked ? 'inline' : 'none';
-});
 
 // Gestion de l'auscultation
 document.getElementById('yesresp6').addEventListener('change', function() {
@@ -6387,35 +6438,48 @@ document.addEventListener('DOMContentLoaded', function() {
         KTA
       </label>
       
-      <!-- Détails KTA - masqués par défaut -->
-      <div id="ktaDetails" style="display: none; margin-left: 25px; margin-top: 5px;">
-        <div style="margin-bottom: 8px;">
-          <span style="display: inline-block; width: 60px;">Côté :</span>
-          <label class="custom-control radio" style="margin-right: 15px;">
-            <input type="radio" name="ktaSide" value="droit" checked>
-            <span class="checkmark"></span>
-            Droit
-          </label>
-          <label class="custom-control radio">
-            <input type="radio" name="ktaSide" value="gauche">
-            <span class="checkmark"></span>
-            Gauche
-          </label>
-        </div>
-        <div>
-          <span style="display: inline-block; width: 60px;">Statut :</span>
-          <label class="custom-control radio" style="margin-right: 15px;">
-            <input type="radio" name="ktaStatus" value="propre" checked>
-            <span class="checkmark"></span>
-            Propre
-          </label>
-          <label class="custom-control radio">
-            <input type="radio" name="ktaStatus" value="sale">
-            <span class="checkmark"></span>
-            Sale
-          </label>
-        </div>
-      </div>
+<!-- Détails KTA - masqués par défaut -->
+<div id="ktaDetails" style="display: none; margin-left: 25px; margin-top: 5px;">
+  <div style="margin-bottom: 8px;">
+    <span style="display: inline-block; width: 60px;">Côté :</span>
+    <label class="custom-control radio" style="margin-right: 15px;">
+      <input type="radio" name="ktaSide" value="droit" checked>
+      <span class="checkmark"></span>
+      Droit
+    </label>
+    <label class="custom-control radio">
+      <input type="radio" name="ktaSide" value="gauche">
+      <span class="checkmark"></span>
+      Gauche
+    </label>
+  </div>
+  <div style="margin-bottom: 8px;">
+    <span style="display: inline-block; width: 60px;">Statut :</span>
+    <label class="custom-control radio" style="margin-right: 15px;">
+      <input type="radio" name="ktaStatus" value="propre" checked>
+      <span class="checkmark"></span>
+      Propre
+    </label>
+    <label class="custom-control radio">
+      <input type="radio" name="ktaStatus" value="sale">
+      <span class="checkmark"></span>
+      Sale
+    </label>
+  </div>
+  <div>
+    <span style="display: inline-block; width: 100px;">Localisation :</span>
+    <label class="custom-control radio" style="margin-right: 15px;">
+      <input type="radio" name="ktaLocation" value="radial" checked>
+      <span class="checkmark"></span>
+      Radial
+    </label>
+    <label class="custom-control radio">
+      <input type="radio" name="ktaLocation" value="fémoral">
+      <span class="checkmark"></span>
+      Fémoral
+    </label>
+  </div>
+</div>
     </div>
     
     <!-- KT central -->
@@ -11534,7 +11598,12 @@ if (document.getElementById('yescard4').checked) {
         instabilityDetails.push(marbruresText);
     }
     
-    if (document.getElementById('trc').checked) instabilityDetails.push("TRC > 3s");
+// Modification pour le TRC avec sa valeur
+if (document.getElementById('trc').checked) {
+    const trcValue = document.getElementById('trcValue').value;
+    instabilityDetails.push(`TRC ${trcValue} s`);
+}	
+	
     if (document.getElementById('polypnee').checked) instabilityDetails.push("polypnée");
     
     if (instabilityDetails.length > 0) {
@@ -11915,10 +11984,10 @@ let section = `<div class="text-line"><strong class="section-title">Sur le plan 
         
         if (lutteDetails.length > 0) {
             if (secondLine) secondLine += " et ";
-            secondLine += `signes de lutte ${intensity}s à type de : ${lutteDetails.join(', ')}`;
+            secondLine += `Signes de lutte ${intensity}s à type de : ${lutteDetails.join(', ')}`;
         } else {
             if (secondLine) secondLine += " et ";
-            secondLine += `présence de signes de lutte ${intensity}s`;
+            secondLine += `Présence de signes de lutte ${intensity}s`;
         }
     }
     
@@ -11973,28 +12042,9 @@ if (document.getElementById('abnormalInspection').checked) {
     } else {
         percussionText = "Percussion sans anomalie.";
     }
+   
     
-    // Vibrations vocales
-    let vibrationsText = "";
-    if (document.getElementById('abnormalVibrations').checked) {
-        let vibrationsAbnormalities = [];
-        
-        if (document.getElementById('diminutionVibrations').checked) {
-            const diminutionLocation = document.getElementById('diminutionLocation').value;
-            vibrationsAbnormalities.push(`abolition des vibrations vocales${diminutionLocation ? ' ' + diminutionLocation : ''}`);
-        }
-        
-        if (document.getElementById('augmentationVibrations').checked) {
-            const augmentationLocation = document.getElementById('augmentationLocation').value;
-            vibrationsAbnormalities.push(`augmentation des vibrations vocales${augmentationLocation ? ' ' + augmentationLocation : ''}`);
-        }
-        
-        vibrationsText = `Anomalie des vibrations vocales : ${vibrationsAbnormalities.join(' et ')}.`;
-    } else {
-        vibrationsText = "Vibrations vocales perçues et symétriques.";
-    }
-    
-    section += `<div class="text-line">${percussionText} ${vibrationsText}</div>`;
+    section += `<div class="text-line">${percussionText}</div>`;
     
     // Auscultation pulmonaire
     let auscultationText = "L'auscultation met en évidence : ";
@@ -12622,7 +12672,8 @@ function generateCathetersText() {
     if (document.getElementById('kta') && document.getElementById('kta').checked) {
         const side = document.querySelector('input[name="ktaSide"]:checked').value;
         const status = document.querySelector('input[name="ktaStatus"]:checked').value;
-        catheterTexts.push(`KTA ${side}, ${status}`);
+		const location = document.querySelector('input[name="ktaLocation"]:checked').value;
+catheterTexts.push(`KTA ${location} ${side}, ${status}`);
     }
     
     // KTC
