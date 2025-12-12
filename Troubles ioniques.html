@@ -326,7 +326,7 @@ document.head.appendChild(meta);
     <div class="tcl-hero-container">
         <div class="tcl-hero-content">
             <h1 class="tcl-hero-title">Troubles Ioniques</h1>
-            <p class="tcl-hero-subtitle">Analysez les troubles ioniques et générez un compte-rendu structuré. Remplissez les champs et obtenez instantanément un texte type pour votre dossier médical.</p>
+            <p class="tcl-hero-subtitle">Analysez les troubles ioniques de vos patients et obtenez une interprétation automatique. Remplissez les valeurs ci-dessous pour générer un compte-rendu détaillé.</p>
             
             <div class="tcl-tool-navigation">
                 <a href="examen-adulte.html" class="tcl-tool-link">
@@ -533,34 +533,20 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(updateActiveSection, 200);
 });
 </script>
-
 <style>
-
 /* =============================================
-   RESET DES ANCIENS STYLES HEADER
-   ============================================= */
-body > header.header:not(.tcl-header) {
-    display: none !important;
-}
-
-.sticky-wrapper:not(.tcl-floating-nav) {
-    display: none !important;
-}
-
-.section-title-wrapper:not(.tcl-section-indicator) {
-    display: none !important;
-}
-
-/* =============================================
-   VARIABLES TYPIXCLIN HEADER
+   VARIABLES TYPIXCLIN HEADER (préfixe tcl-)
    ============================================= */
 :root {
+    /* Couleurs TCL Header */
     --tcl-primary: #3b82f6;
     --tcl-primary-dark: #1d4ed8;
     --tcl-primary-light: #60a5fa;
     --tcl-primary-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
     --tcl-accent: #8b5cf6;
     --tcl-accent-dark: #6d28d9;
+    
+    /* Grays */
     --tcl-gray-100: #f3f4f6;
     --tcl-gray-200: #e5e7eb;
     --tcl-gray-300: #d1d5db;
@@ -569,16 +555,25 @@ body > header.header:not(.tcl-header) {
     --tcl-gray-700: #374151;
     --tcl-gray-800: #1f2937;
     --tcl-gray-900: #111827;
+    
+    /* Shadows */
     --tcl-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --tcl-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --tcl-shadow-blue: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    
+    /* Transitions */
     --tcl-transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
     --tcl-transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Fonts */
     --tcl-font-display: 'Outfit', system-ui, -apple-system, sans-serif;
     --tcl-font-body: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    
+    /* Dimensions */
     --tcl-header-height: 70px;
 }
 
+/* Dark theme variables */
 [data-theme="dark"] {
     --tcl-primary: #60a5fa;
     --tcl-primary-dark: #3b82f6;
@@ -589,84 +584,78 @@ body > header.header:not(.tcl-header) {
 }
 
 /* =============================================
-   BARRE DE PROGRESSION
+   BARRE DE PROGRESSION EN HAUT
    ============================================= */
 .tcl-progress-bar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    height: 3px !important;
-    background: var(--tcl-primary-gradient) !important;
-    width: 0% !important;
-    z-index: 10000 !important;
-    transition: width 0.1s ease !important;
-    pointer-events: none !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--tcl-primary-gradient);
+    width: 0%;
+    z-index: 1002;
+    transition: width 0.1s ease;
 }
 
 /* =============================================
    HEADER PRINCIPAL
    ============================================= */
-header.tcl-header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: var(--tcl-header-height) !important;
-    z-index: 1000 !important;
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    box-shadow: var(--tcl-shadow-md) !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    overflow: visible !important;
+.tcl-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--tcl-header-height);
+    z-index: 100;
+    transition: transform var(--tcl-transition-normal), background-color var(--tcl-transition-normal), box-shadow var(--tcl-transition-normal);
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--tcl-shadow-md);
 }
 
-[data-theme="dark"] header.tcl-header {
-    background-color: rgba(30, 41, 59, 0.95) !important;
+[data-theme="dark"] .tcl-header {
+    background-color: rgba(30, 41, 59, 0.95);
 }
 
 .tcl-header-container {
-    height: 100% !important;
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding: 0 1.5rem !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
+/* Logo */
 .tcl-logo {
-    font-family: var(--tcl-font-display) !important;
-    font-size: 1.8rem !important;
-    font-weight: 800 !important;
-    color: var(--tcl-primary) !important;
-    letter-spacing: -0.05em !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-    text-decoration: none !important;
-    transition: transform var(--tcl-transition-normal) !important;
+    font-family: var(--tcl-font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--tcl-primary);
+    letter-spacing: -0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: transform var(--tcl-transition-normal);
 }
 
 .tcl-logo:hover {
-    transform: scale(1.02) !important;
+    transform: scale(1.02);
 }
 
 .tcl-logo-icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-    background: var(--tcl-primary-gradient) !important;
-    border-radius: 0.5rem !important;
-    color: white !important;
-    font-size: 1.5rem !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--tcl-primary-gradient);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 1.5rem;
 }
 
 .tcl-logo:hover .tcl-logo-icon {
@@ -679,213 +668,209 @@ header.tcl-header {
     100% { transform: scale(1); }
 }
 
+/* Navigation */
 .tcl-nav {
-    display: flex !important;
-    align-items: center !important;
+    display: flex;
+    align-items: center;
 }
 
 .tcl-nav-items {
-    display: flex !important;
-    list-style: none !important;
-    gap: 2rem !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
 }
 
 .tcl-nav-link {
-    font-family: var(--tcl-font-body) !important;
-    font-weight: 500 !important;
-    color: var(--tcl-gray-700) !important;
-    transition: color var(--tcl-transition-normal), transform var(--tcl-transition-normal) !important;
-    position: relative !important;
-    text-decoration: none !important;
-    padding: 0.5rem 0 !important;
-    background: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    font-size: 1rem !important;
+    font-family: var(--tcl-font-body);
+    font-weight: 500;
+    color: var(--tcl-gray-700);
+    transition: color var(--tcl-transition-normal), transform var(--tcl-transition-normal);
+    position: relative;
+    text-decoration: none;
+    padding: 0.5rem 0;
 }
 
 [data-theme="dark"] .tcl-nav-link {
-    color: var(--tcl-gray-300) !important;
+    color: var(--tcl-gray-300);
 }
 
 .tcl-nav-link::after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: -4px !important;
-    left: 0 !important;
-    width: 0 !important;
-    height: 2px !important;
-    background: var(--tcl-primary-gradient) !important;
-    transition: width var(--tcl-transition-normal) !important;
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--tcl-primary-gradient);
+    transition: width var(--tcl-transition-normal);
 }
 
 .tcl-nav-link:hover {
-    color: var(--tcl-primary) !important;
-    transform: translateY(-2px) !important;
-    background: none !important;
+    color: var(--tcl-primary);
+    transform: translateY(-2px);
 }
 
 .tcl-nav-link:hover::after {
-    width: 100% !important;
+    width: 100%;
 }
 
+/* Dropdown Menu */
 .tcl-nav-dropdown {
-    position: relative !important;
+    position: relative;
 }
 
 .tcl-nav-tools {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    cursor: pointer !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
 }
 
 .tcl-dropdown-icon {
-    font-size: 0.75rem !important;
-    transition: transform 0.3s ease !important;
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
 }
 
 .tcl-nav-dropdown:hover .tcl-dropdown-icon {
-    transform: rotate(180deg) !important;
+    transform: rotate(180deg);
 }
 
 .tcl-nav-dropdown-content {
-    position: absolute !important;
-    top: 100% !important;
-    left: -10px !important;
-    background: white !important;
-    min-width: 220px !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-    padding: 8px 0 !important;
-    z-index: 2000 !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(10px) !important;
-    transition: all 0.3s ease !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    position: absolute;
+    top: 100%;
+    left: -10px;
+    background: white;
+    min-width: 220px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .tcl-nav-dropdown:hover .tcl-nav-dropdown-content {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(5px) !important;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(5px);
 }
 
 .tcl-dropdown-item {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    padding: 10px 15px !important;
-    color: var(--tcl-gray-700) !important;
-    text-decoration: none !important;
-    transition: all 0.2s ease !important;
-    font-family: var(--tcl-font-body) !important;
-    font-size: 0.95rem !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    color: var(--tcl-gray-700);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: var(--tcl-font-body);
 }
 
 .tcl-dropdown-item:hover {
-    background-color: var(--tcl-gray-100) !important;
-    color: var(--tcl-primary) !important;
+    background-color: var(--tcl-gray-100);
+    color: var(--tcl-primary);
 }
 
 .tcl-dropdown-item.active {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-    color: var(--tcl-primary) !important;
-    font-weight: 500 !important;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--tcl-primary);
+    font-weight: 500;
 }
 
 [data-theme="dark"] .tcl-nav-dropdown-content {
-    background: var(--tcl-gray-800) !important;
-    border-color: var(--tcl-gray-700) !important;
+    background: var(--tcl-gray-800);
+    border-color: var(--tcl-gray-700);
 }
 
 [data-theme="dark"] .tcl-dropdown-item {
-    color: var(--tcl-gray-300) !important;
+    color: var(--tcl-gray-300);
 }
 
 [data-theme="dark"] .tcl-dropdown-item:hover {
-    background-color: var(--tcl-gray-700) !important;
-    color: var(--tcl-primary-light) !important;
+    background-color: var(--tcl-gray-700);
+    color: var(--tcl-primary-light);
 }
 
+/* Bouton Fiche ECG spécial */
 .tcl-nav-link-special {
-    background-color: #7c3aed !important;
-    border: 2px solid #7c3aed !important;
-    border-radius: 8px !important;
+    background-color: #7c3aed;
+    border: 2px solid #7c3aed;
+    border-radius: 8px;
     padding: 8px 16px !important;
     color: white !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
     position: relative !important;
     top: 4px !important;
 }
 
 .tcl-nav-link-special:hover {
-    background-color: #9d70f8 !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3) !important;
+    background-color: #9d70f8;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
 .tcl-nav-link-special::after {
-    display: none !important;
+    display: none;
 }
 
 [data-theme="dark"] .tcl-nav-link-special {
-    background-color: rgba(139, 92, 246, 0.2) !important;
-    border-color: #8b5cf6 !important;
+    background-color: rgba(139, 92, 246, 0.2);
+    border-color: #8b5cf6;
     color: #c4b5fd !important;
 }
 
 [data-theme="dark"] .tcl-nav-link-special:hover {
-    background-color: #8b5cf6 !important;
+    background-color: #8b5cf6;
     color: white !important;
 }
 
-button.tcl-theme-toggle {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    background: var(--tcl-gray-100) !important;
-    border-radius: 50% !important;
-    color: var(--tcl-gray-600) !important;
-    font-size: 1.25rem !important;
-    cursor: pointer !important;
-    margin-left: 1.5rem !important;
-    transition: all var(--tcl-transition-normal) !important;
-    border: none !important;
-    padding: 0 !important;
+/* Theme Toggle */
+.tcl-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--tcl-gray-100);
+    border-radius: 50%;
+    color: var(--tcl-gray-600);
+    font-size: 1.25rem;
+    cursor: pointer;
+    margin-left: 1.5rem;
+    transition: all var(--tcl-transition-normal);
+    border: none;
 }
 
-[data-theme="dark"] button.tcl-theme-toggle {
-    background: var(--tcl-gray-700) !important;
-    color: var(--tcl-gray-300) !important;
+[data-theme="dark"] .tcl-theme-toggle {
+    background: var(--tcl-gray-700);
+    color: var(--tcl-gray-300);
 }
 
-button.tcl-theme-toggle:hover {
-    background: var(--tcl-primary-light) !important;
-    color: white !important;
-    transform: rotate(15deg) !important;
+.tcl-theme-toggle:hover {
+    background: var(--tcl-primary-light);
+    color: white;
+    transform: rotate(15deg);
 }
 
-button.tcl-mobile-menu-btn {
-    display: none !important;
-    font-size: 1.5rem !important;
-    color: var(--tcl-gray-700) !important;
-    background: none !important;
-    border: none !important;
-    cursor: pointer !important;
-    padding: 0.5rem !important;
+/* Mobile menu button */
+.tcl-mobile-menu-btn {
+    display: none;
+    font-size: 1.5rem;
+    color: var(--tcl-gray-700);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color var(--tcl-transition-normal);
 }
 
-button.tcl-mobile-menu-btn:hover {
-    color: var(--tcl-primary) !important;
+.tcl-mobile-menu-btn:hover {
+    color: var(--tcl-primary);
 }
 
 /* =============================================
@@ -992,112 +977,100 @@ a.tcl-nav-indicator.active .tcl-nav-dot {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
 }
-
 /* =============================================
    INDICATEUR DE SECTION EN BAS
    ============================================= */
-div.tcl-section-indicator {
-    position: fixed !important;
-    bottom: 25px !important;
-    left: 50% !important;
-    transform: translateX(-50%) translateY(100px) !important;
-    background: white !important;
-    border-radius: 50px !important;
-    padding: 14px 28px !important;
-    box-shadow: var(--tcl-shadow-lg) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    opacity: 0 !important;
-    transition: all var(--tcl-transition-bounce) !important;
-    z-index: 998 !important;
-    border: 2px solid var(--tcl-primary-light) !important;
-    pointer-events: none !important;
+.tcl-section-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: white;
+    border-radius: 50px;
+    padding: 12px 30px;
+    box-shadow: var(--tcl-shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transition: all var(--tcl-transition-bounce);
+    z-index: 90;
+    border: 2px solid var(--tcl-primary-light);
 }
 
-[data-theme="dark"] div.tcl-section-indicator {
-    background: var(--tcl-gray-800) !important;
-    border-color: var(--tcl-primary) !important;
+[data-theme="dark"] .tcl-section-indicator {
+    background: var(--tcl-gray-800);
+    border-color: var(--tcl-primary);
 }
 
-div.tcl-section-indicator.visible {
-    transform: translateX(-50%) translateY(0) !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
+.tcl-section-indicator.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
 }
 
 .tcl-section-indicator-icon {
-    color: var(--tcl-primary) !important;
-    font-size: 1.3rem !important;
+    color: var(--tcl-primary);
+    font-size: 1.2rem;
 }
 
 .tcl-section-indicator-text {
-    color: var(--tcl-gray-800) !important;
-    font-weight: 600 !important;
-    font-family: var(--tcl-font-display) !important;
-    font-size: 1rem !important;
+    color: var(--tcl-gray-800);
+    font-weight: 600;
+    font-family: var(--tcl-font-display);
 }
 
 [data-theme="dark"] .tcl-section-indicator-text {
-    color: white !important;
+    color: white;
 }
-
 
 /* =============================================
    HERO SECTION
    ============================================= */
-section.tcl-hero {
-    padding-top: calc(var(--tcl-header-height) + 3rem) !important;
-    padding-bottom: 5rem !important;
-    background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(219, 234, 254, 0.95) 100%) !important;
-    overflow: hidden !important;
-    position: relative !important;
-    min-height: 65vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    animation: none !important;
-    opacity: 1 !important;
+.tcl-hero {
+    padding-top: calc(var(--tcl-header-height) + 3rem);
+    padding-bottom: 4rem;
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.9) 0%, rgba(219, 234, 254, 0.9) 100%);
+    overflow: hidden;
+    position: relative;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-[data-theme="dark"] section.tcl-hero {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%) !important;
+[data-theme="dark"] .tcl-hero {
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(31, 41, 55, 0.9) 100%);
 }
 
-section.tcl-hero::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2000 1500'%3E%3Cdefs%3E%3Ccircle id='a' fill='none' stroke='%233b82f6' stroke-width='1' stroke-opacity='.1' r='300'/%3E%3C/defs%3E%3Cuse href='%23a' transform='translate(0 0)'/%3E%3Cuse href='%23a' transform='translate(300 200)'/%3E%3Cuse href='%23a' transform='translate(600 0)'/%3E%3Cuse href='%23a' transform='translate(900 200)'/%3E%3Cuse href='%23a' transform='translate(1200 0)'/%3E%3Cuse href='%23a' transform='translate(1500 200)'/%3E%3Cuse href='%23a' transform='translate(0 400)'/%3E%3Cuse href='%23a' transform='translate(300 600)'/%3E%3Cuse href='%23a' transform='translate(600 400)'/%3E%3Cuse href='%23a' transform='translate(900 600)'/%3E%3Cuse href='%23a' transform='translate(1200 400)'/%3E%3C/svg%3E") !important;
-    background-size: cover !important;
-    opacity: 0.5 !important;
-    z-index: 0 !important;
-    pointer-events: none !important;
+.tcl-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2000 1500'%3E%3Cdefs%3E%3Ccircle id='a' fill='none' stroke='%233b82f6' stroke-width='1' stroke-opacity='.1' r='300'/%3E%3C/defs%3E%3Cuse href='%23a' transform='translate(0 0)'/%3E%3Cuse href='%23a' transform='translate(300 200)'/%3E%3Cuse href='%23a' transform='translate(600 0)'/%3E%3Cuse href='%23a' transform='translate(900 200)'/%3E%3Cuse href='%23a' transform='translate(1200 0)'/%3E%3Cuse href='%23a' transform='translate(1500 200)'/%3E%3Cuse href='%23a' transform='translate(0 400)'/%3E%3Cuse href='%23a' transform='translate(300 600)'/%3E%3Cuse href='%23a' transform='translate(600 400)'/%3E%3Cuse href='%23a' transform='translate(900 600)'/%3E%3Cuse href='%23a' transform='translate(1200 400)'/%3E%3C/svg%3E");
+    background-size: cover;
+    opacity: 0.5;
+    z-index: 0;
 }
 
 .tcl-hero-container {
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding: 0 1.5rem !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2rem !important;
-    align-items: center !important;
-    text-align: center !important;
-    position: relative !important;
-    z-index: 1 !important;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
 .tcl-hero-content {
-    max-width: 800px !important;
-    animation: tcl-fadeInUp 0.6s ease-out forwards !important;
+    max-width: 800px;
+    animation: tcl-fadeInUp 0.6s ease-out forwards;
 }
 
 @keyframes tcl-fadeInUp {
@@ -1112,108 +1085,107 @@ section.tcl-hero::before {
 }
 
 .tcl-hero-title {
-    font-family: var(--tcl-font-display) !important;
-    font-size: 3rem !important;
-    font-weight: 900 !important;
-    line-height: 1.1 !important;
-    margin-bottom: 1.5rem !important;
-    background: var(--tcl-primary-gradient) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
+    font-family: var(--tcl-font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: var(--tcl-primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .tcl-hero-subtitle {
-    font-family: var(--tcl-font-body) !important;
-    font-size: 1.15rem !important;
-    color: var(--tcl-gray-600) !important;
-    margin-bottom: 2rem !important;
-    line-height: 1.7 !important;
+    font-family: var(--tcl-font-body);
+    font-size: 1.15rem;
+    color: var(--tcl-gray-600);
+    margin-bottom: 2rem;
+    line-height: 1.7;
 }
 
 [data-theme="dark"] .tcl-hero-subtitle {
-    color: var(--tcl-gray-400) !important;
+    color: var(--tcl-gray-400);
 }
 
+/* Navigation des outils */
 .tcl-tool-navigation {
-    display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
-    gap: 1rem !important;
-    margin-top: 2rem !important;
-    width: 100% !important;
-    max-width: 900px !important;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 900px;
 }
 
-a.tcl-tool-link {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-direction: column !important;
-    padding: 1.25rem 0.75rem !important;
-    border-radius: 1rem !important;
-    background: white !important;
-    box-shadow: var(--tcl-shadow-md) !important;
-    transition: all var(--tcl-transition-bounce) !important;
-    color: var(--tcl-gray-800) !important;
-    text-decoration: none !important;
-    position: relative !important;
-    overflow: hidden !important;
-    border: none !important;
-    min-height: auto !important;
+.tcl-tool-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 1.25rem 0.75rem;
+    border-radius: 1rem;
+    background: white;
+    box-shadow: var(--tcl-shadow-md);
+    transition: all var(--tcl-transition-bounce);
+    color: var(--tcl-gray-800);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
 }
 
-[data-theme="dark"] a.tcl-tool-link {
-    background: var(--tcl-gray-800) !important;
-    color: var(--tcl-gray-200) !important;
+[data-theme="dark"] .tcl-tool-link {
+    background: var(--tcl-gray-800);
+    color: var(--tcl-gray-200);
 }
 
-a.tcl-tool-link::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 4px !important;
-    background: var(--tcl-primary-gradient) !important;
-    transform: scaleX(0) !important;
-    transform-origin: left !important;
-    transition: transform var(--tcl-transition-normal) !important;
+.tcl-tool-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--tcl-primary-gradient);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--tcl-transition-normal);
 }
 
-a.tcl-tool-link:hover {
-    transform: translateY(-8px) !important;
-    box-shadow: var(--tcl-shadow-lg) !important;
+.tcl-tool-link:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--tcl-shadow-lg);
 }
 
-a.tcl-tool-link:hover::before {
-    transform: scaleX(1) !important;
+.tcl-tool-link:hover::before {
+    transform: scaleX(1);
 }
 
-a.tcl-tool-link.active {
-    background: var(--tcl-primary-gradient) !important;
-    color: white !important;
-    transform: translateY(-5px) !important;
-    box-shadow: var(--tcl-shadow-blue) !important;
+.tcl-tool-link.active {
+    background: var(--tcl-primary-gradient);
+    color: white;
+    transform: translateY(-5px);
+    box-shadow: var(--tcl-shadow-blue);
 }
 
-a.tcl-tool-link.active::before {
-    display: none !important;
+.tcl-tool-link.active::before {
+    display: none;
 }
 
 .tcl-tool-icon {
-    font-size: 1.75rem !important;
-    margin-bottom: 0.5rem !important;
-    transition: transform var(--tcl-transition-normal) !important;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    transition: transform var(--tcl-transition-normal);
 }
 
-a.tcl-tool-link:hover .tcl-tool-icon {
-    transform: scale(1.2) !important;
+.tcl-tool-link:hover .tcl-tool-icon {
+    transform: scale(1.2);
 }
 
 .tcl-tool-text {
-    font-family: var(--tcl-font-body) !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
+    font-family: var(--tcl-font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 /* Scroll indicator */
@@ -1267,115 +1239,147 @@ a.tcl-tool-link:hover .tcl-tool-icon {
    ============================================= */
 @media (max-width: 1200px) {
     .tcl-tool-navigation {
-        grid-template-columns: repeat(3, 1fr) !important;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 992px) {
     .tcl-hero-title {
-        font-size: 2.5rem !important;
+        font-size: 2.5rem;
     }
     
     .tcl-nav-items {
-        gap: 1.5rem !important;
+        gap: 1.5rem;
     }
 }
 
 @media (max-width: 768px) {
-    header.tcl-header {
-        height: 60px !important;
-    }
-    
-    :root {
-        --tcl-header-height: 60px;
+    .tcl-header {
+        height: 60px;
     }
     
     .tcl-nav-items {
-        display: none !important;
+        display: none;
     }
     
-    button.tcl-mobile-menu-btn {
-        display: block !important;
+    .tcl-mobile-menu-btn {
+        display: block;
     }
     
-    button.tcl-theme-toggle {
-        margin-left: 1rem !important;
+    .tcl-theme-toggle {
+        margin-left: 1rem;
     }
     
-    section.tcl-hero {
-        padding-top: calc(60px + 2rem) !important;
-        min-height: auto !important;
-        padding-bottom: 4rem !important;
+    .tcl-hero {
+        padding-top: calc(60px + 2rem);
+        min-height: auto;
+        padding-bottom: 3rem;
     }
     
     .tcl-hero-title {
-        font-size: 2rem !important;
+        font-size: 2rem;
     }
     
     .tcl-hero-subtitle {
-        font-size: 1rem !important;
+        font-size: 1rem;
     }
     
     .tcl-tool-navigation {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.75rem !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
     }
     
-    nav.tcl-floating-nav {
-        display: none !important;
+    .tcl-floating-nav {
+        bottom: 20px;
+        top: auto;
+        right: 20px;
+        transform: translateY(0);
+        flex-direction: row;
+        padding: 10px;
     }
     
-    div.tcl-section-indicator {
-        display: none !important;
+    .tcl-floating-nav:hover {
+        transform: translateY(0) translateX(0);
     }
     
-    a.tcl-scroll-indicator {
-        display: none !important;
+    .tcl-nav-label {
+        display: none;
+    }
+    
+    .tcl-nav-dot {
+        display: none;
+    }
+    
+    .tcl-section-indicator {
+        padding: 8px 15px;
+        max-width: calc(100% - 40px);
+    }
+    
+    .tcl-section-indicator-text {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .tcl-scroll-indicator {
+        display: none;
     }
 }
 
 @media (max-width: 480px) {
     .tcl-hero-title {
-        font-size: 1.75rem !important;
+        font-size: 1.75rem;
     }
     
-    a.tcl-tool-link {
-        padding: 1rem 0.5rem !important;
+    .tcl-tool-link {
+        padding: 1rem 0.5rem;
     }
     
     .tcl-tool-icon {
-        font-size: 1.5rem !important;
+        font-size: 1.5rem;
     }
     
     .tcl-tool-text {
-        font-size: 0.7rem !important;
+        font-size: 0.7rem;
     }
     
     .tcl-logo {
-        font-size: 1.4rem !important;
+        font-size: 1.4rem;
     }
     
     .tcl-logo-icon {
-        width: 2rem !important;
-        height: 2rem !important;
-        font-size: 1.2rem !important;
+        width: 2rem;
+        height: 2rem;
+        font-size: 1.2rem;
     }
 }
 
+/* Espacement pour le contenu principal après le hero */
+.tcl-main-content {
+    padding-top: 2rem;
+}
+
+/* Ajustement du scroll pour les ancres */
 section[id] {
-    scroll-margin-top: calc(var(--tcl-header-height) + 20px) !important;
+    scroll-margin-top: calc(var(--tcl-header-height) + 20px);
 }
 
-.content,
-.container {
-    position: relative;
-    z-index: 1;
+
+
+@media (max-width: 768px) {
+    nav.tcl-floating-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
 }
 
-section.tcl-hero {
-    margin-bottom: 2rem !important;
-}
-
+@media (max-width: 768px) {
+    .tcl-nav-items {
+        display: none;
+    }
 
 </style>
 
@@ -7076,7 +7080,7 @@ input[type="number"]:focus {
             <!-- Colonne 1 : Marque -->
             <div class="ecg-ft-brand">
                 <div class="ecg-ft-logo">TypixClin</div>
-                <p class="ecg-ft-description">Plateforme interactive d'aide à la rédaction médicale pour les étudiants en médecine.</p>
+                <p class="ecg-ft-description">Plateforme interactive d'aide à la rédaction des examens cliniques pour les étudiants en médecine.</p>
                 <div class="ecg-ft-social">
                     <a href="https://github.com/JEZENN/TypixClin" class="ecg-ft-social-link" target="_blank" rel="noopener">
                         <i class="fab fa-github"></i>
