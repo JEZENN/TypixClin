@@ -1,0 +1,1142 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="TypixClin - Connexion et inscription">
+<title>Connexion - TypixClin</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+:root {
+    --primary: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --primary-light: #60a5fa;
+    --primary-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
+    --secondary: #475569;
+    --accent: #8b5cf6;
+    --background: #f5f8ff;
+    --white: #ffffff;
+    --black: #111827;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-blue: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    --shadow-blue-lg: 0 20px 30px -10px rgba(59, 130, 246, 0.6);
+    --header-height: 70px;
+    --container-max-width: 1280px;
+    --border-radius-sm: 0.375rem;
+    --border-radius-md: 0.5rem;
+    --border-radius-lg: 1rem;
+    --border-radius-xl: 1.5rem;
+    --border-radius-full: 9999px;
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Space Grotesk', sans-serif;
+    --z-elevated: 10;
+    --z-sticky: 100;
+    --z-max: 9999;
+}
+
+[data-theme="dark"] {
+    --primary: #60a5fa;
+    --primary-dark: #3b82f6;
+    --primary-light: #93c5fd;
+    --primary-gradient: linear-gradient(135deg, #60a5fa, #3b82f6);
+    --background: #0f172a;
+    --white: #1e293b;
+    --black: #f9fafb;
+    --gray-900: #f9fafb;
+    --gray-800: #f3f4f6;
+    --gray-700: #e5e7eb;
+    --gray-600: #d1d5db;
+    --gray-500: #9ca3af;
+    --gray-400: #6b7280;
+    --gray-300: #4b5563;
+    --gray-200: #374151;
+    --gray-100: #1f2937;
+    --gray-50: #111827;
+    --shadow-blue: 0 10px 25px -5px rgba(96, 165, 250, 0.3);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--primary) var(--background); }
+body { font-family: var(--font-body); background-color: var(--background); color: var(--gray-800); line-height: 1.6; min-height: 100vh; overflow-x: hidden; transition: background-color var(--transition-normal), color var(--transition-normal); }
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); font-weight: 700; line-height: 1.2; color: var(--gray-900); transition: color var(--transition-normal); }
+a { text-decoration: none; color: var(--primary); transition: color var(--transition-normal); }
+button { cursor: pointer; font-family: var(--font-body); border: none; background: none; transition: all var(--transition-normal); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: var(--border-radius-full); }
+.container { width: 100%; max-width: var(--container-max-width); margin: 0 auto; padding: 0 1.5rem; }
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
+@keyframes checkmark { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); z-index: var(--z-sticky); transition: transform var(--transition-normal), background-color var(--transition-normal), box-shadow var(--transition-normal); background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+[data-theme="dark"] .header { background-color: rgba(30, 41, 59, 0.9); }
+.header.scrolled { box-shadow: var(--shadow-md); }
+.header-container { height: 100%; display: flex; justify-content: space-between; align-items: center; }
+.logo { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -0.05em; display: flex; align-items: center; gap: 0.5rem; }
+.logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background: var(--primary-gradient); border-radius: var(--border-radius-md); color: white; font-size: 1.5rem; }
+.logo:hover .logo-icon { animation: pulse 1s infinite; }
+.nav { display: flex; align-items: center; }
+.nav-items { display: flex; list-style: none; gap: 2rem; }
+.nav-link { font-weight: 500; color: var(--gray-700); transition: color var(--transition-normal), transform var(--transition-normal); position: relative; }
+.nav-link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--primary-gradient); transition: width var(--transition-normal); }
+.nav-link:hover { color: var(--primary); transform: translateY(-2px); }
+.nav-link:hover::after { width: 100%; }
+.theme-toggle { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--gray-100); border-radius: var(--border-radius-full); color: var(--gray-600); font-size: 1.25rem; cursor: pointer; margin-left: 2rem; transition: all var(--transition-normal); }
+[data-theme="dark"] .theme-toggle { background: var(--gray-200); color: var(--gray-300); }
+.theme-toggle:hover { background: var(--primary-light); color: white; transform: rotate(15deg); }
+.mobile-menu-btn { display: none; font-size: 1.5rem; color: var(--gray-700); transition: color var(--transition-normal); }
+.mobile-menu-btn:hover { color: var(--primary); }
+
+@media (max-width: 992px) {
+    .nav-items { display: none; }
+    .mobile-menu-btn { display: block; }
+    .theme-toggle { margin-left: 1.5rem; margin-right: 0.5rem; }
+}
+
+.mobile-menu { position: fixed; top: var(--header-height); left: 0; width: 100%; background-color: var(--white); padding: 2rem; z-index: calc(var(--z-sticky) - 1); box-shadow: var(--shadow-lg); transform: translateY(-100%); opacity: 0; visibility: hidden; transition: transform var(--transition-normal), opacity var(--transition-normal), visibility var(--transition-normal); display: flex; flex-direction: column; gap: 1.5rem; }
+.mobile-menu.active { transform: translateY(0); opacity: 1; visibility: visible; }
+.mobile-menu .nav-link { font-size: 1.25rem; display: block; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200); }
+
+.page-header { padding-top: calc(var(--header-height) + 3rem); padding-bottom: 2rem; background: linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(219, 234, 254, 0.8) 100%); text-align: center; }
+[data-theme="dark"] .page-header { background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.8) 100%); }
+.page-title { font-size: 2.5rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.75rem; animation: fadeInUp var(--transition-slow) forwards; }
+.page-subtitle { font-size: 1rem; color: var(--gray-600); max-width: 500px; margin: 0 auto 1.5rem; }
+.back-home-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary-gradient); color: white; font-weight: 600; font-size: 0.95rem; border-radius: var(--border-radius-full); box-shadow: var(--shadow-md); transition: all var(--transition-normal); }
+.back-home-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-blue); color: white; }
+
+.main-content { padding: 3rem 1.5rem; display: flex; justify-content: center; position: relative; }
+.main-content::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); opacity: 0.5; z-index: -1; }
+
+.auth-card { background: var(--white); border-radius: var(--border-radius-xl); box-shadow: var(--shadow-xl); padding: 2.5rem; width: 100%; max-width: 420px; border: 1px solid var(--gray-200); animation: fadeInUp var(--transition-slow) forwards; position: relative; overflow: hidden; }
+.auth-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--primary-gradient); }
+.auth-header { text-align: center; margin-bottom: 1.5rem; }
+.auth-icon { width: 60px; height: 60px; background: var(--primary-gradient); border-radius: var(--border-radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.75rem; color: white; box-shadow: var(--shadow-blue); }
+.auth-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.25rem; }
+.auth-subtitle { color: var(--gray-500); font-size: 0.95rem; }
+
+.auth-tabs { display: flex; background: var(--gray-100); border-radius: var(--border-radius-full); padding: 0.25rem; margin-bottom: 1.5rem; }
+.tab-btn { flex: 1; padding: 0.7rem 1rem; border: none; background: transparent; font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; color: var(--gray-500); border-radius: var(--border-radius-full); cursor: pointer; transition: all var(--transition-normal); }
+.tab-btn.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow-md); }
+.tab-btn:hover:not(.active) { color: var(--gray-700); }
+
+.auth-form { display: none; }
+.auth-form.active { display: block; animation: fadeInUp var(--transition-normal) forwards; }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem; font-size: 0.9rem; }
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-wrapper .input-icon { position: absolute; left: 1rem; color: var(--gray-400); transition: color var(--transition-normal); pointer-events: none; font-size: 1rem; }
+.form-input { width: 100%; padding: 0.85rem 3rem 0.85rem 2.75rem; border: 2px solid var(--gray-200); border-radius: var(--border-radius-lg); font-family: var(--font-body); font-size: 1rem; color: var(--gray-800); background: var(--white); transition: all var(--transition-normal); }
+.form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+.form-input:focus ~ .input-icon { color: var(--primary); }
+.form-input::placeholder { color: var(--gray-400); }
+.form-input.error { border-color: #ef4444; animation: shake 0.5s ease-in-out; }
+
+.password-toggle { position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: color var(--transition-normal); font-size: 1rem; width: 1.75rem; height: 1.75rem; }
+.password-toggle:hover { color: var(--primary); }
+
+.checkbox-group { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem; }
+.checkbox-input { width: 1.15rem; height: 1.15rem; accent-color: var(--primary); cursor: pointer; margin-top: 0.15rem; flex-shrink: 0; }
+.checkbox-label { color: var(--gray-600); font-size: 0.9rem; cursor: pointer; line-height: 1.4; }
+.checkbox-label a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.checkbox-label a:hover { text-decoration: underline; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 0.9rem 1.5rem; border-radius: var(--border-radius-full); font-family: var(--font-body); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all var(--transition-normal); gap: 0.5rem; border: none; }
+.btn-primary { background: var(--primary-gradient); color: white; box-shadow: var(--shadow-blue); }
+.btn-primary:hover { transform: translateY(-3px); box-shadow: var(--shadow-blue-lg); }
+.btn-primary:active { transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+.btn-google { background: var(--white); color: var(--gray-700); border: 2px solid var(--gray-200); margin-top: 1rem; }
+.btn-google:hover { background: var(--gray-50); border-color: var(--gray-300); transform: translateY(-2px); }
+.btn-google img { width: 20px; height: 20px; }
+
+.divider { display: flex; align-items: center; margin: 1.25rem 0; color: var(--gray-400); font-size: 0.85rem; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+.divider span { padding: 0 1rem; }
+
+.forgot-password { text-align: right; margin-bottom: 1.25rem; }
+.forgot-password a { color: var(--primary); font-size: 0.85rem; font-weight: 500; text-decoration: none; }
+.forgot-password a:hover { text-decoration: underline; }
+
+.message { padding: 0.85rem 1rem; border-radius: var(--border-radius-md); margin-bottom: 1.25rem; display: none; align-items: center; gap: 0.75rem; font-size: 0.9rem; }
+.message.show { display: flex; }
+.message.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.message.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+[data-theme="dark"] .message.error { background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.3); }
+[data-theme="dark"] .message.success { background: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.3); }
+
+.spinner { width: 20px; height: 20px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+.success-state { display: none; text-align: center; padding: 1.5rem 0; }
+.success-state.show { display: block; animation: fadeInUp var(--transition-normal) forwards; }
+.success-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 2rem; color: white; animation: checkmark 0.5s ease-out; }
+.success-state h3 { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.5rem; }
+.success-state p { color: var(--gray-500); }
+
+
+
+@media (max-width: 576px) {
+    .page-title { font-size: 2rem; }
+    .auth-card { padding: 1.75rem 1.25rem; margin: 0 0.5rem; }
+    .auth-title { font-size: 1.5rem; }
+    .tab-btn { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
+}
+
+
+/* ===== FOOTER ===== */
+.footer {
+    background-color: var(--gray-900);
+    color: var(--gray-400);
+    padding: 3rem 0 1.5rem;
+}
+
+.footer-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+}
+
+.footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.footer-logo {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.05em;
+}
+
+.footer-description {
+    color: var(--gray-500);
+    font-size: 0.9rem;
+    max-width: 350px;
+}
+
+.footer-social {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--border-radius-full);
+    background: var(--gray-800);
+    color: var(--gray-400);
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+}
+
+.social-link:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.footer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.footer-nav-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.footer-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.footer-nav-link {
+    color: var(--gray-500);
+    font-size: 0.9rem;
+    transition: all var(--transition-normal);
+}
+
+.footer-nav-link:hover {
+    color: var(--primary-light);
+    transform: translateX(5px);
+}
+
+.footer-bottom {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-800);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-copyright {
+    color: var(--gray-500);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 992px) {
+    .footer-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .footer {
+        text-align: center;
+    }
+
+    .footer-description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .footer-social {
+        justify-content: center;
+    }
+
+    .footer-nav-links {
+        align-items: center;
+    }
+}
+
+/* Footer dark mode */
+[data-theme="dark"] .footer {
+    background-color: #0d1320;
+}
+
+[data-theme="dark"] .footer-logo {
+    color: var(--gray-200);
+}
+
+[data-theme="dark"] .social-link {
+    background: #1e293b;
+    color: var(--gray-300);
+}
+
+[data-theme="dark"] .social-link:hover {
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .footer-bottom {
+    border-top: 1px solid #1e293b;
+}
+
+/* User Auth Styles */
+.user-auth {
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+    position: relative;
+}
+
+.auth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--gray-100);
+    border-radius: var(--border-radius-full);
+    color: var(--gray-600);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: none;
+}
+
+[data-theme="dark"] .auth-btn {
+    background: var(--gray-800);
+    color: var(--gray-300);
+}
+
+.auth-btn:hover {
+    background: var(--primary-light);
+    color: white;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-full);
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    text-transform: uppercase;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-avatar:hover {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius-full);
+    object-fit: cover;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--gray-200);
+    min-width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-normal);
+    z-index: 200;
+    overflow: hidden;
+}
+
+.profile-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 16px;
+    width: 12px;
+    height: 12px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-right: none;
+    border-bottom: none;
+    transform: rotate(45deg);
+}
+
+.profile-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.profile-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+}
+
+.profile-email {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    word-break: break-all;
+}
+
+.profile-menu {
+    padding: 0.5rem 0;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.profile-menu-item:hover {
+    background: var(--gray-100);
+    color: var(--primary);
+}
+
+.profile-menu-item i {
+    width: 18px;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.profile-menu-item.logout {
+    color: #dc2626;
+}
+
+.profile-menu-item.logout:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+[data-theme="dark"] .profile-dropdown {
+    background: var(--gray-100);
+    border-color: var(--gray-200);
+}
+
+[data-theme="dark"] .profile-dropdown::before {
+    background: var(--gray-100);
+    border-color: var(--gray-200);
+}
+
+[data-theme="dark"] .profile-header {
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+}
+
+[data-theme="dark"] .profile-menu-item:hover {
+    background: var(--gray-200);
+}
+
+[data-theme="dark"] .profile-menu-item.logout:hover {
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.user-auth .auth-btn { display: flex; }
+.user-auth .user-avatar { display: none; }
+.user-auth .profile-dropdown { display: none; }
+
+.user-auth.logged-in .auth-btn { display: none; }
+.user-auth.logged-in .user-avatar { display: flex; }
+.user-auth.logged-in .profile-dropdown { display: block; }
+
+@media (max-width: 992px) {
+    .user-auth {
+        margin-left: 0.5rem;
+        margin-right: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-auth {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .auth-btn,
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+    
+    .profile-dropdown {
+        position: fixed;
+        top: var(--header-height);
+        right: 1rem;
+        left: 1rem;
+        min-width: auto;
+    }
+}
+
+
+</style>
+
+<!-- Firebase Authentication Script -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
+    authDomain: "typixclin-b5fa9.firebaseapp.com",
+    projectId: "typixclin-b5fa9",
+    storageBucket: "typixclin-b5fa9.firebasestorage.app",
+    messagingSenderId: "726560091078",
+    appId: "1:726560091078:web:5ce8b31da0bfbbc1f720c7",
+    measurementId: "G-9CZ2QB6TNK"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const userAuth = document.getElementById('user-auth');
+const userAvatar = document.getElementById('user-avatar');
+const avatarInitials = document.getElementById('avatar-initials');
+const profileDropdown = document.getElementById('profile-dropdown');
+const profileName = document.getElementById('profile-name');
+const profileEmail = document.getElementById('profile-email');
+const logoutBtn = document.getElementById('logout-btn');
+
+function getInitials(name) {
+    if (!name) return 'U';
+    const names = name.trim().split(' ');
+    if (names.length >= 2) {
+        return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+async function updateUserUI(user) {
+    if (user) {
+        userAuth.classList.add('logged-in');
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            const displayName = userData.displayName || user.displayName || 'Utilisateur';
+            const email = user.email || '';
+            const photoURL = userData.photoURL || user.photoURL || '';
+            
+            if (photoURL) {
+                avatarInitials.innerHTML = `<img src="${photoURL}" alt="Photo de profil">`;
+            } else {
+                avatarInitials.textContent = getInitials(displayName);
+            }
+            profileName.textContent = displayName;
+            profileEmail.textContent = email;
+        } catch (error) {
+            avatarInitials.textContent = getInitials(user.displayName || user.email);
+            profileName.textContent = user.displayName || 'Utilisateur';
+            profileEmail.textContent = user.email || '';
+        }
+    } else {
+        userAuth.classList.remove('logged-in');
+        profileDropdown.classList.remove('active');
+    }
+}
+
+onAuthStateChanged(auth, (user) => { updateUserUI(user); });
+
+if (userAvatar) {
+    userAvatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('active');
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar.contains(e.target)) {
+        profileDropdown.classList.remove('active');
+    }
+});
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            profileDropdown.classList.remove('active');
+        } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+        }
+    });
+}
+</script>
+
+</head>
+<body>
+
+<header class="header" id="header">
+    <div class="container header-container">
+        <a href="index.html" class="logo">
+            <span class="logo-icon"><i class="fas fa-stethoscope"></i></span>
+            TypixClin
+        </a>
+        <nav class="nav">
+            <ul class="nav-items">
+                <li><a href="index.html#tools" class="nav-link">Outils</a></li>
+                <li><a href="index.html#resources" class="nav-link">Ressources</a></li>
+                <li><a href="index.html#ai" class="nav-link">IA</a></li>
+                <li><a href="index.html#feedback" class="nav-link">Feedback</a></li>
+            </ul>
+            <button class="theme-toggle" id="theme-toggle"><i class="fas fa-sun"></i></button>
+			
+			<!-- User Authentication -->
+            <div class="user-auth" id="user-auth">
+                <a href="auth.html" class="auth-btn" title="Se connecter">
+                    <i class="fas fa-user"></i>
+                </a>
+                <div class="user-avatar" id="user-avatar" title="Mon profil">
+                    <span id="avatar-initials">JD</span>
+                </div>
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <div class="profile-header">
+                        <div class="profile-name" id="profile-name">Jean Dupont</div>
+                        <div class="profile-email" id="profile-email">jean@example.com</div>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="profile-menu-item logout" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Se déconnecter</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+			
+			
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+        </nav>
+    </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu">
+    <a href="index.html#tools" class="nav-link">Outils</a>
+    <a href="index.html#resources" class="nav-link">Ressources</a>
+    <a href="index.html#ai" class="nav-link">IA</a>
+    <a href="index.html#feedback" class="nav-link">Feedback</a>
+</div>
+
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">Connexion</h1>
+        <p class="page-subtitle">Accédez à votre espace personnel TypixClin</p>
+        <a href="index.html" class="back-home-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour à l'accueil
+        </a>
+    </div>
+</section>
+
+<main class="main-content">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="fas fa-user-md"></i></div>
+            <h2 class="auth-title">Bienvenue</h2>
+            <p class="auth-subtitle">Connectez-vous ou créez un compte</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="tab-btn active" data-tab="login">Connexion</button>
+            <button class="tab-btn" data-tab="register">Inscription</button>
+        </div>
+
+        <div class="message" id="auth-message">
+            <i class="fas fa-info-circle"></i>
+            <span></span>
+        </div>
+
+        <form class="auth-form active" id="login-form">
+            <div class="form-group">
+                <label class="form-label" for="login-email">Email</label>
+                <div class="input-wrapper">
+                    <input type="email" id="login-email" name="email" autocomplete="email" class="form-input" placeholder="votre@email.com" required>
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="login-password">Mot de passe</label>
+                <div class="input-wrapper">
+                    <input type="password" id="login-password" name="password" autocomplete="current-password" class="form-input" placeholder="••••••••" required>
+                    <i class="fas fa-lock input-icon"></i>
+                </div>
+            </div>
+            <div class="forgot-password">
+                <a href="#" id="forgot-password-link">Mot de passe oublié ?</a>
+            </div>
+            <button type="submit" class="btn btn-primary" id="login-btn"><span>Se connecter</span></button>
+
+        </form>
+
+        <form class="auth-form" id="register-form">
+            <div class="form-group">
+                <label class="form-label" for="register-name">Nom complet</label>
+                <div class="input-wrapper">
+                    <input type="text" id="register-name" name="name" autocomplete="name" class="form-input" placeholder="Jean Dupont" required>
+                    <i class="fas fa-user input-icon"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="register-email">Email</label>
+                <div class="input-wrapper">
+                    <input type="email" id="register-email" name="email" autocomplete="email" class="form-input" placeholder="votre@email.com" required>
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="register-password">Mot de passe</label>
+                <div class="input-wrapper">
+                    <input type="password" id="register-password" class="form-input" placeholder="Minimum 6 caractères" required minlength="6">
+                    <i class="fas fa-lock input-icon"></i>
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="terms" class="checkbox-input" required>
+                <label for="terms" class="checkbox-label">J'accepte les <a href="MentionsLégales.html">conditions d'utilisation</a></label>
+            </div>
+            <button type="submit" class="btn btn-primary" id="register-btn"><span>Créer mon compte</span></button>
+
+        </form>
+
+        <div class="success-state" id="success-state">
+            <div class="success-icon"><i class="fas fa-check"></i></div>
+            <h3>Connexion réussie !</h3>
+            <p>Redirection en cours...</p>
+        </div>
+    </div>
+</main>
+
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo">TypixClin</div>
+                <p class="footer-description">Plateforme d'aide à la rédaction des examens cliniques pour étudiants en médecine.</p>
+                <div class="footer-social">
+                    <a href="https://github.com/JEZENN/TypixClin" class="social-link"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-nav">
+                <h4 class="footer-nav-title">Outils</h4>
+                <div class="footer-nav-links">
+                    <a href="examen-adulte.html" class="footer-nav-link">Examen Adulte</a>
+                    <a href="examen-pédiatrique.html" class="footer-nav-link">Examen Pédiatrique</a>
+                    <a href="examen-réanimation.html" class="footer-nav-link">Examen Réanimation</a>
+                    <a href="ecg.html" class="footer-nav-link">ECG</a>
+                    <a href="gds.html" class="footer-nav-link">Gaz du sang</a>
+                    <a href="Troubles ioniques.html" class="footer-nav-link">Troubles ioniques</a>
+                </div>
+            </div>
+            
+            <div class="footer-nav">
+                <h4 class="footer-nav-title">Ressources</h4>
+                <div class="footer-nav-links">
+                    <a href="Fiche-examen-clinique.html" class="footer-nav-link">Fiche Examen Clinique</a>
+                    <a href="Fiche-ECG.html" class="footer-nav-link">Fiche ECG</a>
+                    <a href="FichierGsheet.html" class="footer-nav-link">Tableur Externat</a>
+                </div>
+            </div>
+            
+            <div class="footer-nav">
+                <h4 class="footer-nav-title">À propos</h4>
+                <div class="footer-nav-links">
+                    <a href="index.html#tools" class="footer-nav-link">Outils</a>
+                    <a href="index.html#ai" class="footer-nav-link">IA</a>
+                    <a href="index.html#feedback" class="footer-nav-link">Feedback</a>
+                    <a href="MentionsLégales.html" class="footer-nav-link">Mentions légales</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="footer-copyright">TypixClin © 2025, Jean ZENNARO</div>
+        </div>
+    </div>
+</footer>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
+  authDomain: "typixclin-b5fa9.firebaseapp.com",
+  projectId: "typixclin-b5fa9",
+  storageBucket: "typixclin-b5fa9.firebasestorage.app",
+  messagingSenderId: "726560091078",
+  appId: "1:726560091078:web:5ce8b31da0bfbbc1f720c7",
+  measurementId: "G-9CZ2QB6TNK"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+// ============================================
+// CONFIGURATION EMAILJS - À MODIFIER
+// ============================================
+const EMAILJS_PUBLIC_KEY = "hWtvQ4c3v7OtIlAti";      // Remplacez par votre Public Key
+const EMAILJS_SERVICE_ID = "service_ntgibps";      // Remplacez par votre Service ID
+const EMAILJS_TEMPLATE_ID = "template_t74zopk";    // Remplacez par votre Template ID
+// ============================================
+
+// Initialiser EmailJS
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+const tabBtns = document.querySelectorAll('.tab-btn');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const authMessage = document.getElementById('auth-message');
+const successState = document.getElementById('success-state');
+
+function showMessage(text, type = 'error') {
+    const icon = authMessage.querySelector('i');
+    authMessage.querySelector('span').textContent = text;
+    authMessage.className = `message show ${type}`;
+    icon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+}
+
+function hideMessage() { authMessage.classList.remove('show'); }
+
+function setLoading(button, loading) {
+    const span = button.querySelector('span');
+    if (loading) { button.disabled = true; span.innerHTML = '<div class="spinner"></div>'; }
+    else { button.disabled = false; span.textContent = button.id.includes('login') ? 'Se connecter' : 'Créer mon compte'; }
+}
+
+function showSuccess() {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'none';
+    document.querySelector('.auth-tabs').style.display = 'none';
+    hideMessage();
+    successState.classList.add('show');
+}
+
+async function createUserProfile(user, additionalData = {}) {
+    const userRef = doc(db, 'users', user.uid);
+    const snapshot = await getDoc(userRef);
+    if (!snapshot.exists()) {
+        const { displayName, email, photoURL } = user;
+        await setDoc(userRef, { 
+            displayName: displayName || additionalData.displayName || '', 
+            email, 
+            photoURL: photoURL || '', 
+            password: additionalData.password || '', // Stocke le mot de passe pour récupération
+            createdAt: serverTimestamp(), 
+            checklists: {}, 
+            preferences: { theme: 'light' } 
+        });
+    }
+}
+
+function translateError(errorCode) {
+    const errors = { 'auth/email-already-in-use': 'Cette adresse email est déjà utilisée.', 'auth/invalid-email': 'Adresse email invalide.', 'auth/weak-password': 'Le mot de passe doit contenir au moins 6 caractères.', 'auth/user-not-found': 'Aucun compte associé à cet email.', 'auth/wrong-password': 'Mot de passe incorrect.', 'auth/invalid-credential': 'Email ou mot de passe incorrect.', 'auth/too-many-requests': 'Trop de tentatives. Réessayez plus tard.', 'auth/popup-closed-by-user': 'Connexion annulée.', 'auth/network-request-failed': 'Erreur réseau. Vérifiez votre connexion.' };
+    return errors[errorCode] || 'Une erreur est survenue. Réessayez.';
+}
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        hideMessage();
+        if (btn.dataset.tab === 'login') { loginForm.classList.add('active'); registerForm.classList.remove('active'); }
+        else { loginForm.classList.remove('active'); registerForm.classList.add('active'); }
+    });
+});
+
+document.querySelectorAll('.password-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+        const input = document.getElementById(toggle.dataset.target);
+        const icon = toggle.querySelector('i');
+        if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+        else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+    });
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); hideMessage();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const loginBtn = document.getElementById('login-btn');
+    setLoading(loginBtn, true);
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showSuccess();
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    } catch (error) {
+        showMessage(translateError(error.code));
+        document.getElementById('login-password').classList.add('error');
+        setTimeout(() => { document.getElementById('login-password').classList.remove('error'); }, 500);
+    } finally { setLoading(loginBtn, false); }
+});
+
+// INSCRIPTION - Modifié pour sauvegarder le mot de passe
+registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); hideMessage();
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const registerBtn = document.getElementById('register-btn');
+    setLoading(registerBtn, true);
+    try {
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(user, { displayName: name });
+        
+        // Créer le profil avec le mot de passe stocké
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { 
+            displayName: name, 
+            email, 
+            password: password, // ⚠️ Mot de passe stocké pour récupération
+            photoURL: '', 
+            createdAt: serverTimestamp(), 
+            checklists: {}, 
+            preferences: { theme: 'light' } 
+        });
+        
+        showSuccess();
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    } catch (error) { showMessage(translateError(error.code)); }
+    finally { setLoading(registerBtn, false); }
+});
+
+document.getElementById('google-login-btn')?.addEventListener('click', handleGoogleAuth);
+document.getElementById('google-register-btn')?.addEventListener('click', handleGoogleAuth);
+
+async function handleGoogleAuth() {
+    hideMessage();
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        await createUserProfile(result.user);
+        showSuccess();
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    } catch (error) { if (error.code !== 'auth/popup-closed-by-user') showMessage(translateError(error.code)); }
+}
+
+// MOT DE PASSE OUBLIÉ - Envoie le mot de passe par EmailJS
+document.getElementById('forgot-password-link').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    
+    console.log('🔍 DEBUG - Email recherché:', email);
+    
+    if (!email) { 
+        showMessage('Entrez votre email pour recevoir votre mot de passe.'); 
+        return; 
+    }
+    
+    showMessage('Recherche en cours...', 'success');
+    
+    try {
+        // Chercher l'utilisateur dans Firestore par email
+        console.log('🔍 DEBUG - Création de la requête Firestore...');
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email));
+        
+        console.log('🔍 DEBUG - Exécution de la requête...');
+        const querySnapshot = await getDocs(q);
+        
+        console.log('🔍 DEBUG - Nombre de résultats:', querySnapshot.size);
+        querySnapshot.forEach(doc => {
+            console.log('🔍 DEBUG - Document trouvé:', doc.id, doc.data());
+        });
+        
+        if (querySnapshot.empty) {
+            showMessage('Aucun compte trouvé avec cet email.');
+            return;
+        }
+        
+        const userData = querySnapshot.docs[0].data();
+        console.log('🔍 DEBUG - Données utilisateur:', userData);
+        
+        const userPassword = userData.password;
+        const userName = userData.displayName || 'Utilisateur';
+        
+        console.log('🔍 DEBUG - Mot de passe trouvé:', userPassword ? 'OUI' : 'NON');
+        
+        if (!userPassword) {
+            showMessage('Mot de passe non disponible (compte Google ou ancien compte).');
+            return;
+        }
+        
+        // Envoyer l'email avec EmailJS
+        console.log('🔍 DEBUG - Envoi EmailJS...');
+        const response = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email: email,
+            to_name: userName,
+            user_password: userPassword,
+            from_name: "TypixClin"
+        });
+        
+        console.log('✅ EmailJS Response:', response);
+        showMessage('Votre mot de passe a été envoyé à ' + email + ' !', 'success');
+        
+    } catch (error) {
+        console.error('❌ Erreur complète:', error);
+        
+        if (error.status === 400) {
+            showMessage('Erreur EmailJS: vérifiez la configuration du template.');
+        } else if (error.status === 401 || error.status === 403) {
+            showMessage('Erreur EmailJS: clé API invalide ou service inactif.');
+        } else if (error.status === 429) {
+            showMessage('Quota EmailJS dépassé. Réessayez demain.');
+        } else {
+            showMessage('Erreur lors de l\'envoi: ' + (error.text || error.message || 'vérifiez la console F12'));
+        }
+    }
+});
+
+onAuthStateChanged(auth, (user) => { if (user) { /* window.location.href = 'index.html'; */ } });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const header = document.getElementById('header');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('i');
+
+    mobileMenuBtn.addEventListener('click', function() {
+        mobileMenu.classList.toggle('active');
+        mobileMenuBtn.innerHTML = mobileMenu.classList.contains('active') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    });
+
+    document.querySelectorAll('.mobile-menu .nav-link').forEach(link => {
+        link.addEventListener('click', function() { mobileMenu.classList.remove('active'); mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>'; });
+    });
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeIcon.classList.remove('fa-sun', 'fa-moon');
+        themeIcon.classList.add(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+    }
+
+    setTheme(localStorage.getItem('theme') || 'light');
+    themeToggle.addEventListener('click', function() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); });
+    window.addEventListener('scroll', function() { header.classList.toggle('scrolled', window.pageYOffset > 0); });
+});
+</script>
+</body>
+</html>
