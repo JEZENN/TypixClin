@@ -648,6 +648,20 @@ let saveTimeout = null;
 let currentSort = { field: 'num', direction: 'asc' };
 let pendingTour = null;
 
+// === SAUVEGARDE LOCALE ===
+const isLocalMode = window.location.protocol === 'file:';
+
+function initLocalMode() {
+    const saved = localStorage.getItem('planningRevision_local');
+    userData = saved ? JSON.parse(saved) : initializeUserData();
+    if (loginRequired) loginRequired.style.display = 'none';
+    if (mainContent) mainContent.classList.add('active');
+    if (userAuth) userAuth.style.display = 'none';
+    renderAll();
+}
+
+currentUser = null
+
 window.addEventListener('load', () => { setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }, 800); });
 
 mobileMenuBtn?.addEventListener('click', () => {
@@ -705,23 +719,25 @@ async function updateUserUI(user) {
             profileEmail.textContent = user.email || '';
         }
         loadUserData(user.uid);
-    } else {
-        currentUser = null;
-        userAuth.classList.remove('logged-in');
-        loginRequired.style.display = 'block';
-        mainContent.classList.remove('active');
-        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-		const saved = localStorage.getItem('planningRevision_local');
-		userData = saved ? JSON.parse(saved) : initializeUserData();
-		mainContent.classList.add('active'); 
-		loginRequired.style.display = 'none'; 
-		renderAll();
-		
-	
-    }
+		} else {
+			currentUser = null;
+			userAuth.classList.remove('logged-in');
+			if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+			
+			// Charger les données locales
+			const saved = localStorage.getItem('planningRevision_local');
+			userData = saved ? JSON.parse(saved) : initializeUserData();
+			loginRequired.style.display = 'none';
+			mainContent.classList.add('active');
+			renderAll();
+		}
 }
 
-onAuthStateChanged(auth, updateUserUI);
+if (isLocalMode) {
+    initLocalMode();
+} else {
+    onAuthStateChanged(auth, updateUserUI);
+}
 
 userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
@@ -749,23 +765,31 @@ function loadUserData(userId) {
 async function saveUserData() {
     if (!userData) return;
     
-    // Toujours sauvegarder en local
+    // TOUJOURS sauvegarder en localStorage
+    userData.lastUpdated = new Date().toISOString();
     localStorage.setItem('planningRevision_local', JSON.stringify(userData));
     
-    // Si connecté, sauvegarder aussi sur Firebase
-    if (!currentUser) return;
-    
+    // Afficher confirmation
     savingIndicator.classList.add('visible');
+    
+    // Si pas connecté ou mode local, juste confirmer la sauvegarde locale
+    if (!currentUser || isLocalMode) {
+        savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
+        savingIndicator.classList.add('saved');
+        setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 1000);
+        return;
+    }
+    
+    // Si connecté, sauvegarder aussi sur Firebase
     savingIndicator.innerHTML = '<i class="fas fa-spinner"></i><span>Sauvegarde...</span>';
     try {
-        userData.lastUpdated = new Date().toISOString();
         await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
         savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
         savingIndicator.classList.add('saved');
         setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 1500);
     } catch (e) {
         console.error(e);
-        savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
+        savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur cloud</span>';
         setTimeout(() => savingIndicator.classList.remove('visible'), 2000);
     }
 }
@@ -991,3 +1015,4 @@ document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
