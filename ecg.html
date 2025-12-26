@@ -1272,7 +1272,7 @@ section[id] {
 <header class="tcl-header" id="tclHeader">
     <div class="tcl-header-container">
         <a href="index.html" class="tcl-logo">
-            <span class="tcl-logo-icon"><i class="fas fa-heartbeat"></i></span>
+            <span class="tcl-logo-icon"><i class="fas fa-stethoscope"></i></span>
             TypixClin
         </a>
         
@@ -3863,9 +3863,12 @@ document.addEventListener('DOMContentLoaded', function() {
         text.push(rythmeText);
         if (precisions) text.push(`, ${precisions} `);
 
-        // Axe
+        // Axe (sans les degrés entre parenthèses)
         const axe = document.getElementById('ECG_axeCalcule').value;
-        if (axe) text.push(` ; ${axe.toLowerCase()} `);
+        if (axe) {
+            const axeSansDegres = axe.replace(/\s*\([^)]*\)/g, '');
+            text.push(` ; ${axeSansDegres.toLowerCase()} `);
+        }
 
         // PR et BAV
         const pr = document.getElementById('ECG_pr').value;
@@ -3911,17 +3914,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // QTc
+// QTc
         const qtc = document.getElementById('ECG_qtc').value;
-        const qtcStatus = document.getElementById('ECG_qtcStatus').textContent;
         const repolarisation = document.getElementById('ECG_repolarisation').value;
         if (qtc) {
-            text.push(` ; QTc ${qtc} ms (${qtcStatus.toLowerCase()})`);
+            const qtcValue = parseInt(qtc);
+            const sexe = document.querySelector('input[name="sexe"]:checked')?.value;
+            const seuilLong = sexe === 'femme' ? 460 : 450;
+            if (qtcValue > seuilLong) {
+                text.push(` ; QTc long à ${qtc} ms`);
+            } else if (qtcValue < 350) {
+                text.push(` ; QTc court à ${qtc} ms`);
+            } else {
+                text.push(` ; QTc ${qtc} ms`);
+            }
             if (repolarisation) {
                 text.push(`, ${repolarisation}`);
             }
         }
-
+		
+		
+		
+		
         // Hypertrophies
         let hypertrophies = [];
         const pDuration = document.getElementById('ECG_pWaveDuration').value;
@@ -3932,7 +3946,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pAmplitude > 2.5) hypertrophies.push(`hypertrophie auriculaire droite avec amplitude onde P à ${pAmplitude} mm`);
         if (sokolow > 35) hypertrophies.push(`hypertrophie ventriculaire gauche avec sokolow à ${sokolow} mm`);
 
-        text.push(hypertrophies.length ? ` ; ${hypertrophies.join(', ')} ` : "; pas d'hypertrophie auriculaire et ventriculaire ");
+        text.push(hypertrophies.length ? ` ; ${hypertrophies.join(', ')} ` : " ; pas d'hypertrophie auriculaire et ventriculaire ");
 
         // Infarctus
         let infarctus = [];
@@ -3954,7 +3968,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 infarctus.push(`sus décalage ST dans le territoire ${territoire.toLowerCase()}${derivations ? ` (${derivations})` : ''}`);
             }
         }
-        text.push(infarctus.length ? ` ; signes d'infarctus : ${infarctus.join(', ')}` : "; pas de signe d'infarctus du myocarde");
+// Vérifier si une case divers est cochée
+        const hasDivers = ['ECG_pericardite', 'ECG_embolie', 'ECG_hypok', 'ECG_hyperk', 'ECG_hypercalcemie']
+            .some(id => document.getElementById(id)?.checked);
+
+        // Vérifier si une case bloc est cochée
+        const hasBloc = ['ECG_blocDroit', 'ECG_blocGauche', 'ECG_hemibloc', 'ECG_hemiblocanterieur', 'ECG_hemiblocposterieur']
+            .some(id => document.getElementById(id)?.checked);
+
+        if (infarctus.length) {
+            text.push(` ; signes d'infarctus : ${infarctus.join(', ')}`);
+        } else if (!hasDivers) {
+            // Construire le texte négatif seulement si pas d'infarctus ET pas de divers
+            let negativeFindings = [];
+            const bavType = document.querySelector('input[name="bav"]:checked')?.value;
+            const hasBav = bavType && bavType !== 'normal';
+            if (!qrsAutres && !hasBav && !hasBloc) {
+                negativeFindings.push("pas de trouble de la conduction");
+            }
+            if (!repolarisation) {
+                negativeFindings.push("pas de trouble de la repolarisation");
+            }
+            if (negativeFindings.length > 0) {
+                text.push(` ; ${negativeFindings.join(', ')}`);
+            }
+        }
 
         // Divers
         let divers = [];
@@ -4533,7 +4571,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="ecg-ft-nav-links">
                     <a href="Fiche-examen-clinique.html" class="ecg-ft-nav-link">Fiche Examen Clinique</a>
                     <a href="Fiche-ECG.html" class="ecg-ft-nav-link">Fiche ECG</a>
-					<a href="FichierGsheet.html" class="ecg-ft-nav-link">Tableur Externat</a>
+					<a href="FichierGsheet.html" class="ecg-ft-nav-link">Tableur Gsheet Externat</a>
+					<a href="TableurEnLigne.html" class="ecg-ft-nav-link">Tableur en ligne Externat</a>
+					<a href="Carnet-de-stage.html" class="ecg-ft-nav-link">Carnet de stage</a>
+
 
                 </div>
             </div>

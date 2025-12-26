@@ -357,7 +357,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .login-required-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--gray-100), var(--gray-200)); border-radius: var(--border-radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem; color: var(--gray-400); }
 .login-required-title { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.75rem; }
 .login-required-text { color: var(--gray-600); margin-bottom: 2rem; line-height: 1.7; }
-.login-required-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; background: var(--primary-gradient); color: white; font-weight: 600; font-size: 1rem; border-radius: var(--border-radius-full); box-shadow: var(--shadow-blue); }
+.login-required-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; background: var(--primary-gradient); color: white; font-weight: 600; font-size: 1rem; border-radius: var(--border-radius-full); box-shadow: var(--shadow-blue); transition: all var(--transition-normal); }
 .login-required-btn:hover { transform: translateY(-3px); color: white; }
 
 .main-content { padding: 1.5rem; display: none; min-height: calc(100vh - var(--header-height) - 200px); }
@@ -1584,7 +1584,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
         <div class="login-required-icon"><i class="fas fa-lock"></i></div>
         <h2 class="login-required-title">Connexion requise</h2>
         <p class="login-required-text">Pour accéder à votre tableur de révision personnel et sauvegarder votre progression, vous devez créer un compte gratuit ou vous connecter.<br><br><strong>Tous les items</strong> répartis dans <strong>24 spécialités</strong> vous attendent !</p>
-        <a href="auth.html" class="login-required-btn"><i class="fas fa-sign-in-alt"></i> Se connecter / Créer un compte</a>
+		<a href="auth.html?redirect=TableurEnLigne.html" class="login-required-btn"><i class="fas fa-sign-in-alt"></i> Se connecter / Créer un compte</a>
     </div>
 </section>
 
@@ -1898,7 +1898,10 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
                 <div class="footer-nav-links">
                     <a href="Fiche-examen-clinique.html" class="footer-nav-link">Fiche Examen Clinique</a>
                     <a href="Fiche-ECG.html" class="footer-nav-link">Fiche ECG</a>
-					<a href="FichierGsheet.html" class="footer-nav-link">Tableur Externat</a>
+					<a href="FichierGsheet.html" class="footer-nav-link">Tableur Gsheet Externat</a>
+					<a href="TableurEnLigne.html" class="footer-nav-link">Tableur en ligne Externat</a>
+					<a href="Carnet-de-stage.html" class="footer-nav-link">Carnet de stage</a>
+
                 </div>
             </div>
             
@@ -2395,8 +2398,17 @@ const tourBadges = d.tours.map((c, i) => {
     const duration = d.tourDurations ? d.tourDurations[i] : null;
     const support = d.tourSupports ? d.tourSupports[i] : null;
     const supportLabels = { qcm: 'QCM', college: 'COL', anki: 'ANK', perso: 'PER', codex: 'COD', conf: 'CNF' };
-    const previousDone = i === 0 || d.tours[i - 1];
-    const locked = !previousDone && !c;
+    
+    // Trouver l'index du dernier tour fait
+    const lastDoneIndex = d.tours.reduce((last, t, idx) => t !== null ? idx : last, -1);
+    const nextTourIndex = lastDoneIndex + 1;
+    
+    // Un tour est éditable si c'est le dernier fait OU le prochain à faire
+    const isEditable = (c !== null && i === lastDoneIndex) || (c === null && i === nextTourIndex);
+    
+    // Un tour est locked (grisé) si non fait ET pas le prochain
+    const isLocked = c === null && i !== nextTourIndex;
+    
     let info = '';
     if (c) {
         info = '<div class="tour-info">';
@@ -2404,10 +2416,17 @@ const tourBadges = d.tours.map((c, i) => {
         if (support) info += '<span class="tour-support ' + support + '">' + supportLabels[support] + '</span>';
         info += '</div>';
     }
-    if (locked) {
+    
+    if (isLocked) {
         return '<div class="tour-badge-wrapper"><span class="tour-badge locked">T' + (i + 1) + '</span></div>';
     }
-    return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" data-tour="' + i + '" onclick="openConfidenceModal(this)">T' + (i + 1) + '</span>' + info + '</div>';
+    
+    if (isEditable) {
+        return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" data-tour="' + i + '" onclick="openConfidenceModal(this)">T' + (i + 1) + '</span>' + info + '</div>';
+    }
+    
+    // Tour fait mais pas le dernier → affiché avec couleur mais non cliquable
+    return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" style="cursor: default;">T' + (i + 1) + '</span>' + info + '</div>';
 }).join('');
 
         const tourDates = d.tourDates.map(dt => '<span class="tour-date">' + formatDate(dt) + '</span>').join('');
@@ -2503,14 +2522,40 @@ setTimeout(initCustomSelects, 500);
 
 function populateFilters() {
     const specialtyMenu = document.getElementById('specialty-menu');
-    if (!specialtyMenu) return;
+    const customSelect = document.getElementById('specialty-dropdown');
+    if (!specialtyMenu || !customSelect) return;
     
-    let optionsHtml = '<div class="custom-select-option selected" data-value="all"><span class="option-icon"><i class="fas fa-list"></i></span><span>Toutes les spécialités</span></div>';
+    // IMPORTANT : le bon ID est filter-item-specialty
+    const filterInput = document.getElementById('filter-item-specialty');
+    const currentValue = filterInput ? filterInput.value : 'all';
+    
+    // Reconstruire les options du menu
+    let optionsHtml = '';
+    optionsHtml += '<div class="custom-select-option' + (currentValue === 'all' ? ' selected' : '') + '" data-value="all"><span class="option-icon"><i class="fas fa-list"></i></span><span>Toutes les spécialités</span></div>';
+    
     SPECIALTIES_DATA.forEach(s => {
         const cfg = SPECIALTY_CONFIG[s.id] || { icon: 'fa-folder', color: '#6b7280' };
-        optionsHtml += '<div class="custom-select-option" data-value="' + s.id + '"><span class="option-icon" style="color:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i></span><span>' + s.name + '</span></div>';
+        const isSelected = (currentValue === s.id) ? ' selected' : '';
+        optionsHtml += '<div class="custom-select-option' + isSelected + '" data-value="' + s.id + '"><span class="option-icon" style="color:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i></span><span>' + s.name + '</span></div>';
     });
+    
     specialtyMenu.innerHTML = optionsHtml;
+    
+    // Mettre à jour le bouton affiché
+    const selectText = customSelect.querySelector('.custom-select-text');
+    const selectIcon = customSelect.querySelector('.custom-select-icon');
+    
+    if (currentValue === 'all') {
+        selectText.textContent = 'Toutes les spécialités';
+        selectIcon.innerHTML = '<i class="fas fa-list"></i>';
+    } else {
+        const spec = SPECIALTIES_DATA.find(s => s.id === currentValue);
+        if (spec) {
+            const cfg = SPECIALTY_CONFIG[spec.id] || { icon: 'fa-folder', color: '#6b7280' };
+            selectText.textContent = spec.name;
+            selectIcon.innerHTML = '<i class="fas ' + cfg.icon + '" style="color:' + cfg.color + '"></i>';
+        }
+    }
 }
 
 let selectedConfidence = null;

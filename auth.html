@@ -850,7 +850,10 @@ if (logoutBtn) {
                 <div class="footer-nav-links">
                     <a href="Fiche-examen-clinique.html" class="footer-nav-link">Fiche Examen Clinique</a>
                     <a href="Fiche-ECG.html" class="footer-nav-link">Fiche ECG</a>
-                    <a href="FichierGsheet.html" class="footer-nav-link">Tableur Externat</a>
+					<a href="FichierGsheet.html" class="footer-nav-link">Tableur Gsheet Externat</a>
+					<a href="TableurEnLigne.html" class="footer-nav-link">Tableur en ligne Externat</a>
+					<a href="Carnet-de-stage.html" class="footer-nav-link">Carnet de stage</a>
+
                 </div>
             </div>
             
@@ -932,6 +935,12 @@ function showSuccess() {
     successState.classList.add('show');
 }
 
+// Récupérer la page de redirection depuis l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const redirectPage = urlParams.get('redirect') || 'index.html';
+
+
+
 async function createUserProfile(user, additionalData = {}) {
     const userRef = doc(db, 'users', user.uid);
     const snapshot = await getDoc(userRef);
@@ -982,7 +991,7 @@ loginForm.addEventListener('submit', async (e) => {
     try {
         await signInWithEmailAndPassword(auth, email, password);
         showSuccess();
-        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        setTimeout(() => { window.location.href = redirectPage; }, 1500);
     } catch (error) {
         showMessage(translateError(error.code));
         document.getElementById('login-password').classList.add('error');
@@ -1015,7 +1024,7 @@ registerForm.addEventListener('submit', async (e) => {
         });
         
         showSuccess();
-        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        setTimeout(() => { window.location.href = redirectPage; }, 1500);
     } catch (error) { showMessage(translateError(error.code)); }
     finally { setLoading(registerBtn, false); }
 });
@@ -1029,7 +1038,7 @@ async function handleGoogleAuth() {
         const result = await signInWithPopup(auth, googleProvider);
         await createUserProfile(result.user);
         showSuccess();
-        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        setTimeout(() => { window.location.href = redirectPage; }, 1500);
     } catch (error) { if (error.code !== 'auth/popup-closed-by-user') showMessage(translateError(error.code)); }
 }
 
