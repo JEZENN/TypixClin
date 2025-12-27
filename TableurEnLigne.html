@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -96,7 +97,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     --primary: #60a5fa;
     --primary-dark: #3b82f6;
     --primary-light: #93c5fd;
-    --primary-gradient: linear-gradient(135deg, #60a5fa, #3b82f6);
+    --primary-gradient: linear-gradient(135deg, #a855f7, #8b5cf6);
     --background: #0f172a;
     --white: #1e293b;
     --black: #f9fafb;
@@ -2699,6 +2700,8 @@ input[type="date"].modal-input {
     border-radius: var(--border-radius-lg);
 }
 
+
+
 .carousel-slide {
     display: none;
     flex-direction: column;
@@ -2942,7 +2945,7 @@ input[type="date"].modal-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 .stat-percent-badge.orange-badge {
     background: linear-gradient(135deg, #f59e0b, #d97706);
@@ -3603,7 +3606,7 @@ input[type="date"].modal-input {
 
 .specialty-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.4rem;
 }
 
@@ -3613,7 +3616,7 @@ input[type="date"].modal-input {
     border: 2px solid transparent;
     cursor: pointer;
     transition: all var(--transition-fast);
-    text-align: left;
+    text-align: center;
     font-size: 0.7rem;
     font-weight: 600;
     white-space: nowrap;
@@ -4005,6 +4008,545 @@ input[type="date"].modal-input {
 }
 
 
+/* ===== BOUTON ENVOYER VERS CHECKLIST ===== */
+.send-to-checklist-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.35rem;
+    margin-top: 0.25rem;
+    font-size: 0.55rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #a855f7, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.send-to-checklist-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+.send-to-checklist-btn i {
+    font-size: 0.5rem;
+}
+
+
+
+/* Badge spécialité dans la checklist */
+.checklist-specialty-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Toast notification */
+.toast-notification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.toast-notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-notification.toast-warning {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+
+.toast-notification i {
+    font-size: 1.1rem;
+}
+
+/* Légende spécialités */
+.specialty-badges-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.specialty-legend-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: default;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+}
+
+.specialty-legend-badge:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.specialty-legend-badge::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-800);
+    color: white;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    margin-bottom: 6px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.specialty-legend-badge:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* ===== DARK MODE - PLANNING COMPLET ===== */
+
+/* Popup spécialités */
+[data-theme="dark"] .mini-popup-specialty {
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .specialty-popup-header {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .mini-popup-title {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .specialty-search-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .specialty-search-input::placeholder {
+    color: #64748b;
+}
+
+[data-theme="dark"] .specialty-search-input:focus {
+    border-color: var(--primary);
+    background: #0f172a;
+}
+
+[data-theme="dark"] .specialty-mini-btn {
+    border-color: #334155;
+}
+
+[data-theme="dark"] .specialty-mini-btn:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .specialty-clear-btn {
+    background: #334155;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .specialty-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+[data-theme="dark"] .specialty-grid-scroll::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .specialty-grid-scroll::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Popup type de journée */
+[data-theme="dark"] .mini-popup-status {
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .status-mini-btn {
+    background: #0f172a;
+    border: 1px solid #334155;
+}
+
+[data-theme="dark"] .status-mini-btn:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .status-mini-btn.active {
+    border-color: var(--primary);
+    background: #334155;
+}
+
+[data-theme="dark"] .status-mini-label {
+    color: #cbd5e1;
+}
+
+/* Ligne des jours de la semaine */
+[data-theme="dark"] .calendar-weekdays {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .weekday-header {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .weekday-header.weekend {
+    color: #64748b;
+}
+
+/* Dropdowns mois et année */
+[data-theme="dark"] .custom-dropdown-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .custom-dropdown-btn:hover {
+    background: #334155;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .custom-dropdown-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .custom-dropdown-header {
+    background: #0f172a;
+    color: #cbd5e1;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .custom-dropdown-option {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .custom-dropdown-option:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .custom-dropdown-option.selected {
+    background: var(--primary);
+    color: white;
+}
+
+/* Tooltip légende spécialités */
+[data-theme="dark"] .specialty-legend-badge::after {
+    background: #1e293b;
+    color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Légende matières */
+[data-theme="dark"] .legend-title {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .legend-item {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .planning-legend {
+    border-top-color: #334155;
+}
+
+/* Boutons navigation */
+[data-theme="dark"] .planning-nav-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .planning-nav-btn:hover {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+/* Scrollbars */
+[data-theme="dark"] .calendar-wrapper::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .calendar-wrapper::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+[data-theme="dark"] .calendar-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+[data-theme="dark"] .specialty-badges-legend::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .specialty-badges-legend::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Checklist */
+[data-theme="dark"] .checklist-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .checklist-input::placeholder {
+    color: #64748b;
+}
+
+[data-theme="dark"] .checklist-input:focus {
+    border-color: var(--primary);
+    background: #0f172a;
+}
+
+[data-theme="dark"] .checklist-add-btn {
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .checklist-item {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .checklist-item-text {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .checklist-item.completed .checklist-item-text {
+    color: #64748b;
+}
+
+[data-theme="dark"] .checklist-checkbox {
+    border-color: #475569;
+    background: #0f172a;
+}
+
+[data-theme="dark"] .checklist-checkbox.checked {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .checklist-delete {
+    color: #64748b;
+}
+
+[data-theme="dark"] .checklist-delete:hover {
+    color: #f87171;
+}
+
+[data-theme="dark"] .checklist-empty {
+    color: #64748b;
+}
+
+[data-theme="dark"] .checklist-empty i {
+    color: #475569;
+}
+
+/* Cases du calendrier - bordures */
+[data-theme="dark"] .calendar-day {
+    border-color: #334155;
+}
+
+/* Header des cases */
+[data-theme="dark"] .day-header-zone {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .day-header-zone:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .day-num {
+    color: #e2e8f0;
+}
+
+/* Notes */
+[data-theme="dark"] .day-notes-input {
+    color: #cbd5e1;
+    background: transparent;
+}
+
+[data-theme="dark"] .day-notes-input::placeholder {
+    color: #475569;
+}
+
+/* Titre mois */
+[data-theme="dark"] .planning-month-title {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .planning-year-badge {
+    background: #334155;
+    color: #cbd5e1;
+}
+
+/* ===== DARK MODE - CONTRASTE CALENDRIER ===== */
+
+/* Cases du calendrier - plus de contraste */
+[data-theme="dark"] .calendar-day {
+    border-color: #475569;
+    background: #0f172a;
+}
+
+[data-theme="dark"] .calendar-day.other-month {
+    background: #020617;
+}
+
+[data-theme="dark"] .calendar-day.is-weekend {
+    background: #0c1322;
+}
+
+[data-theme="dark"] .calendar-day.is-today {
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+/* Zone type de journée (header) */
+[data-theme="dark"] .day-header-zone {
+    background: #1e293b;
+    border-bottom: 2px solid #475569;
+}
+
+[data-theme="dark"] .day-header-zone:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .day-num {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .day-status-badge {
+    font-weight: 700;
+}
+
+/* Zone spécialités */
+[data-theme="dark"] .day-specialty-zone {
+    background: #0f172a;
+    border-bottom: 2px solid #475569;
+}
+
+[data-theme="dark"] .day-specialty-zone:hover {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .day-specialty-badge {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Zone notes */
+[data-theme="dark"] .day-notes-zone {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .day-notes-input {
+    color: #e2e8f0;
+    background: transparent;
+}
+
+[data-theme="dark"] .day-notes-input:focus {
+    background: #334155;
+}
+
+[data-theme="dark"] .day-notes-input::placeholder {
+    color: #64748b;
+}
+
+/* Statuts avec plus de contraste */
+[data-theme="dark"] .calendar-day.status-stage {
+    background: linear-gradient(135deg, #431407, #7c2d12) !important;
+    border-left: 4px solid #f97316;
+}
+
+[data-theme="dark"] .calendar-day.status-revision {
+    background: linear-gradient(135deg, #052e16, #14532d) !important;
+    border-left: 4px solid #10b981;
+}
+
+[data-theme="dark"] .calendar-day.status-garde {
+    background: linear-gradient(135deg, #450a0a, #7f1d1d) !important;
+    border-left: 4px solid #ef4444;
+}
+
+[data-theme="dark"] .calendar-day.status-repos {
+    background: linear-gradient(135deg, #2e1065, #4c1d95) !important;
+    border-left: 4px solid #8b5cf6;
+}
+
+[data-theme="dark"] .calendar-day.status-autre {
+    background: linear-gradient(135deg, #500724, #831843) !important;
+    border-left: 4px solid #ec4899;
+}
+
+/* Zones internes avec statut - garder le contraste */
+[data-theme="dark"] .calendar-day.status-stage .day-header-zone,
+[data-theme="dark"] .calendar-day.status-revision .day-header-zone,
+[data-theme="dark"] .calendar-day.status-garde .day-header-zone,
+[data-theme="dark"] .calendar-day.status-repos .day-header-zone,
+[data-theme="dark"] .calendar-day.status-autre .day-header-zone {
+    background: rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .calendar-day.status-stage .day-specialty-zone,
+[data-theme="dark"] .calendar-day.status-revision .day-specialty-zone,
+[data-theme="dark"] .calendar-day.status-garde .day-specialty-zone,
+[data-theme="dark"] .calendar-day.status-repos .day-specialty-zone,
+[data-theme="dark"] .calendar-day.status-autre .day-specialty-zone {
+    background: rgba(0,0,0,0.15);
+}
+
+[data-theme="dark"] .calendar-day.status-stage .day-notes-zone,
+[data-theme="dark"] .calendar-day.status-revision .day-notes-zone,
+[data-theme="dark"] .calendar-day.status-garde .day-notes-zone,
+[data-theme="dark"] .calendar-day.status-repos .day-notes-zone,
+[data-theme="dark"] .calendar-day.status-autre .day-notes-zone {
+    background: rgba(0,0,0,0.1);
+}
+
+.mini-popup-status .mini-popup-title {
+    margin-bottom: 8px; /* ajuste à 10–16px selon ton ressenti */
+}
 
 </style>
 </head>
@@ -4080,7 +4622,7 @@ input[type="date"].modal-input {
                     <div class="profile-dropdown" id="profile-dropdown">
                         <div class="profile-header">
                             <div class="profile-name" id="profile-name">Jean Dupont</div>
-                            <div class="profile-email" id="profile-email">email@exemple.com</div>
+                            <div class="profile-email" id="profile-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5c39313d35301c392439312c3039723f3331">[email&#160;protected]</a></div>
                         </div>
                         <div class="profile-menu">
                             <button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
@@ -4155,8 +4697,8 @@ input[type="date"].modal-input {
                 </div>
                 <h2 class="presentation-intro-title">Votre tableur de révision en ligne</h2>
                 <p class="presentation-intro-text">
-                    Un outil complet pour organiser et suivre vos révisions de tous les items de l'externat. 
-                    Visualisez votre progression, gérez vos tours de révision et restez motivé grâce à des statistiques détaillées.
+                    Un outil complet pour planifier et suivre vos révisions de tous les items de l'externat. 
+                    Visualisez votre progression, gérez vos tours de révision et organiser vos semaines.
                 </p>
             </div>
 
@@ -4170,27 +4712,19 @@ input[type="date"].modal-input {
             
             <div class="presentation-feature-grid">
                 <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon stats">
-                        <i class="fas fa-chart-pie"></i>
+                    <div class="presentation-feature-icon specialties">
+                        <i class="fas fa-hospital"></i>
                     </div>
-                    <h4 class="presentation-feature-title">Statistiques complètes</h4>
-                    <p class="presentation-feature-description">Suivez votre progression globale : items révisés, tours effectués, spécialités terminées et temps de travail cumulé.</p>
+                    <h4 class="presentation-feature-title">Liste des spécialités</h4>
+                    <p class="presentation-feature-description">Toutes les spécialités de l'externat ainsi que les 367 items sont répertoriés. Identifiez vos matières fortes et vos matières faibles en un clin d'oeil.</p>
                 </div>
-                
+				                
                 <div class="presentation-feature-card">
                     <div class="presentation-feature-icon tracking">
                         <i class="fas fa-calendar-week"></i>
                     </div>
-                    <h4 class="presentation-feature-title">Suivi quotidien & hebdomadaire</h4>
-                    <p class="presentation-feature-description">Visualisez vos performances jour par jour avec des graphiques clairs : tours effectués, temps de travail et ressenti.</p>
-                </div>
-                
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon specialties">
-                        <i class="fas fa-hospital"></i>
-                    </div>
-                    <h4 class="presentation-feature-title">24 spécialités organisées</h4>
-                    <p class="presentation-feature-description">Toutes les spécialités de l'externat avec leurs 362 items, organisées en cartes visuelles avec code couleur.</p>
+                    <h4 class="presentation-feature-title">Planning</h4>
+                    <p class="presentation-feature-description">Organisez vos semaines de stage et de révisions grâce au planning intégré. Gérez vos taches quotidiennes grâce à une checklist.</p>
                 </div>
                 
                 <div class="presentation-feature-card">
@@ -4198,24 +4732,37 @@ input[type="date"].modal-input {
                         <i class="fas fa-list-check"></i>
                     </div>
                     <h4 class="presentation-feature-title">Liste complète des items</h4>
-                    <p class="presentation-feature-description">Accédez à tous les items avec filtres par spécialité et statut. Marquez vos ressources utilisées.</p>
+                    <p class="presentation-feature-description">Suivez vos tours de révision et votre progression dans l'apprentissage des items de l'externat. Visualisez quels items doivent être revu en priorité.</p>
                 </div>
-                
+ 
+				<div class="presentation-feature-card">
+                    <div class="presentation-feature-icon stats">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h4 class="presentation-feature-title">Statistiques complètes</h4>
+                    <p class="presentation-feature-description">Visualisez vos performances jour par jour avec des graphiques clairs. Suivez votre progression globale : items révisés, tours effectués et temps de travail cumulé.</p>
+                </div>
+				
                 <div class="presentation-feature-card">
                     <div class="presentation-feature-icon save">
                         <i class="fas fa-save"></i>
                     </div>
                     <h4 class="presentation-feature-title">Enregistrement des tours</h4>
-                    <p class="presentation-feature-description">Enregistrez chaque tour avec votre niveau de confiance (1-5), la durée, la date et le support utilisé.</p>
+                    <p class="presentation-feature-description">Enregistrez chaque tour avec votre niveau de confiance (1-5), le temps de travail, la date et le support utilisé.</p>
                 </div>
+			
+				
                 
                 <div class="presentation-feature-card">
                     <div class="presentation-feature-icon daily">
-                        <i class="fas fa-calendar-day"></i>
+                        <i class="fa-solid fa-file-lines"></i>
+
                     </div>
-                    <h4 class="presentation-feature-title">Statistiques du jour</h4>
-                    <p class="presentation-feature-description">Gardez un œil sur votre journée : tours effectués, retard rattrapé, temps de travail et ressenti moyen.</p>
+                    <h4 class="presentation-feature-title">Fiches LISA</h4>
+                    <p class="presentation-feature-description">Des liens sont disponibles pour chaque item vers la référence pour les EDN : les fiches LISA (Version imprimable)</p>
                 </div>
+
+
             </div>
 
             <hr class="presentation-separator">
@@ -4241,24 +4788,24 @@ input[type="date"].modal-input {
             
             <div class="presentation-benefits-grid">
                 <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-cloud"></i></div>
-                    <div class="presentation-benefit-text">Sauvegarde automatique dans le cloud</div>
+                    <div class="presentation-benefit-icon"><i class="fa-solid fa-compass"></i></div>
+                    <div class="presentation-benefit-text">Vision d'ensemble sur l'externat</div>
                 </div>
                 <div class="presentation-benefit-item">
                     <div class="presentation-benefit-icon"><i class="fas fa-mobile-alt"></i></div>
                     <div class="presentation-benefit-text">Accessible sur tous vos appareils</div>
                 </div>
                 <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-lock"></i></div>
-                    <div class="presentation-benefit-text">Données privées et sécurisées</div>
+                    <div class="presentation-benefit-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="presentation-benefit-text">Facilité d'utilisation et gain de temps</div>
                 </div>
                 <div class="presentation-benefit-item">
                     <div class="presentation-benefit-icon"><i class="fas fa-euro-sign"></i></div>
                     <div class="presentation-benefit-text">100% gratuit, sans publicité</div>
                 </div>
                 <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-sync"></i></div>
-                    <div class="presentation-benefit-text">Synchronisation en temps réel</div>
+                    <div class="presentation-benefit-icon"><i class="fa-solid fa-binoculars"></i></div>
+                    <div class="presentation-benefit-text">Meilleur moyen d'anticiper l'été pré-EDN</div>
                 </div>
                 <div class="presentation-benefit-item">
                     <div class="presentation-benefit-icon"><i class="fas fa-chart-line"></i></div>
@@ -4285,6 +4832,9 @@ input[type="date"].modal-input {
     <button class="preview-tab" data-category="items">
         <i class="fas fa-list-check"></i> Liste des items
     </button>
+	<button class="preview-tab" data-category="stats">
+        <i class="fas fa-chart-pie"></i> Planning
+    </button>
 </div>
 
 <!-- Carrousels -->
@@ -4294,24 +4844,22 @@ input[type="date"].modal-input {
     <div class="preview-carousel active" data-category="stats">
         <button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
         <div class="carousel-slides">
-            <!-- Slide 1 -->
-            <div class="carousel-slide active">
-                <p class="carousel-caption">Statistiques générales de progression</p>
-				<img src="StatsGé.png" alt="Statistiques générales">
-                
+			<div class="carousel-slide active">
+				<p class="carousel-caption">Performances quotidiennes.</p>
+				<img src="StatsJour.png" alt="Liste des spécialités">
             </div>
             <!-- Slide 2 -->
             <div class="carousel-slide">
-                <p class="carousel-caption">Graphiques de suivi hebdomadaire</p>
+                <p class="carousel-caption">Graphiques de suivi hebdomadaire.</p>
 				<img src="StatsHebdo.png" alt="Suivi hebdomadaire">
                 
+            </div>			
+            
+			<!-- Slide 1 -->
+            <div class="carousel-slide">
+                <p class="carousel-caption">Statistiques générales de progression.</p>
+				<img src="StatsGé.png" alt="Statistiques générales">
             </div>
-			            <div class="carousel-slide">
-             <p class="carousel-caption">Vue d'ensemble des spécialités</p>
-
-				<img src="ListeSpé.png" alt="Liste des spécialités">
-            </div>
-			
             <!-- AJOUTER D'AUTRES SLIDES ICI (copier le bloc carousel-slide) -->
         </div>
         <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
@@ -4324,15 +4872,19 @@ input[type="date"].modal-input {
         <div class="carousel-slides">
             <!-- Slide 1 -->
             <div class="carousel-slide active">
-                                <p class="carousel-caption">Vue d'ensemble des spécialités</p>
-
-				<img src="ListeSpé.png" alt="Liste des spécialités">
+                 <p class="carousel-caption">Vue d'ensemble des spécialités et de votre avancement</p>
+				<img src="Spé1.png" alt="Liste des spécialités">
             </div>
 			
 			 <div class="carousel-slide">
-                                <p class="carousel-caption">Vue d'ensemble des spécialités</p>
+                <p class="carousel-caption">Classer les matières par caractéristique</p>
 
-				<img src="ListeSpé.png" alt="Liste des spécialités">
+				<img src="Spé2.png" alt="Liste des spécialités">
+            </div>
+			
+			<div class="carousel-slide">
+                <p class="carousel-caption">Rechercher et trier les spécialités</p>
+				<img src="Spé3.png" alt="Liste des spécialités">
             </div>
             <!-- AJOUTER D'AUTRES SLIDES ICI -->
         </div>
@@ -4346,10 +4898,34 @@ input[type="date"].modal-input {
         <div class="carousel-slides">
             <!-- Slide 1 -->
             <div class="carousel-slide active">
-                                <p class="carousel-caption">Liste complète des items avec filtres</p>
-
-				<img src="ListeItems.png" alt="Liste des items">
+                                <p class="carousel-caption">Accès aux items classés par matière en cliquant sur une spécialité.</p>
+				<img src="ItemsIntro.png" alt="Introduction">
             </div>
+			
+            <div class="carousel-slide">
+                                <p class="carousel-caption">Entrer vos tours de révision : ressenti sur l'apprentissage, temps de travail et support de cours.</p>
+				<img src="ItemsValiderTour.png" alt="Valider un tour">
+            </div>
+
+            <div class="carousel-slide">
+                                <p class="carousel-caption">Visualiser votre progression. Priorisez les items que vous n'avez pas vu depuis longtemps.</p>
+				<img src="ItemsTours.png" alt="Progression des tours">
+            </div>
+
+            <div class="carousel-slide">
+                                <p class="carousel-caption">Liens cliquable vers la fiche LISA de l'item. Visualisez les collèges de référence pour chaque item.</p>
+				<img src="ItemsLisa.png" alt="Lisa référence">
+            </div>
+
+            <div class="carousel-slide">
+                                <p class="carousel-caption">Visualisez les items qu'il est bon de lire dans les petits collèges.</p>
+				<img src="ItemsBalises.png" alt="Balises">
+            </div>	
+
+            <div class="carousel-slide">
+                                <p class="carousel-caption">Tableur disponible en mode sombre également.</p>
+				<img src="ItemsSombre.png" alt="Mode sombre">
+            </div>			
             <!-- AJOUTER D'AUTRES SLIDES ICI -->
         </div>
         <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
@@ -4367,10 +4943,10 @@ input[type="date"].modal-input {
             </h3>
             
             <ul class="presentation-tips-list">
-                <li>Créez un compte gratuit pour sauvegarder automatiquement vos données</li>
-                <li>Vos données sont synchronisées en temps réel sur tous vos appareils</li>
-                <li>Utilisez les filtres pour retrouver rapidement un item ou une spécialité</li>
-                <li>N'hésitez pas à adapter votre méthode de suivi selon vos besoins</li>
+                <li>Créez un compte gratuit pour sauvegarder automatiquement vos données.</li>
+                <li>Vos données sont synchronisées en temps réel sur tous vos appareils.</li>
+                <li>N'hésitez pas à contacter l'administrateur (Jean ZENNARO) si vous rencontrez un problème.</li>
+				<li>N'hésitez pas à envoyer un feedback si vous avez des suggestions d'amélioration.</li>
             </ul>
 
             <!-- CTA -->
@@ -4622,18 +5198,14 @@ input[type="date"].modal-input {
 							</div>
 						</div>
                 </div>
-                
-                <!-- Légende -->
-                <div class="planning-legend">
-                    <span class="legend-title">Légende :</span>
-                    <div class="legend-items">
-                        <div class="legend-item"><span class="legend-dot stage"></span> Stage</div>
-                        <div class="legend-item"><span class="legend-dot revision"></span> Révision</div>
-                        <div class="legend-item"><span class="legend-dot garde"></span> Garde</div>
-                        <div class="legend-item"><span class="legend-dot repos"></span> Repos</div>
-                        <div class="legend-item"><span class="legend-dot autre"></span> Autre</div>
-                    </div>
-                </div>
+                			
+				
+				<!-- Légende spécialités -->
+				<div class="planning-legend specialty-legend">
+					<div class="legend-items specialty-badges-legend" id="specialty-legend-items">
+					</div>
+				</div>
+				
             </div>
             
             <!-- Calendrier -->
@@ -4699,10 +5271,7 @@ input[type="date"].modal-input {
                 </button>
             </div>
         </div>
-        <div class="specialty-search-wrapper">
-            <i class="fas fa-search specialty-search-icon"></i>
-            <input type="text" class="specialty-search-input" id="specialty-search" placeholder="Rechercher une spécialité...">
-        </div>
+
     </div>
     <div class="specialty-grid-scroll">
         <div class="specialty-grid" id="specialty-grid"></div>
@@ -4723,7 +5292,7 @@ input[type="date"].modal-input {
     <div class="custom-select" id="sort-specialty-dropdown">
         <button class="custom-select-btn" type="button">
             <span class="custom-select-icon"><i class="fas fa-sort"></i></span>
-            <span class="custom-select-text">Trier par...</span>
+            <span class="custom-select-text">Classer par...</span>
             <i class="fas fa-chevron-down custom-select-arrow"></i>
         </button>
         <div class="custom-select-menu">
@@ -5003,7 +5572,7 @@ input[type="date"].modal-input {
     </div>
 </footer>
 
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -5017,6 +5586,8 @@ const firebaseConfig = {
     appId: "1:726560091078:web:5ce8b31da0bfbbc1f720c7",
     measurementId: "G-9CZ2QB6TNK"
 };
+
+let pendingChecklistItemId = null;
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -5037,6 +5608,34 @@ const BADGE_CONFIG = {
 	'genet': { label: 'Genet', class: 'genet' },
 	'parasito': { label: 'Parasito', class: 'parasito' }
 };
+
+const SPECIALTY_SHORT = {
+    'cardiologie': 'CAR',
+    'hge': 'HGE',
+    'pneumologie': 'PNE',
+    'gynecologie': 'GYN',
+    'orl': 'ORL',
+    'neurologie': 'NEU',
+    'psychiatrie': 'PSY',
+    'osteo': 'OST',
+    'pediatrie': 'PED',
+    'hematologie': 'HEM',
+    'endocrinologie': 'END',
+    'mir': 'MIR',
+    'nephrologie': 'NEP',
+    'infectiologie': 'INF',
+    'dermatologie': 'DER',
+    'therapeutique': 'THE',
+    'geriatrie': 'GER',
+    'douleur': 'DOU',
+    'medecine-interne': 'MIN',
+    'oncologie': 'ONC',
+    'ophtalmologie': 'OPH',
+    'urologie': 'URO',
+    'medecine-legale': 'MLE',
+    'sante-publique': 'SPU'
+};
+
 
 const ITEM_BADGES = {
     // Immuno (medecine-interne)
@@ -7352,7 +7951,10 @@ const isReference = ITEM_REFERENCE[item.num + '|' + item.specialtyId] === true;
 const referenceHtml = isReference ? '<span class="reference-badge"><i class="fas fa-star"></i> Référence</span>' : '';
 const itemUrl = ITEM_URLS[String(parseInt(item.num, 10))];
 const nameHtml = (isReference && itemUrl) ? '<a href="' + itemUrl + '" target="_blank" class="item-link">' + item.name + '</a>' : item.name;
-return '<tr><td class="item-num">' + item.num + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
+const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+const checklistBtn = '<button class="send-to-checklist-btn" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> Checklist</button>';
+
+return '<tr><td class="item-num">' + item.num + '<br>' + checklistBtn + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
 					'<td class="tour-cell"><div class="tour-badges">' + tourBadges + '</div><div class="tour-dates">' + tourDates + '</div></td>' +
 					'<td class="resources-cell">' + resourcesHtml + '</td><td class="days-cell">' + daysBadge + '</td></tr>';
 			}).join('');
@@ -7609,6 +8211,14 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     selectedSupport = null;
     debouncedSave();
     renderAll();
+	
+// Si on vient de la checklist, afficher une notification
+    if (pendingChecklistItemId !== null) {
+        window.showToastNotification('Tour enregistré !', 'success');
+        pendingChecklistItemId = null;
+    }
+	
+	
 });
 
 document.getElementById('btn-reset-tour')?.addEventListener('click', function() {
@@ -7638,6 +8248,7 @@ document.getElementById('confidence-close')?.addEventListener('click', () => {
     pendingTour = null; 
     selectedConfidence = null;
     selectedSupport = null;
+	pendingChecklistItemId = null;
 });
 
 confidenceModal?.addEventListener('click', e => { 
@@ -8140,30 +8751,30 @@ const PlanningModule = (function() {
     
     // Liste des spécialités
     const specialties = [
-        { id: 'hge', name: 'HGE', class: 'spe-hge' },
-        { id: 'gyneco', name: 'Gynéco', class: 'spe-gyneco' },
-        { id: 'cardio', name: 'Cardio', class: 'spe-cardio' },
-        { id: 'pneumo', name: 'Pneumo', class: 'spe-pneumo' },
-        { id: 'neuro', name: 'Neuro', class: 'spe-neuro' },
-        { id: 'psy', name: 'Psy', class: 'spe-psy' },
-        { id: 'pediatrie', name: 'Pédia', class: 'spe-pediatrie' },
-        { id: 'hemato', name: 'Hémato', class: 'spe-hemato' },
+		{ id: 'cardio', name: 'CAR', class: 'spe-cardio' },
+		{ id: 'hge', name: 'HGE', class: 'spe-hge' },
+        { id: 'gyneco', name: 'GYN', class: 'spe-gyneco' },
+        { id: 'pneumo', name: 'PNE', class: 'spe-pneumo' },
         { id: 'orl', name: 'ORL', class: 'spe-orl' },
-        { id: 'endoc', name: 'Endoc', class: 'spe-endoc' },
-        { id: 'osteo', name: 'Ostéo', class: 'spe-osteo' },
-        { id: 'onco', name: 'Onco', class: 'spe-onco' },
+		{ id: 'neuro', name: 'NEU', class: 'spe-neuro' },
+        { id: 'psy', name: 'PSY', class: 'spe-psy' },
+        { id: 'pediatrie', name: 'PED', class: 'spe-pediatrie' },
+        { id: 'hemato', name: 'HEM', class: 'spe-hemato' },
+        { id: 'endoc', name: 'END', class: 'spe-endoc' },
+        { id: 'osteo', name: 'OST', class: 'spe-osteo' },
+        { id: 'onco', name: 'ONC', class: 'spe-onco' },
+        { id: 'nephro', name: 'NEP', class: 'spe-nephro' },
+		{ id: 'infectio', name: 'INF', class: 'spe-infectio' },
         { id: 'mir', name: 'MIR', class: 'spe-mir' },
-        { id: 'nephro', name: 'Néphro', class: 'spe-nephro' },
-        { id: 'infectio', name: 'Infectio', class: 'spe-infectio' },
-        { id: 'ophta', name: 'Ophta', class: 'spe-ophta' },
-        { id: 'therapeut', name: 'Thérap', class: 'spe-therapeut' },
-        { id: 'legal', name: 'MT-ML', class: 'spe-legal' },
-        { id: 'geriatrie', name: 'Géria-MPR', class: 'spe-geriatrie' },
-        { id: 'dermato', name: 'Dermato', class: 'spe-dermato' },
-        { id: 'mi', name: 'Méd. Int.', class: 'spe-mi' },
-        { id: 'uro', name: 'Uro', class: 'spe-uro' },
-        { id: 'douleur', name: 'Douleur', class: 'spe-douleur' },
-        { id: 'sante-pub', name: 'Santé Pu', class: 'spe-sante-pub' }
+		{ id: 'dermato', name: 'DER', class: 'spe-dermato' },
+		{ id: 'therapeut', name: 'THE', class: 'spe-therapeut' },
+        { id: 'geriatrie', name: 'GER', class: 'spe-geriatrie' },
+		{ id: 'douleur', name: 'DOU', class: 'spe-douleur' },
+        { id: 'mi', name: 'MIN', class: 'spe-mi' },
+        { id: 'uro', name: 'URO', class: 'spe-uro' },
+		{ id: 'ophta', name: 'OPH', class: 'spe-ophta' },
+		{ id: 'legal', name: 'MLE', class: 'spe-legal' },
+        { id: 'sante-pub', name: 'SPU', class: 'spe-sante-pub' }
     ];
     
     // Initialisation
@@ -8177,6 +8788,7 @@ const PlanningModule = (function() {
         renderChecklist();
         updateHeaderDisplay();
 		updateSelectors();
+		renderSpecialtyLegend();
     }
     
     // Charger les données
@@ -8753,41 +9365,139 @@ function openSpecialtyPopup(dateKey, targetEl) {
         }
     }
     
-    function toggleChecklistItem(id) {
+function toggleChecklistItem(id) {
         const item = checklistData.find(i => i.id === id);
-        if (item) { item.completed = !item.completed; saveData(); renderChecklist(); }
+        if (item) {
+            // Toggle l'état
+            item.completed = !item.completed; 
+            saveData(); 
+            renderChecklist();
+            
+            // Si c'est un item du tableau ET qu'on vient de le cocher → proposer d'enregistrer un tour
+            if (item.itemKey && item.completed) {
+                window.openTourModalFromChecklist(id, item.itemKey);
+            }
+        }
     }
     
-    function deleteChecklistItem(id) {
+function deleteChecklistItem(id) {
         checklistData = checklistData.filter(i => i.id !== id);
         saveData();
         renderChecklist();
     }
     
-    function renderChecklist() {
-        const container = document.getElementById('checklist-items');
-        const countEl = document.getElementById('checklist-count');
-        if (!container) return;
-        
-        const completedCount = checklistData.filter(i => i.completed).length;
-        if (countEl) countEl.textContent = `${completedCount}/${checklistData.length}`;
-        
-        if (checklistData.length === 0) {
-            container.innerHTML = `<div class="checklist-empty"><i class="fas fa-clipboard-list"></i><p>Aucune tâche</p></div>`;
-            return;
-        }
-        
-        const sorted = [...checklistData].sort((a, b) => a.completed === b.completed ? 0 : a.completed ? 1 : -1);
-        container.innerHTML = sorted.map(item => `
+function renderChecklist() {
+    const container = document.getElementById('checklist-items');
+    const countEl = document.getElementById('checklist-count');
+    if (!container) return;
+    
+    const completedCount = checklistData.filter(i => i.completed).length;
+    if (countEl) countEl.textContent = `${completedCount}/${checklistData.length}`;
+    
+    if (checklistData.length === 0) {
+        container.innerHTML = `<div class="checklist-empty"><i class="fas fa-clipboard-list"></i><p>Aucune tâche</p></div>`;
+        return;
+    }
+    
+    const sorted = [...checklistData].sort((a, b) => a.completed === b.completed ? 0 : a.completed ? 1 : -1);
+    container.innerHTML = sorted.map(item => {
+// Vérifier si c'est un item provenant du tableau des items (a une couleur de spécialité)
+        const dotHtml = item.specialtyColor ? 
+            '<span class="checklist-specialty-badge" style="background-color: ' + item.specialtyColor + '20; color: ' + item.specialtyColor + ';" title="' + (item.specialtyName || '') + '">' + (item.specialtyShort || '') + '</span>' : '';
+        return `
             <div class="checklist-item ${item.completed ? 'completed' : ''}">
                 <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="PlanningModule.toggleChecklistItem(${item.id})">
                     ${item.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
-                <span class="checklist-item-text">${escapeHtml(item.text)}</span>
+                <span class="checklist-item-text">${escapeHtml(item.text)}${dotHtml}</span>
                 <button class="checklist-delete" onclick="PlanningModule.deleteChecklistItem(${item.id})"><i class="fas fa-times"></i></button>
             </div>
-        `).join('');
+        `;
+    }).join('');
+}
+
+// Ajouter un item depuis le tableau des items
+function addItemFromTable(specialtyId, fc, itemNum, itemName, specialtyColor, specialtyName) {
+    // Vérifier si l'item existe déjà
+    const itemKey = specialtyId + '-' + fc;
+    const exists = checklistData.some(item => item.itemKey === itemKey);
+    
+    if (exists) {
+        return { success: false, message: 'Cet item est déjà dans la checklist !' };
     }
+    
+    // Raccourcir le nom si trop long
+    const shortName = itemName.length > 35 ? itemName.substring(0, 32) + '...' : itemName;
+    const text = itemNum + ' - ' + shortName;
+    
+    // Récupérer le code court de la spécialité
+    const specialtyShort = SPECIALTY_SHORT[specialtyId] || '';
+    
+    checklistData.push({
+        id: Date.now(),
+        text: text,
+        completed: false,
+        itemKey: itemKey,
+        specialtyColor: specialtyColor,
+        specialtyName: specialtyName,
+        specialtyShort: specialtyShort
+    });
+    
+    saveData();
+    renderChecklist();
+    
+    return { success: true, message: 'Item ' + itemNum + ' ajouté à la checklist !' };
+}
+
+function completeChecklistItem(id) {
+    const item = checklistData.find(i => i.id === id);
+    if (item && !item.completed) {
+        item.completed = true;
+        saveData();
+        renderChecklist();
+    }
+}
+
+function renderSpecialtyLegend() {
+    const container = document.getElementById('specialty-legend-items');
+    if (!container) return;
+    
+    const specialtyNames = {
+        'cardiologie': 'Cardio-Chir vasc',
+        'hge': 'Hépato-Gastro-Entérologie',
+        'pneumologie': 'Pneumo',
+        'gynecologie': 'Gynéco',
+        'orl': 'ORL-CMF',
+        'neurologie': 'Neuro-Neurochir',
+        'psychiatrie': 'Psychiatrie',
+        'osteo': 'Ortho-Rhumato',
+        'pediatrie': 'Pédiatrie',
+        'hematologie': 'Hématologie',
+        'endocrinologie': 'Endoc-Nutrition',
+        'mir': 'MIR - Anesth',
+        'nephrologie': 'Néphro',
+        'infectiologie': 'Infectio',
+        'dermatologie': 'Dermato',
+        'therapeutique': 'Thérapeutique',
+        'geriatrie': 'Géria-MPR',
+        'douleur': 'Douleur-Soins Pal',
+        'medecine-interne': 'Méd Interne-Immuno',
+        'oncologie': 'Onco-Anapath',
+        'ophtalmologie': 'Ophtalmo',
+        'urologie': 'Urologie',
+        'medecine-legale': 'ML-MT',
+        'sante-publique': 'Santé Pu'
+    };
+    
+    let html = '';
+    for (const [id, short] of Object.entries(SPECIALTY_SHORT)) {
+        const config = SPECIALTY_CONFIG[id] || { color: '#6b7280' };
+        const fullName = specialtyNames[id] || id;
+        html += '<span class="specialty-legend-badge" style="background-color: ' + config.color + '20; color: ' + config.color + ';" data-tooltip="' + fullName + '">' + short + '</span>';
+    }
+    
+    container.innerHTML = html;
+}
     
     // Utilitaires
     function formatDateKey(date) {
@@ -8800,12 +9510,13 @@ function openSpecialtyPopup(dateKey, targetEl) {
         return div.innerHTML;
     }
     
-		// APRÈS - Exposer sur window aussi
-		const api = {
-			init,
-			toggleChecklistItem,
-			deleteChecklistItem
-		};
+const api = {
+    init,
+    toggleChecklistItem,
+    deleteChecklistItem,
+    addItemFromTable
+    
+};
 
 		// Exposer globalement
 		window.PlanningModule = api;
@@ -8839,9 +9550,74 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
 });
 
 
+// ===== FONCTION GLOBALE POUR ENVOYER VERS CHECKLIST =====
+window.sendToChecklist = function(btn, specialtyId, fc, itemNum, itemName) {
+    // Récupérer la couleur de la spécialité
+    var specCfg = SPECIALTY_CONFIG[specialtyId] || { color: '#6b7280' };
+    var specialty = SPECIALTIES_DATA.find(function(s) { return s.id === specialtyId; });
+    var specialtyName = specialty ? specialty.name : '';
+    
+    // Appeler la fonction du module
+    var result = PlanningModule.addItemFromTable(
+        specialtyId, 
+        fc, 
+        itemNum, 
+        itemName, 
+        specCfg.color, 
+        specialtyName
+    );
+    
+    // Afficher le toast
+    window.showToastNotification(result.message, result.success ? 'success' : 'warning');
+    
+
+};
+
+window.showToastNotification = function(message, type) {
+    // Supprimer les toasts existants
+    document.querySelectorAll('.toast-notification').forEach(function(t) { t.remove(); });
+    
+    var toast = document.createElement('div');
+    toast.className = 'toast-notification' + (type === 'warning' ? ' toast-warning' : '');
+    toast.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle') + '"></i><span>' + message + '</span>';
+    document.body.appendChild(toast);
+    
+    setTimeout(function() { toast.classList.add('show'); }, 10);
+    setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 2500);
+};
+
+window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
+    var parts = itemKey.split('-');
+    var specialtyId = parts[0];
+    var fc = parts.slice(1).join('-');
+    
+    // Stocker l'ID pour plus tard
+    pendingChecklistItemId = checklistItemId;
+    
+    // Trouver le prochain tour à faire
+    var itemData = getItemData(specialtyId, fc);
+    var nextTour = 0;
+    for (var i = 0; i < itemData.tours.length; i++) {
+        if (itemData.tours[i] === null) {
+            nextTour = i;
+            break;
+        }
+    }
+    
+    // Créer un faux élément pour openConfidenceModal
+    var fakeElement = document.createElement('span');
+    fakeElement.dataset.specialty = specialtyId;
+    fakeElement.dataset.fc = fc;
+    fakeElement.dataset.tour = nextTour;
+    
+    // Ouvrir le modal
+    openConfidenceModal(fakeElement);
+};
 
 
 </script>
 </body>
 </html>
-
