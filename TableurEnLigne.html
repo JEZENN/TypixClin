@@ -2672,7 +2672,6 @@ input[type="date"].modal-input {
     color: white;
 }
 
-/* Carrousel container */
 .preview-carousel-container {
     position: relative;
 }
@@ -2690,22 +2689,35 @@ input[type="date"].modal-input {
     flex-direction: column;
 }
 
+/* Wrapper pour les slides avec hauteur fixe */
+.carousel-slides-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    align-items: center;
+}
 
 /* Slides */
 .carousel-slides {
     position: relative;
     width: 100%;
-    max-width: 700px;
+    height: 450px; /* HAUTEUR FIXE pour uniformiser */
     overflow: hidden;
     border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
 }
-
-
 
 .carousel-slide {
     display: none;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
     animation: fadeIn 0.4s ease;
 }
 
@@ -2719,11 +2731,18 @@ input[type="date"].modal-input {
 }
 
 .carousel-slide img {
-    width: 100%;
+    max-width: 100%;
+    max-height: 400px; /* Limite la hauteur des images */
+    width: auto;
     height: auto;
+    object-fit: contain; /* Garde les proportions */
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .carousel-slides {
+    background: #1a2332;
 }
 
 [data-theme="dark"] .carousel-slide img {
@@ -2732,23 +2751,31 @@ input[type="date"].modal-input {
 }
 
 .carousel-caption {
-    margin-top: 0.5rem;
-	margin-bottom: 0.25rem;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-md);
     color: var(--gray-600);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-align: center;
     font-style: italic;
+    max-width: 90%;
+    box-shadow: var(--shadow-sm);
 }
 
 [data-theme="dark"] .carousel-caption {
+    background: rgba(30, 41, 59, 0.95);
     color: var(--gray-400);
 }
 
-/* Flèches */
+/* Flèches - Position FIXE par rapport au wrapper */
 .carousel-arrow {
     position: absolute;
     top: 50%;
-    transform: translateY(-70%);
+    transform: translateY(-50%);
     width: 45px;
     height: 45px;
     border-radius: var(--border-radius-full);
@@ -2769,11 +2796,11 @@ input[type="date"].modal-input {
     background: var(--primary);
     color: white;
     border-color: var(--primary);
-    transform: translateY(-70%) scale(1.1);
+    transform: translateY(-50%) scale(1.1);
 }
 
-.carousel-prev { left: -20px; }
-.carousel-next { right: -20px; }
+.carousel-prev { left: -60px; }
+.carousel-next { right: -60px; }
 
 [data-theme="dark"] .carousel-arrow {
     background: #1e293b;
@@ -3962,48 +3989,197 @@ input[type="date"].modal-input {
     background: var(--gray-700);
 }
 
-/* ==========================================================
-   FIX DÉFINITIF MOBILE – PLANNING
-   (autorise scroll horizontal + affiche spécialités)
-   ========================================================== */
+
+/* ===== PLANNING MOBILE - SCROLL HORIZONTAL ===== */
 @media (max-width: 768px) {
-
-    /* === AUTORISER LE SCROLL HORIZONTAL UNIQUEMENT POUR LE PLANNING === */
-    body:has(#page-planning.active) {
-        overflow-x: auto !important;
+    /* Container principal du planning */
+    #page-planning {
+        overflow-x: hidden;
     }
-
-    html:has(#page-planning.active) {
-        overflow-x: auto !important;
+    
+    .planning-main {
+        overflow-x: hidden;
     }
-
-    /* === NE PLUS COUPER LES SECTIONS DU PLANNING === */
-    #page-planning .section-card {
-        overflow: visible !important;
+    
+    /* Header reste fixe en largeur */
+    .planning-header-card {
+        width: 100%;
+        overflow: hidden;
     }
-
-    #page-planning .section-body {
-        overflow: visible !important;
+    
+    .planning-header-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
     }
-
-    /* === LARGEUR RÉELLE DU PLANNING === */
-    #page-planning #calendar-grid {
-        min-width: 1100px;
+    
+    .planning-month-display {
+        justify-content: center;
     }
-
-    /* === SPÉCIALITÉS : FORCER AFFICHAGE MOBILE === */
-    #page-planning .specialties-grid {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        width: 100% !important;
+    
+    .planning-nav-controls {
+        justify-content: center;
     }
+    
+    .planning-date-selector {
+        justify-content: center;
+    }
+    
+    /* Légende scrollable horizontalement */
+    .planning-legend.specialty-legend {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.5rem;
+    }
+    
+    .specialty-badges-legend {
+        flex-wrap: nowrap;
+        min-width: max-content;
+    }
+    
+    /* Wrapper scroll pour le calendrier */
+    .calendar-scroll-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -0.5rem;
+        padding: 0 0.5rem;
+    }
+    
+    /* Indicateur de scroll */
+    .calendar-scroll-wrapper::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to left, var(--background), transparent);
+        pointer-events: none;
+        opacity: 0.8;
+    }
+    
+    /* Calendrier avec largeur minimum */
+    .calendar-container {
+        min-width: 600px;
+        width: max-content;
+    }
+    
+    .calendar-weekdays {
+        position: static;
+        box-shadow: none;
+        grid-template-columns: repeat(7, minmax(85px, 1fr));
+    }
+    
+    .calendar-grid {
+        grid-template-columns: repeat(7, minmax(85px, 1fr));
+    }
+    
+    .calendar-day {
+        min-height: 100px;
+    }
+    
+    .weekday-header {
+        padding: 0.6rem 0.25rem;
+        font-size: 0.7rem;
+    }
+    
+    .day-num {
+        font-size: 0.75rem;
+        width: 22px;
+        height: 22px;
+    }
+    
+    .day-status-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.3rem;
+    }
+    
+    .day-notes-input {
+        font-size: 0.65rem;
+        min-height: 35px;
+    }
+    
+    .day-specialty-zone {
+        min-height: 24px;
+    }
+    
+    .day-specialty-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.25rem;
+    }
+}
 
-    #page-planning .specialty-card {
-        display: block !important;
-        width: 100% !important;
-        min-width: 100% !important;
-        opacity: 1 !important;
-        visibility: visible !important;
+@media (max-width: 480px) {
+    .calendar-container {
+        min-width: 560px;
+    }
+    
+    .calendar-weekdays,
+    .calendar-grid {
+        grid-template-columns: repeat(7, 80px);
+    }
+    
+    .calendar-day {
+        min-height: 90px;
+    }
+    
+    .day-notes-input {
+        font-size: 0.6rem;
+        min-height: 30px;
+    }
+    
+    .day-specialty-zone {
+        display: block; /* On garde visible mais plus petit */
+        min-height: 20px;
+    }
+    
+    .planning-month-title {
+        font-size: 1.2rem;
+    }
+    
+    .planning-year-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.6rem;
+    }
+    
+    .planning-nav-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .planning-today-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Hint de scroll pour indiquer qu'on peut glisser */
+.calendar-scroll-hint {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: var(--border-radius-md);
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.calendar-scroll-hint i {
+    animation: scrollHint 1.5s ease-in-out infinite;
+}
+
+@keyframes scrollHint {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+}
+
+@media (max-width: 768px) {
+    .calendar-scroll-hint {
+        display: flex;
     }
 }
 
@@ -4548,6 +4724,217 @@ input[type="date"].modal-input {
     margin-bottom: 8px; /* ajuste à 10–16px selon ton ressenti */
 }
 
+
+/* Notification d'erreur pour tâche vide */
+.checklist-error-notification {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ef4444;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 100;
+}
+
+.checklist-error-notification::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #ef4444;
+}
+
+.checklist-error-notification.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Animation vibration */
+@keyframes shake {
+    0%, 100% { transform: translateX(-50%); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(calc(-50% - 5px)); }
+    20%, 40%, 60%, 80% { transform: translateX(calc(-50% + 5px)); }
+}
+
+.checklist-error-notification.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+.checklist-input.error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* ===== LAYOUT PRÉSENTATION AVEC SIDEBAR (comme Planning) ===== */
+.presentation-layout {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    align-items: flex-start;
+    position: relative;
+}
+
+.presentation-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 90px;
+    height: fit-content;
+    max-height: calc(100vh - 110px);
+    z-index: 10;
+    align-self: flex-start;
+}
+
+.presentation-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Carte login dans la sidebar */
+.login-sidebar-card {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.login-sidebar-header {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+}
+
+.login-sidebar-header-title {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.login-sidebar-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.login-sidebar-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-200));
+    border-radius: var(--border-radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.login-sidebar-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.75rem;
+}
+
+.login-sidebar-text {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.login-sidebar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: var(--border-radius-full);
+    box-shadow: var(--shadow-blue);
+    transition: all var(--transition-normal);
+    margin-bottom: 1rem;
+}
+
+.login-sidebar-btn:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+.login-sidebar-scroll-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--gray-500);
+    font-size: 0.8rem;
+    transition: color var(--transition-normal);
+}
+
+.login-sidebar-scroll-hint:hover {
+    color: var(--primary);
+}
+
+.login-sidebar-scroll-hint i {
+    font-size: 1rem;
+    color: var(--primary);
+    animation: bounce 2s infinite;
+}
+
+/* Dark mode */
+[data-theme="dark"] .login-sidebar-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .login-sidebar-icon {
+    background: linear-gradient(135deg, #334155, #475569);
+    color: var(--primary-light);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    .presentation-layout {
+        flex-direction: column;
+    }
+    
+    .presentation-sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+        order: -1; /* La sidebar passe AU-DESSUS sur mobile */
+    }
+    
+    .login-sidebar-card {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .presentation-main {
+        width: 100%;
+    }
+}
+
 </style>
 </head>
 
@@ -4673,304 +5060,315 @@ input[type="date"].modal-input {
     </div>
 </section>
 
-<section class="login-required" id="login-required">
-    <div class="login-required-card">
-        <div class="login-required-icon"><i class="fas fa-user-graduate"></i></div>
-        <h2 class="login-required-title">Bienvenue sur le Tableur EDN !</h2>
-        <p class="login-required-text">Connectez-vous pour accéder à votre espace personnel et suivre votre progression.</p>
-        <a href="auth.html?redirect=TableurEnLigne.html" class="login-required-btn"><i class="fas fa-sign-in-alt"></i> Se connecter / Créer un compte</a>
-        <a href="#presentation-section" class="login-required-scroll-hint">
-            <span>Découvrez les fonctionnalités ci-dessous</span>
-            <i class="fas fa-chevron-down"></i>
-        </a>
-    </div>
-</section>
 
 <section class="presentation-section" id="presentation-section">
     <div class="container">
-        <div class="presentation-container">
+        <div class="presentation-layout">
             
-            <!-- Intro -->
-            <div class="presentation-intro">
-                <div class="presentation-intro-icon">
-                    <i class="fas fa-laptop-medical"></i>
+            <!-- Sidebar Login (comme la checklist du planning) -->
+            <aside class="presentation-sidebar" id="login-required">
+                <div class="login-sidebar-card">
+                    <div class="login-sidebar-header">
+                        <h3 class="login-sidebar-header-title">
+                            <i class="fas fa-sign-in-alt"></i> Connexion
+                        </h3>
+                    </div>
+                    <div class="login-sidebar-body">
+                        <div class="login-sidebar-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h2 class="login-sidebar-title">Bienvenue sur le Tableur EDN !</h2>
+                        <p class="login-sidebar-text">Connectez-vous pour accéder à votre espace personnel et suivre votre progression.</p>
+                        <a href="auth.html?redirect=TableurEnLigne.html" class="login-sidebar-btn">
+                            <i class="fas fa-sign-in-alt"></i> Connection / Inscription
+                        </a>
+                        <a href="#presentation-content" class="login-sidebar-scroll-hint">
+                            <span>Découvrez les fonctionnalités</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                    </div>
                 </div>
-                <h2 class="presentation-intro-title">Votre tableur de révision en ligne</h2>
-                <p class="presentation-intro-text">
-                    Un outil complet pour planifier et suivre vos révisions de tous les items de l'externat. 
-                    Visualisez votre progression, gérez vos tours de révision et organiser vos semaines.
-                </p>
-            </div>
-
-            <hr class="presentation-separator">
-
-            <!-- Fonctionnalités -->
-            <h3 class="presentation-section-title">
-                <i class="fas fa-star"></i>
-                Fonctionnalités principales
-            </h3>
+            </aside>
             
-            <div class="presentation-feature-grid">
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon specialties">
-                        <i class="fas fa-hospital"></i>
+            <!-- Contenu principal (comme le calendrier du planning) -->
+            <main class="presentation-main" id="presentation-content">
+                <div class="presentation-container">
+                    
+                    <!-- Intro -->
+                    <div class="presentation-intro">
+                        <div class="presentation-intro-icon">
+                            <i class="fas fa-laptop-medical"></i>
+                        </div>
+                        <h2 class="presentation-intro-title">Votre tableur de révision en ligne</h2>
+                        <p class="presentation-intro-text">
+                            Un outil complet pour planifier et suivre vos révisions de tous les items de l'externat. 
+                            Visualisez votre progression, gérez vos tours de révision et organiser vos semaines.
+                        </p>
                     </div>
-                    <h4 class="presentation-feature-title">Liste des spécialités</h4>
-                    <p class="presentation-feature-description">Toutes les spécialités de l'externat ainsi que les 367 items sont répertoriés. Identifiez vos matières fortes et vos matières faibles en un clin d'oeil.</p>
-                </div>
-				                
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon tracking">
-                        <i class="fas fa-calendar-week"></i>
-                    </div>
-                    <h4 class="presentation-feature-title">Planning</h4>
-                    <p class="presentation-feature-description">Organisez vos semaines de stage et de révisions grâce au planning intégré. Gérez vos taches quotidiennes grâce à une checklist.</p>
-                </div>
-                
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon items">
-                        <i class="fas fa-list-check"></i>
-                    </div>
-                    <h4 class="presentation-feature-title">Liste complète des items</h4>
-                    <p class="presentation-feature-description">Suivez vos tours de révision et votre progression dans l'apprentissage des items de l'externat. Visualisez quels items doivent être revu en priorité.</p>
-                </div>
+
+                    <hr class="presentation-separator">
+
+                    <!-- Fonctionnalités -->
+                    <h3 class="presentation-section-title">
+                        <i class="fas fa-star"></i>
+                        Fonctionnalités principales
+                    </h3>
+                    
+                    <div class="presentation-feature-grid">
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon specialties">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Liste des spécialités</h4>
+                            <p class="presentation-feature-description">Toutes les spécialités de l'externat ainsi que les 367 items sont répertoriés. Identifiez vos matières fortes et vos matières faibles en un clin d'oeil.</p>
+                        </div>
+                                        
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon tracking">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Planning</h4>
+                            <p class="presentation-feature-description">Organisez vos semaines de stage et de révisions grâce au planning intégré. Gérez vos taches quotidiennes grâce à une checklist.</p>
+                        </div>
+                        
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon items">
+                                <i class="fas fa-list-check"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Liste complète des items</h4>
+                            <p class="presentation-feature-description">Suivez vos tours de révision et votre progression dans l'apprentissage des items de l'externat. Visualisez quels items doivent être revu en priorité.</p>
+                        </div>
  
-				<div class="presentation-feature-card">
-                    <div class="presentation-feature-icon stats">
-                        <i class="fas fa-chart-pie"></i>
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon stats">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Statistiques complètes</h4>
+                            <p class="presentation-feature-description">Visualisez vos performances jour par jour avec des graphiques clairs. Suivez votre progression globale : items révisés, tours effectués et temps de travail cumulé.</p>
+                        </div>
+                        
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon save">
+                                <i class="fas fa-save"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Enregistrement des tours</h4>
+                            <p class="presentation-feature-description">Enregistrez chaque tour avec votre niveau de confiance (1-5), le temps de travail, la date et le support utilisé.</p>
+                        </div>
+                        
+                        <div class="presentation-feature-card">
+                            <div class="presentation-feature-icon daily">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </div>
+                            <h4 class="presentation-feature-title">Fiches LISA</h4>
+                            <p class="presentation-feature-description">Des liens sont disponibles pour chaque item vers la référence pour les EDN : les fiches LISA (Version imprimable)</p>
+                        </div>
                     </div>
-                    <h4 class="presentation-feature-title">Statistiques complètes</h4>
-                    <p class="presentation-feature-description">Visualisez vos performances jour par jour avec des graphiques clairs. Suivez votre progression globale : items révisés, tours effectués et temps de travail cumulé.</p>
-                </div>
-				
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon save">
-                        <i class="fas fa-save"></i>
+
+                    <hr class="presentation-separator">
+
+                    <!-- Info highlight -->
+                    <h3 class="presentation-section-title">
+                        <i class="fas fa-lightbulb"></i>
+                        À garder en tête
+                    </h3>
+                    
+                    <div class="presentation-info-highlight">
+                        <p><strong>Il existe autant de méthodes de travail que d'étudiants.</strong> Ce tableur reflète simplement une manière de s'organiser. Ce n'est pas une méthode miracle.</p>
+                        <p>Si cela vous convient, tant mieux ! Sinon, servez-vous-en comme base. Ne vous mettez surtout pas la pression : <strong>écoutez-vous et adaptez selon vos besoins !</strong></p>
                     </div>
-                    <h4 class="presentation-feature-title">Enregistrement des tours</h4>
-                    <p class="presentation-feature-description">Enregistrez chaque tour avec votre niveau de confiance (1-5), le temps de travail, la date et le support utilisé.</p>
-                </div>
-			
-				
-                
-                <div class="presentation-feature-card">
-                    <div class="presentation-feature-icon daily">
-                        <i class="fa-solid fa-file-lines"></i>
 
+                    <hr class="presentation-separator">
+
+                    <!-- Avantages -->
+                    <h3 class="presentation-section-title">
+                        <i class="fas fa-check-circle"></i>
+                        Pourquoi utiliser ce tableur ?
+                    </h3>
+                    
+                    <div class="presentation-benefits-grid">
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fa-solid fa-compass"></i></div>
+                            <div class="presentation-benefit-text">Vision d'ensemble sur l'externat</div>
+                        </div>
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fas fa-mobile-alt"></i></div>
+                            <div class="presentation-benefit-text">Accessible sur tous vos appareils</div>
+                        </div>
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fa-solid fa-bolt"></i></div>
+                            <div class="presentation-benefit-text">Facilité d'utilisation et gain de temps</div>
+                        </div>
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fas fa-euro-sign"></i></div>
+                            <div class="presentation-benefit-text">100% gratuit, sans publicité</div>
+                        </div>
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fa-solid fa-binoculars"></i></div>
+                            <div class="presentation-benefit-text">Meilleur moyen d'anticiper l'été pré-EDN</div>
+                        </div>
+                        <div class="presentation-benefit-item">
+                            <div class="presentation-benefit-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="presentation-benefit-text">Statistiques détaillées et graphiques</div>
+                        </div>
                     </div>
-                    <h4 class="presentation-feature-title">Fiches LISA</h4>
-                    <p class="presentation-feature-description">Des liens sont disponibles pour chaque item vers la référence pour les EDN : les fiches LISA (Version imprimable)</p>
+
+                    <hr class="presentation-separator">
+
+                    <!-- Aperçus -->
+                    <h3 class="presentation-section-title">
+                        <i class="fas fa-images"></i>
+                        Aperçu de l'interface
+                    </h3>
+
+                    <!-- Tabs de catégories -->
+                    <div class="preview-tabs">
+                        <button class="preview-tab active" data-category="stats">
+                            <i class="fas fa-chart-pie"></i> Statistiques
+                        </button>
+                        <button class="preview-tab" data-category="matieres">
+                            <i class="fas fa-hospital"></i> Liste des matières
+                        </button>
+                        <button class="preview-tab" data-category="items">
+                            <i class="fas fa-list-check"></i> Liste des items
+                        </button>
+                        <button class="preview-tab" data-category="stats">
+                            <i class="fas fa-chart-pie"></i> Planning
+                        </button>
+                    </div>
+
+                    <!-- Carrousels -->
+                    <div class="preview-carousel-container">
+                        
+                        <!-- Carrousel Statistiques -->
+                        <div class="preview-carousel active" data-category="stats">
+                          <div class="carousel-slides-wrapper">
+
+							<button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                            <div class="carousel-slides">
+                         
+								
+								<div class="carousel-slide active">
+                                    <p class="carousel-caption">Performances quotidiennes.</p>
+                                    <img src="StatsJour.png" alt="Liste des spécialités">
+                                </div>
+                                <!-- Slide 2 -->
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Graphiques de suivi hebdomadaire.</p>
+                                    <img src="StatsHebdo.png" alt="Suivi hebdomadaire">
+                                </div>			
+                                <!-- Slide 1 -->
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Statistiques générales de progression.</p>
+                                    <img src="StatsGé.png" alt="Statistiques générales">
+                                </div>
+                            </div>
+                            <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+							<div class="carousel-dots"></div>
+                        </div>
+                        
+                        <!-- Carrousel Liste des matières -->
+                        <div class="preview-carousel" data-category="matieres">
+                            <div class="carousel-slides-wrapper">
+							<button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                            <div class="carousel-slides">
+                                <!-- Slide 1 -->
+                                <div class="carousel-slide active">
+                                    <p class="carousel-caption">Vue d'ensemble des spécialités et de votre avancement</p>
+                                    <img src="Spé1.png" alt="Liste des spécialités">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Classer les matières par caractéristique</p>
+                                    <img src="Spé2.png" alt="Liste des spécialités">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Rechercher et trier les spécialités</p>
+                                    <img src="Spé3.png" alt="Liste des spécialités">
+                                </div>
+                            </div>
+                            <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+							<div class="carousel-dots"></div>
+                        </div>
+                        
+                        <!-- Carrousel Liste des items -->
+                        <div class="preview-carousel" data-category="items">
+                            <div class="carousel-slides-wrapper">
+							<button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                            <div class="carousel-slides">
+                                <!-- Slide 1 -->
+                                <div class="carousel-slide active">
+                                    <p class="carousel-caption">Accès aux items classés par matière en cliquant sur une spécialité.</p>
+                                    <img src="ItemsIntro.png" alt="Introduction">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Entrer vos tours de révision : ressenti sur l'apprentissage, temps de travail et support de cours.</p>
+                                    <img src="ItemsValiderTour.png" alt="Valider un tour">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Visualiser votre progression. Priorisez les items que vous n'avez pas vu depuis longtemps.</p>
+                                    <img src="ItemsTours.png" alt="Progression des tours">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Liens cliquable vers la fiche LISA de l'item. Visualisez les collèges de référence pour chaque item.</p>
+                                    <img src="ItemsLisa.png" alt="Lisa référence">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Visualisez les items qu'il est bon de lire dans les petits collèges.</p>
+                                    <img src="ItemsBalises.png" alt="Balises">
+                                </div>
+                                <div class="carousel-slide">
+                                    <p class="carousel-caption">Tableur disponible en mode sombre également.</p>
+                                    <img src="ItemsSombre.png" alt="Mode sombre">
+                                </div>
+                            </div>
+							<button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
+							</div>
+                            <div class="carousel-dots"></div>
+                        </div>
+                        
+                    </div>
+
+                    <hr class="presentation-separator">
+
+                    <!-- Infos pratiques -->
+                    <h3 class="presentation-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informations pratiques
+                    </h3>
+                    
+                    <ul class="presentation-tips-list">
+                        <li>Créez un compte gratuit pour sauvegarder automatiquement vos données.</li>
+                        <li>Vos données sont synchronisées en temps réel sur tous vos appareils.</li>
+                        <li>N'hésitez pas à contacter l'administrateur (Jean ZENNARO) si vous rencontrez un problème.</li>
+                        <li>N'hésitez pas à envoyer un feedback si vous avez des suggestions d'amélioration.</li>
+                    </ul>
+
+                    <!-- CTA -->
+                    <div class="presentation-cta">
+                        <a href="auth.html?redirect=TableurEnLigne.html" class="presentation-cta-btn">
+                            <i class="fas fa-rocket"></i>
+                            Commencer gratuitement
+                        </a>
+                        <p class="presentation-cta-text">Créez votre compte en quelques secondes</p>
+                    </div>
+
                 </div>
-
-
-            </div>
-
-            <hr class="presentation-separator">
-
-            <!-- Info highlight -->
-            <h3 class="presentation-section-title">
-                <i class="fas fa-lightbulb"></i>
-                À garder en tête
-            </h3>
+            </main>
             
-            <div class="presentation-info-highlight">
-                <p><strong>Il existe autant de méthodes de travail que d'étudiants.</strong> Ce tableur reflète simplement une manière de s'organiser. Ce n'est pas une méthode miracle.</p>
-                <p>Si cela vous convient, tant mieux ! Sinon, servez-vous-en comme base. Ne vous mettez surtout pas la pression : <strong>écoutez-vous et adaptez selon vos besoins !</strong></p>
-            </div>
-
-            <hr class="presentation-separator">
-
-            <!-- Avantages -->
-            <h3 class="presentation-section-title">
-                <i class="fas fa-check-circle"></i>
-                Pourquoi utiliser ce tableur ?
-            </h3>
-            
-            <div class="presentation-benefits-grid">
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fa-solid fa-compass"></i></div>
-                    <div class="presentation-benefit-text">Vision d'ensemble sur l'externat</div>
-                </div>
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-mobile-alt"></i></div>
-                    <div class="presentation-benefit-text">Accessible sur tous vos appareils</div>
-                </div>
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fa-solid fa-bolt"></i></div>
-                    <div class="presentation-benefit-text">Facilité d'utilisation et gain de temps</div>
-                </div>
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-euro-sign"></i></div>
-                    <div class="presentation-benefit-text">100% gratuit, sans publicité</div>
-                </div>
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fa-solid fa-binoculars"></i></div>
-                    <div class="presentation-benefit-text">Meilleur moyen d'anticiper l'été pré-EDN</div>
-                </div>
-                <div class="presentation-benefit-item">
-                    <div class="presentation-benefit-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="presentation-benefit-text">Statistiques détaillées et graphiques</div>
-                </div>
-            </div>
-
-            <hr class="presentation-separator">
-
-<!-- Aperçus -->
-<h3 class="presentation-section-title">
-    <i class="fas fa-images"></i>
-    Aperçu de l'interface
-</h3>
-
-<!-- Tabs de catégories -->
-<div class="preview-tabs">
-    <button class="preview-tab active" data-category="stats">
-        <i class="fas fa-chart-pie"></i> Statistiques
-    </button>
-    <button class="preview-tab" data-category="matieres">
-        <i class="fas fa-hospital"></i> Liste des matières
-    </button>
-    <button class="preview-tab" data-category="items">
-        <i class="fas fa-list-check"></i> Liste des items
-    </button>
-	<button class="preview-tab" data-category="stats">
-        <i class="fas fa-chart-pie"></i> Planning
-    </button>
-</div>
-
-<!-- Carrousels -->
-<div class="preview-carousel-container">
-    
-    <!-- Carrousel Statistiques -->
-    <div class="preview-carousel active" data-category="stats">
-        <button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
-        <div class="carousel-slides">
-			<div class="carousel-slide active">
-				<p class="carousel-caption">Performances quotidiennes.</p>
-				<img src="StatsJour.png" alt="Liste des spécialités">
-            </div>
-            <!-- Slide 2 -->
-            <div class="carousel-slide">
-                <p class="carousel-caption">Graphiques de suivi hebdomadaire.</p>
-				<img src="StatsHebdo.png" alt="Suivi hebdomadaire">
-                
-            </div>			
-            
-			<!-- Slide 1 -->
-            <div class="carousel-slide">
-                <p class="carousel-caption">Statistiques générales de progression.</p>
-				<img src="StatsGé.png" alt="Statistiques générales">
-            </div>
-            <!-- AJOUTER D'AUTRES SLIDES ICI (copier le bloc carousel-slide) -->
-        </div>
-        <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
-        <div class="carousel-dots"></div>
-    </div>
-    
-    <!-- Carrousel Liste des matières -->
-    <div class="preview-carousel" data-category="matieres">
-        <button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
-        <div class="carousel-slides">
-            <!-- Slide 1 -->
-            <div class="carousel-slide active">
-                 <p class="carousel-caption">Vue d'ensemble des spécialités et de votre avancement</p>
-				<img src="Spé1.png" alt="Liste des spécialités">
-            </div>
-			
-			 <div class="carousel-slide">
-                <p class="carousel-caption">Classer les matières par caractéristique</p>
-
-				<img src="Spé2.png" alt="Liste des spécialités">
-            </div>
-			
-			<div class="carousel-slide">
-                <p class="carousel-caption">Rechercher et trier les spécialités</p>
-				<img src="Spé3.png" alt="Liste des spécialités">
-            </div>
-            <!-- AJOUTER D'AUTRES SLIDES ICI -->
-        </div>
-        <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
-        <div class="carousel-dots"></div>
-    </div>
-    
-    <!-- Carrousel Liste des items -->
-    <div class="preview-carousel" data-category="items">
-        <button class="carousel-arrow carousel-prev"><i class="fas fa-chevron-left"></i></button>
-        <div class="carousel-slides">
-            <!-- Slide 1 -->
-            <div class="carousel-slide active">
-                                <p class="carousel-caption">Accès aux items classés par matière en cliquant sur une spécialité.</p>
-				<img src="ItemsIntro.png" alt="Introduction">
-            </div>
-			
-            <div class="carousel-slide">
-                                <p class="carousel-caption">Entrer vos tours de révision : ressenti sur l'apprentissage, temps de travail et support de cours.</p>
-				<img src="ItemsValiderTour.png" alt="Valider un tour">
-            </div>
-
-            <div class="carousel-slide">
-                                <p class="carousel-caption">Visualiser votre progression. Priorisez les items que vous n'avez pas vu depuis longtemps.</p>
-				<img src="ItemsTours.png" alt="Progression des tours">
-            </div>
-
-            <div class="carousel-slide">
-                                <p class="carousel-caption">Liens cliquable vers la fiche LISA de l'item. Visualisez les collèges de référence pour chaque item.</p>
-				<img src="ItemsLisa.png" alt="Lisa référence">
-            </div>
-
-            <div class="carousel-slide">
-                                <p class="carousel-caption">Visualisez les items qu'il est bon de lire dans les petits collèges.</p>
-				<img src="ItemsBalises.png" alt="Balises">
-            </div>	
-
-            <div class="carousel-slide">
-                                <p class="carousel-caption">Tableur disponible en mode sombre également.</p>
-				<img src="ItemsSombre.png" alt="Mode sombre">
-            </div>			
-            <!-- AJOUTER D'AUTRES SLIDES ICI -->
-        </div>
-        <button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
-        <div class="carousel-dots"></div>
-    </div>
-    
-</div>
-
-            <hr class="presentation-separator">
-
-            <!-- Infos pratiques -->
-            <h3 class="presentation-section-title">
-                <i class="fas fa-info-circle"></i>
-                Informations pratiques
-            </h3>
-            
-            <ul class="presentation-tips-list">
-                <li>Créez un compte gratuit pour sauvegarder automatiquement vos données.</li>
-                <li>Vos données sont synchronisées en temps réel sur tous vos appareils.</li>
-                <li>N'hésitez pas à contacter l'administrateur (Jean ZENNARO) si vous rencontrez un problème.</li>
-				<li>N'hésitez pas à envoyer un feedback si vous avez des suggestions d'amélioration.</li>
-            </ul>
-
-            <!-- CTA -->
-            <div class="presentation-cta">
-                <a href="auth.html?redirect=TableurEnLigne.html" class="presentation-cta-btn">
-                    <i class="fas fa-rocket"></i>
-                    Commencer gratuitement
-                </a>
-                <p class="presentation-cta-text">Créez votre compte en quelques secondes</p>
-            </div>
-
         </div>
     </div>
 </section>
-
 
 
 <section class="main-content" id="main-content">
     <div class="container">
 <nav class="app-nav">
     <button class="app-nav-btn" data-page="stats"><i class="fas fa-chart-pie"></i><span>Statistiques</span></button>
-    <button class="app-nav-btn" data-page="planning"><i class="fas fa-calendar-alt"></i><span>Planning</span></button>
     <button class="app-nav-btn active" data-page="dashboard"><i class="fas fa-hospital"></i><span>Liste des spécialités</span></button>
     <button class="app-nav-btn" data-page="items"><i class="fas fa-list-check"></i><span>Liste des Items</span></button>
+	    <button class="app-nav-btn" data-page="planning"><i class="fas fa-calendar-alt"></i><span>Planning</span></button>
+
 </nav>
 
 <div class="app-page" id="page-stats">
@@ -5121,7 +5519,10 @@ input[type="date"].modal-input {
                     <span class="checklist-count" id="checklist-count">0/0</span>
                 </div>
                 <div class="checklist-body">
-                    <div class="checklist-input-wrapper">
+                    <div class="checklist-input-wrapper" style="position: relative;">
+						<div class="checklist-error-notification" id="checklist-error">
+							<i class="fas fa-exclamation-circle"></i> Vous devez d'abord écrire une tâche
+						</div>
                         <input type="text" class="checklist-input" id="checklist-new-item" placeholder="Ajouter une tâche...">
                         <button class="checklist-add-btn" id="checklist-add-btn"><i class="fas fa-plus"></i></button>
                     </div>
@@ -5208,18 +5609,27 @@ input[type="date"].modal-input {
 				
             </div>
             
-            <!-- Calendrier -->
-            <div class="calendar-container">
-                <div class="calendar-weekdays">
-                    <div class="weekday-header">Lun</div>
-                    <div class="weekday-header">Mar</div>
-                    <div class="weekday-header">Mer</div>
-                    <div class="weekday-header">Jeu</div>
-                    <div class="weekday-header">Ven</div>
-                    <div class="weekday-header weekend">Sam</div>
-                    <div class="weekday-header weekend">Dim</div>
+<!-- Hint scroll mobile -->
+            <div class="calendar-scroll-hint">
+                <i class="fas fa-hand-pointer"></i>
+                <span>Glissez horizontalement pour voir tout le calendrier</span>
+                <i class="fas fa-arrows-left-right"></i>
+            </div>
+            
+            <!-- Wrapper scroll pour mobile -->
+            <div class="calendar-scroll-wrapper">
+                <div class="calendar-container">
+                    <div class="calendar-weekdays">
+                        <div class="weekday-header">Lun</div>
+                        <div class="weekday-header">Mar</div>
+                        <div class="weekday-header">Mer</div>
+                        <div class="weekday-header">Jeu</div>
+                        <div class="weekday-header">Ven</div>
+                        <div class="weekday-header weekend">Sam</div>
+                        <div class="weekday-header weekend">Dim</div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
                 </div>
-                <div class="calendar-grid" id="calendar-grid"></div>
             </div>
             
         </main>
@@ -7654,6 +8064,34 @@ function formatTime(totalMinutes) {
     }
 }
 
+
+// Cacher le hint de scroll après premier scroll
+document.addEventListener('DOMContentLoaded', function() {
+    const scrollWrapper = document.querySelector('.calendar-scroll-wrapper');
+    const scrollHint = document.querySelector('.calendar-scroll-hint');
+    
+    if (scrollWrapper && scrollHint) {
+        let hasScrolled = localStorage.getItem('calendarScrollHintSeen');
+        
+        if (hasScrolled) {
+            scrollHint.style.display = 'none';
+        }
+        
+        scrollWrapper.addEventListener('scroll', function() {
+            if (!hasScrolled) {
+                scrollHint.style.opacity = '0';
+                setTimeout(() => {
+                    scrollHint.style.display = 'none';
+                }, 300);
+                localStorage.setItem('calendarScrollHintSeen', 'true');
+                hasScrolled = true;
+            }
+        }, { once: true });
+    }
+});
+
+
+
 function getSpecialtyProgress(s) {
     let itemsSeen = 0, totalTours = 0, totalMinutes = 0;
     let feelings = [];
@@ -7952,7 +8390,7 @@ const referenceHtml = isReference ? '<span class="reference-badge"><i class="fas
 const itemUrl = ITEM_URLS[String(parseInt(item.num, 10))];
 const nameHtml = (isReference && itemUrl) ? '<a href="' + itemUrl + '" target="_blank" class="item-link">' + item.name + '</a>' : item.name;
 const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-const checklistBtn = '<button class="send-to-checklist-btn" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> Checklist</button>';
+const checklistBtn = '<button class="send-to-checklist-btn" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> To-do List</button>';
 
 return '<tr><td class="item-num">' + item.num + '<br>' + checklistBtn + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
 					'<td class="tour-cell"><div class="tour-badges">' + tourBadges + '</div><div class="tour-dates">' + tourDates + '</div></td>' +
@@ -9353,17 +9791,40 @@ function openSpecialtyPopup(dateKey, targetEl) {
     }
     
     // ===== CHECKLIST =====
-    function addChecklistItem() {
-        const input = document.getElementById('checklist-new-item');
-        if (!input) return;
-        const text = input.value.trim();
-        if (text) {
-            checklistData.push({ id: Date.now(), text: text, completed: false });
-            input.value = '';
-            saveData();
-            renderChecklist();
-        }
+function addChecklistItem() {
+    const input = document.getElementById('checklist-new-item');
+    const errorNotif = document.getElementById('checklist-error');
+    if (!input) return;
+    
+    const text = input.value.trim();
+    
+    if (!text) {
+        // Afficher la notification d'erreur avec vibration
+        input.classList.add('error');
+        errorNotif.classList.add('show', 'shake');
+        
+        // Retirer l'animation de vibration après qu'elle soit terminée
+        setTimeout(() => {
+            errorNotif.classList.remove('shake');
+        }, 500);
+        
+        // Masquer la notification après 2.5 secondes
+        setTimeout(() => {
+            errorNotif.classList.remove('show');
+            input.classList.remove('error');
+        }, 2500);
+        
+        // Focus sur l'input
+        input.focus();
+        return;
     }
+    
+    // Ajouter la tâche normalement
+    checklistData.push({ id: Date.now(), text: text, completed: false });
+    input.value = '';
+    saveData();
+    renderChecklist();
+}
     
 function toggleChecklistItem(id) {
         const item = checklistData.find(i => i.id === id);
@@ -9423,7 +9884,7 @@ function addItemFromTable(specialtyId, fc, itemNum, itemName, specialtyColor, sp
     const exists = checklistData.some(item => item.itemKey === itemKey);
     
     if (exists) {
-        return { success: false, message: 'Cet item est déjà dans la checklist !' };
+        return { success: false, message: 'Cet item est déjà dans la to-do List !' };
     }
     
     // Raccourcir le nom si trop long
@@ -9446,7 +9907,7 @@ function addItemFromTable(specialtyId, fc, itemNum, itemName, specialtyColor, sp
     saveData();
     renderChecklist();
     
-    return { success: true, message: 'Item ' + itemNum + ' ajouté à la checklist !' };
+    return { success: true, message: 'Item ' + itemNum + ' ajouté à la To-do List !' };
 }
 
 function completeChecklistItem(id) {
