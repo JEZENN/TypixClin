@@ -6895,8 +6895,7 @@ input[type="date"].modal-input {
 									</div>
 									<div class="custom-dropdown-option" data-value="50">50 / page</div>
 									<div class="custom-dropdown-option selected" data-value="100">100 / page</div>
-									<div class="custom-dropdown-option" data-value="200">200 / page</div>
-									<div class="custom-dropdown-option" data-value="all">Tout afficher</div>
+
 								</div>
 							</div>
 						</div>
@@ -10763,14 +10762,30 @@ function autoResizeTextarea(textarea) {
         updateSelectors();
     }
     
-    function goToToday() {
-        const today = new Date();
-        currentMonth = today.getMonth();
-        currentYear = today.getFullYear();
-        renderCalendar();
-        updateHeaderDisplay();
-        updateSelectors();
-    }
+function goToToday() {
+    const today = new Date();
+    currentMonth = today.getMonth();
+    currentYear = today.getFullYear();
+    renderCalendar();
+    updateHeaderDisplay();
+    updateSelectors();
+    
+    // Scroll vers la case d'aujourd'hui
+    setTimeout(() => {
+        const todayCell = document.querySelector('.calendar-day.is-today');
+        if (todayCell) {
+            const rect = todayCell.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const isMobile = window.innerWidth <= 768;
+            const offset = isMobile ? 350 : 300;
+            
+            window.scrollTo({
+                top: scrollTop + rect.top - offset,
+                behavior: 'smooth'
+            });
+        }
+    }, 100);
+}
     
     function onDateSelectChange() {
         const monthSelect = document.getElementById('planning-month-select');
