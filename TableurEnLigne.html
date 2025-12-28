@@ -4467,6 +4467,11 @@ input[type="date"].modal-input {
 .specialty-badges-legend {
     justify-content: center;
 }
+	.specialty-badges-legend {
+        display: grid;
+        grid-template-columns: repeat(12, auto);
+        justify-content: center;
+    }
 
 /* ===== FIX TOOLTIPS LÉGENDE SPÉCIALITÉS SUR MOBILE ===== */
 @media (max-width: 768px) {
@@ -4485,7 +4490,7 @@ input[type="date"].modal-input {
     }
 	    .specialty-badges-legend {
         display: grid;
-        grid-template-columns: repeat(12, auto);
+        grid-template-columns: repeat(8, auto);
         justify-content: center;
         gap: 0.6rem;
     }
@@ -5874,6 +5879,27 @@ input[type="date"].modal-input {
 }
 
 
+/* ===== DROPDOWN PAGINATION PERSONNALISÉ ===== */
+.pagination-dropdown {
+    min-width: 130px;
+}
+
+.pagination-dropdown .custom-dropdown-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.pagination-dropdown .custom-dropdown-menu {
+    min-width: 150px;
+    right: 0;
+    left: auto;
+}
+
+.pagination-dropdown .custom-dropdown-option {
+    font-size: 0.85rem;
+}
+
+
 </style>
 </head>
 
@@ -6857,12 +6883,22 @@ input[type="date"].modal-input {
 								<i class="fas fa-angles-right"></i>
 							</button>
 							
-							<select class="pagination-select" id="pagination-size-bottom" title="Items par page">
-								<option value="50">50 / page</option>
-								<option value="100" selected>100 / page</option>
-								<option value="200">200 / page</option>
-								<option value="all">Tout afficher</option>
-							</select>
+							<div class="custom-dropdown pagination-dropdown" id="pagination-dropdown">
+								<button class="custom-dropdown-btn" id="pagination-dropdown-btn">
+									<span class="custom-dropdown-icon"><i class="fas fa-layer-group"></i></span>
+									<span class="custom-dropdown-text" id="pagination-dropdown-text">100 / page</span>
+									<i class="fas fa-chevron-down"></i>
+								</button>
+								<div class="custom-dropdown-menu" id="pagination-dropdown-menu">
+									<div class="custom-dropdown-header">
+										<i class="fas fa-list-ol"></i> Items par page
+									</div>
+									<div class="custom-dropdown-option" data-value="50">50 / page</div>
+									<div class="custom-dropdown-option selected" data-value="100">100 / page</div>
+									<div class="custom-dropdown-option" data-value="200">200 / page</div>
+									<div class="custom-dropdown-option" data-value="all">Tout afficher</div>
+								</div>
+							</div>
 						</div>
 
                 </div>
@@ -7034,7 +7070,7 @@ const SPECIALTY_SHORT = {
     'pneumologie': 'PNE',
     'gynecologie': 'GYN',
     'orl': 'ORL',
-    'neurologie': 'NEUR',
+    'neurologie': 'NEU',
     'psychiatrie': 'PSY',
     'osteo': 'RHU',
     'pediatrie': 'PED',
@@ -7044,7 +7080,7 @@ const SPECIALTY_SHORT = {
     'nephrologie': 'NEPH',
     'infectiologie': 'INF',
     'dermatologie': 'DER',
-    'therapeutique': 'THER',
+    'therapeutique': 'TTT',
     'geriatrie': 'GER',
     'douleur': 'DOU',
     'medecine-interne': 'MIN',
@@ -9341,11 +9377,8 @@ function changePageSize(size) {
     }
     currentPage = 1;
     
-    // Synchroniser les deux selects
-    const sizeTop = document.getElementById('pagination-size-top');
-    const sizeBottom = document.getElementById('pagination-size-bottom');
-    if (sizeTop) sizeTop.value = size;
-    if (sizeBottom) sizeBottom.value = size;
+    // Synchroniser le dropdown personnalisé
+    updatePaginationDropdown(size);
     
     renderItemsTable();
     
@@ -9657,6 +9690,67 @@ if (filterSpecialtyDropdown) {
     });
 }
 
+// ===== DROPDOWN PAGINATION PERSONNALISÉ =====
+document.addEventListener('DOMContentLoaded', function() {
+    const paginationDropdown = document.getElementById('pagination-dropdown');
+    const paginationBtn = document.getElementById('pagination-dropdown-btn');
+    const paginationMenu = document.getElementById('pagination-dropdown-menu');
+    const paginationText = document.getElementById('pagination-dropdown-text');
+    
+    if (!paginationBtn || !paginationMenu) return;
+    
+    // Toggle menu
+    paginationBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        paginationBtn.classList.toggle('active');
+        paginationMenu.classList.toggle('active');
+    });
+    
+    // Sélection d'une option
+    paginationMenu.querySelectorAll('.custom-dropdown-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.dataset.value;
+            const text = this.textContent;
+            
+            // Mettre à jour le texte affiché
+            paginationText.textContent = text;
+            
+            // Mettre à jour la classe selected
+            paginationMenu.querySelectorAll('.custom-dropdown-option').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Fermer le menu
+            paginationBtn.classList.remove('active');
+            paginationMenu.classList.remove('active');
+            
+            // Appeler la fonction de changement de taille
+            changePageSize(value);
+        });
+    });
+    
+    // Fermer si clic ailleurs
+    document.addEventListener('click', function(e) {
+        if (!paginationDropdown.contains(e.target)) {
+            paginationBtn.classList.remove('active');
+            paginationMenu.classList.remove('active');
+        }
+    });
+});
+
+// Fonction pour mettre à jour le dropdown depuis l'extérieur
+function updatePaginationDropdown(value) {
+    const paginationText = document.getElementById('pagination-dropdown-text');
+    const paginationMenu = document.getElementById('pagination-dropdown-menu');
+    
+    if (!paginationText || !paginationMenu) return;
+    
+    const option = paginationMenu.querySelector(`[data-value="${value}"]`);
+    if (option) {
+        paginationText.textContent = option.textContent;
+        paginationMenu.querySelectorAll('.custom-dropdown-option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+    }
+}
 
 function populateFilters() {
     const specialtyMenu = document.getElementById('specialty-menu');
@@ -10341,7 +10435,7 @@ const PlanningModule = (function() {
         { id: 'gyneco', name: 'GYN', class: 'spe-gyneco' },
         { id: 'pneumo', name: 'PNE', class: 'spe-pneumo' },
         { id: 'orl', name: 'ORL', class: 'spe-orl' },
-		{ id: 'neuro', name: 'NEUR', class: 'spe-neuro' },
+		{ id: 'neuro', name: 'NEU', class: 'spe-neuro' },
         { id: 'psy', name: 'PSY', class: 'spe-psy' },
         { id: 'pediatrie', name: 'PED', class: 'spe-pediatrie' },
         { id: 'hemato', name: 'HEM', class: 'spe-hemato' },
@@ -10352,7 +10446,7 @@ const PlanningModule = (function() {
 		{ id: 'infectio', name: 'INF', class: 'spe-infectio' },
         { id: 'mir', name: 'MIR', class: 'spe-mir' },
 		{ id: 'dermato', name: 'DER', class: 'spe-dermato' },
-		{ id: 'therapeut', name: 'THER', class: 'spe-therapeut' },
+		{ id: 'therapeut', name: 'TTT', class: 'spe-therapeut' },
         { id: 'geriatrie', name: 'GER', class: 'spe-geriatrie' },
 		{ id: 'douleur', name: 'DOU', class: 'spe-douleur' },
         { id: 'mi', name: 'MIN', class: 'spe-mi' },
