@@ -3254,7 +3254,7 @@ input[type="date"].modal-input {
 /* ===== CALENDRIER ===== */
 .calendar-container {
     background: var(--white);
-    border-radius: var(--border-radius-xl);
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0; 
     box-shadow: var(--shadow-md);
     border: 1px solid var(--gray-200);
 }
@@ -3990,21 +3990,28 @@ input[type="date"].modal-input {
 }
 
 
-/* ===== PLANNING MOBILE - SCROLL HORIZONTAL ===== */
+/* ===== PLANNING MOBILE - SCROLL HORIZONTAL FORCÉ ===== */
 @media (max-width: 768px) {
-    /* Container principal du planning */
+    
+    /* Permettre le scroll sur le wrapper uniquement */
     #page-planning {
-        overflow-x: hidden;
+        overflow-x: visible;
+        overflow-y: visible;
+    }
+    
+    .planning-container {
+        overflow: visible;
     }
     
     .planning-main {
-        overflow-x: hidden;
+        overflow: visible;
+        width: 100%;
     }
     
     /* Header reste fixe en largeur */
     .planning-header-card {
         width: 100%;
-        overflow: hidden;
+        overflow: visible;
     }
     
     .planning-header-row {
@@ -4037,45 +4044,57 @@ input[type="date"].modal-input {
         min-width: max-content;
     }
     
-    /* Wrapper scroll pour le calendrier */
+    /* ===== WRAPPER SCROLL - LA CLÉ ===== */
     .calendar-scroll-wrapper {
-        overflow-x: auto;
+        width: 100%;
+        overflow-x: scroll !important;
+        overflow-y: visible !important;
         -webkit-overflow-scrolling: touch;
-        margin: 0 -0.5rem;
-        padding: 0 0.5rem;
+        position: relative;
+        /* Masquer la scrollbar mais garder le scroll */
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
     }
     
-    /* Indicateur de scroll */
-    .calendar-scroll-wrapper::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 30px;
-        background: linear-gradient(to left, var(--background), transparent);
-        pointer-events: none;
-        opacity: 0.8;
+    .calendar-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
     }
     
-    /* Calendrier avec largeur minimum */
+    .calendar-scroll-wrapper::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 3px;
+    }
+    
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 3px;
+    }
+    
+    /* Calendrier avec largeur FIXE pour forcer le scroll */
     .calendar-container {
-        min-width: 600px;
-        width: max-content;
+        width: 650px !important;
+        min-width: 650px !important;
+        max-width: none !important;
+        flex-shrink: 0;
     }
     
     .calendar-weekdays {
         position: static;
         box-shadow: none;
-        grid-template-columns: repeat(7, minmax(85px, 1fr));
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
     }
     
     .calendar-grid {
-        grid-template-columns: repeat(7, minmax(85px, 1fr));
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
     }
     
     .calendar-day {
         min-height: 100px;
+        min-width: 0;
     }
     
     .weekday-header {
@@ -4107,29 +4126,43 @@ input[type="date"].modal-input {
         font-size: 0.5rem;
         padding: 0.1rem 0.25rem;
     }
+    
+    /* Hint de scroll */
+    .calendar-scroll-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+        border-radius: var(--border-radius-md);
+        color: var(--primary);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .calendar-scroll-hint i {
+        animation: scrollHint 1.5s ease-in-out infinite;
+    }
 }
 
 @media (max-width: 480px) {
     .calendar-container {
-        min-width: 560px;
-    }
-    
-    .calendar-weekdays,
-    .calendar-grid {
-        grid-template-columns: repeat(7, 80px);
+        width: 580px !important;
+        min-width: 580px !important;
     }
     
     .calendar-day {
-        min-height: 90px;
+        min-height: 85px;
     }
     
     .day-notes-input {
         font-size: 0.6rem;
-        min-height: 30px;
+        min-height: 28px;
     }
     
     .day-specialty-zone {
-        display: block; /* On garde visible mais plus petit */
         min-height: 20px;
     }
     
@@ -4153,34 +4186,16 @@ input[type="date"].modal-input {
     }
 }
 
-/* Hint de scroll pour indiquer qu'on peut glisser */
-.calendar-scroll-hint {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    margin-bottom: 0.75rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-    border-radius: var(--border-radius-md);
-    color: var(--primary);
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.calendar-scroll-hint i {
-    animation: scrollHint 1.5s ease-in-out infinite;
+/* Cacher le hint sur desktop */
+@media (min-width: 769px) {
+    .calendar-scroll-hint {
+        display: none;
+    }
 }
 
 @keyframes scrollHint {
     0%, 100% { transform: translateX(0); }
     50% { transform: translateX(5px); }
-}
-
-@media (max-width: 768px) {
-    .calendar-scroll-hint {
-        display: flex;
-    }
 }
 
 
@@ -5609,28 +5624,28 @@ input[type="date"].modal-input {
 				
             </div>
             
-<!-- Hint scroll mobile -->
-            <div class="calendar-scroll-hint">
-                <i class="fas fa-hand-pointer"></i>
-                <span>Glissez horizontalement pour voir tout le calendrier</span>
-                <i class="fas fa-arrows-left-right"></i>
-            </div>
-            
-            <!-- Wrapper scroll pour mobile -->
-            <div class="calendar-scroll-wrapper">
-                <div class="calendar-container">
-                    <div class="calendar-weekdays">
-                        <div class="weekday-header">Lun</div>
-                        <div class="weekday-header">Mar</div>
-                        <div class="weekday-header">Mer</div>
-                        <div class="weekday-header">Jeu</div>
-                        <div class="weekday-header">Ven</div>
-                        <div class="weekday-header weekend">Sam</div>
-                        <div class="weekday-header weekend">Dim</div>
-                    </div>
-                    <div class="calendar-grid" id="calendar-grid"></div>
-                </div>
-            </div>
+					<!-- Hint scroll mobile -->
+					<div class="calendar-scroll-hint">
+						<i class="fas fa-hand-pointer"></i>
+						<span>Glissez horizontalement pour voir tout le calendrier</span>
+						<i class="fas fa-arrows-left-right"></i>
+					</div>
+
+					<!-- Wrapper scroll pour mobile -->
+					<div class="calendar-scroll-wrapper">
+						<div class="calendar-container">
+							<div class="calendar-weekdays">
+								<div class="weekday-header">Lun</div>
+								<div class="weekday-header">Mar</div>
+								<div class="weekday-header">Mer</div>
+								<div class="weekday-header">Jeu</div>
+								<div class="weekday-header">Ven</div>
+								<div class="weekday-header weekend">Sam</div>
+								<div class="weekday-header weekend">Dim</div>
+							</div>
+							<div class="calendar-grid" id="calendar-grid"></div>
+						</div>
+					</div>
             
         </main>
     </div>
