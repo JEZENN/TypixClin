@@ -4410,6 +4410,13 @@ input[type="date"].modal-input {
     gap: 0.4rem;
 }
 
+/* Légende spécialités */
+.specialty-badges-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
 .specialty-legend-badge {
     display: inline-flex;
     align-items: center;
@@ -4426,12 +4433,14 @@ input[type="date"].modal-input {
 .specialty-legend-badge:hover {
     transform: scale(1.1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 100;
 }
 
+/* Tooltip EN DESSOUS */
 .specialty-legend-badge::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 100%;
+    top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     background: var(--gray-800);
@@ -4444,14 +4453,87 @@ input[type="date"].modal-input {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.15s ease, visibility 0.15s ease;
-    margin-bottom: 6px;
-    z-index: 100;
+    z-index: 9999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    pointer-events: none;
 }
 
-.specialty-legend-badge:hover::after {
+/* Petite flèche vers le haut */
+.specialty-legend-badge::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--gray-800);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    z-index: 9999;
+}
+
+.specialty-legend-badge:hover::after,
+.specialty-legend-badge:hover::before {
     opacity: 1;
     visibility: visible;
+}
+
+/* Conteneurs - overflow visible */
+.planning-legend.specialty-legend {
+    overflow: visible !important;
+}
+
+.planning-header-card {
+    overflow: visible !important;
+}
+
+/* Dark mode */
+[data-theme="dark"] .specialty-legend-badge::after {
+    background: #1e293b;
+    border: 1px solid #475569;
+}
+
+[data-theme="dark"] .specialty-legend-badge::before {
+    border-bottom-color: #1e293b;
+}
+
+/* ===== MOBILE : Tooltip centré en position fixed ===== */
+@media (max-width: 768px) {
+    .planning-legend.specialty-legend {
+        display: flex !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.5rem;
+    }
+    
+    .specialty-badges-legend {
+        flex-wrap: nowrap;
+    }
+    
+    /* Tooltip en position fixed centré sur mobile */
+    .specialty-legend-badge::after {
+        position: fixed;
+        top: auto;
+        bottom: 100px;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        white-space: normal;
+        text-align: center;
+        max-width: 200px;
+        font-size: 0.85rem;
+        padding: 0.6rem 1rem;
+    }
+    
+    /* Cacher la flèche sur mobile */
+    .specialty-legend-badge::before {
+        display: none;
+    }
+    
+    .specialty-legend-badge:hover {
+        transform: scale(1.15);
+    }
 }
 
 
