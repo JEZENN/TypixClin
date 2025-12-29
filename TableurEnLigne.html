@@ -9919,7 +9919,7 @@ userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdow
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => { try { await signOut(auth); profileDropdown.classList.remove('active'); } catch (e) { console.error(e); } });
 
-function initializeUserData() { return { items: {}, lastUpdated: new Date().toISOString() }; }
+function initializeUserData() { return { items: {}, trophies: {}, lastUpdated: new Date().toISOString() }; }
 
 function loadUserData(userId) {
     if (userId) {
@@ -11133,21 +11133,19 @@ function getWeeklyData() {
                         // Compter les tours
                         toursPerDay[day]++;
                         
-                        // Temps de travail
-						if (d.tourDurations && d.tourDurations[idx]) {
-							const durationStr = d.tourDurations[idx];
-							let hoursWorked = 0;
-							if (typeof durationStr === 'string' && durationStr.includes(':')) {
-								const parts = durationStr.split(':');
-								hoursWorked = parseInt(parts[0], 10) + (parseInt(parts[1], 10) / 60);
-							} else {
-								hoursWorked = parseFloat(durationStr) / 60;
+							if (d.tourDurations && d.tourDurations[idx]) {
+								const durationStr = d.tourDurations[idx];
+								let minutesWorked = 0;
+								if (typeof durationStr === 'string' && durationStr.includes(':')) {
+									const parts = durationStr.split(':');
+									minutesWorked = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+								} else {
+									minutesWorked = parseFloat(durationStr) || 0;
+								}
+								if (!isNaN(minutesWorked)) {
+									timePerDay[day] += minutesWorked;
+								}
 							}
-							if (!isNaN(hoursWorked)) {
-								dailyStats[date].hours += hoursWorked;
-								totalHours += hoursWorked;
-							}
-						}
                         
                         // Ressenti
                         if (d.tours[idx]) {
@@ -12357,20 +12355,42 @@ window.TrophiesSystem = (function() {
     
     let unlockedTrophies = {};
     
-    function loadTrophies() {
-        const saved = localStorage.getItem('typixclin_trophies');
-        if (saved) {
-            try {
-                unlockedTrophies = JSON.parse(saved);
-            } catch (e) {
-                unlockedTrophies = {};
-            }
-        }
-    }
-    
-    function saveTrophies() {
-        localStorage.setItem('typixclin_trophies', JSON.stringify(unlockedTrophies));
-    }
+	function loadTrophies() {
+		// Charger depuis userData (Firebase) si disponible
+		if (userData && userData.trophies) {
+			unlockedTrophies = userData.trophies;
+		} else {
+			// Fallback: tenter de récupérer depuis localStorage pour migration
+			const saved = localStorage.getItem('typixclin_trophies');
+			if (saved) {
+				try {
+					unlockedTrophies = JSON.parse(saved);
+					// Migrer vers Firebase si userData existe
+					if (userData) {
+						userData.trophies = unlockedTrophies;
+						debouncedSave();
+						// Nettoyer le localStorage après migration
+						localStorage.removeItem('typixclin_trophies');
+					}
+				} catch (e) {
+					unlockedTrophies = {};
+				}
+			} else {
+				unlockedTrophies = {};
+			}
+		}
+	}
+
+	function saveTrophies() {
+		// Sauvegarder dans userData pour Firebase
+		if (userData) {
+			userData.trophies = unlockedTrophies;
+			debouncedSave();
+		} else {
+			// Fallback localStorage si pas connecté
+			localStorage.setItem('typixclin_trophies', JSON.stringify(unlockedTrophies));
+		}
+	}
     
     function getCurrentStats() {
         const today = new Date();
