@@ -11134,12 +11134,20 @@ function getWeeklyData() {
                         toursPerDay[day]++;
                         
                         // Temps de travail
-                        if (d.tourDurations && d.tourDurations[idx]) {
-                            const parts = d.tourDurations[idx].split(':');
-                            const hours = parseInt(parts[0]) || 0;
-                            const mins = parseInt(parts[1]) || 0;
-                            timePerDay[day] += hours * 60 + mins;
-                        }
+						if (d.tourDurations && d.tourDurations[idx]) {
+							const durationStr = d.tourDurations[idx];
+							let hoursWorked = 0;
+							if (typeof durationStr === 'string' && durationStr.includes(':')) {
+								const parts = durationStr.split(':');
+								hoursWorked = parseInt(parts[0], 10) + (parseInt(parts[1], 10) / 60);
+							} else {
+								hoursWorked = parseFloat(durationStr) / 60;
+							}
+							if (!isNaN(hoursWorked)) {
+								dailyStats[date].hours += hoursWorked;
+								totalHours += hoursWorked;
+							}
+						}
                         
                         // Ressenti
                         if (d.tours[idx]) {
@@ -12390,36 +12398,54 @@ window.TrophiesSystem = (function() {
         let totalHours = 0;
         
         if (typeof SPECIALTIES_DATA !== 'undefined') {
-            SPECIALTIES_DATA.forEach(s => {
-                s.items.forEach(item => {
-                    const d = getItemData(s.id, item.fc);
-                    if (d.tourDates) {
-                        d.tourDates.forEach((date, idx) => {
-                            if (date) {
-                                if (!dailyStats[date]) {
-                                    dailyStats[date] = { tours: 0, hours: 0, confidenceSum: 0, confidenceCount: 0 };
-                                }
-                                
-                                dailyStats[date].tours++;
-                                totalTours++;
-                                
-                                if (d.tours && d.tours[idx] !== null) {
-                                    dailyStats[date].confidenceSum += d.tours[idx];
-                                    dailyStats[date].confidenceCount++;
-                                }
-                                
-                                if (d.tourDurations && d.tourDurations[idx]) {
-                                    const duration = parseInt(d.tourDurations[idx]);
-                                    if (!isNaN(duration)) {
-                                        dailyStats[date].hours += duration / 60;
-                                        totalHours += duration / 60;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
-            });
+			SPECIALTIES_DATA.forEach(s => {
+				s.items.forEach(item => {
+					const d = getItemData(s.id, item.fc);
+					if (d.tourDates) {
+						// Trier les dates pour calculer le retard entre chaque révision
+						const datesWithIndex = d.tourDates
+							.map((date, idx) => ({ date, idx }))
+							.filter(x => x.date)
+							.sort((a, b) => new Date(a.date) - new Date(b.date));
+						
+						datesWithIndex.forEach((entry, i) => {
+							const date = entry.date.split('T')[0];
+							const idx = entry.idx;
+							
+							if (!dailyStats[date]) {
+								dailyStats[date] = { tours: 0, hours: 0, confidenceSum: 0, confidenceCount: 0, delayCaught: 0 };
+							}
+							
+							dailyStats[date].tours++;
+							totalTours++;
+							
+							if (d.tours && d.tours[idx] !== null) {
+								dailyStats[date].confidenceSum += d.tours[idx];
+								dailyStats[date].confidenceCount++;
+							}
+							
+							if (d.tourDurations && d.tourDurations[idx]) {
+								const parts = d.tourDurations[idx].split(':');
+								const hours = parseInt(parts[0]) || 0;
+								const minutes = parseInt(parts[1]) || 0;
+								const totalH = hours + (minutes / 60);
+								dailyStats[date].hours += totalH;
+								totalHours += totalH;
+							}
+							
+							// Calculer le retard rattrapé (jours depuis la révision précédente de cet item)
+							if (i > 0) {
+								const prevDate = new Date(datesWithIndex[i - 1].date);
+								const currDate = new Date(entry.date);
+								const daysBetween = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
+								if (daysBetween > 0) {
+									dailyStats[date].delayCaught += daysBetween;
+								}
+							}
+						});
+					}
+				});
+			});
         }
         
         let bestToursInDay = 0;
@@ -12445,10 +12471,9 @@ window.TrophiesSystem = (function() {
                 }
             }
             
-            const delayRecovered = day.tours * 10;
-            if (delayRecovered > bestDelayRecovered) {
-                bestDelayRecovered = delayRecovered;
-            }
+			if (day.delayCaught > bestDelayRecovered) {
+				bestDelayRecovered = day.delayCaught;
+			}
         });
         
         const weeklyStats = {};
