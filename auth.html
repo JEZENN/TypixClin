@@ -1323,13 +1323,20 @@ if (logoutBtn) {
         </form>
 
         <form class="auth-form" id="register-form">
-            <div class="form-group">
-                <label class="form-label" for="register-name">Nom complet</label>
-                <div class="input-wrapper">
-                    <input type="text" id="register-name" name="name" autocomplete="name" class="form-input" placeholder="Jean Dupont" required>
-                    <i class="fas fa-user input-icon"></i>
-                </div>
-            </div>
+			<div class="form-group">
+				<label class="form-label" for="register-firstname">Prénom</label>
+				<div class="input-wrapper">
+					<input type="text" id="register-firstname" name="firstname" autocomplete="given-name" class="form-input" placeholder="Jean" required>
+					<i class="fas fa-user input-icon"></i>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="form-label" for="register-lastname">Nom de famille</label>
+				<div class="input-wrapper">
+					<input type="text" id="register-lastname" name="lastname" autocomplete="family-name" class="form-input" placeholder="Dupont" required>
+					<i class="fas fa-user input-icon"></i>
+				</div>
+			</div>
             <div class="form-group">
                 <label class="form-label" for="register-email">Email</label>
                 <div class="input-wrapper">
@@ -1550,8 +1557,9 @@ loginForm.addEventListener('submit', async (e) => {
 // INSCRIPTION - Modifié pour sauvegarder le mot de passe
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault(); hideMessage();
-    const name = document.getElementById('register-name').value;
-    const email = document.getElementById('register-email').value;
+	const firstname = document.getElementById('register-firstname').value.trim();
+	const lastname = document.getElementById('register-lastname').value.trim();
+	const name = firstname + ' ' + lastname;    const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
     const registerBtn = document.getElementById('register-btn');
@@ -1575,15 +1583,17 @@ registerForm.addEventListener('submit', async (e) => {
         
         // Créer le profil avec le mot de passe stocké
         const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, { 
-            displayName: name, 
-            email, 
-            password: password, // ⚠️ Mot de passe stocké pour récupération
-            photoURL: '', 
-            createdAt: serverTimestamp(), 
-            checklists: {}, 
-            preferences: { theme: 'light' } 
-        });
+		await setDoc(userRef, { 
+			displayName: name,
+			firstName: firstname,
+			lastName: lastname,
+			email, 
+			password: password,
+			photoURL: '', 
+			createdAt: serverTimestamp(), 
+			checklists: {}, 
+			preferences: { theme: 'light' } 
+		});
         
         showSuccess();
         setTimeout(() => { window.location.href = redirectPage; }, 1500);
