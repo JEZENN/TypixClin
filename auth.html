@@ -1432,7 +1432,7 @@ if (logoutBtn) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, sendEmailVerification, updateProfile, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1450,16 +1450,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-// ============================================
-// CONFIGURATION EMAILJS - À MODIFIER
-// ============================================
-const EMAILJS_PUBLIC_KEY = "hWtvQ4c3v7OtIlAti";      // Remplacez par votre Public Key
-const EMAILJS_SERVICE_ID = "service_ntgibps";      // Remplacez par votre Service ID
-const EMAILJS_TEMPLATE_ID = "template_t74zopk";    // Remplacez par votre Template ID
-// ============================================
-
-// Initialiser EmailJS
-emailjs.init(EMAILJS_PUBLIC_KEY);
 
 const tabBtns = document.querySelectorAll('.tab-btn');
 const loginForm = document.getElementById('login-form');
@@ -1505,7 +1495,7 @@ async function createUserProfile(user, additionalData = {}) {
             displayName: displayName || additionalData.displayName || '', 
             email, 
             photoURL: photoURL || '', 
-            password: additionalData.password || '', // Stocke le mot de passe pour récupération
+            
             createdAt: serverTimestamp(), 
             checklists: {}, 
             preferences: { theme: 'light' } 
@@ -1544,8 +1534,18 @@ loginForm.addEventListener('submit', async (e) => {
     const loginBtn = document.getElementById('login-btn');
     setLoading(loginBtn, true);
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showSuccess();
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+
+			if (!cred.user.emailVerified) {
+				showMessage(
+				  "Merci de vérifier votre email avant de vous connecter."
+				);
+				await signOut(auth);
+				return;
+			}
+
+			showSuccess();
+
         setTimeout(() => { window.location.href = redirectPage; }, 1500);
     } catch (error) {
         showMessage(translateError(error.code));
@@ -1554,52 +1554,61 @@ loginForm.addEventListener('submit', async (e) => {
     } finally { setLoading(loginBtn, false); }
 });
 
-// INSCRIPTION - Modifié pour sauvegarder le mot de passe
 registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); hideMessage();
-	const firstname = document.getElementById('register-firstname').value.trim();
-	const lastname = document.getElementById('register-lastname').value.trim();
-	const name = firstname + ' ' + lastname;    const email = document.getElementById('register-email').value;
+    e.preventDefault();
+    hideMessage();
+
+    const firstname = document.getElementById('register-firstname').value.trim();
+    const lastname = document.getElementById('register-lastname').value.trim();
+    const name = firstname + ' ' + lastname;
+    const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
     const registerBtn = document.getElementById('register-btn');
-    
-    // Vérification que les mots de passe correspondent
+
     if (password !== passwordConfirm) {
         showMessage('Les mots de passe ne correspondent pas.');
-        document.getElementById('register-password').classList.add('error');
-        document.getElementById('register-password-confirm').classList.add('error');
-        setTimeout(() => {
-            document.getElementById('register-password').classList.remove('error');
-            document.getElementById('register-password-confirm').classList.remove('error');
-        }, 500);
         return;
     }
-    
+
     setLoading(registerBtn, true);
+
     try {
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(user, { displayName: name });
-        
-        // Créer le profil avec le mot de passe stocké
-        const userRef = doc(db, 'users', user.uid);
-		await setDoc(userRef, { 
-			displayName: name,
-			firstName: firstname,
-			lastName: lastname,
-			email, 
-			password: password,
-			photoURL: '', 
-			createdAt: serverTimestamp(), 
-			checklists: {}, 
-			preferences: { theme: 'light' } 
-		});
-        
-        showSuccess();
-        setTimeout(() => { window.location.href = redirectPage; }, 1500);
-    } catch (error) { showMessage(translateError(error.code)); }
-    finally { setLoading(registerBtn, false); }
+        await sendEmailVerification(user);
+
+        await setDoc(doc(db, 'users', user.uid), {
+            displayName: name,
+            firstName: firstname,
+            lastName: lastname,
+            email,
+            photoURL: '',
+            createdAt: serverTimestamp(),
+            checklists: {},
+            preferences: { theme: 'light' }
+        });
+
+        // 🔐 IMPORTANT : déconnexion immédiate
+        await signOut(auth);
+
+        // 🔁 Retour onglet connexion
+        document.querySelector('[data-tab="login"]').click();
+
+        showMessage(
+          "📧 Un email de vérification a été envoyé. Merci de le vérifier avant de vous connecter.",
+          "success"
+        );
+
+        registerForm.reset();
+
+    } catch (error) {
+        showMessage(translateError(error.code));
+    } finally {
+        setLoading(registerBtn, false);
+    }
 });
+
 
 // Validation en temps réel de la confirmation du mot de passe
 const passwordField = document.getElementById('register-password');
@@ -1646,78 +1655,27 @@ async function handleGoogleAuth() {
     } catch (error) { if (error.code !== 'auth/popup-closed-by-user') showMessage(translateError(error.code)); }
 }
 
-// MOT DE PASSE OUBLIÉ - Envoie le mot de passe par EmailJS
+// MOT DE PASSE OUBLIÉ - Firebase sécurisé
 document.getElementById('forgot-password-link').addEventListener('click', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
-    
-    console.log('🔍 DEBUG - Email recherché:', email);
-    
-    if (!email) { 
-        showMessage('Entrez votre email pour recevoir votre mot de passe.'); 
-        return; 
+
+    if (!email) {
+        showMessage("Entre ton email pour recevoir le lien de réinitialisation.");
+        return;
     }
-    
-    showMessage('Recherche en cours...', 'success');
-    
+
     try {
-        // Chercher l'utilisateur dans Firestore par email
-        console.log('🔍 DEBUG - Création de la requête Firestore...');
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', email));
-        
-        console.log('🔍 DEBUG - Exécution de la requête...');
-        const querySnapshot = await getDocs(q);
-        
-        console.log('🔍 DEBUG - Nombre de résultats:', querySnapshot.size);
-        querySnapshot.forEach(doc => {
-            console.log('🔍 DEBUG - Document trouvé:', doc.id, doc.data());
-        });
-        
-        if (querySnapshot.empty) {
-            showMessage('Aucun compte trouvé avec cet email.');
-            return;
-        }
-        
-        const userData = querySnapshot.docs[0].data();
-        console.log('🔍 DEBUG - Données utilisateur:', userData);
-        
-        const userPassword = userData.password;
-        const userName = userData.displayName || 'Utilisateur';
-        
-        console.log('🔍 DEBUG - Mot de passe trouvé:', userPassword ? 'OUI' : 'NON');
-        
-        if (!userPassword) {
-            showMessage('Mot de passe non disponible (compte Google ou ancien compte).');
-            return;
-        }
-        
-        // Envoyer l'email avec EmailJS
-        console.log('🔍 DEBUG - Envoi EmailJS...');
-        const response = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-            to_email: email,
-            to_name: userName,
-            user_password: userPassword,
-            from_name: "TypixClin"
-        });
-        
-        console.log('✅ EmailJS Response:', response);
-        showMessage('Votre mot de passe a été envoyé à ' + email + ' !', 'success');
-        
+        await sendPasswordResetEmail(auth, email);
+        showMessage(
+            "Un email de réinitialisation a été envoyé.",
+            "success"
+        );
     } catch (error) {
-        console.error('❌ Erreur complète:', error);
-        
-        if (error.status === 400) {
-            showMessage('Erreur EmailJS: vérifiez la configuration du template.');
-        } else if (error.status === 401 || error.status === 403) {
-            showMessage('Erreur EmailJS: clé API invalide ou service inactif.');
-        } else if (error.status === 429) {
-            showMessage('Quota EmailJS dépassé. Réessayez demain.');
-        } else {
-            showMessage('Erreur lors de l\'envoi: ' + (error.text || error.message || 'vérifiez la console F12'));
-        }
+        showMessage(translateError(error.code));
     }
 });
+
 
 onAuthStateChanged(auth, (user) => { if (user) { /* window.location.href = 'index.html'; */ } });
 
