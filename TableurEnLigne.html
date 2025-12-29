@@ -592,11 +592,375 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .tour-dates { display: flex; gap: 2px; margin-top: 2px; }
 .tour-date { width: 30px; font-size: 0.6rem; color: var(--gray-500); text-align: center; overflow: hidden; font-family: var(--font-body); }
 
-.resources-cell { min-width: 130px; }
-.resource-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; color: var(--gray-600); cursor: pointer; margin-bottom: 2px; transition: all var(--transition-normal); }
-.resource-check input { width: 12px; height: 12px; cursor: pointer; accent-color: var(--primary); }
-.resource-check.checked { color: var(--success); font-weight: 600; }
+.resources-cell { min-width: 140px; padding: 0.5rem !important; }
 
+/* Grille des ressources 2x2 */
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    width: 100%;
+}
+
+/* Case de ressource */
+.resource-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    line-height: 1.2;
+    min-height: 28px;
+    border: 2px solid transparent;
+}
+
+.resource-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Couleurs des ressources non validées */
+.resource-box.qi-edni { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.resource-box.dp-edni { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.resource-box.qi-hypo { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.resource-box.dp-hypo { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.resource-box.qi-annales { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+.resource-box.dp-annales { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+.resource-box.qi-uness { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
+.resource-box.dp-uness { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
+.resource-box.fiche-perso { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+
+/* État validé (vert) */
+.resource-box.validated {
+    background: linear-gradient(135deg, #10b981, #34d399) !important;
+    color: white !important;
+    border-color: #059669 !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+/* Bouton configurer ressources */
+.config-resources-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.config-resources-btn:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-400);
+}
+
+.config-resources-btn i {
+    color: var(--primary);
+}
+
+/* Modal configuration ressources */
+.resources-config-modal .modal-content {
+    max-width: 420px;
+    padding: 1.25rem;
+}
+
+.resources-config-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.resources-config-subtitle {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+}
+
+.resources-selected-count {
+    text-align: center;
+    padding: 0.4rem;
+    background: var(--gray-100);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--gray-700);
+}
+
+.resources-selected-count span {
+    color: var(--primary);
+}
+
+/* Grille 3x3 pour les 9 ressources */
+.resources-available-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.resource-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.3rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    background: var(--white);
+}
+
+.resource-option:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.resource-option.selected {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.resource-option.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.resource-option-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.resource-option.selected .resource-option-checkbox {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.resource-option-preview {
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+
+.resource-option-name {
+    font-weight: 500;
+    font-size: 0.65rem;
+    color: var(--gray-700);
+    line-height: 1.2;
+}
+
+.resources-config-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.resources-config-actions button {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.resources-cancel-btn {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+}
+
+.resources-cancel-btn:hover {
+    background: var(--gray-200);
+}
+
+.resources-save-btn {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+}
+
+.resources-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Bouton ajouter ressources quand liste vide */
+.resources-empty-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 60px;
+    background: var(--gray-100);
+    border: 2px dashed var(--gray-300);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.resources-empty-btn:hover {
+    background: var(--gray-200);
+    border-color: var(--primary);
+}
+
+.resources-empty-btn i {
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+.resources-empty-btn span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--gray-500);
+}
+
+/* Dark mode ressources */
+[data-theme="dark"] .resource-box.qi-edni { background: rgba(254, 226, 226, 0.2); color: #fca5a5; border-color: rgba(254, 202, 202, 0.3); }
+[data-theme="dark"] .resource-box.dp-edni { background: rgba(254, 226, 226, 0.2); color: #fca5a5; border-color: rgba(254, 202, 202, 0.3); }
+[data-theme="dark"] .resource-box.qi-hypo { background: rgba(219, 234, 254, 0.2); color: #93c5fd; border-color: rgba(191, 219, 254, 0.3); }
+[data-theme="dark"] .resource-box.dp-hypo { background: rgba(219, 234, 254, 0.2); color: #93c5fd; border-color: rgba(191, 219, 254, 0.3); }
+[data-theme="dark"] .resource-box.qi-annales { background: rgba(255, 237, 213, 0.2); color: #fdba74; border-color: rgba(254, 215, 170, 0.3); }
+[data-theme="dark"] .resource-box.dp-annales { background: rgba(255, 237, 213, 0.2); color: #fdba74; border-color: rgba(254, 215, 170, 0.3); }
+[data-theme="dark"] .resource-box.qi-uness { background: rgba(237, 233, 254, 0.2); color: #c4b5fd; border-color: rgba(221, 214, 254, 0.3); }
+[data-theme="dark"] .resource-box.dp-uness { background: rgba(237, 233, 254, 0.2); color: #c4b5fd; border-color: rgba(221, 214, 254, 0.3); }
+[data-theme="dark"] .resource-box.fiche-perso { background: rgba(254, 243, 199, 0.2); color: #fcd34d; border-color: rgba(253, 230, 138, 0.3); }
+
+[data-theme="dark"] .config-resources-btn { 
+    background: #1e293b; 
+    border: 1px solid #334155; 
+    color: #94a3b8; 
+}
+[data-theme="dark"] .config-resources-btn:hover { 
+    background: #60a5fa; 
+    border-color: #60a5fa;
+    color: #1e293b;
+}
+[data-theme="dark"] .config-resources-btn i { 
+    color: #94a3b8; 
+}
+[data-theme="dark"] .config-resources-btn:hover i { 
+    color: #1e293b; 
+}
+
+[data-theme="dark"] .resources-config-modal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155;
+}
+[data-theme="dark"] .resources-config-title {
+    color: #f1f5f9;
+}
+[data-theme="dark"] .resources-config-subtitle {
+    color: #94a3b8;
+}
+[data-theme="dark"] .resources-selected-count { 
+    background: #334155; 
+    color: #cbd5e1; 
+}
+[data-theme="dark"] .resource-option { 
+    border-color: #475569; 
+    background: #334155;
+}
+[data-theme="dark"] .resource-option:hover { 
+    background: #475569; 
+    border-color: #60a5fa;
+}
+[data-theme="dark"] .resource-option.selected { 
+    background: rgba(59, 130, 246, 0.25); 
+    border-color: #60a5fa;
+}
+[data-theme="dark"] .resource-option-checkbox {
+    border-color: #64748b;
+    background: #475569;
+}
+[data-theme="dark"] .resource-option.selected .resource-option-checkbox {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+[data-theme="dark"] .resource-option-name { 
+    color: #cbd5e1; 
+}
+[data-theme="dark"] .resources-cancel-btn {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+}
+[data-theme="dark"] .resources-cancel-btn:hover {
+    background: #334155;
+    color: #cbd5e1;
+}
+[data-theme="dark"] .resources-empty-btn { 
+    background: #334155; 
+    border-color: #475569; 
+}
+[data-theme="dark"] .resources-empty-btn:hover { 
+    background: #475569; 
+    border-color: #60a5fa; 
+}
+[data-theme="dark"] .resources-empty-btn span { 
+    color: #94a3b8; 
+}
+
+/* Responsive ressources */
+@media (max-width: 768px) {
+    .config-resources-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .resources-config-modal .modal-content {
+        max-width: 95%;
+        padding: 1rem;
+    }
+    
+    .resources-available-list {
+        gap: 0.4rem;
+    }
+    
+    .resource-option {
+        padding: 0.4rem 0.2rem;
+    }
+    
+    .resource-option-preview {
+        font-size: 0.55rem;
+        padding: 0.15rem 0.3rem;
+    }
+    
+    .resource-option-name {
+        font-size: 0.6rem;
+    }
+    
+    .resource-option-checkbox {
+        width: 16px;
+        height: 16px;
+    }
+}
 .days-cell { min-width: 80px; text-align: center; }
 .days-badge { display: inline-block; padding: 0.35rem 0.75rem; border-radius: var(--border-radius-full); font-size: 0.85rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .days-badge.recent { background: var(--success); color: white; }
@@ -5905,7 +6269,403 @@ input[type="date"].modal-input {
     font-size: 0.85rem;
 }
 
+/* Badge "Ajouté à la checklist" */
+.added-to-checklist-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    margin-top: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: default;
+    white-space: nowrap;
+}
 
+.added-to-checklist-badge i {
+    font-size: 0.6rem;
+}
+
+
+/* ===== SYSTÈME DE TROPHÉES ===== */
+.trophies-section {
+    margin-top: 1.5rem;
+}
+
+.trophies-card {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.trophies-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--gray-50);
+}
+
+.trophies-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trophies-title i {
+    color: #f59e0b;
+}
+
+.trophies-progress-text {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.trophies-progress-text span {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.trophies-body {
+    padding: 1.5rem;
+}
+
+.trophies-category {
+    margin-bottom: 1.5rem;
+}
+
+.trophies-category:last-child {
+    margin-bottom: 0;
+}
+
+.trophies-category-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trophies-category-title i {
+    font-size: 0.75rem;
+}
+
+.trophies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.trophy-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid var(--gray-200);
+    transition: all 0.3s ease;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.trophy-item.locked {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+.trophy-item.unlocked {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+    border-color: #fbbf24;
+}
+
+.trophy-item.unlocked:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);
+}
+
+.trophy-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.trophy-item.locked .trophy-icon {
+    background: var(--gray-200);
+    color: var(--gray-400);
+}
+
+.trophy-item.unlocked .trophy-icon {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.trophy-item.locked .trophy-icon::after {
+    content: "\f023";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    font-size: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.trophy-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+.trophy-item.locked .trophy-name {
+    color: var(--gray-400);
+}
+
+.trophy-desc {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.trophy-item.locked .trophy-desc {
+    color: var(--gray-400);
+}
+
+.trophy-date {
+    font-size: 0.6rem;
+    color: #f59e0b;
+    margin-top: 0.35rem;
+    font-weight: 500;
+}
+
+/* Animation déblocage */
+.trophy-item.just-unlocked {
+    animation: trophyUnlock 0.6s ease;
+}
+
+@keyframes trophyUnlock {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.15); }
+    60% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+/* Notification trophée */
+.trophy-notification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 10px 40px rgba(251, 191, 36, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: var(--z-max);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.trophy-notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.trophy-notification-icon {
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.trophy-notification-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.trophy-notification-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.trophy-notification-name {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* Dark mode Trophées */
+[data-theme="dark"] .trophies-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .trophies-header {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .trophies-title {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .trophies-title i {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .trophies-progress-text {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .trophies-progress-text span {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .trophies-body {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .trophies-category-title {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .trophy-item {
+    background: #334155;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .trophy-item.locked {
+    background: #1e293b;
+    border-color: #334155;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] .trophy-item.unlocked {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+    border-color: #b45309;
+}
+
+[data-theme="dark"] .trophy-item.unlocked:hover {
+    box-shadow: 0 8px 20px rgba(251, 191, 36, 0.2);
+}
+
+[data-theme="dark"] .trophy-item.locked .trophy-icon {
+    background: #475569;
+    color: #64748b;
+}
+
+[data-theme="dark"] .trophy-item.unlocked .trophy-icon {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+}
+
+[data-theme="dark"] .trophy-item.locked .trophy-icon::after {
+    background: #64748b;
+}
+
+[data-theme="dark"] .trophy-name {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .trophy-item.locked .trophy-name {
+    color: #64748b;
+}
+
+[data-theme="dark"] .trophy-desc {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .trophy-item.locked .trophy-desc {
+    color: #475569;
+}
+
+[data-theme="dark"] .trophy-date {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .trophy-notification {
+    background: linear-gradient(135deg, #b45309, #d97706);
+    box-shadow: 0 10px 40px rgba(180, 83, 9, 0.4);
+}
+
+[data-theme="dark"] .trophy-notification-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trophies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .trophy-item {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .trophy-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .trophy-name {
+        font-size: 0.7rem;
+    }
+    
+    .trophy-notification {
+        left: 1rem;
+        right: 1rem;
+        transform: translateX(0) translateY(100px);
+        padding: 0.85rem 1rem;
+    }
+    
+    .trophy-notification.show {
+        transform: translateX(0) translateY(0);
+    }
+}
 
 
 </style>
@@ -6504,6 +7264,58 @@ input[type="date"].modal-input {
             <div class="stat-sublabel">Cumulé sur tous les tours</div>
         </div>
     </div>
+	
+	<!-- Section Trophées -->
+<div class="trophies-section">
+    <div class="trophies-card">
+        <div class="trophies-header">
+            <h3 class="trophies-title"><i class="fas fa-trophy"></i> Trophées</h3>
+            <span class="trophies-progress-text"><span id="trophies-unlocked-count">0</span> / <span id="trophies-total-count">12</span> débloqués</span>
+        </div>
+        <div class="trophies-body">
+            
+            <!-- Catégorie: Avancement -->
+            <div class="trophies-category">
+                <div class="trophies-category-title"><i class="fas fa-chart-line"></i> Avancement du programme</div>
+                <div class="trophies-grid" id="trophies-progress">
+                </div>
+            </div>
+            
+            <!-- Catégorie: Stats Quotidiennes -->
+            <div class="trophies-category">
+                <div class="trophies-category-title"><i class="fas fa-calendar-day"></i> Exploits quotidiens</div>
+                <div class="trophies-grid" id="trophies-daily">
+                </div>
+            </div>
+            
+            <!-- Catégorie: Stats Hebdomadaires -->
+            <div class="trophies-category">
+                <div class="trophies-category-title"><i class="fas fa-calendar-week"></i> Exploits hebdomadaires</div>
+                <div class="trophies-grid" id="trophies-weekly">
+                </div>
+            </div>
+            
+            <!-- Catégorie: Stats Générales -->
+            <div class="trophies-category">
+                <div class="trophies-category-title"><i class="fas fa-star"></i> Accomplissements</div>
+                <div class="trophies-grid" id="trophies-general">
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Notification Trophée -->
+<div class="trophy-notification" id="trophy-notification">
+    <div class="trophy-notification-icon"><i class="fas fa-trophy"></i></div>
+    <div class="trophy-notification-content">
+        <span class="trophy-notification-title">Trophée débloqué !</span>
+        <span class="trophy-notification-name" id="trophy-notification-name"></span>
+    </div>
+</div>
+
+
 
 </div>
 
@@ -6838,6 +7650,11 @@ input[type="date"].modal-input {
 						</div>
 						<input type="hidden" id="filter-item-status" value="all">
 					</div>
+					
+					<button class="config-resources-btn" onclick="openResourcesConfigModal()">
+						<i class="fas fa-cog"></i> Configurer ressources
+					</button>
+
 				</div>
 
             <div class="section-card">
@@ -6889,7 +7706,7 @@ input[type="date"].modal-input {
                                     <th data-sort="name">Nom <i class="fas fa-sort sort-icon"></i></th>
                                     <th data-sort="specialty">Spécialité <i class="fas fa-sort sort-icon"></i></th>
                                     <th>Tours (T1-T8)</th>
-                                    <th>Ressources</th>
+                                    <th>Ressources faites</th>
                                     <th data-sort="days">Dernière révision <i class="fas fa-sort sort-icon"></i></th>
                                 </tr>
                             </thead>
@@ -6938,6 +7755,30 @@ input[type="date"].modal-input {
 
                 </div>
             </div>
+			
+											<!-- Modal Configuration Ressources -->
+								<div class="modal resources-config-modal" id="resources-config-modal">
+									<div class="modal-content">
+										<button class="modal-close" onclick="closeResourcesConfigModal()"><i class="fas fa-times"></i></button>
+										<h3 class="resources-config-title"><i class="fas fa-cog"></i> Configurer les ressources</h3>
+										<p class="resources-config-subtitle">Sélectionnez jusqu'à 4 ressources à afficher pour chaque item, vous pourrez ensuite les valider en fonction de votre avancée.</p>
+										
+										<div class="resources-selected-count">
+											<span id="resources-count">0</span> / 4 ressources sélectionnées
+										</div>
+										
+										<div class="resources-available-list" id="resources-available-list">
+											<!-- Généré par JavaScript -->
+										</div>
+										
+										<div class="resources-config-actions">
+											<button class="resources-cancel-btn" onclick="closeResourcesConfigModal()">Annuler</button>
+											<button class="resources-save-btn" onclick="saveResourcesConfig()">Enregistrer</button>
+										</div>
+									</div>
+								</div>
+
+
         </div>
     </div>
 </section>
@@ -7082,6 +7923,124 @@ let pendingChecklistItemId = null;
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+
+// ===== CONFIGURATION DES RESSOURCES PERSONNALISÉES =====
+const AVAILABLE_RESOURCES = [
+    { id: 'qi-edni', label: 'Qi sur EDNi', shortLabel: 'Qi EDNi', cssClass: 'qi-edni' },
+    { id: 'dp-edni', label: 'DP sur EDNi', shortLabel: 'DP EDNi', cssClass: 'dp-edni' },
+    { id: 'qi-hypo', label: 'Qi sur Hypocampus', shortLabel: 'Qi Hypo', cssClass: 'qi-hypo' },
+    { id: 'dp-hypo', label: 'DP Hypocampus', shortLabel: 'DP Hypo', cssClass: 'dp-hypo' },
+    { id: 'qi-annales', label: 'Qi Annales', shortLabel: 'Qi Ann', cssClass: 'qi-annales' },
+    { id: 'dp-annales', label: 'DP Annales', shortLabel: 'DP Ann', cssClass: 'dp-annales' },
+    { id: 'qi-uness', label: 'Qi sur UNESS', shortLabel: 'Qi UNESS', cssClass: 'qi-uness' },
+    { id: 'dp-uness', label: 'DP sur UNESS', shortLabel: 'DP UNESS', cssClass: 'dp-uness' },
+    { id: 'fiche-perso', label: 'Fiche Perso', shortLabel: 'Fiche', cssClass: 'fiche-perso' }
+];
+
+// Ressources sélectionnées par défaut
+let selectedResources = [];
+
+// Charger la configuration depuis localStorage
+function loadResourcesConfig() {
+    const saved = localStorage.getItem('typixclin_resources_config');
+    if (saved) {
+        try {
+            selectedResources = JSON.parse(saved);
+        } catch (e) {
+            console.error('Erreur chargement config ressources:', e);
+        }
+    }
+}
+
+// Sauvegarder la configuration
+function saveResourcesConfigToStorage() {
+    localStorage.setItem('typixclin_resources_config', JSON.stringify(selectedResources));
+}
+
+// Variable temporaire pour la sélection dans le modal
+let tempSelectedResources = [];
+
+// Ouvrir le modal de configuration
+window.openResourcesConfigModal = function() {
+    tempSelectedResources = [...selectedResources];
+    renderResourcesOptions();
+    updateResourcesCount();
+    document.getElementById('resources-config-modal').classList.add('active');
+};
+
+// Fermer le modal
+window.closeResourcesConfigModal = function() {
+    document.getElementById('resources-config-modal').classList.remove('active');
+};
+
+// Rendre les options de ressources
+function renderResourcesOptions() {
+    const container = document.getElementById('resources-available-list');
+    container.innerHTML = AVAILABLE_RESOURCES.map(res => {
+        const isSelected = tempSelectedResources.includes(res.id);
+        const isDisabled = !isSelected && tempSelectedResources.length >= 4;
+        return `
+            <div class="resource-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" 
+                 data-resource-id="${res.id}" 
+                 onclick="toggleResourceOption('${res.id}')">
+                <div class="resource-option-checkbox">
+                    ${isSelected ? '<i class="fas fa-check"></i>' : ''}
+                </div>
+                <div class="resource-option-preview resource-box ${res.cssClass}">${res.shortLabel}</div>
+                <span class="resource-option-name">${res.label}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Basculer la sélection d'une ressource
+window.toggleResourceOption = function(resourceId) {
+    const index = tempSelectedResources.indexOf(resourceId);
+    
+    if (index > -1) {
+        // Déselectionner
+        tempSelectedResources.splice(index, 1);
+    } else if (tempSelectedResources.length < 4) {
+        // Sélectionner (si moins de 4)
+        tempSelectedResources.push(resourceId);
+    }
+    
+    renderResourcesOptions();
+    updateResourcesCount();
+};
+
+// Mettre à jour le compteur
+function updateResourcesCount() {
+    document.getElementById('resources-count').textContent = tempSelectedResources.length;
+}
+
+// Sauvegarder la configuration
+window.saveResourcesConfig = function() {
+    selectedResources = [...tempSelectedResources];
+    saveResourcesConfigToStorage();
+    closeResourcesConfigModal();
+    renderItemsTable();
+    window.showToastNotification('Configuration des ressources enregistrée !', 'success');
+};
+
+// Basculer l'état validé d'une ressource pour un item
+window.toggleResourceValidation = function(specialtyId, fc, resourceId) {
+    const d = getItemData(specialtyId, fc);
+    if (!d.resources) d.resources = {};
+    d.resources[resourceId] = !d.resources[resourceId];
+    debouncedSave();
+    renderItemsTable();
+	    
+		// Vérifier les trophées après validation
+    if (typeof TrophiesSystem !== 'undefined') {
+        setTimeout(() => TrophiesSystem.checkTrophies(), 500);
+    }
+};
+
+// Charger la config au démarrage
+loadResourcesConfig();
+
 
 // Configuration des pastilles sous-spécialités
 const BADGE_CONFIG = {
@@ -9567,12 +10526,20 @@ function renderItemsTable() {
             else daysBadge = '<span class="days-badge old">' + days + 'j</span>';
         }
         
-        const res = d.resources;
-        const resourcesHtml = '<label class="resource-check ' + (res.edni ? 'checked' : '') + '"><input type="checkbox" ' + (res.edni ? 'checked' : '') + ' onchange="toggleResource(\'' + item.specialtyId + '\',\'' + item.fc + '\',\'edni\',this.checked)"> QCM EDNi</label>' +
-            '<label class="resource-check ' + (res.hypocampus ? 'checked' : '') + '"><input type="checkbox" ' + (res.hypocampus ? 'checked' : '') + ' onchange="toggleResource(\'' + item.specialtyId + '\',\'' + item.fc + '\',\'hypocampus\',this.checked)"> QCM Hypo</label>' +
-            '<label class="resource-check ' + (res.fichesPerso ? 'checked' : '') + '"><input type="checkbox" ' + (res.fichesPerso ? 'checked' : '') + ' onchange="toggleResource(\'' + item.specialtyId + '\',\'' + item.fc + '\',\'fichesPerso\',this.checked)"> Fiches Perso</label>' +
-            '<label class="resource-check ' + (res.anki ? 'checked' : '') + '"><input type="checkbox" ' + (res.anki ? 'checked' : '') + ' onchange="toggleResource(\'' + item.specialtyId + '\',\'' + item.fc + '\',\'anki\',this.checked)"> Anki</label>';
-        
+		const res = d.resources || {};
+		let resourcesHtml = '';
+		if (selectedResources.length === 0) {
+			resourcesHtml = '<div class="resources-empty-btn" onclick="openResourcesConfigModal()"><i class="fas fa-plus"></i><span>Configurer</span></div>';
+		} else {
+			resourcesHtml = '<div class="resources-grid">' + selectedResources.map(resId => {
+				const resourceConfig = AVAILABLE_RESOURCES.find(r => r.id === resId);
+				if (!resourceConfig) return '';
+				const isValidated = res[resId] === true;
+				return '<div class="resource-box ' + resourceConfig.cssClass + (isValidated ? ' validated' : '') + '" onclick="toggleResourceValidation(\'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + resId + '\')">' + resourceConfig.shortLabel + '</div>';
+			}).join('') + '</div>';
+		}
+
+
         const specCfg = SPECIALTY_CONFIG[item.specialtyId] || { color: '#6b7280' };
         const badgeType = ITEM_BADGES[item.specialtyId + '|' + item.name];
         const badgeHtml = badgeType && BADGE_CONFIG[badgeType] ? '<span class="item-badge ' + BADGE_CONFIG[badgeType].class + '">' + BADGE_CONFIG[badgeType].label + '</span>' : '';
@@ -9580,10 +10547,14 @@ function renderItemsTable() {
         const referenceHtml = isReference ? '<span class="reference-badge"><i class="fas fa-star"></i> Référence</span>' : '';
         const itemUrl = ITEM_URLS[String(parseInt(item.num, 10))];
         const nameHtml = (isReference && itemUrl) ? '<a href="' + itemUrl + '" target="_blank" class="item-link">' + item.name + '</a>' : item.name;
-        const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const checklistBtn = '<button class="send-to-checklist-btn" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> To-do List</button>';
-
-        return '<tr><td class="item-num">' + item.num + '<br>' + checklistBtn + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
+const escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+const isInChecklist = window.PlanningModule && window.PlanningModule.isItemInChecklist ? 
+    window.PlanningModule.isItemInChecklist(item.specialtyId, item.fc) : false;
+const checklistBtn = isInChecklist ? 
+    '<span class="added-to-checklist-badge" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '"><i class="fas fa-check"></i> Ajouté</span>' :
+    '<button class="send-to-checklist-btn" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> To-do List</button>';
+        
+		return '<tr><td class="item-num">' + item.num + '<br>' + checklistBtn + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
             '<td class="tour-cell"><div class="tour-badges">' + tourBadges + '</div><div class="tour-dates">' + tourDates + '</div></td>' +
             '<td class="resources-cell">' + resourcesHtml + '</td><td class="days-cell">' + daysBadge + '</td></tr>';
     }).join('');
@@ -9955,6 +10926,13 @@ document.getElementById('btn-reset-tour')?.addEventListener('click', function() 
     selectedSupport = null;
     debouncedSave();
     renderAll();
+	
+	    // Vérifier les trophées après validation
+    if (typeof TrophiesSystem !== 'undefined') {
+        setTimeout(() => TrophiesSystem.checkTrophies(), 500);
+    }
+	
+	
 });
 
 document.getElementById('confidence-close')?.addEventListener('click', () => { 
@@ -9975,12 +10953,6 @@ confidenceModal?.addEventListener('click', e => {
 });
 
 
-window.toggleResource = function(sId, fc, resource, checked) {
-    const d = getItemData(sId, fc);
-    d.resources[resource] = checked;
-    debouncedSave();
-    renderItemsTable();
-};
 
 window.navigateToSpecialty = function(sId) {
     document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
@@ -10797,6 +11769,9 @@ function autoResizeTextarea(textarea) {
         updateHeaderDisplay();
         updateSelectors();
     }
+	
+	
+
     
 function goToToday() {
     const today = new Date();
@@ -11134,10 +12109,41 @@ function toggleChecklistItem(id) {
     }
  
  
- function deleteChecklistItem(id) {
+function deleteChecklistItem(id) {
+    // Récupérer l'itemKey avant de supprimer
+    var itemToDelete = checklistData.find(function(i) { return i.id === id; });
+    var itemKey = itemToDelete ? itemToDelete.itemKey : null;
+    
     checklistData = checklistData.filter(i => i.id !== id);
     saveData();
     renderChecklist();
+    
+    // Restaurer le bouton "To-do List" dans le tableau si l'item avait un itemKey
+    if (itemKey) {
+        var parts = itemKey.split('-');
+        var specialtyId = parts[0];
+        var fc = parts.slice(1).join('-');
+        
+        // Chercher le badge correspondant et le remplacer par un bouton
+        var badges = document.querySelectorAll('.added-to-checklist-badge[data-specialty="' + specialtyId + '"][data-fc="' + fc + '"]');
+        badges.forEach(function(badge) {
+            // Trouver l'item correspondant pour récupérer le nom et le numéro
+            var specialty = SPECIALTIES_DATA.find(function(s) { return s.id === specialtyId; });
+            if (specialty) {
+                var item = specialty.items.find(function(i) { return i.fc === fc; });
+                if (item) {
+                    var escapedName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    var btn = document.createElement('button');
+                    btn.className = 'send-to-checklist-btn';
+                    btn.setAttribute('data-specialty', specialtyId);
+                    btn.setAttribute('data-fc', fc);
+                    btn.setAttribute('onclick', "sendToChecklist(this, '" + specialtyId + "', '" + fc + "', '" + item.num + "', '" + escapedName + "')");
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> To-do List';
+                    badge.parentNode.replaceChild(btn, badge);
+                }
+            }
+        });
+    }
 }
 
 function toggleChecklistItem(id, event) {
@@ -11306,6 +12312,328 @@ function completeChecklistItem(id) {
     }
 }
 
+function isItemInChecklist(specialtyId, fc) {
+    const itemKey = specialtyId + '-' + fc;
+    return checklistData.some(item => item.itemKey === itemKey);
+}
+
+function getChecklistItemKey(id) {
+    const item = checklistData.find(i => i.id === id);
+    return item ? item.itemKey : null;
+}
+
+
+// ===== SYSTÈME DE TROPHÉES =====
+window.TrophiesSystem = (function() {
+    
+    // Définition des trophées
+    const TROPHIES = {
+        progress: [
+            { id: 'prog_25', name: 'Débutant', desc: '25% du programme', icon: 'fa-seedling', condition: (stats) => stats.progressPercent >= 25 },
+            { id: 'prog_50', name: 'Intermédiaire', desc: '50% du programme', icon: 'fa-leaf', condition: (stats) => stats.progressPercent >= 50 },
+            { id: 'prog_75', name: 'Avancé', desc: '75% du programme', icon: 'fa-tree', condition: (stats) => stats.progressPercent >= 75 },
+            { id: 'prog_95', name: 'Expert', desc: '95% du programme', icon: 'fa-crown', condition: (stats) => stats.progressPercent >= 95 }
+        ],
+        daily: [
+            { id: 'daily_10tours', name: 'Productif', desc: '10 tours en 1 jour', icon: 'fa-fire', condition: (stats) => stats.bestToursInDay >= 10 },
+            { id: 'daily_10h', name: 'Marathonien', desc: '10h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 10 },
+            { id: 'daily_200delay', name: 'Rattrapeur', desc: '200j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 200 },
+            { id: 'daily_perfect', name: 'Perfectionniste', desc: 'Moyenne 5/5 sur 1 jour', icon: 'fa-star', condition: (stats) => stats.hadPerfectDay === true }
+        ],
+        weekly: [
+            { id: 'weekly_60tours', name: 'Semaine intense', desc: '60 tours en 1 semaine', icon: 'fa-rocket', condition: (stats) => stats.bestToursInWeek >= 60 },
+            { id: 'weekly_50h', name: 'Bourreau de travail', desc: '50h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 50 }
+        ],
+        general: [
+            { id: 'gen_1month', name: 'Persévérant', desc: '1 mois de travail cumulé', icon: 'fa-calendar-check', condition: (stats) => stats.totalHours >= 720 },
+            { id: 'gen_1000tours', name: 'Millionnaire', desc: '1000 tours cumulés', icon: 'fa-gem', condition: (stats) => stats.totalTours >= 1000 }
+        ]
+    };
+    
+    let unlockedTrophies = {};
+    
+    function loadTrophies() {
+        const saved = localStorage.getItem('typixclin_trophies');
+        if (saved) {
+            try {
+                unlockedTrophies = JSON.parse(saved);
+            } catch (e) {
+                unlockedTrophies = {};
+            }
+        }
+    }
+    
+    function saveTrophies() {
+        localStorage.setItem('typixclin_trophies', JSON.stringify(unlockedTrophies));
+    }
+    
+    function getCurrentStats() {
+        const today = new Date();
+        const todayKey = formatDateKey(today);
+        
+        let totalItems = 0;
+        let completedItems = 0;
+        
+        if (typeof SPECIALTIES_DATA !== 'undefined') {
+            SPECIALTIES_DATA.forEach(s => {
+                s.items.forEach(item => {
+                    totalItems++;
+                    const d = getItemData(s.id, item.fc);
+                    if (d.tours && d.tours.filter(t => t !== null).length >= MAX_TOURS) {
+                        completedItems++;
+                    }
+                });
+            });
+        }
+        
+        const progressPercent = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+        
+        const dailyStats = {};
+        let totalTours = 0;
+        let totalHours = 0;
+        
+        if (typeof SPECIALTIES_DATA !== 'undefined') {
+            SPECIALTIES_DATA.forEach(s => {
+                s.items.forEach(item => {
+                    const d = getItemData(s.id, item.fc);
+                    if (d.tourDates) {
+                        d.tourDates.forEach((date, idx) => {
+                            if (date) {
+                                if (!dailyStats[date]) {
+                                    dailyStats[date] = { tours: 0, hours: 0, confidenceSum: 0, confidenceCount: 0 };
+                                }
+                                
+                                dailyStats[date].tours++;
+                                totalTours++;
+                                
+                                if (d.tours && d.tours[idx] !== null) {
+                                    dailyStats[date].confidenceSum += d.tours[idx];
+                                    dailyStats[date].confidenceCount++;
+                                }
+                                
+                                if (d.tourDurations && d.tourDurations[idx]) {
+                                    const duration = parseInt(d.tourDurations[idx]);
+                                    if (!isNaN(duration)) {
+                                        dailyStats[date].hours += duration / 60;
+                                        totalHours += duration / 60;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+        
+        let bestToursInDay = 0;
+        let bestHoursInDay = 0;
+        let hadPerfectDay = false;
+        let bestDelayRecovered = 0;
+        
+        Object.keys(dailyStats).forEach(date => {
+            const day = dailyStats[date];
+            
+            if (day.tours > bestToursInDay) {
+                bestToursInDay = day.tours;
+            }
+            
+            if (day.hours > bestHoursInDay) {
+                bestHoursInDay = day.hours;
+            }
+            
+            if (day.confidenceCount >= 5) {
+                const avgConfidence = day.confidenceSum / day.confidenceCount;
+                if (avgConfidence === 5) {
+                    hadPerfectDay = true;
+                }
+            }
+            
+            const delayRecovered = day.tours * 10;
+            if (delayRecovered > bestDelayRecovered) {
+                bestDelayRecovered = delayRecovered;
+            }
+        });
+        
+        const weeklyStats = {};
+        
+        Object.keys(dailyStats).forEach(dateStr => {
+            const date = new Date(dateStr);
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            const weekKey = formatDateKey(weekStart);
+            
+            if (!weeklyStats[weekKey]) {
+                weeklyStats[weekKey] = { tours: 0, hours: 0 };
+            }
+            
+            weeklyStats[weekKey].tours += dailyStats[dateStr].tours;
+            weeklyStats[weekKey].hours += dailyStats[dateStr].hours;
+        });
+        
+        let bestToursInWeek = 0;
+        let bestHoursInWeek = 0;
+        
+        Object.keys(weeklyStats).forEach(week => {
+            if (weeklyStats[week].tours > bestToursInWeek) {
+                bestToursInWeek = weeklyStats[week].tours;
+            }
+            if (weeklyStats[week].hours > bestHoursInWeek) {
+                bestHoursInWeek = weeklyStats[week].hours;
+            }
+        });
+        
+        const todayStats = dailyStats[todayKey] || { tours: 0, hours: 0, confidenceSum: 0, confidenceCount: 0 };
+        const avgConfidenceToday = todayStats.confidenceCount > 0 ? todayStats.confidenceSum / todayStats.confidenceCount : 0;
+        
+        return {
+            progressPercent,
+            bestToursInDay,
+            bestHoursInDay,
+            hadPerfectDay,
+            bestDelayRecovered,
+            bestToursInWeek,
+            bestHoursInWeek,
+            totalTours,
+            totalHours,
+            toursToday: todayStats.tours,
+            hoursToday: todayStats.hours,
+            avgConfidenceToday: Math.round(avgConfidenceToday * 10) / 10
+        };
+    }
+    
+    function checkTrophies() {
+        const stats = (typeof TrophiesSystem !== 'undefined' && TrophiesSystem.getCurrentStats) 
+            ? TrophiesSystem.getCurrentStats() 
+            : getCurrentStats();
+        
+        const newlyUnlocked = [];
+        
+        Object.keys(TROPHIES).forEach(category => {
+            TROPHIES[category].forEach(trophy => {
+                if (!unlockedTrophies[trophy.id] && trophy.condition(stats)) {
+                    unlockedTrophies[trophy.id] = {
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                    newlyUnlocked.push(trophy);
+                }
+            });
+        });
+        
+        if (newlyUnlocked.length > 0) {
+            saveTrophies();
+            newlyUnlocked.forEach((trophy, index) => {
+                setTimeout(() => showTrophyNotification(trophy), index * 2500);
+            });
+        }
+        
+        renderTrophies();
+    }
+    
+    function showTrophyNotification(trophy) {
+        const notif = document.getElementById('trophy-notification');
+        const nameEl = document.getElementById('trophy-notification-name');
+        
+        if (notif && nameEl) {
+            nameEl.textContent = trophy.name;
+            notif.classList.add('show');
+            
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3500);
+        }
+        
+        const trophyEl = document.querySelector(`[data-trophy-id="${trophy.id}"]`);
+        if (trophyEl) {
+            trophyEl.classList.add('just-unlocked');
+            setTimeout(() => trophyEl.classList.remove('just-unlocked'), 600);
+        }
+    }
+    
+    function renderTrophies() {
+        const categories = {
+            progress: document.getElementById('trophies-progress'),
+            daily: document.getElementById('trophies-daily'),
+            weekly: document.getElementById('trophies-weekly'),
+            general: document.getElementById('trophies-general')
+        };
+        
+        let totalUnlocked = 0;
+        let totalTrophies = 0;
+        
+        Object.keys(TROPHIES).forEach(category => {
+            const container = categories[category];
+            if (!container) return;
+            
+            container.innerHTML = TROPHIES[category].map(trophy => {
+                totalTrophies++;
+                const isUnlocked = !!unlockedTrophies[trophy.id];
+                if (isUnlocked) totalUnlocked++;
+                
+                const unlockedDate = isUnlocked ? unlockedTrophies[trophy.id].date : null;
+                const formattedDate = unlockedDate ? formatTrophyDate(unlockedDate) : '';
+                
+                return `
+                    <div class="trophy-item ${isUnlocked ? 'unlocked' : 'locked'}" data-trophy-id="${trophy.id}" title="${trophy.desc}">
+                        <div class="trophy-icon"><i class="fas ${trophy.icon}"></i></div>
+                        <div class="trophy-name">${trophy.name}</div>
+                        <div class="trophy-desc">${trophy.desc}</div>
+                        ${isUnlocked ? `<div class="trophy-date">${formattedDate}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        });
+        
+        const unlockedCountEl = document.getElementById('trophies-unlocked-count');
+        const totalCountEl = document.getElementById('trophies-total-count');
+        if (unlockedCountEl) unlockedCountEl.textContent = totalUnlocked;
+        if (totalCountEl) totalCountEl.textContent = totalTrophies;
+    }
+    
+    function formatTrophyDate(dateStr) {
+        const date = new Date(dateStr);
+        const options = { day: 'numeric', month: 'short' };
+        return date.toLocaleDateString('fr-FR', options);
+    }
+    
+    function formatDateKey(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+    
+    function init() {
+        loadTrophies();
+        renderTrophies();
+        setTimeout(checkTrophies, 1000);
+    }
+    
+    return {
+        init,
+        checkTrophies,
+        renderTrophies,
+        getCurrentStats
+    };
+})();
+
+// Initialiser les trophées quand la page stats est visible
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        if (document.getElementById('trophies-progress')) {
+            TrophiesSystem.init();
+        }
+    }, 500);
+});
+
+// Vérifier les trophées automatiquement après chaque sauvegarde
+(function() {
+    const originalDebouncedSave = window.debouncedSave;
+    if (typeof originalDebouncedSave === 'function') {
+        window.debouncedSave = function() {
+            originalDebouncedSave();
+            if (typeof TrophiesSystem !== 'undefined') {
+                setTimeout(() => TrophiesSystem.checkTrophies(), 500);
+            }
+        };
+    }
+})();
 
 function renderSpecialtyLegend() {
     const container = document.getElementById('specialty-legend-items');
@@ -11365,7 +12693,9 @@ const api = {
     deleteChecklistItem,
     addItemFromTable,
     showChecklistChoicePopup,
-    handleChecklistChoice
+    handleChecklistChoice,
+    isItemInChecklist,
+    getChecklistItemKey
 };
 
 		// Exposer globalement
@@ -11388,11 +12718,24 @@ document.addEventListener('DOMContentLoaded', function() {
 // Navigation vers Planning
 document.querySelectorAll('.app-nav-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-        if (this.dataset.page === 'planning') {
-            setTimeout(() => {
-                const grid = document.getElementById('calendar-grid');
-                if (grid && grid.children.length === 0) {
-                    PlanningModule.init();
+        document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('page-' + this.dataset.page).classList.add('active');
+        
+        // Scroll jusqu'aux boutons de navigation
+        const appNav = document.querySelector('.app-nav');
+        if (appNav) {
+            const headerHeight = 70;
+            const navPosition = appNav.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
+            window.scrollTo({ top: navPosition, behavior: 'smooth' });
+        }
+        
+        // Rafraîchir la table des items quand on ouvre la page "Liste des Items"
+        if (this.dataset.page === 'items') {
+            setTimeout(function() {
+                if (typeof renderItemsTable === 'function') {
+                    renderItemsTable();
                 }
             }, 50);
         }
@@ -11420,7 +12763,15 @@ window.sendToChecklist = function(btn, specialtyId, fc, itemNum, itemName) {
     // Afficher le toast
     window.showToastNotification(result.message, result.success ? 'success' : 'warning');
     
-
+    // Si ajout réussi, transformer le bouton en badge "Ajouté"
+    if (result.success && btn) {
+        var badge = document.createElement('span');
+        badge.className = 'added-to-checklist-badge';
+        badge.setAttribute('data-specialty', specialtyId);
+        badge.setAttribute('data-fc', fc);
+        badge.innerHTML = '<i class="fas fa-check"></i> Ajouté';
+        btn.parentNode.replaceChild(badge, btn);
+    }
 };
 
 window.showToastNotification = function(message, type) {
