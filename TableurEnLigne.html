@@ -7941,22 +7941,16 @@ const AVAILABLE_RESOURCES = [
 // Ressources sélectionnées par défaut
 let selectedResources = [];
 
-// Charger la configuration depuis localStorage
+// Charger la configuration depuis userData (Firebase)
 function loadResourcesConfig() {
-    const saved = localStorage.getItem('typixclin_resources_config');
-    if (saved) {
-        try {
-            selectedResources = JSON.parse(saved);
-        } catch (e) {
-            console.error('Erreur chargement config ressources:', e);
-        }
+    if (userData && userData.selectedResources) {
+        selectedResources = userData.selectedResources;
+    } else {
+        selectedResources = [];
     }
 }
 
-// Sauvegarder la configuration
-function saveResourcesConfigToStorage() {
-    localStorage.setItem('typixclin_resources_config', JSON.stringify(selectedResources));
-}
+
 
 // Variable temporaire pour la sélection dans le modal
 let tempSelectedResources = [];
@@ -8018,7 +8012,11 @@ function updateResourcesCount() {
 // Sauvegarder la configuration
 window.saveResourcesConfig = function() {
     selectedResources = [...tempSelectedResources];
-    saveResourcesConfigToStorage();
+    // Sauvegarder dans userData pour Firebase
+    if (userData) {
+        userData.selectedResources = selectedResources;
+        debouncedSave();
+    }
     closeResourcesConfigModal();
     renderItemsTable();
     window.showToastNotification('Configuration des ressources enregistrée !', 'success');
@@ -8038,8 +8036,6 @@ window.toggleResourceValidation = function(specialtyId, fc, resourceId) {
     }
 };
 
-// Charger la config au démarrage
-loadResourcesConfig();
 
 
 // Configuration des pastilles sous-spécialités
@@ -9930,6 +9926,7 @@ function loadUserData(userId) {
         // Utilisateur connecté → Firebase
         unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
             userData = docSnap.exists() ? docSnap.data() : initializeUserData();
+			loadResourcesConfig();
             if (!docSnap.exists()) saveUserData();
             localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
             renderAll();
