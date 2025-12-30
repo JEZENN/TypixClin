@@ -253,6 +253,84 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     width: 100%;
 }
 
+/* ========================================= */
+/* INDICATEUR DE SAUVEGARDE DANS LE HEADER */
+/* ========================================= */
+.save-indicator-header {
+    display: none; /* Caché par défaut */
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border-radius: var(--border-radius-full);
+    color: var(--gray-400);
+    font-size: 1rem;
+    margin-left: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.save-indicator-header.visible {
+    display: flex;
+}
+
+/* État : En attente de sauvegarde (icône rotation) */
+.save-indicator-header.pending {
+    color: var(--gray-400);
+}
+
+.save-indicator-header.pending i {
+    animation: rotate 1.5s linear infinite;
+}
+
+/* État : Sauvegarde en cours (icône rotation rapide) */
+.save-indicator-header.saving {
+    color: var(--primary);
+}
+
+.save-indicator-header.saving i {
+    animation: rotate 0.8s linear infinite;
+}
+
+/* État : Sauvegardé (icône check verte) */
+.save-indicator-header.saved {
+    color: var(--success);
+}
+
+.save-indicator-header.saved i {
+    animation: none;
+}
+
+/* Animation de rotation pour les flèches circulaires */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .save-indicator-header.pending {
+    color: var(--gray-500);
+}
+
+[data-theme="dark"] .save-indicator-header.saving {
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .save-indicator-header.saved {
+    color: var(--success);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .save-indicator-header {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+        margin-left: 1rem;
+    }
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -1161,22 +1239,8 @@ input[type="date"].modal-input {
 .filter-select:focus { outline: none; border-color: var(--primary); }
 
 .saving-indicator { 
-    position: fixed; 
-    bottom: 2rem; 
-    right: 2rem; 
-    background: var(--gray-900); 
-    color: white; 
-    padding: 0.75rem 1.25rem; 
-    border-radius: var(--border-radius-full); 
-    font-size: 0.9rem; 
-    display: flex; 
-    align-items: center; 
-    gap: 0.5rem; 
-    opacity: 0; 
-    transform: translateY(20px); 
-    transition: all var(--transition-normal); 
-    z-index: var(--z-elevated);
-    box-shadow: var(--shadow-lg);
+    /* ANCIEN INDICATEUR - CACHÉ (remplacé par save-indicator-header) */
+    display: none !important;
 }
 .saving-indicator.visible { 
     opacity: 1; 
@@ -7025,6 +7089,13 @@ input[type="date"].modal-input {
         
         <nav class="nav">
             <ul class="nav-items">
+			
+			                <!-- Indicateur de sauvegarde -->
+                <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique">
+                    <i class="fas fa-check"></i>
+                </div>
+				
+				
                 <!-- OUTILS -->
                 <li class="nav-dropdown">
                     <button class="nav-dropdown-trigger">
@@ -7069,6 +7140,7 @@ input[type="date"].modal-input {
             
             <div class="header-actions">
                 <button class="theme-toggle" id="theme-toggle"><i class="fas fa-sun"></i></button>
+                
                 
                 <div class="user-auth" id="user-auth">
                     <a href="auth.html?redirect=TableurEnLigne.html" class="auth-btn" title="Se connecter"><i class="fas fa-user"></i></a>
@@ -10232,7 +10304,8 @@ const filterReference = document.getElementById('filter-item-reference')?.value 
 
 
 const mainContent = document.getElementById('main-content');
-const savingIndicator = document.getElementById('saving-indicator');
+const savingIndicator = document.getElementById('saving-indicator'); // Ancien (caché)
+const saveIndicatorHeader = document.getElementById('save-indicator-header'); // Nouveau dans header
 const confidenceModal = document.getElementById('confidence-modal');
 const statItemsDone = document.getElementById('stat-items-done');
 const statToursDone = document.getElementById('stat-tours-done');
@@ -10386,23 +10459,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fermer la modal
             hideWarningModal();
             
-            // Afficher indicateur de sauvegarde
-            if (savingIndicator) {
-                savingIndicator.classList.add('visible');
-                savingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Sauvegarde en cours...</span>';
-                savingIndicator.style.background = '#3b82f6';
+            // Afficher indicateur dans le header
+            if (saveIndicatorHeader) {
+                saveIndicatorHeader.classList.add('visible', 'saving');
+                saveIndicatorHeader.classList.remove('pending', 'saved');
+                saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                saveIndicatorHeader.title = 'Sauvegarde en cours...';
             }
             
             // Forcer la sauvegarde immédiate
             await forceSaveAsync();
-            
-            // Masquer l'indicateur après 2 secondes
-            setTimeout(() => {
-                if (savingIndicator) {
-                    savingIndicator.classList.remove('visible');
-                    savingIndicator.style.background = '';
-                }
-            }, 2000);
         });
     }
     
@@ -10607,10 +10673,13 @@ function loadUserData(userId) {
 async function saveUserData() {
     if (!currentUser || !userData) return;
     
-    // Afficher l'indicateur de sauvegarde
-    savingIndicator.classList.add('visible');
-    savingIndicator.classList.remove('saved');
-    savingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Sauvegarde...</span>';
+    // Afficher l'indicateur de sauvegarde dans le header (rotation rapide)
+    if (saveIndicatorHeader) {
+        saveIndicatorHeader.classList.add('visible', 'saving');
+        saveIndicatorHeader.classList.remove('pending', 'saved');
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        saveIndicatorHeader.title = 'Sauvegarde en cours...';
+    }
     
     try {
         userData.lastUpdated = new Date().toISOString();
@@ -10626,18 +10695,22 @@ async function saveUserData() {
             lastUpdated: userData.lastUpdated
         });
         
-// Succès
-lastSaveTime = Date.now();
-hasUnsavedChanges = false; // Réinitialiser le flag
+        // Succès
+        lastSaveTime = Date.now();
+        hasUnsavedChanges = false; // Réinitialiser le flag
         
-        savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
-        savingIndicator.classList.add('saved');
-        savingIndicator.style.background = ''; // Reset style
-        
-        // Masquer après 2 secondes
-        setTimeout(() => {
-            savingIndicator.classList.remove('visible', 'saved');
-        }, 2000);
+        // Afficher le check vert
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('pending', 'saving');
+            saveIndicatorHeader.classList.add('saved');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
+            saveIndicatorHeader.title = 'Tout est sauvegardé';
+            
+            // Masquer après 3 secondes
+            setTimeout(() => {
+                saveIndicatorHeader.classList.remove('visible', 'saved');
+            }, 3000);
+        }
         
         console.log('✅ Sauvegarde Firestore réussie');
         
@@ -10649,19 +10722,38 @@ hasUnsavedChanges = false; // Réinitialiser le flag
             try {
                 await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
                 lastSaveTime = Date.now();
-				hasUnsavedChanges = false; // Réinitialiser le flag
-				savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
-                savingIndicator.classList.add('saved');
-                setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 2000);
+                hasUnsavedChanges = false; // Réinitialiser le flag
+                
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('pending', 'saving');
+                    saveIndicatorHeader.classList.add('saved');
+                    saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
+                    saveIndicatorHeader.title = 'Tout est sauvegardé';
+                    setTimeout(() => saveIndicatorHeader.classList.remove('visible', 'saved'), 3000);
+                }
+                
                 console.log('✅ Document créé avec setDoc (fallback)');
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
-                savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
-                setTimeout(() => savingIndicator.classList.remove('visible'), 3000);
+                
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+                    saveIndicatorHeader.classList.add('visible');
+                    saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    saveIndicatorHeader.title = 'Erreur de sauvegarde';
+                    saveIndicatorHeader.style.color = 'var(--danger)';
+                    setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
+                }
             }
         } else {
-            savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
-            setTimeout(() => savingIndicator.classList.remove('visible'), 3000);
+            if (saveIndicatorHeader) {
+                saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+                saveIndicatorHeader.classList.add('visible');
+                saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                saveIndicatorHeader.title = 'Erreur de sauvegarde';
+                saveIndicatorHeader.style.color = 'var(--danger)';
+                setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
+            }
         }
     }
 }
@@ -10676,9 +10768,12 @@ hasUnsavedChanges = false; // Réinitialiser le flag
 // Variables pour le système de sauvegarde optimisé
 let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
-const DEBOUNCE_DELAY = 7 * 1000; // 7 secondes de debounce
+const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
 
-
+// OPTION : Afficher le message d'avertissement à la fermeture
+// Note: La modal personnalisée ne peut PAS s'afficher dans beforeunload (restriction navigateur)
+// Elle s'affiche seulement au changement d'onglet (visibilitychange)
+// Donc on DOIT utiliser le message Windows pour bloquer la fermeture de page
 const ENABLE_WINDOWS_WARNING = true; // OBLIGATOIRE pour bloquer la fermeture
 
 // Fonction de sauvegarde avec debounce simple
@@ -10686,11 +10781,12 @@ function debouncedSave() {
     // Marquer qu'il y a des modifications non sauvegardées
     hasUnsavedChanges = true;
     
-    // Afficher un indicateur discret de modifications en attente
-    if (savingIndicator) {
-        savingIndicator.classList.add('visible');
-        savingIndicator.innerHTML = '<i class="fas fa-circle"></i><span>Sauvegarde...</span>';
-        savingIndicator.style.background = '#f59e0b'; // Orange
+    // Afficher l'indicateur dans le header (flèches circulaires grises)
+    if (saveIndicatorHeader) {
+        saveIndicatorHeader.classList.add('visible', 'pending');
+        saveIndicatorHeader.classList.remove('saving', 'saved');
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>'; // Flèches circulaires
+        saveIndicatorHeader.title = 'Sauvegarde en cours...';
     }
     
     // Annuler le timeout précédent
