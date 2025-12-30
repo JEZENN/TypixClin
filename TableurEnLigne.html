@@ -1207,6 +1207,200 @@ input[type="date"].modal-input {
     }
 }
 
+/* ========================================= */
+/* NOTIFICATION PERSONNALISÉE D'AVERTISSEMENT */
+/* ========================================= */
+.custom-warning-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.custom-warning-modal.show {
+    display: flex;
+}
+
+.custom-warning-content {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease;
+    text-align: center;
+}
+
+.custom-warning-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.custom-warning-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+}
+
+.custom-warning-message {
+    font-size: 1.1rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.custom-warning-message strong {
+    color: var(--danger);
+    font-weight: 700;
+}
+
+.custom-warning-progress {
+    width: 100%;
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: var(--border-radius-full);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.custom-warning-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: progressGlow 1.5s infinite;
+}
+
+.custom-warning-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.custom-warning-btn {
+    flex: 1;
+    min-width: 180px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-lg);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.custom-warning-btn.btn-wait {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.custom-warning-btn.btn-wait:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+}
+
+.custom-warning-btn.btn-force {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.custom-warning-btn.btn-force:hover {
+    background: var(--gray-300);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(50px); 
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0); 
+    }
+}
+
+@keyframes progressGlow {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.8);
+    }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .custom-warning-content {
+    background: var(--gray-100);
+}
+
+[data-theme="dark"] .custom-warning-title {
+    color: var(--gray-900);
+}
+
+[data-theme="dark"] .custom-warning-message {
+    color: var(--gray-600);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .custom-warning-content {
+        padding: 2rem 1.5rem;
+        max-width: 95%;
+    }
+    
+    .custom-warning-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .custom-warning-title {
+        font-size: 1.5rem;
+    }
+    
+    .custom-warning-message {
+        font-size: 1rem;
+    }
+    
+    .custom-warning-actions {
+        flex-direction: column;
+    }
+    
+    .custom-warning-btn {
+        min-width: 100%;
+    }
+}
+
 .quick-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .quick-action-btn { padding: 0.5rem 1rem; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 500; color: var(--gray-700); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
 .quick-action-btn:hover { background: var(--primary-light); color: white; border-color: var(--primary-light); }
@@ -8024,6 +8218,32 @@ input[type="date"].modal-input {
 </div>
 
 <div class="saving-indicator" id="saving-indicator"><i class="fas fa-spinner"></i><span>Sauvegarde...</span></div>
+
+<!-- Notification personnalisée pour avertir avant fermeture -->
+<div class="custom-warning-modal" id="custom-warning-modal">
+    <div class="custom-warning-content">
+        <div class="custom-warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="custom-warning-title">⚠️ Attention !</h3>
+        <p class="custom-warning-message">
+            Des modifications sont en cours de sauvegarde.<br>
+            <strong>Veuillez patienter quelques secondes...</strong>
+        </p>
+        <div class="custom-warning-progress">
+            <div class="custom-warning-progress-bar" id="warning-progress-bar"></div>
+        </div>
+        <div class="custom-warning-actions">
+            <button class="custom-warning-btn btn-wait" id="btn-wait-save">
+                <i class="fas fa-clock"></i> Attendre la sauvegarde
+            </button>
+            <button class="custom-warning-btn btn-force" id="btn-force-quit">
+                <i class="fas fa-sign-out-alt"></i> Quitter quand même
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="back-to-top" id="back-to-top"><i class="fas fa-arrow-up"></i></div>
 
 <!-- Footer -->
@@ -10139,19 +10359,169 @@ logoutBtn?.addEventListener('click', async () => {
 });
 
 // ========================================
-// SAUVEGARDE AU BEFOREUNLOAD
-// Sauvegarder automatiquement quand l'utilisateur ferme/quitte la page
+// SAUVEGARDE AVEC MESSAGE DE CONFIRMATION
 // ========================================
-window.addEventListener('beforeunload', (e) => {
-    // Si des modifications ne sont pas sauvegardées, sauvegarder immédiatement
+
+// ========================================
+// NOTIFICATION PERSONNALISÉE
+// ========================================
+
+// Variables pour la notification
+let warningModal = null;
+let warningProgressBar = null;
+let btnWaitSave = null;
+let btnForceQuit = null;
+let canQuit = false; // Flag pour autoriser la fermeture
+
+// Initialiser les éléments de la notification
+document.addEventListener('DOMContentLoaded', () => {
+    warningModal = document.getElementById('custom-warning-modal');
+    warningProgressBar = document.getElementById('warning-progress-bar');
+    btnWaitSave = document.getElementById('btn-wait-save');
+    btnForceQuit = document.getElementById('btn-force-quit');
+    
+    // Bouton "Attendre"
+    if (btnWaitSave) {
+        btnWaitSave.addEventListener('click', async () => {
+            // Fermer la modal
+            hideWarningModal();
+            
+            // Afficher indicateur de sauvegarde
+            if (savingIndicator) {
+                savingIndicator.classList.add('visible');
+                savingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Sauvegarde en cours...</span>';
+                savingIndicator.style.background = '#3b82f6';
+            }
+            
+            // Forcer la sauvegarde immédiate
+            await forceSaveAsync();
+            
+            // Masquer l'indicateur après 2 secondes
+            setTimeout(() => {
+                if (savingIndicator) {
+                    savingIndicator.classList.remove('visible');
+                    savingIndicator.style.background = '';
+                }
+            }, 2000);
+        });
+    }
+    
+    // Bouton "Quitter quand même"
+    if (btnForceQuit) {
+        btnForceQuit.addEventListener('click', () => {
+            // Sauvegarder localStorage en dernier recours
+            forceSave();
+            
+            // Autoriser la fermeture
+            canQuit = true;
+            hasUnsavedChanges = false;
+            
+            // Fermer la modal
+            hideWarningModal();
+            
+            // Fermer la page
+            window.close();
+            // Si window.close() ne fonctionne pas, rediriger
+            setTimeout(() => {
+                if (!window.closed) {
+                    alert('Veuillez fermer manuellement cet onglet');
+                }
+            }, 100);
+        });
+    }
+});
+
+// Fonction pour afficher la notification
+function showWarningModal() {
+    if (!warningModal) return;
+    
+    warningModal.classList.add('show');
+    
+    // Animation de la barre de progression
+    if (warningProgressBar) {
+        warningProgressBar.style.width = '0%';
+        setTimeout(() => {
+            warningProgressBar.style.width = '100%';
+        }, 100);
+    }
+}
+
+// Fonction pour cacher la notification
+function hideWarningModal() {
+    if (!warningModal) return;
+    warningModal.classList.remove('show');
+}
+
+// Fonction pour forcer la sauvegarde immédiate (annule le debounce)
+function forceSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
     if (hasUnsavedChanges && currentUser) {
-        // Annuler le timeout s'il existe
-        if (saveTimeout) clearTimeout(saveTimeout);
+        // Sauvegarder localStorage (garanti)
+        try {
+            userData.lastUpdated = new Date().toISOString();
+            localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
+            console.log('💾 Sauvegarde forcée localStorage');
+        } catch (e) {
+            console.error('Erreur localStorage:', e);
+        }
         
-        // Sauvegarder immédiatement
+        // Sauvegarder Firebase
         saveUserData();
+        hasUnsavedChanges = false;
+    }
+}
+
+// Version async pour attendre la fin de la sauvegarde
+async function forceSaveAsync() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    if (hasUnsavedChanges && currentUser) {
+        // Sauvegarder localStorage (garanti)
+        try {
+            userData.lastUpdated = new Date().toISOString();
+            localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
+            console.log('💾 Sauvegarde forcée localStorage');
+        } catch (e) {
+            console.error('Erreur localStorage:', e);
+        }
         
-        console.log('💾 Sauvegarde au beforeunload');
+        // Sauvegarder Firebase et ATTENDRE
+        await saveUserData();
+        hasUnsavedChanges = false;
+    }
+}
+
+// Détecter changement d'onglet/fenêtre
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        // Si modifications en attente, afficher la notification SEULEMENT si changement d'onglet
+        if (hasUnsavedChanges && currentUser) {
+            // Afficher la modal personnalisée
+            showWarningModal();
+            
+            // Lancer la sauvegarde en arrière-plan
+            forceSave();
+        }
+    } else if (document.visibilityState === 'visible') {
+        // Revenu sur l'onglet, cacher la modal si elle est visible
+        hideWarningModal();
+    }
+});
+
+// MESSAGE DE CONFIRMATION si modifications non sauvegardées
+window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges && currentUser && !canQuit) {
+        // Forcer la sauvegarde immédiatement
+        forceSave();
+        
+        // Afficher le message Windows SEULEMENT si activé dans la config
+        if (ENABLE_WINDOWS_WARNING) {
+            e.preventDefault();
+            e.returnValue = 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
+            return 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
+        }
+        
+        // Sinon : sauvegarde silencieuse sans bloquer
+        // La notification personnalisée s'affiche seulement au changement d'onglet (visibilitychange)
     }
 });
 
@@ -10170,9 +10540,28 @@ function loadUserData(userId) {
     if (userId) {
         // Utilisateur connecté → Firebase
         unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
-            userData = docSnap.exists() ? docSnap.data() : initializeUserData();
+            // Charger depuis Firebase ou fallback localStorage backup
+            if (docSnap.exists()) {
+                userData = docSnap.data();
+            } else {
+                // Essayer de charger depuis le backup localStorage
+                const backup = localStorage.getItem('planningRevision_backup');
+                if (backup) {
+                    try {
+                        userData = JSON.parse(backup);
+                        console.log('🔄 Données récupérées depuis localStorage backup');
+                        // Sauvegarder sur Firebase
+                        saveUserData();
+                    } catch (e) {
+                        userData = initializeUserData();
+                    }
+                } else {
+                    userData = initializeUserData();
+                    saveUserData();
+                }
+            }
+            
 			loadResourcesConfig();
-            if (!docSnap.exists()) saveUserData();
             localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
             
             // ÉTAPE 9 : Charger les données du planning depuis Firebase
@@ -10183,7 +10572,22 @@ function loadUserData(userId) {
             }
             
             renderAll();
-        }, e => { console.error(e); userData = initializeUserData(); renderAll(); });
+        }, e => { 
+            console.error('Erreur Firebase:', e); 
+            // En cas d'erreur Firebase, essayer le backup localStorage
+            const backup = localStorage.getItem('planningRevision_backup');
+            if (backup) {
+                try {
+                    userData = JSON.parse(backup);
+                    console.log('🔄 Données récupérées depuis localStorage backup (erreur Firebase)');
+                } catch (e2) {
+                    userData = initializeUserData();
+                }
+            } else {
+                userData = initializeUserData();
+            }
+            renderAll(); 
+        });
     } else {
         // Pas connecté → localStorage
         const saved = localStorage.getItem('planningRevision_local');
@@ -10228,6 +10632,7 @@ hasUnsavedChanges = false; // Réinitialiser le flag
         
         savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
         savingIndicator.classList.add('saved');
+        savingIndicator.style.background = ''; // Reset style
         
         // Masquer après 2 secondes
         setTimeout(() => {
@@ -10265,15 +10670,28 @@ hasUnsavedChanges = false; // Réinitialiser le flag
 // OPTIMISATION FIRESTORE - VERSION SIMPLIFIÉE
 // ========================================
 
+// ========================================
+// CONFIGURATION SAUVEGARDE
+// ========================================
 // Variables pour le système de sauvegarde optimisé
 let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
-const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
+const DEBOUNCE_DELAY = 7 * 1000; // 7 secondes de debounce
+
+
+const ENABLE_WINDOWS_WARNING = true; // OBLIGATOIRE pour bloquer la fermeture
 
 // Fonction de sauvegarde avec debounce simple
 function debouncedSave() {
     // Marquer qu'il y a des modifications non sauvegardées
     hasUnsavedChanges = true;
+    
+    // Afficher un indicateur discret de modifications en attente
+    if (savingIndicator) {
+        savingIndicator.classList.add('visible');
+        savingIndicator.innerHTML = '<i class="fas fa-circle"></i><span>Sauvegarde...</span>';
+        savingIndicator.style.background = '#f59e0b'; // Orange
+    }
     
     // Annuler le timeout précédent
     if (saveTimeout) clearTimeout(saveTimeout);
