@@ -1017,11 +1017,30 @@ input[type="date"].modal-input {
 .confidence-btn.c4 { background: var(--confidence-4); }
 .confidence-btn.c5 { background: var(--confidence-5); }
 
-.confidence-error { display: none; color: var(--danger); font-size: 0.8rem; text-align: center; margin-top: 0.5rem; font-weight: 500; }
-.confidence-error.visible { display: block; animation: shake 0.3s ease; }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.confidence-error { 
+    display: none; 
+    color: var(--danger); 
+    font-size: 0.8rem; 
+    text-align: center; 
+    margin-top: 0.5rem; 
+    font-weight: 500; 
+}
 
+.confidence-error.visible { 
+    display: block; 
+    animation: fadeInDown 0.3s ease;
+}
 
+@keyframes fadeInDown { 
+    0% { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    } 
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}
 
 .duration-input-wrapper { display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--gray-50); padding: 0.75rem 1rem; border-radius: var(--border-radius-md); border: 2px solid var(--gray-200); width: calc(100% - 4px); max-width: 100%; box-sizing: border-box; margin: 0 auto; transition: all var(--transition-fast); }
 .duration-input-wrapper:focus-within { border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
@@ -7139,21 +7158,27 @@ input[type="date"].modal-input {
                                     <img src="ItemsValiderTour.png" alt="Valider un tour">
                                 </div>
                                 <div class="carousel-slide">
-                                    <p class="carousel-caption">Visualiser votre progression. Priorisez les items que vous n'avez pas vu depuis longtemps.</p>
+                                    <p class="carousel-caption">Visualiser votre progression tour après tour.</p>
                                     <img src="ItemsTours.png" alt="Progression des tours">
+                                </div>
+								
+								  <div class="carousel-slide">
+                                    <p class="carousel-caption">Indiquez les ressources que vous avez faites. Priorisez les items que vous n'avez pas vu depuis longtemps.</p>
+                                    <img src="ItemsTours2.png" alt="Progression des tours">
+                                </div>
+								  <div class="carousel-slide">
+                                    <p class="carousel-caption">Personalisez la colonne avec les ressources que vous utilisez.</p>
+                                    <img src="ItemsRessources.png" alt="Progression des tours">
                                 </div>
                                 <div class="carousel-slide">
                                     <p class="carousel-caption">Liens cliquable vers la fiche LISA de l'item. Visualisez les collèges de référence pour chaque item.</p>
                                     <img src="ItemsLisa.png" alt="Lisa référence">
                                 </div>
                                 <div class="carousel-slide">
-                                    <p class="carousel-caption">Visualisez les items qu'il est bon de lire dans les petits collèges.</p>
+                                    <p class="carousel-caption">Visualisez les items qu'il est bon de lire dans les petits collèges. Envoyez des items à faire sur la To-do List en un clic.</p>
                                     <img src="ItemsBalises.png" alt="Balises">
                                 </div>
-                                <div class="carousel-slide">
-                                    <p class="carousel-caption">Tableur disponible en mode sombre également.</p>
-                                    <img src="ItemsSombre.png" alt="Mode sombre">
-                                </div>
+
                             </div>
 							<button class="carousel-arrow carousel-next"><i class="fas fa-chevron-right"></i></button>
 							</div>
@@ -7919,17 +7944,23 @@ input[type="date"].modal-input {
         
         <div class="modal-section">
             <label class="modal-label">Date</label>
-            <input type="date" id="tour-date" class="modal-input">
+            <input type="date" id="tour-date" class="modal-input" max="">
+			    <div class="confidence-error" id="date-error">Vous ne pouvez pas sélectionner une date future</div>
+
+			
         </div>
         
         <div class="modal-section">
             <label class="modal-label">Durée</label>
             <div class="duration-input-wrapper">
-                <input type="number" id="tour-duration-hours" class="duration-input" min="0" max="23" placeholder="0">
+                <input type="number" id="tour-duration-hours" class="duration-input" min="0" max="10" placeholder="0">
                 <span class="duration-separator">h</span>
                 <input type="number" id="tour-duration-minutes" class="duration-input" min="0" max="59" step="5" placeholder="00">
                 <span class="duration-separator">min</span>
+
             </div>
+							<div class="confidence-error" id="duration-error">La durée ne peut pas dépasser 10 heures</div>
+
         </div>
         
         <div class="modal-section">
@@ -10956,6 +10987,11 @@ window.openConfidenceModal = function(el) {
     document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected'));
     document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
     
+    // Reset erreurs
+    document.getElementById('confidence-error')?.classList.remove('visible');
+    document.getElementById('duration-error')?.classList.remove('visible');
+    document.getElementById('date-error')?.classList.remove('visible');
+    
     if (selectedConfidence) {
         document.querySelector('.confidence-btn[data-confidence="' + selectedConfidence + '"]')?.classList.add('selected');
     }
@@ -10963,12 +10999,15 @@ window.openConfidenceModal = function(el) {
         document.querySelector('.support-btn[data-support="' + selectedSupport + '"]')?.classList.add('selected');
     }
     
-    // Date : existante ou aujourd'hui
+    // Date : existante ou aujourd'hui + définir la date max à aujourd'hui
     const dateInput = document.getElementById('tour-date');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('max', today);
+    
     if (d.tourDates && d.tourDates[tourIndex]) {
         dateInput.value = d.tourDates[tourIndex].split('T')[0];
     } else {
-        dateInput.value = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
     }
     
     // Durée
@@ -11004,14 +11043,47 @@ document.querySelectorAll('.support-btn').forEach(btn => {
 
 document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     const errorEl = document.getElementById('confidence-error');
+    const durationErrorEl = document.getElementById('duration-error');
+    const dateErrorEl = document.getElementById('date-error');
     
+    // Reset toutes les erreurs
+    errorEl.classList.remove('visible');
+    durationErrorEl.classList.remove('visible');
+    dateErrorEl.classList.remove('visible');
+    
+    let hasError = false;
+    
+    // Validation confiance
     if (!selectedConfidence) {
         errorEl.classList.add('visible');
-        return;
+        hasError = true;
     }
-    errorEl.classList.remove('visible');
     
     if (!pendingTour) return;
+    
+    // VALIDATION : Durée max 10h
+    const hours = parseInt(document.getElementById('tour-duration-hours').value) || 0;
+    const minutes = parseInt(document.getElementById('tour-duration-minutes').value) || 0;
+    
+    if (hours > 10) {
+        durationErrorEl.classList.add('visible');
+        document.getElementById('tour-duration-hours').focus();
+        hasError = true;
+    }
+    
+    // VALIDATION : Date pas dans le futur
+    const dateInput = document.getElementById('tour-date');
+    const selectedDateStr = dateInput.value;
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (selectedDateStr > today) {
+        dateErrorEl.classList.add('visible');
+        dateInput.focus();
+        hasError = true;
+    }
+    
+    // Si erreur, on arrête
+    if (hasError) return;
     
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
     const tourIndex = pendingTour.tour;
@@ -11022,14 +11094,13 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     d.tours[tourIndex] = selectedConfidence;
     
     // Date personnalisée
-    const dateInput = document.getElementById('tour-date');
-    const selectedDate = dateInput.value ? new Date(dateInput.value).toISOString() : new Date().toISOString();
+    const selectedDate = selectedDateStr ? new Date(selectedDateStr).toISOString() : new Date().toISOString();
     d.tourDates[tourIndex] = selectedDate;
     
     // Durée
-    const hours = document.getElementById('tour-duration-hours').value || '0';
-    const minutes = document.getElementById('tour-duration-minutes').value || '00';
-    d.tourDurations[tourIndex] = hours + ':' + minutes.padStart(2, '0');
+    const hoursStr = hours.toString();
+    const minutesStr = minutes.toString().padStart(2, '0');
+    d.tourDurations[tourIndex] = hoursStr + ':' + minutesStr;
     
     d.tourSupports[tourIndex] = selectedSupport;
     d.lastRevision = selectedDate;
@@ -11040,14 +11111,12 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     selectedSupport = null;
     debouncedSave();
     renderAll();
-	
-// Si on vient de la checklist, afficher une notification
+    
+    // Si on vient de la checklist, afficher une notification
     if (pendingChecklistItemId !== null) {
         window.showToastNotification('Tour enregistré !', 'success');
         pendingChecklistItemId = null;
     }
-	
-	
 });
 
 document.getElementById('btn-reset-tour')?.addEventListener('click', function() {
@@ -11517,6 +11586,23 @@ function initPreviewCarousels() {
                 c.classList.remove('active');
                 if (c.dataset.category === category) {
                     c.classList.add('active');
+                    
+                    // CORRECTION : Réinitialiser à la première slide lors du changement d'onglet
+                    const slides = c.querySelectorAll('.carousel-slide');
+                    const dots = c.querySelectorAll('.carousel-dot');
+                    slides.forEach((s, i) => {
+                        s.classList.remove('active');
+                        if (i === 0) s.classList.add('active');
+                    });
+                    dots.forEach((d, i) => {
+                        d.classList.remove('active');
+                        if (i === 0) d.classList.add('active');
+                    });
+                    
+                    // Réinitialiser l'index du carrousel
+                    if (c.carouselState) {
+                        c.carouselState.currentIndex = 0;
+                    }
                 }
             });
         });
@@ -11528,7 +11614,9 @@ function initPreviewCarousels() {
         const prevBtn = carousel.querySelector('.carousel-prev');
         const nextBtn = carousel.querySelector('.carousel-next');
         const dotsContainer = carousel.querySelector('.carousel-dots');
-        let currentIndex = 0;
+        
+        // CORRECTION : Stocker l'état dans l'élément DOM
+        carousel.carouselState = { currentIndex: 0 };
         
         // Créer les dots
         slides.forEach((_, index) => {
@@ -11541,95 +11629,102 @@ function initPreviewCarousels() {
         
         const dots = dotsContainer.querySelectorAll('.carousel-dot');
         
-function goToSlide(index) {
-    // Gestion de la navigation inter-pages du carrousel
-    if (index < 0) {
-        // On est sur la première diapo et on va vers la gauche
-        const allCarousels = Array.from(document.querySelectorAll('.preview-carousel'));
-        const currentCarouselIndex = allCarousels.indexOf(carousel);
-        
-        if (currentCarouselIndex > 0) {
-            // Il y a une page précédente
-            const prevCarousel = allCarousels[currentCarouselIndex - 1];
-            const prevSlides = prevCarousel.querySelectorAll('.carousel-slide');
-            const prevDots = prevCarousel.querySelectorAll('.carousel-dot');
+        function goToSlide(index) {
+            // CORRECTION : Utiliser l'état stocké
+            const currentIndex = carousel.carouselState.currentIndex;
             
-            // Désactiver le carrousel actuel
+            // Gestion de la navigation inter-pages du carrousel
+            if (index < 0) {
+                // On est sur la première diapo et on va vers la gauche
+                const allCarousels = Array.from(document.querySelectorAll('.preview-carousel'));
+                const currentCarouselIndex = allCarousels.indexOf(carousel);
+                
+                if (currentCarouselIndex > 0) {
+                    // Il y a une page précédente
+                    const prevCarousel = allCarousels[currentCarouselIndex - 1];
+                    const prevSlides = prevCarousel.querySelectorAll('.carousel-slide');
+                    const prevDots = prevCarousel.querySelectorAll('.carousel-dot');
+                    
+                    // Désactiver le carrousel actuel
+                    slides[currentIndex].classList.remove('active');
+                    dots[currentIndex].classList.remove('active');
+                    carousel.classList.remove('active');
+                    carousel.carouselState.currentIndex = 0;
+                    
+                    // Changer de tab visuellement
+                    const tabs = document.querySelectorAll('.preview-tab');
+                    const prevTab = document.querySelector(`.preview-tab[data-category="${prevCarousel.dataset.category}"]`);
+                    tabs.forEach(t => t.classList.remove('active'));
+                    prevTab.classList.add('active');
+                    
+                    // Activer le carrousel précédent
+                    prevCarousel.classList.add('active');
+                    
+                    // Activer la dernière slide du carrousel précédent
+                    prevSlides.forEach(s => s.classList.remove('active'));
+                    prevDots.forEach(d => d.classList.remove('active'));
+                    const lastIndex = prevSlides.length - 1;
+                    prevSlides[lastIndex].classList.add('active');
+                    prevDots[lastIndex].classList.add('active');
+                    prevCarousel.carouselState.currentIndex = lastIndex;
+                    
+                    return;
+                } else {
+                    // Pas de page précédente, boucler sur la dernière diapo
+                    index = slides.length - 1;
+                }
+            } else if (index >= slides.length) {
+                // On est sur la dernière diapo et on va vers la droite
+                const allCarousels = Array.from(document.querySelectorAll('.preview-carousel'));
+                const currentCarouselIndex = allCarousels.indexOf(carousel);
+                
+                if (currentCarouselIndex < allCarousels.length - 1) {
+                    // Il y a une page suivante
+                    const nextCarousel = allCarousels[currentCarouselIndex + 1];
+                    const nextSlides = nextCarousel.querySelectorAll('.carousel-slide');
+                    const nextDots = nextCarousel.querySelectorAll('.carousel-dot');
+                    
+                    // Désactiver le carrousel actuel
+                    slides[currentIndex].classList.remove('active');
+                    dots[currentIndex].classList.remove('active');
+                    carousel.classList.remove('active');
+                    carousel.carouselState.currentIndex = 0;
+                    
+                    // Changer de tab visuellement
+                    const tabs = document.querySelectorAll('.preview-tab');
+                    const nextTab = document.querySelector(`.preview-tab[data-category="${nextCarousel.dataset.category}"]`);
+                    tabs.forEach(t => t.classList.remove('active'));
+                    nextTab.classList.add('active');
+                    
+                    // Activer le carrousel suivant
+                    nextCarousel.classList.add('active');
+                    
+                    // Activer la première slide du carrousel suivant
+                    nextSlides.forEach(s => s.classList.remove('active'));
+                    nextDots.forEach(d => d.classList.remove('active'));
+                    nextSlides[0].classList.add('active');
+                    nextDots[0].classList.add('active');
+                    nextCarousel.carouselState.currentIndex = 0;
+                    
+                    return;
+                } else {
+                    // Pas de page suivante, boucler sur la première diapo
+                    index = 0;
+                }
+            }
+            
+            // Navigation normale dans la page actuelle
             slides[currentIndex].classList.remove('active');
             dots[currentIndex].classList.remove('active');
-            carousel.classList.remove('active');
             
-            // Changer de tab visuellement
-            const tabs = document.querySelectorAll('.preview-tab');
-            const prevTab = document.querySelector(`.preview-tab[data-category="${prevCarousel.dataset.category}"]`);
-            tabs.forEach(t => t.classList.remove('active'));
-            prevTab.classList.add('active');
+            carousel.carouselState.currentIndex = index;
             
-            // Activer le carrousel précédent
-            prevCarousel.classList.add('active');
-            
-            // Activer la dernière slide du carrousel précédent
-            prevSlides.forEach(s => s.classList.remove('active'));
-            prevDots.forEach(d => d.classList.remove('active'));
-            const lastIndex = prevSlides.length - 1;
-            prevSlides[lastIndex].classList.add('active');
-            prevDots[lastIndex].classList.add('active');
-            
-            return;
-        } else {
-            // Pas de page précédente, boucler sur la dernière diapo
-            index = slides.length - 1;
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
         }
-    } else if (index >= slides.length) {
-        // On est sur la dernière diapo et on va vers la droite
-        const allCarousels = Array.from(document.querySelectorAll('.preview-carousel'));
-        const currentCarouselIndex = allCarousels.indexOf(carousel);
         
-        if (currentCarouselIndex < allCarousels.length - 1) {
-            // Il y a une page suivante
-            const nextCarousel = allCarousels[currentCarouselIndex + 1];
-            const nextSlides = nextCarousel.querySelectorAll('.carousel-slide');
-            const nextDots = nextCarousel.querySelectorAll('.carousel-dot');
-            
-            // Désactiver le carrousel actuel
-            slides[currentIndex].classList.remove('active');
-            dots[currentIndex].classList.remove('active');
-            carousel.classList.remove('active');
-            
-            // Changer de tab visuellement
-            const tabs = document.querySelectorAll('.preview-tab');
-            const nextTab = document.querySelector(`.preview-tab[data-category="${nextCarousel.dataset.category}"]`);
-            tabs.forEach(t => t.classList.remove('active'));
-            nextTab.classList.add('active');
-            
-            // Activer le carrousel suivant
-            nextCarousel.classList.add('active');
-            
-            // Activer la première slide du carrousel suivant
-            nextSlides.forEach(s => s.classList.remove('active'));
-            nextDots.forEach(d => d.classList.remove('active'));
-            nextSlides[0].classList.add('active');
-            nextDots[0].classList.add('active');
-            
-            return;
-        } else {
-            // Pas de page suivante, boucler sur la première diapo
-            index = 0;
-        }
-    }
-    
-    // Navigation normale dans la page actuelle
-    slides[currentIndex].classList.remove('active');
-    dots[currentIndex].classList.remove('active');
-    
-    currentIndex = index;
-    
-    slides[currentIndex].classList.add('active');
-    dots[currentIndex].classList.add('active');
-}
-        
-        prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
-        nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+        prevBtn.addEventListener('click', () => goToSlide(carousel.carouselState.currentIndex - 1));
+        nextBtn.addEventListener('click', () => goToSlide(carousel.carouselState.currentIndex + 1));
         
         // Masquer les flèches si une seule image
         if (slides.length <= 1) {
@@ -12654,79 +12749,43 @@ window.TrophiesSystem = (function() {
     };
     
     let unlockedTrophies = {};
-    let notifiedTrophies = [];
     
-function loadTrophies() {
-    // Si déjà chargé, ne pas recharger
-    if (Object.keys(unlockedTrophies).length > 0 || notifiedTrophies.length > 0) {
-        return;
-    }
-    
-    // Charger depuis userData (Firebase) si disponible
-    if (userData && userData.trophies) {
-        unlockedTrophies = userData.trophies;
-    } else {
-        const saved = localStorage.getItem('typixclin_trophies');
-        if (saved) {
-            try {
-                unlockedTrophies = JSON.parse(saved);
-                if (userData) {
-                    userData.trophies = unlockedTrophies;
-                    debouncedSave();
-                    localStorage.removeItem('typixclin_trophies');
+    function loadTrophies() {
+        // Si déjà chargé, ne pas recharger
+        if (Object.keys(unlockedTrophies).length > 0) {
+            return;
+        }
+        
+        // Charger depuis userData (Firebase) si disponible
+        if (userData && userData.trophies) {
+            unlockedTrophies = userData.trophies;
+        } else {
+            const saved = localStorage.getItem('typixclin_trophies');
+            if (saved) {
+                try {
+                    unlockedTrophies = JSON.parse(saved);
+                    if (userData) {
+                        userData.trophies = unlockedTrophies;
+                        debouncedSave();
+                        localStorage.removeItem('typixclin_trophies');
+                    }
+                } catch (e) {
+                    unlockedTrophies = {};
                 }
-            } catch (e) {
+            } else {
                 unlockedTrophies = {};
             }
-        } else {
-            unlockedTrophies = {};
         }
     }
-    
-    // Charger les notifications depuis Firebase
-    if (userData && userData.trophiesNotified) {
-        notifiedTrophies = userData.trophiesNotified;
-    } else {
-        const notified = localStorage.getItem('typixclin_trophies_notified');
-        if (notified) {
-            try {
-                notifiedTrophies = JSON.parse(notified);
-                if (userData) {
-                    userData.trophiesNotified = notifiedTrophies;
-                    debouncedSave();
-                    localStorage.removeItem('typixclin_trophies_notified');
-                }
-            } catch (e) {
-                notifiedTrophies = [];
-            }
-        } else {
-            notifiedTrophies = [];
-        }
-    }
-    
-    // Si un trophée est débloqué mais pas dans notifiedTrophies, l'ajouter
-    Object.keys(unlockedTrophies).forEach(trophyId => {
-        if (!notifiedTrophies.includes(trophyId)) {
-            notifiedTrophies.push(trophyId);
-        }
-    });
-    
-    // Sauvegarder si on a ajouté des trophées aux notifications
-    if (userData && userData.trophiesNotified && userData.trophiesNotified.length !== notifiedTrophies.length) {
-        saveTrophies();
-    }
-}
 
     function saveTrophies() {
         // Sauvegarder dans userData pour Firebase
         if (userData) {
             userData.trophies = unlockedTrophies;
-            userData.trophiesNotified = notifiedTrophies;
             debouncedSave();
         } else {
             // Fallback localStorage si pas connecté
             localStorage.setItem('typixclin_trophies', JSON.stringify(unlockedTrophies));
-            localStorage.setItem('typixclin_trophies_notified', JSON.stringify(notifiedTrophies));
         }
     }
     
@@ -12884,80 +12943,21 @@ function loadTrophies() {
             ? TrophiesSystem.getCurrentStats() 
             : getCurrentStats();
         
-        const newlyUnlocked = [];
-        
         Object.keys(TROPHIES).forEach(category => {
             TROPHIES[category].forEach(trophy => {
                 const conditionMet = trophy.condition(stats);
                 
-                if (conditionMet) {
-                    if (!unlockedTrophies[trophy.id]) {
-                        unlockedTrophies[trophy.id] = {
-                            date: new Date().toISOString().split('T')[0],
-                            category: category
-                        };
-                        newlyUnlocked.push({ ...trophy, category: category });
-                    } else if (!notifiedTrophies.includes(trophy.id)) {
-                        notifiedTrophies.push(trophy.id);
-                    }
+                if (conditionMet && !unlockedTrophies[trophy.id]) {
+                    unlockedTrophies[trophy.id] = {
+                        date: new Date().toISOString().split('T')[0],
+                        category: category
+                    };
                 }
             });
         });
         
-        if (newlyUnlocked.length > 0) {
-            saveTrophies();
-            newlyUnlocked.forEach((trophy, index) => {
-                setTimeout(() => {
-                    showTrophyNotification(trophy);
-                }, index * 2500);
-            });
-        } else {
-            saveTrophies();
-        }
-        
+        saveTrophies();
         renderTrophies();
-    }
-    
-    function showTrophyNotification(trophy) {
-        const notif = document.getElementById('trophy-notification');
-        const nameEl = document.getElementById('trophy-notification-name');
-        
-        if (notif && nameEl) {
-            nameEl.textContent = trophy.name;
-            notif.classList.add('show');
-            
-            setTimeout(() => {
-                notif.classList.remove('show');
-            }, 3500);
-        }
-        
-        if (!notifiedTrophies.includes(trophy.id)) {
-            notifiedTrophies.push(trophy.id);
-            saveTrophies();
-        }
-        
-        const categoryMap = {
-            'progress': 'Complétion du programme',
-            'daily': 'Trophées quotidiens',
-            'weekly': 'Trophées hebdomadaires',
-            'general': 'Accomplissements'
-        };
-        
-        const categoryTitle = categoryMap[trophy.category];
-        const categoryElement = Array.from(document.querySelectorAll('.trophies-category-title'))
-            .find(el => el.textContent.includes(categoryTitle));
-        
-        if (categoryElement) {
-            const headerHeight = 70;
-            const categoryPosition = categoryElement.getBoundingClientRect().top + window.pageYOffset - headerHeight - 20;
-            window.scrollTo({ top: categoryPosition, behavior: 'smooth' });
-        }
-        
-        const trophyEl = document.querySelector(`[data-trophy-id="${trophy.id}"]`);
-        if (trophyEl) {
-            trophyEl.classList.add('just-unlocked');
-            setTimeout(() => trophyEl.classList.remove('just-unlocked'), 600);
-        }
     }
     
     function renderTrophies() {
