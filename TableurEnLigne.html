@@ -11739,6 +11739,24 @@ function initPreviewCarousels() {
 document.addEventListener('DOMContentLoaded', initPreviewCarousels);
 
 
+// ===== SYSTÈME D'IDENTIFICATION UTILISATEUR =====
+function getUserId() {
+    let userId = localStorage.getItem('typixclin_user_id');
+    if (!userId) {
+        // Générer un ID unique basé sur la date et un nombre aléatoire
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('typixclin_user_id', userId);
+        console.log('Nouvel utilisateur créé:', userId);
+    } else {
+        console.log('Utilisateur existant:', userId);
+    }
+    return userId;
+}
+
+// Initialiser l'ID utilisateur global
+const USER_ID = getUserId();
+console.log('ID utilisateur actif:', USER_ID);
+
 // ===== PLANNING MODULE V4 - MULTI-SPÉCIALITÉS =====
 const PlanningModule = (function() {
     
@@ -11787,38 +11805,108 @@ const PlanningModule = (function() {
         { id: 'sante-pub', name: 'SPU', class: 'spe-sante-pub' }
     ];
     
-    // Initialisation
-    function init() {
-        loadData();
+// Initialisation (avec support asynchrone)
+function init() {
+    // Charger les données de manière asynchrone
+    loadData().then(() => {
         setupYearSelector();
         setupEventListeners();
         setupSpecialtyPopup();
-		setupCustomDropdowns(); 
+        setupCustomDropdowns(); 
         renderCalendar();
         renderChecklist();
         updateHeaderDisplay();
-		updateSelectors();
-		renderSpecialtyLegend();
-    }
+        updateSelectors();
+        renderSpecialtyLegend();
+        console.log('✅ Planning Module initialisé');
+    }).catch(error => {
+        console.error('❌ Erreur initialisation:', error);
+        // Continuer avec les données locales
+        setupYearSelector();
+        setupEventListeners();
+        setupSpecialtyPopup();
+        setupCustomDropdowns(); 
+        renderCalendar();
+        renderChecklist();
+        updateHeaderDisplay();
+        updateSelectors();
+        renderSpecialtyLegend();
+    });
+}
     
-    // Charger les données
-    function loadData() {
-        try {
-            const saved = localStorage.getItem('typixclin_planning_v4');
-            if (saved) planningData = JSON.parse(saved);
-            const savedChecklist = localStorage.getItem('typixclin_checklist');
-            if (savedChecklist) checklistData = JSON.parse(savedChecklist);
-        } catch (e) {
-            planningData = {};
-            checklistData = [];
-        }
-    }
+// Charger les données depuis Firebase
+function loadData() {
+    return new Promise((resolve) => {
+        const yearPath = `users/${USER_ID}/planning/${currentYear}`;
+        
+        database.ref(yearPath).once('value')
+            .then(snapshot => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    planningData = data.planningData || {};
+                    checklistData = data.checklistData || [];
+                    console.log('✅ Données chargées depuis Firebase');
+                    
+                    // Sauvegarder en local pour backup
+                    localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
+                    localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
+                } else {
+                    console.log('ℹ️ Aucune donnée Firebase, chargement depuis localStorage');
+                    // Pas de données Firebase, charger depuis localStorage
+                    try {
+                        const saved = localStorage.getItem('typixclin_planning_v4');
+                        if (saved) planningData = JSON.parse(saved);
+                        const savedChecklist = localStorage.getItem('typixclin_checklist');
+                        if (savedChecklist) checklistData = JSON.parse(savedChecklist);
+                    } catch (e) {
+                        planningData = {};
+                        checklistData = [];
+                    }
+                }
+                resolve();
+            })
+            .catch(error => {
+                console.error('❌ Erreur chargement Firebase:', error);
+                // Fallback sur localStorage
+                try {
+                    const saved = localStorage.getItem('typixclin_planning_v4');
+                    if (saved) planningData = JSON.parse(saved);
+                    const savedChecklist = localStorage.getItem('typixclin_checklist');
+                    if (savedChecklist) checklistData = JSON.parse(savedChecklist);
+                } catch (e) {
+                    planningData = {};
+                    checklistData = [];
+                }
+                resolve();
+            });
+    });
+}
     
-    // Sauvegarder
-    function saveData() {
-        localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
-        localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
-    }
+// Sauvegarder dans Firebase
+function saveData() {
+    const yearPath = `users/${USER_ID}/planning/${currentYear}`;
+    
+    // Sauvegarder les données de planning et checklist dans Firebase
+    const dataToSave = {
+        planningData: planningData,
+        checklistData: checklistData,
+        lastUpdate: Date.now()
+    };
+    
+    database.ref(yearPath).set(dataToSave)
+        .then(() => {
+            console.log('✅ Données sauvegardées dans Firebase');
+            // Backup local en cas de problème de connexion
+            localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
+            localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
+        })
+        .catch(error => {
+            console.error('❌ Erreur sauvegarde Firebase:', error);
+            // Fallback sur localStorage si Firebase échoue
+            localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
+            localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
+        });
+}
     
 // Setup année dropdown
 function setupYearSelector() {
