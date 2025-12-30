@@ -7089,14 +7089,12 @@ input[type="date"].modal-input {
         
         <nav class="nav">
             <ul class="nav-items">
-			
-			                <!-- Indicateur de sauvegarde -->
+                 <!-- Indicateur de sauvegarde -->
                 <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique">
                     <i class="fas fa-check"></i>
                 </div>
 				
-				
-                <!-- OUTILS -->
+				<!-- OUTILS -->
                 <li class="nav-dropdown">
                     <button class="nav-dropdown-trigger">
                         <i class="fas fa-toolbox"></i> Outils
@@ -7141,6 +7139,7 @@ input[type="date"].modal-input {
             <div class="header-actions">
                 <button class="theme-toggle" id="theme-toggle"><i class="fas fa-sun"></i></button>
                 
+
                 
                 <div class="user-auth" id="user-auth">
                     <a href="auth.html?redirect=TableurEnLigne.html" class="auth-btn" title="Se connecter"><i class="fas fa-user"></i></a>
@@ -7164,7 +7163,12 @@ input[type="date"].modal-input {
 
 <!-- Mobile Menu -->
 <div class="mobile-menu" id="mobile-menu">
-    <div class="mobile-menu-section">
+                <!-- Indicateur de sauvegarde -->
+                <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique">
+                    <i class="fas fa-check"></i>
+                </div>
+
+<div class="mobile-menu-section">
         <div class="mobile-menu-title"><i class="fas fa-toolbox"></i> Outils</div>
         <a href="examen-adulte.html" class="mobile-menu-link"><i class="fas fa-user-md"></i> Examen Adulte</a>
         <a href="examen-pédiatrique.html" class="mobile-menu-link"><i class="fas fa-baby"></i> Examen Pédiatrique</a>
@@ -10609,6 +10613,7 @@ function loadUserData(userId) {
             // Charger depuis Firebase ou fallback localStorage backup
             if (docSnap.exists()) {
                 userData = docSnap.data();
+                console.log('📥 Données chargées depuis Firebase');
             } else {
                 // Essayer de charger depuis le backup localStorage
                 const backup = localStorage.getItem('planningRevision_backup');
@@ -10630,22 +10635,31 @@ function loadUserData(userId) {
 			loadResourcesConfig();
             localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
             
-            // ÉTAPE 9 : Charger les données du planning depuis Firebase
+            // IMPORTANT : Charger les données du planning depuis userData
             if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
                 PlanningModule.loadData();
+                console.log('📅 Planning chargé:', userData.planningData ? 'Données trouvées' : 'Vide');
+                console.log('✅ Checklist chargée:', userData.checklistData ? userData.checklistData.length + ' items' : 'Vide');
                 if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
                 if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
             }
             
             renderAll();
         }, e => { 
-            console.error('Erreur Firebase:', e); 
+            console.error('❌ Erreur Firebase:', e); 
             // En cas d'erreur Firebase, essayer le backup localStorage
             const backup = localStorage.getItem('planningRevision_backup');
             if (backup) {
                 try {
                     userData = JSON.parse(backup);
                     console.log('🔄 Données récupérées depuis localStorage backup (erreur Firebase)');
+                    
+                    // IMPORTANT : Charger le planning après récupération
+                    if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                        PlanningModule.loadData();
+                        if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                        if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+                    }
                 } catch (e2) {
                     userData = initializeUserData();
                 }
@@ -10786,7 +10800,7 @@ function debouncedSave() {
         saveIndicatorHeader.classList.add('visible', 'pending');
         saveIndicatorHeader.classList.remove('saving', 'saved');
         saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>'; // Flèches circulaires
-        saveIndicatorHeader.title = 'Sauvegarde en cours...';
+        saveIndicatorHeader.title = 'Modifications en attente...';
     }
     
     // Annuler le timeout précédent
@@ -13426,15 +13440,15 @@ window.TrophiesSystem = (function() {
             { id: 'daily_8h', name: 'BU lover - 1', desc: '8h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 8 },
             { id: 'daily_12h', name: 'BU lover - 2', desc: '12h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 12 },
             { id: 'daily_200delay', name: 'Mise à jour', desc: '200j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 200 },
-            { id: 'daily_perfect', name: 'Perfectionniste', desc: 'Moyenne 5/5 sur 1 jour', icon: 'fa-star', condition: (stats) => stats.hadPerfectDay === true }
+			{ id: 'daily_500delay', name: 'Mise à jour', desc: '500j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 500 }
         ],
         weekly: [
             { id: 'weekly_30tours', name: 'Semaine intense - 1', desc: '30 tours en 1 semaine', icon: 'fa-rocket', condition: (stats) => stats.bestToursInWeek >= 30 },
             { id: 'weekly_70tours', name: 'Semaine intense - 2', desc: '60 tours en 1 semaine', icon: 'fa-rocket', condition: (stats) => stats.bestToursInWeek >= 60 },
             { id: 'weekly_100tours', name: 'Semaine intense - 3', desc: '100 tours en 1 semaine', icon: 'fa-rocket', condition: (stats) => stats.bestToursInWeek >= 100 },
-            { id: 'weekly_35h', name: 'Bousillé de QI - 1', desc: '35h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 35 },
-            { id: 'weekly_50h', name: 'Bousillé de QI - 2', desc: '45h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 45 },
-            { id: 'weekly_70h', name: 'Bousillé de QI - 3', desc: '65h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 65 }
+            { id: 'weekly_35h', name: 'Bousillé de taff - 1', desc: '35h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 35 },
+            { id: 'weekly_50h', name: 'Bousillé de taff - 2', desc: '45h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 45 },
+            { id: 'weekly_70h', name: 'Bousillé de taff - 3', desc: '65h en 1 semaine', icon: 'fa-briefcase', condition: (stats) => stats.bestHoursInWeek >= 65 }
         ],
         general: [
             { id: 'gen_0.5month', name: 'Persévérant - 1', desc: '1 semaine de travail', icon: 'fa-calendar-check', condition: (stats) => stats.totalHours >= 168 },
