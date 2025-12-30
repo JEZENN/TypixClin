@@ -2684,6 +2684,148 @@ button {
     box-shadow: var(--shadow-green-lg);
 }
 
+/* ===== NOTIFICATION TOAST ===== */
+.toast-notification {
+    position: fixed;
+    top: 100px;
+    right: 30px;
+    min-width: 320px;
+    max-width: 420px;
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: var(--z-toast);
+    transform: translateX(150%);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border-left: 5px solid var(--primary);
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast-notification.hide {
+    transform: translateX(150%);
+    opacity: 0;
+}
+
+.toast-notification.error {
+    border-left-color: #ef4444;
+}
+
+.toast-notification.info,
+.toast-notification.logout {
+    border-left-color: var(--primary);
+}
+
+.toast-notification.success {
+    border-left-color: var(--success);
+}
+
+.toast-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.4rem;
+    color: white;
+}
+
+.toast-notification.success .toast-icon {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+}
+
+.toast-notification.error .toast-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.toast-notification.info .toast-icon,
+.toast-notification.logout .toast-icon {
+    background: var(--primary-gradient);
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.4;
+}
+
+.toast-close {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-full);
+    background: var(--gray-100);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-500);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+    transform: rotate(90deg);
+}
+
+/* Dark Mode */
+[data-theme="dark"] .toast-notification {
+    background: var(--gray-100);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .toast-title {
+    color: var(--gray-900);
+}
+
+[data-theme="dark"] .toast-message {
+    color: var(--gray-500);
+}
+
+[data-theme="dark"] .toast-close {
+    background: var(--gray-200);
+}
+
+[data-theme="dark"] .toast-close:hover {
+    background: var(--gray-300);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .toast-notification {
+        top: auto;
+        bottom: 20px;
+        right: 15px;
+        left: 15px;
+        min-width: auto;
+        max-width: none;
+    }
+}
+
 
 </style>
 </head>
@@ -3186,7 +3328,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <p class="resources-description">Autre outil disponible pour suivre votre progression en stage.</p>
             
             <div class="resources-links">
-                <a href="carnet-de-stage.html" class="resource-link">
+                <a href="index.html" class="resource-link">
                     <i class="fas fa-book-medical resource-link-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"></i>
                     <span>Carnet de Stage (En cours de conception)</span>
                     <span style="font-size: 0.7rem; background: var(--primary-gradient); color: white; padding: 0.2rem 0.5rem; border-radius: 20px; margin-left: auto; white-space: nowrap;">Compte requis</span>
@@ -3380,6 +3522,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="back-to-top" id="back-to-top">
     <i class="fas fa-arrow-up"></i>
 </div>
+
+
+<!-- Toast Notification -->
+<div class="toast-notification logout" id="toast-notification">
+    <div class="toast-icon">
+        <i class="fas fa-sign-out-alt"></i>
+    </div>
+    <div class="toast-content">
+        <div class="toast-title">Déconnexion réussie</div>
+        <div class="toast-message">À bientôt sur TypixClin !</div>
+    </div>
+
+</div>
+
+
 
 <!-- Scripts -->
 <script>
@@ -3663,12 +3820,46 @@ if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         try {
             await signOut(auth);
-            profileDropdown.classList.remove('active');
+            
+            // Afficher la notification directement ici
+            const toast = document.getElementById('toast-notification');
+            if (toast) {
+                const toastIcon = toast.querySelector('.toast-icon i');
+                const toastTitle = toast.querySelector('.toast-title');
+                const toastMessage = toast.querySelector('.toast-message');
+                
+                toast.className = 'toast-notification logout';
+                toastIcon.className = 'fas fa-sign-out-alt';
+                toastTitle.textContent = 'Déconnexion réussie';
+                toastMessage.textContent = 'À bientôt sur TypixClin !';
+                
+                toast.classList.add('show');
+                toast.classList.remove('hide');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.classList.add('hide');
+                }, 3000);
+            }
+            
         } catch (error) {
             console.error('Erreur lors de la déconnexion:', error);
         }
     });
 }
+
+// Fermer le toast
+const toastCloseBtn = document.getElementById('toast-close-btn');
+if (toastCloseBtn) {
+    toastCloseBtn.addEventListener('click', () => {
+        const toast = document.getElementById('toast-notification');
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+    });
+}
+
+
+
 </script>
 
 </body>
