@@ -10143,10 +10143,10 @@ logoutBtn?.addEventListener('click', async () => {
 // Sauvegarder automatiquement quand l'utilisateur ferme/quitte la page
 // ========================================
 window.addEventListener('beforeunload', (e) => {
-    // Si un timeout de sauvegarde est en attente, sauvegarder immédiatement
-    if (saveTimeout && currentUser) {
-        // Annuler le timeout
-        clearTimeout(saveTimeout);
+    // Si des modifications ne sont pas sauvegardées, sauvegarder immédiatement
+    if (hasUnsavedChanges && currentUser) {
+        // Annuler le timeout s'il existe
+        if (saveTimeout) clearTimeout(saveTimeout);
         
         // Sauvegarder immédiatement
         saveUserData();
@@ -10222,8 +10222,9 @@ async function saveUserData() {
             lastUpdated: userData.lastUpdated
         });
         
-        // Succès
-        lastSaveTime = Date.now();
+// Succès
+lastSaveTime = Date.now();
+hasUnsavedChanges = false; // Réinitialiser le flag
         
         savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
         savingIndicator.classList.add('saved');
@@ -10243,7 +10244,8 @@ async function saveUserData() {
             try {
                 await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
                 lastSaveTime = Date.now();
-                savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
+				hasUnsavedChanges = false; // Réinitialiser le flag
+				savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
                 savingIndicator.classList.add('saved');
                 setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 2000);
                 console.log('✅ Document créé avec setDoc (fallback)');
@@ -10265,10 +10267,14 @@ async function saveUserData() {
 
 // Variables pour le système de sauvegarde optimisé
 let lastSaveTime = Date.now();
+let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
 const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
 
 // Fonction de sauvegarde avec debounce simple
 function debouncedSave() {
+    // Marquer qu'il y a des modifications non sauvegardées
+    hasUnsavedChanges = true;
+    
     // Annuler le timeout précédent
     if (saveTimeout) clearTimeout(saveTimeout);
     
