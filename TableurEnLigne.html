@@ -1160,10 +1160,52 @@ input[type="date"].modal-input {
 .filter-select { padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius-lg); font-size: 0.95rem; background: var(--white); min-width: 160px; cursor: pointer; }
 .filter-select:focus { outline: none; border-color: var(--primary); }
 
-.saving-indicator { position: fixed; bottom: 2rem; right: 2rem; background: var(--gray-900); color: white; padding: 0.75rem 1.25rem; border-radius: var(--border-radius-full); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; opacity: 0; transform: translateY(20px); transition: all var(--transition-normal); z-index: var(--z-elevated); }
-.saving-indicator.visible { opacity: 1; transform: translateY(0); }
-.saving-indicator i { animation: spin 1s linear infinite; }
-.saving-indicator.saved i { animation: none; }
+.saving-indicator { 
+    position: fixed; 
+    bottom: 2rem; 
+    right: 2rem; 
+    background: var(--gray-900); 
+    color: white; 
+    padding: 0.75rem 1.25rem; 
+    border-radius: var(--border-radius-full); 
+    font-size: 0.9rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    opacity: 0; 
+    transform: translateY(20px); 
+    transition: all var(--transition-normal); 
+    z-index: var(--z-elevated);
+    box-shadow: var(--shadow-lg);
+}
+.saving-indicator.visible { 
+    opacity: 1; 
+    transform: translateY(0); 
+}
+.saving-indicator i { 
+    animation: spin 1s linear infinite; 
+}
+.saving-indicator.saved { 
+    background: var(--success); 
+}
+.saving-indicator.saved i { 
+    animation: none; 
+}
+/* Animation spinner */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .saving-indicator {
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+    }
+}
 
 .quick-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .quick-action-btn { padding: 0.5rem 1rem; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 500; color: var(--gray-700); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
@@ -8063,7 +8105,7 @@ input[type="date"].modal-input {
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
@@ -10096,13 +10138,33 @@ logoutBtn?.addEventListener('click', async () => {
     }
 });
 
-function initializeUserData() { return { 
-    items: {}, 
-    trophies: {}, 
-    planningData: {},      // AJOUT : Données du calendrier de planning
-    checklistData: [],     // AJOUT : Données de la checklist
-    lastUpdated: new Date().toISOString() 
-}; }
+// ========================================
+// SAUVEGARDE AU BEFOREUNLOAD
+// Sauvegarder automatiquement quand l'utilisateur ferme/quitte la page
+// ========================================
+window.addEventListener('beforeunload', (e) => {
+    // Si un timeout de sauvegarde est en attente, sauvegarder immédiatement
+    if (saveTimeout && currentUser) {
+        // Annuler le timeout
+        clearTimeout(saveTimeout);
+        
+        // Sauvegarder immédiatement
+        saveUserData();
+        
+        console.log('💾 Sauvegarde au beforeunload');
+    }
+});
+
+function initializeUserData() { 
+    return { 
+        items: {}, 
+        trophies: {}, 
+        planningData: {},      // Planning calendrier
+        checklistData: [],     // Checklist
+        selectedResources: [], // Ressources
+        lastUpdated: new Date().toISOString() 
+    }; 
+}
 
 function loadUserData(userId) {
     if (userId) {
@@ -10113,11 +10175,11 @@ function loadUserData(userId) {
             if (!docSnap.exists()) saveUserData();
             localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
             
-            // ÉTAPE 3 : Charger les données du planning depuis Firebase
-            if (typeof loadData === 'function') {
-                loadData();
-                if (typeof renderCalendar === 'function') renderCalendar();
-                if (typeof renderChecklist === 'function') renderChecklist();
+            // ÉTAPE 9 : Charger les données du planning depuis Firebase
+            if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                PlanningModule.loadData();
+                if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
             }
             
             renderAll();
@@ -10128,10 +10190,10 @@ function loadUserData(userId) {
         userData = saved ? JSON.parse(saved) : initializeUserData();
         
         // Charger le planning depuis localStorage
-        if (typeof loadData === 'function') {
-            loadData();
-            if (typeof renderCalendar === 'function') renderCalendar();
-            if (typeof renderChecklist === 'function') renderChecklist();
+        if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+            PlanningModule.loadData();
+            if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+            if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
         }
         
         renderAll();
@@ -10140,22 +10202,82 @@ function loadUserData(userId) {
 
 async function saveUserData() {
     if (!currentUser || !userData) return;
+    
+    // Afficher l'indicateur de sauvegarde
     savingIndicator.classList.add('visible');
-    savingIndicator.innerHTML = '<i class="fas fa-spinner"></i><span>Sauvegarde...</span>';
+    savingIndicator.classList.remove('saved');
+    savingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Sauvegarde...</span>';
+    
     try {
         userData.lastUpdated = new Date().toISOString();
-        await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
+        
+        // OPTIMISATION : Utiliser updateDoc au lieu de setDoc
+        // Ne met à jour que les champs modifiés au lieu de réécrire tout le document
+        await updateDoc(doc(db, 'planningRevision', currentUser.uid), {
+            items: userData.items,
+            trophies: userData.trophies,
+            planningData: userData.planningData || {},
+            checklistData: userData.checklistData || [],
+            selectedResources: userData.selectedResources || [],
+            lastUpdated: userData.lastUpdated
+        });
+        
+        // Succès
+        lastSaveTime = Date.now();
+        
         savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
         savingIndicator.classList.add('saved');
-        setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 1500);
+        
+        // Masquer après 2 secondes
+        setTimeout(() => {
+            savingIndicator.classList.remove('visible', 'saved');
+        }, 2000);
+        
+        console.log('✅ Sauvegarde Firestore réussie');
+        
     } catch (e) {
-        console.error(e);
-        savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
-        setTimeout(() => savingIndicator.classList.remove('visible'), 2000);
+        console.error('❌ Erreur sauvegarde Firestore:', e);
+        
+        // En cas d'erreur, essayer avec setDoc (fallback)
+        if (e.code === 'not-found') {
+            try {
+                await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
+                lastSaveTime = Date.now();
+                savingIndicator.innerHTML = '<i class="fas fa-check"></i><span>Sauvegardé</span>';
+                savingIndicator.classList.add('saved');
+                setTimeout(() => savingIndicator.classList.remove('visible', 'saved'), 2000);
+                console.log('✅ Document créé avec setDoc (fallback)');
+            } catch (e2) {
+                console.error('❌ Erreur setDoc:', e2);
+                savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
+                setTimeout(() => savingIndicator.classList.remove('visible'), 3000);
+            }
+        } else {
+            savingIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur</span>';
+            setTimeout(() => savingIndicator.classList.remove('visible'), 3000);
+        }
     }
 }
 
-function debouncedSave() { if (saveTimeout) clearTimeout(saveTimeout); saveTimeout = setTimeout(saveUserData, 1000); }
+// ========================================
+// OPTIMISATION FIRESTORE - VERSION SIMPLIFIÉE
+// ========================================
+
+// Variables pour le système de sauvegarde optimisé
+let lastSaveTime = Date.now();
+const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
+
+// Fonction de sauvegarde avec debounce simple
+function debouncedSave() {
+    // Annuler le timeout précédent
+    if (saveTimeout) clearTimeout(saveTimeout);
+    
+    // Attendre 10 secondes d'inactivité avant de sauvegarder
+    saveTimeout = setTimeout(() => {
+        console.log('💾 Sauvegarde après inactivité (10s)');
+        saveUserData();
+    }, DEBOUNCE_DELAY);
+}
 
 function getItemKey(sId, fc) { return sId + '-' + fc; }
 
@@ -11824,11 +11946,18 @@ const PlanningModule = (function() {
     
     // Charger les données
     function loadData() {
-        // ÉTAPE 1 : Charger depuis userData (Firebase) si disponible
-        if (userData && userData.planningData) {
-            planningData = userData.planningData;
-        } else {
-            // Fallback localStorage pour compatibilité
+        // OPTIMISATION : Charger depuis userData (Firebase) en priorité
+        if (typeof userData !== 'undefined' && userData) {
+            if (userData.planningData) {
+                planningData = userData.planningData;
+            }
+            if (userData.checklistData) {
+                checklistData = userData.checklistData;
+            }
+        }
+        
+        // Fallback localStorage si pas de userData
+        if (Object.keys(planningData).length === 0) {
             try {
                 const saved = localStorage.getItem('typixclin_planning_v4');
                 if (saved) planningData = JSON.parse(saved);
@@ -11837,11 +11966,7 @@ const PlanningModule = (function() {
             }
         }
         
-        // Charger la checklist
-        if (userData && userData.checklistData) {
-            checklistData = userData.checklistData;
-        } else {
-            // Fallback localStorage
+        if (checklistData.length === 0) {
             try {
                 const savedChecklist = localStorage.getItem('typixclin_checklist');
                 if (savedChecklist) checklistData = JSON.parse(savedChecklist);
@@ -11853,23 +11978,23 @@ const PlanningModule = (function() {
     
     // Sauvegarder
     function saveData() {
-        // ÉTAPE 2 : Sauvegarder dans userData pour Firebase
-        if (userData) {
+        // OPTIMISATION : Sauvegarder dans userData pour Firebase
+        if (typeof userData !== 'undefined' && userData) {
             userData.planningData = planningData;
             userData.checklistData = checklistData;
             
-            // Déclencher la sauvegarde Firebase
+            // Déclencher la sauvegarde Firebase optimisée
             if (typeof debouncedSave === 'function') {
                 debouncedSave();
             }
         }
         
-        // Toujours sauvegarder en localStorage (backup)
+        // Backup localStorage (toujours actif)
         try {
             localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
             localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
         } catch (e) {
-            console.error('Erreur sauvegarde localStorage:', e);
+            console.error('Erreur localStorage:', e);
         }
     }
     
@@ -13169,6 +13294,9 @@ function renderSpecialtyLegend() {
     
 const api = {
     init,
+    loadData,              // AJOUT : Exposer pour loadUserData
+    renderCalendar,        // AJOUT : Exposer pour loadUserData
+    renderChecklist,       // AJOUT : Exposer pour loadUserData
     toggleChecklistItem,
     deleteChecklistItem,
     addItemFromTable,
