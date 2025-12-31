@@ -7152,6 +7152,16 @@ input[type="date"].modal-input {
             TypixClin
         </a>
         
+		<a href="comptepremium.html" id="premium-crown" style="display: none; margin-left: 0.5rem; text-decoration: none; font-size: 1.5rem; transition: transform 0.3s ease;" title="Mon compte Premium">
+    👑
+</a>
+
+<style>
+#premium-crown:hover {
+    transform: scale(1.2) rotate(-15deg);
+}
+</style>
+
         <nav class="nav">
             <ul class="nav-items">
                                <!-- Indicateur de sauvegarde -->
@@ -10458,7 +10468,39 @@ async function updateUserUI(user) {
             return;
         }
         // ========== FIN VÉRIFICATION ==========
-        
+					// ========== GESTION FREEMIUM ==========
+			const premiumCrown = document.getElementById('premium-crown');
+
+			if (result.data.isPremium) {
+				// Utilisateur premium (grace_period OU abonnement payant)
+				console.log('✅ Mode Premium activé');
+				
+				// Afficher la couronne
+				if (premiumCrown) {
+					premiumCrown.style.display = 'inline';
+				}
+				
+				// Désactiver les notifications freemium
+				if (window.PremiumSystem) {
+					window.PremiumSystem.disable();
+				}
+				
+			} else {
+				// Utilisateur sans abonnement - Mode Freemium
+				console.log('⚠️ Mode Freemium activé');
+				
+				// Masquer la couronne
+				if (premiumCrown) {
+					premiumCrown.style.display = 'none';
+				}
+				
+				// Activer les notifications freemium
+				if (window.PremiumSystem) {
+					window.PremiumSystem.enable();
+				}
+			}
+			// ========== FIN GESTION FREEMIUM ==========
+		
         currentUser = user;
         userAuth.classList.add('logged-in');
         loginRequired.style.display = 'none';
@@ -14064,6 +14106,6 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 </script>
 
 
-
+<script src="premium-notifications.js"></script>
 </body>
 </html>
