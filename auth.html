@@ -1079,7 +1079,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
@@ -1578,16 +1578,45 @@ registerForm.addEventListener('submit', async (e) => {
         await updateProfile(user, { displayName: name });
         await sendEmailVerification(user);
 
-        await setDoc(doc(db, 'users', user.uid), {
-            displayName: name,
-            firstName: firstname,
-            lastName: lastname,
-            email,
-            photoURL: '',
-            createdAt: serverTimestamp(),
-            checklists: {},
-            preferences: { theme: 'light' }
-        });
+				// Déterminer le type de premium selon la date de création
+				const now = new Date();
+				const cutoffDate = new Date('2025-09-01T00:00:00Z');
+				const gracePeriodEnd = new Date('2025-10-25T23:59:59Z');
+
+				let premiumData = {};
+
+				if (now < cutoffDate) {
+					// Compte créé AVANT le 1er septembre 2025 → Période de grâce
+					premiumData = {
+						isPremium: true,
+						premiumType: 'grace_period',
+						gracePeriodEnd: Timestamp.fromDate(gracePeriodEnd)
+					};
+				} else {
+					// Compte créé APRÈS le 1er septembre 2025 → Payant dès le départ
+					premiumData = {
+						isPremium: false,
+						premiumType: null,
+						gracePeriodEnd: null
+					};
+				}
+
+				await setDoc(doc(db, 'users', user.uid), {
+					displayName: name,
+					firstName: firstname,
+					lastName: lastname,
+					email,
+					photoURL: '',
+					createdAt: serverTimestamp(),
+					...premiumData,
+					stripeCustomerId: null,
+					stripeSubscriptionId: null,
+					subscriptionStatus: null,
+					subscriptionEndDate: null,
+					lastUpdated: serverTimestamp(),
+					checklists: {},
+					preferences: { theme: 'light' }
+				});
 
         // 🔐 IMPORTANT : déconnexion immédiate
         await signOut(auth);
@@ -1744,7 +1773,20 @@ document.addEventListener('keydown', (e) => {
         closeModal();
     }
 });
+// Gestion de la touche Tab pour mettre le focus sur les boutons de soumission
+document.getElementById('login-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('login-btn').focus();
+    }
+});
 
+document.getElementById('register-password-confirm').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('register-btn').focus();
+    }
+});
 
 </script>
 

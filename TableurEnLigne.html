@@ -153,11 +153,73 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-.loader-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); display: flex; justify-content: center; align-items: center; z-index: var(--z-max); transition: opacity var(--transition-slow), visibility var(--transition-slow); }
-.loader { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
-.loader-logo { width: 120px; height: 120px; position: relative; }
-.loader-logo::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 4px solid var(--gray-200); border-top-color: var(--primary); animation: spin 1s linear infinite; }
-.loader-text { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.05em; }
+/* ===== LOADER ===== */
+.loader-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-max);
+    transition: opacity var(--transition-slow), visibility var(--transition-slow);
+}
+
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.loader-logo {
+    width: 120px;
+    height: 120px;
+    position: relative;
+}
+
+.loader-logo::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.05em;
+    position: relative;
+}
+
+.loader-text::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-gradient);
+    background-size: 200% 200%;
+    animation: gradientFlow 2s ease infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 
 /* ===== HEADER ===== */
 .header {
@@ -7069,6 +7131,9 @@ input[type="date"].modal-input {
 </style>
 </head>
 
+
+
+
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGHT97MD" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
@@ -8366,7 +8431,7 @@ input[type="date"].modal-input {
         </div>
         
         <div class="footer-bottom">
-            <div class="footer-copyright">TypixClin © 2025, Jean ZENNARO</div>
+            <div class="footer-copyright">TypixClin © 2025, Jean ZENNARO. Certaines fonctionnalités et leur code source font l’objet d’un dépôt d’antériorité (e-Soleau – INPI).</div>
         </div>
     </div>
 </footer>
@@ -8397,7 +8462,8 @@ input[type="date"].modal-input {
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
@@ -8412,6 +8478,7 @@ const firebaseConfig = {
 let pendingChecklistItemId = null;
 
 const app = initializeApp(firebaseConfig);
+const functions = getFunctions(app, 'europe-west1');
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -10371,14 +10438,33 @@ function getInitials(name) {
 }
 
 async function updateUserUI(user) {
-    const presentationSection = document.getElementById('presentation-section'); // Ajout
+    const presentationSection = document.getElementById('presentation-section');
     
     if (user) {
+        // ========== VÉRIFICATION PREMIUM ==========
+        try {
+            const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
+            const result = await checkPremiumStatus();
+            
+            if (!result.data.isPremium) {
+                alert('⚠️ Accès premium requis. Vous allez être redirigé vers la page d\'abonnement.');
+                window.location.href = 'comptepremium.html';
+                return;
+            }
+        } catch (error) {
+            console.error('Erreur vérification premium:', error);
+            alert('Erreur lors de la vérification de votre abonnement.');
+            window.location.href = 'comptepremium.html';
+            return;
+        }
+        // ========== FIN VÉRIFICATION ==========
+        
         currentUser = user;
         userAuth.classList.add('logged-in');
         loginRequired.style.display = 'none';
-        if (presentationSection) presentationSection.style.display = 'none'; // ← AJOUT
+        if (presentationSection) presentationSection.style.display = 'none';
         mainContent.classList.add('active');
+        
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             const userInfo = userDoc.exists() ? userDoc.data() : {};
@@ -10393,12 +10479,13 @@ async function updateUserUI(user) {
             profileEmail.textContent = user.email || '';
             updateWelcomeMessage(user.displayName || 'Utilisateur');
         }
+        
         loadUserData(user.uid);
     } else {
         currentUser = null;
         userAuth.classList.remove('logged-in');
         loginRequired.style.display = 'block';
-        if (presentationSection) presentationSection.style.display = 'block'; // ← AJOUT
+        if (presentationSection) presentationSection.style.display = 'block';
         mainContent.classList.remove('active');
         if (unsubscribe) { unsubscribe(); unsubscribe = null; }
     }
@@ -13975,5 +14062,8 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 
 
 </script>
+
+<script src="premium-notifications.js"></script>
+
 </body>
 </html>

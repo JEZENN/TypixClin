@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Compte Premium - TypixClin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-grace {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .plans-section {
+            margin: 30px 0;
+        }
+
+        .plans-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .plan-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .plan-card.recommended {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .plan-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 15px 0;
+        }
+
+        .plan-price span {
+            font-size: 0.4em;
+            color: #666;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .plan-features li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💎 Mon Compte Premium</h1>
+            <p>Gérez votre abonnement TypixClin</p>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                <p>⏳ Chargement de vos informations...</p>
+            </div>
+
+            <div id="main-content" style="display: none;">
+                <!-- Statut actuel -->
+                <div class="status-card">
+                    <div id="status-badge"></div>
+                    <div id="status-info"></div>
+                </div>
+
+                <!-- Alerte période de grâce -->
+                <div id="grace-alert" style="display: none;"></div>
+
+                <!-- Plans disponibles -->
+                <div id="plans-section" style="display: none;">
+                    <div class="plans-section">
+                        <h2>🎯 Choisissez votre plan</h2>
+                        <div class="plans-grid">
+                            <div class="plan-card" onclick="selectPlan('monthly')">
+                                <div class="plan-name">Plan Mensuel</div>
+                                <div class="plan-price">2,50€<span>/mois</span></div>
+                                <ul class="plan-features">
+                                    <li>Accès complet à TypixClin</li>
+                                    <li>Mises à jour automatiques</li>
+                                    <li>Support prioritaire</li>
+                                    <li>Sans engagement</li>
+                                </ul>
+                                <button class="btn btn-primary" onclick="subscribe('monthly')">
+                                    Souscrire
+                                </button>
+                            </div>
+
+                            <div class="plan-card recommended">
+                                <div class="plan-name">Plan Annuel 🏆</div>
+                                <div class="plan-price">25€<span>/an</span></div>
+                                <ul class="plan-features">
+                                    <li>Tout du plan mensuel</li>
+                                    <li>Économisez 5€ par an</li>
+                                    <li>Facturation annuelle</li>
+                                    <li>Meilleur rapport qualité/prix</li>
+                                </ul>
+                                <button class="btn btn-primary" onclick="subscribe('annual')">
+                                    Souscrire (Recommandé)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button id="portal-btn" class="btn btn-secondary" style="display: none;" onclick="openCustomerPortal()">
+                        📊 Gérer mon abonnement
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.location.href='TableurEnLigne.html'">
+                        ← Retour au tableau
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSom91bLLumYC4AtcVWT6bxzbdKsHf40E",
+            authDomain: "typixclin-b5fa9.firebaseapp.com",
+            projectId: "typixclin-b5fa9",
+            storageBucket: "typixclin-b5fa9.firebasestorage.app",
+            messagingSenderId: "726560091078",
+            appId: "1:726560091078:web:5d56a98cdb8b45a8d4e37f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app, 'europe-west1');
+
+        let currentUser = null;
+        let userData = null;
+
+        // Vérifier l'authentification
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+            } else {
+                window.location.href = 'auth.html';
+            }
+        });
+
+        // Charger les données utilisateur
+        async function loadUserData() {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                
+                if (!userDoc.exists()) {
+                    showError('Données utilisateur introuvables');
+                    return;
+                }
+
+                userData = userDoc.data();
+                displayUserStatus();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Erreur chargement données:', error);
+                showError('Erreur lors du chargement de vos données');
+            }
+        }
+
+        // Afficher le statut de l'utilisateur
+        function displayUserStatus() {
+            const statusBadge = document.getElementById('status-badge');
+            const statusInfo = document.getElementById('status-info');
+            const graceAlert = document.getElementById('grace-alert');
+            const plansSection = document.getElementById('plans-section');
+            const portalBtn = document.getElementById('portal-btn');
+
+            let badgeHTML = '';
+            let infoHTML = '';
+            let showPlans = false;
+
+            // Période de grâce
+            if (userData.premiumType === 'grace_period') {
+                const graceEnd = userData.gracePeriodEnd?.toDate();
+                const now = new Date();
+                const daysLeft = Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24));
+
+                if (graceEnd && graceEnd > now) {
+                    badgeHTML = '<span class="status-badge status-grace">🎁 Période de grâce active</span>';
+                    infoHTML = `
+                        <div class="info-row">
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value">Accès gratuit temporaire</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Fin de la période :</span>
+                            <span class="info-value">${graceEnd.toLocaleDateString('fr-FR')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Jours restants :</span>
+                            <span class="info-value">${daysLeft} jours</span>
+                        </div>
+                    `;
+
+                    if (daysLeft <= 15) {
+                        graceAlert.innerHTML = `
+                            <div class="alert alert-warning">
+                                <strong>⚠️ Attention !</strong> Votre période gratuite se termine dans ${daysLeft} jours. 
+                                Souscrivez à un abonnement pour continuer à utiliser TypixClin.
+                            </div>
+                        `;
+                        graceAlert.style.display = 'block';
+                    }
+
+                    showPlans = true;
+
+                } else {
+                    badgeHTML = '<span class="status-badge status-inactive">❌ Période expirée</span>';
+                    infoHTML = `
+                        <div class="info-row">
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value">Accès expiré</span>
+                        </div>
+                    `;
+                    showPlans = true;
+                }
+            }
+            // Abonnement actif
+            else if (userData.isPremium && userData.subscriptionStatus === 'active') {
+                const endDate = userData.subscriptionEndDate?.toDate();
+                const planName = userData.premiumType === 'monthly' ? 'Mensuel' : 'Annuel';
+
+                badgeHTML = '<span class="status-badge status-active">✅ Abonnement actif</span>';
+                infoHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Plan :</span>
+                        <span class="info-value">${planName}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Prochain renouvellement :</span>
+                        <span class="info-value">${endDate ? endDate.toLocaleDateString('fr-FR') : 'N/A'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Statut du paiement :</span>
+                        <span class="info-value">✅ À jour</span>
+                    </div>
+                `;
+
+                portalBtn.style.display = 'inline-block';
+            }
+            // Pas d'abonnement
+            else {
+                badgeHTML = '<span class="status-badge status-inactive">❌ Pas d\'abonnement</span>';
+                infoHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Statut :</span>
+                        <span class="info-value">Aucun abonnement actif</span>
+                    </div>
+                `;
+                
+                graceAlert.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>💡 Information :</strong> Vous devez souscrire à un abonnement pour accéder à TypixClin.
+                    </div>
+                `;
+                graceAlert.style.display = 'block';
+                showPlans = true;
+            }
+
+            statusBadge.innerHTML = badgeHTML;
+            statusInfo.innerHTML = infoHTML;
+            plansSection.style.display = showPlans ? 'block' : 'none';
+        }
+
+        // Souscrire à un plan
+        window.subscribe = async function(planType) {
+            if (!currentUser) {
+                alert('Vous devez être connecté');
+                return;
+            }
+
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = 'Chargement...';
+
+                const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+                
+                const result = await createCheckoutSession({
+                    planType: planType,
+                    successUrl: window.location.origin + '/comptepremium.html?success=true',
+                    cancelUrl: window.location.origin + '/comptepremium.html?canceled=true'
+                });
+
+                // Rediriger vers Stripe Checkout
+                window.location.href = result.data.url;
+
+            } catch (error) {
+                console.error('Erreur souscription:', error);
+                alert('Erreur lors de la création de la session de paiement: ' + error.message);
+                button.disabled = false;
+                button.textContent = 'Souscrire';
+            }
+        };
+
+        // Ouvrir le portail client Stripe
+        window.openCustomerPortal = async function() {
+            try {
+                const button = document.getElementById('portal-btn');
+                button.disabled = true;
+                button.textContent = 'Chargement...';
+
+                const createPortalSession = httpsCallable(functions, 'createCustomerPortalSession');
+                
+                const result = await createPortalSession({
+                    returnUrl: window.location.origin + '/comptepremium.html'
+                });
+
+                window.location.href = result.data.url;
+
+            } catch (error) {
+                console.error('Erreur portail:', error);
+                alert('Erreur lors de l\'ouverture du portail: ' + error.message);
+                button.disabled = false;
+                button.textContent = '📊 Gérer mon abonnement';
+            }
+        };
+
+        // Afficher une erreur
+        function showError(message) {
+            document.getElementById('loading').innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Erreur :</strong> ${message}
+                </div>
+            `;
+        }
+
+        // Gérer les retours de Stripe
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            setTimeout(() => {
+                alert('✅ Paiement réussi ! Votre abonnement est maintenant actif.');
+                window.location.href = 'comptepremium.html';
+            }, 1000);
+        } else if (urlParams.get('canceled') === 'true') {
+            alert('❌ Paiement annulé. Vous pouvez réessayer quand vous voulez.');
+            window.location.href = 'comptepremium.html';
+        }
+    </script>
+	
+	</body>
+</html>
