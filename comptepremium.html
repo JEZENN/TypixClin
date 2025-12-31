@@ -368,9 +368,15 @@
         let userData = null;
 
 // Vérifier l'authentification
+let authChecked = false;
+
 onAuthStateChanged(auth, async (user) => {
     console.log('🔵 onAuthStateChanged déclenché');
     console.log('🔵 User:', user);
+    
+    // Éviter la double exécution
+    if (authChecked) return;
+    authChecked = true;
     
     if (user) {
         console.log('✅ Utilisateur connecté:', user.uid);
@@ -378,7 +384,12 @@ onAuthStateChanged(auth, async (user) => {
         await loadUserData();
     } else {
         console.log('❌ Pas d\'utilisateur - redirection auth.html');
-        window.location.href = 'auth.html';
+        // Attendre 1 seconde pour éviter redirection prématurée
+        setTimeout(() => {
+            if (!currentUser) {
+                window.location.href = 'auth.html';
+            }
+        }, 1000);
     }
 });
 
