@@ -367,29 +367,27 @@
         let currentUser = null;
         let userData = null;
 
-// Vérifier l'authentification
-let authChecked = false;
 
+
+// Vérifier l'authentification
 onAuthStateChanged(auth, async (user) => {
     console.log('🔵 onAuthStateChanged déclenché');
     console.log('🔵 User:', user);
-    
-    // Éviter la double exécution
-    if (authChecked) return;
-    authChecked = true;
     
     if (user) {
         console.log('✅ Utilisateur connecté:', user.uid);
         currentUser = user;
         await loadUserData();
     } else {
-        console.log('❌ Pas d\'utilisateur - redirection auth.html');
-        // Attendre 1 seconde pour éviter redirection prématurée
-        setTimeout(() => {
-            if (!currentUser) {
-                window.location.href = 'auth.html';
-            }
-        }, 1000);
+        console.log('❌ Pas d\'utilisateur');
+        // TEMPORAIREMENT DÉSACTIVÉ POUR TESTS
+        // window.location.href = 'auth.html';
+        document.getElementById('loading').innerHTML = `
+            <div class="alert alert-warning">
+                <strong>⚠️ Non connecté</strong><br>
+                <a href="auth.html">Se connecter</a>
+            </div>
+        `;
     }
 });
 
