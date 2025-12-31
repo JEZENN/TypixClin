@@ -1433,7 +1433,7 @@ if (logoutBtn) {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, sendEmailVerification, updateProfile, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
@@ -1558,6 +1558,8 @@ registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideMessage();
 
+    console.log('🔵 Début inscription');
+
     const firstname = document.getElementById('register-firstname').value.trim();
     const lastname = document.getElementById('register-lastname').value.trim();
     const name = firstname + ' ' + lastname;
@@ -1565,6 +1567,8 @@ registerForm.addEventListener('submit', async (e) => {
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
     const registerBtn = document.getElementById('register-btn');
+
+    console.log('🔵 Données récupérées');
 
     if (password !== passwordConfirm) {
         showMessage('Les mots de passe ne correspondent pas.');
@@ -1574,64 +1578,81 @@ registerForm.addEventListener('submit', async (e) => {
     setLoading(registerBtn, true);
 
     try {
+        console.log('🔵 Tentative création compte Firebase Auth...');
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        console.log('✅ Compte Auth créé:', user.uid);
+
+        console.log('🔵 Mise à jour profil...');
         await updateProfile(user, { displayName: name });
+        console.log('✅ Profil mis à jour');
+
+        console.log('🔵 Envoi email vérification...');
         await sendEmailVerification(user);
+        console.log('✅ Email envoyé');
 
-				// Déterminer le type de premium selon la date de création
-				const now = new Date();
-				const cutoffDate = new Date('2026-09-01T00:00:00Z');
-				const gracePeriodEnd = new Date('2026-10-25T23:59:59Z');
+        // Déterminer le type de premium selon la date de création
+        console.log('🔵 Calcul période de grâce...');
+        const now = new Date();
+        const cutoffDate = new Date('2026-09-01T00:00:00Z');
+        const gracePeriodEnd = new Date('2026-10-25T23:59:59Z');
 
-				let premiumData = {};
+        let premiumData = {};
 
-				if (now < cutoffDate) {
-					// Compte créé AVANT le 1er septembre 2025 → Période de grâce
-					premiumData = {
-						isPremium: true,
-						premiumType: 'grace_period',
-						gracePeriodEnd: Timestamp.fromDate(gracePeriodEnd)
-					};
-				} else {
-					// Compte créé APRÈS le 1er septembre 2025 → Payant dès le départ
-					premiumData = {
-						isPremium: false,
-						premiumType: null,
-						gracePeriodEnd: null
-					};
-				}
+        if (now < cutoffDate) {
+            console.log('✅ Période de grâce activée');
+            premiumData = {
+                isPremium: true,
+                premiumType: 'grace_period',
+                gracePeriodEnd: Timestamp.fromDate(gracePeriodEnd)
+            };
+        } else {
+            console.log('⚠️ Pas de période de grâce (après cutoff)');
+            premiumData = {
+                isPremium: false,
+                premiumType: null,
+                gracePeriodEnd: null
+            };
+        }
 
-				await setDoc(doc(db, 'users', user.uid), {
-					displayName: name,
-					firstName: firstname,
-					lastName: lastname,
-					email,
-					photoURL: '',
-					createdAt: serverTimestamp(),
-					...premiumData,
-					stripeCustomerId: null,
-					stripeSubscriptionId: null,
-					subscriptionStatus: null,
-					subscriptionEndDate: null,
-					lastUpdated: serverTimestamp(),
-					checklists: {},
-					preferences: { theme: 'light' }
-				});
+        console.log('🔵 Écriture dans Firestore...');
+        await setDoc(doc(db, 'users', user.uid), {
+            displayName: name,
+            firstName: firstname,
+            lastName: lastname,
+            email,
+            photoURL: '',
+            createdAt: serverTimestamp(),
+            ...premiumData,
+            stripeCustomerId: null,
+            stripeSubscriptionId: null,
+            subscriptionStatus: null,
+            subscriptionEndDate: null,
+            lastUpdated: serverTimestamp(),
+            checklists: {},
+            preferences: { theme: 'light' }
+        });
+        console.log('✅ Document Firestore créé');
 
-        // 🔐 IMPORTANT : déconnexion immédiate
+        console.log('🔵 Déconnexion...');
         await signOut(auth);
+        console.log('✅ Déconnecté');
 
-        // 🔁 Retour onglet connexion
+        // Retour onglet connexion
         document.querySelector('[data-tab="login"]').click();
 
         showMessage(
-          "📧 Un email de vérification a été envoyé. Merci de le vérifier avant de vous connecter.",
-          "success"
+            "📧 Un email de vérification a été envoyé. Merci de le vérifier avant de vous connecter.",
+            "success"
         );
 
         registerForm.reset();
+        console.log('✅ INSCRIPTION COMPLÈTE');
 
     } catch (error) {
+        console.error('❌ ERREUR COMPLÈTE:', error);
+        console.error('❌ Message:', error.message);
+        console.error('❌ Code:', error.code);
+        console.error('❌ Stack:', error.stack);
         showMessage(translateError(error.code));
     } finally {
         setLoading(registerBtn, false);
