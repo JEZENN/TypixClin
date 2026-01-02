@@ -8459,7 +8459,7 @@ input[type="date"].modal-input {
 </div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -10605,21 +10605,37 @@ function hideWarningModal() {
     warningModal.classList.remove('show');
 }
 
+// Fonction pour forcer la sauvegarde immédiate (annule le debounce)
 function forceSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     if (hasUnsavedChanges && currentUser) {
-        userData.lastUpdated = new Date().toISOString();
+        // Sauvegarder localStorage (garanti)
+        try {
+            userData.lastUpdated = new Date().toISOString();
+            localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
+            console.log('💾 Sauvegarde forcée localStorage');
+        } catch (e) {
+            console.error('Erreur localStorage:', e);
+        }
         
-        // Sauvegarder Firebase uniquement
+        // Sauvegarder Firebase
         saveUserData();
         hasUnsavedChanges = false;
     }
 }
 
+// Version async pour attendre la fin de la sauvegarde
 async function forceSaveAsync() {
     if (saveTimeout) clearTimeout(saveTimeout);
     if (hasUnsavedChanges && currentUser) {
-        userData.lastUpdated = new Date().toISOString();
+        // Sauvegarder localStorage (garanti)
+        try {
+            userData.lastUpdated = new Date().toISOString();
+            localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
+            console.log('💾 Sauvegarde forcée localStorage');
+        } catch (e) {
+            console.error('Erreur localStorage:', e);
+        }
         
         // Sauvegarder Firebase et ATTENDRE
         await saveUserData();
@@ -10675,21 +10691,34 @@ function initializeUserData() {
 
 function loadUserData(userId) {
     if (userId) {
-        // Utilisateur connecté → Firebase UNIQUEMENT
+        // Utilisateur connecté → Firebase
         unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
+            // Charger depuis Firebase ou fallback localStorage backup
             if (docSnap.exists()) {
                 userData = docSnap.data();
                 console.log('📥 Données chargées depuis Firebase');
             } else {
-                // Nouveau compte : initialiser avec données vides
-                userData = initializeUserData();
-                saveUserData();
-                console.log('🆕 Nouveau compte initialisé');
+                // Essayer de charger depuis le backup localStorage
+                const backup = localStorage.getItem('planningRevision_backup');
+                if (backup) {
+                    try {
+                        userData = JSON.parse(backup);
+                        console.log('🔄 Données récupérées depuis localStorage backup');
+                        // Sauvegarder sur Firebase
+                        saveUserData();
+                    } catch (e) {
+                        userData = initializeUserData();
+                    }
+                } else {
+                    userData = initializeUserData();
+                    saveUserData();
+                }
             }
             
-            loadResourcesConfig();
+			loadResourcesConfig();
+            localStorage.setItem('planningRevision_backup', JSON.stringify(userData));
             
-            // Charger les données du planning depuis userData
+            // IMPORTANT : Charger les données du planning depuis userData
             if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
                 PlanningModule.loadData();
                 console.log('📅 Planning chargé:', userData.planningData ? 'Données trouvées' : 'Vide');
@@ -10700,15 +10729,40 @@ function loadUserData(userId) {
             
             renderAll();
         }, e => { 
-            console.error('❌ Erreur Firebase:', e);
-            // Initialiser avec données vides en cas d'erreur
-            userData = initializeUserData();
+            console.error('❌ Erreur Firebase:', e); 
+            // En cas d'erreur Firebase, essayer le backup localStorage
+            const backup = localStorage.getItem('planningRevision_backup');
+            if (backup) {
+                try {
+                    userData = JSON.parse(backup);
+                    console.log('🔄 Données récupérées depuis localStorage backup (erreur Firebase)');
+                    
+                    // IMPORTANT : Charger le planning après récupération
+                    if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                        PlanningModule.loadData();
+                        if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                        if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+                    }
+                } catch (e2) {
+                    userData = initializeUserData();
+                }
+            } else {
+                userData = initializeUserData();
+            }
             renderAll(); 
         });
     } else {
-        // Pas connecté : rediriger vers login (car app premium uniquement)
-        console.warn('⚠️ Utilisateur non connecté - redirection nécessaire');
-        userData = initializeUserData();
+        // Pas connecté → localStorage
+        const saved = localStorage.getItem('planningRevision_local');
+        userData = saved ? JSON.parse(saved) : initializeUserData();
+        
+        // Charger le planning depuis localStorage
+        if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+            PlanningModule.loadData();
+            if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+            if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+        }
+        
         renderAll();
     }
 }
@@ -12509,38 +12563,57 @@ const PlanningModule = (function() {
     
     // Charger les données
     function loadData() {
-		// Charger depuis userData UNIQUEMENT
-		if (typeof userData !== 'undefined' && userData) {
-			if (userData.planningData) {
-				planningData = userData.planningData;
-			}
-			if (userData.checklistData) {
-				checklistData = userData.checklistData;
-			}
-		}
-
-		// Si pas de données : initialiser vide (pas de fallback)
-		if (!planningData) {
-			planningData = {};
-		}
-		if (!checklistData) {
-			checklistData = [];
-		}
-    }
-    
-// Sauvegarder
-function saveData() {
-    // Sauvegarder dans userData pour Firebase UNIQUEMENT
-    if (typeof userData !== 'undefined' && userData) {
-        userData.planningData = planningData;
-        userData.checklistData = checklistData;
+        // OPTIMISATION : Charger depuis userData (Firebase) en priorité
+        if (typeof userData !== 'undefined' && userData) {
+            if (userData.planningData) {
+                planningData = userData.planningData;
+            }
+            if (userData.checklistData) {
+                checklistData = userData.checklistData;
+            }
+        }
         
-        // Déclencher la sauvegarde Firebase
-        if (typeof debouncedSave === 'function') {
-            debouncedSave();
+        // Fallback localStorage si pas de userData
+        if (Object.keys(planningData).length === 0) {
+            try {
+                const saved = localStorage.getItem('typixclin_planning_v4');
+                if (saved) planningData = JSON.parse(saved);
+            } catch (e) {
+                planningData = {};
+            }
+        }
+        
+        if (checklistData.length === 0) {
+            try {
+                const savedChecklist = localStorage.getItem('typixclin_checklist');
+                if (savedChecklist) checklistData = JSON.parse(savedChecklist);
+            } catch (e) {
+                checklistData = [];
+            }
         }
     }
-}
+    
+    // Sauvegarder
+    function saveData() {
+        // OPTIMISATION : Sauvegarder dans userData pour Firebase
+        if (typeof userData !== 'undefined' && userData) {
+            userData.planningData = planningData;
+            userData.checklistData = checklistData;
+            
+            // Déclencher la sauvegarde Firebase optimisée
+            if (typeof debouncedSave === 'function') {
+                debouncedSave();
+            }
+        }
+        
+        // Backup localStorage (toujours actif)
+        try {
+            localStorage.setItem('typixclin_planning_v4', JSON.stringify(planningData));
+            localStorage.setItem('typixclin_checklist', JSON.stringify(checklistData));
+        } catch (e) {
+            console.error('Erreur localStorage:', e);
+        }
+    }
     
 // Setup année dropdown
 function setupYearSelector() {
@@ -13201,21 +13274,6 @@ function addChecklistItem() {
     renderChecklist();
 }
     
-function toggleChecklistItem(id) {
-        const item = checklistData.find(i => i.id === id);
-        if (item) {
-            // Toggle l'état
-            item.completed = !item.completed; 
-            saveData(); 
-            renderChecklist();
-            
-            // Si c'est un item du tableau ET qu'on vient de le cocher → proposer d'enregistrer un tour
-            if (item.itemKey && item.completed) {
-                window.openTourModalFromChecklist(id, item.itemKey);
-            }
-        }
-    }
- 
  
 function deleteChecklistItem(id) {
     // Récupérer l'itemKey avant de supprimer
@@ -13372,11 +13430,11 @@ function renderChecklist() {
             '<span class="checklist-specialty-badge" style="background-color: ' + item.specialtyColor + '20; color: ' + item.specialtyColor + ';" title="' + (item.specialtyName || '') + '">' + (item.specialtyShort || '') + '</span>' : '';
         return `
             <div class="checklist-item ${item.completed ? 'completed' : ''}">
-                <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="PlanningModule.toggleChecklistItem(${item.id}, event)">
+                <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="toggleChecklistItem(${item.id}, event)">
                     ${item.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
                 <span class="checklist-item-text">${escapeHtml(item.text)}${dotHtml}</span>
-                <button class="checklist-delete" onclick="PlanningModule.deleteChecklistItem(${item.id})"><i class="fas fa-trash"></i></button>
+                <button class="checklist-delete" onclick="deleteChecklistItem(${item.id})"><i class="fas fa-trash"></i></button>
             </div>
         `;
     }).join('');
@@ -13472,22 +13530,44 @@ window.TrophiesSystem = (function() {
     
     let unlockedTrophies = {};
     
-loadTrophies() {
-    if (typeof userData !== 'undefined' && userData && userData.trophies) {
-        unlockedTrophies = userData.trophies;
-    } else {
-        unlockedTrophies = {};
-    }
-},
-
-saveTrophies() {
-    if (typeof userData !== 'undefined' && userData) {
-        userData.trophies = unlockedTrophies;
-        if (typeof debouncedSave === 'function') {
-            debouncedSave();
+    function loadTrophies() {
+        // Si déjà chargé, ne pas recharger
+        if (Object.keys(unlockedTrophies).length > 0) {
+            return;
+        }
+        
+        // Charger depuis userData (Firebase) si disponible
+        if (userData && userData.trophies) {
+            unlockedTrophies = userData.trophies;
+        } else {
+            const saved = localStorage.getItem('typixclin_trophies');
+            if (saved) {
+                try {
+                    unlockedTrophies = JSON.parse(saved);
+                    if (userData) {
+                        userData.trophies = unlockedTrophies;
+                        debouncedSave();
+                        localStorage.removeItem('typixclin_trophies');
+                    }
+                } catch (e) {
+                    unlockedTrophies = {};
+                }
+            } else {
+                unlockedTrophies = {};
+            }
         }
     }
-}
+
+    function saveTrophies() {
+        // Sauvegarder dans userData pour Firebase
+        if (userData) {
+            userData.trophies = unlockedTrophies;
+            debouncedSave();
+        } else {
+            // Fallback localStorage si pas connecté
+            localStorage.setItem('typixclin_trophies', JSON.stringify(unlockedTrophies));
+        }
+    }
     
     function getCurrentStats() {
         const today = new Date();
