@@ -1534,7 +1534,7 @@ input[type="date"].modal-input {
 .empty-state { text-align: center; padding: 3rem 2rem; color: var(--gray-500); }
 .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
 
-.back-to-top { position: fixed; bottom: 2rem; left: 2rem; width: 50px; height: 50px; border-radius: var(--border-radius-full); background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; cursor: pointer; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all var(--transition-normal); box-shadow: var(--shadow-md); z-index: var(--z-elevated); }
+.back-to-top { position: fixed; bottom: 2rem; right: 2rem; width: 50px; height: 50px; border-radius: var(--border-radius-full); background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; cursor: pointer; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all var(--transition-normal); box-shadow: var(--shadow-md); z-index: var(--z-elevated); }
 .back-to-top.visible { opacity: 1; visibility: visible; transform: translateY(0); }
 
 .tour-badge-wrapper { display: flex; flex-direction: column; align-items: center; }
@@ -7215,7 +7215,11 @@ input[type="date"].modal-input {
                             <div class="profile-email" id="profile-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5c39313d35301c392439312c3039723f3331">[email&#160;protected]</a></div>
                         </div>
                         <div class="profile-menu">
-                            <button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
+       					   <a href="comptepremium.html" class="profile-menu-item">
+								<i class="fas fa-crown"></i>
+								Mon abonnement
+							</a>
+							<button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
                         </div>
                     </div>
                 </div>
@@ -10754,6 +10758,10 @@ function loadUserData(userId) {
 async function saveUserData() {
     if (!currentUser || !userData) return;
     
+    // Variable pour tracker si la sauvegarde est terminée
+    let saveCompleted = false;
+    let saveTimedOut = false;
+    
     // Afficher l'indicateur de sauvegarde dans le header (rotation rapide)
     if (saveIndicatorHeader) {
         saveIndicatorHeader.classList.add('visible', 'saving');
@@ -10762,11 +10770,95 @@ async function saveUserData() {
         saveIndicatorHeader.title = 'Sauvegarde en cours...';
     }
     
+    // ⚠️ TIMEOUT DE SÉCURITÉ - Force l'arrêt après 10 secondes
+    const safetyTimeout = setTimeout(() => {
+        if (!saveCompleted) {
+            saveTimedOut = true;
+            console.warn('⏱️ Timeout de sauvegarde atteint (10s)');
+            
+            // FORCER l'arrêt de l'animation
+            if (saveIndicatorHeader) {
+                saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+                saveIndicatorHeader.classList.add('visible');
+                saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                saveIndicatorHeader.title = 'Timeout - Vérifiez votre connexion';
+                saveIndicatorHeader.style.color = 'var(--danger)';
+                
+                // Supprimer toutes les classes d'animation
+                const icon = saveIndicatorHeader.querySelector('i');
+                if (icon) {
+                    icon.style.animation = 'none';
+                }
+                
+                setTimeout(() => {
+                    if (saveIndicatorHeader) {
+                        saveIndicatorHeader.classList.remove('visible');
+                        saveIndicatorHeader.style.color = '';
+                    }
+                }, 4000);
+            }
+        }
+    }, 10000); // 10 secondes
+    
+    // Fonction helper pour afficher le succès
+    const showSaveSuccess = () => {
+        saveCompleted = true;
+        clearTimeout(safetyTimeout);
+        
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('pending', 'saving');
+            saveIndicatorHeader.classList.add('saved');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
+            saveIndicatorHeader.title = 'Tout est sauvegardé';
+            
+            const icon = saveIndicatorHeader.querySelector('i');
+            if (icon) {
+                icon.style.animation = 'none';
+            }
+            
+            setTimeout(() => {
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('visible', 'saved');
+                }
+            }, 3000);
+        }
+    };
+    
+    // Fonction helper pour afficher l'erreur
+    const showSaveError = () => {
+        saveCompleted = true;
+        clearTimeout(safetyTimeout);
+        
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+            saveIndicatorHeader.classList.add('visible');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            saveIndicatorHeader.title = 'Erreur de sauvegarde';
+            saveIndicatorHeader.style.color = 'var(--danger)';
+            
+            const icon = saveIndicatorHeader.querySelector('i');
+            if (icon) {
+                icon.style.animation = 'none';
+            }
+            
+            setTimeout(() => {
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('visible');
+                    saveIndicatorHeader.style.color = '';
+                }
+            }, 3000);
+        }
+    };
+    
     try {
+        // Si le timeout est déjà passé, ne pas essayer de sauvegarder
+        if (saveTimedOut) {
+            return;
+        }
+        
         userData.lastUpdated = new Date().toISOString();
         
         // OPTIMISATION : Utiliser updateDoc au lieu de setDoc
-        // Ne met à jour que les champs modifiés au lieu de réécrire tout le document
         await updateDoc(doc(db, 'planningRevision', currentUser.uid), {
             items: userData.items,
             trophies: userData.trophies,
@@ -10776,64 +10868,42 @@ async function saveUserData() {
             lastUpdated: userData.lastUpdated
         });
         
-        // Succès
-        lastSaveTime = Date.now();
-        hasUnsavedChanges = false; // Réinitialiser le flag
-        
-        // Afficher le check vert
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('pending', 'saving');
-            saveIndicatorHeader.classList.add('saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
-            saveIndicatorHeader.title = 'Tout est sauvegardé';
-            
-            // Masquer après 3 secondes
-            setTimeout(() => {
-                saveIndicatorHeader.classList.remove('visible', 'saved');
-            }, 3000);
+        // Succès - mais vérifier qu'on n'a pas timeout
+        if (!saveTimedOut) {
+            lastSaveTime = Date.now();
+            hasUnsavedChanges = false;
+            showSaveSuccess();
+            console.log('✅ Sauvegarde Firestore réussie');
         }
-        
-        console.log('✅ Sauvegarde Firestore réussie');
         
     } catch (e) {
         console.error('❌ Erreur sauvegarde Firestore:', e);
+        
+        // Si timeout déjà passé, ne rien faire
+        if (saveTimedOut) {
+            return;
+        }
         
         // En cas d'erreur, essayer avec setDoc (fallback)
         if (e.code === 'not-found') {
             try {
                 await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
-                lastSaveTime = Date.now();
-                hasUnsavedChanges = false; // Réinitialiser le flag
                 
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('pending', 'saving');
-                    saveIndicatorHeader.classList.add('saved');
-                    saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
-                    saveIndicatorHeader.title = 'Tout est sauvegardé';
-                    setTimeout(() => saveIndicatorHeader.classList.remove('visible', 'saved'), 3000);
+                if (!saveTimedOut) {
+                    lastSaveTime = Date.now();
+                    hasUnsavedChanges = false;
+                    showSaveSuccess();
+                    console.log('✅ Document créé avec setDoc (fallback)');
                 }
-                
-                console.log('✅ Document créé avec setDoc (fallback)');
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
-                
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-                    saveIndicatorHeader.classList.add('visible');
-                    saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                    saveIndicatorHeader.title = 'Erreur de sauvegarde';
-                    saveIndicatorHeader.style.color = 'var(--danger)';
-                    setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
+                if (!saveTimedOut) {
+                    showSaveError();
                 }
             }
         } else {
-            if (saveIndicatorHeader) {
-                saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-                saveIndicatorHeader.classList.add('visible');
-                saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                saveIndicatorHeader.title = 'Erreur de sauvegarde';
-                saveIndicatorHeader.style.color = 'var(--danger)';
-                setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
+            if (!saveTimedOut) {
+                showSaveError();
             }
         }
     }
@@ -11856,10 +11926,19 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     debouncedSave();
     renderAll();
     
-    // Si on vient de la checklist, afficher une notification
+    // Si on vient de la checklist, valider la tâche ET afficher une notification
     if (pendingChecklistItemId !== null) {
-        window.showToastNotification('Tour enregistré !', 'success');
+        // Valider la tâche dans la checklist
+        if (typeof PlanningModule !== 'undefined' && PlanningModule.completeChecklistItem) {
+            PlanningModule.completeChecklistItem(pendingChecklistItemId);
+        }
+        window.showToastNotification('Tour enregistré et tâche validée !', 'success');
         pendingChecklistItemId = null;
+    }
+    
+    // Vérifier les trophées après validation
+    if (typeof TrophiesSystem !== 'undefined') {
+        setTimeout(() => TrophiesSystem.checkTrophies(), 500);
     }
 });
 
@@ -13369,12 +13448,16 @@ function handleChecklistChoice(withTour) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('checklist-choice-tour')?.addEventListener('click', function(e) {
         e.stopPropagation();
-        handleChecklistChoice(true);
+        if (typeof PlanningModule !== 'undefined' && PlanningModule.handleChecklistChoice) {
+            PlanningModule.handleChecklistChoice(true);
+        }
     });
     
     document.getElementById('checklist-choice-task')?.addEventListener('click', function(e) {
         e.stopPropagation();
-        handleChecklistChoice(false);
+        if (typeof PlanningModule !== 'undefined' && PlanningModule.handleChecklistChoice) {
+            PlanningModule.handleChecklistChoice(false);
+        }
     });
 });
     
@@ -13397,11 +13480,11 @@ function renderChecklist() {
             '<span class="checklist-specialty-badge" style="background-color: ' + item.specialtyColor + '20; color: ' + item.specialtyColor + ';" title="' + (item.specialtyName || '') + '">' + (item.specialtyShort || '') + '</span>' : '';
         return `
             <div class="checklist-item ${item.completed ? 'completed' : ''}">
-                <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="toggleChecklistItem(${item.id}, event)">
+                <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="PlanningModule.toggleChecklistItem(${item.id}, event)">
                     ${item.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
                 <span class="checklist-item-text">${escapeHtml(item.text)}${dotHtml}</span>
-                <button class="checklist-delete" onclick="deleteChecklistItem(${item.id})"><i class="fas fa-trash"></i></button>
+                <button class="checklist-delete" onclick="PlanningModule.deleteChecklistItem(${item.id})"><i class="fas fa-trash"></i></button>
             </div>
         `;
     }).join('');
@@ -13841,14 +13924,15 @@ function renderSpecialtyLegend() {
     
 const api = {
     init,
-    loadData,              // AJOUT : Exposer pour loadUserData
-    renderCalendar,        // AJOUT : Exposer pour loadUserData
-    renderChecklist,       // AJOUT : Exposer pour loadUserData
+    loadData,              
+    renderCalendar,        
+    renderChecklist,       
     toggleChecklistItem,
     deleteChecklistItem,
     addItemFromTable,
     showChecklistChoicePopup,
     handleChecklistChoice,
+	completeChecklistItem,
     isItemInChecklist,
     getChecklistItemKey
 };
@@ -13992,6 +14076,7 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 
 
 </script>
+
 
 
 </body>
