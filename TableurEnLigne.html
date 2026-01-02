@@ -10499,10 +10499,34 @@ userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdow
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => {
     try {
+        // 1️⃣ Annuler le debounce en cours
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+            saveTimeout = null;
+        }
+        
+        // 2️⃣ Afficher l'indicateur de sauvegarde
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.add('visible', 'saving');
+            saveIndicatorHeader.classList.remove('pending', 'saved');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            saveIndicatorHeader.title = 'Sauvegarde avant déconnexion...';
+        }
+        
+        // 3️⃣ Forcer la sauvegarde immédiate si des modifications existent
+        if (hasUnsavedChanges && currentUser) {
+            console.log('💾 Sauvegarde forcée avant déconnexion...');
+            await forceSaveAsync();
+        }
+        
+        // 4️⃣ Déconnexion
         await signOut(auth);
         profileDropdown.classList.remove('active');
         
-        // Afficher le toast de déconnexion
+        // 5️⃣ Réinitialiser le flag
+        hasUnsavedChanges = false;
+        
+        // 6️⃣ Afficher le toast de déconnexion
         const toast = document.getElementById('toast-logout');
         if (toast) {
             toast.classList.add('show');
@@ -10514,8 +10538,20 @@ logoutBtn?.addEventListener('click', async () => {
             }, 3000);
         }
         
+        console.log('✅ Déconnexion réussie avec sauvegarde');
+        
     } catch (error) {
-        console.error('Erreur lors de la déconnexion:', error);
+        console.error('❌ Erreur lors de la déconnexion:', error);
+        
+        // Afficher l'erreur dans l'indicateur
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('saving', 'saved', 'pending');
+            saveIndicatorHeader.classList.add('visible');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            saveIndicatorHeader.title = 'Erreur de sauvegarde';
+            saveIndicatorHeader.style.color = 'var(--danger)';
+            setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
+        }
     }
 });
 
@@ -10557,6 +10593,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Forcer la sauvegarde immédiate
             await forceSaveAsync();
+			await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s de pause
         });
     }
     
