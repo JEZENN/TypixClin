@@ -8465,6 +8465,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import { getFirestore, doc, getDoc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
+
 const firebaseConfig = {
     apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
     authDomain: "typixclin-b5fa9.firebaseapp.com",
@@ -8475,13 +8476,243 @@ const firebaseConfig = {
     measurementId: "G-9CZ2QB6TNK"
 };
 
+// ========== SESSION MANAGER ==========
+class SessionManager {
+    constructor(db, auth) {
+        this.db = db;
+        this.auth = auth;
+        this.sessionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.heartbeatInterval = null;
+        this.isCurrentSessionActive = false;
+        this.onSessionKicked = null;
+    }
+
+    async startSession(user, onKicked = null) {
+        if (!user) return false;
+        this.onSessionKicked = onKicked;
+        const sessionRef = doc(this.db, 'activeSessions', user.uid);
+
+        try {
+            const sessionSnap = await getDoc(sessionRef);
+            if (sessionSnap.exists()) {
+                const existingSession = sessionSnap.data();
+                const existingTime = existingSession.lastHeartbeat?.toDate?.() || new Date(0);
+                const timeDiff = (new Date() - existingTime) / 1000;
+                if (timeDiff < 30) {
+                    console.warn('⚠️ Session active détectée');
+                    this.showTakeoverNotification(existingSession);
+                }
+            }
+
+            await setDoc(sessionRef, {
+                sessionId: this.sessionId,
+                userId: user.uid,
+                userEmail: user.email,
+                startTime: serverTimestamp(),
+                lastHeartbeat: serverTimestamp(),
+                deviceInfo: this.getDeviceInfo()
+            });
+
+            this.isCurrentSessionActive = true;
+            console.log('✅ Session démarrée:', this.sessionId);
+            this.startHeartbeat(user);
+            return true;
+        } catch (error) {
+            console.error('❌ Erreur session:', error);
+            return false;
+        }
+    }
+
+    showTakeoverNotification(existingSession) {
+        const notification = document.createElement('div');
+        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;padding:1rem 1.5rem;border-radius:0.75rem;box-shadow:0 10px 25px rgba(59,130,246,0.3);z-index:10001;animation:slideIn 0.3s ease';
+        notification.innerHTML = `<div style="display:flex;align-items:center;gap:1rem"><i class="fas fa-info-circle" style="font-size:1.5rem"></i><div><strong>Session précédente fermée</strong><p style="font-size:0.85rem;margin:0;opacity:0.9">Appareil: ${existingSession.deviceInfo || 'Inconnu'}</p></div></div>`;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 4000);
+    }
+
+    startHeartbeat(user) {
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        this.heartbeatInterval = setInterval(async () => {
+            if (!this.isCurrentSessionActive) {
+                clearInterval(this.heartbeatInterval);
+                return;
+            }
+            try {
+                await setDoc(doc(this.db, 'activeSessions', user.uid), { lastHeartbeat: serverTimestamp() }, { merge: true });
+                console.log('💓 Heartbeat');
+            } catch (error) {
+                console.error('❌ Erreur heartbeat:', error);
+            }
+        }, 15000);
+    }
+
+    async endSession(user) {
+        if (!user || !this.isCurrentSessionActive) return;
+        console.log('🔚 Fin session');
+        this.isCurrentSessionActive = false;
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+        try {
+            await setDoc(doc(this.db, 'activeSessions', user.uid), { sessionId: deleteField(), lastHeartbeat: deleteField() }, { merge: true });
+            console.log('✅ Session supprimée');
+        } catch (error) {
+            console.error('❌ Erreur suppression:', error);
+        }
+    }
+
+    getDeviceInfo() {
+        const ua = navigator.userAgent;
+        let deviceType = 'Ordinateur';
+        if (/Mobile|Android|iPhone|iPad|iPod/.test(ua)) deviceType = 'Mobile/Tablette';
+        let browser = 'Inconnu';
+        if (ua.includes('Chrome')) browser = 'Chrome';
+        else if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Safari')) browser = 'Safari';
+        else if (ua.includes('Edge')) browser = 'Edge';
+        return `${deviceType} - ${browser}`;
+    }
+}
+
+// ========== SAVE GUARD ==========
+class SaveGuard {
+    constructor() {
+        this.isSaving = false;
+        this.saveCount = 0;
+        this.notificationElement = null;
+        this.initialized = false;
+    }
+
+    init() {
+        if (this.initialized) return;
+        this.createStyles();
+        window.addEventListener('beforeunload', (e) => {
+            if (this.isSaving) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        });
+        this.initialized = true;
+        console.log('✅ SaveGuard initialisé');
+    }
+
+    startSaving() {
+        this.saveCount++;
+        this.isSaving = true;
+        console.log('💾 Sauvegarde démarrée');
+    }
+
+    endSaving() {
+        this.saveCount--;
+        if (this.saveCount <= 0) {
+            this.saveCount = 0;
+            this.isSaving = false;
+            console.log('✅ Sauvegarde terminée');
+        }
+    }
+
+    async attemptLogout(logoutFunction) {
+        if (this.isSaving) {
+            this.showSaveInProgressNotification(logoutFunction);
+            return false;
+        }
+        return true;
+    }
+
+    showSaveInProgressNotification(logoutFunction) {
+        if (this.notificationElement) this.notificationElement.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'save-guard-modal';
+        modal.innerHTML = `
+            <div class="save-guard-overlay"></div>
+            <div class="save-guard-content">
+                <div class="save-guard-spinner"><i class="fas fa-sync-alt fa-spin"></i></div>
+                <h2 class="save-guard-title">Sauvegarde en cours...</h2>
+                <p class="save-guard-message">Veuillez patienter pendant que vos données sont enregistrées.</p>
+                <div class="save-guard-progress"><div class="save-guard-progress-bar"></div></div>
+                <div class="save-guard-actions">
+                    <button class="save-guard-btn-cancel" id="save-guard-cancel">Annuler</button>
+                    <button class="save-guard-btn-force" id="save-guard-force">Se déconnecter quand même</button>
+                </div>
+            </div>`;
+
+        this.notificationElement = modal;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+
+        modal.querySelector('#save-guard-cancel').addEventListener('click', () => this.closeNotification());
+        modal.querySelector('#save-guard-force').addEventListener('click', async () => {
+            console.warn('⚠️ Déconnexion forcée');
+            this.closeNotification();
+            this.isSaving = false;
+            this.saveCount = 0;
+            if (logoutFunction) await logoutFunction();
+        });
+
+        const checkInterval = setInterval(() => {
+            if (!this.isSaving) {
+                clearInterval(checkInterval);
+                this.showSaveCompletedAndLogout(logoutFunction);
+            }
+        }, 500);
+
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (this.isSaving) this.showSaveCompletedAndLogout(logoutFunction);
+        }, 30000);
+    }
+
+    showSaveCompletedAndLogout(logoutFunction) {
+        if (!this.notificationElement) return;
+        const content = this.notificationElement.querySelector('.save-guard-content');
+        content.innerHTML = `
+            <div class="save-guard-success"><i class="fas fa-check-circle"></i></div>
+            <h2 class="save-guard-title">Sauvegarde terminée !</h2>
+            <p class="save-guard-message">Vous pouvez maintenant vous déconnecter en toute sécurité.</p>`;
+        setTimeout(async () => {
+            this.closeNotification();
+            if (logoutFunction) await logoutFunction();
+        }, 1500);
+    }
+
+    closeNotification() {
+        if (!this.notificationElement) return;
+        this.notificationElement.classList.remove('active');
+        setTimeout(() => {
+            if (this.notificationElement) {
+                this.notificationElement.remove();
+                this.notificationElement = null;
+            }
+        }, 300);
+    }
+
+    createStyles() {
+        if (document.getElementById('save-guard-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'save-guard-styles';
+        style.textContent = `.save-guard-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s}.save-guard-modal.active{opacity:1}.save-guard-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px)}.save-guard-content{position:relative;background:white;border-radius:1.5rem;padding:2.5rem;max-width:500px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.3);text-align:center;transform:scale(0.9);transition:transform 0.3s}.save-guard-modal.active .save-guard-content{transform:scale(1)}[data-theme="dark"] .save-guard-content{background:#1e293b;color:#f9fafb}.save-guard-spinner{width:80px;height:80px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem;color:white;animation:saveGuardPulse 2s ease-in-out infinite}.save-guard-success{width:80px;height:80px;background:linear-gradient(135deg,#10b981,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem;color:white;animation:saveGuardSuccess 0.5s ease}@keyframes saveGuardSuccess{0%{transform:scale(0);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}@keyframes saveGuardPulse{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0.5)}50%{box-shadow:0 0 0 20px rgba(59,130,246,0)}}.save-guard-title{font-size:1.75rem;font-weight:700;margin-bottom:1rem;color:#1f2937}[data-theme="dark"] .save-guard-title{color:#f9fafb}.save-guard-message{font-size:1rem;color:#6b7280;margin-bottom:2rem;line-height:1.6}[data-theme="dark"] .save-guard-message{color:#9ca3af}.save-guard-progress{width:100%;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin-bottom:2rem}[data-theme="dark"] .save-guard-progress{background:#374151}.save-guard-progress-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb,#3b82f6);background-size:200% 100%;animation:saveGuardProgress 1.5s ease-in-out infinite}@keyframes saveGuardProgress{0%{background-position:200% 0}100%{background-position:-200% 0}}.save-guard-actions{display:flex;gap:1rem;margin-top:2rem}.save-guard-actions button{flex:1;padding:0.875rem 1.5rem;border-radius:0.5rem;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.2s;border:none}.save-guard-btn-cancel{background:#e5e7eb;color:#374151}.save-guard-btn-cancel:hover{background:#d1d5db;transform:translateY(-2px)}[data-theme="dark"] .save-guard-btn-cancel{background:#374151;color:#f9fafb}[data-theme="dark"] .save-guard-btn-cancel:hover{background:#4b5563}.save-guard-btn-force{background:linear-gradient(135deg,#ef4444,#dc2626);color:white}.save-guard-btn-force:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(239,68,68,0.3)}@media (max-width:640px){.save-guard-content{padding:2rem 1.5rem}.save-guard-title{font-size:1.5rem}.save-guard-message{font-size:0.95rem}.save-guard-actions{flex-direction:column}}`;
+        document.head.appendChild(style);
+    }
+}
+
+const saveGuard = new SaveGuard();
+
+let sessionManager = null;
+saveGuard.init();
+
+
 let pendingChecklistItemId = null;
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'europe-west1');
 const auth = getAuth(app);
 const db = getFirestore(app);
-
+let sessionManager = null;
+saveGuard.init();
 
 // ===== CONFIGURATION DES RESSOURCES PERSONNALISÉES =====
 const AVAILABLE_RESOURCES = [
@@ -10441,6 +10672,17 @@ async function updateUserUI(user) {
     const presentationSection = document.getElementById('presentation-section');
     
     if (user) {
+        // ===== SESSION UNIQUE =====
+        if (!sessionManager) {
+            sessionManager = new SessionManager(db, auth);
+        }
+        
+        await sessionManager.startSession(user, (reason) => {
+            if (unsubscribe) unsubscribe();
+            auth.signOut();
+        });
+        // ===== FIN SESSION =====
+        
         // ========== VÉRIFICATION PREMIUM ==========
         try {
             const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
@@ -10482,6 +10724,12 @@ async function updateUserUI(user) {
         
         loadUserData(user.uid);
     } else {
+        // ===== NETTOYAGE SESSION =====
+        if (sessionManager && currentUser) {
+            await sessionManager.endSession(currentUser);
+        }
+        // ===== FIN NETTOYAGE =====
+        
         currentUser = null;
         userAuth.classList.remove('logged-in');
         loginRequired.style.display = 'block';
@@ -10494,14 +10742,30 @@ async function updateUserUI(user) {
 onAuthStateChanged(auth, updateUserUI);
 
 
-userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
-document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
-logoutBtn?.addEventListener('click', async () => {
+userAvatar?.addEventListener('click', e => { 
+    e.stopPropagation(); 
+    profileDropdown.classList.toggle('active'); 
+});
+
+document.addEventListener('click', e => { 
+    if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) 
+        profileDropdown.classList.remove('active'); 
+});
+
+// FONCTION DE DÉCONNEXION
+async function performLogout() {
     try {
+        if (sessionManager && currentUser) {
+            await sessionManager.endSession(currentUser);
+        }
+        if (unsubscribe) {
+            unsubscribe();
+            unsubscribe = null;
+        }
+        
         await signOut(auth);
         profileDropdown.classList.remove('active');
         
-        // Afficher le toast de déconnexion
         const toast = document.getElementById('toast-logout');
         if (toast) {
             toast.classList.add('show');
@@ -10516,6 +10780,13 @@ logoutBtn?.addEventListener('click', async () => {
     } catch (error) {
         console.error('Erreur lors de la déconnexion:', error);
     }
+}
+
+// BOUTON LOGOUT AVEC PROTECTION
+logoutBtn?.addEventListener('click', async () => {
+    const canLogout = await saveGuard.attemptLogout(performLogout);
+    if (!canLogout) return;
+    await performLogout();
 });
 
 // ========================================
@@ -10769,6 +11040,7 @@ function loadUserData(userId) {
 
 async function saveUserData() {
     if (!currentUser || !userData) return;
+	  saveGuard.startSaving();
     
     // Afficher l'indicateur de sauvegarde dans le header (rotation rapide)
     if (saveIndicatorHeader) {
@@ -10810,6 +11082,7 @@ async function saveUserData() {
         }
         
         console.log('✅ Sauvegarde Firestore réussie');
+		saveGuard.endSaving();
         
     } catch (e) {
         console.error('❌ Erreur sauvegarde Firestore:', e);
@@ -10830,6 +11103,7 @@ async function saveUserData() {
                 }
                 
                 console.log('✅ Document créé avec setDoc (fallback)');
+				saveGuard.endSaving();
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
                 
@@ -10841,6 +11115,7 @@ async function saveUserData() {
                     saveIndicatorHeader.style.color = 'var(--danger)';
                     setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
                 }
+				saveGuard.endSaving();
             }
         } else {
             if (saveIndicatorHeader) {
@@ -10851,6 +11126,7 @@ async function saveUserData() {
                 saveIndicatorHeader.style.color = 'var(--danger)';
                 setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
             }
+			saveGuard.endSaving();
         }
     }
 }
@@ -14059,6 +14335,12 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     // Ouvrir le modal
     openConfidenceModal(fakeElement);
 };
+
+window.addEventListener('beforeunload', () => {
+    if (sessionManager && currentUser) {
+        sessionManager.endSession(currentUser);
+    }
+});
 
 
 </script>
