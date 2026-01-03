@@ -10527,6 +10527,9 @@ const progressTours = document.getElementById('progress-tours');
 
 let currentUser = null;
 let userData = null;
+let cachedStats = null;
+let cachedStatsTime = null;
+const STATS_CACHE_DURATION = 30000;
 let unsubscribe = null;
 let saveTimeout = null;
 let currentSort = { field: 'num', direction: 'asc' };
@@ -11049,6 +11052,7 @@ async function saveUserData() {
             hasUnsavedChanges = false;
             showSaveSuccess();
             console.log('✅ Sauvegarde Firestore réussie');
+			invalidateStatsCache();
         }
         
     } catch (e) {
@@ -11069,6 +11073,7 @@ async function saveUserData() {
                     hasUnsavedChanges = false;
                     showSaveSuccess();
                     console.log('✅ Document créé avec setDoc (fallback)');
+					invalidateStatsCache();
                 }
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
@@ -11140,6 +11145,15 @@ function getItemData(sId, fc) {
 }
 
 function calculateStats() {
+    // 🔥 NOUVEAU : Utiliser le cache si récent (< 30 secondes)
+    if (cachedStats && cachedStatsTime && (Date.now() - cachedStatsTime) < STATS_CACHE_DURATION) {
+        console.log('📦 Stats depuis cache');
+        return cachedStats;
+    }
+    
+    console.log('🔄 Calcul stats...');
+    const startTime = performance.now();
+    
     let itemsWithOneTour = 0, totalTours = 0, refItemsWithOneTour = 0, totalRefItems = 0;
     let totalMinutes = 0;
     
@@ -11149,11 +11163,11 @@ function calculateStats() {
             const d = getItemData(s.id, item.fc);
             const tc = d.tours.filter(t => t !== null).length;
             if (tc > 0) itemsWithOneTour++;
-				const isReference = ITEM_REFERENCE[item.num + '|' + s.id] === true;
-				if (isReference) {
-					totalRefItems++;
-					if (tc > 0) refItemsWithOneTour++;
-				}
+            const isReference = ITEM_REFERENCE[item.num + '|' + s.id] === true;
+            if (isReference) {
+                totalRefItems++;
+                if (tc > 0) refItemsWithOneTour++;
+            }
             totalTours += tc;
             
             if (d.tourDurations) {
@@ -11167,10 +11181,28 @@ function calculateStats() {
                 });
             }
         });
-        
     });
     
-    return { itemsWithOneTour, totalTours, refItemsWithOneTour, totalRefItems, maxTours: TOTAL_ITEMS * MAX_TOURS, totalMinutes };
+    // 🔥 NOUVEAU : Mettre en cache
+    cachedStats = { 
+        itemsWithOneTour, 
+        totalTours, 
+        refItemsWithOneTour, 
+        totalRefItems, 
+        maxTours: TOTAL_ITEMS * MAX_TOURS, 
+        totalMinutes 
+    };
+    cachedStatsTime = Date.now();
+    
+    const endTime = performance.now();
+    console.log(`✅ Stats calculées en ${Math.round(endTime - startTime)}ms`);
+    
+    return cachedStats;
+}
+
+function invalidateStatsCache() {
+    cachedStats = null;
+    cachedStatsTime = null;
 }
 
 function calculateDailyStats() {
@@ -14927,6 +14959,61 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     .timer-modal.show,
     .legend-modal.show {
         animation: none;
+    }
+}
+
+/* ===== RESPONSIVE MOBILE POUR CHRONO ET LÉGENDE ===== */
+@media (max-width: 768px) {
+    /* Réduire la taille des boutons sur mobile */
+    .timer-button,
+    .legend-button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        gap: 0.4rem;
+    }
+    
+    .timer-button span,
+    .legend-button span {
+        display: none; /* Cacher le texte sur mobile */
+    }
+    
+    .timer-button i,
+    .legend-button i {
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    /* Positionner les modals sous les boutons sur mobile */
+    .timer-modal,
+    .legend-modal {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: auto;
+        right: auto;
+        transform: none;
+        max-width: calc(100vw - 2rem);
+    }
+    
+    .timer-modal {
+        right: 0;
+    }
+    
+    .legend-modal {
+        left: 0;
+    }
+}
+
+/* Pour très petits écrans */
+@media (max-width: 480px) {
+    .quick-actions {
+        gap: 0.5rem;
+    }
+    
+    .timer-button,
+    .legend-button,
+    .quick-action-btn {
+        padding: 0.5rem;
+        font-size: 0.75rem;
     }
 }
 
