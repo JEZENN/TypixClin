@@ -10643,7 +10643,15 @@ userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdow
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => {
     try {
-        // 1️⃣ Annuler le debounce en cours
+		if (currentUser) {
+            const cacheKey = `planning_cache_${currentUser.uid}`;
+            const cacheTimeKey = `planning_cache_time_${currentUser.uid}`;
+            localStorage.removeItem(cacheKey);
+            localStorage.removeItem(cacheTimeKey);
+            console.log('🧹 Cache nettoyé');
+        }
+		
+		// 1️⃣ Annuler le debounce en cours
         if (saveTimeout) {
             clearTimeout(saveTimeout);
             saveTimeout = null;
@@ -10857,11 +10865,38 @@ function initializeUserData() {
 
 function loadUserData(userId) {
     if (userId) {
-        // Utilisateur connecté → Firebase UNIQUEMENT
+        // 🔥 NOUVEAU : Vérifier le cache d'abord
+        const cacheKey = `planning_cache_${userId}`;
+        const cacheTimeKey = `planning_cache_time_${userId}`;
+        const cachedData = localStorage.getItem(cacheKey);
+        const cacheTime = localStorage.getItem(cacheTimeKey);
+        
+        // Si cache récent (< 5 minutes), utiliser le cache
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
+            userData = JSON.parse(cachedData);
+            console.log('📦 Chargé depuis le cache local (économie bande passante)');
+            
+            // Charger les ressources et afficher
+            loadResourcesConfig();
+            if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                PlanningModule.loadData();
+                if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+            }
+            renderAll();
+        }
+        
+        // Listener Firebase (toujours actif pour synchronisation temps réel)
         unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
             if (docSnap.exists()) {
                 userData = docSnap.data();
-                console.log('📥 Données chargées depuis Firebase');
+                
+                // 🔥 NOUVEAU : Mettre à jour le cache
+                localStorage.setItem(cacheKey, JSON.stringify(userData));
+                localStorage.setItem(cacheTimeKey, Date.now().toString());
+                
+                console.log('📥 Données chargées depuis Firebase + cache mis à jour');
             } else {
                 // Nouveau compte : initialiser avec données vides
                 userData = initializeUserData();
@@ -15403,6 +15438,38 @@ window.addEventListener('beforeunload', function() {
     stopTimer();
 });
 
+// 🔥 OPTIMISATION : Détacher listener quand onglet inactif
+let isTabActive = true;
+let temporaryUnsubscribe = null;
+
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Onglet caché
+        isTabActive = false;
+        console.log('👁️ Onglet inactif - pause sync Firebase');
+        
+        // Sauvegarder avant de détacher
+        if (hasUnsavedChanges) {
+            saveUserData();
+        }
+        
+        // Détacher le listener temporairement
+        if (unsubscribe) {
+            temporaryUnsubscribe = unsubscribe;
+            unsubscribe();
+            unsubscribe = null;
+        }
+    } else {
+        // Onglet visible à nouveau
+        isTabActive = true;
+        console.log('👁️ Onglet actif - reprise sync Firebase');
+        
+        // Réattacher le listener
+        if (currentUser && !unsubscribe) {
+            loadUserData(currentUser.uid);
+        }
+    }
+});
 
 </script>
 
