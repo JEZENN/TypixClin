@@ -1530,9 +1530,25 @@ input[type="date"].modal-input {
 }
 
 .quick-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-.quick-action-btn { padding: 0.5rem 1rem; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 500; color: var(--gray-700); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
-.quick-action-btn:hover { background: var(--primary-light); color: white; border-color: var(--primary-light); }
+.quick-action-btn { 
+    padding: 0.625rem 1rem;
+    background: var(--gray-200);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+}
 
+.quick-action-btn:hover { 
+    background: var(--gray-300);
+    box-shadow: var(--shadow-md);
+}
 .empty-state { text-align: center; padding: 3rem 2rem; color: var(--gray-500); }
 .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
 
@@ -2376,6 +2392,8 @@ input[type="date"].modal-input {
     color: #ef4444;
 }
 
+
+
 /* Bouton Réinitialiser dans modal */
 [data-theme="dark"] .btn-reset {
     background: #374151;
@@ -2411,14 +2429,25 @@ input[type="date"].modal-input {
 
 /* Boutons d'action rapide (Réinitialiser les filtres, etc.) */
 [data-theme="dark"] .quick-action-btn {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
+    background: var(--gray-200);
+    border-color: transparent;
+    color: var(--gray-700);
+}
+[data-theme="dark"] .quick-action-btn:hover {
+    background: var(--gray-300);
+    box-shadow: var(--shadow-md);
 }
 
-[data-theme="dark"] .quick-action-btn:hover {
-    background: var(--primary);
-    border-color: var(--primary);
+.quick-action-btn.success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.quick-action-btn.success:hover {
+    background: var(--success);
     color: white;
 }
 
@@ -7261,7 +7290,7 @@ input[type="date"].modal-input {
     <div class="container">
         <h1 class="page-title"><i class="fas fa-calendar-check"></i> Tableur de Révision EDN</h1>
         <p class="welcome-message" id="welcome-message"></p>
-        <p class="page-subtitle">Organisez et suivez vos révisions</p>
+        <p class="page-subtitle">Organisez vos révisions</p>
         <a href="index.html" class="back-home-btn"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
 
 		
@@ -7655,7 +7684,7 @@ input[type="date"].modal-input {
     <!-- Titre Section Quotidienne -->
     <div class="stats-section-title daily">
         <i class="fas fa-calendar-day"></i> Statistiques du Jour
-		<span class="help-icon" onclick="openHelpModal('stats-general')">?</span>
+		<span class="help-icon" onclick="openHelpModal('stats-daily')">?</span>
 
     </div>
     
@@ -8202,40 +8231,96 @@ input[type="date"].modal-input {
 				</div>
 
             <div class="section-card">
-    <div class="section-header">
-        <h2 class="section-title">
-            <i class="fas fa-list-check"></i> Liste des Items
-            <span class="help-icon" onclick="openHelpModal('items-list')">?</span>
-        </h2>
-        
-        <div class="support-legend">
-            <span class="legend-item2 qcm"><strong>QCM</strong> QCM/DP</span>
-            <span class="legend-item2 college"><strong>COL</strong> Collèges</span>
-            <span class="legend-item2 anki"><strong>ANK</strong> Anki</span>
-            <span class="legend-item2 perso"><strong>PER</strong> Fiche perso</span>
-            <span class="legend-item2 codex"><strong>COD</strong> EDNi/Codex</span>
-            <span class="legend-item2 conf"><strong>CNF</strong> Conférence</span>
-        </div>
-        
-        <div class="header-pagination">
-            <button class="pagination-btn" id="pagination-prev-top" title="Page précédente">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="pagination-info">
-                <span class="pagination-current" id="pagination-current-top">1 / 8</span>
-                <span class="pagination-total" id="pagination-total-top">760 items</span>
-            </div>
-            <button class="pagination-btn" id="pagination-next-top" title="Page suivante">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-        
-        <div class="quick-actions">
-            <button class="quick-action-btn" id="btn-reset-filters">
-                <i class="fas fa-filter-circle-xmark"></i> Réinitialiser
-            </button>
-        </div>
-    </div>
+						<div class="section-header">
+							<h2 class="section-title">
+								<i class="fas fa-list-check"></i> Liste des Items
+								<span class="help-icon" onclick="openHelpModal('items-list')">?</span>
+							</h2>
+							
+							<div class="header-pagination">
+								<button class="pagination-btn" id="pagination-prev-top" title="Page précédente">
+									<i class="fas fa-chevron-left"></i>
+								</button>
+								<div class="pagination-info">
+									<span class="pagination-current" id="pagination-current-top">1 / 8</span>
+									<span class="pagination-total" id="pagination-total-top">760 items</span>
+								</div>
+								<button class="pagination-btn" id="pagination-next-top" title="Page suivante">
+									<i class="fas fa-chevron-right"></i>
+								</button>
+							</div>
+							
+							<div class="quick-actions" style="position: relative;">
+								<!-- Bouton Légende -->
+								<button class="legend-button" onclick="toggleLegendModal(event)">
+									<i class="fas fa-info-circle"></i>
+									<span>Légende</span>
+								</button>
+								
+								<!-- Modal Légende -->
+								<div class="legend-modal" id="legendModal">
+									<div class="legend-modal-header">
+										<div class="legend-modal-title">
+											<i class="fas fa-info-circle"></i>
+											Supports disponibles
+										</div>
+										<button class="legend-close" onclick="closeLegendModal()">
+											<i class="fas fa-times"></i>
+										</button>
+									</div>
+									<div class="legend-items">
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #3b82f6; color: white;">QCM</span>
+											<span class="legend-description">QCM/DP disponibles</span>
+										</div>
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #8b5cf6; color: white;">COL</span>
+											<span class="legend-description">Collèges</span>
+										</div>
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #10b981; color: white;">ANK</span>
+											<span class="legend-description">Anki</span>
+										</div>
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #f59e0b; color: white;">PER</span>
+											<span class="legend-description">Fiche perso</span>
+										</div>
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #ef4444; color: white;">COD</span>
+											<span class="legend-description">EDNi/Codex</span>
+										</div>
+										<div class="legend-item">
+											<span class="legend-badge" style="background: #6b7280; color: white;">CNF</span>
+											<span class="legend-description">Conférence</span>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Bouton Chronomètre -->
+								<button class="timer-button" id="timerButton" onclick="toggleTimerModal(event)">
+									<i class="fas fa-clock" id="timerIcon"></i>
+									<span>Chronomètre</span>
+								</button>
+								
+								<!-- Modal Chronomètre -->
+								<div class="timer-modal" id="timerModal">
+									<button class="timer-close" onclick="closeTimerModal()">
+										<i class="fas fa-times"></i>
+									</button>
+									<div class="timer-display">
+										<div class="timer-time" id="timerDisplay">00:00</div>
+									</div>
+									<div class="timer-controls" id="timerControls">
+										<!-- Les boutons seront générés dynamiquement -->
+									</div>
+								</div>
+								
+								<!-- Bouton Réinitialiser -->
+								<button class="quick-action-btn" id="btn-reset-filters">
+									<i class="fas fa-filter-circle-xmark"></i> Réinitialiser
+								</button>
+							</div>
+						</div>
 
     <div class="section-body">
         <!-- Hint scroll mobile pour items -->
@@ -10992,7 +11077,7 @@ function debouncedSave() {
         saveIndicatorHeader.classList.add('visible', 'pending');
         saveIndicatorHeader.classList.remove('saving', 'saved');
         saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>'; // Flèches circulaires
-        saveIndicatorHeader.title = 'Modifications en attente...';
+        saveIndicatorHeader.title = 'En attente d\'autres modifications...';
     }
     
     // Annuler le timeout précédent
@@ -12102,7 +12187,20 @@ document.getElementById('filter-item-specialty')?.addEventListener('change', ren
 document.getElementById('filter-item-status')?.addEventListener('change', renderItemsTable);
 document.getElementById('filter-item-reference')?.addEventListener('change', renderItemsTable);
 document.getElementById('search-specialty')?.addEventListener('input', renderDashboardSpecialties);
+
+
+
 document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
+    const btn = document.getElementById('btn-reset-filters');
+    
+    // Empêcher les clics multiples
+    if (btn.disabled) return;
+    
+    const originalHTML = btn.innerHTML;
+    const originalWidth = btn.offsetWidth + 'px'; // Capturer la largeur actuelle
+    btn.disabled = true;
+    btn.style.width = originalWidth; // Fixer la largeur
+    
     // Reset search
     document.getElementById('search-item').value = '';
     
@@ -12125,23 +12223,23 @@ document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
         statusDropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
         statusDropdown.querySelector('[data-value="all"]').classList.add('selected');
     }
-	
-	// Reset reference dropdown
-document.getElementById('filter-item-reference').value = 'all';
-const referenceDropdown = document.getElementById('reference-dropdown');
-if (referenceDropdown) {
-    referenceDropdown.querySelector('.custom-select-text').textContent = 'Tous les items';
-    referenceDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-list"></i>';
-    referenceDropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
-    referenceDropdown.querySelector('[data-value="all"]').classList.add('selected');
-}
-
- // Reset tri par numéro croissant
-currentSort = { field: 'num', direction: 'asc' };  
-renderItemsTable();
+    
+    // Reset reference dropdown
+    document.getElementById('filter-item-reference').value = 'all';
+    const referenceDropdown = document.getElementById('reference-dropdown');
+    if (referenceDropdown) {
+        referenceDropdown.querySelector('.custom-select-text').textContent = 'Tous les items';
+        referenceDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-list"></i>';
+        referenceDropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+        referenceDropdown.querySelector('[data-value="all"]').classList.add('selected');
+    }
+    
+    // Reset tri par numéro croissant
+    currentSort = { field: 'num', direction: 'asc' };  
+    renderItemsTable();
+    
     // Retirer l'indicateur visuel de tri (sélecteur bleu)
     document.querySelectorAll('.items-table th').forEach(h => h.classList.remove('sorted'));
-
     
     // Scroll jusqu'aux boutons de navigation
     const appNav = document.querySelector('.app-nav');
@@ -12150,10 +12248,30 @@ renderItemsTable();
         const navPosition = appNav.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
         window.scrollTo({ top: navPosition, behavior: 'smooth' });
     }
+    
+    // Feedback visuel
+    btn.classList.add('success');
+    btn.innerHTML = '<i class="fas fa-check"></i> Réinitialisé !';
+    
+    setTimeout(() => {
+        btn.classList.remove('success');
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        btn.style.width = ''; // Retirer la largeur fixe
+    }, 1500);
 });
 
-
 document.getElementById('btn-reset-filters-specialty')?.addEventListener('click', () => {
+    const btn = document.getElementById('btn-reset-filters-specialty');
+    
+    // Empêcher les clics multiples
+    if (btn.disabled) return;
+    
+    const originalHTML = btn.innerHTML;
+    const originalWidth = btn.offsetWidth + 'px'; // Capturer la largeur actuelle
+    btn.disabled = true;
+    btn.style.width = originalWidth; // Fixer la largeur
+    
     // Reset search
     document.getElementById('search-specialty').value = '';
     
@@ -12178,13 +12296,25 @@ document.getElementById('btn-reset-filters-specialty')?.addEventListener('click'
     }
     
     renderDashboardSpecialties();
-	    // Scroll jusqu'aux boutons de navigation
+    
+    // Scroll jusqu'aux boutons de navigation
     const appNav = document.querySelector('.app-nav');
     if (appNav) {
         const headerHeight = 70;
         const navPosition = appNav.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
         window.scrollTo({ top: navPosition, behavior: 'smooth' });
     }
+    
+    // Feedback visuel
+    btn.classList.add('success');
+    btn.innerHTML = '<i class="fas fa-check"></i> Réinitialisé !';
+    
+    setTimeout(() => {
+        btn.classList.remove('success');
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        btn.style.width = ''; // Retirer la largeur fixe
+    }, 1500);
 });
 
 
@@ -13611,9 +13741,10 @@ window.TrophiesSystem = (function() {
             { id: 'daily_10tours', name: 'Productif - 1', desc: '10 tours en 1 jour', icon: 'fa-fire', condition: (stats) => stats.bestToursInDay >= 10 },
             { id: 'daily_20tours', name: 'Productif - 2', desc: '20 tours en 1 jour', icon: 'fa-fire', condition: (stats) => stats.bestToursInDay >= 20 },
             { id: 'daily_8h', name: 'BU lover - 1', desc: '8h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 8 },
-            { id: 'daily_12h', name: 'BU lover - 2', desc: '12h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 12 },
-            { id: 'daily_200delay', name: 'Mise à jour', desc: '200j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 200 },
-            { id: 'daily_perfect', name: 'Perfectionniste', desc: 'Moyenne 5/5 sur 1 jour', icon: 'fa-star', condition: (stats) => stats.hadPerfectDay === true }
+            { id: 'daily_11h', name: 'BU lover - 2', desc: '11h de travail en 1 jour', icon: 'fa-clock', condition: (stats) => stats.bestHoursInDay >= 11 },
+            { id: 'daily_200delay', name: 'Mise à jour - 1', desc: '200j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 200 },
+			{ id: 'daily_400delay', name: 'Mise à jour - 2', desc: '400j de retard rattrapé', icon: 'fa-bolt', condition: (stats) => stats.bestDelayRecovered >= 400 }
+
         ],
         weekly: [
             { id: 'weekly_30tours', name: 'Semaine intense - 1', desc: '30 tours en 1 semaine', icon: 'fa-rocket', condition: (stats) => stats.bestToursInWeek >= 30 },
@@ -14212,23 +14343,28 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;  /* Plus petit : 18px au lieu de 20px */
+    width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #94a3b8;  /* Gris discret au lieu de bleu */
+    background: #94a3b8;  /* Gris au repos */
     color: white;
-    font-size: 11px;  /* Police plus petite : 11px au lieu de 12px */
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     margin-left: 8px;
-    transition: all 0.2s ease;
-    box-shadow: none;  /* Pas d'ombre au repos */
-    opacity: 0.6;  /* Semi-transparent pour être discret */
+    opacity: 0.6;
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+    
+    /* ✨ Transitions SÉPARÉES pour chaque propriété */
+    transition: background 0.4s ease, 
+                opacity 0.4s ease, 
+                transform 0.3s ease, 
+                box-shadow 0.4s ease;
 }
 
-/* Au survol : devient bleu et visible */
 .help-icon:hover {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: #3b82f6;  /* Bleu solide au lieu de gradient */
     opacity: 1;
     transform: scale(1.1);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
@@ -14238,14 +14374,10 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     transform: scale(0.95);
 }
 
-@keyframes pulse-help {
-    0%, 100% { box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
-    50% { box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2), 0 0 0 6px rgba(59, 130, 246, 0); }
+.help-icon.pulse {
+    animation: none;
 }
 
-.help-icon.pulse {
-    animation: pulse-help 2s ease-in-out infinite;
-}
 
 .help-modal-overlay {
     position: fixed;
@@ -14364,7 +14496,7 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 }
 
 .help-key-points-title {
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 700;
     color: #1e40af;
     margin-bottom: 12px;
@@ -14380,20 +14512,19 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 }
 
 .help-key-points li {
-    padding: 8px 0 8px 32px;
+    padding: 6px 0 6px 26px;
     position: relative;
     color: #334155;
     font-size: 14px;
     line-height: 1.6;
 }
-
 .help-key-points li::before {
     content: "✓";
     position: absolute;
     left: 0;
-    top: 8px;
-    width: 22px;
-    height: 22px;
+    top: 6px;
+    width: 18px;
+    height: 18px;
     background: #3b82f6;
     color: white;
     border-radius: 50%;
@@ -14401,7 +14532,7 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .help-tip {
@@ -14415,22 +14546,22 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 }
 
 .help-tip-icon {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
     background: #f59e0b;
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 13px;
 }
 
 .help-tip-content strong {
     display: block;
     color: #92400e;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
     margin-bottom: 4px;
 }
@@ -14467,6 +14598,303 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
+
+/* ===== CHRONOMÈTRE ===== */
+.timer-button {
+    padding: 0.625rem 1rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.timer-button:hover {
+    background: var(--gray-300);
+    box-shadow: var(--shadow-md);
+}
+
+/* NOUVEAU - Bouton chronomètre avec états */
+.timer-button.active {
+    color: white;
+    border-color: transparent;
+}
+
+.timer-button.active.running {
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+
+.timer-button.active.running:hover {
+    background: var(--success-dark);
+}
+
+.timer-button.active.paused {
+    background: var(--warning);
+    animation: none; /* Important : désactiver le pulse */
+}
+
+.timer-button.active.paused:hover {
+    background: #d97706;
+}
+
+.timer-modal {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 1.5rem;
+    min-width: 280px;
+    z-index: var(--z-dropdown);
+    display: none;
+    border: 2px solid var(--gray-200);
+}
+
+.timer-modal.show {
+    display: block;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.timer-display {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.timer-time {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+}
+
+.timer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.timer-btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.timer-btn-start {
+    background: var(--success);
+    color: white;
+}
+
+.timer-btn-start:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.timer-btn-pause {
+    background: var(--warning);
+    color: white;
+}
+
+.timer-btn-pause:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.timer-btn-stop {
+    background: var(--danger);
+    color: white;
+}
+
+.timer-btn-stop:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.timer-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--gray-200);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-600);
+    transition: all var(--transition-fast);
+}
+
+.timer-close:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+    transform: rotate(90deg);
+}
+
+.legend-close {
+    background: var(--gray-200);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-600);
+    transition: all var(--transition-fast);
+}
+
+.legend-close:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+    transform: rotate(90deg);
+}
+
+/* ===== BOUTON LÉGENDE ===== */
+.legend-button {
+    padding: 0.625rem 1rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.legend-button:hover {
+    background: var(--gray-300);
+    box-shadow: var(--shadow-md);
+}
+
+.legend-modal {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 1.25rem;
+    min-width: 320px;
+    max-width: 400px;
+    z-index: var(--z-dropdown);
+    display: none;
+    border: 2px solid var(--gray-200);
+}
+
+.legend-modal.show {
+    display: block;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.legend-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.legend-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-close {
+    background: var(--gray-200);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-600);
+    transition: all var(--transition-fast);
+}
+
+.legend-close:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+}
+
+/* NOUVEAU - Sélecteurs spécifiques au modal */
+.legend-modal .legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.legend-modal .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.legend-modal .legend-item:hover {
+    background: var(--gray-100);
+}
+
+.legend-modal .legend-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+}
+
+.legend-modal .legend-description {
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    flex: 1;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+    .timer-modal,
+    .legend-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .timer-modal.show,
+    .legend-modal.show {
+        animation: none;
+    }
+}
+
 </style>
 
 <!-- Modal -->
@@ -14499,23 +14927,22 @@ const helpContent = {
         title: 'Statistiques Quotidiennes',
         content: `
             <div class="help-description">
-                <p>Votre <strong>tableau de bord quotidien</strong> affiche vos performances du jour en temps réel.</p>
-                <p>Ces statistiques vous permettent de suivre votre progression jour après jour.</p>
+                <p>Votre <strong>tableau de bord quotidien</strong> affiche vos statistiques du jour en temps réel.</p>
             </div>
             <div class="help-key-points">
-                <div class="help-key-points-title"><i class="fas fa-lightbulb"></i> Points clés</div>
+                <div class="help-key-points-title"><i class="fas fa-clock"></i> Statistiques clés</div>
                 <ul>
-                    <li><strong>Tours effectués</strong> : Nombre d'items révisés aujourd'hui</li>
-                    <li><strong>Retard rattrapé</strong> : Jours de retard compensés</li>
-                    <li><strong>Temps de travail</strong> : Durée totale de vos sessions</li>
-                    <li><strong>Ressenti moyen</strong> : Votre niveau de confiance (1-5)</li>
+                    <li><strong>Tours effectués</strong> : nombre d'items révisés aujourd'hui.</li>
+                    <li><strong>Retard rattrapé</strong> : jours de retard rattrapé (si un item qui n'avait pas été vu depuis 30 jours est vu alors + 30j de retard rattrapé).</li>
+                    <li><strong>Temps de travail</strong> : durée totale de vos révisions des items.</li>
+                    <li><strong>Ressenti moyen</strong> : votre niveau de confiance (1-5) moyen sur la journée.</li>
                 </ul>
             </div>
             <div class="help-tip">
                 <div class="help-tip-icon">💡</div>
                 <div class="help-tip-content">
-                    <strong>Astuce</strong>
-                    <p>Consultez ces stats en fin de journée pour ajuster votre planning !</p>
+                    <strong>Conseil</strong>
+                    <p>Pas de stress : il est normal que le temps de travail indiqué soit inférieur au temps de travail réel, car les sessions de QCM ne sont pas prises en compte.</p>
                 </div>
             </div>
         `
@@ -14525,21 +14952,21 @@ const helpContent = {
         title: 'Graphiques de la Semaine',
         content: `
             <div class="help-description">
-                <p>Visualisez votre <strong>évolution sur 7 jours</strong> avec des graphiques interactifs.</p>
+                <p>Visualisez <strong>l'évolution de votre travail sur les 7 derniers jours</strong> sur des graphiques.</p>
             </div>
             <div class="help-key-points">
                 <div class="help-key-points-title"><i class="fas fa-chart-bar"></i> Trois graphiques</div>
                 <ul>
-                    <li><strong>Tours effectués</strong> : Évolution quotidienne</li>
-                    <li><strong>Temps de travail</strong> : Suivi du temps investi</li>
-                    <li><strong>Ressenti moyen</strong> : Tendance de votre confiance</li>
+                    <li><strong>Tours effectués</strong> : évolution quotidienne.</li>
+                    <li><strong>Temps de travail</strong> : suivi du temps à réviser les items.</li>
+                    <li><strong>Ressenti moyen</strong> : tendance de votre niveau confiance sur les items sur les 7 derniers jours.</li>
                 </ul>
             </div>
             <div class="help-tip">
-                <div class="help-tip-icon">📊</div>
+                <div class="help-tip-icon">💡</div>
                 <div class="help-tip-content">
                     <strong>Conseil</strong>
-                    <p>Un graphique régulier = meilleure mémorisation à long terme !</p>
+                    <p>Voyez ces statistiques comme un moyen de vous motiver ; n’oubliez pas qu’il est normal de moins travailler certains jours de la semaine.</p>
                 </div>
             </div>
         `
@@ -14554,12 +14981,27 @@ const helpContent = {
             <div class="help-key-points">
                 <div class="help-key-points-title"><i class="fas fa-trophy"></i> Indicateurs globaux</div>
                 <ul>
-                    <li><strong>Items révisés</strong> : % d'items parcourus (≥1 tour)</li>
-                    <li><strong>Items de référence</strong> : Progression sur les prioritaires</li>
-                    <li><strong>Tours totaux</strong> : Cumul de toutes vos révisions</li>
-                    <li><strong>Temps total</strong> : Temps investi depuis le début</li>
+                    <li><strong>Items révisés</strong> : nombre d'item (en comptant les doublons dans les différents collèges) vu au moins une fois (≥1 tour) - Voir Précisions 1</li>
+                    <li><strong>Items de référence</strong> : nombre d'items de référence vu au moins une fois (≥1 tour) - Voir Précisions 1</li>
+                    <li><strong>Tours totaux</strong> : nombre total de tours fait sur tous les items.</li>
+                    <li><strong>Temps total</strong> : temps cumulé passer à réviser les items.</li>
                 </ul>
             </div>
+			 <div class="help-tip">
+                <div class="help-tip-icon">💡</div>
+                <div class="help-tip-content">
+                    <strong>Précision - 1</strong>
+                    <p>Le programme sur le LISA comporte 367 items à réviser pour les EDN. Le tableur comporte en tout 747 items, tous collèges confondus (avec de nombreux doublons entre les collèges). La case bleue correspond au nombre d’items vus sur 747.</p>
+                </div>
+            </div>
+			<div class="help-tip">
+                <div class="help-tip-icon">💡</div>
+                <div class="help-tip-content">
+                    <strong>Précision - 2</strong>
+                    <p>Parmi les 747 items du tableur, 411 sont étiquetés « Collège de référence » : pour chaque item, un collège est indiqué comme étant le collège de référence, censé faire foi pour les EDN. Attention, certains gros items sont divisés en plusieurs plus petits, ce qui explique pourquoi on obtient 411. La case orange correspond au nombre d’items vus dans les collèges de référence sur 411.</p>
+                </div>
+            </div>
+			
         `
     },
     'stats-trophies': {
@@ -14567,22 +15009,22 @@ const helpContent = {
         title: 'Système de Trophées',
         content: `
             <div class="help-description">
-                <p>Débloquez des <strong>trophées</strong> en atteignant vos objectifs !</p>
+                <p>Débloquez des <strong>trophées</strong> au fur et à mesure de l'externat.</p>
             </div>
             <div class="help-key-points">
                 <div class="help-key-points-title"><i class="fas fa-medal"></i> Types de trophées</div>
                 <ul>
-                    <li><strong>Complétion</strong> : 10, 50, 100, 200, 500 items...</li>
-                    <li><strong>Quotidiens</strong> : Défis de la journée</li>
-                    <li><strong>Hebdomadaires</strong> : Régularité sur 7 jours</li>
-                    <li><strong>Accomplissements</strong> : Jalons importants</li>
+                    <li><strong>Complétion du programme</strong> : % des items vu au moins une fois parmi les 747 items du tableur.</li>
+                    <li><strong>Trophées quotidiens</strong> : débloqués lors de performances exceptionnelles un jour de votre externat.</li>
+                    <li><strong>Trophées hebdomadaires</strong> : débloqués lors de performances exceptionnelles une semaine de votre externat.</li>
+                    <li><strong>Accomplissements</strong> : quand les heures de travail deviennent des jours, les jours deviennent des semaines et les semaines deviennent des mois.</li>
                 </ul>
             </div>
-            <div class="help-tip">
-                <div class="help-tip-icon">🏆</div>
+			<div class="help-tip">
+                <div class="help-tip-icon">💡</div>
                 <div class="help-tip-content">
-                    <strong>Motivation</strong>
-                    <p>Collectionnez tous les trophées pour booster votre motivation !</p>
+                    <strong>Précision</strong>
+                    <p>Les trophées sont à prendre avec légèreté, c'est plus une blague qu'un réel indicateur de performance. Beaucoup se débloquent en fin de D3, pendant les révisions.</p>
                 </div>
             </div>
         `
@@ -14592,17 +15034,26 @@ const helpContent = {
     title: 'Liste des Spécialités',
     content: `
         <div class="help-description">
-            <p>Chaque <strong>carte</strong> représente une spécialité médicale.</p>
-            <p>Cliquez dessus pour filtrer les items de cette spécialité.</p>
+            <p>Chaque <strong>carte</strong> représente une matière qui sera à aborder au cours de l'externat.</p>
+            <p>Certaines spécialités sont regroupées car proches ou à travailler conjointement (par exemple : neurologie et neurochirurgie).</p>
+			<p>Utilisez les filtres et le tri pour naviguer efficacement entre les différentes matières.</p>
+
         </div>
         <div class="help-key-points">
             <div class="help-key-points-title"><i class="fas fa-info-circle"></i> Informations</div>
             <ul>
-                <li>Nom avec icône et couleur distinctive</li>
-                <li>Nombre total d'items</li>
-                <li>Items déjà révisés</li>
-                <li>Barre de progression visuelle</li>
+                <li>Les <strong>24 matières</strong> de l'externat.</li>
+                <li>Nombre total d'items par matière.</li>
+                <li><strong>Statistiques par matière :</strong> temps de travail total, nombre de tours, moyenne du ressenti sur les tours.</li>
+                <li><strong>Barre de progression visuelle.</strong></li>
             </ul>
+        </div>
+				<div class="help-tip">
+                <div class="help-tip-icon">💡</div>
+                <div class="help-tip-content">
+                    <strong>Astuce</strong>
+                    <p>Accédez directement à la liste des items d’une matière en cliquant sur l’une des cases.</p>
+                </div>
         </div>
     `
 },
@@ -14611,25 +15062,68 @@ const helpContent = {
     title: 'Liste des Items',
     content: `
         <div class="help-description">
-            <p>Ce tableau centralise tous les <strong>items R2C</strong> de votre programme de révision.</p>
-            <p>Utilisez les filtres et le tri pour naviguer efficacement.</p>
+            <p>Ce tableau centralise tous les <strong>items R2C</strong> du programme des EDNs.</p>
+            <p>Utilisez les filtres et le tri pour naviguer efficacement entre les différents items.</p>
         </div>
-        <div class="help-key-points">
-            <div class="help-key-points-title"><i class="fas fa-table"></i> Fonctionnalités</div>
+
+		
+		
+		<div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-table"></i> Liste des items</div>
+					<ul>
+						<li><strong>To-do List</strong> : envoyez directement dans la to-do list les items que vous souhaitez réviser.</li>
+						<li><strong>Liens cliquables</strong> : les noms des items de référence apparaissent en bleu. Cliquez sur le lien pour accéder directement aux fiches LISA (après connexion à votre compte UNESS).</li>
+						<li><strong>Tri</strong> : Cliquez sur les en-têtes pour trier les items.</li>
+
+					</ul>
+
+        </div>
+		<div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-star"></i> Précisions items</div>
             <ul>
-                <li><strong>Tri</strong> : Cliquez sur les en-têtes pour trier</li>
-                <li><strong>Filtres</strong> : Recherche, spécialités, ressources</li>
-                <li><strong>Pagination</strong> : 30, 50 ou 100 items par page</li>
-                <li><strong>Actions</strong> : Tours, ressources, checklist</li>
+            <li><strong>Items de référence</strong> : certains items sont étiquetés « Collège de référence ». Pour chacun d’eux, un collège est désigné comme faisant foi pour les EDN.</li>
+
+			<li><strong>Collèges associés</strong> : certains items sont accompagnés d’une pastille indiquant un collège secondaire. Celle-ci précise : les items pertinents à lire dans un autre collège (ex. : déficit immunitaire en immunologie) ; ou, dans le cas de groupes de spécialités, les items à travailler dans la spécialité secondaire (ex. : MPR dans le groupe gériatrie–MPR).
+			</li>
             </ul>
         </div>
-        <div class="help-tip">
+		
+		
+		<div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-pencil"></i> Tours (T1-T8)</div>
+            <ul>
+				<li><strong>Entrer vos tours :</strong> cliquez sur les cases T1-T8 pour faire apparaitre le formulaire.</li>
+				<li><strong>Confiance :</strong> en auto-évaluation, indiquez votre ressenti sur la maitrise de l'item.</li>
+				<li><strong>Date :</strong> la date du jour est entrée par défaut.</li>
+				<li><strong>Durée :</strong> si vous le souhaitez indiquez le temps passé à travailler l'item pendant le tour.</li>
+				<li><strong>Support :</strong> si vous le souhaitez indiquez le support que vous avez utilisé pour travailler l'item.</li>
+            </ul>
+        </div>
+		        <div class="help-tip">
             <div class="help-tip-icon">💡</div>
             <div class="help-tip-content">
-                <strong>Navigation rapide</strong>
-                <p>Utilisez Ctrl+F pour rechercher un item spécifique dans la page !</p>
+                <strong>Conseil</strong>
+                <p>La régularité est la clé de la réussite : même si insérer des tours peut paraître un peu laborieux sur le moment, cela vous rendra service pendant les révisions.</p>
             </div>
         </div>
+		
+		<div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-book-open"></i> Ressources</div>
+            <ul>
+				<li><strong>Sélection</strong> : sélectionnez les ressources que vous utilisez parmi la liste proposée.</li>
+				<li><strong>Valider</strong> : validez les ressources réalisées pour chaque item (fiche de révision, QI EDN, etc.).</li>
+				<li><strong>Sauvegarde</strong> : les ressources validées sont sauvegardées, même si vous changez les ressources sélectionnées.</li>
+
+            </ul>
+        </div>
+		<div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-clock"></i> Dernières révisions</div>
+            <ul>
+				<li><strong>Nombre de jour depuis le dernier tour sur un item</strong></li>
+				<li><strong>Se met à 0j quand un nouveau tour est entré.</strong></li>
+            </ul>
+        </div>
+
     `
 },
 
@@ -14641,22 +15135,22 @@ const helpContent = {
     content: `
         <div class="help-description">
             <p>Votre <strong>checklist personnelle</strong> pour organiser vos révisions du jour.</p>
-            <p>Ajoutez, cochez et validez vos items en temps réel.</p>
+            <p>Ajoutez des items à travailler depuis la « liste des items » en appuyant sur le bouton « To-do List ».</p>
         </div>
         <div class="help-key-points">
-            <div class="help-key-points-title"><i class="fas fa-check-circle"></i> Actions disponibles</div>
+            <div class="help-key-points-title"><i class="fas fa-tasks"></i> Fonctionalités</div>
             <ul>
-                <li><strong>Créer</strong> : Tapez le nom de l'item et appuyez sur Entrée</li>
-                <li><strong>Cocher</strong> : Marquez comme fait en cochant la case</li>
-                <li><strong>Valider</strong> : Enregistrez un tour de révision depuis la checklist</li>
-                <li><strong>Supprimer</strong> : Retirez l'item de votre liste</li>
+			<li><strong>Créer</strong> : tapez le nom d’une tâche à effectuer.</li>
+			<li><strong>Valider les tâches</strong> : marquez une tâche comme terminée.</li>
+			<li><strong>Entrer des tours</strong> : enregistrez un tour de révision depuis la checklist en appuyant sur la case de validation.</li>
+			<li><strong>Supprimer</strong> : retirez l’item ou la tâche de votre liste si vous le souhaitez.</li>
             </ul>
         </div>
         <div class="help-tip">
-            <div class="help-tip-icon">✅</div>
+            <div class="help-tip-icon">💡</div>
             <div class="help-tip-content">
-                <strong>Astuce productivité</strong>
-                <p>Préparez votre checklist le matin pour une journée de révision efficace et motivante !</p>
+                <strong>Astuce</strong>
+                <p>Entrez vos tours directement depuis la To-do List pour gagner du temps.</p>
             </div>
         </div>
     `
@@ -14666,23 +15160,25 @@ const helpContent = {
     title: 'Calendrier & Statuts',
     content: `
         <div class="help-description">
-            <p>Suivez votre <strong>assiduité</strong> et organisez vos révisions au jour le jour.</p>
-            <p>Cliquez sur une case pour définir le statut de la journée.</p>
+            <p>Votre <strong>planning de l'année</strong> qui vous aidera à organiser vos semaines.</p>
+            
         </div>
         <div class="help-key-points">
-            <div class="help-key-points-title"><i class="fas fa-clipboard-check"></i> Fonctionnalités</div>
+            <div class="help-key-points-title"><i class="fas fa-tasks"></i> Fonctionnalités</div>
             <ul>
-                <li><strong>Statut du jour</strong> : Repos, révision normale, intensive...</li>
-                <li><strong>Spécialité travaillée</strong> : Matière étudiée dans la journée</li>
-                <li><strong>Visualisation</strong> : Codes couleur pour voir vos habitudes</li>
-                <li><strong>Navigation</strong> : Flèches pour changer de mois, bouton "Aujourd'hui"</li>
+				<li><strong>Statut du jour</strong> : indiquez chaque jour un statut (révision, stage, garde, repos).</li>
+				<li><strong>Spécialité(s) travaillée(s)</strong> : matière(s) étudiée(s) dans la journée.</li>
+				<li><strong>Visualisation</strong> : codes couleur pour visualiser l’organisation de vos semaines à venir.</li>
+				<li><strong>Zone de texte</strong> : indiquez les événements à venir en appuyant sur les cases «notes».</li>
+				<li><strong>Navigation</strong> : naviguez de mois en mois.</li>
+
             </ul>
         </div>
         <div class="help-tip">
-            <div class="help-tip-icon">📅</div>
+            <div class="help-tip-icon">💡</div>
             <div class="help-tip-content">
-                <strong>Motivation</strong>
-                <p>Remplissez chaque jour pour visualiser votre progression mensuelle et rester motivé !</p>
+                <strong>Astuce</strong>
+                <p>Remplissez votre planning à l’avance et consultez-le sur tous vos appareils en cas de besoin.</p>
             </div>
         </div>
     `
@@ -14715,6 +15211,199 @@ function closeHelpModal(event) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeHelpModal();
 });
+
+
+// ===== CHRONOMÈTRE =====
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+let timerPaused = false;
+
+function formatTime(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+    document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+}
+
+function updateTimerButton() {
+    const button = document.getElementById('timerButton');
+    const icon = document.getElementById('timerIcon');
+    
+    // Retirer toutes les classes d'état
+    button.classList.remove('active', 'running', 'paused');
+    
+    if (timerRunning && !timerPaused) {
+        // Chrono en cours
+        button.classList.add('active', 'running');
+        icon.className = 'fas fa-stopwatch';
+    } else if (timerRunning && timerPaused) {
+        // Chrono en pause
+        button.classList.add('active', 'paused');
+        icon.className = 'fas fa-pause-circle';
+    } else {
+        // Chrono arrêté
+        icon.className = 'fas fa-clock';
+    }
+}
+
+function updateTimerControls() {
+    const controls = document.getElementById('timerControls');
+    
+    if (!timerRunning && timerSeconds === 0) {
+        // État initial : afficher bouton démarrer
+        controls.innerHTML = `
+            <button class="timer-btn timer-btn-start" onclick="startTimer()">
+                <i class="fas fa-play"></i>
+                Démarrer
+            </button>
+        `;
+    } else if (timerRunning && !timerPaused) {
+        // En cours : afficher pause et stop
+        controls.innerHTML = `
+            <button class="timer-btn timer-btn-pause" onclick="event.stopPropagation(); pauseTimer()">
+                <i class="fas fa-pause"></i>
+                Mettre en pause
+            </button>
+            <button class="timer-btn timer-btn-stop" onclick="stopTimer()">
+                <i class="fas fa-stop"></i>
+                Arrêter
+            </button>
+        `;
+    } else if (timerPaused) {
+        // En pause : afficher reprendre et stop
+        controls.innerHTML = `
+            <button class="timer-btn timer-btn-start" onclick="resumeTimer()">
+                <i class="fas fa-play"></i>
+                Reprendre
+            </button>
+            <button class="timer-btn timer-btn-stop" onclick="stopTimer()">
+                <i class="fas fa-stop"></i>
+                Arrêter
+            </button>
+        `;
+    }
+}
+
+function startTimer() {
+    timerRunning = true;
+    timerPaused = false;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        if (timerSeconds >= 86400) { // 86400 = 24h
+            stopTimer();
+        }
+        updateTimerDisplay();
+    }, 1000);
+    updateTimerButton();
+    updateTimerControls();
+}
+
+function pauseTimer() {
+    timerPaused = true;
+    clearInterval(timerInterval);
+	updateTimerButton();
+    updateTimerControls();
+}
+
+function resumeTimer() {
+    timerPaused = false;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+	updateTimerButton();
+    updateTimerControls();
+}
+
+function stopTimer() {
+    timerRunning = false;
+    timerPaused = false;
+    clearInterval(timerInterval);
+    timerSeconds = 0;
+    updateTimerDisplay();
+    updateTimerButton();
+    updateTimerControls();
+	loseTimerModal(); 
+}
+
+function toggleTimerModal(event) {
+    event.stopPropagation();
+    const modal = document.getElementById('timerModal');
+    const legendModal = document.getElementById('legendModal');
+    
+    // Fermer le modal légende s'il est ouvert
+    legendModal.classList.remove('show');
+    
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+    } else {
+        modal.classList.add('show');
+        updateTimerControls();
+    }
+}
+
+function closeTimerModal() {
+    document.getElementById('timerModal').classList.remove('show');
+}
+
+// ===== LÉGENDE =====
+function toggleLegendModal(event) {
+    event.stopPropagation();
+    const modal = document.getElementById('legendModal');
+    const timerModal = document.getElementById('timerModal');
+    
+    // Fermer le modal chronomètre s'il est ouvert
+    timerModal.classList.remove('show');
+    
+    if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+    } else {
+        modal.classList.add('show');
+    }
+}
+
+function closeLegendModal() {
+    document.getElementById('legendModal').classList.remove('show');
+}
+
+// ===== FERMETURE DES MODALS EN CLIQUANT AILLEURS =====
+document.addEventListener('click', function(event) {
+    const timerModal = document.getElementById('timerModal');
+    const timerButton = document.getElementById('timerButton');
+    const legendModal = document.getElementById('legendModal');
+    const legendButton = document.querySelector('.legend-button');
+    
+    // Fermer le modal chronomètre si on clique ailleurs
+    if (timerModal && timerModal.classList.contains('show')) {
+        if (!timerModal.contains(event.target) && !timerButton.contains(event.target)) {
+            timerModal.classList.remove('show');
+        }
+    }
+    
+    // Fermer le modal légende si on clique ailleurs
+    if (legendModal && legendModal.classList.contains('show')) {
+        if (!legendModal.contains(event.target) && !legendButton.contains(event.target)) {
+            legendModal.classList.remove('show');
+        }
+    }
+});
+
+// ===== RÉINITIALISATION DU CHRONOMÈTRE =====
+// À la fermeture de la page
+window.addEventListener('beforeunload', function() {
+    stopTimer();
+});
+
+
 </script>
 
 

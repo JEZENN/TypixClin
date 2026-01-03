@@ -3,16 +3,17 @@
 // ============================================
 
 /**
- * ⚡ CONFIGURATION - Contrôlé dynamiquement par TableurEnLigne.html
+ * ⚡ CONFIGURATION - UN SEUL ENDROIT À MODIFIER
+ * Changez simplement true/false pour tout activer/désactiver
  */
-const PREMIUM_NOTIFICATIONS_ENABLED = false; // Désactivé par défaut
+const PREMIUM_NOTIFICATIONS_ENABLED = true; // ← CHANGEZ ICI (true = activé, false = désactivé)
 
 /**
  * Configuration des textes (personnalisable)
  */
 const PREMIUM_CONFIG = {
     // Bouton sticky
-    buttonText: "Devenir Premium",
+    buttonText: "Premium",
     buttonIcon: "👑",
     
     // Modal
@@ -21,17 +22,17 @@ const PREMIUM_CONFIG = {
     modalCTA: "Découvrir Premium",
     
     // Toast
-    toastMessage: "Cette fonctionnalité nécessite un compte Premium",
-    toastDuration: 4000,
+    toastMessage: "Cette action nécessite un compte Premium",
+    toastDuration: 4000, // 4 secondes
     
     // Features affichées dans le modal
     features: [
         { icon: "✏️", text: "Modification illimitée" },
-        { icon: "➕", text: "Ajout de tours illimité" },
+        { icon: "➕", text: "Ajout de tours" },
         { icon: "☁️", text: "Sauvegarde cloud" },
         { icon: "📊", text: "Statistiques avancées" },
         { icon: "🏆", text: "Système de trophées" },
-        { icon: "🔄", text: "Synchronisation" }
+        { icon: "🔄", text: "Synchronisation multi-appareils" }
     ]
 };
 
@@ -44,42 +45,27 @@ const PremiumSystem = {
     
     init() {
         if (!this.isEnabled) {
-            console.log('💡 Mode Premium activé - Notifications désactivées');
+            console.log('💡 Notifications Premium désactivées');
             return;
         }
         
-        console.log('🔔 Mode Freemium - Fonctionnalités limitées');
+        console.log('🔔 Notifications Premium activées - Édition bloquée');
         this.addStyles();
         this.createStickyButton();
         this.createModal();
         this.interceptEditing();
         this.blockConfigModals();
-    },
-    
-    enable() {
-        this.isEnabled = true;
-        this.init();
-    },
-    
-    disable() {
-        this.isEnabled = false;
-        this.cleanup();
-    },
-    
-    cleanup() {
-        // Supprimer les éléments créés
-        document.getElementById('premium-sticky-btn')?.remove();
-        document.getElementById('premium-modal')?.remove();
-        document.getElementById('premium-toast')?.remove();
-        console.log('🧹 Notifications premium nettoyées');
+        
+        // Afficher le toast au chargement après un court délai
+        setTimeout(() => {
+            this.showToast();
+        }, 2000); // 2 secondes après le chargement
     },
     
     /**
      * Créer le bouton sticky en bas à droite
      */
     createStickyButton() {
-        if (document.getElementById('premium-sticky-btn')) return;
-        
         const button = document.createElement('button');
         button.id = 'premium-sticky-btn';
         button.className = 'premium-sticky-btn';
@@ -96,8 +82,6 @@ const PremiumSystem = {
      * Créer le modal
      */
     createModal() {
-        if (document.getElementById('premium-modal')) return;
-        
         const modal = document.createElement('div');
         modal.id = 'premium-modal';
         modal.className = 'premium-modal';
@@ -152,6 +136,9 @@ const PremiumSystem = {
         modal.querySelector('.premium-modal-later').addEventListener('click', () => this.closeModal());
     },
     
+    /**
+     * Ouvrir le modal
+     */
     openModal() {
         const modal = document.getElementById('premium-modal');
         if (modal) {
@@ -161,6 +148,9 @@ const PremiumSystem = {
         }
     },
     
+    /**
+     * Fermer le modal
+     */
     closeModal() {
         const modal = document.getElementById('premium-modal');
         if (modal) {
@@ -170,7 +160,11 @@ const PremiumSystem = {
         }
     },
     
+    /**
+     * Afficher un toast
+     */
     showToast() {
+        // Supprimer le toast existant s'il y en a un
         const existingToast = document.getElementById('premium-toast');
         if (existingToast) {
             existingToast.remove();
@@ -202,19 +196,30 @@ const PremiumSystem = {
         `;
         
         document.body.appendChild(toast);
+        
+        // Animation d'entrée
         setTimeout(() => toast.classList.add('show'), 10);
+        
+        // Auto-fermeture
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         }, PREMIUM_CONFIG.toastDuration);
     },
     
+    /**
+     * Intercepter les tentatives d'édition
+     */
     interceptEditing() {
+        // Liste des sélecteurs d'éléments à bloquer
         const editableSelectors = [
             'input[type="number"]',
             'input[type="text"]',
             'input[type="time"]',
             'input[type="date"]',
+            'input[type="email"]',
+            'input[type="checkbox"]',
+            'input[type="radio"]',
             'select',
             'textarea',
             'button.confidence-btn',
@@ -225,14 +230,27 @@ const PremiumSystem = {
             'button.save-btn',
             '.editable',
             '[contenteditable="true"]',
+            // Ressources
             '.resource-box',
             '.resource-option',
+            '.resource-checkbox',
+            'button[onclick*="toggleResourceValidation"]',
+            'button[onclick*="toggleResourceOption"]',
+            'button[onclick*="saveResourcesConfig"]',
             '#resources-config-btn',
+            // Planning
+            '.planning-date',
+            '.planning-input',
             '.planning-btn',
+            'button[onclick*="updatePlanning"]',
+            'button[onclick*="savePlanning"]',
+            'button[onclick*="modifyPlanning"]',
             '#planning-form input',
+            '#planning-form select',
             '#planning-form button'
         ];
         
+        // Intercepter les clics
         document.addEventListener('click', (e) => {
             if (!this.isEnabled || this.modalOpen) return;
             
@@ -249,28 +267,123 @@ const PremiumSystem = {
             }
         }, { capture: true, passive: false });
         
+        // Intercepter les changements
+        document.addEventListener('change', (e) => {
+            if (!this.isEnabled || this.modalOpen) return;
+            
+            const isInput = e.target.matches('input, select, textarea');
+            if (isInput) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // Restaurer la valeur précédente
+                if (e.target.dataset.previousValue !== undefined) {
+                    e.target.value = e.target.dataset.previousValue;
+                }
+                // Pour les checkboxes
+                if (e.target.type === 'checkbox' && e.target.dataset.previousChecked !== undefined) {
+                    e.target.checked = e.target.dataset.previousChecked === 'true';
+                }
+                this.showToast();
+                return false;
+            }
+        }, { capture: true, passive: false });
+        
+        // Intercepter le focus
         document.addEventListener('focus', (e) => {
             if (!this.isEnabled || this.modalOpen) return;
             
             const isInput = e.target.matches('input, select, textarea');
             if (isInput) {
+                // Sauvegarder la valeur actuelle
+                e.target.dataset.previousValue = e.target.value;
+                if (e.target.type === 'checkbox') {
+                    e.target.dataset.previousChecked = e.target.checked;
+                }
+                
+                // Bloquer immédiatement
                 e.target.blur();
                 this.showToast();
             }
         }, { capture: true, passive: false });
+        
+        // Intercepter la saisie clavier
+        document.addEventListener('keydown', (e) => {
+            if (!this.isEnabled || this.modalOpen) return;
+            
+            const isInput = e.target.matches('input, select, textarea, [contenteditable="true"]');
+            if (isInput) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                this.showToast();
+                return false;
+            }
+        }, { capture: true, passive: false });
+        
+        // Wrapper pour les fonctions spécifiques (à adapter selon votre code)
+        this.wrapFunctions([
+            // Tours et confiance
+            'addTour',
+            'updateTour',
+            'deleteTour',
+            'updateConfidence',
+            'updateItemData',
+            'saveData',
+            // Planning
+            'modifyPlanning',
+            'updatePlanning',
+            'savePlanning',
+            'openPlanningModal',
+            // Ressources
+            'toggleResourceValidation',
+            'toggleResourceOption',
+            'saveResourcesConfig',
+            'openResourcesConfigModal',
+            // Autres
+            'debouncedSave',
+            'forceSave',
+            'forceSaveAsync'
+        ]);
     },
     
+    /**
+     * Wrapper pour les fonctions globales
+     */
+    wrapFunctions(functionNames) {
+        functionNames.forEach(funcName => {
+            if (typeof window[funcName] === 'function') {
+                const originalFunc = window[funcName];
+                window[funcName] = (...args) => {
+                    if (this.isEnabled && !this.modalOpen) {
+                        this.showToast();
+                        return;
+                    }
+                    return originalFunc.apply(this, args);
+                };
+                console.log(`✅ Fonction "${funcName}" protégée`);
+            }
+        });
+    },
+    
+    /**
+     * Bloquer l'ouverture des modals de configuration
+     */
     blockConfigModals() {
+        // Observer les modals qui s'ouvrent
         const observer = new MutationObserver((mutations) => {
             if (!this.isEnabled || this.modalOpen) return;
             
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
+                    if (node.nodeType === 1) { // Element node
+                        // Détecter les modals de configuration
                         if (node.id === 'resources-config-modal' || 
                             node.id === 'planning-modal' ||
-                            node.classList?.contains('modal')) {
+                            node.classList?.contains('modal') ||
+                            node.classList?.contains('config-modal')) {
                             
+                            // Fermer immédiatement
                             setTimeout(() => {
                                 if (node.classList.contains('active')) {
                                     node.classList.remove('active');
@@ -293,13 +406,16 @@ const PremiumSystem = {
         });
     },
     
+    /**
+     * Ajouter les styles CSS
+     */
     addStyles() {
         if (document.getElementById('premium-system-styles')) return;
         
         const styles = document.createElement('style');
         styles.id = 'premium-system-styles';
         styles.textContent = `
-            /* Bouton Sticky */
+            /* ===== BOUTON STICKY ===== */
             .premium-sticky-btn {
                 position: fixed;
                 bottom: 2rem;
@@ -317,7 +433,7 @@ const PremiumSystem = {
                 font-size: 1rem;
                 cursor: pointer;
                 box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-                transition: all 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 animation: premium-pulse 3s ease-in-out infinite;
             }
             
@@ -326,12 +442,22 @@ const PremiumSystem = {
                 box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
             }
             
+            .premium-btn-icon {
+                font-size: 1.5rem;
+                animation: premium-bounce 2s ease-in-out infinite;
+            }
+            
             @keyframes premium-pulse {
                 0%, 100% { box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4); }
                 50% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.6); }
             }
             
-            /* Modal */
+            @keyframes premium-bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-3px); }
+            }
+            
+            /* ===== MODAL ===== */
             .premium-modal {
                 position: fixed;
                 top: 0;
@@ -354,7 +480,10 @@ const PremiumSystem = {
             
             .premium-modal-overlay {
                 position: absolute;
-                inset: 0;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
                 background: rgba(0, 0, 0, 0.75);
                 backdrop-filter: blur(8px);
                 cursor: pointer;
@@ -371,7 +500,7 @@ const PremiumSystem = {
                 overflow-y: auto;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 transform: scale(0.9) translateY(20px);
-                transition: transform 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
             .premium-modal.active .premium-modal-card {
@@ -416,6 +545,12 @@ const PremiumSystem = {
                 justify-content: center;
                 font-size: 2.5rem;
                 box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+                animation: premium-icon-pulse 2s ease-in-out infinite;
+            }
+            
+            @keyframes premium-icon-pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
             }
             
             .premium-modal-title {
@@ -436,7 +571,7 @@ const PremiumSystem = {
                 gap: 1rem;
                 margin-bottom: 2rem;
                 padding: 1.5rem;
-                background: #f9fafb;
+                background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
                 border-radius: 1rem;
             }
             
@@ -451,6 +586,7 @@ const PremiumSystem = {
             
             .premium-feature-icon {
                 font-size: 1.5rem;
+                flex-shrink: 0;
             }
             
             .premium-modal-footer {
@@ -474,6 +610,7 @@ const PremiumSystem = {
                 text-decoration: none;
                 cursor: pointer;
                 transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
             }
             
             .premium-modal-cta:hover {
@@ -488,6 +625,7 @@ const PremiumSystem = {
                 border: none;
                 border-radius: 0.5rem;
                 font-weight: 600;
+                font-size: 0.95rem;
                 cursor: pointer;
                 transition: all 0.3s ease;
             }
@@ -497,7 +635,7 @@ const PremiumSystem = {
                 color: #374151;
             }
             
-            /* Toast */
+            /* ===== TOAST ===== */
             .premium-toast {
                 position: fixed;
                 bottom: 6rem;
@@ -515,7 +653,7 @@ const PremiumSystem = {
                 border-left: 4px solid #667eea;
                 opacity: 0;
                 transform: translateY(20px);
-                transition: all 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
             .premium-toast.show {
@@ -558,6 +696,7 @@ const PremiumSystem = {
                 cursor: pointer;
                 padding: 0;
                 text-decoration: underline;
+                transition: color 0.3s ease;
             }
             
             .premium-toast-cta:hover {
@@ -583,6 +722,7 @@ const PremiumSystem = {
                 color: #374151;
             }
             
+            /* ===== RESPONSIVE ===== */
             @media (max-width: 640px) {
                 .premium-sticky-btn {
                     bottom: 1.5rem;
@@ -594,9 +734,67 @@ const PremiumSystem = {
                     display: none;
                 }
                 
+                .premium-modal-card {
+                    padding: 2rem 1.5rem;
+                }
+                
                 .premium-modal-features {
                     grid-template-columns: 1fr;
                 }
+                
+                .premium-toast {
+                    bottom: 5rem;
+                    right: 1.5rem;
+                    width: calc(100vw - 3rem);
+                }
+            }
+            
+            /* ===== DARK MODE ===== */
+            [data-theme="dark"] .premium-modal-card {
+                background: #1e293b;
+            }
+            
+            [data-theme="dark"] .premium-modal-title {
+                color: #f9fafb;
+            }
+            
+            [data-theme="dark"] .premium-modal-subtitle {
+                color: #d1d5db;
+            }
+            
+            [data-theme="dark"] .premium-modal-features {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            
+            [data-theme="dark"] .premium-feature {
+                color: #e5e7eb;
+            }
+            
+            [data-theme="dark"] .premium-modal-close {
+                background: #374151;
+                color: #d1d5db;
+            }
+            
+            [data-theme="dark"] .premium-modal-close:hover {
+                background: #4b5563;
+            }
+            
+            [data-theme="dark"] .premium-modal-later:hover {
+                background: #374151;
+                color: #e5e7eb;
+            }
+            
+            [data-theme="dark"] .premium-toast {
+                background: #1e293b;
+                border-left-color: #667eea;
+            }
+            
+            [data-theme="dark"] .premium-toast-message {
+                color: #f9fafb;
+            }
+            
+            [data-theme="dark"] .premium-toast-close:hover {
+                background: #374151;
             }
         `;
         
@@ -604,14 +802,15 @@ const PremiumSystem = {
     }
 };
 
+// ============================================
+// AUTO-INITIALISATION
+// ============================================
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (PREMIUM_NOTIFICATIONS_ENABLED) {
-            PremiumSystem.init();
-        }
-    });
-} else if (PREMIUM_NOTIFICATIONS_ENABLED) {
+    document.addEventListener('DOMContentLoaded', () => PremiumSystem.init());
+} else {
     PremiumSystem.init();
 }
 
+// Exporter pour usage global
 window.PremiumSystem = PremiumSystem;
