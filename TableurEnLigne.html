@@ -10868,19 +10868,20 @@ function initializeUserData() {
 
 function loadUserData(userId) {
     if (userId) {
-        // 🔥 NOUVEAU : Vérifier le cache d'abord
+        // 🔥 Cache pour affichage rapide
         const cacheKey = `planning_cache_${userId}`;
         const cacheTimeKey = `planning_cache_time_${userId}`;
         const cachedData = localStorage.getItem(cacheKey);
         const cacheTime = localStorage.getItem(cacheTimeKey);
         
-        // Si cache récent (< 5 minutes), utiliser le cache
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
+        
+        // ✅ Si cache valide : affichage immédiat (pas de lecture Firebase initiale !)
         if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
             userData = JSON.parse(cachedData);
-            console.log('📦 Chargé depuis le cache local (économie bande passante)');
+            console.log('📦 Affichage instantané depuis cache (économie lecture Firebase)');
             
-            // Charger les ressources et afficher
+            // Afficher immédiatement
             loadResourcesConfig();
             if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
                 PlanningModule.loadData();
@@ -10890,35 +10891,53 @@ function loadUserData(userId) {
             renderAll();
         }
         
-        // Listener Firebase (toujours actif pour synchronisation temps réel)
+        // ✅ TOUJOURS activer onSnapshot (même si cache utilisé ci-dessus)
+        // → Garantit sync temps réel multi-appareils
         unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
             if (docSnap.exists()) {
-                userData = docSnap.data();
+                const newData = docSnap.data();
                 
-                // 🔥 NOUVEAU : Mettre à jour le cache
+                // ⚡ OPTIMISATION : Ne re-render que si données différentes
+                const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
+                
+                userData = newData;
+                
+                // Mettre à jour le cache
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(cacheTimeKey, Date.now().toString());
                 
-                console.log('📥 Données chargées depuis Firebase + cache mis à jour');
+                if (dataChanged) {
+                    console.log('📥 Sync Firebase : données mises à jour');
+                    
+                    loadResourcesConfig();
+                    
+                    // Charger les données du planning
+                    if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                        PlanningModule.loadData();
+                        console.log('📅 Planning synchronisé');
+                        console.log('✅ Checklist synchronisée');
+                        if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                        if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+                    }
+                    
+                    renderAll();
+                } else {
+                    console.log('📥 Sync Firebase : aucun changement détecté');
+                }
             } else {
                 // Nouveau compte : initialiser avec données vides
                 userData = initializeUserData();
                 saveUserData();
                 console.log('🆕 Nouveau compte initialisé');
+                
+                loadResourcesConfig();
+                if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                    PlanningModule.loadData();
+                    if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                    if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+                }
+                renderAll();
             }
-            
-            loadResourcesConfig();
-            
-            // Charger les données du planning depuis userData
-            if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
-                PlanningModule.loadData();
-                console.log('📅 Planning chargé:', userData.planningData ? 'Données trouvées' : 'Vide');
-                console.log('✅ Checklist chargée:', userData.checklistData ? userData.checklistData.length + ' items' : 'Vide');
-                if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
-                if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
-            }
-            
-            renderAll();
         }, e => { 
             console.error('❌ Erreur Firebase:', e);
             // Initialiser avec données vides en cas d'erreur
@@ -14328,6 +14347,64 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
 };
 
 
+// 🔥 OPTIMISATION : Détacher listener quand onglet inactif
+let isTabActive = true;
+let temporaryUnsubscribe = null;
+
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Onglet caché
+        isTabActive = false;
+        console.log('👁️ Onglet inactif - pause sync Firebase');
+        
+        // Sauvegarder avant de détacher
+        if (hasUnsavedChanges) {
+            saveUserData();
+        }
+        
+        // Détacher le listener temporairement
+        if (unsubscribe) {
+            temporaryUnsubscribe = unsubscribe;
+            unsubscribe();
+            unsubscribe = null;
+        }
+    } else {
+        // Onglet visible à nouveau
+        isTabActive = true;
+        console.log('👁️ Onglet actif - reprise sync Firebase');
+        
+        // Réattacher le listener
+        if (currentUser && !unsubscribe) {
+            loadUserData(currentUser.uid);
+        }
+    }
+});
+
+// Détection inactivité 3 minutes
+let inactivityTimer = null;
+
+function resetInactivityTimer() {
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    
+    inactivityTimer = setTimeout(() => {
+        if (!document.hidden && unsubscribe) {
+            console.log('😴 Inactif - détachement');
+            if (hasUnsavedChanges) saveUserData();
+            if (unsubscribe) {
+                unsubscribe();
+                unsubscribe = null;
+            }
+        }
+    }, 3 * 60 * 1000);
+}
+
+['mousedown', 'keydown', 'click'].forEach(e => {
+    document.addEventListener(e, resetInactivityTimer, { passive: true });
+});
+resetInactivityTimer();
+
+
+
 </script>
 
 <style>
@@ -15520,38 +15597,7 @@ window.addEventListener('beforeunload', function() {
     stopTimer();
 });
 
-// 🔥 OPTIMISATION : Détacher listener quand onglet inactif
-let isTabActive = true;
-let temporaryUnsubscribe = null;
 
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        // Onglet caché
-        isTabActive = false;
-        console.log('👁️ Onglet inactif - pause sync Firebase');
-        
-        // Sauvegarder avant de détacher
-        if (hasUnsavedChanges) {
-            saveUserData();
-        }
-        
-        // Détacher le listener temporairement
-        if (unsubscribe) {
-            temporaryUnsubscribe = unsubscribe;
-            unsubscribe();
-            unsubscribe = null;
-        }
-    } else {
-        // Onglet visible à nouveau
-        isTabActive = true;
-        console.log('👁️ Onglet actif - reprise sync Firebase');
-        
-        // Réattacher le listener
-        if (currentUser && !unsubscribe) {
-            loadUserData(currentUser.uid);
-        }
-    }
-});
 
 </script>
 
