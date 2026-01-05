@@ -8268,32 +8268,32 @@ input[type="date"].modal-input {
 											<i class="fas fa-times"></i>
 										</button>
 									</div>
-									<div class="legend-items">
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #3b82f6; color: white;">QCM</span>
-											<span class="legend-description">QCM/DP disponibles</span>
-										</div>
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #8b5cf6; color: white;">COL</span>
-											<span class="legend-description">Collèges</span>
-										</div>
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #10b981; color: white;">ANK</span>
-											<span class="legend-description">Anki</span>
-										</div>
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #f59e0b; color: white;">PER</span>
-											<span class="legend-description">Fiche perso</span>
-										</div>
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #ef4444; color: white;">COD</span>
-											<span class="legend-description">EDNi/Codex</span>
-										</div>
-										<div class="legend-item">
-											<span class="legend-badge" style="background: #6b7280; color: white;">CNF</span>
-											<span class="legend-description">Conférence</span>
-										</div>
-									</div>
+											<div class="legend-items">
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #3b82f6; color: white;">QCM</span>
+													<span class="legend-description">QCM/DP disponibles</span>
+												</div>
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #8b5cf6; color: white;">COL</span>
+													<span class="legend-description">Collèges</span>
+												</div>
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #ef4444; color: white;">ANK</span>
+													<span class="legend-description">Anki</span>
+												</div>
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #f59e0b; color: white;">PER</span>
+													<span class="legend-description">Fiche perso</span>
+												</div>
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #10b981; color: white;">COD</span>
+													<span class="legend-description">EDNi/Codex</span>
+												</div>
+												<div class="legend-item">
+													<span class="legend-badge" style="background: #ec4899; color: white;">CNF</span>
+													<span class="legend-description">Conférence</span>
+												</div>
+											</div>
 								</div>
 								
 								<!-- Bouton Chronomètre -->
@@ -10672,6 +10672,27 @@ logoutBtn?.addEventListener('click', async () => {
         if (hasUnsavedChanges && currentUser) {
             console.log('💾 Sauvegarde forcée avant déconnexion...');
             await forceSaveAsync();
+        }
+        
+        // ✅ Afficher le check vert (que la sauvegarde ait eu lieu ou non)
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('pending', 'saving');
+            saveIndicatorHeader.classList.add('visible', 'saved');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
+            saveIndicatorHeader.title = 'Sauvegardé';
+            saveIndicatorHeader.style.color = '';
+            
+            const icon = saveIndicatorHeader.querySelector('i');
+            if (icon) icon.style.animation = 'none';
+        }
+        
+        // ⏱️ Attendre 1 seconde pour voir le check
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 🧹 Nettoyer l'indicateur AVANT la déconnexion
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.remove('visible', 'saved', 'saving', 'pending');
+            saveIndicatorHeader.innerHTML = '';
         }
         
         // 4️⃣ Déconnexion
@@ -14705,14 +14726,14 @@ resetInactivityTimer();
 .help-tip-content strong {
     display: block;
     color: #92400e;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     margin-bottom: 4px;
 }
 
 .help-tip-content p {
     color: #78350f;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     margin: 0;
 }
@@ -15176,7 +15197,7 @@ const helpContent = {
                 <div class="help-key-points-title"><i class="fas fa-trophy"></i> Indicateurs globaux</div>
                 <ul>
                     <li><strong>Items révisés</strong> : nombre d'item (en comptant les doublons dans les différents collèges) vu au moins une fois (≥1 tour) - Voir Précisions 1</li>
-                    <li><strong>Items de référence</strong> : nombre d'items de référence vu au moins une fois (≥1 tour) - Voir Précisions 1</li>
+                    <li><strong>Items de référence</strong> : nombre d'items de référence vu au moins une fois (≥1 tour) - Voir Précisions 2</li>
                     <li><strong>Tours totaux</strong> : nombre total de tours fait sur tous les items.</li>
                     <li><strong>Temps total</strong> : temps cumulé passer à réviser les items.</li>
                 </ul>
@@ -15288,7 +15309,7 @@ const helpContent = {
             <ul>
 				<li><strong>Entrer vos tours :</strong> cliquez sur les cases T1-T8 pour faire apparaitre le formulaire.</li>
 				<li><strong>Confiance :</strong> en auto-évaluation, indiquez votre ressenti sur la maitrise de l'item.</li>
-				<li><strong>Date :</strong> la date du jour est entrée par défaut.</li>
+				<li><strong>Date :</strong> la date du jour est entrée par défaut, vous pouvez également la modifier.</li>
 				<li><strong>Durée :</strong> si vous le souhaitez indiquez le temps passé à travailler l'item pendant le tour.</li>
 				<li><strong>Support :</strong> si vous le souhaitez indiquez le support que vous avez utilisé pour travailler l'item.</li>
             </ul>
