@@ -10927,22 +10927,28 @@ function loadUserData(userId) {
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(cacheTimeKey, Date.now().toString());
                 
-                if (dataChanged) {
-                    console.log('📥 Sync Firebase : données mises à jour');
-                    
-                    loadResourcesConfig();
-                    
-                    // Charger les données du planning
-                    if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
-                        PlanningModule.loadData();
-                        console.log('📅 Planning synchronisé');
-                        console.log('✅ Checklist synchronisée');
-                        if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
-                        if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
-                    }
-                    
-                    renderAll();
-                } else {
+				if (dataChanged) {
+					console.log('📥 Sync Firebase : données mises à jour');
+					
+					loadResourcesConfig();
+					
+					// Charger les données du planning
+					if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+						PlanningModule.loadData();
+						console.log('📅 Planning synchronisé');
+						console.log('✅ Checklist synchronisée');
+						if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+						if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+					}
+					
+					// 🏆 Recharger les trophées automatiquement lors de la sync
+					if (typeof TrophiesSystem !== 'undefined') {
+						TrophiesSystem.init(); // Recharge les trophées depuis userData
+						console.log('🏆 Trophées synchronisés');
+					}
+					
+					renderAll();
+				}else {
                     console.log('📥 Sync Firebase : aucun changement détecté');
                 }
             } else {
