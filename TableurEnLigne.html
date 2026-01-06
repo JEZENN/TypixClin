@@ -4170,6 +4170,50 @@ input[type="date"].modal-input {
 .day-status-badge.repos { background: #ddd6fe; color: #5b21b6; }
 .day-status-badge.autre { background: #fbcfe8; color: #9d174d; }
 
+/* Checkbox remplir semaine - Style discret */
+.status-week-fill {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.status-week-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    user-select: none;
+    padding: 0.4rem;
+    background: transparent;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+
+.status-week-checkbox input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.status-week-checkbox span {
+    font-weight: 500;
+}
+
+[data-theme="dark"] .status-week-fill {
+    border-top-color: var(--gray-600);
+}
+
+[data-theme="dark"] .status-week-checkbox {
+    color: var(--gray-400);
+}
+
+
+
+
 /* Zone notes - AUTO-EXPAND */
 .day-notes-zone {
     flex: 1;
@@ -4305,6 +4349,40 @@ input[type="date"].modal-input {
     max-height: 420px;
 
 }
+
+/* Checkbox remplir semaine pour spécialités */
+.specialty-week-fill {
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-top: 1px solid var(--gray-200);
+    background: var(--white);
+}
+
+.specialty-week-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    user-select: none;
+}
+
+.specialty-week-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.specialty-week-checkbox:hover {
+    color: var(--gray-900);
+}
+
+[data-theme="dark"] .specialty-week-fill {
+    border-top-color: var(--gray-600);
+}
+
+
 
 .specialty-popup-header {
     display: flex;
@@ -8042,6 +8120,12 @@ input[type="date"].modal-input {
             <div class="status-mini-label">Autre</div>
         </button>
     </div>
+    <div class="status-week-fill" id="status-week-fill-container" style="display: none;">
+        <label class="status-week-checkbox">
+            <input type="checkbox" id="status-week-fill-checkbox">
+            <span>Remplir toute la semaine</span>
+        </label>
+    </div>
 </div>
 
 <!-- Mini Popup Spécialité - Amélioré -->
@@ -8058,10 +8142,15 @@ input[type="date"].modal-input {
                 </button>
             </div>
         </div>
-
     </div>
     <div class="specialty-grid-scroll">
         <div class="specialty-grid" id="specialty-grid"></div>
+    </div>
+    <div class="specialty-week-fill" id="specialty-week-fill-container" style="display: none;">
+        <label class="specialty-week-checkbox">
+            <input type="checkbox" id="specialty-week-fill-checkbox">
+            <span>Remplir toute la semaine</span>
+        </label>
     </div>
 </div>
 
@@ -8460,8 +8549,8 @@ input[type="date"].modal-input {
         
         <div class="modal-section">
             <label class="modal-label">Date</label>
-            <input type="date" id="tour-date" class="modal-input" max="">
-			    <div class="confidence-error" id="date-error">Vous ne pouvez pas sélectionner une date future</div>
+			<input type="date" id="tour-date" class="modal-input" max="">
+			<div class="confidence-error" id="date-error">Erreur de date</div>
 
 			
         </div>
@@ -10539,7 +10628,18 @@ let pendingTour = null;
 
 currentUser = null
 
-window.addEventListener('load', () => { setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }, 800); });
+//window.addEventListener('load', () => { setTimeout(() => { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }, 800); });
+
+// Fonction pour masquer le loader une fois les données chargées
+function hideLoader() {
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 500);
+    }
+}
+
 
 mobileMenuBtn?.addEventListener('click', () => {
     mobileMenu.classList.toggle('active');
@@ -10585,23 +10685,54 @@ function getInitials(name) {
     return names.length >= 2 ? (names[0][0] + names[names.length-1][0]).toUpperCase() : name.substring(0,2).toUpperCase();
 }
 
+// Cache pour la vérification premium (évite les appels répétés)
+let premiumStatusCache = null;
+let premiumStatusCacheTime = null;
+const PREMIUM_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 async function updateUserUI(user) {
     const presentationSection = document.getElementById('presentation-section');
     
-    if (user) {
-        // ========== VÉRIFICATION PREMIUM ==========
-        try {
-            const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
-            const result = await checkPremiumStatus();
-            
-            if (!result.data.isPremium) {
-                alert('⚠️ Accès premium requis. Vous allez être redirigé vers la page d\'abonnement.');
-                window.location.href = 'comptepremium.html';
-                return;
+if (user) {
+        // ========== VÉRIFICATION PREMIUM AVEC CACHE ==========
+        const now = Date.now();
+        let isPremium = false;
+        
+        // Vérifier si le cache est valide (moins de 5 minutes)
+        if (premiumStatusCache !== null && premiumStatusCacheTime && (now - premiumStatusCacheTime) < PREMIUM_CACHE_DURATION) {
+            // Utiliser le cache
+            isPremium = premiumStatusCache;
+            console.log('✅ Statut premium depuis cache');
+        } else {
+            // Faire un nouvel appel
+            try {
+                const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
+                const result = await checkPremiumStatus();
+                isPremium = result.data.isPremium;
+                
+                // Mettre à jour le cache
+                premiumStatusCache = isPremium;
+                premiumStatusCacheTime = now;
+                console.log('✅ Statut premium vérifié et mis en cache');
+            } catch (error) {
+                console.error('Erreur vérification premium:', error);
+                
+                // Si on a un cache même expiré, l'utiliser plutôt que de bloquer
+                if (premiumStatusCache !== null) {
+                    console.warn('⚠️ Utilisation du cache expiré suite à une erreur');
+                    isPremium = premiumStatusCache;
+                } else {
+                    // Seulement si aucun cache et erreur, alors rediriger
+                    alert('Erreur lors de la vérification de votre abonnement.');
+                    window.location.href = 'comptepremium.html';
+                    return;
+                }
             }
-        } catch (error) {
-            console.error('Erreur vérification premium:', error);
-            alert('Erreur lors de la vérification de votre abonnement.');
+        }
+        
+        // Vérifier le statut premium
+        if (!isPremium) {
+            alert('⚠️ Accès premium requis. Vous allez être redirigé vers la page d\'abonnement.');
             window.location.href = 'comptepremium.html';
             return;
         }
@@ -10629,6 +10760,7 @@ async function updateUserUI(user) {
         }
         
         loadUserData(user.uid);
+		setTimeout(hideLoader, 500);
     } else {
         currentUser = null;
         userAuth.classList.remove('logged-in');
@@ -10636,6 +10768,7 @@ async function updateUserUI(user) {
         if (presentationSection) presentationSection.style.display = 'block';
         mainContent.classList.remove('active');
         if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+		hideLoader();
     }
 }
 
@@ -12066,10 +12199,29 @@ window.openConfidenceModal = function(el) {
         document.querySelector('.support-btn[data-support="' + selectedSupport + '"]')?.classList.add('selected');
     }
     
-    // Date : existante ou aujourd'hui + définir la date max à aujourd'hui
+// Date : existante ou aujourd'hui + définir la date max à aujourd'hui
     const dateInput = document.getElementById('tour-date');
     const today = new Date().toISOString().split('T')[0];
     dateInput.setAttribute('max', today);
+    
+    // Trouver la date du dernier tour AVANT celui-ci
+    let minDate = null;
+    if (d.tourDates && tourIndex > 0) {
+        // Parcourir les tours précédents pour trouver le plus récent
+        for (let i = tourIndex - 1; i >= 0; i--) {
+            if (d.tourDates[i]) {
+                minDate = d.tourDates[i].split('T')[0];
+                break;
+            }
+        }
+    }
+    
+    // Définir la date min (date du dernier tour précédent)
+    if (minDate) {
+        dateInput.setAttribute('min', minDate);
+    } else {
+        dateInput.removeAttribute('min');
+    }
     
     if (d.tourDates && d.tourDates[tourIndex]) {
         dateInput.value = d.tourDates[tourIndex].split('T')[0];
@@ -12144,9 +12296,30 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     const today = new Date().toISOString().split('T')[0];
     
     if (selectedDateStr > today) {
+        dateErrorEl.textContent = 'Vous ne pouvez pas sélectionner une date future';
         dateErrorEl.classList.add('visible');
         dateInput.focus();
         hasError = true;
+    }
+    
+    // VALIDATION : Date pas avant le dernier tour précédent
+    // Récupérer les données pour vérifier les tours précédents
+    const tempD = getItemData(pendingTour.specialtyId, pendingTour.fc);
+    
+    if (pendingTour.tour > 0 && tempD.tourDates) {
+        // Trouver la date du dernier tour AVANT celui-ci
+        for (let i = pendingTour.tour - 1; i >= 0; i--) {
+            if (tempD.tourDates[i]) {
+                const previousTourDate = tempD.tourDates[i].split('T')[0];
+                if (selectedDateStr < previousTourDate) {
+                    dateErrorEl.textContent = 'La date ne peut pas être antérieure au tour précédent (' + previousTourDate + ')';
+                    dateErrorEl.classList.add('visible');
+                    dateInput.focus();
+                    hasError = true;
+                }
+                break;
+            }
+        }
     }
     
     // Si erreur, on arrête
@@ -12194,7 +12367,6 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
         setTimeout(() => TrophiesSystem.checkTrophies(), 500);
     }
 });
-
 document.getElementById('btn-reset-tour')?.addEventListener('click', function() {
     if (!pendingTour) return;
     
@@ -13103,20 +13275,41 @@ function setupCustomDropdowns() {
             }
         });
         
-        // Boutons statut
-        document.querySelectorAll('#status-popup .status-mini-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (currentEditingDate) {
-                    setDayStatus(currentEditingDate, btn.dataset.status);
-                    document.getElementById('status-popup').classList.remove('active');
-                }
-            });
-        });
+			// Boutons statut
+					document.querySelectorAll('#status-popup .status-mini-btn').forEach(btn => {
+						btn.addEventListener('click', () => {
+							if (currentEditingDate) {
+								const selectedStatus = btn.dataset.status;
+								const weekFillCheckbox = document.getElementById('status-week-fill-checkbox');
+								
+								// Vérifier si la checkbox est cochée
+								if (weekFillCheckbox && weekFillCheckbox.checked) {
+									// Remplir toute la semaine
+									fillWeekWithStatus(currentEditingDate, selectedStatus);
+								} else {
+									// Remplir seulement le jour actuel
+									setDayStatus(currentEditingDate, selectedStatus);
+								}
+								
+								document.getElementById('status-popup').classList.remove('active');
+							}
+						});
+					});
         
-			// Bouton Effacer - efface ET ferme le popup
+// Bouton Effacer - efface ET ferme le popup
 			document.getElementById('specialty-clear')?.addEventListener('click', () => {
 				if (currentEditingDate) {
-					setDaySpecialties(currentEditingDate, []); // Efface les spécialités
+					const weekFillCheckbox = document.getElementById('specialty-week-fill-checkbox');
+					
+					// Vérifier si la checkbox est cochée
+					if (weekFillCheckbox && weekFillCheckbox.checked) {
+						// Effacer toute la semaine
+						fillWeekWithSpecialties(currentEditingDate, []);
+					} else {
+						// Effacer seulement le jour actuel
+						setDaySpecialties(currentEditingDate, []);
+					}
+					
 					document.getElementById('specialty-popup').classList.remove('active');
 					document.getElementById('specialty-search').value = ''; // Reset recherche
 				}
@@ -13125,7 +13318,17 @@ function setupCustomDropdowns() {
 			// Bouton OK - confirme et ferme
 			document.getElementById('specialty-confirm')?.addEventListener('click', () => {
 				if (currentEditingDate) {
-					setDaySpecialties(currentEditingDate, [...tempSelectedSpecialties]);
+					const weekFillCheckbox = document.getElementById('specialty-week-fill-checkbox');
+					
+					// Vérifier si la checkbox est cochée
+					if (weekFillCheckbox && weekFillCheckbox.checked) {
+						// Remplir toute la semaine
+						fillWeekWithSpecialties(currentEditingDate, [...tempSelectedSpecialties]);
+					} else {
+						// Remplir seulement le jour actuel
+						setDaySpecialties(currentEditingDate, [...tempSelectedSpecialties]);
+					}
+					
 					document.getElementById('specialty-popup').classList.remove('active');
 					document.getElementById('specialty-search').value = ''; // Reset recherche
 				}
@@ -13426,9 +13629,28 @@ function openStatusPopup(dateKey, targetEl) {
     
     document.getElementById('specialty-popup')?.classList.remove('active');
     
+    // Déterminer si c'est un lundi (jour de la semaine = 1)
+    const date = new Date(dateKey);
+    const dayOfWeek = date.getDay(); // 0 = Dimanche, 1 = Lundi
+    const isMonday = dayOfWeek === 1;
+    
+    // Afficher/masquer la checkbox selon si c'est un lundi
+    const weekFillContainer = document.getElementById('status-week-fill-container');
+    const weekFillCheckbox = document.getElementById('status-week-fill-checkbox');
+    
+    if (weekFillContainer && weekFillCheckbox) {
+        if (isMonday) {
+            weekFillContainer.style.display = 'block';
+            weekFillCheckbox.checked = false; // Toujours décoché par défaut
+        } else {
+            weekFillContainer.style.display = 'none';
+            weekFillCheckbox.checked = false;
+        }
+    }
+    
     const rect = targetEl.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const popupHeight = 200; // Hauteur approximative du popup statut (plus petit que specialty)
+    const popupHeight = isMonday ? 280 : 200; // Plus haut si lundi (avec checkbox)
     
     // Calculer l'espace disponible
     const spaceBelow = viewportHeight - rect.bottom;
@@ -13483,9 +13705,28 @@ function openSpecialtyPopup(dateKey, targetEl) {
     
     document.getElementById('status-popup')?.classList.remove('active');
     
+    // Déterminer si c'est un lundi (jour de la semaine = 1)
+    const date = new Date(dateKey);
+    const dayOfWeek = date.getDay(); // 0 = Dimanche, 1 = Lundi
+    const isMonday = dayOfWeek === 1;
+    
+    // Afficher/masquer la checkbox selon si c'est un lundi
+    const weekFillContainer = document.getElementById('specialty-week-fill-container');
+    const weekFillCheckbox = document.getElementById('specialty-week-fill-checkbox');
+    
+    if (weekFillContainer && weekFillCheckbox) {
+        if (isMonday) {
+            weekFillContainer.style.display = 'block';
+            weekFillCheckbox.checked = false; // Toujours décoché par défaut
+        } else {
+            weekFillContainer.style.display = 'none';
+            weekFillCheckbox.checked = false;
+        }
+    }
+    
     const rect = targetEl.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const popupHeight = 440;
+    const popupHeight = isMonday ? 500 : 440; // Plus haut si lundi (avec checkbox)
     const idealTopPosition = 250; // Position idéale de la case par rapport au haut de l'écran
     
     // Calculer où devrait être la case pour que tout soit visible
@@ -13545,7 +13786,69 @@ function openSpecialtyPopup(dateKey, targetEl) {
         saveData();
         renderCalendar();
     }
+	
+	    // Remplir toute la semaine avec un statut
+    function fillWeekWithStatus(mondayDateKey, status) {
+        const startDate = new Date(mondayDateKey);
+        
+        // Déterminer le nombre de jours à remplir selon le statut
+        let daysToFill = 7; // Par défaut : lundi à dimanche
+        
+        if (status === 'stage') {
+            daysToFill = 5; // Lundi à vendredi seulement
+        } else if (status === 'garde') {
+            daysToFill = 1; // Seulement le lundi
+        }
+        
+        // Remplir les jours
+        for (let i = 0; i < daysToFill; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            const dateKey = formatDateKey(currentDate);
+            
+            if (!planningData[dateKey]) planningData[dateKey] = {};
+            planningData[dateKey].status = status;
+            if (!status) delete planningData[dateKey].status;
+            cleanupDayData(dateKey);
+        }
+        
+        saveData();
+        renderCalendar();
+    }
+	
     
+	// Remplir toute la semaine avec des spécialités
+    function fillWeekWithSpecialties(mondayDateKey, specialtiesArray) {
+        const startDate = new Date(mondayDateKey);
+        
+        // Toujours remplir du lundi au dimanche (7 jours) pour les spécialités
+        const daysToFill = 7;
+        
+        // Remplir les jours
+        for (let i = 0; i < daysToFill; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            const dateKey = formatDateKey(currentDate);
+            
+            if (!planningData[dateKey]) planningData[dateKey] = {};
+            
+            // Supprimer l'ancien format
+            delete planningData[dateKey].specialty;
+            
+            if (specialtiesArray.length > 0) {
+                planningData[dateKey].specialties = [...specialtiesArray];
+            } else {
+                delete planningData[dateKey].specialties;
+            }
+            
+            cleanupDayData(dateKey);
+        }
+        
+        saveData();
+        renderCalendar();
+    }
+	
+	
     // Sauvegarder spécialités (multi)
     function setDaySpecialties(dateKey, specialtiesArray) {
         if (!planningData[dateKey]) planningData[dateKey] = {};
@@ -13890,11 +14193,10 @@ function loadTrophies() {
 function saveTrophies() {
     if (typeof userData !== 'undefined' && userData) {
         userData.trophies = unlockedTrophies;
-        if (typeof debouncedSave === 'function') {
-            debouncedSave();
-        }
+
     }
 }
+
     
     function getCurrentStats() {
         const today = new Date();
@@ -14156,18 +14458,7 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
     });
 });
 
-// Vérifier les trophées automatiquement après chaque sauvegarde
-(function() {
-    const originalDebouncedSave = window.debouncedSave;
-    if (typeof originalDebouncedSave === 'function') {
-        window.debouncedSave = function() {
-            originalDebouncedSave();
-            if (typeof TrophiesSystem !== 'undefined') {
-                setTimeout(() => TrophiesSystem.checkTrophies(), 500);
-            }
-        };
-    }
-})();
+
 
 function renderSpecialtyLegend() {
     const container = document.getElementById('specialty-legend-items');
@@ -15237,7 +15528,7 @@ const helpContent = {
                 <ul>
                     <li><strong>Complétion du programme</strong> : % des items vu au moins une fois parmi les 747 items du tableur.</li>
                     <li><strong>Trophées quotidiens</strong> : débloqués lors de performances exceptionnelles un jour de votre externat.</li>
-                    <li><strong>Trophées hebdomadaires</strong> : débloqués lors de performances exceptionnelles une semaine de votre externat.</li>
+                    <li><strong>Trophées hebdomadaires</strong> : débloqués lors de performances exceptionnelles une semaine de votre externat du lundi au dimanche.</li>
                     <li><strong>Accomplissements</strong> : quand les heures de travail deviennent des jours, les jours deviennent des semaines et les semaines deviennent des mois.</li>
                 </ul>
             </div>
@@ -15394,7 +15685,7 @@ const helpContent = {
         <div class="help-key-points">
             <div class="help-key-points-title"><i class="fas fa-tasks"></i> Fonctionnalités</div>
             <ul>
-				<li><strong>Statut du jour</strong> : indiquez chaque jour un statut (révision, stage, garde, repos).</li>
+				<li><strong>Statut du jour</strong> : indiquez chaque jour un statut (révision, stage, garde, repos). Vous pouvez également remplir l’ensemble des jours d’une semaine en une seule fois via la case située sous le pop-up « lundi ».</li>
 				<li><strong>Spécialité(s) travaillée(s)</strong> : matière(s) étudiée(s) dans la journée.</li>
 				<li><strong>Visualisation</strong> : codes couleur pour visualiser l’organisation de vos semaines à venir.</li>
 				<li><strong>Zone de texte</strong> : indiquez les événements à venir en appuyant sur les cases «notes».</li>
