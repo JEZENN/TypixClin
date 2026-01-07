@@ -459,6 +459,16 @@ button {
     width: 100%;
 }
 
+/* Style pour le lien actif au scroll */
+.nav-link.active {
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.nav-link.active::after {
+    width: 100%;
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -2827,6 +2837,24 @@ button {
     }
 }
 
+/* Style pour le lien actif (scroll spy) */
+.nav-link.active {
+    color: var(--primary);
+}
+
+.nav-link.active::after {
+    width: 100%;
+}
+
+.nav-link.active {
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.nav-link.active::after {
+    width: 100%;
+}
+
 
 </style>
 </head>
@@ -3701,6 +3729,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+	    // ===== SCROLL SPY - Activer les liens du header au scroll =====
+    const sections = document.querySelectorAll('section[id]');
+    const navLinksAll = document.querySelectorAll('.nav-items .nav-link');
+    
+    function updateActiveNavLink() {
+        const scrollPosition = window.scrollY + 200;
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionId = section.getAttribute('id');
+            
+            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                navLinksAll.forEach(link => link.classList.remove('active'));
+                
+                const correspondingLink = document.querySelector('.nav-items .nav-link[href="#' + sectionId + '"]');
+                if (correspondingLink) {
+                    correspondingLink.classList.add('active');
+                }
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', updateActiveNavLink);
+    updateActiveNavLink();
+	
 });
 </script>
 
