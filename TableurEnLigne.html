@@ -12576,29 +12576,34 @@ function renderSpecialtyOptions(searchTerm = '') {
     });
     
     list.innerHTML = html;
-    
-    // Ajouter les event listeners
-    list.querySelectorAll('.specialty-multi-option').forEach(opt => {
-        opt.addEventListener('click', function() {
-            const value = this.dataset.value;
-            
-            if (value === 'all') {
-                selectedSpecialties = [];
-            } else if (this.classList.contains('disabled')) {
-                return; // Ignorer si désactivé
-            } else {
-                const index = selectedSpecialties.indexOf(value);
-                if (index > -1) {
-                    selectedSpecialties.splice(index, 1);
-                } else if (selectedSpecialties.length < MAX_SPECIALTY_SELECTION) {
-                    selectedSpecialties.push(value);
-                }
+	
+list.querySelectorAll('.specialty-multi-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+        const value = this.dataset.value;
+        
+        if (value === 'all') {
+            selectedSpecialties = [];
+            document.getElementById('specialty-dropdown').classList.remove('open');
+        } else if (this.classList.contains('disabled')) {
+            return; // Ignorer si désactivé
+        } else {
+            const index = selectedSpecialties.indexOf(value);
+            if (index > -1) {
+                selectedSpecialties.splice(index, 1);
+            } else if (selectedSpecialties.length < MAX_SPECIALTY_SELECTION) {
+                selectedSpecialties.push(value);
             }
-            
-            updateSpecialtySelection();
-            renderSpecialtyOptions(document.getElementById('specialty-search-input')?.value.toLowerCase() || '');
-        });
+        }
+        
+        updateSpecialtySelection();
+        renderSpecialtyOptions(document.getElementById('specialty-search-input')?.value.toLowerCase() || '');
+        
+        // Fermer si 4 spécialités atteintes
+        if (selectedSpecialties.length >= MAX_SPECIALTY_SELECTION) {
+            document.getElementById('specialty-dropdown').classList.remove('open');
+        }
     });
+});
 }
 
 function updateSpecialtySelection() {
