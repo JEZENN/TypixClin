@@ -28,7 +28,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="TypixClin" />
 <link rel="manifest" href="/site.webmanifest" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
 
 
 <meta charset="UTF-8">
@@ -9850,16 +9850,7 @@ input[type="date"].modal-input {
         <div class="backup-list" id="cloud-backup-section">
             <!-- Rempli dynamiquement -->
         </div>
-        
-        <!-- 💻 SECTION BACKUPS LOCAUX -->
-        <div class="backup-list-title" style="margin-top: 2rem;">
-            <i class="fas fa-hdd"></i>
-            Sauvegardes locales (7 derniers jours)
-        </div>
-        <div class="backup-list" id="backup-list">
-            <!-- Rempli dynamiquement -->
-        </div>
-        
+                
         <div class="backup-warning">
             <i class="fas fa-exclamation-triangle"></i>
             <span>La restauration remplacera vos données actuelles. Cette action est irréversible.</span>
@@ -12072,6 +12063,7 @@ let cachedStatsTime = null;
 const STATS_CACHE_DURATION = 30000;
 let unsubscribe = null;
 let saveTimeout = null;
+let cloudSaveTimeout = null; // ⏱️ Timeout pour la sauvegarde cloud automatique
 let currentSort = { field: 'num', direction: 'asc' };
 let pendingTour = null;
 
@@ -12165,6 +12157,9 @@ async function updateUserUI(user) {
         loginRequired.style.display = 'none';
         if (presentationSection) presentationSection.style.display = 'none';
         mainContent.classList.add('active');
+		// 💾 Afficher le bouton de sauvegarde
+		const backupBtn = document.getElementById('backup-settings-btn');
+		if (backupBtn) backupBtn.style.display = 'flex';
         
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -12192,7 +12187,8 @@ async function updateUserUI(user) {
             // Vérifier si le cache est valide (moins de 5 minutes)
             if (premiumStatusCache !== null && premiumStatusCacheTime && (now - premiumStatusCacheTime) < PREMIUM_CACHE_DURATION) {
                 isPremium = premiumStatusCache;
-                console.log('✅ Statut premium depuis cache');
+                
+			
             } else {
                 try {
                     const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
@@ -12201,7 +12197,7 @@ async function updateUserUI(user) {
                     
                     premiumStatusCache = isPremium;
                     premiumStatusCacheTime = now;
-                    console.log('✅ Statut premium vérifié et mis en cache');
+                    
                 } catch (error) {
                     console.error('Erreur vérification premium:', error);
                     
@@ -12224,7 +12220,7 @@ async function updateUserUI(user) {
                 // Au lieu de rediriger immédiatement, proposer des options
                 showPremiumRequiredMessage();
             } else {
-                console.log('✅ Accès premium confirmé');
+                
             }
         })();
         
@@ -12237,6 +12233,12 @@ async function updateUserUI(user) {
         if (presentationSection) presentationSection.style.display = 'block';
         mainContent.classList.remove('active');
         if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+		// 🚫 Cacher le bouton de sauvegarde
+			const backupBtn = document.getElementById('backup-settings-btn');
+			if (backupBtn) backupBtn.style.display = 'none';
+
+
+        if (cloudSaveTimeout) { clearTimeout(cloudSaveTimeout); cloudSaveTimeout = null; }
         hideLoader();
     }
 }
@@ -12318,12 +12320,7 @@ userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdow
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => {
     try {
-		if (currentUser) {
-            const cacheKey = `planning_cache_${currentUser.uid}`;
-            const cacheTimeKey = `planning_cache_time_${currentUser.uid}`;
-            localStorage.removeItem(cacheKey);
-            localStorage.removeItem(cacheTimeKey);
-            console.log('🧹 Cache nettoyé');
+		if (currentUser) {           
         }
 		
 		// 1️⃣ Annuler le debounce en cours
@@ -12331,6 +12328,17 @@ logoutBtn?.addEventListener('click', async () => {
             clearTimeout(saveTimeout);
             saveTimeout = null;
         }
+
+        // 🛑 Annuler aussi le timeout de sauvegarde cloud
+        if (cloudSaveTimeout) {
+            clearTimeout(cloudSaveTimeout);
+            cloudSaveTimeout = null;
+        }
+		
+		// 🚫 Cacher immédiatement le bouton de sauvegarde
+const backupBtnLogout = document.getElementById('backup-settings-btn');
+if (backupBtnLogout) backupBtnLogout.style.display = 'none';
+
         
         // 2️⃣ Afficher l'indicateur de sauvegarde
         if (saveIndicatorHeader) {
@@ -12342,7 +12350,7 @@ logoutBtn?.addEventListener('click', async () => {
         
         // 3️⃣ Forcer la sauvegarde immédiate si des modifications existent
         if (hasUnsavedChanges && currentUser) {
-            console.log('💾 Sauvegarde forcée avant déconnexion...');
+            
             await forceSaveAsync();
         }
         
@@ -12386,7 +12394,7 @@ logoutBtn?.addEventListener('click', async () => {
             }, 3000);
         }
         
-        console.log('✅ Déconnexion réussie avec sauvegarde');
+        
         
     } catch (error) {
         console.error('❌ Erreur lors de la déconnexion:', error);
@@ -12448,7 +12456,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton "Quitter quand même"
     if (btnForceQuit) {
         btnForceQuit.addEventListener('click', () => {
-            // Sauvegarder localStorage en dernier recours
             forceSave();
             
             // Autoriser la fermeture
@@ -12549,81 +12556,7 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 
-function saveBackupToLocalStorage(userId, data) {
-    if (!userId || !data) return;
-    
-    try {
-        const backupKey = `${BACKUP_KEY_PREFIX}${userId}`;
-        const existingBackups = JSON.parse(localStorage.getItem(backupKey) || '[]');
-        
-        // Compter TOUT le contenu
-        const content = countDataContent(data);
-        
-        // Ne sauvegarder que si les données ont du contenu
-        if (content.total === 0) {
-            console.log('⚠️ Backup ignoré : données vides');
-            return;
-        }
-        
-        // Créer le nouveau backup avec toutes les infos
-        const newBackup = {
-            timestamp: new Date().toISOString(),
-            itemsCount: content.items,
-            totalCount: content.total,
-            details: content,
-            data: JSON.parse(JSON.stringify(data)) // Deep copy
-        };
-        
-        // Éviter les doublons (comparer tout le contenu, pas juste items)
-        if (existingBackups.length > 0) {
-            const lastBackup = existingBackups[existingBackups.length - 1];
-            const lastContent = JSON.stringify({
-                items: lastBackup.data.items,
-                planningData: lastBackup.data.planningData,
-                checklistData: lastBackup.data.checklistData,
-                trophies: lastBackup.data.trophies,
-                selectedResources: lastBackup.data.selectedResources
-            });
-            const newContent = JSON.stringify({
-                items: data.items,
-                planningData: data.planningData,
-                checklistData: data.checklistData,
-                trophies: data.trophies,
-                selectedResources: data.selectedResources
-            });
-            if (lastContent === newContent) {
-                console.log('📦 Backup ignoré : identique au précédent');
-                return;
-            }
-        }
-        
-        // Ajouter le nouveau backup
-        existingBackups.push(newBackup);
-        
-        // Garder seulement les X derniers backups
-        while (existingBackups.length > MAX_BACKUPS) {
-            existingBackups.shift();
-        }
-        
-        localStorage.setItem(backupKey, JSON.stringify(existingBackups));
-        console.log(`💾 Backup créé (${content.items} items, ${content.planningDays} planning, ${content.checklistItems} checklist, ${content.trophies} trophées) - ${existingBackups.length}/${MAX_BACKUPS} backups`);
-        
-    } catch (e) {
-        console.error('❌ Erreur création backup:', e);
-    }
-}
 
-function getBackupsFromLocalStorage(userId) {
-    if (!userId) return [];
-    
-    try {
-        const backupKey = `${BACKUP_KEY_PREFIX}${userId}`;
-        return JSON.parse(localStorage.getItem(backupKey) || '[]');
-    } catch (e) {
-        console.error('❌ Erreur lecture backups:', e);
-        return [];
-    }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // ☁️ SYSTÈME DE BACKUP FIREBASE (Cloud)
@@ -12637,7 +12570,7 @@ async function saveBackupToFirebase(userId, data) {
         
         // Ne sauvegarder que si les données ont du contenu significatif
         if (content.items < 10) {
-            console.log('☁️ Backup Firebase ignoré : pas assez de données');
+            
             return { success: false, error: 'Pas assez de données (minimum 10 fiches)' };
         }
         
@@ -12654,7 +12587,7 @@ async function saveBackupToFirebase(userId, data) {
         // Sauvegarder dans une collection séparée "planningBackups"
         await setDoc(doc(db, 'planningBackups', userId), backupData);
         
-        console.log(`☁️ Backup Firebase créé (${content.items} items)`);
+        
         return { success: true, content: content };
         
     } catch (e) {
@@ -12671,10 +12604,10 @@ async function getBackupFromFirebase(userId) {
         
         if (docSnap.exists()) {
             const backup = docSnap.data();
-            console.log(`☁️ Backup Firebase trouvé (${backup.itemsCount} items, ${backup.date})`);
+            
             return backup;
         } else {
-            console.log('☁️ Aucun backup Firebase trouvé');
+            
             return null;
         }
         
@@ -12692,7 +12625,7 @@ async function restoreFromFirebaseBackup(userId) {
         return null;
     }
     
-    console.log(`🔄 Restauration du backup Firebase du ${backup.date} (${backup.itemsCount} items)`);
+    
     return backup.data;
 }
 
@@ -12705,86 +12638,7 @@ function getTodayDateString() {
     return new Date().toISOString().split('T')[0]; // Format: "2026-01-10"
 }
 
-function saveDailyBackup(userId, data, isManual = false) {
-    if (!userId || !data) return;
-    
-    try {
-        const content = countDataContent(data);
-        
-        // Ne sauvegarder que si les données ont du contenu significatif
-        if (content.items < 10) {
-            console.log('📅 Backup quotidien ignoré : pas assez de données');
-            return;
-        }
-        
-        const dailyKey = `${DAILY_BACKUP_KEY_PREFIX}${userId}`;
-        const existingDailyBackups = JSON.parse(localStorage.getItem(dailyKey) || '[]');
-        const today = getTodayDateString();
-        
-        // Vérifier si on a déjà un backup aujourd'hui
-        const todayBackupIndex = existingDailyBackups.findIndex(b => b.date === today);
-        
-        if (todayBackupIndex !== -1) {
-            const existingToday = existingDailyBackups[todayBackupIndex];
-            
-            // 🛡️ Si le backup existant est MANUEL, ne PAS l'écraser avec un automatique
-            if (existingToday.isManual && !isManual) {
-                console.log('📅 Backup quotidien ignoré : sauvegarde manuelle déjà présente');
-                return;
-            }
-            
-            // Mettre à jour seulement si :
-            // - C'est une sauvegarde manuelle (prioritaire)
-            // - OU plus de données ET l'existant n'est pas manuel
-            if (isManual || (content.items > (existingToday.itemsCount || 0) && !existingToday.isManual)) {
-                existingDailyBackups[todayBackupIndex] = {
-                    date: today,
-                    timestamp: new Date().toISOString(),
-                    itemsCount: content.items,
-                    totalCount: content.total,
-                    details: content,
-                    isManual: isManual,
-                    data: JSON.parse(JSON.stringify(data))
-                };
-                console.log(`📅 Backup quotidien MIS À JOUR ${isManual ? '(MANUELLE)' : ''} (${content.items} items)`);
-            } else {
-                console.log('📅 Backup quotidien existant déjà meilleur, ignoré');
-                return;
-            }
-        } else {
-            // Créer un nouveau backup quotidien
-            existingDailyBackups.push({
-                date: today,
-                timestamp: new Date().toISOString(),
-                itemsCount: content.items,
-                totalCount: content.total,
-                details: content,
-                isManual: isManual,
-                data: JSON.parse(JSON.stringify(data))
-            });
-            console.log(`📅 Nouveau backup quotidien créé ${isManual ? '(MANUELLE)' : ''} (${content.items} items)`);
-        }
-        
-        // Trier par date (plus récent en dernier)
-        existingDailyBackups.sort((a, b) => a.date.localeCompare(b.date));
-        
-        // Garder seulement les X derniers jours
-        while (existingDailyBackups.length > MAX_DAILY_BACKUPS) {
-            const removed = existingDailyBackups.shift();
-            console.log(`🗑️ Ancien backup quotidien supprimé (${removed.date})`);
-        }
-        
-        localStorage.setItem(dailyKey, JSON.stringify(existingDailyBackups));
-        
-        // ✨ Rafraîchir le modal si ouvert
-        const modal = document.getElementById('backup-modal');
-        if (modal && modal.classList.contains('active')) {
-            updateBackupModalContent();
-        }
-    } catch (e) {
-        console.error('❌ Erreur backup quotidien:', e);
-    }
-}
+
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -12800,7 +12654,7 @@ async function checkAndCreateCloudBackup(userId, userData) {
         
         if (!backupDoc.exists()) {
             // Nouveau compte → Créer première sauvegarde cloud
-            console.log('☁️ Première sauvegarde cloud');
+            
             await saveCloudBackup(userId, userData, false);
             return;
         }
@@ -12810,7 +12664,7 @@ async function checkAndCreateCloudBackup(userId, userData) {
         
         if (!lastCloudBackupDate) {
             // Pas de sauvegarde cloud encore
-            console.log('☁️ Création première sauvegarde cloud');
+            
             await saveCloudBackup(userId, userData, false);
             return;
         }
@@ -12821,10 +12675,10 @@ async function checkAndCreateCloudBackup(userId, userData) {
         const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
         
         if (diffDays >= 7) {
-            console.log(`☁️ Dernière sauvegarde cloud : il y a ${diffDays} jours → Nouvelle sauvegarde`);
+            
             await saveCloudBackup(userId, userData, false);
         } else {
-            console.log(`✅ Sauvegarde cloud récente (${diffDays} jours)`);
+            
         }
         
     } catch (error) {
@@ -12840,7 +12694,7 @@ async function saveCloudBackup(userId, data, isManual = false) {
         
         // Vérification minimum
         if (content.items < 10) {
-            console.log('☁️ Sauvegarde cloud ignorée : pas assez de données');
+            
             return;
         }
         
@@ -12852,12 +12706,10 @@ async function saveCloudBackup(userId, data, isManual = false) {
             isManual: isManual
         });
         
-        console.log(`✅ Sauvegarde cloud créée ${isManual ? '(MANUELLE)' : '(AUTO)'} - ${content.items} items`);
+        
         
         // Si manuelle, créer aussi en local avec flag
-        if (isManual) {
-            saveDailyBackup(userId, data, true);
-        }
+        if (isManual) {}
         
         // Rafraîchir le modal si ouvert
         const modal = document.getElementById('backup-modal');
@@ -12882,7 +12734,7 @@ async function getCloudBackup(userId) {
         
         if (backupDoc.exists()) {
             const docData = backupDoc.data();
-            console.log('📥 Cloud backup trouvé:', docData);
+            
             // ✅ Adapter la structure pour l'affichage
             return {
                 cloudBackup: docData.data,
@@ -12892,7 +12744,7 @@ async function getCloudBackup(userId) {
             };
         }
         
-        console.log('📥 Aucun cloud backup trouvé');
+        
         return null;
         
     } catch (error) {
@@ -12920,7 +12772,7 @@ async function restoreFromCloudBackup(userId) {
             return null;
         }
         
-        console.log(`🔄 Restauration depuis le cloud (${docData.itemsCount} items du ${docData.date})`);
+        
         return docData.data;
         
     } catch (error) {
@@ -12929,8 +12781,8 @@ async function restoreFromCloudBackup(userId) {
     }
 }
 
-async function confirmRestoreLocal(date, itemsCount) {
-    return confirmRestore(date, itemsCount);
+function confirmRestoreLocal() {
+    // Fonction désactivée - backups locaux supprimés
 }
 
 async function confirmRestoreCloud() {
@@ -12942,46 +12794,6 @@ async function performRestoreCloud() {
 }
 
 
-function getDailyBackups(userId) {
-    if (!userId) return [];
-    
-    try {
-        const dailyKey = `${DAILY_BACKUP_KEY_PREFIX}${userId}`;
-        return JSON.parse(localStorage.getItem(dailyKey) || '[]');
-    } catch (e) {
-        console.error('❌ Erreur lecture backups quotidiens:', e);
-        return [];
-    }
-}
-
-function restoreFromDailyBackup(userId, date) {
-    const dailyBackups = getDailyBackups(userId);
-    
-    if (dailyBackups.length === 0) {
-        console.error('❌ Aucun backup quotidien disponible');
-        return null;
-    }
-    
-    // Trouver le backup par date
-    const backup = dailyBackups.find(b => b.date === date);
-    
-    if (!backup) {
-        console.error(`❌ Aucun backup trouvé pour la date ${date}`);
-        console.log('Dates disponibles:', dailyBackups.map(b => b.date).join(', '));
-        return null;
-    }
-    
-    console.log(`🔄 Restauration du backup quotidien du ${backup.date} (${backup.itemsCount} items)`);
-    return backup.data;
-}
-
-function shouldCreateDailyBackup(userId) {
-    const dailyBackups = getDailyBackups(userId);
-    const today = getTodayDateString();
-    
-    // Vérifier si on a déjà un backup aujourd'hui
-    return !dailyBackups.some(b => b.date === today);
-}
 
 // ════════════════════════════════════════════════════════════
 // ☁️ VÉRIFICATION ET SAUVEGARDE CLOUD AUTOMATIQUE
@@ -12989,17 +12801,17 @@ function shouldCreateDailyBackup(userId) {
 
 async function checkAndAutoSaveCloud(userId) {
     if (!userId || !userData) {
-        console.log('⏭️ Auto-save cloud ignoré : pas de données');
+        
         return;
     }
     
-    console.log('🔍 Vérification sauvegarde cloud...');
+   
     
     const content = countDataContent(userData);
     
     // Vérifier qu'il y a assez de données (minimum 10 fiches)
     if (content.items < 10) {
-        console.log('⏭️ Auto-save cloud ignoré : pas assez de données (< 10 fiches)');
+       
         return;
     }
     
@@ -13015,20 +12827,20 @@ async function checkAndAutoSaveCloud(userId) {
             // Première connexion : aucune sauvegarde cloud
             needsCloudSave = true;
             reason = 'Première sauvegarde cloud';
-            console.log('☁️ Aucune sauvegarde cloud → Création automatique (première connexion)');
+            
         } else {
             // Vérifier l'ancienneté
             const lastCloudSave = new Date(cloudBackup.cloudBackupDate).getTime();
             const daysSinceCloud = (now - lastCloudSave) / (24 * 60 * 60 * 1000);
             
-            console.log(`☁️ Dernière sauvegarde cloud : il y a ${daysSinceCloud.toFixed(1)} jour(s)`);
+            
             
             if (now - lastCloudSave > FOURTEEN_DAYS) {
                 needsCloudSave = true;
                 reason = `Plus de 14 jours (${daysSinceCloud.toFixed(0)} jours)`;
-                console.log('⏰ Plus de 14 jours → Sauvegarde cloud automatique nécessaire');
+                
             } else {
-                console.log('✅ Sauvegarde cloud récente, pas besoin');
+                
             }
         }
         
@@ -13037,7 +12849,7 @@ async function checkAndAutoSaveCloud(userId) {
         // ═══════════════════════════════════════════════════════
         
         if (needsCloudSave) {
-            console.log(`☁️ AUTO-SAVE CLOUD : ${reason}`);
+            
             
             // Afficher une notification discrète
             if (saveIndicatorHeader) {
@@ -13050,7 +12862,7 @@ async function checkAndAutoSaveCloud(userId) {
             const result = await saveBackupToFirebase(userId, userData);
             
             if (result.success) {
-                console.log('✅ Sauvegarde cloud automatique réussie');
+                
                 
                 // Notification de succès
                 if (saveIndicatorHeader) {
@@ -13091,18 +12903,18 @@ async function checkAndAutoSaveCloud(userId) {
                 }
             }
         } else {
-            console.log('✅ Sauvegarde cloud à jour');
+            
         }
         
     } catch (error) {
         console.error('❌ Erreur vérification cloud backup:', error);
         
         // Par sécurité, on tente une sauvegarde en cas d'erreur
-        console.log('🔄 Tentative de sauvegarde cloud par sécurité...');
+        
         const result = await saveBackupToFirebase(userId, userData);
         
         if (result.success) {
-            console.log('✅ Sauvegarde cloud de sécurité réussie');
+            
         }
     }
 }
@@ -13112,25 +12924,8 @@ window.checkAndAutoSaveCloud = checkAndAutoSaveCloud;
 
 
 function restoreFromBackup(userId, backupIndex = 0) {
-    const backups = getBackupsFromLocalStorage(userId);
-    
-    if (backups.length === 0) {
-        console.error('❌ Aucun backup disponible');
-        return null;
-    }
-    
-    // backupIndex: 0 = le plus récent, 1 = avant-dernier, etc.
-    const index = backups.length - 1 - backupIndex;
-    
-    if (index < 0 || index >= backups.length) {
-        console.error('❌ Index de backup invalide');
-        return null;
-    }
-    
-    const backup = backups[index];
-    console.log(`🔄 Restauration du backup du ${backup.timestamp} (${backup.itemsCount} items)`);
-    
-    return backup.data;
+    console.warn('⚠️ Les backups localStorage ont été désactivés. Utilisez les sauvegardes cloud.');
+    return null;
 }
 
 // 🛡️ PROTECTION ANTI-ÉCRASEMENT - SÉCURITÉ MAXIMALE
@@ -13158,26 +12953,9 @@ function isDataSafeToSave(newData, userId) {
     let referenceContent = null;
     
     // Vérifier le cache principal
-    const cacheKey = `planning_cache_${userId}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (cachedData) {
-        try {
-            const parsed = JSON.parse(cachedData);
-            referenceContent = countDataContent(parsed);
-        } catch (e) {}
-    }
     
     // Si pas de cache, vérifier les backups
     if (!referenceContent || referenceContent.total === 0) {
-        const backups = getBackupsFromLocalStorage(userId);
-        if (backups.length > 0) {
-            const lastBackup = backups[backups.length - 1];
-            referenceContent = lastBackup.details || { 
-                total: lastBackup.totalCount || lastBackup.itemsCount || 0,
-                items: lastBackup.itemsCount || 0
-            };
-        }
     }
     
     // 2. Si aucune donnée de référence, c'est un nouveau compte → OK
@@ -13242,17 +13020,12 @@ function initializeUserData() {
 function loadUserData(userId) {
     if (userId) {
         // 🔥 Cache pour affichage rapide
-        const cacheKey = `planning_cache_${userId}`;
-        const cacheTimeKey = `planning_cache_time_${userId}`;
-        const cachedData = localStorage.getItem(cacheKey);
-        const cacheTime = localStorage.getItem(cacheTimeKey);
-        
-        const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
+                                        const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
         
         // ✅ Si cache valide : affichage immédiat (pas de lecture Firebase initiale !)
-        if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
+        if (false && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
             userData = JSON.parse(cachedData);
-            console.log('📦 Affichage instantané depuis cache (économie lecture Firebase)');
+            
             
             // Afficher immédiatement
             loadResourcesConfig();
@@ -13276,32 +13049,34 @@ function loadUserData(userId) {
                 
                 userData = newData;
                 
-                // Mettre à jour le cache
-                localStorage.setItem(cacheKey, JSON.stringify(userData));
-                localStorage.setItem(cacheTimeKey, Date.now().toString());
 				
 				                // 📅 BACKUP QUOTIDIEN : Créer si pas encore fait aujourd'hui
-                if (shouldCreateDailyBackup(userId)) {
-                    saveDailyBackup(userId, userData);
-                }
+              
 				
 				                // ☁️ BACKUP CLOUD AUTO : Vérifier si > 14 jours ou première connexion
-                setTimeout(() => {
-                    checkAndAutoSaveCloud(userId);
+                // 🛑 Annuler l'ancien timeout s'il existe
+                if (cloudSaveTimeout) {
+                    clearTimeout(cloudSaveTimeout);
+                }
+                
+                cloudSaveTimeout = setTimeout(() => {
+                    // ✅ Vérifier que l'utilisateur est toujours connecté avant de sauvegarder
+                    if (currentUser && currentUser.uid === userId) {
+                        checkAndAutoSaveCloud(userId);
+                    }
                 }, 3000); // Attendre 3 secondes après le chargement
 				
 				
                 
                 if (dataChanged) {
-                    console.log('📥 Sync Firebase : données mises à jour');
+                    
                     
                     loadResourcesConfig();
                     
                     // Charger les données du planning
                     if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
                         PlanningModule.loadData();
-                        console.log('📅 Planning synchronisé');
-                        console.log('✅ Checklist synchronisée');
+
                         if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
                         if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
                     }
@@ -13309,18 +13084,15 @@ function loadUserData(userId) {
                     // 🏆 Recharger les trophées automatiquement lors de la sync
                     if (typeof TrophiesSystem !== 'undefined') {
                         TrophiesSystem.init(); // Recharge les trophées depuis userData
-                        console.log('🏆 Trophées synchronisés');
+                        
                     }
                     
                     renderAll();
                 } else {
-                    console.log('📥 Sync Firebase : aucun changement détecté');
+                    
                 }
             } else {
                 // 🛡️ PROTECTION : Vérifier si on a des données en cache/backup avant d'initialiser
-                const existingCache = localStorage.getItem(cacheKey);
-                const backups = getBackupsFromLocalStorage(userId);
-                
                 if (existingCache) {
                     try {
                         const parsed = JSON.parse(existingCache);
@@ -13335,20 +13107,11 @@ function loadUserData(userId) {
                     } catch (e) {}
                 }
                 
-                if (backups.length > 0 && backups[backups.length - 1].itemsCount > 0) {
-                    console.warn('⚠️ Document Firebase absent mais backup disponible - RESTAURATION depuis backup');
-                    userData = restoreFromBackup(userId, 0);
-                    if (userData) {
-                        saveUserData();
-                        renderAll();
-                        return;
-                    }
-                }
                 
                 // Vraiment nouveau compte : initialiser avec données vides
                 userData = initializeUserData();
                 saveUserData();
-                console.log('🆕 Nouveau compte initialisé');
+                
                 
                 loadResourcesConfig();
                 if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
@@ -13362,7 +13125,6 @@ function loadUserData(userId) {
             console.error('❌ Erreur Firebase:', e);
             
             // 🛡️ PROTECTION : En cas d'erreur, utiliser le cache au lieu d'initialiser des données vides
-            const existingCache = localStorage.getItem(cacheKey);
             if (existingCache) {
                 try {
                     const parsed = JSON.parse(existingCache);
@@ -13376,15 +13138,6 @@ function loadUserData(userId) {
             }
             
             // Fallback sur backup
-            const backups = getBackupsFromLocalStorage(userId);
-            if (backups.length > 0 && backups[backups.length - 1].itemsCount > 0) {
-                console.warn('⚠️ Erreur Firebase - Restauration depuis backup');
-                userData = restoreFromBackup(userId, 0);
-                if (userData) {
-                    renderAll();
-                    return;
-                }
-            }
             
             // Dernier recours : données vides (mais PAS de sauvegarde !)
             console.error('❌ Aucune donnée de secours disponible');
@@ -13430,7 +13183,7 @@ async function checkConnectionBeforeSave() {
             return false;
         }
         
-        console.log(`🟢 Connexion OK (${pingTime}ms)`);
+        
         return true;
         
     } catch (error) {
@@ -13516,7 +13269,7 @@ function showConnectionWarning() {
     }
     
     document.body.appendChild(connectionWarningToast);
-    console.log('⚠️ Notification de connexion affichée');
+    
 }
 
 function hideConnectionWarning() {
@@ -13528,13 +13281,13 @@ function hideConnectionWarning() {
                 connectionWarningToast = null;
             }
         }, 300);
-        console.log('✅ Notification de connexion masquée');
+        
     }
 }
 
 // Fonction pour réessayer manuellement
 window.retryFirebaseSave = async function() {
-    console.log('🔄 Tentative manuelle de sauvegarde...');
+    
     const btn = event.target.closest('button');
     const originalHTML = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Tentative...';
@@ -13586,27 +13339,12 @@ async function saveUserData() {
     }
     
     // 💾 BACKUP : Sauvegarder le CACHE (anciennes données) avant d'écraser
-    const cacheKey = `planning_cache_${currentUser.uid}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    if (cachedData) {
-        try {
-            const oldData = JSON.parse(cachedData);
-            const oldContent = countDataContent(oldData);
-            if (oldContent.total > 0) {
-                saveBackupToLocalStorage(currentUser.uid, oldData);
-            }
-        } catch (e) {
-            console.warn('⚠️ Impossible de créer backup depuis cache:', e);
-        }
-    }
     
     // ════════════════════════════════════════════════════════════
     // 🌐 VÉRIFICATION DE CONNEXION AVANT FIREBASE
     // ════════════════════════════════════════════════════════════
     
-    // ✅ Toujours mettre à jour le cache LOCAL (sécurisé)
-    localStorage.setItem(cacheKey, JSON.stringify(userData));
-    console.log('💾 Cache local mis à jour (sécurisé)');
+    // ✅ Toujours mettre à jour le cache LOCAL (sécurisé)  
     
     // 🔍 Vérifier la connexion avant d'essayer Firebase
     const connectionOK = await checkConnectionBeforeSave();
@@ -13748,7 +13486,7 @@ async function saveUserData() {
             lastSaveTime = Date.now();
             hasUnsavedChanges = false;
             showSaveSuccess();
-            console.log('✅ Sauvegarde Firestore réussie');
+            
             invalidateStatsCache();
         }
         
@@ -13776,7 +13514,7 @@ async function saveUserData() {
                     lastSaveTime = Date.now();
                     hasUnsavedChanges = false;
                     showSaveSuccess();
-                    console.log('✅ Document créé avec setDoc (fallback)');
+                    
                     invalidateStatsCache();
                 }
             } catch (e2) {
@@ -13796,13 +13534,7 @@ async function saveUserData() {
 
 window.countDataContent = countDataContent;
 window.isDataSafeToSave = isDataSafeToSave;
-window.saveBackupToLocalStorage = saveBackupToLocalStorage;
-window.getBackupsFromLocalStorage = getBackupsFromLocalStorage;
 window.restoreFromBackup = restoreFromBackup;
-window.saveDailyBackup = saveDailyBackup;
-window.getDailyBackups = getDailyBackups;
-window.restoreFromDailyBackup = restoreFromDailyBackup;
-window.shouldCreateDailyBackup = shouldCreateDailyBackup;
 
 // 🔧 Fonctions utilitaires pour debug/admin (accessibles depuis la console)
 window.BackupUtils = {
@@ -13813,27 +13545,23 @@ window.BackupUtils = {
             return;
         }
         
-        console.log('═══════════════════════════════════════');
-        console.log('📦 BACKUPS DISPONIBLES');
-        console.log('═══════════════════════════════════════');
+
         
         // Backups rapides
-        const backups = getBackupsFromLocalStorage(currentUser.uid);
-        console.log(`\n⚡ Backups rapides: ${backups.length}/${MAX_BACKUPS}`);
+        
         backups.forEach((b, i) => {
             const date = new Date(b.timestamp).toLocaleString('fr-FR');
-            console.log(`   ${i}: ${date} - ${b.itemsCount} items`);
+            
         });
         
         // Backups quotidiens
-        const dailyBackups = getDailyBackups(currentUser.uid);
-        console.log(`\n📅 Backups quotidiens: ${dailyBackups.length}/${MAX_DAILY_BACKUPS}`);
+        
         dailyBackups.forEach((b, i) => {
             const date = new Date(b.timestamp).toLocaleString('fr-FR');
-            console.log(`   ${b.date}: ${date} - ${b.itemsCount} items`);
+            
         });
         
-        console.log('═══════════════════════════════════════');
+        
         
         return { quick: backups, daily: dailyBackups };
     },
@@ -13848,8 +13576,7 @@ window.BackupUtils = {
         if (restored) {
             userData = restored;
             renderAll();
-            console.log('✅ Données restaurées depuis backup rapide !');
-            console.log('👉 Appelez BackupUtils.saveRestored() pour sauvegarder sur Firebase');
+
         }
         return restored;
     },
@@ -13862,18 +13589,14 @@ window.BackupUtils = {
         }
         
         if (!date) {
-            const dailyBackups = getDailyBackups(currentUser.uid);
-            console.log('📅 Dates disponibles:', dailyBackups.map(b => b.date).join(', '));
-            console.log('👉 Usage: BackupUtils.restoreDaily("2026-01-10")');
+
             return;
         }
         
-        const restored = restoreFromDailyBackup(currentUser.uid, date);
         if (restored) {
             userData = restored;
             renderAll();
-            console.log(`✅ Données restaurées depuis backup du ${date} !`);
-            console.log('👉 Appelez BackupUtils.saveRestored() pour sauvegarder sur Firebase');
+
         }
         return restored;
     },
@@ -13886,10 +13609,9 @@ window.BackupUtils = {
         }
         const itemsCount = Object.keys(userData.items || {}).length;
         if (itemsCount > 0) {
-            console.log(`💾 Sauvegarde de ${itemsCount} items...`);
+            
             // Forcer la mise à jour du cache avant sauvegarde
-            const cacheKey = `planning_cache_${currentUser.uid}`;
-            localStorage.setItem(cacheKey, JSON.stringify(userData));
+
             saveUserData();
         } else {
             console.error('❌ Impossible de sauvegarder des données vides');
@@ -13902,9 +13624,6 @@ window.BackupUtils = {
             console.error('Non connecté ou pas de données');
             return;
         }
-        saveBackupToLocalStorage(currentUser.uid, userData);
-        saveDailyBackup(currentUser.uid, userData);
-        console.log('✅ Backups forcés (rapide + quotidien)');
     }
 };
 
@@ -13917,10 +13636,10 @@ window.TestProtection = {
             console.error('❌ Non connecté');
             return;
         }
-        console.log('🧪 TEST : Tentative de sauvegarde avec données vides...');
+        
         const fakeEmptyData = { items: {}, trophies: {}, planningData: {}, checklistData: [], selectedResources: [] };
         const result = isDataSafeToSave(fakeEmptyData, currentUser.uid);
-        console.log('Résultat:', result);
+        
         return result;
     },
     
@@ -13930,7 +13649,7 @@ window.TestProtection = {
             console.error('❌ Non connecté ou pas de données');
             return;
         }
-        console.log('🧪 TEST : Simulation perte massive de données...');
+        
         
         // Créer une copie avec seulement 10% des items
         const itemKeys = Object.keys(userData.items || {});
@@ -13945,9 +13664,9 @@ window.TestProtection = {
             items: reducedItems 
         };
         
-        console.log(`📊 Items actuels: ${itemKeys.length}, Items simulés: ${keepCount}`);
+       
         const result = isDataSafeToSave(fakeReducedData, currentUser.uid);
-        console.log('Résultat:', result);
+        
         return result;
     },
     
@@ -13957,56 +13676,34 @@ window.TestProtection = {
             return;
         }
         
-        const cacheKey = `planning_cache_${currentUser.uid}`;
-        const cachedData = localStorage.getItem(cacheKey);
-        const backups = getBackupsFromLocalStorage(currentUser.uid);
-        const dailyBackups = getDailyBackups(currentUser.uid);
-        
-        console.log('═══════════════════════════════════════');
-        console.log('🛡️ ÉTAT DU SYSTÈME DE PROTECTION');
-        console.log('═══════════════════════════════════════');
+
         
         // Données actuelles
         const currentContent = countDataContent(userData);
-        console.log('\n📊 Données actuelles en mémoire:');
-        console.log(`   - Items: ${currentContent.items}`);
-        console.log(`   - Planning: ${currentContent.planningDays} jours`);
-        console.log(`   - Checklist: ${currentContent.checklistItems} éléments`);
-        console.log(`   - Trophées: ${currentContent.trophies}`);
-        console.log(`   - Ressources: ${currentContent.resources}`);
-        console.log(`   - TOTAL: ${currentContent.total}`);
+
         
         // Cache
-        if (cachedData) {
-            const cacheContent = countDataContent(JSON.parse(cachedData));
-            console.log('\n💾 Cache localStorage:');
-            console.log(`   - Items: ${cacheContent.items}`);
-            console.log(`   - TOTAL: ${cacheContent.total}`);
-        } else {
-            console.log('\n💾 Cache localStorage: VIDE');
-        }
         
         // Backups rapides
-        console.log(`\n⚡ Backups rapides: ${backups.length}/${MAX_BACKUPS}`);
+        
         backups.forEach((b, i) => {
             const date = new Date(b.timestamp).toLocaleString('fr-FR');
-            console.log(`   ${i}: ${date} - ${b.itemsCount} items`);
+           
         });
         
         // Backups quotidiens
-        console.log(`\n📅 Backups quotidiens: ${dailyBackups.length}/${MAX_DAILY_BACKUPS}`);
+        
         dailyBackups.forEach((b) => {
             const date = new Date(b.timestamp).toLocaleString('fr-FR');
-            console.log(`   ${b.date}: ${date} - ${b.itemsCount} items`);
+           
         });
         
-        console.log('═══════════════════════════════════════');
         
-        return { currentContent, cachePresent: !!cachedData, backupsCount: backups.length, dailyBackupsCount: dailyBackups.length };
+        
+        return { currentContent, cachePresent: false, backupsCount: 0, dailyBackupsCount: 0 };
     }
 };
 
-console.log('🧪 Tests disponibles : TestProtection.status(), TestProtection.testEmptyData(), TestProtection.testMassiveLoss()');
 
 // ═══════════════════════════════════════════════════════════════
 // 🎨 MODALS PERSONNALISÉS
@@ -14265,68 +13962,8 @@ async function updateBackupModalContent() {
         `;
     }
     
-    // ═══════════════════════════════════════════════════════════════
-    // 💻 SECTION BACKUPS LOCAUX
-    // ═══════════════════════════════════════════════════════════════
-    const backupList = document.getElementById('backup-list');
-    const dailyBackups = getDailyBackups(currentUser.uid);
-    
-    if (dailyBackups.length === 0) {
-        backupList.innerHTML = `
-            <div class="backup-empty">
-                <i class="fas fa-inbox"></i>
-                <div>Aucune sauvegarde locale disponible</div>
-            </div>
-        `;
-        return;
-    }
-    
-    // Trier par date décroissante (plus récent en premier)
-    const sortedBackups = [...dailyBackups].sort((a, b) => b.date.localeCompare(a.date));
-    
-    backupList.innerHTML = sortedBackups.map(backup => {
-        const date = new Date(backup.timestamp);
-        const dateStr = date.toLocaleDateString('fr-FR', { 
-            weekday: 'long', 
-            day: 'numeric', 
-            month: 'long' 
-        });
-        const timeStr = date.toLocaleTimeString('fr-FR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        // Capitaliser la première lettre du jour
-        const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-        
-        // Badges
-        let badges = '';
-        
-		if (backup.isManual) {
-            // Sauvegarde manuelle → Badge unique MANUELLE
-            badges += '<span style="background: var(--accent); color: white; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; margin-left: 0.5rem; font-weight: 600;">MANUELLE</span>';
-        } else {
-            // Sauvegarde automatique → Badge AUTO
-            badges += '<span style="background: var(--primary); color: white; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; margin-left: 0.5rem; font-weight: 600;">AUTO</span>';
-        }
-
-        return `
-            <div class="backup-item" data-date="${backup.date}">
-                <div class="backup-item-info">
-                    <div class="backup-item-date">
-                        ${formattedDate}
-                        <span style="color: var(--gray-500); font-weight: normal; margin-left: 0.5rem;">${timeStr}</span>
-                        ${badges}
-                    </div>
-                </div>
-                <button class="backup-item-btn" onclick="confirmRestoreLocal('${backup.date}', ${backup.itemsCount})">
-                    <i class="fas fa-undo"></i>
-                    Restaurer
-                </button>
-            </div>
-        `;
-    }).join('');
 }
+
 
 async function confirmRestore(date, itemsCount) {
 if (!canPerformAction('save')) return;
@@ -14361,80 +13998,7 @@ if (!canPerformAction('save')) return;
 }
 
 async function performRestore(date) {
-    if (!currentUser) return;
-    
-    // Trouver le bouton et le mettre en état "restoring"
-    const btn = document.querySelector(`.backup-item[data-date="${date}"] .backup-item-btn`);
-    if (btn) {
-        btn.classList.add('restoring');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restauration...';
-    }
-    
-    try {
-        // Restaurer les données
-        const restored = restoreFromDailyBackup(currentUser.uid, date);
-        
-        if (restored) {
-            userData = restored;
-            
-            // Mettre à jour le cache
-            const cacheKey = `planning_cache_${currentUser.uid}`;
-            localStorage.setItem(cacheKey, JSON.stringify(userData));
-            
-            // Sauvegarder sur Firebase
-            await saveUserData();
-            
-            // Rafraîchir l'interface
-            renderAll();
-            
-            if (typeof PlanningModule !== 'undefined') {
-                PlanningModule.loadData();
-                if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
-                if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
-            }
-            
-            if (typeof TrophiesSystem !== 'undefined') {
-                TrophiesSystem.init();
-            }
-            
-            // Fermer le modal backup
-            closeBackupModal();
-            
-            // Afficher le succès
-            const itemsRestored = Object.keys(userData.items || {}).length;
-            await showCustomAlert({
-                type: 'success',
-                icon: 'check-circle',
-                title: 'Restauration réussie !',
-                message: 'Vos données ont été restaurées avec succès.',
-                details: [
-                    { icon: 'file-alt', text: `${itemsRestored} items récupérées et leurs tours` },
-                    { icon: 'trophy', text: `${Object.keys(userData.trophies || {}).length} trophées` },
-                    { icon: 'calendar', text: `${Object.keys(userData.planningData || {}).length} jours de planning et la To-do List` }
-                ],
-                okText: 'Parfait !'
-            });
-        } else {
-            throw new Error('Échec de la restauration');
-        }
-        
-    } catch (error) {
-        console.error('Erreur restauration:', error);
-        
-        await showCustomAlert({
-            type: 'error',
-            icon: 'times-circle',
-            title: 'Erreur de restauration',
-            message: 'Une erreur est survenue lors de la restauration. Veuillez réessayer.',
-            okText: 'Compris'
-        });
-        
-        // Remettre le bouton normal
-        if (btn) {
-            btn.classList.remove('restoring');
-            btn.innerHTML = '<i class="fas fa-undo"></i> Restaurer';
-        }
-    }
+    // Cette fonction n'est plus utilisée car les backups locaux sont supprimés
 }
 
 async function confirmRestoreFirebase() {
@@ -14499,11 +14063,7 @@ async function performRestoreFirebase() {
         if (restored) {
             userData = restored;
             
-            // Mettre à jour le cache
-            const cacheKey = `planning_cache_${currentUser.uid}`;
-            localStorage.setItem(cacheKey, JSON.stringify(userData));
-            
-            // Sauvegarder sur Firebase (données principales)
+            // Mettre à jour le cache            // Sauvegarder sur Firebase (données principales)
             await saveUserData();
             
             // Rafraîchir l'interface
@@ -14597,11 +14157,7 @@ async function forceManualBackup() {
     }
     
     try {
-        // 1. Backup localStorage (rapide)
-        saveBackupToLocalStorage(currentUser.uid, userData);
-        
-        // 2. Backup localStorage quotidien (MANUEL = true)
-        saveDailyBackup(currentUser.uid, userData, true);
+
         
         // 3. Backup Firebase (cloud) ☁️
         const firebaseResult = await saveBackupToFirebase(currentUser.uid, userData);
@@ -14625,7 +14181,6 @@ async function forceManualBackup() {
                 details: [
                     { icon: 'file-alt', text: `${content.items} items et leurs tours sauvegardés` },
 					{ icon: 'file-alt', text: `Planning et To-Do List sauvegardés` },
-                    { icon: 'hdd', text: 'Sauvegarde locale ✓' },
                     { icon: 'cloud', text: 'Sauvegarde cloud ✓' }
                 ],
                 okText: 'Parfait !'
@@ -14667,11 +14222,7 @@ async function forceManualBackup() {
 // Bouton pour ouvrir le modal
 document.getElementById('backup-settings-btn')?.addEventListener('click', openBackupModal);
 
-console.log('💾 Interface de sauvegarde activée');
 
-console.log('🛡️ Protection anti-écrasement activée');
-console.log('💾 Système de backup localStorage activé (3 versions)');
-console.log('ℹ️ Utilisez BackupUtils.listBackups() pour voir les backups disponibles');
 
 
 
@@ -14712,7 +14263,7 @@ function debouncedSave() {
     
     // Attendre 10 secondes d'inactivité avant de sauvegarder
     saveTimeout = setTimeout(() => {
-        console.log('💾 Sauvegarde après inactivité (10s)');
+        
         saveUserData();
     }, DEBOUNCE_DELAY);
 }
@@ -14720,6 +14271,11 @@ function debouncedSave() {
 function getItemKey(sId, fc) { return sId + '-' + fc; }
 
 function getItemData(sId, fc) {
+    // 🛡️ Protection si pas de données
+    if (!userData || !userData.items) {
+        return null;
+    }
+    
     const key = getItemKey(sId, fc);
     if (!userData.items[key]) userData.items[key] = { tours: [null,null,null,null,null,null,null,null], tourDates: [null,null,null,null,null,null,null,null], tourDurations: [null,null,null,null,null,null,null,null], tourSupports: [null,null,null,null,null,null,null,null], resources: {}, lastRevision: null };
     const d = userData.items[key];
@@ -14734,11 +14290,11 @@ function getItemData(sId, fc) {
 function calculateStats() {
     // 🔥 NOUVEAU : Utiliser le cache si récent (< 30 secondes)
     if (cachedStats && cachedStatsTime && (Date.now() - cachedStatsTime) < STATS_CACHE_DURATION) {
-        console.log('📦 Stats depuis cache');
+        
         return cachedStats;
     }
     
-    console.log('🔄 Calcul stats...');
+  
     const startTime = performance.now();
     
     let itemsWithOneTour = 0, totalTours = 0, refItemsWithOneTour = 0, totalRefItems = 0;
@@ -14782,7 +14338,7 @@ function calculateStats() {
     cachedStatsTime = Date.now();
     
     const endTime = performance.now();
-    console.log(`✅ Stats calculées en ${Math.round(endTime - startTime)}ms`);
+    
     
     return cachedStats;
 }
@@ -17944,27 +17500,32 @@ function saveTrophies() {
         };
     }
     
-    function checkTrophies() {
-        const stats = (typeof TrophiesSystem !== 'undefined' && TrophiesSystem.getCurrentStats) 
-            ? TrophiesSystem.getCurrentStats() 
-            : getCurrentStats();
-        
-        Object.keys(TROPHIES).forEach(category => {
-            TROPHIES[category].forEach(trophy => {
-                const conditionMet = trophy.condition(stats);
-                
-                if (conditionMet && !unlockedTrophies[trophy.id]) {
-                    unlockedTrophies[trophy.id] = {
-                        date: new Date().toISOString().split('T')[0],
-                        category: category
-                    };
-                }
-            });
-        });
-        
-        saveTrophies();
-        renderTrophies();
+function checkTrophies() {
+    // 🛡️ Ne rien faire si pas connecté ou pas de données
+    if (!currentUser || !userData) {
+        return;
     }
+    
+    const stats = (typeof TrophiesSystem !== 'undefined' && TrophiesSystem.getCurrentStats) 
+        ? TrophiesSystem.getCurrentStats() 
+        : getCurrentStats();
+    
+    Object.keys(TROPHIES).forEach(category => {
+        TROPHIES[category].forEach(trophy => {
+            const conditionMet = trophy.condition(stats);
+            
+            if (conditionMet && !unlockedTrophies[trophy.id]) {
+                unlockedTrophies[trophy.id] = {
+                    date: new Date().toISOString().split('T')[0],
+                    category: category
+                };
+            }
+        });
+    });
+    
+    saveTrophies();
+    renderTrophies();
+}
     
     function renderTrophies() {
         const categories = {
@@ -18274,7 +17835,7 @@ document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
         // Onglet caché
         isTabActive = false;
-        console.log('👁️ Onglet inactif - pause sync Firebase');
+        
         
         // Sauvegarder avant de détacher
         if (hasUnsavedChanges) {
@@ -18290,7 +17851,7 @@ document.addEventListener('visibilitychange', function() {
     } else {
         // Onglet visible à nouveau
         isTabActive = true;
-        console.log('👁️ Onglet actif - reprise sync Firebase');
+        
         
         // Réattacher le listener
         if (currentUser && !unsubscribe) {
@@ -18307,7 +17868,7 @@ function resetInactivityTimer() {
     
     inactivityTimer = setTimeout(() => {
         if (!document.hidden && unsubscribe) {
-            console.log('😴 Inactif - détachement');
+            
             if (hasUnsavedChanges) saveUserData();
             if (unsubscribe) {
                 unsubscribe();
@@ -19163,12 +18724,11 @@ const helpContent = {
         </div>
 		
 		<div class="help-key-points">
-            <div class="help-key-points-title"><i class="fas fa-shield-alt"></i> Sauvarde des données</div>
+            <div class="help-key-points-title"><i class="fas fa-shield-alt"></i> Sauvegarde des données</div>
 				<ul>
 					<li>Vos données sont précieuses et ne doivent pas être perdues.</li>
 					<li>Un système de sauvegarde sécurisé est donc mis en place.</li>
-					<li>Les données sont sauvegardées chaque jour localement dans votre navigateur et peuvent être restaurées en cas de besoin.</li>
-					<li>Une sauvegarde automatique sur une base de données est effectuée tous les 3 jours, avec la possibilité de lancer une sauvegarde manuelle à tout moment.</li>
+					<li>Une sauvegarde automatique sur une base de données est effectuée tous les 3 jours, vous avez la possibilité de lancer une sauvegarde manuelle à tout moment.</li>
 				</ul>
 
         </div>
