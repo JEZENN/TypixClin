@@ -8149,8 +8149,167 @@ input[type="date"].modal-input {
     color: #f97316;
 }
 
+/* ===== NOTIFICATION HORS LIGNE (VERSION COMPACTE BAS DROITE) ===== */
+.offline-notification {
+    position: fixed;
+	bottom: 20px;
+	left: 20px;
+	transform: translateX(-400px); /* Commence hors écran à droite */
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    z-index: 10001;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.8rem;
+    font-weight: 500;
+    max-width: 280px;
+}
 
+.offline-notification.show {
+    transform: translateX(0); /* Glisse vers la gauche */
+    opacity: 1;
+}
 
+.offline-notification-icon {
+    font-size: 0.95rem;
+    animation: pulse-offline 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulse-offline {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.offline-notification-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.offline-notification-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.offline-notification-subtitle {
+    font-size: 0.65rem;
+    opacity: 0.9;
+    line-height: 1.2;
+}
+
+.offline-refresh-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.offline-refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.offline-refresh-btn:active {
+    transform: scale(0.95);
+}
+
+.offline-refresh-btn i {
+    font-size: 0.75rem;
+}
+
+/* Mobile - Encore plus compact */
+@media (max-width: 768px) {
+    .offline-notification {
+        bottom: 15px;
+        left: 15px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        gap: 0.5rem;
+        max-width: 240px;
+    }
+    
+    .offline-notification-icon {
+        font-size: 0.85rem;
+    }
+    
+    .offline-notification-title {
+        font-size: 0.75rem;
+    }
+    
+    .offline-notification-subtitle {
+        font-size: 0.6rem;
+    }
+    
+    .offline-refresh-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    
+    .offline-refresh-btn i {
+        font-size: 0.7rem;
+    }
+}
+
+/* Très petit écran - Ultra compact */
+@media (max-width: 480px) {
+    .offline-notification {
+        bottom: 10px;
+        left: 10px;
+        padding: 0.45rem 0.65rem;
+        font-size: 0.7rem;
+        gap: 0.45rem;
+        max-width: 200px;
+        border-radius: 8px;
+    }
+    
+    .offline-notification-icon {
+        font-size: 0.8rem;
+    }
+    
+    .offline-notification-title {
+        font-size: 0.7rem;
+    }
+    
+    .offline-notification-subtitle {
+        font-size: 0.55rem;
+    }
+    
+    .offline-refresh-btn {
+        padding: 0.2rem 0.45rem;
+        font-size: 0.6rem;
+        gap: 0.25rem;
+    }
+    
+    .offline-refresh-btn i {
+        font-size: 0.65rem;
+    }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .offline-notification {
+    background: linear-gradient(135deg, #991b1b, #7f1d1d);
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.6);
+}
 </style>
 </head>
 
@@ -9743,6 +9902,15 @@ const firebaseConfig = {
     measurementId: "G-9CZ2QB6TNK"
 };
 
+// ═══════════════════════════════════════════════════════════
+// SYSTÈME DE DÉTECTION HORS LIGNE
+// ═══════════════════════════════════════════════════════════
+
+let isOfflineMode = false;
+let offlineCheckInterval = null;
+let offlineNotification = null;
+const OFFLINE_CHECK_INTERVAL = 2000; // Vérifier toutes les 5 secondes
+
 let pendingChecklistItemId = null;
 
 const app = initializeApp(firebaseConfig);
@@ -9783,6 +9951,9 @@ let tempSelectedResources = [];
 
 // Ouvrir le modal de configuration
 window.openResourcesConfigModal = function() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('config')) return;
+    
     tempSelectedResources = [...selectedResources];
     renderResourcesOptions();
     updateResourcesCount();
@@ -9816,6 +9987,9 @@ function renderResourcesOptions() {
 
 // Basculer la sélection d'une ressource
 window.toggleResourceOption = function(resourceId) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('config')) return;
+    
     const index = tempSelectedResources.indexOf(resourceId);
     
     if (index > -1) {
@@ -9830,6 +10004,237 @@ window.toggleResourceOption = function(resourceId) {
     updateResourcesCount();
 };
 
+
+// ═══════════════════════════════════════════════════════════
+// FONCTIONS DE GESTION DU MODE HORS LIGNE (VERSION PRODUCTION)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Initialiser le système de détection hors ligne
+ */
+function initOfflineDetection() {
+    checkOfflineStatus();
+    
+    window.addEventListener('offline', () => {
+        handleOffline();
+    });
+    
+    window.addEventListener('online', () => {
+        checkOfflineStatus();
+    });
+    
+    offlineCheckInterval = setInterval(checkOfflineStatus, OFFLINE_CHECK_INTERVAL);
+}
+
+/**
+ * Vérifier le statut de connexion
+ */
+async function checkOfflineStatus() {
+    if (!navigator.onLine) {
+        if (!isOfflineMode) {
+            handleOffline();
+        }
+        return;
+    }
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        await fetch('https://www.google.com/favicon.ico', {
+            method: 'HEAD',
+            mode: 'no-cors',
+            cache: 'no-cache',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (isOfflineMode) {
+            handleOnline();
+        }
+    } catch (error) {
+        try {
+            const controller2 = new AbortController();
+            const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+            
+            await fetch('https://cloudflare.com/favicon.ico', {
+                method: 'HEAD',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                signal: controller2.signal
+            });
+            
+            clearTimeout(timeoutId2);
+            
+            if (isOfflineMode) {
+                handleOnline();
+            }
+        } catch (error2) {
+            if (!isOfflineMode) {
+                handleOffline();
+            }
+        }
+    }
+}
+
+function handleOffline() {
+    if (isOfflineMode) return;
+    isOfflineMode = true;
+    showOfflineNotification();
+    disableOfflineActions();
+    
+    if (typeof saveTimeout !== 'undefined' && saveTimeout) {
+        clearTimeout(saveTimeout);
+        saveTimeout = null;
+    }
+    
+    if (typeof saveIndicatorHeader !== 'undefined' && saveIndicatorHeader) {
+        saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
+    }
+}
+
+function handleOnline() {
+    if (!isOfflineMode) return;
+    isOfflineMode = false;
+    hideOfflineNotification();
+    enableOfflineActions();
+    
+    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && typeof currentUser !== 'undefined' && currentUser) {
+        if (typeof debouncedSave === 'function') {
+            debouncedSave();
+        }
+    }
+}
+
+function showOfflineNotification() {
+    if (offlineNotification) offlineNotification.remove();
+    
+    offlineNotification = document.createElement('div');
+    offlineNotification.className = 'offline-notification';
+    offlineNotification.innerHTML = `
+        <i class="fas fa-wifi-slash offline-notification-icon"></i>
+        <div class="offline-notification-text">
+            <div class="offline-notification-title">Mode hors ligne</div>
+            <div class="offline-notification-subtitle">Modifications désactivées</div>
+        </div>
+        <button class="offline-refresh-btn" onclick="forceConnectionCheck()">
+            <i class="fas fa-sync-alt"></i>
+            Actualiser
+        </button>
+    `;
+    
+    document.body.appendChild(offlineNotification);
+    setTimeout(() => offlineNotification.classList.add('show'), 100);
+}
+
+function hideOfflineNotification() {
+    if (!offlineNotification) return;
+    offlineNotification.classList.remove('show');
+    setTimeout(() => {
+        if (offlineNotification) {
+            offlineNotification.remove();
+            offlineNotification = null;
+        }
+    }, 400);
+}
+
+window.forceConnectionCheck = async function() {
+    const btn = document.querySelector('.offline-refresh-btn');
+    if (!btn) return;
+    
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vérification...';
+    await checkOfflineStatus();
+    
+    setTimeout(() => {
+        if (btn && isOfflineMode) {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }, 1000);
+};
+
+function disableOfflineActions() {
+    window.offlineActionsBlocked = true;
+    
+    const criticalButtons = [
+        '[onclick*="openResourcesConfigModal"]',
+        '[onclick*="openConfidenceModal"]',
+        '[onclick*="sendToChecklist"]',
+        '[data-action="save"]',
+        '[data-action="validate"]',
+        '.action-btn',
+        '.validate-btn',
+        '.send-btn'
+    ];
+    
+    criticalButtons.forEach(selector => {
+        document.querySelectorAll(selector).forEach(btn => {
+            btn.dataset.offlineDisabled = 'true';
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+    });
+}
+
+function enableOfflineActions() {
+    window.offlineActionsBlocked = false;
+    document.querySelectorAll('[data-offline-disabled="true"]').forEach(btn => {
+        delete btn.dataset.offlineDisabled;
+        btn.style.opacity = '';
+        btn.style.cursor = '';
+    });
+}
+
+function canPerformAction(actionName) {
+    if (isOfflineMode || window.offlineActionsBlocked) {
+        showOfflineActionBlockedMessage(actionName);
+        return false;
+    }
+    return true;
+}
+
+function showOfflineActionBlockedMessage(actionName) {
+    const messages = {
+        'config': 'Configuration des ressources',
+        'tour': 'Ajout de tour',
+        'checklist': 'Envoi vers la checklist',
+        'task': 'Ajout de tâche',
+        'validate': 'Validation de tâche',
+        'planning-status': 'Modification du planning',
+        'planning-text': 'Ajout de texte',
+        'planning-specialty': 'Ajout de spécialité',
+        'save': 'Sauvegarde'
+    };
+    
+    const message = messages[actionName] || 'Cette action';
+    const miniToast = document.createElement('div');
+    miniToast.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #dc2626, #b91c1c); color: white;
+        padding: 1rem 1.5rem; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(220, 38, 38, 0.5); z-index: 10002;
+        font-size: 0.9rem; font-weight: 600; text-align: center; max-width: 300px;
+    `;
+    miniToast.innerHTML = `
+        <i class="fas fa-wifi-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+        ${message} impossible<br>
+        <span style="font-size: 0.8rem; font-weight: 400; opacity: 0.9;">Mode hors ligne</span>
+    `;
+    document.body.appendChild(miniToast);
+    setTimeout(() => miniToast.remove(), 2000);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOfflineDetection);
+} else {
+    initOfflineDetection();
+}
+
+
+
 // Mettre à jour le compteur
 function updateResourcesCount() {
     document.getElementById('resources-count').textContent = tempSelectedResources.length;
@@ -9837,6 +10242,9 @@ function updateResourcesCount() {
 
 // Sauvegarder la configuration
 window.saveResourcesConfig = function() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('config')) return;
+    
     selectedResources = [...tempSelectedResources];
     // Sauvegarder dans userData pour Firebase
     if (userData) {
@@ -9850,6 +10258,8 @@ window.saveResourcesConfig = function() {
 
 // Basculer l'état validé d'une ressource pour un item
 window.toggleResourceValidation = function(specialtyId, fc, resourceId) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('tour')) return;
     const d = getItemData(specialtyId, fc);
     if (!d.resources) d.resources = {};
     d.resources[resourceId] = !d.resources[resourceId];
@@ -13144,6 +13554,13 @@ window.retryFirebaseSave = async function() {
 async function saveUserData() {
     if (!currentUser || !userData) return;
     
+    // 🔴 VÉRIFICATION MODE HORS LIGNE
+    if (isOfflineMode) {
+        console.warn('⚠️ Sauvegarde bloquée : mode hors ligne');
+        showOfflineActionBlockedMessage('save');
+        return;
+    }
+    
     // 🛡️ PROTECTION ANTI-ÉCRASEMENT
     const safetyCheck = isDataSafeToSave(userData, currentUser.uid);
     if (!safetyCheck.safe) {
@@ -13912,6 +14329,7 @@ async function updateBackupModalContent() {
 }
 
 async function confirmRestore(date, itemsCount) {
+if (!canPerformAction('save')) return;
     const dateObj = new Date(date);
     const formattedDate = dateObj.toLocaleDateString('fr-FR', { 
         weekday: 'long', 
@@ -14020,6 +14438,7 @@ async function performRestore(date) {
 }
 
 async function confirmRestoreFirebase() {
+if (!canPerformAction('save')) return;
     const firebaseBackup = await getBackupFromFirebase(currentUser.uid);
     
     if (!firebaseBackup) {
@@ -14142,6 +14561,9 @@ async function performRestoreFirebase() {
 
 
 async function forceManualBackup() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('save')) return;
+    
     if (!currentUser || !userData) {
         await showCustomAlert({
             type: 'error',
@@ -15332,6 +15754,9 @@ let selectedConfidence = null;
 let selectedSupport = null;
 
 window.openConfidenceModal = function(el) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('tour')) return;
+    
     pendingTour = { specialtyId: el.dataset.specialty, fc: el.dataset.fc, tour: parseInt(el.dataset.tour) };
     
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
@@ -15418,6 +15843,9 @@ document.querySelectorAll('.support-btn').forEach(btn => {
 });
 
 document.getElementById('btn-save-tour')?.addEventListener('click', function() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('tour')) return;
+    
     const errorEl = document.getElementById('confidence-error');
     const durationErrorEl = document.getElementById('duration-error');
     const dateErrorEl = document.getElementById('date-error');
@@ -15524,7 +15952,11 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
         setTimeout(() => TrophiesSystem.checkTrophies(), 500);
     }
 });
+
 document.getElementById('btn-reset-tour')?.addEventListener('click', function() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('tour')) return;
+    
     if (!pendingTour) return;
     
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
@@ -16248,6 +16680,12 @@ const PlanningModule = (function() {
     
 // Sauvegarder
 function saveData() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (isOfflineMode) {
+        console.warn('⚠️ Sauvegarde planning bloquée : mode hors ligne');
+        return;
+    }
+    
     // Sauvegarder dans userData pour Firebase UNIQUEMENT
     if (typeof userData !== 'undefined' && userData) {
         userData.planningData = planningData;
@@ -16754,6 +17192,9 @@ function updateSelectors() {
     
 // Ouvrir popup statut
 function openStatusPopup(dateKey, targetEl) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-status')) return;
+    
     currentEditingDate = dateKey;
     const popup = document.getElementById('status-popup');
     if (!popup) return;
@@ -16830,6 +17271,9 @@ function openStatusPopup(dateKey, targetEl) {
     
 // Ouvrir popup spécialité
 function openSpecialtyPopup(dateKey, targetEl) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-specialty')) return;
+    
     currentEditingDate = dateKey;
     const popup = document.getElementById('specialty-popup');
     if (!popup) return;
@@ -16908,9 +17352,11 @@ function openSpecialtyPopup(dateKey, targetEl) {
     }
 }
     
-    // Sauvegarder statut
-    function setDayStatus(dateKey, status) {
-        if (!planningData[dateKey]) planningData[dateKey] = {};
+function setDayStatus(dateKey, status) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-status')) return;
+    
+    if (!planningData[dateKey]) planningData[dateKey] = {};
         planningData[dateKey].status = status;
         if (!status) delete planningData[dateKey].status;
         cleanupDayData(dateKey);
@@ -16918,9 +17364,11 @@ function openSpecialtyPopup(dateKey, targetEl) {
         renderCalendar();
     }
 	
-	    // Remplir toute la semaine avec un statut
-    function fillWeekWithStatus(mondayDateKey, status) {
-        const startDate = new Date(mondayDateKey);
+function fillWeekWithStatus(mondayDateKey, status) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-status')) return;
+    
+    const startDate = new Date(mondayDateKey);
         
         // Déterminer le nombre de jours à remplir selon le statut
         let daysToFill = 7; // Par défaut : lundi à dimanche
@@ -16949,8 +17397,11 @@ function openSpecialtyPopup(dateKey, targetEl) {
 	
     
 	// Remplir toute la semaine avec des spécialités
-    function fillWeekWithSpecialties(mondayDateKey, specialtiesArray) {
-        const startDate = new Date(mondayDateKey);
+function fillWeekWithSpecialties(mondayDateKey, specialtiesArray) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-specialty')) return;
+    
+    const startDate = new Date(mondayDateKey);
         
         // Toujours remplir du lundi au dimanche (7 jours) pour les spécialités
         const daysToFill = 7;
@@ -16981,8 +17432,11 @@ function openSpecialtyPopup(dateKey, targetEl) {
 	
 	
     // Sauvegarder spécialités (multi)
-    function setDaySpecialties(dateKey, specialtiesArray) {
-        if (!planningData[dateKey]) planningData[dateKey] = {};
+function setDaySpecialties(dateKey, specialtiesArray) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-specialty')) return;
+    
+    if (!planningData[dateKey]) planningData[dateKey] = {};
         
         // Supprimer l'ancien format
         delete planningData[dateKey].specialty;
@@ -16999,8 +17453,11 @@ function openSpecialtyPopup(dateKey, targetEl) {
     }
     
     // Sauvegarder notes
-    function saveDayNotes(dateKey, notes) {
-        if (!planningData[dateKey]) planningData[dateKey] = {};
+function saveDayNotes(dateKey, notes) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('planning-text')) return;
+    
+    if (!planningData[dateKey]) planningData[dateKey] = {};
         planningData[dateKey].notes = notes.trim();
         if (!notes.trim()) delete planningData[dateKey].notes;
         cleanupDayData(dateKey);
@@ -17016,6 +17473,9 @@ function openSpecialtyPopup(dateKey, targetEl) {
     
     // ===== CHECKLIST =====
 function addChecklistItem() {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('task')) return;
+    
     const input = document.getElementById('checklist-new-item');
     const errorNotif = document.getElementById('checklist-error');
     if (!input) return;
@@ -17054,6 +17514,9 @@ function addChecklistItem() {
  
  
 function deleteChecklistItem(id) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('task')) return;
+    
     // Récupérer l'itemKey avant de supprimer
     var itemToDelete = checklistData.find(function(i) { return i.id === id; });
     var itemKey = itemToDelete ? itemToDelete.itemKey : null;
@@ -17091,6 +17554,9 @@ function deleteChecklistItem(id) {
 }
 
 function toggleChecklistItem(id, event) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('validate')) return;
+    
     const item = checklistData.find(i => i.id === id);
     if (!item) return;
     
@@ -17722,6 +18188,8 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
 
 // ===== FONCTION GLOBALE POUR ENVOYER VERS CHECKLIST =====
 window.sendToChecklist = function(btn, specialtyId, fc, itemNum, itemName) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('checklist')) return;
     // Récupérer la couleur de la spécialité
     var specCfg = SPECIALTY_CONFIG[specialtyId] || { color: '#6b7280' };
     var specialty = SPECIALTIES_DATA.find(function(s) { return s.id === specialtyId; });
@@ -17768,6 +18236,8 @@ window.showToastNotification = function(message, type) {
 };
 
 window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
+    // 🔴 BLOQUER SI HORS LIGNE
+    if (!canPerformAction('tour')) return;
     var parts = itemKey.split('-');
     var specialtyId = parts[0];
     var fc = parts.slice(1).join('-');
