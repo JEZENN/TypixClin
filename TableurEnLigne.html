@@ -13038,16 +13038,49 @@ function loadUserData(userId) {
         }
         
         // ✅ TOUJOURS activer onSnapshot (même si cache utilisé ci-dessus)
-        // → Garantit sync temps réel multi-appareils
-        unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
-            if (docSnap.exists()) {
-                const newData = docSnap.data();
-                
-                // ⚡ OPTIMISATION : Ne re-render que si données différentes
-                const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
-                
-                
-                userData = newData;
+			unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
+				if (docSnap.exists()) {
+					const newData = docSnap.data();
+					
+					// 🛡️ PROTECTION ANTI-CORRUPTION
+					// Vérifier si les nouvelles données sont suspectes (vides ou invalides)
+					const newDataIsEmpty = !newData || 
+										   !newData.items || 
+										   Object.keys(newData.items || {}).length === 0;
+					
+					const currentDataHasContent = userData && 
+												  userData.items && 
+												  Object.keys(userData.items || {}).length > 0;
+					
+					// Si Firebase envoie des données vides mais qu'on a déjà des données : BLOQUER
+					if (newDataIsEmpty && currentDataHasContent) {
+						console.error('🚫 PROTECTION ACTIVÉE : Firebase veut écraser vos données avec du vide !');
+						console.warn('📊 Données actuelles :', Object.keys(userData.items).length, 'items');
+						console.warn('📊 Données reçues : VIDES ou CORROMPUES');
+						console.warn('✅ Écrasement BLOQUÉ - vos données sont en sécurité');
+						
+						// Afficher une alerte visuelle à l'utilisateur
+						if (typeof showCustomModal === 'function') {
+							showCustomModal({
+								icon: 'warning',
+								title: 'Protection des données activée',
+								message: 'Une tentative d\'écrasement de vos données a été détectée et bloquée.',
+								details: [
+									{ icon: 'shield-alt', text: `${Object.keys(userData.items).length} items protégés` },
+									{ icon: 'database', text: 'Vos données sont en sécurité' }
+								],
+								primaryBtn: { text: 'OK, merci', action: () => {} }
+							});
+						}
+						
+						return; // ← NE PAS écraser userData !
+					}
+					
+					// ⚡ OPTIMISATION : Ne re-render que si données différentes
+					const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
+					
+					// ✅ Données valides : mise à jour sécurisée
+					userData = newData;
                 
 				
 				                // 📅 BACKUP QUOTIDIEN : Créer si pas encore fait aujourd'hui
