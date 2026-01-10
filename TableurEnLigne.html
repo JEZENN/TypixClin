@@ -11172,6 +11172,11 @@ const statSpecialtiesDone = document.getElementById('stat-specialties-done');
 const progressItems = document.getElementById('progress-items');
 const progressTours = document.getElementById('progress-tours');
 
+
+const BACKUP_KEY_PREFIX = 'planning_backup_';
+const MAX_BACKUPS = 3;
+
+
 let currentUser = null;
 let userData = null;
 let cachedStats = null;
@@ -11567,6 +11572,168 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
+
+function saveBackupToLocalStorage(userId, data) {
+    if (!userId || !data) return;
+    
+    try {
+        const backupKey = `${BACKUP_KEY_PREFIX}${userId}`;
+        const existingBackups = JSON.parse(localStorage.getItem(backupKey) || '[]');
+        
+        // Compter TOUT le contenu
+        const content = countDataContent(data);
+        
+        // Ne sauvegarder que si les données ont du contenu
+        if (content.total === 0) {
+            console.log('⚠️ Backup ignoré : données vides');
+            return;
+        }
+        
+        // Créer le nouveau backup avec toutes les infos
+        const newBackup = {
+            timestamp: new Date().toISOString(),
+            itemsCount: content.items,
+            totalCount: content.total,
+            details: content,
+            data: JSON.parse(JSON.stringify(data)) // Deep copy
+        };
+        
+        // Éviter les doublons (comparer tout le contenu, pas juste items)
+        if (existingBackups.length > 0) {
+            const lastBackup = existingBackups[existingBackups.length - 1];
+            const lastContent = JSON.stringify({
+                items: lastBackup.data.items,
+                planningData: lastBackup.data.planningData,
+                checklistData: lastBackup.data.checklistData,
+                trophies: lastBackup.data.trophies,
+                selectedResources: lastBackup.data.selectedResources
+            });
+            const newContent = JSON.stringify({
+                items: data.items,
+                planningData: data.planningData,
+                checklistData: data.checklistData,
+                trophies: data.trophies,
+                selectedResources: data.selectedResources
+            });
+            if (lastContent === newContent) {
+                console.log('📦 Backup ignoré : identique au précédent');
+                return;
+            }
+        }
+        
+        // Ajouter le nouveau backup
+        existingBackups.push(newBackup);
+        
+        // Garder seulement les X derniers backups
+        while (existingBackups.length > MAX_BACKUPS) {
+            existingBackups.shift();
+        }
+        
+        localStorage.setItem(backupKey, JSON.stringify(existingBackups));
+        console.log(`💾 Backup créé (${content.items} items, ${content.planningDays} planning, ${content.checklistItems} checklist, ${content.trophies} trophées) - ${existingBackups.length}/${MAX_BACKUPS} backups`);
+        
+    } catch (e) {
+        console.error('❌ Erreur création backup:', e);
+    }
+}
+
+function getBackupsFromLocalStorage(userId) {
+    if (!userId) return [];
+    
+    try {
+        const backupKey = `${BACKUP_KEY_PREFIX}${userId}`;
+        return JSON.parse(localStorage.getItem(backupKey) || '[]');
+    } catch (e) {
+        console.error('❌ Erreur lecture backups:', e);
+        return [];
+    }
+}
+
+function restoreFromBackup(userId, backupIndex = 0) {
+    const backups = getBackupsFromLocalStorage(userId);
+    
+    if (backups.length === 0) {
+        console.error('❌ Aucun backup disponible');
+        return null;
+    }
+    
+    // backupIndex: 0 = le plus récent, 1 = avant-dernier, etc.
+    const index = backups.length - 1 - backupIndex;
+    
+    if (index < 0 || index >= backups.length) {
+        console.error('❌ Index de backup invalide');
+        return null;
+    }
+    
+    const backup = backups[index];
+    console.log(`🔄 Restauration du backup du ${backup.timestamp} (${backup.itemsCount} items)`);
+    
+    return backup.data;
+}
+
+// 🛡️ PROTECTION ANTI-ÉCRASEMENT - SÉCURITÉ MAXIMALE
+function countDataContent(data) {
+    if (!data) return { total: 0 };
+    
+    const counts = {
+        items: Object.keys(data.items || {}).length,
+        trophies: Object.keys(data.trophies || {}).length,
+        planningDays: Object.keys(data.planningData || {}).length,
+        checklistItems: (data.checklistData || []).length,
+        resources: (data.selectedResources || []).length
+    };
+    
+    counts.total = counts.items + counts.trophies + counts.planningDays + counts.checklistItems + counts.resources;
+    
+    return counts;
+}
+
+function isDataSafeToSave(newData, userId) {
+    // Compter TOUT le contenu des nouvelles données
+    const newContent = countDataContent(newData);
+    
+    // Si les nouvelles données ont du contenu significatif, c'est OK
+    if (newContent.total > 0) {
+        return { safe: true, reason: 'Données valides', content: newContent };
+    }
+    
+    // Les nouvelles données sont COMPLÈTEMENT vides - DANGER !
+    const cacheKey = `planning_cache_${userId}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    // 1. Vérifier le cache principal
+    if (cachedData) {
+        try {
+            const parsed = JSON.parse(cachedData);
+            const cachedContent = countDataContent(parsed);
+            
+            if (cachedContent.total > 0) {
+                return { 
+                    safe: false, 
+                    reason: `BLOQUÉ : Tentative d'écraser ${cachedContent.items} items, ${cachedContent.planningDays} jours planning, ${cachedContent.checklistItems} checklist, ${cachedContent.trophies} trophées, ${cachedContent.resources} ressources`,
+                    previousContent: cachedContent
+                };
+            }
+        } catch (e) {}
+    }
+    
+    // 2. Vérifier les backups
+    const backups = getBackupsFromLocalStorage(userId);
+    if (backups.length > 0) {
+        const lastBackup = backups[backups.length - 1];
+        if ((lastBackup.totalCount || lastBackup.itemsCount || 0) > 0) {
+            return { 
+                safe: false, 
+                reason: `BLOQUÉ : Backup existant avec ${lastBackup.totalCount || lastBackup.itemsCount} éléments`,
+                previousCount: lastBackup.totalCount || lastBackup.itemsCount
+            };
+        }
+    }
+    
+    // Aucune donnée précédente trouvée, OK pour sauvegarder (nouveau compte)
+    return { safe: true, reason: 'Nouveau compte ou données déjà vides' };
+}
+
 function initializeUserData() { 
     return { 
         items: {}, 
@@ -11612,38 +11779,71 @@ function loadUserData(userId) {
                 // ⚡ OPTIMISATION : Ne re-render que si données différentes
                 const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
                 
+                // 💾 BACKUP : Sauvegarder les anciennes données AVANT de les remplacer
+                if (userData && Object.keys(userData.items || {}).length > 0 && dataChanged) {
+                    saveBackupToLocalStorage(userId, userData);
+                }
+                
                 userData = newData;
                 
                 // Mettre à jour le cache
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(cacheTimeKey, Date.now().toString());
                 
-				if (dataChanged) {
-					console.log('📥 Sync Firebase : données mises à jour');
-					
-					loadResourcesConfig();
-					
-					// Charger les données du planning
-					if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
-						PlanningModule.loadData();
-						console.log('📅 Planning synchronisé');
-						console.log('✅ Checklist synchronisée');
-						if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
-						if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
-					}
-					
-					// 🏆 Recharger les trophées automatiquement lors de la sync
-					if (typeof TrophiesSystem !== 'undefined') {
-						TrophiesSystem.init(); // Recharge les trophées depuis userData
-						console.log('🏆 Trophées synchronisés');
-					}
-					
-					renderAll();
-				}else {
+                if (dataChanged) {
+                    console.log('📥 Sync Firebase : données mises à jour');
+                    
+                    loadResourcesConfig();
+                    
+                    // Charger les données du planning
+                    if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                        PlanningModule.loadData();
+                        console.log('📅 Planning synchronisé');
+                        console.log('✅ Checklist synchronisée');
+                        if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                        if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+                    }
+                    
+                    // 🏆 Recharger les trophées automatiquement lors de la sync
+                    if (typeof TrophiesSystem !== 'undefined') {
+                        TrophiesSystem.init(); // Recharge les trophées depuis userData
+                        console.log('🏆 Trophées synchronisés');
+                    }
+                    
+                    renderAll();
+                } else {
                     console.log('📥 Sync Firebase : aucun changement détecté');
                 }
             } else {
-                // Nouveau compte : initialiser avec données vides
+                // 🛡️ PROTECTION : Vérifier si on a des données en cache/backup avant d'initialiser
+                const existingCache = localStorage.getItem(cacheKey);
+                const backups = getBackupsFromLocalStorage(userId);
+                
+                if (existingCache) {
+                    try {
+                        const parsed = JSON.parse(existingCache);
+                        if (Object.keys(parsed?.items || {}).length > 0) {
+                            console.warn('⚠️ Document Firebase absent mais cache avec données - RESTAURATION depuis cache');
+                            userData = parsed;
+                            // Recréer le document Firebase avec les données du cache
+                            saveUserData();
+                            renderAll();
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                
+                if (backups.length > 0 && backups[backups.length - 1].itemsCount > 0) {
+                    console.warn('⚠️ Document Firebase absent mais backup disponible - RESTAURATION depuis backup');
+                    userData = restoreFromBackup(userId, 0);
+                    if (userData) {
+                        saveUserData();
+                        renderAll();
+                        return;
+                    }
+                }
+                
+                // Vraiment nouveau compte : initialiser avec données vides
                 userData = initializeUserData();
                 saveUserData();
                 console.log('🆕 Nouveau compte initialisé');
@@ -11658,7 +11858,34 @@ function loadUserData(userId) {
             }
         }, e => { 
             console.error('❌ Erreur Firebase:', e);
-            // Initialiser avec données vides en cas d'erreur
+            
+            // 🛡️ PROTECTION : En cas d'erreur, utiliser le cache au lieu d'initialiser des données vides
+            const existingCache = localStorage.getItem(cacheKey);
+            if (existingCache) {
+                try {
+                    const parsed = JSON.parse(existingCache);
+                    if (Object.keys(parsed?.items || {}).length > 0) {
+                        console.warn('⚠️ Erreur Firebase - Utilisation du cache local');
+                        userData = parsed;
+                        renderAll();
+                        return;
+                    }
+                } catch (parseError) {}
+            }
+            
+            // Fallback sur backup
+            const backups = getBackupsFromLocalStorage(userId);
+            if (backups.length > 0 && backups[backups.length - 1].itemsCount > 0) {
+                console.warn('⚠️ Erreur Firebase - Restauration depuis backup');
+                userData = restoreFromBackup(userId, 0);
+                if (userData) {
+                    renderAll();
+                    return;
+                }
+            }
+            
+            // Dernier recours : données vides (mais PAS de sauvegarde !)
+            console.error('❌ Aucune donnée de secours disponible');
             userData = initializeUserData();
             renderAll(); 
         });
@@ -11670,8 +11897,39 @@ function loadUserData(userId) {
     }
 }
 
+
 async function saveUserData() {
     if (!currentUser || !userData) return;
+    
+    // 🛡️ PROTECTION ANTI-ÉCRASEMENT
+    const safetyCheck = isDataSafeToSave(userData, currentUser.uid);
+    if (!safetyCheck.safe) {
+        console.error('🚫 SAUVEGARDE BLOQUÉE :', safetyCheck.reason);
+        
+        // Afficher une erreur visuelle
+        if (saveIndicatorHeader) {
+            saveIndicatorHeader.classList.add('visible');
+            saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            saveIndicatorHeader.title = 'Protection : écrasement bloqué';
+            saveIndicatorHeader.style.color = 'var(--danger)';
+            
+            setTimeout(() => {
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('visible');
+                    saveIndicatorHeader.style.color = '';
+                }
+            }, 5000);
+        }
+        
+        return; // NE PAS SAUVEGARDER !
+    }
+    
+// 💾 BACKUP avant sauvegarde (si données significatives)
+    const contentCheck = countDataContent(userData);
+    if (contentCheck.total > 0) {
+        saveBackupToLocalStorage(currentUser.uid, userData);
+    }
     
     // Variable pour tracker si la sauvegarde est terminée
     let saveCompleted = false;
@@ -11789,7 +12047,7 @@ async function saveUserData() {
             hasUnsavedChanges = false;
             showSaveSuccess();
             console.log('✅ Sauvegarde Firestore réussie');
-			invalidateStatsCache();
+            invalidateStatsCache();
         }
         
     } catch (e) {
@@ -11802,6 +12060,13 @@ async function saveUserData() {
         
         // En cas d'erreur, essayer avec setDoc (fallback)
         if (e.code === 'not-found') {
+            // 🛡️ Vérification supplémentaire avant setDoc
+            if (Object.keys(userData.items || {}).length === 0) {
+                console.warn('⚠️ setDoc bloqué : données vides sur document not-found');
+                showSaveError();
+                return;
+            }
+            
             try {
                 await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
                 
@@ -11810,7 +12075,7 @@ async function saveUserData() {
                     hasUnsavedChanges = false;
                     showSaveSuccess();
                     console.log('✅ Document créé avec setDoc (fallback)');
-					invalidateStatsCache();
+                    invalidateStatsCache();
                 }
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
@@ -16625,7 +16890,66 @@ window.addEventListener('beforeunload', function() {
     stopTimer();
 });
 
+// 🔧 Fonctions utilitaires pour debug/admin (accessibles depuis la console)
+window.BackupUtils = {
+    // Voir tous les backups
+    listBackups: function() {
+        if (!currentUser) {
+            console.error('Non connecté');
+            return;
+        }
+        const backups = getBackupsFromLocalStorage(currentUser.uid);
+        console.log(`📦 ${backups.length} backup(s) disponible(s):`);
+        backups.forEach((b, i) => {
+            console.log(`  ${i}: ${b.timestamp} - ${b.itemsCount} items`);
+        });
+        return backups;
+    },
+    
+    // Restaurer un backup spécifique
+    restore: function(index = 0) {
+        if (!currentUser) {
+            console.error('Non connecté');
+            return;
+        }
+        const restored = restoreFromBackup(currentUser.uid, index);
+        if (restored) {
+            userData = restored;
+            renderAll();
+            console.log('✅ Données restaurées ! Appelez BackupUtils.saveRestored() pour sauvegarder sur Firebase');
+        }
+        return restored;
+    },
+    
+    // Sauvegarder après restauration
+    saveRestored: function() {
+        if (!currentUser || !userData) {
+            console.error('Non connecté ou pas de données');
+            return;
+        }
+        // Forcer la sauvegarde même si protection
+        const itemsCount = Object.keys(userData.items || {}).length;
+        if (itemsCount > 0) {
+            console.log(`💾 Sauvegarde de ${itemsCount} items...`);
+            saveUserData();
+        } else {
+            console.error('❌ Impossible de sauvegarder des données vides');
+        }
+    },
+    
+    // Forcer un backup manuel
+    forceBackup: function() {
+        if (!currentUser || !userData) {
+            console.error('Non connecté ou pas de données');
+            return;
+        }
+        saveBackupToLocalStorage(currentUser.uid, userData);
+    }
+};
 
+console.log('🛡️ Protection anti-écrasement activée');
+console.log('💾 Système de backup localStorage activé (3 versions)');
+console.log('ℹ️ Utilisez BackupUtils.listBackups() pour voir les backups disponibles');
 
 </script>
 
