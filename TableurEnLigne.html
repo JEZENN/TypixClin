@@ -13036,6 +13036,11 @@ function loadUserData(userId) {
             }
             renderAll();
         }
+		
+		        // 📦 Récupérer le cache existant
+        const cacheKey = `planning_cache_${userId}`;
+        const existingCache = localStorage.getItem(cacheKey);
+		
         
         // ✅ TOUJOURS activer onSnapshot (même si cache utilisé ci-dessus)
 			unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
@@ -13521,6 +13526,19 @@ async function saveUserData() {
             showSaveSuccess();
             
             invalidateStatsCache();
+            
+            // ═══════════════════════════════════════════════════════════
+            // 💾 NOUVEAU : SAUVEGARDER AUSSI EN LOCAL (backup de secours)
+            // ═══════════════════════════════════════════════════════════
+            try {
+                const cacheKey = `planning_cache_${currentUser.uid}`;
+                localStorage.setItem(cacheKey, JSON.stringify(userData));
+                localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                console.log('💾 Backup local créé');
+            } catch (localError) {
+                console.warn('⚠️ Impossible de sauvegarder en local:', localError);
+            }
+            // ═══════════════════════════════════════════════════════════
         }
         
     } catch (e) {
@@ -13549,6 +13567,19 @@ async function saveUserData() {
                     showSaveSuccess();
                     
                     invalidateStatsCache();
+                    
+                    // ═══════════════════════════════════════════════════════════
+                    // 💾 NOUVEAU : SAUVEGARDER AUSSI EN LOCAL (backup de secours)
+                    // ═══════════════════════════════════════════════════════════
+                    try {
+                        const cacheKey = `planning_cache_${currentUser.uid}`;
+                        localStorage.setItem(cacheKey, JSON.stringify(userData));
+                        localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                        console.log('💾 Backup local créé (fallback setDoc)');
+                    } catch (localError) {
+                        console.warn('⚠️ Impossible de sauvegarder en local:', localError);
+                    }
+                    // ═══════════════════════════════════════════════════════════
                 }
             } catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
@@ -19132,7 +19163,29 @@ window.addEventListener('beforeunload', function() {
 
 </script>
 
-
+<script>
+// Test automatique après connexion
+setTimeout(() => {
+    if (typeof userData !== 'undefined' && userData && currentUser) {
+        console.log('');
+        console.log('╔════════════════════════════════════════╗');
+        console.log('║   🛡️  PROTECTION ANTI-CORRUPTION      ║');
+        console.log('╚════════════════════════════════════════╝');
+        console.log('');
+        console.log('✅ Protection active');
+        console.log('📊 Items protégés:', Object.keys(userData.items || {}).length);
+        
+        const cacheKey = `planning_cache_${currentUser.uid}`;
+        const backup = localStorage.getItem(cacheKey);
+        if (backup) {
+            const backupData = JSON.parse(backup);
+            console.log('💾 Backup local:', Object.keys(backupData.items || {}).length, 'items');
+        }
+        
+        console.log('');
+    }
+}, 3000); // Attend 3 secondes que tout soit chargé
+</script>
 
 
 </body>
