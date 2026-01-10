@@ -13007,14 +13007,22 @@ function isDataSafeToSave(newData, userId) {
 }
 
 function initializeUserData() { 
-    return { 
-        items: {}, 
-        trophies: {}, 
-        planningData: {},      // Planning calendrier
-        checklistData: [],     // Checklist
-        selectedResources: [], // Ressources
-        lastUpdated: new Date().toISOString() 
-    }; 
+    // 🛡️ BUG #11 CORRIGÉ : Initialisation complète garantie
+    const initialData = {
+        items: {},
+        trophies: {},
+        planningData: {},
+        checklistData: [],
+        selectedResources: [],
+        lastUpdated: new Date().toISOString()
+    };
+    
+    // Vérifier que toutes les propriétés existent
+    if (!initialData.planningData) initialData.planningData = {};
+    if (!initialData.checklistData) initialData.checklistData = [];
+    if (!initialData.selectedResources) initialData.selectedResources = [];
+    
+    return initialData;
 }
 
 function loadUserData(userId) {
@@ -13085,7 +13093,16 @@ function loadUserData(userId) {
 					const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
 					
 					// ✅ Données valides : mise à jour sécurisée
-					userData = newData;
+					// 🛡️ BUG #11 CORRIGÉ : S'assurer que planningData/checklistData existent
+						userData = {
+							items: newData.items || {},
+							trophies: newData.trophies || {},
+							planningData: newData.planningData || {},
+							checklistData: newData.checklistData || [],
+							selectedResources: newData.selectedResources || [],
+							lastUpdated: newData.lastUpdated || new Date().toISOString()
+						};
+
                 
 				
 				                // 📅 BACKUP QUOTIDIEN : Créer si pas encore fait aujourd'hui
@@ -13342,7 +13359,7 @@ window.retryFirebaseSave = async function() {
     }
 };
 
-async function saveUserData() {
+async function saveUserData(retryCount = 0) {
     if (!currentUser || !userData) return;
     
     // 🔴 VÉRIFICATION MODE HORS LIGNE
@@ -13357,7 +13374,6 @@ async function saveUserData() {
     if (!safetyCheck.safe) {
         console.error('🚫 SAUVEGARDE BLOQUÉE :', safetyCheck.reason);
         
-        // Afficher une erreur visuelle
         if (saveIndicatorHeader) {
             saveIndicatorHeader.classList.add('visible');
             saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
@@ -13373,16 +13389,8 @@ async function saveUserData() {
             }, 5000);
         }
         
-        return; // NE PAS SAUVEGARDER !
+        return;
     }
-    
-    // 💾 BACKUP : Sauvegarder le CACHE (anciennes données) avant d'écraser
-    
-    // ════════════════════════════════════════════════════════════
-    // 🌐 VÉRIFICATION DE CONNEXION AVANT FIREBASE
-    // ════════════════════════════════════════════════════════════
-    
-    // ✅ Toujours mettre à jour le cache LOCAL (sécurisé)  
     
     // 🔍 Vérifier la connexion avant d'essayer Firebase
     const connectionOK = await checkConnectionBeforeSave();
@@ -13391,7 +13399,6 @@ async function saveUserData() {
         console.warn('⚠️ Connexion instable - Sauvegarde Firebase reportée');
         showConnectionWarning();
         
-        // Afficher l'indicateur "en attente"
         if (saveIndicatorHeader) {
             saveIndicatorHeader.classList.add('visible', 'pending');
             saveIndicatorHeader.classList.remove('saving', 'saved');
@@ -13399,59 +13406,109 @@ async function saveUserData() {
             saveIndicatorHeader.title = 'En attente de connexion stable';
         }
         
-        return; // Ne pas essayer Firebase, données en sécurité en local
+        return;
     }
     
-    // ✅ Connexion OK - Cacher le bandeau si présent
     hideConnectionWarning();
     
     // ════════════════════════════════════════════════════════════
-    // Suite du code Firebase
+    // 🆕 SYSTÈME DE RETRY AVEC BACKOFF EXPONENTIEL
     // ════════════════════════════════════════════════════════════
     
-    // Variable pour tracker si la sauvegarde est terminée
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = [2000, 4000, 8000]; // 2s, 4s, 8s
+    
+    // Variable pour tracker l'état
     let saveCompleted = false;
     let saveTimedOut = false;
     
-    // Afficher l'indicateur de sauvegarde dans le header (rotation rapide)
+    // Afficher l'indicateur de sauvegarde
     if (saveIndicatorHeader) {
         saveIndicatorHeader.classList.add('visible', 'saving');
         saveIndicatorHeader.classList.remove('pending', 'saved');
-        saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
-        saveIndicatorHeader.title = 'Sauvegarde en cours...';
+        
+        if (retryCount > 0) {
+            saveIndicatorHeader.innerHTML = `<i class="fas fa-sync-alt"></i> Tentative ${retryCount + 1}/${MAX_RETRIES}`;
+            saveIndicatorHeader.title = `Nouvelle tentative (${retryCount + 1}/${MAX_RETRIES})...`;
+        } else {
+            saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            saveIndicatorHeader.title = 'Sauvegarde en cours...';
+        }
     }
     
-    // ⚠️ TIMEOUT DE SÉCURITÉ - Force l'arrêt après 10 secondes
+    // ⚠️ TIMEOUT DE SÉCURITÉ - 10 secondes
     const safetyTimeout = setTimeout(() => {
         if (!saveCompleted) {
             saveTimedOut = true;
-            console.warn('⏱️ Timeout de sauvegarde atteint (10s)');
+            console.warn(`⏱️ Timeout tentative ${retryCount + 1}/${MAX_RETRIES}`);
             
-            // FORCER l'arrêt de l'animation
-            if (saveIndicatorHeader) {
-                saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-                saveIndicatorHeader.classList.add('visible');
-                saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                saveIndicatorHeader.title = 'Timeout - Vérifiez votre connexion';
-                saveIndicatorHeader.style.color = 'var(--danger)';
+            // 🔄 RETRY SI ENCORE DES TENTATIVES
+            if (retryCount < MAX_RETRIES - 1) {
+                const delay = RETRY_DELAY[retryCount];
+                console.log(`🔄 Nouvelle tentative dans ${delay/1000}s...`);
                 
-                // Supprimer toutes les classes d'animation
-                const icon = saveIndicatorHeader.querySelector('i');
-                if (icon) {
-                    icon.style.animation = 'none';
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('saving');
+                    saveIndicatorHeader.classList.add('pending');
+                    saveIndicatorHeader.innerHTML = `<i class="fas fa-clock"></i> Retry dans ${delay/1000}s`;
+                    saveIndicatorHeader.title = `Nouvelle tentative dans ${delay/1000}s`;
                 }
                 
                 setTimeout(() => {
+                    saveUserData(retryCount + 1);
+                }, delay);
+                
+            } else {
+                // ❌ ÉCHEC DÉFINITIF après 3 tentatives
+                console.error('❌ Échec définitif après 3 tentatives');
+                
+                // 💾 FALLBACK : Sauvegarder en LOCAL
+                try {
+                    const cacheKey = `planning_cache_${currentUser.uid}`;
+                    localStorage.setItem(cacheKey, JSON.stringify(userData));
+                    localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                    console.log('💾 Sauvegarde locale de secours créée');
+                    
                     if (saveIndicatorHeader) {
-                        saveIndicatorHeader.classList.remove('visible');
-                        saveIndicatorHeader.style.color = '';
+                        saveIndicatorHeader.classList.remove('saving', 'pending');
+                        saveIndicatorHeader.classList.add('visible');
+                        saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                        saveIndicatorHeader.title = 'Sauvegardé en local uniquement (connexion instable)';
+                        saveIndicatorHeader.style.color = '#f59e0b'; // Orange
+                        
+                        // Garder visible 10 secondes
+                        setTimeout(() => {
+                            if (saveIndicatorHeader) {
+                                saveIndicatorHeader.classList.remove('visible');
+                                saveIndicatorHeader.style.color = '';
+                            }
+                        }, 10000);
                     }
-                }, 4000);
+                    
+                } catch (localError) {
+                    console.error('❌ Impossible de sauvegarder même en local:', localError);
+                    
+                    if (saveIndicatorHeader) {
+                        saveIndicatorHeader.classList.remove('saving', 'pending', 'saved');
+                        saveIndicatorHeader.classList.add('visible');
+                        saveIndicatorHeader.innerHTML = '<i class="fas fa-times-circle"></i>';
+                        saveIndicatorHeader.title = 'Échec de sauvegarde - Vérifiez votre connexion';
+                        saveIndicatorHeader.style.color = 'var(--danger)';
+                        
+                        // Garder visible jusqu'à intervention utilisateur
+                        setTimeout(() => {
+                            if (saveIndicatorHeader) {
+                                saveIndicatorHeader.classList.remove('visible');
+                                saveIndicatorHeader.style.color = '';
+                            }
+                        }, 15000);
+                    }
+                }
             }
         }
-    }, 10000); // 10 secondes
+    }, 10000);
     
-    // Fonction helper pour afficher le succès
+    // Fonction pour afficher le succès
     const showSaveSuccess = () => {
         saveCompleted = true;
         clearTimeout(safetyTimeout);
@@ -13460,12 +13517,12 @@ async function saveUserData() {
             saveIndicatorHeader.classList.remove('pending', 'saving');
             saveIndicatorHeader.classList.add('saved');
             saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
-            saveIndicatorHeader.title = 'Tout est sauvegardé';
+            saveIndicatorHeader.title = retryCount > 0 
+                ? `Sauvegardé après ${retryCount + 1} tentative(s)` 
+                : 'Tout est sauvegardé';
             
             const icon = saveIndicatorHeader.querySelector('i');
-            if (icon) {
-                icon.style.animation = 'none';
-            }
+            if (icon) icon.style.animation = 'none';
             
             setTimeout(() => {
                 if (saveIndicatorHeader) {
@@ -13475,41 +13532,12 @@ async function saveUserData() {
         }
     };
     
-    // Fonction helper pour afficher l'erreur
-    const showSaveError = () => {
-        saveCompleted = true;
-        clearTimeout(safetyTimeout);
-        
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-            saveIndicatorHeader.classList.add('visible');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-            saveIndicatorHeader.title = 'Erreur de sauvegarde';
-            saveIndicatorHeader.style.color = 'var(--danger)';
-            
-            const icon = saveIndicatorHeader.querySelector('i');
-            if (icon) {
-                icon.style.animation = 'none';
-            }
-            
-            setTimeout(() => {
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('visible');
-                    saveIndicatorHeader.style.color = '';
-                }
-            }, 3000);
-        }
-    };
-    
     try {
-        // Si le timeout est déjà passé, ne pas essayer de sauvegarder
-        if (saveTimedOut) {
-            return;
-        }
+        if (saveTimedOut) return;
         
         userData.lastUpdated = new Date().toISOString();
         
-        // OPTIMISATION : Utiliser updateDoc au lieu de setDoc
+        // SAUVEGARDE FIREBASE
         await updateDoc(doc(db, 'planningRevision', currentUser.uid), {
             items: userData.items,
             trophies: userData.trophies,
@@ -13519,78 +13547,68 @@ async function saveUserData() {
             lastUpdated: userData.lastUpdated
         });
         
-        // Succès - mais vérifier qu'on n'a pas timeout
+        // ✅ SUCCÈS
         if (!saveTimedOut) {
             lastSaveTime = Date.now();
             hasUnsavedChanges = false;
             showSaveSuccess();
-            
             invalidateStatsCache();
             
-            // ═══════════════════════════════════════════════════════════
-            // 💾 NOUVEAU : SAUVEGARDER AUSSI EN LOCAL (backup de secours)
-            // ═══════════════════════════════════════════════════════════
+            // 💾 BACKUP LOCAL
             try {
                 const cacheKey = `planning_cache_${currentUser.uid}`;
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
-                console.log('💾 Backup local créé');
+                
             } catch (localError) {
-                console.warn('⚠️ Impossible de sauvegarder en local:', localError);
+                console.warn('⚠️ Backup local impossible:', localError);
             }
-            // ═══════════════════════════════════════════════════════════
         }
         
     } catch (e) {
-        console.error('❌ Erreur sauvegarde Firestore:', e);
+        console.error('❌ Erreur sauvegarde:', e);
         
-        // Si timeout déjà passé, ne rien faire
-        if (saveTimedOut) {
-            return;
-        }
+        if (saveTimedOut) return;
         
-        // En cas d'erreur, essayer avec setDoc (fallback)
+        // FALLBACK : setDoc si document not-found
         if (e.code === 'not-found') {
-            // 🛡️ Vérification supplémentaire avant setDoc
             if (Object.keys(userData.items || {}).length === 0) {
-                console.warn('⚠️ setDoc bloqué : données vides sur document not-found');
-                showSaveError();
+                console.warn('⚠️ setDoc bloqué : données vides');
+                clearTimeout(safetyTimeout);
                 return;
             }
             
-            try {
-                await setDoc(doc(db, 'planningRevision', currentUser.uid), userData);
-                
-                if (!saveTimedOut) {
-                    lastSaveTime = Date.now();
-                    hasUnsavedChanges = false;
-                    showSaveSuccess();
-                    
-                    invalidateStatsCache();
-                    
-                    // ═══════════════════════════════════════════════════════════
-                    // 💾 NOUVEAU : SAUVEGARDER AUSSI EN LOCAL (backup de secours)
-                    // ═══════════════════════════════════════════════════════════
-                    try {
-                        const cacheKey = `planning_cache_${currentUser.uid}`;
-                        localStorage.setItem(cacheKey, JSON.stringify(userData));
-                        localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
-                        console.log('💾 Backup local créé (fallback setDoc)');
-                    } catch (localError) {
-                        console.warn('⚠️ Impossible de sauvegarder en local:', localError);
-                    }
-                    // ═══════════════════════════════════════════════════════════
-                }
-            } catch (e2) {
+			try {
+				// 🛡️ BUG #13 CORRIGÉ : Utiliser merge au lieu d'écraser
+				await setDoc(doc(db, 'planningRevision', currentUser.uid), userData, { merge: true });
+				
+				if (!saveTimedOut) {
+					lastSaveTime = Date.now();
+					hasUnsavedChanges = false;
+					showSaveSuccess();
+					invalidateStatsCache();
+					
+					// 💾 BACKUP LOCAL
+					try {
+						const cacheKey = `planning_cache_${currentUser.uid}`;
+						localStorage.setItem(cacheKey, JSON.stringify(userData));
+						localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+						console.log('💾 Backup local créé (setDoc avec merge)');
+					} catch (localError) {
+						console.warn('⚠️ Backup local impossible:', localError);
+					}
+				}
+			} 
+			catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
-                if (!saveTimedOut) {
-                    showSaveError();
-                }
+                clearTimeout(safetyTimeout);
+                
+                // Déclencher le retry via timeout
+                saveTimedOut = true;
             }
         } else {
-            if (!saveTimedOut) {
-                showSaveError();
-            }
+            clearTimeout(safetyTimeout);
+            saveTimedOut = true;
         }
     }
 }
@@ -14335,19 +14353,34 @@ function debouncedSave() {
 function getItemKey(sId, fc) { return sId + '-' + fc; }
 
 function getItemData(sId, fc) {
-    // 🛡️ Protection si pas de données
     if (!userData || !userData.items) {
-        return null;
+        console.error('❌ userData ou userData.items est undefined');
+        return null; // Toujours retourner null en cas d'erreur
     }
     
     const key = getItemKey(sId, fc);
-    if (!userData.items[key]) userData.items[key] = { tours: [null,null,null,null,null,null,null,null], tourDates: [null,null,null,null,null,null,null,null], tourDurations: [null,null,null,null,null,null,null,null], tourSupports: [null,null,null,null,null,null,null,null], resources: {}, lastRevision: null };
+    
+    if (!userData.items[key]) {
+        userData.items[key] = {
+            tours: [null, null, null, null, null, null, null, null],
+            tourDates: [null, null, null, null, null, null, null, null],
+            tourDurations: [null, null, null, null, null, null, null, null],
+            tourSupports: [null, null, null, null, null, null, null, null],
+            resources: {},
+            lastRevision: null
+        };
+    }
+    
     const d = userData.items[key];
-    if (d.tours && typeof d.tours[0] === 'boolean') d.tours = d.tours.map(t => t ? 3 : null);
+    // Migrations de format
+    if (d.tours && typeof d.tours[0] === 'boolean') {
+        d.tours = d.tours.map(t => t ? 3 : null);
+    }
     if (!d.tourDates) d.tourDates = [null,null,null,null,null,null,null,null];
     if (!d.tourDurations) d.tourDurations = [null,null,null,null,null,null,null,null];
     if (!d.tourSupports) d.tourSupports = [null,null,null,null,null,null,null,null];
     if (!d.resources) d.resources = {};
+    
     return d;
 }
 
@@ -14377,16 +14410,36 @@ function calculateStats() {
             }
             totalTours += tc;
             
-            if (d.tourDurations) {
-                d.tourDurations.forEach(dur => {
-                    if (dur) {
-                        const parts = dur.split(':');
-                        const hours = parseInt(parts[0]) || 0;
-                        const minutes = parseInt(parts[1]) || 0;
-                        totalMinutes += hours * 60 + minutes;
-                    }
-                });
-            }
+				if (d.tourDurations && Array.isArray(d.tourDurations)) {
+					d.tourDurations.forEach(dur => {
+						if (!dur) return;
+						
+						try {
+							if (typeof dur !== 'string') {
+								console.warn('⚠️ Format de durée invalide:', dur);
+								return;
+							}
+							
+							const parts = dur.split(':');
+							if (parts.length !== 2) {
+								console.warn('⚠️ Format de durée incorrect:', dur);
+								return;
+							}
+							
+							const hours = parseInt(parts[0], 10) || 0;
+							const minutes = parseInt(parts[1], 10) || 0;
+							
+							if (hours < 0 || minutes < 0 || minutes >= 60) {
+								console.warn('⚠️ Valeurs de temps invalides:', dur);
+								return;
+							}
+							
+							totalMinutes += hours * 60 + minutes;
+						} catch (error) {
+							console.error('❌ Erreur parsing durée:', error, dur);
+						}
+					});
+				}
         });
     });
     
@@ -16300,18 +16353,26 @@ const PlanningModule = (function() {
     
 // Sauvegarder
 function saveData() {
-    // 🔴 BLOQUER SI HORS LIGNE
     if (isOfflineMode) {
         console.warn('⚠️ Sauvegarde planning bloquée : mode hors ligne');
         return;
     }
     
-    // Sauvegarder dans userData pour Firebase UNIQUEMENT
+    // Validation des données avant sauvegarde
+    if (!planningData || typeof planningData !== 'object') {
+        console.error('❌ planningData invalide, sauvegarde annulée');
+        return;
+    }
+    
+    if (!Array.isArray(checklistData)) {
+        console.error('❌ checklistData invalide, sauvegarde annulée');
+        return;
+    }
+    
     if (typeof userData !== 'undefined' && userData) {
         userData.planningData = planningData;
         userData.checklistData = checklistData;
         
-        // Déclencher la sauvegarde Firebase
         if (typeof debouncedSave === 'function') {
             debouncedSave();
         }
