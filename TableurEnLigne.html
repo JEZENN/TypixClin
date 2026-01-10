@@ -13418,9 +13418,10 @@ async function saveUserData(retryCount = 0) {
     const MAX_RETRIES = 3;
     const RETRY_DELAY = [2000, 4000, 8000]; // 2s, 4s, 8s
     
-    // Variable pour tracker l'état
+    // ✅ CORRECTION : Variable pour tracker l'état (avec flag d'annulation)
     let saveCompleted = false;
     let saveTimedOut = false;
+    let saveCancelled = false; // 🆕 Flag pour gérer l'annulation proprement
     
     // Afficher l'indicateur de sauvegarde
     if (saveIndicatorHeader) {
@@ -13438,7 +13439,7 @@ async function saveUserData(retryCount = 0) {
     
     // ⚠️ TIMEOUT DE SÉCURITÉ - 10 secondes
     const safetyTimeout = setTimeout(() => {
-        if (!saveCompleted) {
+        if (!saveCompleted && !saveCancelled) { // ✅ CORRECTION : Check aussi saveCancelled
             saveTimedOut = true;
             console.warn(`⏱️ Timeout tentative ${retryCount + 1}/${MAX_RETRIES}`);
             
@@ -13476,7 +13477,6 @@ async function saveUserData(retryCount = 0) {
                         saveIndicatorHeader.title = 'Sauvegardé en local uniquement (connexion instable)';
                         saveIndicatorHeader.style.color = '#f59e0b'; // Orange
                         
-                        // Garder visible 10 secondes
                         setTimeout(() => {
                             if (saveIndicatorHeader) {
                                 saveIndicatorHeader.classList.remove('visible');
@@ -13495,7 +13495,6 @@ async function saveUserData(retryCount = 0) {
                         saveIndicatorHeader.title = 'Échec de sauvegarde - Vérifiez votre connexion';
                         saveIndicatorHeader.style.color = 'var(--danger)';
                         
-                        // Garder visible jusqu'à intervention utilisateur
                         setTimeout(() => {
                             if (saveIndicatorHeader) {
                                 saveIndicatorHeader.classList.remove('visible');
@@ -13508,10 +13507,16 @@ async function saveUserData(retryCount = 0) {
         }
     }, 10000);
     
+    // ✅ CORRECTION : Fonction pour nettoyer proprement
+    const cleanupTimeout = () => {
+        saveCancelled = true;
+        clearTimeout(safetyTimeout);
+    };
+    
     // Fonction pour afficher le succès
     const showSaveSuccess = () => {
         saveCompleted = true;
-        clearTimeout(safetyTimeout);
+        cleanupTimeout(); // ✅ CORRECTION : Utiliser la fonction de nettoyage
         
         if (saveIndicatorHeader) {
             saveIndicatorHeader.classList.remove('pending', 'saving');
@@ -13532,23 +13537,33 @@ async function saveUserData(retryCount = 0) {
         }
     };
     
+    // ✅ CORRECTION : Créer un snapshot immuable des données AVANT la sauvegarde
+    const timestamp = new Date().toISOString();
+    const dataToSave = {
+        items: userData.items,
+        trophies: userData.trophies,
+        planningData: userData.planningData || {},
+        checklistData: userData.checklistData || [],
+        selectedResources: userData.selectedResources || [],
+        lastUpdated: timestamp // ✅ Utiliser le timestamp local, pas userData.lastUpdated
+    };
+    
     try {
-        if (saveTimedOut) return;
+        // ✅ CORRECTION : Check unique au début du try
+        if (saveTimedOut || saveCancelled) {
+            cleanupTimeout();
+            return;
+        }
         
-        userData.lastUpdated = new Date().toISOString();
+        // ✅ CORRECTION : Ne PAS modifier userData.lastUpdated ici
+        // userData.lastUpdated = new Date().toISOString(); // ❌ SUPPRIMÉ
         
-        // SAUVEGARDE FIREBASE
-        await updateDoc(doc(db, 'planningRevision', currentUser.uid), {
-            items: userData.items,
-            trophies: userData.trophies,
-            planningData: userData.planningData || {},
-            checklistData: userData.checklistData || [],
-            selectedResources: userData.selectedResources || [],
-            lastUpdated: userData.lastUpdated
-        });
+        // SAUVEGARDE FIREBASE avec les données snapshottées
+        await updateDoc(doc(db, 'planningRevision', currentUser.uid), dataToSave);
         
-        // ✅ SUCCÈS
-        if (!saveTimedOut) {
+        // ✅ SUCCÈS : Mutation SEULEMENT après confirmation de succès
+        if (!saveTimedOut && !saveCancelled) {
+            userData.lastUpdated = timestamp; // ✅ Maintenant on peut modifier
             lastSaveTime = Date.now();
             hasUnsavedChanges = false;
             showSaveSuccess();
@@ -13559,56 +13574,71 @@ async function saveUserData(retryCount = 0) {
                 const cacheKey = `planning_cache_${currentUser.uid}`;
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
-                
             } catch (localError) {
                 console.warn('⚠️ Backup local impossible:', localError);
             }
+        } else {
+            // Si timeout/annulation pendant l'await, nettoyer
+            cleanupTimeout();
         }
         
     } catch (e) {
         console.error('❌ Erreur sauvegarde:', e);
         
-        if (saveTimedOut) return;
+        // ✅ CORRECTION : Nettoyer le timeout immédiatement
+        if (saveTimedOut || saveCancelled) {
+            cleanupTimeout();
+            return;
+        }
         
         // FALLBACK : setDoc si document not-found
         if (e.code === 'not-found') {
             if (Object.keys(userData.items || {}).length === 0) {
                 console.warn('⚠️ setDoc bloqué : données vides');
-                clearTimeout(safetyTimeout);
+                cleanupTimeout(); // ✅ CORRECTION
                 return;
             }
             
-			try {
-				// 🛡️ BUG #13 CORRIGÉ : Utiliser merge au lieu d'écraser
-				await setDoc(doc(db, 'planningRevision', currentUser.uid), userData, { merge: true });
-				
-				if (!saveTimedOut) {
-					lastSaveTime = Date.now();
-					hasUnsavedChanges = false;
-					showSaveSuccess();
-					invalidateStatsCache();
-					
-					// 💾 BACKUP LOCAL
-					try {
-						const cacheKey = `planning_cache_${currentUser.uid}`;
-						localStorage.setItem(cacheKey, JSON.stringify(userData));
-						localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
-						console.log('💾 Backup local créé (setDoc avec merge)');
-					} catch (localError) {
-						console.warn('⚠️ Backup local impossible:', localError);
-					}
-				}
-			} 
-			catch (e2) {
-                console.error('❌ Erreur setDoc:', e2);
-                clearTimeout(safetyTimeout);
+            try {
+                // 🛡️ Utiliser merge au lieu d'écraser
+                await setDoc(doc(db, 'planningRevision', currentUser.uid), dataToSave, { merge: true });
                 
-                // Déclencher le retry via timeout
-                saveTimedOut = true;
+                // ✅ SUCCÈS setDoc
+                if (!saveTimedOut && !saveCancelled) {
+                    userData.lastUpdated = timestamp; // ✅ Mutation après succès
+                    lastSaveTime = Date.now();
+                    hasUnsavedChanges = false;
+                    showSaveSuccess();
+                    invalidateStatsCache();
+                    
+                    // 💾 BACKUP LOCAL
+                    try {
+                        const cacheKey = `planning_cache_${currentUser.uid}`;
+                        localStorage.setItem(cacheKey, JSON.stringify(userData));
+                        localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                        console.log('💾 Backup local créé (setDoc avec merge)');
+                    } catch (localError) {
+                        console.warn('⚠️ Backup local impossible:', localError);
+                    }
+                } else {
+                    cleanupTimeout();
+                }
+            } 
+            catch (e2) {
+                console.error('❌ Erreur setDoc:', e2);
+                cleanupTimeout(); // ✅ CORRECTION
+                
+                // Déclencher le retry via timeout (si pas déjà timeout)
+                if (!saveTimedOut) {
+                    saveTimedOut = true;
+                }
             }
         } else {
-            clearTimeout(safetyTimeout);
-            saveTimedOut = true;
+            // ✅ CORRECTION : Nettoyer dans tous les cas d'erreur
+            cleanupTimeout();
+            if (!saveTimedOut) {
+                saveTimedOut = true;
+            }
         }
     }
 }
