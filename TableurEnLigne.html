@@ -1115,8 +1115,9 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .modal.active { display: flex; }
 .modal-content { background: #ffffff; border-radius: var(--border-radius-xl); padding: 2rem; max-width: 400px; width: 90%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; }
 .modal-close { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--gray-500); transition: all var(--transition-fast); }
-.modal-close:hover { background: var(--danger-light); color: var(--danger); transform: rotate(90deg) translateZ(0); }
+.modal-close:hover { background: var(--danger-light); color: var(--danger);}
 .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center; color: var(--gray-900); }
+
 
 .modal-section { margin-bottom: 1.25rem; }
 .modal-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -10080,6 +10081,11 @@ function handleOffline() {
         saveTimeout = null;
     }
     
+    // 🆕 CRITIQUE : Réinitialiser le flag de modifications non sauvegardées
+    if (typeof hasUnsavedChanges !== 'undefined') {
+        hasUnsavedChanges = false; // ← AJOUTE CETTE LIGNE
+    }
+    
     if (typeof saveIndicatorHeader !== 'undefined' && saveIndicatorHeader) {
         saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
     }
@@ -10091,7 +10097,10 @@ function handleOnline() {
     hideOfflineNotification();
     enableOfflineActions();
     
-    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && typeof currentUser !== 'undefined' && currentUser) {
+    // 🆕 CRITIQUE : Ne relancer la sauvegarde QUE si Firebase a fini de charger
+    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && 
+        typeof currentUser !== 'undefined' && currentUser &&
+        typeof firebaseDataLoaded !== 'undefined' && firebaseDataLoaded) { // ← AJOUTE CE CHECK
         if (typeof debouncedSave === 'function') {
             debouncedSave();
         }
@@ -13492,7 +13501,7 @@ if (!firebaseDataLoaded) {
         
         if (saveIndicatorHeader) {
             saveIndicatorHeader.classList.remove('pending', 'saving');
-            saveIndicatorHeader.classList.add('saved');
+            saveIndicatorHeader.classList.add('visible', 'saved');
             saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
             saveIndicatorHeader.title = retryCount > 0 
                 ? `Sauvegardé après ${retryCount + 1} tentative(s)` 
@@ -13927,7 +13936,7 @@ async function updateBackupModalContent() {
                 weekday: 'long', 
                 day: 'numeric', 
                 month: 'long',
-                year: 'numeric'
+                
             });
             const timeStr = date.toLocaleTimeString('fr-FR', { 
                 hour: '2-digit', 
@@ -13981,7 +13990,7 @@ if (!canPerformAction('save')) return;
         weekday: 'long', 
         day: 'numeric', 
         month: 'long',
-        year: 'numeric'
+        
     });
     
     const confirmed = await showCustomConfirm({
@@ -14030,7 +14039,6 @@ if (!canPerformAction('save')) return;
         weekday: 'long', 
         day: 'numeric', 
         month: 'long',
-        year: 'numeric'
     });
     
     const confirmed = await showCustomConfirm({
