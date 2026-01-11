@@ -5976,9 +5976,9 @@ input[type="date"].modal-input {
 /* Toast notification */
 .toast-notification {
     position: fixed;
-      bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    bottom: 20px;
+    right: 20px;
+    transform: translateX(400px);
     background: linear-gradient(135deg, #059669, #10b981);
     color: white;
     padding: 0.75rem 1.5rem;
@@ -5992,11 +5992,23 @@ input[type="date"].modal-input {
     transition: all 0.3s ease;
     font-size: 0.9rem;
     font-weight: 500;
+    max-width: 400px;
 }
 
 .toast-notification.show {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(0);
     opacity: 1;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .toast-notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
+        font-size: 0.85rem;
+        padding: 0.6rem 1rem;
+    }
 }
 
 .toast-notification.toast-warning {
@@ -8311,6 +8323,21 @@ input[type="date"].modal-input {
     background: linear-gradient(135deg, #991b1b, #7f1d1d);
     box-shadow: 0 4px 12px rgba(127, 29, 29, 0.6);
 }
+
+/* Banner d'erreur de connexion responsive */
+@media (max-width: 768px) {
+    #connection-error-banner {
+        top: 70px !important;
+        left: 10px !important;
+        right: 10px !important;
+        transform: none !important;
+        max-width: calc(100% - 20px) !important;
+        font-size: 0.85rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+}
+
+
 </style>
 </head>
 
@@ -10086,8 +10113,7 @@ function handleOffline() {
         
         // Afficher notification d'avertissement
         if (typeof showToastNotification === 'function') {
-            showToastNotification('Modifications non sauvegardées - Connexion perdue', 'warning', true);
-        }
+showToastNotification('⚠️ Connexion perdue - Modifications NON sauvegardées. Ne fermez PAS cet onglet/fenêtre et ne changez pas d\'onglet ! Reconnectez-vous à Internet avant de quitter.', 'warning', true);        }
     }
     
     isOfflineMode = true;
@@ -10109,6 +10135,16 @@ function handleOffline() {
 			saveIndicatorHeader.style.color = ''; // Nettoyer la couleur orange
 			saveIndicatorHeader.innerHTML = ''; // Vider l'icône
 		}
+		
+		    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.disabled = true;
+        logoutBtn.style.opacity = '0.5';
+        logoutBtn.style.cursor = 'not-allowed';
+        logoutBtn.title = 'Impossible de se déconnecter en mode hors ligne';
+    }
+	
+	
 }
 
 async function handleOnline() {
@@ -10116,25 +10152,33 @@ async function handleOnline() {
     isOfflineMode = false;
     hideOfflineNotification();
     enableOfflineActions();
-    
-    // Supprimer le toast persistant de modifications non sauvegardées
-    const persistentToast = document.getElementById('persistent-warning-toast');
-    if (persistentToast) {
-        persistentToast.classList.remove('show');
-        setTimeout(function() { persistentToast.remove(); }, 300);
+	
+	// Supprimer le banner d'erreur de connexion s'il existe
+    const connectionErrorBanner = document.getElementById('connection-error-banner');
+    if (connectionErrorBanner) {
+        connectionErrorBanner.style.opacity = '0';
+        connectionErrorBanner.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => connectionErrorBanner.remove(), 300);
     }
     
-    // 🚨 CRITIQUE : Si on avait des modifications perdues, les sauvegarder IMMÉDIATEMENT
+    // Vérifier s'il y avait des modifications perdues
     if (hadUnsavedChangesBeforeOffline && 
         typeof currentUser !== 'undefined' && currentUser &&
         typeof firebaseDataLoaded !== 'undefined' && firebaseDataLoaded) {
         
-        console.log('🔄 Retour en ligne : sauvegarde immédiate des modifications perdues...');
+        
         
         // Réactiver le flag pour bloquer la fermeture de page
         hasUnsavedChanges = true;
         
-        // Forcer une sauvegarde IMMÉDIATE (pas de debounce)
+        // Supprimer le toast orange persistant AVANT la sauvegarde
+        const persistentToast = document.getElementById('persistent-warning-toast');
+        if (persistentToast) {
+            persistentToast.classList.remove('show');
+            setTimeout(function() { persistentToast.remove(); }, 300);
+        }
+        
+        // Forcer une sauvegarde IMMÉDIATE
         if (typeof forceSaveAsync === 'function') {
             await forceSaveAsync();
         }
@@ -10142,8 +10186,31 @@ async function handleOnline() {
         // Réinitialiser le flag
         hadUnsavedChangesBeforeOffline = false;
         
-        console.log('✅ Modifications sauvegardées avec succès');
+        
+        
+        // AFFICHER NOTIFICATION VERTE DE SUCCÈS
+        if (typeof showToastNotification === 'function') {
+            showToastNotification('Retour en ligne - Vous pouvez recommencer à travailler sur le tableur', 'success', false, 4000);
+        }
+    } else {
+        // Pas de modifications perdues, juste supprimer le toast orange s'il existe
+        const persistentToast = document.getElementById('persistent-warning-toast');
+        if (persistentToast) {
+            persistentToast.classList.remove('show');
+            setTimeout(function() { persistentToast.remove(); }, 300);
+        }
     }
+	
+	// Réactiver le bouton de déconnexion
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.disabled = false;
+        logoutBtn.style.opacity = '';
+        logoutBtn.style.cursor = '';
+        logoutBtn.title = '';
+    }
+	
+	
 }
 
 function showOfflineNotification() {
@@ -12197,6 +12264,7 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
     });
 });
 
+
 function getInitials(name) {
     if (!name) return 'U';
     const names = name.trim().split(' ');
@@ -12328,32 +12396,43 @@ onAuthStateChanged(auth, updateUserUI);
 
 // Afficher erreur de vérification premium (sans bloquer)
 function showPremiumVerificationError() {
+    // Supprimer le banner existant s'il y en a déjà un
+    const existingBanner = document.getElementById('connection-error-banner');
+    if (existingBanner) existingBanner.remove();
+    
     const banner = document.createElement('div');
+    banner.id = 'connection-error-banner';
     banner.style.cssText = `
         position: fixed;
         top: 80px;
         left: 50%;
         transform: translateX(-50%);
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        color: #92400e;
-        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+        color: white;
+        padding: 0.75rem 1.5rem;
         border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         z-index: 10000;
         max-width: 500px;
         text-align: center;
-        border: 2px solid #fbbf24;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
     `;
-    banner.innerHTML = `
-        <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
-        <strong>Impossible de vous connecter correctement.</strong>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
-            Vos données sont accessibles en lecture. Vérifiez votre connexion.
-        </p>
+banner.innerHTML = `
+        <i class="fas fa-exclamation-triangle" style="font-size: 1.1rem;"></i>
+        <div style="text-align: center;">
+            <strong style="display: block; margin-bottom: 0.25rem;">Impossible de vous connecter correctement.</strong>
+            <span style="font-size: 0.85rem; opacity: 0.95;">Vos données peuvent être manquantes. Vérifiez votre connexion réseau et réessayez.</span>
+        </div>
     `;
     document.body.appendChild(banner);
     
-    setTimeout(() => banner.remove(), 8000);
+    // NE PLUS supprimer automatiquement après 8 secondes
+    // Le banner restera jusqu'au retour de la connexion
 }
 
 // Afficher message premium requis (sans bloquer l'accès aux données)
@@ -12394,7 +12473,9 @@ function showPremiumRequiredMessage() {
 userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => {
-    try {
+    
+	if (logoutBtn.disabled) return;
+	try {
 		if (currentUser) {           
         }
 		
@@ -12595,7 +12676,6 @@ async function forceSaveAsync() {
     }
 }
 
-// Détecter changement d'onglet/fenêtre
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         // Si modifications en attente, afficher la notification SEULEMENT si changement d'onglet
@@ -12614,19 +12694,29 @@ document.addEventListener('visibilitychange', () => {
 
 // MESSAGE DE CONFIRMATION si modifications non sauvegardées
 window.addEventListener('beforeunload', (e) => {
-    // Vérifier d'abord si on est en mode hors ligne
-    if (typeof isOfflineMode !== 'undefined' && isOfflineMode) {
+
+    
+    // Vérifier si le toast orange persistant existe
+    const persistentToast = document.getElementById('persistent-warning-toast');
+    
+    
+    if (persistentToast) {
+        
         e.preventDefault();
-        e.returnValue = 'Vous êtes hors ligne. Vos modifications récentes ne sont PAS sauvegardées. Reconnectez-vous avant de quitter.';
-        return 'Vous êtes hors ligne. Vos modifications récentes ne sont PAS sauvegardées. Reconnectez-vous avant de quitter.';
+        e.returnValue = 'ATTENTION : Vous êtes hors ligne. Vos modifications ne sont PAS sauvegardées et seront PERDUES. Reconnectez-vous avant de quitter.';
+        return 'ATTENTION : Vous êtes hors ligne. Vos modifications ne sont PAS sauvegardées et seront PERDUES. Reconnectez-vous avant de quitter.';
     }
     
+    
+    
     if (hasUnsavedChanges && currentUser && !canQuit) {
+        
         // Forcer la sauvegarde immédiatement
         forceSave();
         
         // Afficher le message Windows SEULEMENT si activé dans la config
         if (ENABLE_WINDOWS_WARNING) {
+            
             e.preventDefault();
             e.returnValue = 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
             return 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
@@ -12635,6 +12725,8 @@ window.addEventListener('beforeunload', (e) => {
         // Sinon : sauvegarde silencieuse sans bloquer
         // La notification personnalisée s'affiche seulement au changement d'onglet (visibilitychange)
     }
+    
+    
 });
 
 
@@ -13523,18 +13615,9 @@ if (!firebaseDataLoaded) {
                     console.log('💾 Sauvegarde locale de secours créée');
                     
                     if (saveIndicatorHeader) {
-                        saveIndicatorHeader.classList.remove('saving', 'pending');
-                        saveIndicatorHeader.classList.add('visible');
-                        saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-                        saveIndicatorHeader.title = 'Sauvegardé en local uniquement (connexion instable)';
-                        saveIndicatorHeader.style.color = '#f59e0b'; // Orange
-                        
-                        setTimeout(() => {
-                            if (saveIndicatorHeader) {
-                                saveIndicatorHeader.classList.remove('visible');
-                                saveIndicatorHeader.style.color = '';
-                            }
-                        }, 10000);
+                        // NE PLUS afficher d'indicateur orange pour la sauvegarde locale
+                        saveIndicatorHeader.classList.remove('saving', 'pending', 'visible');
+                        saveIndicatorHeader.style.color = '';
                     }
                     
                 } catch (localError) {
@@ -17948,7 +18031,7 @@ window.sendToChecklist = function(btn, specialtyId, fc, itemNum, itemName) {
     }
 };
 
-window.showToastNotification = function(message, type, persist) {
+window.showToastNotification = function(message, type, persist, duration) {
     // Supprimer les toasts existants (sauf si on veut garder le toast persistant)
     document.querySelectorAll('.toast-notification').forEach(function(t) { 
         if (!persist || !t.classList.contains('persist')) {
@@ -17970,10 +18053,11 @@ window.showToastNotification = function(message, type, persist) {
     
     // Ne faire disparaître que si ce n'est PAS persistant
     if (!persist) {
+        var displayDuration = duration || 2500; // Durée par défaut : 2.5 secondes
         setTimeout(function() {
             toast.classList.remove('show');
             setTimeout(function() { toast.remove(); }, 300);
-        }, 2500);
+        }, displayDuration);
     }
 };
 
