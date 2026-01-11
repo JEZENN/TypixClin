@@ -5976,7 +5976,7 @@ input[type="date"].modal-input {
 /* Toast notification */
 .toast-notification {
     position: fixed;
-    bottom: 6rem;
+      bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
     background: linear-gradient(135deg, #059669, #10b981);
@@ -10072,6 +10072,24 @@ async function checkOfflineStatus() {
 
 function handleOffline() {
     if (isOfflineMode) return;
+    
+    // Vérifier s'il y a des modifications non sauvegardées
+    const hadUnsavedChanges = typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges;
+    
+    if (hadUnsavedChanges && typeof saveTimeout !== 'undefined' && saveTimeout) {
+        // Annuler le debounce
+        clearTimeout(saveTimeout);
+        saveTimeout = null;
+        
+        // MÉMORISER qu'on avait des modifications non sauvegardées
+        hadUnsavedChangesBeforeOffline = true;
+        
+        // Afficher notification d'avertissement
+        if (typeof showToastNotification === 'function') {
+            showToastNotification('Modifications non sauvegardées - Connexion perdue', 'warning', true);
+        }
+    }
+    
     isOfflineMode = true;
     showOfflineNotification();
     disableOfflineActions();
@@ -10083,27 +10101,48 @@ function handleOffline() {
     
     // 🆕 CRITIQUE : Réinitialiser le flag de modifications non sauvegardées
     if (typeof hasUnsavedChanges !== 'undefined') {
-        hasUnsavedChanges = false; // ← AJOUTE CETTE LIGNE
+        hasUnsavedChanges = false;
     }
     
-    if (typeof saveIndicatorHeader !== 'undefined' && saveIndicatorHeader) {
-        saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
-    }
+		if (typeof saveIndicatorHeader !== 'undefined' && saveIndicatorHeader) {
+			saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
+			saveIndicatorHeader.style.color = ''; // Nettoyer la couleur orange
+			saveIndicatorHeader.innerHTML = ''; // Vider l'icône
+		}
 }
 
-function handleOnline() {
+async function handleOnline() {
     if (!isOfflineMode) return;
     isOfflineMode = false;
     hideOfflineNotification();
     enableOfflineActions();
     
-    // 🆕 CRITIQUE : Ne relancer la sauvegarde QUE si Firebase a fini de charger
-    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && 
+    // Supprimer le toast persistant de modifications non sauvegardées
+    const persistentToast = document.getElementById('persistent-warning-toast');
+    if (persistentToast) {
+        persistentToast.classList.remove('show');
+        setTimeout(function() { persistentToast.remove(); }, 300);
+    }
+    
+    // 🚨 CRITIQUE : Si on avait des modifications perdues, les sauvegarder IMMÉDIATEMENT
+    if (hadUnsavedChangesBeforeOffline && 
         typeof currentUser !== 'undefined' && currentUser &&
-        typeof firebaseDataLoaded !== 'undefined' && firebaseDataLoaded) { // ← AJOUTE CE CHECK
-        if (typeof debouncedSave === 'function') {
-            debouncedSave();
+        typeof firebaseDataLoaded !== 'undefined' && firebaseDataLoaded) {
+        
+        console.log('🔄 Retour en ligne : sauvegarde immédiate des modifications perdues...');
+        
+        // Réactiver le flag pour bloquer la fermeture de page
+        hasUnsavedChanges = true;
+        
+        // Forcer une sauvegarde IMMÉDIATE (pas de debounce)
+        if (typeof forceSaveAsync === 'function') {
+            await forceSaveAsync();
         }
+        
+        // Réinitialiser le flag
+        hadUnsavedChangesBeforeOffline = false;
+        
+        console.log('✅ Modifications sauvegardées avec succès');
     }
 }
 
@@ -12575,6 +12614,13 @@ document.addEventListener('visibilitychange', () => {
 
 // MESSAGE DE CONFIRMATION si modifications non sauvegardées
 window.addEventListener('beforeunload', (e) => {
+    // Vérifier d'abord si on est en mode hors ligne
+    if (typeof isOfflineMode !== 'undefined' && isOfflineMode) {
+        e.preventDefault();
+        e.returnValue = 'Vous êtes hors ligne. Vos modifications récentes ne sont PAS sauvegardées. Reconnectez-vous avant de quitter.';
+        return 'Vous êtes hors ligne. Vos modifications récentes ne sont PAS sauvegardées. Reconnectez-vous avant de quitter.';
+    }
+    
     if (hasUnsavedChanges && currentUser && !canQuit) {
         // Forcer la sauvegarde immédiatement
         forceSave();
@@ -14279,6 +14325,7 @@ document.getElementById('backup-settings-btn')?.addEventListener('click', openBa
 // Variables pour le système de sauvegarde optimisé
 let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
+let hadUnsavedChangesBeforeOffline = false; // Mémoriser les modifications perdues en mode hors ligne
 const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
 
 // OPTION : Afficher le message d'avertissement à la fermeture
@@ -15021,9 +15068,29 @@ btn.addEventListener('click', function(e) {
     // Fermer tous les autres dropdowns
     document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
     container.classList.toggle('open');
-    if (container.classList.contains('open')) {
-        searchInput.focus();
-    }
+			if (container.classList.contains('open')) {
+				searchInput.focus();
+				
+				// Capturer les touches du clavier
+				const keyHandler = (e) => {
+					// Ignorer les touches spéciales
+					if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') return;
+					
+					// Si l'utilisateur tape et que le focus n'est pas sur la recherche
+					if (document.activeElement !== searchInput && e.key.length === 1) {
+						searchInput.focus();
+					}
+				};
+				
+				document.addEventListener('keydown', keyHandler);
+				container._keyHandler = keyHandler;
+			} else {
+				// Retirer l'écouteur quand on ferme
+				if (container._keyHandler) {
+					document.removeEventListener('keydown', container._keyHandler);
+					delete container._keyHandler;
+				}
+			}
 });
     
     // Recherche
@@ -15048,19 +15115,35 @@ clearBtn.addEventListener('click', function(e) {
 // Bouton fermer (mobile)
 const closeBtn = document.getElementById('specialty-close-btn');
 if (closeBtn) {
-    closeBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        container.classList.remove('open');
-    });
+	closeBtn.addEventListener('click', function(e) {
+		e.stopPropagation();
+		container.classList.remove('open');
+		searchInput.value = ''; // Réinitialiser la recherche
+		renderSpecialtyOptions(''); // Réafficher toutes les options
+		
+		// Retirer l'écouteur de touches
+		if (container._keyHandler) {
+			document.removeEventListener('keydown', container._keyHandler);
+			delete container._keyHandler;
+		}
+	});
 }
 
     
     // Fermer en cliquant ailleurs
-    document.addEventListener('click', function(e) {
-        if (!container.contains(e.target)) {
-            container.classList.remove('open');
-        }
-    });
+		document.addEventListener('click', function(e) {
+			if (!container.contains(e.target)) {
+				container.classList.remove('open');
+				searchInput.value = ''; // Réinitialiser la recherche
+				renderSpecialtyOptions(''); // Réafficher toutes les options
+				
+				// Retirer l'écouteur de touches
+				if (container._keyHandler) {
+					document.removeEventListener('keydown', container._keyHandler);
+					delete container._keyHandler;
+				}
+			}
+		});
 }
 
 function renderSpecialtyOptions(searchTerm = '') {
@@ -17865,20 +17948,33 @@ window.sendToChecklist = function(btn, specialtyId, fc, itemNum, itemName) {
     }
 };
 
-window.showToastNotification = function(message, type) {
-    // Supprimer les toasts existants
-    document.querySelectorAll('.toast-notification').forEach(function(t) { t.remove(); });
+window.showToastNotification = function(message, type, persist) {
+    // Supprimer les toasts existants (sauf si on veut garder le toast persistant)
+    document.querySelectorAll('.toast-notification').forEach(function(t) { 
+        if (!persist || !t.classList.contains('persist')) {
+            t.remove(); 
+        }
+    });
     
+    var cleanMessage = message.replace(/⚠️|✅|❌|⏱️|🚨/g, '').trim();
     var toast = document.createElement('div');
     toast.className = 'toast-notification' + (type === 'warning' ? ' toast-warning' : '');
-    toast.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle') + '"></i><span>' + message + '</span>';
+    if (persist) {
+        toast.classList.add('persist');
+        toast.id = 'persistent-warning-toast'; // Ajouter un ID pour le retrouver
+    }
+    toast.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle') + '"></i><span>' + cleanMessage + '</span>';
     document.body.appendChild(toast);
     
     setTimeout(function() { toast.classList.add('show'); }, 10);
-    setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { toast.remove(); }, 300);
-    }, 2500);
+    
+    // Ne faire disparaître que si ce n'est PAS persistant
+    if (!persist) {
+        setTimeout(function() {
+            toast.classList.remove('show');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 2500);
+    }
 };
 
 window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
@@ -19202,6 +19298,18 @@ window.addEventListener('beforeunload', function() {
     stopTimer();
 });
 
+// Scroll en haut à l'ouverture/refresh de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Attendre un court instant pour que tout soit chargé
+    setTimeout(function() {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 100);
+});
+
+// Aussi au chargement complet de la page
+window.addEventListener('load', function() {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+});
 
 
 </script>
