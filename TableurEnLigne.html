@@ -12058,6 +12058,8 @@ const MAX_DAILY_BACKUPS = 3; // Garder 7 jours de backups quotidiens
 
 let currentUser = null;
 let userData = null;
+let firebaseDataLoaded = false;  
+let firebaseLoadingError = false; 
 let cachedStats = null;
 let cachedStatsTime = null;
 const STATS_CACHE_DURATION = 30000;
@@ -12945,66 +12947,7 @@ function countDataContent(data) {
     return counts;
 }
 
-function isDataSafeToSave(newData, userId) {
-    // Compter TOUT le contenu des nouvelles données
-    const newContent = countDataContent(newData);
-    
-    // 1. Récupérer les données de référence (cache ou backup)
-    let referenceContent = null;
-    
-    // Vérifier le cache principal
-    
-    // Si pas de cache, vérifier les backups
-    if (!referenceContent || referenceContent.total === 0) {
-    }
-    
-    // 2. Si aucune donnée de référence, c'est un nouveau compte → OK
-    if (!referenceContent || referenceContent.total === 0) {
-        return { safe: true, reason: 'Nouveau compte ou données déjà vides', content: newContent };
-    }
-    
-    // 3. Si les nouvelles données sont COMPLÈTEMENT vides → BLOQUER
-    if (newContent.total === 0) {
-        return { 
-            safe: false, 
-            reason: `BLOQUÉ : Tentative d'écraser ${referenceContent.items} items, ${referenceContent.planningDays || 0} jours planning, ${referenceContent.checklistItems || 0} checklist, ${referenceContent.trophies || 0} trophées`,
-            previousContent: referenceContent
-        };
-    }
-    
-    // 4. NOUVELLE PROTECTION : Détecter une perte massive (> 50% des items)
-    if (referenceContent.items > 10) { // Seulement si on avait assez de données
-        const itemsLossPercent = ((referenceContent.items - newContent.items) / referenceContent.items) * 100;
-        
-        if (itemsLossPercent > 50) {
-            return { 
-                safe: false, 
-                reason: `BLOQUÉ : Perte massive détectée ! ${referenceContent.items} → ${newContent.items} items (${itemsLossPercent.toFixed(0)}% de perte)`,
-                previousContent: referenceContent,
-                newContent: newContent,
-                lossPercent: itemsLossPercent
-            };
-        }
-    }
-    
-    // 5. NOUVELLE PROTECTION : Détecter une perte massive du total (> 50%)
-    if (referenceContent.total > 20) {
-        const totalLossPercent = ((referenceContent.total - newContent.total) / referenceContent.total) * 100;
-        
-        if (totalLossPercent > 50) {
-            return { 
-                safe: false, 
-                reason: `BLOQUÉ : Perte massive de données ! ${referenceContent.total} → ${newContent.total} éléments (${totalLossPercent.toFixed(0)}% de perte)`,
-                previousContent: referenceContent,
-                newContent: newContent,
-                lossPercent: totalLossPercent
-            };
-        }
-    }
-    
-    // Tout est OK
-    return { safe: true, reason: 'Données valides', content: newContent, previousContent: referenceContent };
-}
+
 
 function initializeUserData() { 
     // 🛡️ BUG #11 CORRIGÉ : Initialisation complète garantie
@@ -13027,8 +12970,16 @@ function initializeUserData() {
 
 function loadUserData(userId) {
     if (userId) {
-        // 🔥 Cache pour affichage rapide
-                                        const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
+        
+		    firebaseDataLoaded = false;
+    if (saveIndicatorHeader) {
+        saveIndicatorHeader.classList.add('visible');
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        saveIndicatorHeader.title = 'Chargement des données...';
+    }
+		
+		// 🔥 Cache pour affichage rapide
+          const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
         
         // ✅ Si cache valide : affichage immédiat (pas de lecture Firebase initiale !)
         if (false && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
@@ -13054,6 +13005,12 @@ function loadUserData(userId) {
 			unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
 				if (docSnap.exists()) {
 					const newData = docSnap.data();
+					
+					    firebaseDataLoaded = true;
+								if (saveIndicatorHeader) {
+									saveIndicatorHeader.classList.remove('visible');
+								}
+	
 					
 					// 🛡️ PROTECTION ANTI-CORRUPTION
 					// Vérifier si les nouvelles données sont suspectes (vides ou invalides)
@@ -13161,6 +13118,11 @@ function loadUserData(userId) {
                         }
                     } catch (e) {}
                 }
+				
+				    firebaseDataLoaded = true;
+						if (saveIndicatorHeader) {
+							saveIndicatorHeader.classList.remove('visible');
+						}
                 
                 
                 // Vraiment nouveau compte : initialiser avec données vides
@@ -13179,6 +13141,10 @@ function loadUserData(userId) {
         }, e => { 
             console.error('❌ Erreur Firebase:', e);
             
+			
+			firebaseLoadingError = true;
+			
+			
             // 🛡️ PROTECTION : En cas d'erreur, utiliser le cache au lieu d'initialiser des données vides
             if (existingCache) {
                 try {
@@ -13198,6 +13164,13 @@ function loadUserData(userId) {
             console.error('❌ Aucune donnée de secours disponible');
             userData = initializeUserData();
             renderAll(); 
+			
+			    firebaseDataLoaded = true;
+    if (saveIndicatorHeader) {
+        saveIndicatorHeader.classList.remove('visible');
+    }
+	
+	
         });
     } else {
         // Pas connecté : rediriger vers login (car app premium uniquement)
@@ -13369,28 +13342,27 @@ async function saveUserData(retryCount = 0) {
         return;
     }
     
-    // 🛡️ PROTECTION ANTI-ÉCRASEMENT
-    const safetyCheck = isDataSafeToSave(userData, currentUser.uid);
-    if (!safetyCheck.safe) {
-        console.error('🚫 SAUVEGARDE BLOQUÉE :', safetyCheck.reason);
-        
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.add('visible');
-            saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            saveIndicatorHeader.title = 'Protection : écrasement bloqué';
-            saveIndicatorHeader.style.color = 'var(--danger)';
-            
-            setTimeout(() => {
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('visible');
-                    saveIndicatorHeader.style.color = '';
-                }
-            }, 5000);
-        }
-        
-        return;
+// 🛡️ PROTECTION SIMPLE : Attendre que Firebase charge
+if (!firebaseDataLoaded) {
+    console.warn('⚠️ SAUVEGARDE BLOQUÉE : Firebase n\'a pas fini de charger');
+    
+    if (saveIndicatorHeader) {
+        saveIndicatorHeader.classList.add('visible');
+        saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+        saveIndicatorHeader.title = 'Chargement en cours... Patientez';
+        saveIndicatorHeader.style.color = 'var(--warning)';
     }
+    
+    // Réessayer dans 2 secondes
+    setTimeout(() => {
+        if (firebaseDataLoaded) {
+            saveUserData(retryCount);
+        }
+    }, 2000);
+    
+    return;
+}
     
     // 🔍 Vérifier la connexion avant d'essayer Firebase
     const connectionOK = await checkConnectionBeforeSave();
@@ -13645,7 +13617,7 @@ async function saveUserData(retryCount = 0) {
 
 
 window.countDataContent = countDataContent;
-window.isDataSafeToSave = isDataSafeToSave;
+
 window.restoreFromBackup = restoreFromBackup;
 
 // 🔧 Fonctions utilitaires pour debug/admin (accessibles depuis la console)
@@ -13740,81 +13712,6 @@ window.BackupUtils = {
 };
 
 
-// 🧪 Fonctions de TEST pour le système de protection
-window.TestProtection = {
-    // Test 1 : Simuler des données vides
-    testEmptyData: function() {
-        if (!currentUser) {
-            console.error('❌ Non connecté');
-            return;
-        }
-        
-        const fakeEmptyData = { items: {}, trophies: {}, planningData: {}, checklistData: [], selectedResources: [] };
-        const result = isDataSafeToSave(fakeEmptyData, currentUser.uid);
-        
-        return result;
-    },
-    
-    // Test 2 : Simuler une perte massive (90% des items)
-    testMassiveLoss: function() {
-        if (!currentUser || !userData) {
-            console.error('❌ Non connecté ou pas de données');
-            return;
-        }
-        
-        
-        // Créer une copie avec seulement 10% des items
-        const itemKeys = Object.keys(userData.items || {});
-        const keepCount = Math.max(1, Math.floor(itemKeys.length * 0.1));
-        const reducedItems = {};
-        itemKeys.slice(0, keepCount).forEach(key => {
-            reducedItems[key] = userData.items[key];
-        });
-        
-        const fakeReducedData = { 
-            ...userData, 
-            items: reducedItems 
-        };
-        
-       
-        const result = isDataSafeToSave(fakeReducedData, currentUser.uid);
-        
-        return result;
-    },
-    
-    status: function() {
-        if (!currentUser) {
-            console.error('❌ Non connecté');
-            return;
-        }
-        
-
-        
-        // Données actuelles
-        const currentContent = countDataContent(userData);
-
-        
-        // Cache
-        
-        // Backups rapides
-        
-        backups.forEach((b, i) => {
-            const date = new Date(b.timestamp).toLocaleString('fr-FR');
-           
-        });
-        
-        // Backups quotidiens
-        
-        dailyBackups.forEach((b) => {
-            const date = new Date(b.timestamp).toLocaleString('fr-FR');
-           
-        });
-        
-        
-        
-        return { currentContent, cachePresent: false, backupsCount: 0, dailyBackupsCount: 0 };
-    }
-};
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -18039,6 +17936,28 @@ function resetInactivityTimer() {
 resetInactivityTimer();
 
 
+// Timeout de sécurité : Si Firebase ne charge pas en 15 secondes
+setTimeout(() => {
+    if (!firebaseDataLoaded && !firebaseLoadingError && currentUser) {
+        console.warn('⏱️ TIMEOUT : Firebase très lent, utilisation du cache');
+        
+        const cacheKey = `planning_cache_${currentUser.uid}`;
+        const cachedData = localStorage.getItem(cacheKey);
+        
+        if (cachedData) {
+            try {
+                userData = JSON.parse(cachedData);
+                firebaseDataLoaded = true;
+                if (saveIndicatorHeader) {
+                    saveIndicatorHeader.classList.remove('visible');
+                }
+                renderAll();
+            } catch (e) {
+                console.error('Cache corrompu');
+            }
+        }
+    }
+}, 15000); // 15 secondes
 
 </script>
 
