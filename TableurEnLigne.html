@@ -10177,14 +10177,39 @@ function disableOfflineActions() {
             btn.style.cursor = 'not-allowed';
         });
     });
+    
+    // 🆕 BLOQUER LES INPUTS DU PLANNING
+    // 1. Désactiver les textarea de notes
+    document.querySelectorAll('.day-notes-input').forEach(textarea => {
+        textarea.dataset.offlineDisabled = 'true';
+        textarea.disabled = true;
+        textarea.style.opacity = '0.5';
+        textarea.style.cursor = 'not-allowed';
+        textarea.placeholder = 'Mode hors ligne';
+    });
+    
+    // 2. Bloquer les zones cliquables (statut et spécialité)
+    document.querySelectorAll('.day-header-zone, .day-specialty-zone').forEach(zone => {
+        zone.dataset.offlineDisabled = 'true';
+        zone.style.opacity = '0.6';
+        zone.style.cursor = 'not-allowed';
+        zone.style.pointerEvents = 'none';
+    });
 }
 
 function enableOfflineActions() {
     window.offlineActionsBlocked = false;
-    document.querySelectorAll('[data-offline-disabled="true"]').forEach(btn => {
-        delete btn.dataset.offlineDisabled;
-        btn.style.opacity = '';
-        btn.style.cursor = '';
+    document.querySelectorAll('[data-offline-disabled="true"]').forEach(element => {
+        delete element.dataset.offlineDisabled;
+        element.style.opacity = '';
+        element.style.cursor = '';
+        element.style.pointerEvents = '';
+        
+        // Réactiver spécifiquement les textarea
+        if (element.tagName === 'TEXTAREA') {
+            element.disabled = false;
+            element.placeholder = 'Notes...';
+        }
     });
 }
 
