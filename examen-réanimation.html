@@ -9164,6 +9164,16 @@ document.addEventListener('DOMContentLoaded', function() {
         Simpson biplan
     </label>
 </div>
+
+<!-- Strain longitudinal global -->
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; margin-top: 15px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Strain longitudinal global (%) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="strain_global">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < -18%</span>
+        <span id="strain-status" style="font-weight: bold;"></span>
+    </div>
+</div>
 				
 				
                 
@@ -9198,7 +9208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 <!-- Rapport E/E' septale -->
                 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <label style="width: 250px; min-width: 200px;"><strong>Rapport E/E' septale :</strong></label>
+                    <label style="width: 250px; min-width: 200px;"><strong>Rapport E/E' moyen :</strong></label>
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <input type="number" step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="rapport_EE">
                         <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Norme: < 14</span>
@@ -9261,15 +9271,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                                 
-                <!-- Surface de la chambre de chasse -->
-                <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <label style="width: 250px; min-width: 200px;"><strong>Surface chambre de chasse (cm²) :</strong></label>
-                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <input type="number" step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="surface_CC">
-                        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes: 3-4 cm²</span>
-                        <span id="surface-CC-status" style="font-weight: bold;"></span>
-                    </div>
-                </div>
+<!-- Diamètre de la chambre de chasse -->
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Diamètre chambre de chasse (mm) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 4px; transition: all 0.2s ease;" class="small" id="diametre_CC">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes: 19-23 mm</span>
+    </div>
+</div>
+
+<!-- Surface de la chambre de chasse (calculée automatiquement) -->
+<div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+    <label style="width: 250px; min-width: 200px;"><strong>Surface chambre de chasse (cm²) :</strong></label>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <input type="number" readonly step="0.1" style="width: 35px; padding: 0.4rem 0.8rem; border: 2px solid #94a3b8; border-radius: 4px; background-color: #e2e8f0; color: #1e293b; cursor: not-allowed;" class="small" id="surface_CC">
+        <span style="color: #94a3b8; font-size: 0.9rem; white-space: nowrap;">Normes 3-4cm²</span>
+        <span id="surface-CC-status" style="font-weight: bold;"></span>
+    </div>
+</div>
                 
                 <!-- Débit calculé -->
                 <div class="input-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
@@ -10937,6 +10956,11 @@ function updateDebitCardiaque() {
 }
 
 document.getElementById('ITV').addEventListener('input', updateDebitCardiaque);
+// Listener pour le diamètre de la chambre de chasse
+document.getElementById('diametre_CC').addEventListener('input', updateSurfaceChambreChasse);
+
+// Le calcul du débit sera déclenché automatiquement par updateSurfaceChambreChasse()
+// On garde quand même un listener direct sur surface_CC au cas où elle serait modifiée manuellement
 document.getElementById('surface_CC').addEventListener('input', updateDebitCardiaque);
 document.getElementById('FC').addEventListener('input', updateDebitCardiaque);
 
@@ -11094,6 +11118,38 @@ function validateFEVG() {
         statusElement.textContent = '';
     }
 }
+
+// Validation du Strain longitudinal global
+function validateStrain() {
+    const strainInput = document.getElementById('strain_global');
+    const statusElement = document.getElementById('strain-status');
+    
+    // Vérifier que les éléments existent
+    if (!strainInput || !statusElement) {
+        console.error("Éléments manquants pour validateStrain()");
+        return;
+    }
+    
+    const strain = parseFloat(strainInput.value);
+    
+    if (!isNaN(strain)) {
+        // Attention : les valeurs normales sont NÉGATIVES
+        // Un strain à -20% est normal (plus négatif = meilleur)
+        // Un strain à -12% est altéré (moins négatif = moins bon)
+        if (strain < -18) {
+            // Valeur normale (ex: -20%, -22%, -25%)
+            statusElement.textContent = 'Normal';
+            statusElement.style.color = '#16a34a'; // vert
+        } else {
+            // Valeur altérée (ex: -16%, -12%, -8%)
+            statusElement.textContent = 'Altéré';
+            statusElement.style.color = '#dc2626'; // rouge
+        }
+    } else {
+        statusElement.textContent = '';
+    }
+}
+
 
 // Afficher/masquer la section rétrécissement aortique
 document.querySelectorAll('input[name="retrecissement_aortique"]').forEach(radio => {
@@ -11519,6 +11575,7 @@ document.getElementById('paroi_anteroseptale').addEventListener('input', validat
 document.getElementById('paroi_inferolaterale').addEventListener('input', validateParoiInferoLaterale);
 document.getElementById('diametre_VG').addEventListener('input', validateDiametreVG);
 document.getElementById('FEVG').addEventListener('input', validateFEVG);
+document.getElementById('strain_global').addEventListener('input', validateStrain);
 document.getElementById('ITV').addEventListener('input', validateITV);
 document.getElementById('surface_OD').addEventListener('input', validateSurfaceOD);
 document.getElementById('diametre_basal_VD').addEventListener('input', validateDiametreBasalVD);
@@ -12037,7 +12094,7 @@ const precisionsExamen = document.getElementById('precisions_examen').value.trim
 	
 ettSection += `<div class="text-line">- ${echogenicite.charAt(0).toUpperCase() + echogenicite.slice(1)} échogénicité ; FC ${fc} bpm ; ${ventilationText} ; ${aminesText} ; ${poids} kg - ${taille} cm - SC ${sc} m²${precisionsExamen ? ' ; ' + precisionsExamen : ''}</div>`;
 
-    
+
    // Ventricule gauche : dimensions et hypertrophie
 const surfaceOG = valueOrDash(document.getElementById('surface_OG').value);
 const siv = valueOrDash(document.getElementById('paroi_anteroseptale').value);
@@ -12050,6 +12107,17 @@ const surfaceCorporelle = document.getElementById('surface_corporelle').value;
 const volumeOGIndexe = document.getElementById('volume_OG_indexe').value;
 const volumeOGEllipsoide = document.getElementById('volume_OG_calcule').value;
 const volumeOGCubique = document.getElementById('volume_OG_cubique').value;
+
+    // Calcul du DTDVG indexé si surface corporelle disponible
+let dtdvgText = "";
+if (surfaceCorporelle && document.getElementById('diametre_VG').value) {
+    const dtdvgValue = parseFloat(document.getElementById('diametre_VG').value);
+    const surfaceValue = parseFloat(surfaceCorporelle);
+    const dtdvgIndexe = (dtdvgValue / surfaceValue).toFixed(1);
+    dtdvgText = `${dtdvg} mm soit ${dtdvgIndexe} mm/m²`;
+} else {
+    dtdvgText = `${dtdvg} mm`;
+}
 
 // Construction du texte pour le volume OG - avec valeur par défaut "? mL" si aucune valeur
 if (surfaceCorporelle && volumeOGIndexe) {
@@ -12125,8 +12193,7 @@ else if (vgDilate) vgDescription = "VG dilaté et non hypertrophié";
 else if (vgHypertrophie) vgDescription = "VG non dilaté et hypertrophié";
 else vgDescription = "VG non dilaté et non hypertrophié";
 
-ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (S OG ${surfaceOG} cm²${volumeOGText}). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvg} mm ; PIL ${pil} mm)</div>`;
-
+ettSection += `<div class="text-line">- OG ${ogDilatee ? 'dilatée' : 'non dilatée'} (S OG ${surfaceOG} cm²${volumeOGText}). ${vgDescription} (SIV ${siv} mm ; DTDVG ${dtdvgText} ; PIL ${pil} mm)</div>`;
     // Fonction diastolique
     const rapportEE = valueOrDash(document.getElementById('rapport_EE').value);
     const ondeE = valueOrDash(document.getElementById('onde_E').value);
@@ -12173,6 +12240,7 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
     const fevg = valueOrDash(document.getElementById('FEVG').value);
     const itv = valueOrDash(document.getElementById('ITV').value);
     const methodeFEVG = document.querySelector('input[name="methode_fevg"]:checked').value;
+	const strain = valueOrDash(document.getElementById('strain_global').value);
     
     // Déterminer si la FEVG est normale
     let fevgNormale = true;
@@ -12190,8 +12258,9 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
     const cinetiqueSegmentaire = document.querySelector('input[name="cinetique_segmentaire"]:checked').value;
     
     if (cinetiqueSegmentaire === 'normale') {
-        ettSection += `<div class="text-line">- Pas de trouble de la cinétique segmentaire. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%.</div>`;
-    } else {
+
+ettSection += `<div class="text-line">- Pas de trouble de la cinétique segmentaire. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%${strain !== '?' ? `. Strain longitudinal global : ${strain}%` : ''}.</div>`;
+	} else {
         // Récupérer les troubles de cinétique sélectionnés
         let troubles4C = Array.from(document.querySelectorAll('input[name="trouble_4c"]:checked')).map(cb => cb.value);
         let troubles2C = Array.from(document.querySelectorAll('input[name="trouble_2c"]:checked')).map(cb => cb.value);
@@ -12226,14 +12295,16 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
             troublesListe.push(`Parasternal petit axe: ${ppaTroubles.join('; ')}`);
         }
         
-        ettSection += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%.</div>`;
-    }
+ettSection += `<div class="text-line">- Trouble de la cinétique segmentaire du VG : ${troublesListe.join(' ; ')}. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%${strain !== '?' ? `. Strain longitudinal global : ${strain}%` : ''}.</div>`;
+	
+	}
    	
 	
 // Débit cardiaque
 const debitCalcule = valueOrDash(document.getElementById('debit_calcule').value);
 const debitIndexe = valueOrDash(document.getElementById('debit_indexe').value);
 const surfaceCC = valueOrDash(document.getElementById('surface_CC').value);
+const diametreCC = valueOrDash(document.getElementById('diametre_CC').value);
 
 // Déterminer si le débit cardiaque est bas
 let debitBas = false;
@@ -12264,9 +12335,9 @@ if (document.getElementById('debit_calcule').value) {
 
 // Ajouter les valeurs, en utilisant des "?" si non disponibles
 if (surfaceCorporelle && document.getElementById('debit_indexe').value) {
-    debitPhrase += ` calculé à ${debitCalcule} L/min soit ${debitIndexe} L/min/m² (ITV ${itv} cm ; Surface chambre chasse ${surfaceCC} cm²)`;
+    debitPhrase += ` calculé à ${debitCalcule} L/min soit ${debitIndexe} L/min/m² (ITV ${itv} cm ; Diamètre chambre chasse ${diametreCC} mm ; Surface chambre chasse ${surfaceCC} cm²)`;
 } else {
-    debitPhrase += ` calculé à ${debitCalcule} L/min (ITV ${itv} cm ; Surface chambre chasse ${surfaceCC} cm²)`;
+    debitPhrase += ` calculé à ${debitCalcule} L/min (ITV ${itv} cm ; Diamètre chambre chasse ${diametreCC} mm ; Surface chambre chasse ${surfaceCC} cm²)`;
 }
 
 // Ajouter la ligne de débit cardiaque, qu'il y ait des données ou non
@@ -13671,6 +13742,39 @@ function generateSondeUrinaireText() {
     
     return sondeText;
 }
+
+// Fonction pour calculer automatiquement la surface de la chambre de chasse à partir du diamètre
+function updateSurfaceChambreChasse() {
+    const diametre = parseFloat(document.getElementById('diametre_CC').value);
+    const surfaceCC = document.getElementById('surface_CC');
+    const surfaceStatus = document.getElementById('surface-CC-status');
+    
+    if (!isNaN(diametre) && diametre > 0) {
+        // Conversion mm -> cm et calcul de la surface : π × (d/2)²
+        const diametreCm = diametre / 10; // Conversion mm en cm
+        const surface = Math.PI * Math.pow(diametreCm / 2, 2);
+        surfaceCC.value = surface.toFixed(2);
+        
+        // Validation de la surface (normes: 3-4 cm²)
+        if (surface >= 3 && surface <= 4) {
+            surfaceStatus.textContent = 'Normal';
+            surfaceStatus.style.color = 'green';
+        } else if (surface < 3) {
+            surfaceStatus.textContent = 'Diminuée';
+            surfaceStatus.style.color = 'orange';
+        } else {
+            surfaceStatus.textContent = 'Augmentée';
+            surfaceStatus.style.color = 'orange';
+        }
+        
+        // Déclencher le calcul du débit cardiaque
+        updateDebitCardiaque();
+    } else {
+        surfaceCC.value = '';
+        surfaceStatus.textContent = '';
+    }
+}
+
 
 // Fonction pour appliquer les animations au texte généré
 function applyTextAnimations() {
