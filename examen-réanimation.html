@@ -8080,40 +8080,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Ajout à la fonction de réinitialisation
-    const originalResetETTInputs = window.resetETTInputs || function() {};
-    window.resetETTInputs = function() {
-        // Appeler la fonction originale
-        originalResetETTInputs();
-        
-        // Réinitialiser les options de ventilation
-        if (document.getElementById('ventSpont_ett')) {
-            document.getElementById('ventSpont_ett').checked = true;
-        }
-        
-        // Réinitialiser les options d'amines
-        if (document.getElementById('noAmines_ett')) {
-            document.getElementById('noAmines_ett').checked = true;
-        }
-        
-        // Réinitialiser les détails des amines
-        if (document.getElementById('amines_details_ett')) {
-            document.getElementById('amines_details_ett').style.display = 'none';
-        }
-        
-        // Décocher et réinitialiser les champs d'amines
-        if (document.getElementById('noradrenaline_ett')) {
-            document.getElementById('noradrenaline_ett').checked = false;
-            document.getElementById('noradrenaline_dose_ett').style.display = 'none';
-            document.getElementById('noradrenaline_dose_ett').value = '';
-        }
-        
-        if (document.getElementById('dobutamine_ett')) {
-            document.getElementById('dobutamine_ett').checked = false;
-            document.getElementById('dobutamine_dose_ett').style.display = 'none';
-            document.getElementById('dobutamine_dose_ett').value = '';
-        }
-    };
+    // NOTE: La logique de réinitialisation des amines a été déplacée dans resetETTInputs()
 });
 
 </script>
@@ -8912,25 +8879,8 @@ function resetVolumeOGIndexe() {
     }
 }
 
-// Modifier la fonction de réinitialisation des champs ETT pour inclure notre réinitialisation
+// NOTE: La logique de resetVolumeOGIndexe a été déplacée dans resetETTInputs()
 document.addEventListener('DOMContentLoaded', function() {
-    // Récupérer le bouton de réinitialisation ETT
-    const resetButton = document.querySelector('button[onclick="resetETTInputs()"]');
-    
-    if (resetButton) {
-        // Sauvegarder la fonction originale
-        const originalResetFunction = window.resetETTInputs || function() {};
-        
-        // Remplacer par notre fonction améliorée
-        window.resetETTInputs = function() {
-            // Appeler la fonction originale
-            originalResetFunction.call(this);
-            
-            // Puis réinitialiser le volume OG indexé
-            resetVolumeOGIndexe();
-        };
-    }
-    
     // Configurer les écouteurs d'événements pour les champs qui peuvent être vidés manuellement
     const inputsToWatch = [
         'longueur_OG', 'diametre_long_OG', 'diametre_trans_OG', 
@@ -11655,12 +11605,12 @@ function calculerSeveriteRM() {
         if (!coherent) {
             const fc = parseFloat(document.getElementById('FC').value) || 0;
             
-            if (fcValue > 100) {
+            if (fc > 100) {
                 messageInfo = 'Discordance surface/gradient : gradient probablement surestimé (tachycardie FC > 100 bpm).';
                 messageCoherence.style.backgroundColor = '#fef3c7';
                 messageCoherence.style.borderLeft = '4px solid #f59e0b';
                 messageCoherence.style.color = '#92400e';
-            } else if (fcValue < 60 && fcValue > 0) {
+            } else if (fc < 60 && fc > 0) {
                 messageInfo = 'Discordance surface/gradient : gradient probablement sous-estimé (bradycardie FC < 60 bpm).';
                 messageCoherence.style.backgroundColor = '#fef3c7';
                 messageCoherence.style.borderLeft = '4px solid #f59e0b';
@@ -12002,69 +11952,156 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function resetETTInputs() {
-    // Réinitialiser tous les champs numériques
+    // ============================================
+    // RÉINITIALISATION COMPLÈTE DE L'ETT
+    // ============================================
+    
+    // 1. Réinitialiser tous les champs numériques
     document.querySelectorAll('.section-content input[type="number"]').forEach(input => {
         input.value = '';
     });
     
-    // Réinitialiser tous les champs texte
+    // 2. Réinitialiser tous les champs texte
     document.querySelectorAll('.section-content input[type="text"]').forEach(input => {
         input.value = '';
     });
     
-    // Réinitialiser les statuts
+    // 3. Réinitialiser les statuts
     document.querySelectorAll('[id$="-status"]').forEach(span => {
         span.textContent = '';
     });
     
-    // Réinitialiser les radios
-    document.querySelector('input[name="sexe"][value="homme"]').checked = true;
-    document.querySelector('input[name="cinetique_segmentaire"][value="normale"]').checked = true;
-    document.querySelector('input[name="fuite_aortique"][value="non"]').checked = true;
-    document.querySelector('input[name="fuite_mitrale"][value="non"]').checked = true;
-    document.querySelector('input[name="septum_paradoxal"][value="non"]').checked = true;
-    document.querySelector('input[name="compliance_VCI"][value="sup50"]').checked = true;
-    document.querySelector('input[name="pericarde"][value="sec"]').checked = true;
-    document.querySelector('input[name="methode_fevg"][value="visuelle"]').checked = true;
+    // 4. Réinitialiser les radios principaux
+    const radiosToReset = [
+        { name: 'sexe', value: 'homme' },
+        { name: 'cinetique_segmentaire', value: 'normale' },
+        { name: 'fuite_aortique', value: 'non' },
+        { name: 'fuite_mitrale', value: 'non' },
+        { name: 'septum_paradoxal', value: 'non' },
+        { name: 'compliance_VCI', value: 'sup50' },
+        { name: 'pericarde', value: 'sec' },
+        { name: 'methode_fevg', value: 'visuelle' },
+        { name: 'retrecissement_mitral', value: 'non' }
+    ];
     
-    document.querySelector('input[name="retrecissement_mitral"][value="non"]').checked = true;
-    
-    // Masquer les sections conditionnelles
-    document.getElementById('troubles_cinetique_section').style.display = 'none';
-    document.getElementById('fuite_aortique_section').style.display = 'none';
-    document.getElementById('fuite_mitrale_section').style.display = 'none';
-    document.getElementById('retrecissement_mitral_section').style.display = 'none';
-    document.getElementById('pericarde_section').style.display = 'none';
-    
-    // Réinitialiser les messages et les affichages
-    document.getElementById('message_par_defaut').style.display = 'block';
-    document.getElementById('criteres_fonction_diastolique').style.display = 'none';
-    document.getElementById('interpretation_fonction_diastolique').style.display = 'none';
-    document.getElementById('message_profil_par_defaut').style.display = 'block';
-    document.getElementById('criteres_profil_mitral').style.display = 'none';
-    document.getElementById('interpretation_profil_mitral').style.display = 'none';
-    
-    // Mettre à jour les normes pour homme (par défaut)
-    document.getElementById('norme_anteroseptale').textContent = 'Normes: H (6-10 mm)';
-    document.getElementById('norme_inferolaterale').textContent = 'Normes: H (6-10 mm)';
-    document.getElementById('norme_diametre').textContent = 'Normes: H (42-59 mm)';
-    document.getElementById('norme_FEVG').textContent = 'Normes: H (52-72%)';
-    document.getElementById('norme_ITV').textContent = 'Normes: H (18-26 cm)';
-    document.getElementById('norme_valsalva').textContent = 'Normes: H (31-37 mm)';
-    document.getElementById('norme_jonction').textContent = 'Normes: H (26-32 mm)';
-    document.getElementById('norme_aorte').textContent = 'Normes: H (26-34 mm)';
-    
-// Déclencher des événements pour mettre à jour les calculs
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-        const event = new Event('input', { bubbles: true });
-        input.dispatchEvent(event);
+    radiosToReset.forEach(radio => {
+        const element = document.querySelector(`input[name="${radio.name}"][value="${radio.value}"]`);
+        if (element) element.checked = true;
     });
     
-    // Réinitialiser la qualification RA à "Pas de RA"
-    calculerSeveriteRA();
-	calculerSeveriteRM();
-
+    // 5. Masquer les sections conditionnelles
+    const sectionsToHide = [
+        'troubles_cinetique_section',
+        'fuite_aortique_section',
+        'fuite_mitrale_section',
+        'retrecissement_mitral_section',
+        'pericarde_section'
+    ];
+    
+    sectionsToHide.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) section.style.display = 'none';
+    });
+    
+    // 6. Réinitialiser les messages et les affichages
+    const messagesToShow = ['message_par_defaut', 'message_profil_par_defaut'];
+    const messagesToHide = [
+        'criteres_fonction_diastolique',
+        'interpretation_fonction_diastolique',
+        'criteres_profil_mitral',
+        'interpretation_profil_mitral'
+    ];
+    
+    messagesToShow.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    });
+    
+    messagesToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    
+    // 7. Mettre à jour les normes pour homme (par défaut)
+    const normesHomme = {
+        'norme_anteroseptale': 'Normes: H (6-10 mm)',
+        'norme_inferolaterale': 'Normes: H (6-10 mm)',
+        'norme_diametre': 'Normes: H (42-59 mm)',
+        'norme_FEVG': 'Normes: H (52-72%)',
+        'norme_ITV': 'Normes: H (18-26 cm)',
+        'norme_valsalva': 'Normes: H (31-37 mm)',
+        'norme_jonction': 'Normes: H (26-32 mm)',
+        'norme_aorte': 'Normes: H (26-34 mm)'
+    };
+    
+    Object.entries(normesHomme).forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    });
+    
+    // 8. *** CRITIQUE : Forcer directement "Pas de RA" ***
+    const qualificationRA = document.getElementById('qualification_ra');
+    if (qualificationRA) {
+        qualificationRA.textContent = 'Pas de RA';
+        qualificationRA.className = 'ra-pas-de';
+    }
+    
+    // 9. *** CRITIQUE : Forcer directement "Pas de RM" ***
+    const qualificationRM = document.getElementById('qualification_rm');
+    if (qualificationRM) {
+        qualificationRM.textContent = 'Pas de RM';
+        qualificationRM.className = 'rm-pas-de';
+    }
+    
+    // 10. *** CRITIQUE : Masquer le message de cohérence RM ***
+    const messageCoherence = document.getElementById('message_coherence_rm');
+    if (messageCoherence) {
+        messageCoherence.style.display = 'none';
+    }
+    
+    // 11. Réinitialiser les options de ventilation (ancienne surcharge 1)
+    const ventSpont = document.getElementById('ventSpont_ett');
+    if (ventSpont) ventSpont.checked = true;
+    
+    // 12. Réinitialiser les options d'amines (ancienne surcharge 1)
+    const noAmines = document.getElementById('noAmines_ett');
+    if (noAmines) noAmines.checked = true;
+    
+    const aminesDetails = document.getElementById('amines_details_ett');
+    if (aminesDetails) aminesDetails.style.display = 'none';
+    
+    // Décocher et réinitialiser les champs d'amines
+    const noradrenaline = document.getElementById('noradrenaline_ett');
+    if (noradrenaline) {
+        noradrenaline.checked = false;
+        const noradrenalineDose = document.getElementById('noradrenaline_dose_ett');
+        if (noradrenalineDose) {
+            noradrenalineDose.style.display = 'none';
+            noradrenalineDose.value = '';
+        }
+    }
+    
+    const dobutamine = document.getElementById('dobutamine_ett');
+    if (dobutamine) {
+        dobutamine.checked = false;
+        const dobutamineDose = document.getElementById('dobutamine_dose_ett');
+        if (dobutamineDose) {
+            dobutamineDose.style.display = 'none';
+            dobutamineDose.value = '';
+        }
+    }
+    
+    // 13. Réinitialiser le volume OG indexé (ancienne surcharge 2)
+    const volumeOGIndexe = document.getElementById('volume_OG_indexe');
+    if (volumeOGIndexe) volumeOGIndexe.value = '';
+    
+    const methodeLabel = document.getElementById('methode-volume-label');
+    if (methodeLabel) methodeLabel.textContent = '';
+    
+    // 14. NE PAS déclencher d'événements qui pourraient recalculer RA/RM !
+    // Les événements causaient le problème en re-déclenchant les calculs.
 }
+
 
 
 function resetSection(button) {
@@ -12806,16 +12843,49 @@ ettSection += `<div class="text-line">- ${profilMitral} (E/A ${rapportEA} ; TDE 
     // Cinétique segmentaire
     const cinetiqueSegmentaire = document.querySelector('input[name="cinetique_segmentaire"]:checked').value;
     
+    // Mapping des identifiants vers les noms lisibles en français
+    const mappingTroublesCinetique = {
+        // Vue 4 cavités
+        'apex': 'apex',
+        'septoapical': 'septoapical',
+        'lateroapical': 'latéroapical',
+        'inferosepto_median': 'inféroseptomédian',
+        'anterolatero_median': 'antérolatéromédian',
+        'inferosepto_basal': 'inféroseptobasal',
+        'anterolatero_basal': 'antérolatérobasal',
+        // Vue 2 cavités
+        'inferoapical': 'inféroapical',
+        'anteroapical': 'antéroapical',
+        'infero_median': 'inféromédian',
+        'antero_median': 'antéromédian',
+        'infero_basal': 'inférobasal',
+        'antero_basal': 'antérobasal',
+        // PPA
+        'anterieure': 'antérieur',
+        'anterolateral': 'antérolatéral',
+        'inferolateral': 'inférolatéral',
+        'inferieure': 'inférieur',
+        'inferoseptal': 'inféroseptal',
+        'anteroseptal': 'antéroseptal',
+        'laterale': 'latéral',
+        'septale': 'septal'
+    };
+    
+    // Fonction pour convertir les identifiants en noms lisibles
+    function formatTroubleName(value) {
+        return mappingTroublesCinetique[value] || value;
+    }
+    
     if (cinetiqueSegmentaire === 'normale') {
 
 ettSection += `<div class="text-line">- Pas de trouble de la cinétique segmentaire. FEVG (${methodeFEVG === 'simpson' ? 'simpson biplan' : 'visuelle'}) ${fevgNormale ? 'préservée' : 'altérée'} à ${fevg}%${strain !== '?' ? `. Strain longitudinal global : ${strain}%` : ''}.</div>`;
 	} else {
-        // Récupérer les troubles de cinétique sélectionnés
-        let troubles4C = Array.from(document.querySelectorAll('input[name="trouble_4c"]:checked')).map(cb => cb.value);
-        let troubles2C = Array.from(document.querySelectorAll('input[name="trouble_2c"]:checked')).map(cb => cb.value);
-        let troublesPPAApex = Array.from(document.querySelectorAll('input[name="trouble_ppa_apex"]:checked')).map(cb => cb.value);
-        let troublesPPAMoyen = Array.from(document.querySelectorAll('input[name="trouble_ppa_moyen"]:checked')).map(cb => cb.value);
-        let troublesPPABase = Array.from(document.querySelectorAll('input[name="trouble_ppa_base"]:checked')).map(cb => cb.value);
+        // Récupérer les troubles de cinétique sélectionnés et les convertir
+        let troubles4C = Array.from(document.querySelectorAll('input[name="trouble_4c"]:checked')).map(cb => formatTroubleName(cb.value));
+        let troubles2C = Array.from(document.querySelectorAll('input[name="trouble_2c"]:checked')).map(cb => formatTroubleName(cb.value));
+        let troublesPPAApex = Array.from(document.querySelectorAll('input[name="trouble_ppa_apex"]:checked')).map(cb => formatTroubleName(cb.value));
+        let troublesPPAMoyen = Array.from(document.querySelectorAll('input[name="trouble_ppa_moyen"]:checked')).map(cb => formatTroubleName(cb.value));
+        let troublesPPABase = Array.from(document.querySelectorAll('input[name="trouble_ppa_base"]:checked')).map(cb => formatTroubleName(cb.value));
         
         let troublesListe = [];
         
