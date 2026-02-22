@@ -8361,6 +8361,245 @@ input[type="date"].modal-input {
     }
 }
 
+/* ===== ANIMATION VALIDATION TOUR ===== */
+.tour-success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.tour-success-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tour-success-check {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Cercle avec dégradé animé */
+.check-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+    background-size: 200% 200%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 20px 60px rgba(16, 185, 129, 0.5),
+        0 0 0 0 rgba(16, 185, 129, 0.4);
+    transform: scale(0);
+    animation: checkPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.check-circle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* SVG Check animé */
+.check-svg {
+    width: 85px;
+    height: 85px;
+    opacity: 0;
+    animation: checkAppear 0.4s ease 0.3s forwards;
+}
+
+.check-path {
+    stroke: white;
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawCheck 0.5s ease 0.4s forwards;
+}
+
+/* Ondes de propagation multiples */
+.check-ripple {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 3px solid rgba(16, 185, 129, 0.6);
+    animation: rippleEffect 1s ease forwards;
+}
+
+.check-ripple:nth-child(2) {
+    animation-delay: 0.15s;
+    border-color: rgba(52, 211, 153, 0.4);
+}
+
+.check-ripple:nth-child(3) {
+    animation-delay: 0.3s;
+    border-color: rgba(110, 231, 183, 0.3);
+}
+
+/* Particules de succès */
+.success-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    opacity: 0;
+    animation: particleBurst 0.8s ease-out forwards;
+}
+
+/* Confettis */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+}
+
+.confetti::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Animations */
+@keyframes checkPop {
+    0% {
+        transform: scale(0) rotate(0deg);
+        box-shadow: 
+            0 0 0 0 rgba(16, 185, 129, 0),
+            0 0 0 0 rgba(16, 185, 129, 0);
+    }
+    50% {
+        transform: scale(1.2) rotate(5deg);
+    }
+    70% {
+        transform: scale(0.95) rotate(-3deg);
+        box-shadow: 
+            0 25px 70px rgba(16, 185, 129, 0.6),
+            0 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        box-shadow: 
+            0 20px 60px rgba(16, 185, 129, 0.5),
+            0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes checkAppear {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes drawCheck {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes rippleEffect {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) rotate(45deg);
+    }
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: translate(0, 0) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .tour-success-overlay {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .check-circle {
+    box-shadow: 
+        0 25px 70px rgba(52, 211, 153, 0.6),
+        0 0 40px rgba(16, 185, 129, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .check-circle {
+        width: 110px;
+        height: 110px;
+    }
+
+    .check-svg {
+        width: 65px;
+        height: 65px;
+    }
+
+    .check-path {
+        stroke-width: 4;
+    }
+
+    .check-ripple {
+        width: 110px;
+        height: 110px;
+    }
+}
+
+@media (max-width: 480px) {
+    .check-circle {
+        width: 90px;
+        height: 90px;
+    }
+
+    .check-svg {
+        width: 55px;
+        height: 55px;
+    }
+
+    .check-ripple {
+        width: 90px;
+        height: 90px;
+    }
+}
 
 </style>
 </head>
@@ -10443,6 +10682,100 @@ window.toggleResourceValidation = function(specialtyId, fc, resourceId) {
     }
 };
 
+
+function showTourSuccessAnimation() {
+    const overlay = document.getElementById('tour-success-overlay');
+    const checkContainer = overlay.querySelector('.tour-success-check');
+    
+    // Nettoyer les anciens confettis et particules
+    const oldElements = checkContainer.querySelectorAll('.confetti, .success-particle');
+    oldElements.forEach(el => el.remove());
+    
+    // Afficher l'overlay
+    overlay.classList.add('show');
+    
+    // Créer les particules de succès
+    createSuccessParticles(checkContainer);
+    
+    // Créer les confettis après un léger délai
+    setTimeout(() => {
+        createConfetti(checkContainer);
+    }, 400);
+    
+    // Masquer l'overlay
+    setTimeout(() => {
+        overlay.classList.remove('show');
+    }, 2000);
+}
+
+function createSuccessParticles(container) {
+    const particleCount = 12;
+    const colors = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'success-particle';
+        
+        const angle = (i / particleCount) * Math.PI * 2;
+        const distance = 80 + Math.random() * 40;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.animationDelay = `${i * 0.03}s`;
+        
+        container.appendChild(particle);
+    }
+}
+
+function createConfetti(container) {
+    const confettiCount = 50;
+    const colors = [
+        '#10b981', '#34d399', '#6ee7b7', '#a7f3d0',
+        '#fbbf24', '#f59e0b', '#ec4899', '#8b5cf6'
+    ];
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Position de départ au centre
+        confetti.style.left = '50%';
+        confetti.style.top = '50%';
+        
+        // Paramètres aléatoires
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 150 + Math.random() * 150;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity - 100; // Biais vers le haut
+        const rotation = Math.random() * 720 - 360;
+        const duration = 1000 + Math.random() * 1000;
+        
+        // Créer l'animation
+        confetti.animate([
+            {
+                transform: 'translate(-50%, -50%) rotate(0deg)',
+                opacity: 1
+            },
+            {
+                transform: `translate(calc(-50% + ${vx}px), calc(-50% + ${vy}px)) rotate(${rotation}deg)`,
+                opacity: 0
+            }
+        ], {
+            duration: duration,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            fill: 'forwards'
+        });
+        
+        container.appendChild(confetti);
+        
+        // Nettoyer après l'animation
+        setTimeout(() => confetti.remove(), duration);
+    }
+}
 
 
 // Configuration des pastilles sous-spécialités
@@ -15795,6 +16128,7 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     selectedSupport = null;
     debouncedSave();
     renderAll();
+	showTourSuccessAnimation();
     
     // Si on vient de la checklist, valider la tâche ET afficher une notification
     if (pendingChecklistItemId !== null) {
@@ -19458,6 +19792,21 @@ window.addEventListener('load', function() {
 
 </script>
 
+
+
+<!-- ===== ANIMATION CHECK VALIDATION TOUR ===== -->
+<div id="tour-success-overlay" class="tour-success-overlay">
+    <div class="tour-success-check">
+        <div class="check-circle">
+            <svg class="check-svg" viewBox="0 0 52 52">
+                <path class="check-path" d="M14 27l7.5 7.5L38 18" />
+            </svg>
+        </div>
+        <div class="check-ripple"></div>
+        <div class="check-ripple"></div>
+        <div class="check-ripple"></div>
+    </div>
+</div>
 
 
 
