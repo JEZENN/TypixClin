@@ -789,8 +789,8 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     letter-spacing: 2px;
 }
 .resource-box.overflow-btn:hover {
-    background: var(--gray-200);
-    color: var(--gray-700);
+    background: var(--gray-100);
+    color: var(--gray-500);
 }
 
 .resource-box.overflow-validated {
@@ -1196,8 +1196,14 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .days-badge.old { background: var(--danger); color: white; }
 .days-badge.never { background: var(--gray-400); color: white; }
 
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
-.modal.active { display: flex; }
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: var(--z-modal); pointer-events: none; }
+.modal.active { display: flex; backdrop-filter: blur(4px); pointer-events: auto; }
+.modal:not(.active) { pointer-events: none; }
+
+.modal:not(.active) {
+    pointer-events: none;
+}
+
 
 @keyframes modalOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalOverlayOut { from { opacity: 1; } to { opacity: 0; } }
@@ -5213,6 +5219,26 @@ input[type="date"].modal-input {
 
 .day-specialty-zone:hover { background: rgba(0,0,0,0.03); }
 
+/* Surbrillance zone active (popup ouvert) */
+.day-header-zone.popup-open {
+    background: rgba(59, 130, 246, 0.22) !important;
+    border-bottom-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+.day-specialty-zone.popup-open {
+    background: rgba(59, 130, 246, 0.22) !important;
+}
+
+[data-theme="dark"] .day-header-zone.popup-open {
+    background: rgba(96, 165, 250, 0.28) !important;
+    border-bottom-color: rgba(96, 165, 250, 0.4) !important;
+}
+
+[data-theme="dark"] .day-specialty-zone.popup-open {
+    background: rgba(96, 165, 250, 0.28) !important;
+}
+
+
 .day-specialty-badge {
     font-size: 0.58rem;
     padding: 0.15rem 0.35rem;
@@ -8217,15 +8243,18 @@ input[type="date"].modal-input {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     padding: 1rem;
+	pointer-events: none; 
 }
 .custom-modal-overlay.active {
     display: flex;
+	backdrop-filter: blur(4px);
+	pointer-events: auto; 
 }
 .custom-modal {
     background: var(--white);
@@ -10102,27 +10131,7 @@ input[type="date"].modal-input {
 }
 </style>
 			
-											<!-- Modal Configuration Ressources -->
-								<div class="modal resources-config-modal" id="resources-config-modal">
-									<div class="modal-content">
-										<button class="modal-close" onclick="closeResourcesConfigModal()"><i class="fas fa-times"></i></button>
-										<h3 class="resources-config-title"><i class="fas fa-cog"></i> Configurer les ressources</h3>
-												<p class="resources-config-subtitle">Sélectionnez jusqu'à 3 ressources à afficher en permanence. Les autres seront accessibles via le bouton ···</p>
 
-												<div class="resources-selected-count">
-													<span id="resources-count">0</span> / 3 ressources sélectionnées
-												</div>
-										
-										<div class="resources-available-list" id="resources-available-list">
-											<!-- Généré par JavaScript -->
-										</div>
-										
-										<div class="resources-config-actions">
-											<button class="resources-cancel-btn" onclick="closeResourcesConfigModal()">Annuler</button>
-											<button class="resources-save-btn" onclick="saveResourcesConfig()">Enregistrer</button>
-										</div>
-									</div>
-								</div>
 
 
         </div>
@@ -10199,6 +10208,25 @@ input[type="date"].modal-input {
         <div class="modal-actions">
             <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i> Valider</button>
             <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i> Réinitialiser</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Configuration Ressources -->
+<div class="modal resources-config-modal" id="resources-config-modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeResourcesConfigModal()"><i class="fas fa-times"></i></button>
+        <h3 class="resources-config-title"><i class="fas fa-cog"></i> Configurer les ressources</h3>
+        <p class="resources-config-subtitle">Sélectionnez jusqu'à 4 ressources à afficher pour chaque item, vous pourrez ensuite les valider en fonction de votre avancée.</p>
+        <div class="resources-selected-count">
+            <span id="resources-count">0</span> / 4 ressources sélectionnées
+        </div>
+        <div class="resources-available-list" id="resources-available-list">
+            <!-- Généré par JavaScript -->
+        </div>
+        <div class="resources-config-actions">
+            <button class="resources-cancel-btn" onclick="closeResourcesConfigModal()">Annuler</button>
+            <button class="resources-save-btn" onclick="saveResourcesConfig()">Enregistrer</button>
         </div>
     </div>
 </div>
@@ -10883,18 +10911,45 @@ window.openResourcesOverflow = function(event, specialtyId, fc) {
     popup.classList.remove('visible');
     refreshOverflowPopup(specialtyId, fc);
 
-    // Positionner à droite du bouton
-    const rect = event.currentTarget.getBoundingClientRect();
-    popup.style.display = 'block';
-    const popupW = popup.offsetWidth || 140;
-    let left = rect.right + 6;
-    if (left + popupW > window.innerWidth - 8) left = rect.left - popupW - 6;
-    popup.style.top = (rect.top + rect.height / 2 - 20) + 'px';
-    popup.style.left = left + 'px';
-    popup.classList.add('show');
+    const btn = event.currentTarget;
 
-    // Animation d'apparition
-    requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add('visible')));
+    // Fonction qui positionne et affiche le popup (appelée après scroll éventuel)
+    function showPopup() {
+        const rect = btn.getBoundingClientRect();
+        popup.style.display = 'block';
+        const popupW = popup.offsetWidth || 140;
+        let left = rect.right + 6;
+        if (left + popupW > window.innerWidth - 8) left = rect.left - popupW - 6;
+        popup.style.top = (rect.top + rect.height / 2 - 20) + 'px';
+        popup.style.left = left + 'px';
+        popup.classList.add('show');
+        requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add('visible')));
+    }
+
+    // Mesurer si un scroll est nécessaire (sans afficher le popup)
+    popup.style.visibility = 'hidden';
+    popup.style.display = 'block';
+    const popupH = popup.offsetHeight || 80;
+    popup.style.display = '';
+    popup.style.visibility = '';
+
+    const rect = btn.getBoundingClientRect();
+    const estimatedBottom = rect.top + rect.height / 2 - 20 + popupH;
+    const overflowBottom = estimatedBottom - window.innerHeight + 12;
+
+    if (overflowBottom > 0) {
+        // Scroller d'abord, afficher après
+        window.removeEventListener('scroll', closeResourcesOverflow, true);
+        window.scrollBy({ top: overflowBottom, behavior: 'smooth' });
+        setTimeout(() => {
+            showPopup();
+            setTimeout(() => {
+                window.addEventListener('scroll', closeResourcesOverflow, true);
+            }, 100);
+        }, 450);
+    } else {
+        showPopup();
+    }
 };
 
 function refreshOverflowPopup(specialtyId, fc) {
@@ -10931,6 +10986,7 @@ window.closeResourcesOverflow = function() {
         if (!popup.classList.contains('visible')) {
             if (popup._dirty) { popup._dirty = false; renderItemsTable(); }
             popup.classList.remove('show');
+			 popup.style.display = ''; 
         }
     }, 180);
 };
@@ -17156,6 +17212,7 @@ const PlanningModule = (function() {
     let planningData = {};
     let checklistData = [];
     let currentEditingDate = null;
+let ignoreScrollClose = false;
     let tempSelectedSpecialties = []; // Pour la sélection multiple temporaire
     let listenersInitialized = false;
     
@@ -17406,11 +17463,28 @@ window.addEventListener('scroll', () => {
             
             if (statusPopup && !statusPopup.contains(e.target) && !e.target.closest('.day-header-zone')) {
                 statusPopup.classList.remove('active');
+				clearZoneHighlight();
             }
             if (specPopup && !specPopup.contains(e.target) && !e.target.closest('.day-specialty-zone')) {
                 specPopup.classList.remove('active');
             }
         });
+		
+// ===== FERMER LES POPUPS AU SCROLL =====
+let scrollCloseTimer = null;
+window.addEventListener('scroll', () => {
+    if (ignoreScrollClose) {
+        clearTimeout(scrollCloseTimer);
+        scrollCloseTimer = setTimeout(() => {
+            ignoreScrollClose = false;
+        }, 150);
+        return;
+    }
+    const statusPopup = document.getElementById('status-popup');
+    const specPopup   = document.getElementById('specialty-popup');
+    if (statusPopup) { statusPopup.classList.remove('active'); clearZoneHighlight(); }
+    if (specPopup)   { specPopup.classList.remove('active');   clearZoneHighlight(); }
+}, { passive: true });
         
 			// Boutons statut
 					document.querySelectorAll('#status-popup .status-mini-btn').forEach(btn => {
@@ -17758,12 +17832,48 @@ function updateSelectors() {
         return dayEl;
     }
     
+let scrollWaitId = 0;
+
+let activeStatusZone    = null;
+let activeSpecialtyZone = null;
+
+function clearZoneHighlight() {
+    activeStatusZone?.classList.remove('popup-open');
+    activeSpecialtyZone?.classList.remove('popup-open');
+    activeStatusZone    = null;
+    activeSpecialtyZone = null;
+}
+
+function waitForScrollEnd(callback) {
+    const myId = ++scrollWaitId; // ID unique pour cet appel
+    
+    const check = setInterval(() => {
+        if (scrollWaitId !== myId) { clearInterval(check); return; } // Annulé
+        if (!ignoreScrollClose) {
+            clearInterval(check);
+            callback();
+        }
+    }, 50);
+    
+    // Filet de sécurité — ne fire QUE si pas déjà annulé
+    setTimeout(() => {
+        if (scrollWaitId !== myId) return; // Annulé
+        clearInterval(check);
+        ignoreScrollClose = false;
+        callback();
+    }, 600);
+}
+
 // Ouvrir popup statut
 function openStatusPopup(dateKey, targetEl) {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('planning-status')) return;
     
     currentEditingDate = dateKey;
+	clearZoneHighlight();
+activeStatusZone = targetEl;
+targetEl.classList.add('popup-open');
+
     const popup = document.getElementById('status-popup');
     if (!popup) return;
     
@@ -17807,22 +17917,21 @@ function openStatusPopup(dateKey, targetEl) {
     }
     
     // Effectuer le scroll si nécessaire
-    if (scrollNeeded !== 0) {
-        window.scrollBy({
-            top: scrollNeeded,
-            behavior: 'smooth'
-        });
+if (scrollNeeded !== 0) {
+        ignoreScrollClose = true;
         
-        // Attendre la fin du scroll pour positionner le popup
-        setTimeout(() => {
-            const newRect = targetEl.getBoundingClientRect();
-            popup.style.top = (newRect.bottom + 5) + 'px';
-            popup.style.left = Math.max(10, Math.min(newRect.left - 30, window.innerWidth - 240)) + 'px';
-            finishOpeningPopup();
-        }, 200);
+        // Position calculée mathématiquement AVANT le scroll
+        const finalTop  = rect.bottom - scrollNeeded + 5;
+        const finalLeft = Math.max(10, Math.min(rect.left - 30, window.innerWidth - 240));
+        popup.style.top  = finalTop + 'px';
+        popup.style.left = finalLeft + 'px';
+        
+        window.scrollBy({ top: scrollNeeded, behavior: 'smooth' });
+        
+        // Afficher seulement quand le scroll est vraiment terminé
+        waitForScrollEnd(() => finishOpeningPopup());
     } else {
-        // Pas de scroll nécessaire, affichage direct
-        popup.style.top = (rect.bottom + 5) + 'px';
+        popup.style.top  = (rect.bottom + 5) + 'px';
         popup.style.left = Math.max(10, Math.min(rect.left - 30, window.innerWidth - 240)) + 'px';
         finishOpeningPopup();
     }
@@ -17837,86 +17946,77 @@ function openStatusPopup(dateKey, targetEl) {
     }
 }
     
-// Ouvrir popup spécialité
 function openSpecialtyPopup(dateKey, targetEl) {
-    // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('planning-specialty')) return;
     
     currentEditingDate = dateKey;
+	clearZoneHighlight();
+activeSpecialtyZone = targetEl;
+targetEl.classList.add('popup-open');
     const popup = document.getElementById('specialty-popup');
     if (!popup) return;
     
     document.getElementById('status-popup')?.classList.remove('active');
     
-    // Déterminer si c'est un lundi (jour de la semaine = 1)
-    const date = new Date(dateKey);
-    const dayOfWeek = date.getDay(); // 0 = Dimanche, 1 = Lundi
-    const isMonday = dayOfWeek === 1;
+    const date      = new Date(dateKey);
+    const isMonday  = date.getDay() === 1;
     
-    // Afficher/masquer la checkbox selon si c'est un lundi
     const weekFillContainer = document.getElementById('specialty-week-fill-container');
-    const weekFillCheckbox = document.getElementById('specialty-week-fill-checkbox');
-    
+    const weekFillCheckbox  = document.getElementById('specialty-week-fill-checkbox');
     if (weekFillContainer && weekFillCheckbox) {
-        if (isMonday) {
-            weekFillContainer.style.display = 'block';
-            weekFillCheckbox.checked = false; // Toujours décoché par défaut
-        } else {
-            weekFillContainer.style.display = 'none';
-            weekFillCheckbox.checked = false;
-        }
+        weekFillContainer.style.display = isMonday ? 'block' : 'none';
+        weekFillCheckbox.checked = false;
     }
     
-    const rect = targetEl.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const popupHeight = isMonday ? 500 : 440; // Plus haut si lundi (avec checkbox)
-    const idealTopPosition = 250; // Position idéale de la case par rapport au haut de l'écran
+    // 1. Peupler le contenu en avance (popup encore invisible)
+    const dayData = planningData[dateKey] || {};
+    if (dayData.specialties && Array.isArray(dayData.specialties)) {
+        tempSelectedSpecialties = [...dayData.specialties];
+    } else if (dayData.specialty) {
+        tempSelectedSpecialties = [dayData.specialty];
+    } else {
+        tempSelectedSpecialties = [];
+    }
+    const searchInput = document.getElementById('specialty-search');
+    if (searchInput) { searchInput.value = ''; filterSpecialties(''); }
+    updateSpecialtyPopupSelection();
     
-    // Calculer où devrait être la case pour que tout soit visible
-    const targetScrollY = window.scrollY + rect.top - idealTopPosition;
+    // 2. Mesurer la vraie hauteur (visibility:hidden = layout calculé mais invisible)
+    const realHeight = popup.offsetHeight || 420;
+    
+    const rect           = targetEl.getBoundingClientRect();
+    const targetScrollY  = window.scrollY + rect.top - 250;
     const currentScrollY = window.scrollY;
     
-    // Si on doit scroller
-    if (Math.abs(targetScrollY - currentScrollY) > 10) {
-        window.scrollTo({
-            top: targetScrollY,
-            behavior: 'smooth'
-        });
-        
-        // Attendre la fin du scroll pour positionner le popup
-        setTimeout(() => {
-            const newRect = targetEl.getBoundingClientRect();
-            popup.style.top = (newRect.bottom + 5) + 'px';
-            popup.style.left = Math.max(10, Math.min(newRect.left - 50, window.innerWidth - 340)) + 'px';
-            finishOpeningPopup();
-        }, 200);
-    } else {
-        // Pas de scroll nécessaire
-        popup.style.top = (rect.bottom + 5) + 'px';
-        popup.style.left = Math.max(10, Math.min(rect.left - 50, window.innerWidth - 340)) + 'px';
-        finishOpeningPopup();
-    }
+function positionAndShow() {
+    const r          = targetEl.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - r.bottom;
+    const popupWidth = 320;
     
-    function finishOpeningPopup() {
-        const dayData = planningData[dateKey] || {};
-        if (dayData.specialties && Array.isArray(dayData.specialties)) {
-            tempSelectedSpecialties = [...dayData.specialties];
-        } else if (dayData.specialty) {
-            tempSelectedSpecialties = [dayData.specialty];
-        } else {
-            tempSelectedSpecialties = [];
-        }
-        
-        const searchInput = document.getElementById('specialty-search');
-        if (searchInput) {
-            searchInput.value = '';
-            filterSpecialties('');
-        }
-        
-        updateSpecialtyPopupSelection();
-        popup.classList.add('active');
-        
-        setTimeout(() => searchInput?.focus(), 100);
+    // Centrer le popup sur la case (suit mieux gauche/droite)
+    const cellCenter = r.left + r.width / 2;
+    const left = Math.max(10, Math.min(cellCenter - popupWidth / 2, window.innerWidth - popupWidth - 10));
+    
+    popup.style.left = left + 'px';
+    popup.style.top  = (spaceBelow >= realHeight + 10)
+        ? (r.bottom + 5) + 'px'
+        : Math.max(10, r.top - realHeight - 5) + 'px';
+    
+    popup.classList.add('active');
+    setTimeout(() => searchInput?.focus(), 100);
+}
+    
+    if (Math.abs(targetScrollY - currentScrollY) > 10) {
+	scrollWaitId++; // Annule tout waitForScrollEnd précédent en cours
+ignoreScrollClose = true;
+window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+waitForScrollEnd(() => positionAndShow());
+
+        ignoreScrollClose = true;
+        window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+        waitForScrollEnd(() => positionAndShow());
+    } else {
+        positionAndShow();
     }
 }
     
@@ -19789,7 +19889,7 @@ const helpContent = {
 				<ul>
 					<li>Vos données sont précieuses et ne doivent pas être perdues.</li>
 					<li>Un système de sauvegarde sécurisé est donc mis en place.</li>
-					<li>Une sauvegarde automatique sur une base de données est effectuée tous les 3 jours, vous avez la possibilité de lancer une sauvegarde manuelle à tout moment.</li>
+					<li>Une sauvegarde automatique sur une base de données est effectuée tous les 4 jours.</li>
 				</ul>
 
         </div>
