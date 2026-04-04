@@ -5522,7 +5522,8 @@ input[type="date"].modal-input {
     padding: 1.5rem;
     color: var(--gray-400);
     font-size: 0.8rem;
-    grid-column: span 2;
+    width: 100%;
+    display: block;
 }
 
 
@@ -15566,7 +15567,7 @@ function renderDashboardSpecialties() {
     
     // Afficher message si aucun résultat
     if (specialtiesWithStats.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Aucune spécialité ne correspond à ce filtre</p></div>';
+        container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><i class="fas fa-search"></i><p>Aucune spécialité ne correspond</p></div>';
         return;
     }
     
@@ -17600,17 +17601,20 @@ function filterSpecialties(query) {
     });
     
     // Afficher message si aucun résultat
-    let noResultMsg = grid.querySelector('.specialty-no-result');
-    if (!hasResults) {
-        if (!noResultMsg) {
-            noResultMsg = document.createElement('div');
-            noResultMsg.className = 'specialty-no-result';
-            noResultMsg.textContent = 'Aucune spécialité trouvée';
-            grid.appendChild(noResultMsg);
-        }
-    } else if (noResultMsg) {
-        noResultMsg.remove();
-    }
+		const scrollContainer = grid.parentNode;
+			let noResultMsg = scrollContainer.querySelector('.specialty-no-result');
+			if (!hasResults) {
+				grid.style.display = 'none';
+				if (!noResultMsg) {
+					noResultMsg = document.createElement('div');
+					noResultMsg.className = 'specialty-no-result';
+					noResultMsg.textContent = 'Aucune spécialité trouvée';
+					scrollContainer.appendChild(noResultMsg);
+				}
+			} else {
+				grid.style.display = 'grid';
+				if (noResultMsg) noResultMsg.remove();
+			}
 }
 
 // Auto-resize textarea
