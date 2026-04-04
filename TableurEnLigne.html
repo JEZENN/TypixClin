@@ -780,6 +780,89 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .resource-box.dp-uness { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 .resource-box.fiche-perso { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 
+/* Bouton ··· overflow */
+.resource-box.overflow-btn {
+    background: var(--gray-100);
+    color: var(--gray-500);
+    border-color: var(--gray-200);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+}
+.resource-box.overflow-btn:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.resource-box.overflow-validated {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #6ee7b7;
+}
+[data-theme="dark"] .resource-box.overflow-validated {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(110, 231, 183, 0.3);
+}
+
+
+/* Popup overflow ressources */
+.resource-overflow-popup {
+    position: fixed;
+    z-index: 9999;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    padding: 0.4rem;
+    display: none;
+    min-width: 130px;
+    border: 1px solid var(--gray-200);
+    opacity: 0;
+    transform: scale(0.92) translateX(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.resource-overflow-popup.show {
+    display: block;
+}
+.resource-overflow-popup.visible {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+}
+
+/* Hover sur overflow-btn quand des ressources sont validées */
+.resource-box.overflow-validated:hover {
+    background: #a7f3d0;
+    color: #064e3b;
+    border-color: #34d399;
+}
+[data-theme="dark"] .resource-box.overflow-validated:hover {
+    background: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+    border-color: rgba(110, 231, 183, 0.5);
+}
+.resource-overflow-item {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.3rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.resource-overflow-item:hover { background: var(--gray-100); }
+.resource-overflow-item .resource-box {
+    margin: 0;
+    pointer-events: none;
+    width: 100%;
+    min-height: 24px;
+    font-size: 0.6rem;
+}
+
+[data-theme="dark"] .resource-box.overflow-btn:not(.overflow-validated) { background: var(--gray-200); color: var(--gray-500); border-color: var(--gray-300); }
+[data-theme="dark"] .resource-box.overflow-btn.overflow-validated { background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(110, 231, 183, 0.4); }
+[data-theme="dark"] .resource-box.overflow-btn.overflow-validated:hover { background: rgba(16, 185, 129, 0.35); color: #6ee7b7; border-color: rgba(110, 231, 183, 0.6); }
+[data-theme="dark"] .resource-overflow-popup { border-color: var(--gray-300); }
+[data-theme="dark"] .resource-overflow-item:hover { background: var(--gray-200); }
+
+
 /* État validé (vert) */
 .resource-box.validated {
     background: linear-gradient(135deg, #10b981, #34d399) !important;
@@ -1000,7 +1083,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 [data-theme="dark"] .config-resources-btn { 
     background: #1e293b; 
     border: 1px solid #334155; 
-    color: #94a3b8; 
+    color: white; 
 }
 [data-theme="dark"] .config-resources-btn:hover { 
     background: #60a5fa; 
@@ -1008,7 +1091,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     color: #1e293b;
 }
 [data-theme="dark"] .config-resources-btn i { 
-    color: #94a3b8; 
+    color: white; 
 }
 [data-theme="dark"] .config-resources-btn:hover i { 
     color: #1e293b; 
@@ -1115,16 +1198,95 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
 .modal.active { display: flex; }
+
+@keyframes modalOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalContentIn  { from { opacity: 0; transform: scale(0.94) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes modalContentOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.94) translateY(14px); } }
+
+.modal.active            { animation: modalOverlayIn  0.2s  ease forwards; }
+.modal.active .modal-content { animation: modalContentIn  0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.modal.closing           { animation: modalOverlayOut 0.18s ease forwards; }
+.modal.closing .modal-content { animation: modalContentOut 0.18s ease forwards; }
+
+
+
+
+
 .modal-content { background: #ffffff; border-radius: var(--border-radius-xl); padding: 2rem; max-width: 400px; width: 90%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative; }
-.modal-close { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--gray-500); transition: all var(--transition-fast); }
-.modal-close:hover { background: var(--danger-light); color: var(--danger);}
+.modal-close { position: absolute; top: 1rem; right: 1rem; width: 30px; height: 30px; border-radius: 50%; background: var(--danger-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--danger); transition: all var(--transition-fast); }
+.modal-close:hover { background: var(--danger); color: #ffffff; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
 .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center; color: var(--gray-900); }
+
+.tour-context-card {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+
+.tour-context-num {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: var(--border-radius-sm);
+    padding: 0.2rem 0.45rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tour-context-name {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.tour-context-specialty {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.18rem 0.45rem;
+    border-radius: var(--border-radius-full);
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tour-context-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.18rem 0.45rem;
+    border-radius: var(--border-radius-full);
+    background: var(--gray-200);
+    color: var(--gray-700);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .tour-context-card {
+    background: var(--gray-100);
+    border-color: var(--gray-200);
+}
 
 
 .modal-section { margin-bottom: 1.25rem; }
 .modal-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.modal-input { width: calc(100% - 4px) !important; padding: 0.75rem 1rem; border: 2px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: 0.95rem; text-align: center; background: var(--gray-50); transition: all var(--transition-fast); box-sizing: border-box !important; max-width: 100% !important; display: block; margin: 0 auto; }
+.modal-input { width: calc(100% - 4px) !important; padding: 0.75rem 1rem; border: 2px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: 1.1rem; font-weight: 600; font-family: var(--font-body); text-align: center; background: var(--gray-50); transition: all var(--transition-fast); box-sizing: border-box !important; max-width: 100% !important; display: block; margin: 0 auto; }
 .modal-input:focus { outline: none; border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+
+input[type="date"].modal-input::-webkit-calendar-picker-indicator { display: none; }
+input[type="date"].modal-input::-webkit-inner-spin-button { display: none; }
 
 
 input[type="date"].modal-input {
@@ -1222,9 +1384,18 @@ input[type="date"].modal-input {
     }
 }
 
-.duration-input { width: 50px; padding: 0.5rem; border: none; border-radius: var(--border-radius-sm); font-size: 1.1rem; text-align: center; background: #ffffff; font-weight: 600; }
+.duration-input { width: 50px; padding: 0.5rem; border: none; border-radius: var(--border-radius-sm); font-size: 1.1rem; text-align: center; background: #ffffff; font-weight: 600; caret-color: var(--primary); }
 .duration-input:focus { outline: none; box-shadow: 0 0 0 2px var(--primary); }
+.duration-input::placeholder { color: var(--gray-300); }
 .duration-separator { font-size: 0.9rem; color: var(--gray-500); font-weight: 500; }
+.duration-arrows { display: flex; flex-direction: column; gap: 2px; margin-left: 0.25rem; }
+.duration-arrow-btn { width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--gray-200); border: none; border-radius: var(--border-radius-sm); color: var(--gray-600); font-size: 0.65rem; cursor: pointer; transition: all var(--transition-fast); padding: 0; }
+.duration-arrow-btn:hover { background: var(--primary); color: white; }
+.duration-arrow-btn:active { transform: scale(0.95); }
+[data-theme="dark"] .duration-arrow-btn { background: var(--gray-300); color: var(--gray-600); }
+[data-theme="dark"] .duration-arrow-btn:hover { background: var(--primary); color: white; }
+
+.duration-input { width: 50px; padding: 0.5rem; border: none; border-radius: var(--border-radius-sm); font-size: 1.1rem; text-align: center; background: #ffffff; font-weight: 600; caret-color: transparent; }
 
 .support-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
 .support-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-radius: var(--border-radius-md); border: 2px solid var(--gray-200); background: #ffffff; color: var(--gray-600); cursor: pointer; transition: all var(--transition-fast); display: flex; align-items: center; gap: 0.4rem; }
@@ -2861,7 +3032,8 @@ input[type="date"].modal-input {
 }
 
 [data-theme="dark"] .specialty-multi-btn:hover {
-    border-color: #475569;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
     background: #1e293b;
 }
 
@@ -3096,6 +3268,10 @@ input[type="date"].modal-input {
     box-shadow: 0 0 0 2px var(--primary);
 }
 
+[data-theme="dark"] .duration-input::placeholder {
+    color: #4b5563;
+}
+
 [data-theme="dark"] .duration-separator {
     color: #9ca3af;
 }
@@ -3119,15 +3295,16 @@ input[type="date"].modal-input {
     color: white;
 }
 
-/* Bouton fermer modal */
 [data-theme="dark"] .modal-close {
-    background: #374151;
-    color: #9ca3af;
+    background: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.55);
 }
 
 [data-theme="dark"] .modal-close:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background: #ef4444;
+    color: #ffffff;
+    border-color: transparent;
 }
 
 
@@ -3194,6 +3371,39 @@ input[type="date"].modal-input {
     background: #1e293b;
     border-color: #374151;
     color: #f9fafb;
+}
+
+[data-theme="dark"] .custom-select-btn:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+[data-theme="dark"] .custom-select-btn:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    outline: none;
+}
+
+[data-theme="dark"] .filter-select {
+    background: #1e293b;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .filter-select:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+[data-theme="dark"] .filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    outline: none;
+}
+
+[data-theme="dark"] .search-box input:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 [data-theme="dark"] .custom-select-menu {
@@ -4272,7 +4482,7 @@ input[type="date"].modal-input {
     color: var(--gray-600);
     font-size: 0.9rem;
     text-align: center;
-    font-style: italic;
+    font-style: normal;
     max-width: 90%;
     box-shadow: var(--shadow-sm);
 }
@@ -9128,7 +9338,7 @@ input[type="date"].modal-input {
 	
     <!-- Titre Section Quotidienne -->
     <div class="stats-section-title daily">
-        <i class="fas fa-calendar-day"></i> Statistiques du Jour
+        <i class="fas fa-calendar-day"></i> Stats du Jour
 		<span class="help-icon" onclick="openHelpModal('stats-daily')">?</span>
 
     </div>
@@ -9176,7 +9386,7 @@ input[type="date"].modal-input {
 	
 	<!-- Titre Section Hebdomadaire -->
 <div class="stats-section-title weekly">
-    <i class="fas fa-calendar-week"></i> Statistiques des 7 derniers jours
+    <i class="fas fa-calendar-week"></i> Stats des 7 derniers jours
 	<span class="help-icon" onclick="openHelpModal('stats-weekly')">?</span>
 
 </div>
@@ -9227,7 +9437,7 @@ input[type="date"].modal-input {
 
     <!-- Titre Section Générale -->
     <div class="stats-section-title general">
-        <i class="fas fa-chart-pie"></i> Statistiques Générales
+        <i class="fas fa-chart-pie"></i> Stats générales
 		                <span class="help-icon" onclick="openHelpModal('stats-general')">?</span>
 
     </div>
@@ -9817,7 +10027,7 @@ input[type="date"].modal-input {
                         </th>
                         <th data-sort="name">Nom <i class="fas fa-sort sort-icon"></i></th>
                         <th data-sort="specialty">Spécialité <i class="fas fa-sort sort-icon"></i></th>
-                        <th>Tours (T1-T8)
+                        <th>Tours
 
 						</th>
                         <th>Ressources faites</th>
@@ -9897,11 +10107,11 @@ input[type="date"].modal-input {
 									<div class="modal-content">
 										<button class="modal-close" onclick="closeResourcesConfigModal()"><i class="fas fa-times"></i></button>
 										<h3 class="resources-config-title"><i class="fas fa-cog"></i> Configurer les ressources</h3>
-										<p class="resources-config-subtitle">Sélectionnez jusqu'à 4 ressources à afficher pour chaque item, vous pourrez ensuite les valider en fonction de votre avancée.</p>
-										
-										<div class="resources-selected-count">
-											<span id="resources-count">0</span> / 4 ressources sélectionnées
-										</div>
+												<p class="resources-config-subtitle">Sélectionnez jusqu'à 3 ressources à afficher en permanence. Les autres seront accessibles via le bouton ···</p>
+
+												<div class="resources-selected-count">
+													<span id="resources-count">0</span> / 3 ressources sélectionnées
+												</div>
 										
 										<div class="resources-available-list" id="resources-available-list">
 											<!-- Généré par JavaScript -->
@@ -9922,7 +10132,14 @@ input[type="date"].modal-input {
 <div class="modal" id="confidence-modal">
     <div class="modal-content">
         <button class="modal-close" id="confidence-close"><i class="fas fa-xmark"></i></button>
-        <h3 class="modal-title">Enregistrer le tour</h3>
+        <h3 class="modal-title">Enregistrer un tour</h3>
+
+<div class="tour-context-card" id="tour-context-card">
+    <div class="tour-context-num" id="tour-context-num"></div>
+    <div class="tour-context-name" id="tour-context-name"></div>
+    <span class="tour-context-specialty" id="tour-context-specialty"></span>
+    <span class="tour-context-badge" id="tour-context-badge"></span>
+</div>
         
 <div class="modal-section">
     <label class="modal-label">Confiance</label>
@@ -9947,14 +10164,24 @@ input[type="date"].modal-input {
         <div class="modal-section">
             <label class="modal-label">Durée</label>
             <div class="duration-input-wrapper">
-                <input type="number" id="tour-duration-hours" class="duration-input" min="0" max="10" placeholder="0">
+                <input type="text" inputmode="numeric" id="tour-duration-hours" class="duration-input" placeholder="0" maxlength="2">
                 <span class="duration-separator">h</span>
-                <input type="number" id="tour-duration-minutes" class="duration-input" min="0" max="59" step="5" placeholder="00">
+                <input type="text" inputmode="numeric" id="tour-duration-minutes" class="duration-input" placeholder="00" maxlength="2">
                 <span class="duration-separator">min</span>
-
+                <div class="duration-arrows">
+                    <button type="button" class="duration-arrow-btn"
+						onmousedown="_startDurationHold(15)" onmouseup="_stopDurationHold()" onmouseleave="_stopDurationHold()"
+						ontouchstart="event.preventDefault();_startDurationHold(15)" ontouchend="_stopDurationHold()">
+						<i class="fas fa-chevron-up"></i>
+					</button>
+					<button type="button" class="duration-arrow-btn"
+						onmousedown="_startDurationHold(-15)" onmouseup="_stopDurationHold()" onmouseleave="_stopDurationHold()"
+						ontouchstart="event.preventDefault();_startDurationHold(-15)" ontouchend="_stopDurationHold()">
+						<i class="fas fa-chevron-down"></i>
+					</button>
+                </div>
             </div>
-							<div class="confidence-error" id="duration-error">La durée ne peut pas dépasser 10 heures</div>
-
+            <div class="confidence-error" id="duration-error">La durée ne peut pas dépasser 10 heures</div>
         </div>
         
         <div class="modal-section">
@@ -10148,10 +10375,6 @@ input[type="date"].modal-input {
             <span>La restauration remplacera vos données actuelles. Cette action est irréversible.</span>
         </div>
         
-        <button class="backup-force-btn" onclick="forceManualBackup()">
-            <i class="fas fa-download"></i>
-            Créer une sauvegarde maintenant
-        </button>
     </div>
 </div>
 
@@ -10245,7 +10468,9 @@ window.openResourcesConfigModal = function() {
 
 // Fermer le modal
 window.closeResourcesConfigModal = function() {
-    document.getElementById('resources-config-modal').classList.remove('active');
+    const modal = document.getElementById('resources-config-modal');
+    modal.classList.add('closing');
+    setTimeout(() => modal.classList.remove('active', 'closing'), 180);
 };
 
 // Fermer le modal de configuration des ressources en cliquant en dehors
@@ -10269,7 +10494,7 @@ function renderResourcesOptions() {
     const container = document.getElementById('resources-available-list');
     container.innerHTML = AVAILABLE_RESOURCES.map(res => {
         const isSelected = tempSelectedResources.includes(res.id);
-        const isDisabled = !isSelected && tempSelectedResources.length >= 4;
+        const isDisabled = !isSelected && tempSelectedResources.length >= 3;
         return `
             <div class="resource-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" 
                  data-resource-id="${res.id}" 
@@ -10294,7 +10519,7 @@ window.toggleResourceOption = function(resourceId) {
     if (index > -1) {
         // Déselectionner
         tempSelectedResources.splice(index, 1);
-    } else if (tempSelectedResources.length < 4) {
+    } else if (tempSelectedResources.length < 3) {
         // Sélectionner (si moins de 4)
         tempSelectedResources.push(resourceId);
     }
@@ -10644,6 +10869,75 @@ if (document.readyState === 'loading') {
     initOfflineDetection();
 }
 
+window.openResourcesOverflow = function(event, specialtyId, fc) {
+    event.stopPropagation();
+    const popup = document.getElementById('resource-overflow-popup');
+
+    if (popup.classList.contains('show') && popup._spec === specialtyId && popup._fc === fc) {
+        closeResourcesOverflow();
+        return;
+    }
+
+    popup._spec = specialtyId;
+    popup._fc = fc;
+    popup.classList.remove('visible');
+    refreshOverflowPopup(specialtyId, fc);
+
+    // Positionner à droite du bouton
+    const rect = event.currentTarget.getBoundingClientRect();
+    popup.style.display = 'block';
+    const popupW = popup.offsetWidth || 140;
+    let left = rect.right + 6;
+    if (left + popupW > window.innerWidth - 8) left = rect.left - popupW - 6;
+    popup.style.top = (rect.top + rect.height / 2 - 20) + 'px';
+    popup.style.left = left + 'px';
+    popup.classList.add('show');
+
+    // Animation d'apparition
+    requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add('visible')));
+};
+
+function refreshOverflowPopup(specialtyId, fc) {
+    const popup = document.getElementById('resource-overflow-popup');
+    const d = getItemData(specialtyId, fc);
+    const res = d.resources || {};
+    const overflow = AVAILABLE_RESOURCES.filter(r => !selectedResources.slice(0, 3).includes(r.id));
+    if (overflow.length === 0) { popup.classList.remove('show'); return; }
+    popup.innerHTML = overflow.map(r => {
+        const isValidated = res[r.id] === true;
+        return '<div class="resource-overflow-item" onclick="toggleResourceInOverflow(event,\'' + specialtyId + '\',\'' + fc + '\',\'' + r.id + '\')">'
+            + '<div class="resource-box ' + r.cssClass + (isValidated ? ' validated' : '') + '">' + r.shortLabel + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+window.toggleResourceInOverflow = function(event, specialtyId, fc, resourceId) {
+    event.stopPropagation();
+    if (!canPerformAction('tour')) return;
+    const d = getItemData(specialtyId, fc);
+    if (!d.resources) d.resources = {};
+    d.resources[resourceId] = !d.resources[resourceId];
+    debouncedSave();
+    refreshOverflowPopup(specialtyId, fc);
+    document.getElementById('resource-overflow-popup')._dirty = true;
+    if (typeof TrophiesSystem !== 'undefined') setTimeout(() => TrophiesSystem.checkTrophies(), 500);
+};
+
+window.closeResourcesOverflow = function() {
+    const popup = document.getElementById('resource-overflow-popup');
+    if (!popup || !popup.classList.contains('show')) return;
+    popup.classList.remove('visible');
+    setTimeout(function() {
+        if (!popup.classList.contains('visible')) {
+            if (popup._dirty) { popup._dirty = false; renderItemsTable(); }
+            popup.classList.remove('show');
+        }
+    }, 180);
+};
+
+
+window.addEventListener('scroll', closeResourcesOverflow, true);
+document.addEventListener('touchmove', closeResourcesOverflow, { passive: true });
 
 
 // Mettre à jour le compteur
@@ -12618,6 +12912,10 @@ window.addEventListener('scroll', () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     header?.classList.toggle('scrolled', scrollTop > 0);
     backToTop?.classList.toggle('visible', scrollTop > 600);
+	    // Fermer tous les filtres au scroll
+    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
+    document.getElementById('specialty-dropdown')?.classList.remove('open');
+
 });
 backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
@@ -12753,6 +13051,10 @@ async function updateUserUI(user) {
 		// 🚫 Cacher le bouton de sauvegarde
 			const backupBtn = document.getElementById('backup-settings-btn');
 			if (backupBtn) backupBtn.style.display = 'none';
+
+			// 👋 Cacher le message de bienvenue
+			const welcomeEl = document.getElementById('welcome-message');
+			if (welcomeEl) { welcomeEl.classList.remove('visible'); welcomeEl.innerHTML = ''; }
 
 
         if (cloudSaveTimeout) { clearTimeout(cloudSaveTimeout); cloudSaveTimeout = null; }
@@ -13222,7 +13524,7 @@ async function checkAndCreateCloudBackup(userId, userData) {
         const today = new Date();
         const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
         
-        if (diffDays >= 7) {
+        if (diffDays >= 4) {
             
             await saveCloudBackup(userId, userData, false);
         } else {
@@ -13253,6 +13555,7 @@ async function saveCloudBackup(userId, data, isManual = false) {
             cloudBackupDate: new Date().toISOString(),
             isManual: isManual
         });
+		
         
         
         
@@ -15468,16 +15771,21 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
         
 		const res = d.resources || {};
 		let resourcesHtml = '';
-		if (selectedResources.length === 0) {
-			resourcesHtml = '<div class="resources-empty-btn" onclick="openResourcesConfigModal()"><i class="fas fa-plus"></i><span>Configurer</span></div>';
-		} else {
-			resourcesHtml = '<div class="resources-grid">' + selectedResources.map(resId => {
-				const resourceConfig = AVAILABLE_RESOURCES.find(r => r.id === resId);
-				if (!resourceConfig) return '';
-				const isValidated = res[resId] === true;
-				return '<div class="resource-box ' + resourceConfig.cssClass + (isValidated ? ' validated' : '') + '" onclick="toggleResourceValidation(\'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + resId + '\')">' + resourceConfig.shortLabel + '</div>';
-			}).join('') + '</div>';
-		}
+			if (selectedResources.length === 0) {
+				resourcesHtml = '<div class="resources-empty-btn" onclick="openResourcesConfigModal()"><i class="fas fa-plus"></i><span>Configurer</span></div>';
+			} else {
+				const displayed = selectedResources.slice(0, 3);
+				let boxes = displayed.map(resId => {
+					const resourceConfig = AVAILABLE_RESOURCES.find(r => r.id === resId);
+					if (!resourceConfig) return '';
+					const isValidated = res[resId] === true;
+					return '<div class="resource-box ' + resourceConfig.cssClass + (isValidated ? ' validated' : '') + '" onclick="toggleResourceValidation(\'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + resId + '\')">' + resourceConfig.shortLabel + '</div>';
+				}).join('');
+const overflowResources = AVAILABLE_RESOURCES.filter(r => !selectedResources.slice(0, 3).includes(r.id));
+const hasValidatedOverflow = overflowResources.some(r => res[r.id] === true);
+boxes += '<div class="resource-box overflow-btn' + (hasValidatedOverflow ? ' overflow-validated' : '') + '" onclick="openResourcesOverflow(event,\'' + item.specialtyId + '\',\'' + item.fc + '\')">···</div>';
+				resourcesHtml = '<div class="resources-grid">' + boxes + '</div>';
+			}
 
 
         const specCfg = SPECIALTY_CONFIG[item.specialtyId] || { color: '#6b7280' };
@@ -15720,7 +16028,7 @@ function updateSpecialtySelection() {
                 const cfg = SPECIALTY_CONFIG[sId] || { color: '#6b7280' };
 						const abbrev = SPECIALTY_SHORT[sId] || spec.name.substring(0, 3).toUpperCase();
 						chipsHtml += `
-							<div class="specialty-chip" style="background: ${cfg.color}" data-id="${sId}" title="${spec.name}">
+							<div class="specialty-chip" style="background: ${cfg.color}" data-id="${sId}" title="${spec.name}" onclick="removeSpecialtyChip(event, '${sId}')">
 								<span>${abbrev}</span>
 								<span class="specialty-chip-remove" onclick="removeSpecialtyChip(event, '${sId}')">
 									<i class="fas fa-times"></i>
@@ -15951,6 +16259,25 @@ window.openConfidenceModal = function(el) {
     if (!canPerformAction('tour')) return;
     
     pendingTour = { specialtyId: el.dataset.specialty, fc: el.dataset.fc, tour: parseInt(el.dataset.tour) };
+	
+	// Remplir la carte contextuelle
+const spec = SPECIALTIES_DATA.find(s => s.id === pendingTour.specialtyId);
+const item = spec?.items.find(i => i.fc === pendingTour.fc);
+const cfg  = SPECIALTY_CONFIG[pendingTour.specialtyId] || { color: '#6b7280' };
+const abbrev = SPECIALTY_SHORT[pendingTour.specialtyId] || pendingTour.specialtyId.substring(0, 3).toUpperCase();
+
+if (item) {
+    const words = item.name.split(' ');
+    const shortName = words.slice(0, 5).join(' ');
+    const displayName = shortName.length > 30 ? shortName.substring(0, 30) + '…' : shortName;
+
+    document.getElementById('tour-context-num').textContent  = '#' + item.num;
+    document.getElementById('tour-context-name').textContent = displayName;
+    document.getElementById('tour-context-specialty').textContent   = abbrev;
+    document.getElementById('tour-context-specialty').style.background = cfg.color;
+    document.getElementById('tour-context-badge').textContent = 'T' + (pendingTour.tour + 1);
+}
+
     
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
     const tourIndex = pendingTour.tour;
@@ -16123,7 +16450,8 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     d.tourSupports[tourIndex] = selectedSupport;
     d.lastRevision = selectedDate;
     
-    confidenceModal.classList.remove('active');
+    confidenceModal.classList.add('closing');
+setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
     pendingTour = null;
     selectedConfidence = null;
     selectedSupport = null;
@@ -16164,7 +16492,8 @@ document.getElementById('btn-reset-tour')?.addEventListener('click', function() 
     const remainingDates = d.tourDates.filter(x => x);
     d.lastRevision = remainingDates.length > 0 ? remainingDates[remainingDates.length - 1] : null;
     
-    confidenceModal.classList.remove('active');
+    confidenceModal.classList.add('closing');
+setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
     pendingTour = null;
     selectedConfidence = null;
     selectedSupport = null;
@@ -16180,7 +16509,8 @@ document.getElementById('btn-reset-tour')?.addEventListener('click', function() 
 });
 
 document.getElementById('confidence-close')?.addEventListener('click', () => { 
-    confidenceModal.classList.remove('active'); 
+    confidenceModal.classList.add('closing');
+setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180); 
     pendingTour = null; 
     selectedConfidence = null;
     selectedSupport = null;
@@ -16189,7 +16519,8 @@ document.getElementById('confidence-close')?.addEventListener('click', () => {
 
 confidenceModal?.addEventListener('click', e => { 
     if (e.target === confidenceModal) { 
-        confidenceModal.classList.remove('active'); 
+        confidenceModal.classList.add('closing');
+setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180); 
         pendingTour = null;
         selectedConfidence = null;
         selectedSupport = null;
@@ -16581,6 +16912,33 @@ function initWeeklyCharts() {
     document.getElementById('weekly-feeling-avg').textContent = avgFeeling !== null ? avgFeeling + '/5' : '--';
 }
 
+
+window.adjustDuration = function(deltaMinutes) {
+    const hoursEl = document.getElementById('tour-duration-hours');
+    const minutesEl = document.getElementById('tour-duration-minutes');
+    let total = (parseInt(hoursEl.value) || 0) * 60 + (parseInt(minutesEl.value) || 0) + deltaMinutes;
+    if (total < 0) total = 0;
+    if (total > 600) total = 600;
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    hoursEl.value = h > 0 ? String(h) : '';
+    minutesEl.value = m.toString().padStart(2, '0');
+}
+
+let _durationHoldTimer = null;
+let _durationHoldInterval = null;
+
+window._startDurationHold = function(delta) {
+    window.adjustDuration(delta);
+    _durationHoldTimer = setTimeout(function() {
+        _durationHoldInterval = setInterval(function() { window.adjustDuration(delta); }, 150);
+    }, 400);
+}
+
+window._stopDurationHold = function() {
+    clearTimeout(_durationHoldTimer);
+    clearInterval(_durationHoldInterval);
+}
 
 function formatDuration(minutes) {
     const h = Math.floor(minutes / 60);
@@ -17011,6 +17369,14 @@ function setupCustomDropdowns() {
             yearMenu?.classList.remove('active');
         }
     });
+	
+	// Fermer au scroll
+window.addEventListener('scroll', () => {
+    monthBtn?.classList.remove('active');
+    monthMenu?.classList.remove('active');
+    yearBtn?.classList.remove('active');
+    yearMenu?.classList.remove('active');
+}, { passive: true });
 }
     
     // Setup événements
@@ -18697,12 +19063,12 @@ setTimeout(() => {
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+
 }
 
 .help-modal-overlay.active {
     display: flex;
+	animation: modalOverlayIn 0.2s ease forwards; 
     opacity: 1;
 }
 
@@ -18714,15 +19080,20 @@ setTimeout(() => {
     width: 90%;
     max-height: 85vh;
     overflow: hidden;
-    transform: scale(0.9) translateY(20px);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: scale(0.94) translateY(14px); 
+    
     display: flex;
     flex-direction: column;
 }
 
 .help-modal-overlay.active .help-modal {
     transform: scale(1) translateY(0);
+	animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
 }
+
+.help-modal-overlay.closing          { animation: modalOverlayOut 0.18s ease forwards; }
+.help-modal-overlay.closing .help-modal { animation: modalContentOut 0.18s ease forwards; }
+
 
 .help-modal-header {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -18754,26 +19125,41 @@ setTimeout(() => {
     font-size: 20px;
     font-weight: 700;
     margin: 0;
+	color: white;
 }
 
 .help-modal-close {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--danger-light);
     border: none;
-    color: white;
-    font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    font-size: 1.2rem;
+    color: var(--danger);
+    transition: all var(--transition-fast);
 }
 
 .help-modal-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(90deg);
+    background: var(--danger);
+    color: #ffffff;
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
+}
+
+[data-theme="dark"] .help-modal-close {
+    background: rgba(239, 68, 68, 0.6);
+    color: #ffffff;
+    border: 1px solid rgba(239, 68, 68, 0.8);
+}
+
+[data-theme="dark"] .help-modal-close:hover {
+    background: var(--danger);
+    color: #ffffff;
+    border-color: transparent;
 }
 
 .help-modal-body {
@@ -19035,41 +19421,49 @@ setTimeout(() => {
 
 .timer-close {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: var(--gray-200);
+    top: 1rem;
+    right: 1rem;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    background: var(--danger-light);
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gray-600);
+    font-size: 1.2rem;
+    color: var(--danger);
     transition: all var(--transition-fast);
 }
 
 .timer-close:hover {
-    background: var(--gray-300);
-    color: var(--gray-800);
-    transform: rotate(90deg);
+    background: var(--danger);
+    color: #ffffff;
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
 }
 
 .legend-close {
-    background: var(--gray-200);
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    background: var(--danger-light);
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gray-600);
+    font-size: 1.2rem;
+    color: var(--danger);
     transition: all var(--transition-fast);
 }
 
 .legend-close:hover {
-    background: var(--gray-300);
-    color: var(--gray-800);
-    transform: rotate(90deg);
+    background: var(--danger);
+    color: #ffffff;
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
 }
 
 /* ===== BOUTON LÉGENDE ===== */
@@ -19130,22 +19524,7 @@ setTimeout(() => {
     gap: 0.5rem;
 }
 
-.legend-close {
-    background: var(--gray-200);
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gray-600);
-    transition: all var(--transition-fast);
-}
 
-.legend-close:hover {
-    background: var(--gray-300);
-    color: var(--gray-800);
-}
 
 /* NOUVEAU - Sélecteurs spécifiques au modal */
 .legend-modal .legend-items {
@@ -19569,17 +19948,24 @@ function openHelpModal(contentId) {
     document.getElementById('helpModalTitle').textContent = data.title;
     document.getElementById('helpModalBody').innerHTML = data.content;
     
-    const overlay = document.getElementById('helpModalOverlay');
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+		const overlay = document.getElementById('helpModalOverlay');
+		overlay.classList.add('active');
+		const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+		document.body.style.overflow = 'hidden';
+		document.body.style.paddingRight = scrollbarWidth + 'px';
+		document.querySelector('.header').style.paddingRight = scrollbarWidth + 'px';
 }
 
 function closeHelpModal(event) {
     if (event && event.target.id !== 'helpModalOverlay') return;
-    
     const overlay = document.getElementById('helpModalOverlay');
-    overlay.classList.remove('active');
+    overlay.classList.add('closing');
+setTimeout(() => {
+    overlay.classList.remove('active', 'closing');
     document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+document.querySelector('.header').style.paddingRight = '';	
+}, 180);
 }
 
 document.addEventListener('keydown', function(e) {
@@ -19769,6 +20155,12 @@ document.addEventListener('click', function(event) {
             legendModal.classList.remove('show');
         }
     }
+
+    // ← AJOUTE CES 3 LIGNES ICI
+    const overflowPopup = document.getElementById('resource-overflow-popup');
+    if (overflowPopup && !overflowPopup.contains(event.target)) {
+        closeResourcesOverflow();
+    }
 });
 
 // ===== RÉINITIALISATION DU CHRONOMÈTRE =====
@@ -19809,6 +20201,7 @@ window.addEventListener('load', function() {
     </div>
 </div>
 
+<div class="resource-overflow-popup" id="resource-overflow-popup"></div>
 
 
 </body>
