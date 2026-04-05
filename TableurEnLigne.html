@@ -7559,7 +7559,7 @@ input[type="date"].modal-input {
     }
     
     .header-pagination .pagination-btn {
-        width: 63px;
+        width: 30px;
         height: 30px;
         font-size: 0.75rem;
     }
@@ -7592,7 +7592,7 @@ input[type="date"].modal-input {
     }
     
     .header-pagination .pagination-btn {
-        width: 60px;
+        width: 28px;
         height: 28px;
     }
     
@@ -9173,42 +9173,143 @@ input[type="date"].modal-input {
 
 
 
-@media (min-width: 769px) and (max-width: 900px) {
+/* ===== LÉGENDE PLANNING HEADER ===== */
+.planning-legend-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
 
-    /* Autoriser le scroll horizontal sur le tableau */
-    #page-items .items-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+.planning-legend-btn {
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+    white-space: nowrap;
+}
+
+.planning-legend-btn:hover {
+    background: var(--gray-300);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .planning-legend-btn {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.planning-legend-modal {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    left: 0;
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 1.25rem;
+    min-width: 300px;
+    max-width: 380px;
+    z-index: var(--z-dropdown);
+    display: none;
+    border: 2px solid var(--gray-200);
+}
+
+.planning-legend-modal.show {
+    display: block;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.planning-legend-modal.closing {
+    display: block;
+    animation: fadeOutDown 0.2s ease-in forwards;
+}
+
+.planning-legend-modal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.planning-legend-modal-items::-webkit-scrollbar { width: 4px; }
+.planning-legend-modal-items::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
+.planning-legend-modal-items::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+
+.planning-legend-modal .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.planning-legend-modal .legend-item:hover {
+    background: var(--gray-100);
+}
+
+.planning-legend-modal .legend-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 52px;
+    text-align: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.planning-legend-modal .legend-description {
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    flex: 1;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 768px) {
+    .planning-legend-btn-text {
+        display: none;
     }
 
-    #page-items .section-card {
-        overflow: visible;
+    .planning-legend-btn {
+        padding: 0.5rem 0.625rem;
     }
 
-    /* Réduire les colonnes les plus larges */
-    .tour-cell        { min-width: 210px; }
-    .resources-cell   { min-width: 110px; }
-    .days-cell        { min-width: 60px; }
-
-    .items-table .item-name {
-        max-width: 140px;
+    .planning-legend-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        transform: translate(-50%, -50%);
+        width: calc(100vw - 2rem);
+        max-width: 420px;
+        max-height: 80vh;
+        overflow-y: hidden;
+        z-index: var(--z-modal);
     }
 
-    .items-table .item-specialty {
-        max-width: 90px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .planning-legend-modal.show {
+        animation: fadeInMobile 0.25s ease-out;
     }
 
-    /* Sticky du thead : compenser le header fixe de 70px */
-    #page-items .items-table th {
-        position: sticky;
-        top: 70px;
-        z-index: 50;
+    .planning-legend-modal-items {
+        max-height: 60vh;
     }
 }
 
+@media (max-width: 480px) {
+    .planning-legend-modal {
+        width: calc(100vw - 1.5rem);
+    }
+}
 
 </style>
 </head>
@@ -9998,7 +10099,29 @@ input[type="date"].modal-input {
 								<span id="current-month-name">Janvier</span>
 							</h2>
 							<span class="planning-year-badge" id="current-year">2025</span>
+							<!-- Bouton Légende Planning -->
+								<div class="planning-legend-wrapper">
+									<button class="planning-legend-btn" onclick="togglePlanningLegendModal(event)" title="Légende des matières">
+										<i class="fas fa-palette"></i>
+									</button>
+
+									<div class="planning-legend-modal" id="planningLegendModal">
+										<div class="legend-modal-header">
+											<div class="legend-modal-title">
+												<i class="fas fa-palette"></i>
+												Légende des matières
+											</div>
+											<button class="legend-close" onclick="closePlanningLegendModal()">
+												<i class="fas fa-times"></i>
+											</button>
+										</div>
+										<div class="planning-legend-modal-items" id="planningLegendItems">
+											<!-- Généré dynamiquement par JS -->
+										</div>
+									</div>
+								</div>
 							<span class="help-icon" onclick="openHelpModal('planning-calendar')">?</span>
+							
 						</div>
                     
                     <div class="planning-nav-controls">
@@ -10057,11 +10180,11 @@ input[type="date"].modal-input {
                 </div>
                 			
 				
-				<!-- Légende spécialités -->
+				<!-- Légende spécialités 
 				<div class="planning-legend specialty-legend">
 					<div class="legend-items specialty-badges-legend" id="specialty-legend-items">
 					</div>
-				</div>
+				</div>-->
 				
             </div>
             
@@ -10817,6 +10940,8 @@ input[type="date"].modal-input {
 
 
 <script type="module">
+
+
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -18084,18 +18209,21 @@ window.addEventListener('scroll', () => {
         });
         
         // Fermer popups au clic extérieur
-        document.addEventListener('click', (e) => {
-            const statusPopup = document.getElementById('status-popup');
-            const specPopup = document.getElementById('specialty-popup');
-            
-            if (statusPopup && !statusPopup.contains(e.target) && !e.target.closest('.day-header-zone')) {
-                statusPopup.classList.remove('active');
-				clearZoneHighlight();
-            }
-            if (specPopup && !specPopup.contains(e.target) && !e.target.closest('.day-specialty-zone')) {
-                specPopup.classList.remove('active');
-            }
-        });
+			document.addEventListener('click', (e) => {
+				const statusPopup = document.getElementById('status-popup');
+				const specPopup = document.getElementById('specialty-popup');
+				
+				if (statusPopup && !statusPopup.contains(e.target) && !e.target.closest('.day-header-zone')) {
+					statusPopup.classList.remove('active');
+					activeStatusZone?.classList.remove('popup-open'); // ← efface SEULEMENT la zone statut
+					activeStatusZone = null;
+				}
+				if (specPopup && !specPopup.contains(e.target) && !e.target.closest('.day-specialty-zone')) {
+					specPopup.classList.remove('active');
+					activeSpecialtyZone?.classList.remove('popup-open'); // ← efface la zone spécialité
+					activeSpecialtyZone = null;
+				}
+			});
 		
 // ===== FERMER LES POPUPS AU SCROLL =====
 let scrollCloseTimer = null;
@@ -18149,7 +18277,9 @@ window.addEventListener('scroll', () => {
 					}
 					
 					document.getElementById('specialty-popup').classList.remove('active');
-					document.getElementById('specialty-search').value = ''; // Reset recherche
+					document.getElementById('specialty-search').value = '';
+					activeSpecialtyZone?.classList.remove('popup-open');
+					activeSpecialtyZone = null;
 				}
 			});
 
@@ -18168,7 +18298,9 @@ window.addEventListener('scroll', () => {
 					}
 					
 					document.getElementById('specialty-popup').classList.remove('active');
-					document.getElementById('specialty-search').value = ''; // Reset recherche
+					document.getElementById('specialty-search').value = '';
+					activeSpecialtyZone?.classList.remove('popup-open');
+					activeSpecialtyZone = null;
 				}
 			});
 
@@ -19663,6 +19795,12 @@ setTimeout(() => {
     }
 }, 15000); // 15 secondes
 
+
+// Exposition des données spécialités au scope global
+window.SPECIALTY_SHORT   = SPECIALTY_SHORT;
+window.SPECIALTY_CONFIG  = SPECIALTY_CONFIG;
+window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
+
 </script>
 
 <style>
@@ -21061,6 +21199,94 @@ function closeLegendModal() {
     closeLegendModalAnimated();
 }
 
+// ===== LÉGENDE PLANNING =====
+
+function buildPlanningLegendItems() {
+    const container = document.getElementById('planningLegendItems');
+    if (!container || container.children.length > 0) return;
+
+    const shortMap  = window.SPECIALTY_SHORT  || {};
+    const cfgMap    = window.SPECIALTY_CONFIG  || {};
+    const dataArr   = window.SPECIALTIES_DATA  || [];
+
+    const html = Object.entries(shortMap).map(([id, short]) => {
+        const cfg  = cfgMap[id]  || { color: '#6b7280' };
+        const spec = dataArr.find(s => s.id === id);
+        const name = spec ? spec.name : id;
+        return `
+            <div class="legend-item">
+                <span class="legend-badge" style="background:${cfg.color};">${short}</span>
+                <span class="legend-description">${name}</span>
+            </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+// ===== FERMETURE PLANNING LEGEND AU SWIPE =====
+(function() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        const modal = document.getElementById('planningLegendModal');
+        if (!modal || !modal.classList.contains('show')) return;
+
+        const touch = e.changedTouches[0];
+
+        // Vérifier si le doigt est à l'intérieur du modal via coordonnées réelles
+        const rect = modal.getBoundingClientRect();
+        const isInsideModal = (
+            touch.clientX >= rect.left &&
+            touch.clientX <= rect.right &&
+            touch.clientY >= rect.top  &&
+            touch.clientY <= rect.bottom
+        );
+        if (isInsideModal) return;
+
+        // Swipe vertical dominant d'au moins 40px en dehors du modal → fermer
+        const deltaX = Math.abs(touch.clientX - touchStartX);
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        if (deltaY > 40 && deltaY > deltaX) {
+            closePlanningLegendModalAnimated();
+        }
+    }, { passive: true });
+})();
+
+function togglePlanningLegendModal(event) {
+    event.stopPropagation();
+    const modal = document.getElementById('planningLegendModal');
+    if (!modal) return;
+
+    // Fermer les autres modals ouverts
+    closeLegendModalAnimated();
+    closeTimerModalAnimated();
+
+    if (modal.classList.contains('show')) {
+        closePlanningLegendModalAnimated();
+    } else {
+        buildPlanningLegendItems(); // construction lazy
+        modal.classList.add('show');
+    }
+}
+
+function closePlanningLegendModalAnimated() {
+    const modal = document.getElementById('planningLegendModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    modal.classList.add('closing');
+    setTimeout(() => modal.classList.remove('show', 'closing'), 200);
+}
+
+function closePlanningLegendModal() {
+    closePlanningLegendModalAnimated();
+}
+
+
 // ===== FERMETURE DES MODALS EN CLIQUANT AILLEURS =====
 document.addEventListener('click', function(event) {
     const timerModal = document.getElementById('timerModal');
@@ -21074,6 +21300,15 @@ document.addEventListener('click', function(event) {
             closeTimerModalAnimated();                // ← modifié
         }
     }
+	
+	// Fermer le modal légende planning si on clique ailleurs
+const planningLegendModal  = document.getElementById('planningLegendModal');
+const planningLegendBtn    = document.querySelector('.planning-legend-btn');
+if (planningLegendModal && planningLegendModal.classList.contains('show')) {
+    if (!planningLegendModal.contains(event.target) && !planningLegendBtn.contains(event.target)) {
+        closePlanningLegendModalAnimated();
+    }
+}
     
     // Fermer le modal légende si on clique ailleurs
     if (legendModal && legendModal.classList.contains('show')) {
