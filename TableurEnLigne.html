@@ -5972,8 +5972,6 @@ input[type="date"].modal-input {
     .day-notes-input {
         font-size: 0.65rem;
         min-height: 35px;
-		    overflow-y: auto;                    
-    -webkit-overflow-scrolling: touch;
     }
     
     .day-specialty-zone {
@@ -10298,7 +10296,10 @@ input[type="date"].modal-input {
 <div class="mini-popup mini-popup-specialty" id="specialty-popup">
     <div class="specialty-popup-header">
         <div class="specialty-popup-top">
-            <div class="mini-popup-title">Spécialités</div>
+            <div class="mini-popup-title">
+				Spécialités
+				<span id="specialty-counter" style="font-size:0.75rem; font-weight:500; color:var(--gray-400); margin-left:0.4rem;">0/3</span>
+			</div>
             <div class="specialty-popup-actions">
                 <button class="specialty-clear-btn" id="specialty-clear">
                     <i class="fas fa-trash-alt"></i> 
@@ -11722,7 +11723,7 @@ const SPECIALTY_SHORT = {
     'hematologie': 'HEM',
     'endocrinologie': 'END',
     'mir': 'MIR',
-    'nephrologie': 'NEPH',
+    'nephrologie': 'NEF',
     'infectiologie': 'INF',
     'dermatologie': 'DER',
     'therapeutique': 'TTT',
@@ -11732,7 +11733,7 @@ const SPECIALTY_SHORT = {
     'oncologie': 'ONC',
     'ophtalmologie': 'OPH',
     'urologie': 'URO',
-    'medecine-legale': 'MTML',
+    'medecine-legale': 'MTL',
     'sante-publique': 'SPU'
 };
 
@@ -18053,7 +18054,7 @@ let ignoreScrollClose = false;
         { id: 'endoc', name: 'END', class: 'spe-endoc' },
         { id: 'osteo', name: 'RHU', class: 'spe-osteo' },
         { id: 'onco', name: 'ONC', class: 'spe-onco' },
-        { id: 'nephro', name: 'NEPH', class: 'spe-nephro' },
+        { id: 'nephro', name: 'NEF', class: 'spe-nephro' },
 		{ id: 'infectio', name: 'INF', class: 'spe-infectio' },
         { id: 'mir', name: 'MIR', class: 'spe-mir' },
 		{ id: 'dermato', name: 'DER', class: 'spe-dermato' },
@@ -18063,7 +18064,7 @@ let ignoreScrollClose = false;
         { id: 'mi', name: 'MIN', class: 'spe-mi' },
         { id: 'uro', name: 'URO', class: 'spe-uro' },
 		{ id: 'ophta', name: 'OPH', class: 'spe-ophta' },
-		{ id: 'legal', name: 'MTML', class: 'spe-legal' },
+		{ id: 'legal', name: 'MTL', class: 'spe-legal' },
         { id: 'sante-pub', name: 'SPU', class: 'spe-sante-pub' }
     ];
     
@@ -18387,11 +18388,12 @@ window.addEventListener('scroll', () => {
                 const speId = btn.dataset.specialty;
                 const index = tempSelectedSpecialties.indexOf(speId);
                 
-                if (index > -1) {
-                    tempSelectedSpecialties.splice(index, 1);
-                } else {
-                    tempSelectedSpecialties.push(speId);
-                }
+				if (index > -1) {
+					tempSelectedSpecialties.splice(index, 1);
+				} else {
+					if (tempSelectedSpecialties.length >= 3) return; // ← bloque à 3
+					tempSelectedSpecialties.push(speId);
+				}
                 
                 updateSpecialtyPopupSelection();
             });
@@ -18442,12 +18444,12 @@ function autoResizeTextarea(textarea) {
     textarea.style.height = 'auto';
     
     // Calculer la nouvelle hauteur (avec min et max)
-		const minHeight = 45;
-		const maxHeight = window.innerWidth <= 768 ? 200 : 150;
-		const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+	const minHeight = 45;
+	const maxHeight = window.innerWidth <= 768 ? 200 : 150;
+	const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
-		textarea.style.height = newHeight + 'px';
-		textarea.style.overflowY = newHeight >= maxHeight ? 'auto' : 'hidden';
+	textarea.style.height = newHeight + 'px';
+	textarea.style.overflowY = newHeight >= maxHeight ? 'auto' : 'hidden';
 }
     
     // Mettre à jour la sélection visuelle
@@ -18459,6 +18461,22 @@ function autoResizeTextarea(textarea) {
             const isSelected = tempSelectedSpecialties.includes(btn.dataset.specialty);
             btn.classList.toggle('selected', isSelected);
         });
+		
+					// Compteur
+			const counter = document.getElementById('specialty-counter');
+			if (counter) {
+				counter.textContent = `${tempSelectedSpecialties.length}/3`;
+				counter.style.color = tempSelectedSpecialties.length >= 3 ? 'var(--danger)' : 'var(--gray-400)';
+			}
+
+			// Griser les boutons non sélectionnés si limite atteinte
+			grid.querySelectorAll('.specialty-mini-btn').forEach(btn => {
+				const isSelected = tempSelectedSpecialties.includes(btn.dataset.specialty);
+				btn.style.opacity = (!isSelected && tempSelectedSpecialties.length >= 3) ? '0.35' : '';
+				btn.style.pointerEvents = (!isSelected && tempSelectedSpecialties.length >= 3) ? 'none' : '';
+			});
+
+
     }
     
     // Navigation
