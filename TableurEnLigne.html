@@ -3281,6 +3281,7 @@ input[type="date"].modal-input {
 
 .specialty-multi-close:hover {
     background: #2563eb;
+    transform: translateY(-1px);
 }
 
 
@@ -6318,15 +6319,15 @@ input[type="date"].modal-input {
 /* Mobile responsive */
 @media (max-width: 768px) {
     .toast-notification {
-        right: 0;
-        left: 0;
-        bottom: 20px;
-        max-width: none;
-        width: 100%;
-        font-size: 0.85rem;
-        padding: 0.75rem 1rem;
-        border-radius: 0;
-        transform: translateY(100%);
+        left: 16px;
+        right: auto;
+        bottom: 0;
+        max-width: 260px;
+        width: auto;
+        font-size: 0.8rem;
+        padding: 0.6rem 1rem;
+        border-radius: 10px 10px 0 0;
+        transform: translateY(110%);
     }
     
     .toast-notification.show {
@@ -10580,7 +10581,8 @@ input[type="date"].modal-input {
 				<div class="specialty-multi-header">
 					<div class="specialty-multi-counter">
 						<span></span>
-						<span class="specialty-counter-badge" id="specialty-counter">0</span>
+						<span class="specialty-counter-badge" id="specialty-dropdown-counter">0</span>
+
 						<span>/ 4</span>
 					</div>
 					<div class="specialty-multi-header-buttons">
@@ -10592,9 +10594,7 @@ input[type="date"].modal-input {
 						</button>
 					</div>
 				</div>
-        <div class="specialty-multi-search">
-            <input type="text" placeholder="Rechercher une spécialité..." id="specialty-search-input">
-        </div>
+
         <div class="specialty-multi-list" id="specialty-multi-list"></div>
     </div>
     <input type="hidden" id="filter-item-specialty" value="all">
@@ -11338,7 +11338,7 @@ function handleOffline() {
         
         // Afficher notification d'avertissement
         if (typeof showToastNotification === 'function') {
-showToastNotification('⚠️ Connexion perdue - Les dernières modificationss ne SONT PAS sauvegardées. Ne fermez PAS cet onglet/fenêtre et ne changez pas d\'onglet ! Reconnectez-vous à Internet avant de quitter.', 'warning', true);        }
+showToastNotification('⚠️ Connexion perdue - Les dernières modifications ne SONT PAS sauvegardées. Ne fermez PAS cet onglet/fenêtre et ne changez pas d\'onglet ! Reconnectez-vous à Internet avant de quitter.', 'warning', true);        }
     }
     
     isOfflineMode = true;
@@ -16844,7 +16844,6 @@ function initSpecialtyMultiSelect() {
     const btn = document.getElementById('specialty-multi-btn');
     const menu = document.getElementById('specialty-menu');
     const list = document.getElementById('specialty-multi-list');
-    const searchInput = document.getElementById('specialty-search-input');
     const clearBtn = document.getElementById('specialty-clear-btn');
     
     if (!container || !btn || !menu || !list) return;
@@ -16883,10 +16882,7 @@ btn.addEventListener('click', function(e) {
 			}
 });
     
-    // Recherche
-    searchInput.addEventListener('input', function() {
-        renderSpecialtyOptions(this.value.toLowerCase());
-    });
+
     
     // Empêcher la fermeture quand on clique dans le menu
     menu.addEventListener('click', function(e) {
@@ -16897,7 +16893,7 @@ btn.addEventListener('click', function(e) {
 clearBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     selectedSpecialties = [];
-    searchInput.value = '';
+
     updateSpecialtySelection();
     renderSpecialtyOptions('');
 });
@@ -17006,7 +17002,7 @@ list.querySelectorAll('.specialty-multi-option').forEach(opt => {
 
 function updateSpecialtySelection() {
     const content = document.querySelector('.specialty-multi-content');
-    const counter = document.getElementById('specialty-counter');
+    const counter = document.getElementById('specialty-dropdown-counter');
     const filterInput = document.getElementById('filter-item-specialty');
     
     if (!content) return;
