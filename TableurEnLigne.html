@@ -1003,32 +1003,60 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 
 .resources-config-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem; 
+    justify-content: flex-end;
+    align-items: stretch;
 }
 
 .resources-config-actions button {
-    padding: 0.5rem 1rem;
+    padding: 0.65rem 1.4rem; 
     border-radius: var(--border-radius-md);
     font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
+    font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
+.resources-save-btn {
+    flex: 2.2; /* plus large */
+    min-width: 140px;
+}
+
 .resources-cancel-btn {
-    flex: 1;
+    flex: 1; /* plus petit */
+    min-width: 110px;
+}
+
+.resources-cancel-btn {
     background: var(--gray-100);
-    border: 1px solid var(--gray-300);
     color: var(--gray-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.resources-cancel-btn i {
+    color: inherit;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .resources-cancel-btn:hover {
-    background: var(--danger-light);
+    background: #f3dede;
+    border-color: transparent;
+    color: var(--gray-700);
+    box-shadow: none;
+}
+
+.resources-cancel-btn:hover i {
+    color: #ef4444;
+    transform: scale(1.05);
+}
+
+.resources-cancel-btn:hover i {
     color: var(--danger);
 }
 
 .resources-save-btn {
-    flex: 2;
     background: var(--primary-gradient);
     border: none;
     color: white;
@@ -1137,14 +1165,21 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     color: #cbd5e1; 
 }
 [data-theme="dark"] .resources-cancel-btn {
-    background: transparent;
-    border: 1px solid #475569;
     color: #94a3b8;
+	background: #3f4a5a;
 }
+
 [data-theme="dark"] .resources-cancel-btn:hover {
-    background: #334155;
-    color: #cbd5e1;
+    background: #4b2c34;
+    border-color: transparent;
+    color: #e2e8f0;
+    box-shadow: none;
 }
+
+[data-theme="dark"] .resources-cancel-btn:hover i {
+    color: #ef4444;
+}
+
 [data-theme="dark"] .resources-empty-btn { 
     background: #334155; 
     border-color: #475569; 
@@ -5199,7 +5234,7 @@ input[type="date"].modal-input {
 .day-notes-zone {
     flex: 1;
     padding: 0.4rem 0.6rem;
-    overflow: hidden;
+    overflow: visible;
     min-height: 50px;
 }
 
@@ -5214,8 +5249,12 @@ input[type="date"].modal-input {
     color: var(--gray-800);
     resize: none;
     outline: none;
-    overflow-y: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     font-weight: 800;
+    display: block;
+    box-sizing: border-box;
 }
 
 .day-notes-input::placeholder { 
@@ -5423,7 +5462,6 @@ input[type="date"].modal-input {
     cursor: pointer;
     transition: all var(--transition-fast);
     font-weight: 600;
-    border: 1px solid var(--gray-300);
 }
 
 .specialty-clear-btn:hover { 
@@ -5659,6 +5697,16 @@ input[type="date"].modal-input {
     .day-status-badge { font-size: 0.5rem; padding: 0.1rem 0.3rem; }
     .weekday-header { padding: 0.6rem 0.25rem; font-size: 0.6rem; }
     .mini-popup-specialty { width: 260px; }
+}
+
+@media (max-width: 768px) {
+  .day-status-badge.revision {
+    font-size: 0;
+  }
+  .day-status-badge.revision::before {
+    content: "RÉV.";
+    font-size: 0.5rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -6017,10 +6065,13 @@ input[type="date"].modal-input {
         min-height: 85px;
     }
     
-    .day-notes-input {
-        font-size: 0.6rem;
-        min-height: 28px;
-    }
+.day-notes-input {
+    font-size: 0.6rem;
+    min-height: 28px;
+    max-height: 120px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
     
     .day-specialty-zone {
         min-height: 20px;
@@ -6693,8 +6744,50 @@ input[type="date"].modal-input {
     background: #0c1322;
 }
 
-[data-theme="dark"] .calendar-day.is-today {
+[data-theme="dark"] .calendar-day.is-today:not(.status-stage):not(.status-revision):not(.status-garde):not(.status-repos):not(.status-autre) {
     box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+[data-theme="dark"] .calendar-day.is-today {
+    position: relative;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .calendar-day.is-today:not(.status-stage):not(.status-revision):not(.status-garde):not(.status-repos):not(.status-autre)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--primary);
+    pointer-events: none;
+    z-index: 3;
+    box-sizing: border-box;
+}
+
+[data-theme="dark"] .calendar-day.is-today.status-stage,
+[data-theme="dark"] .calendar-day.is-today.status-revision,
+[data-theme="dark"] .calendar-day.is-today.status-garde,
+[data-theme="dark"] .calendar-day.is-today.status-repos,
+[data-theme="dark"] .calendar-day.is-today.status-autre {
+    box-shadow: none;
+}
+
+[data-theme="dark"] .calendar-day.is-today.status-stage::after,
+[data-theme="dark"] .calendar-day.is-today.status-revision::after,
+[data-theme="dark"] .calendar-day.is-today.status-garde::after,
+[data-theme="dark"] .calendar-day.is-today.status-repos::after,
+[data-theme="dark"] .calendar-day.is-today.status-autre::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0px;
+    border-top: 2px solid var(--primary);
+    border-right: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+    pointer-events: none;
+    z-index: 3;
+    box-sizing: border-box;
 }
 
 /* Zone type de journée (header) */
@@ -6740,7 +6833,7 @@ input[type="date"].modal-input {
 }
 
 [data-theme="dark"] .day-notes-input:focus {
-    background: #334155;
+    background: transparent;
 }
 
 [data-theme="dark"] .day-notes-input::placeholder {
@@ -7098,17 +7191,21 @@ input[type="date"].modal-input {
         flex-direction: column;
     }
     
-    /* Zone notes ne prend pas tout l'espace */
-    .day-notes-zone {
-        flex: 1;
-        min-height: 30px;
-        max-height: 45px;
-    }
-    
-    .day-notes-input {
-        font-size: 0.6rem;
-        min-height: 28px;
-    }
+/* Zone notes mobile : peut grandir, puis scroll interne */
+.day-notes-zone {
+    flex: 1;
+    min-height: 30px;
+    max-height: none;
+    overflow: visible;
+}
+
+.day-notes-input {
+    font-size: 0.6rem;
+    min-height: 28px;
+    max-height: 120px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+}
 }
 
 @media (max-width: 480px) {
@@ -7158,6 +7255,16 @@ input[type="date"].modal-input {
     .calendar-day {
         min-height: 95px;
     }
+	
+	.day-notes-input {
+    font-size: 0.6rem;
+    min-height: 28px;
+    max-height: 200px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+}
+
+
 }
 
 /* Hint de scroll pour liste des items */
@@ -10312,7 +10419,7 @@ input[type="date"].modal-input {
 			</div>
             <div class="specialty-popup-actions">
                 <button class="specialty-clear-btn" id="specialty-clear">
-                    <i class="fas fa-trash-alt"></i> 
+                    <i class="fas fa-trash"></i> 
                 </button>
                 <button class="specialty-confirm-btn" id="specialty-confirm">
                     <i class="fas fa-check"></i> 
@@ -10798,8 +10905,9 @@ input[type="date"].modal-input {
             <!-- Généré par JavaScript -->
         </div>
         <div class="resources-config-actions">
+						<button class="resources-save-btn" onclick="saveResourcesConfig()"><i class="fas fa-check"></i></button>
+
 			<button class="resources-cancel-btn" onclick="resetResourcesConfig()"><i class="fas fa-trash"></i></button>
-			<button class="resources-save-btn" onclick="saveResourcesConfig()"><i class="fas fa-check"></i></button>
         </div>
     </div>
 </div>
@@ -13562,6 +13670,15 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
         document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
         this.classList.add('active');
         document.getElementById('page-' + this.dataset.page).classList.add('active');
+
+        // Redimensionner les notes du planning à l'activation de l'onglet
+        if (this.dataset.page === 'planning') {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('#page-planning .day-notes-input').forEach(ta => {
+                    if (ta.value) autoResizeTextarea(ta);
+                });
+            });
+        }
         
         // Scroll jusqu'aux boutons de navigation
         const appNav = document.querySelector('.app-nav');
@@ -18460,18 +18577,22 @@ function filterSpecialties(query) {
 			}
 }
 
-// Auto-resize textarea
 function autoResizeTextarea(textarea) {
-    // Reset height pour calculer la vraie hauteur du contenu
     textarea.style.height = 'auto';
-    
-    // Calculer la nouvelle hauteur (avec min et max)
-	const minHeight = 45;
-	const maxHeight = window.innerWidth <= 768 ? 200 : 150;
-	const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
-	textarea.style.height = newHeight + 'px';
-	textarea.style.overflowY = newHeight >= maxHeight ? 'auto' : 'hidden';
+    const isMobile = window.innerWidth <= 768;
+    const minHeight = isMobile ? 28 : 45;
+    const maxHeight = isMobile ? 120 : 150;
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+
+    textarea.style.height = newHeight + 'px';
+
+    if (newHeight >= maxHeight) {
+        textarea.style.overflowY = isMobile ? 'scroll' : 'auto';
+        textarea.style.webkitOverflowScrolling = 'touch';
+    } else {
+        textarea.style.overflowY = 'hidden';
+    }
 }
     
     // Mettre à jour la sélection visuelle
@@ -18614,6 +18735,16 @@ function updateSelectors() {
             const dayEl = createDayElement(date, today, isOtherMonth);
             grid.appendChild(dayEl);
         }
+
+        // Si la page planning est déjà visible, redimensionner les textareas tout de suite
+        const planningPage = document.getElementById('page-planning');
+        if (planningPage && planningPage.classList.contains('active')) {
+            requestAnimationFrame(() => {
+                grid.querySelectorAll('.day-notes-input').forEach(ta => {
+                    if (ta.value) autoResizeTextarea(ta);
+                });
+            });
+        }
     }
     
     // Créer élément jour
@@ -18657,23 +18788,41 @@ function updateSelectors() {
         // Event: clic header = popup statut
         dayEl.querySelector('.day-header-zone').addEventListener('click', (e) => {
             e.stopPropagation();
+		closePlanningLegendModal();
+
             openStatusPopup(dateKey, e.currentTarget);
         });
         
         // Event: clic spécialité = popup spécialité
         dayEl.querySelector('.day-specialty-zone').addEventListener('click', (e) => {
             e.stopPropagation();
+			closePlanningLegendModal();
             openSpecialtyPopup(dateKey, e.currentTarget);
         });
+		
         
 		// Event: modification notes + auto-resize
 		const textarea = dayEl.querySelector('.day-notes-input');
 		let saveTimeout;
 
 		// Auto-resize au chargement si contenu existant
-		if (dayData.notes) {
-			setTimeout(() => autoResizeTextarea(textarea), 0);
-		}
+			if (dayData.notes) {
+				const isMobile = window.innerWidth <= 768;
+				const lines = dayData.notes.split('\n').length;
+				const lineH = 16;
+				const minH = isMobile ? 28 : 45;
+				const maxH = isMobile ? 120 : 150;
+				const h = Math.min(Math.max(lines * lineH + 10, minH), maxH);
+
+				textarea.style.height = h + 'px';
+
+				if (h >= maxH) {
+					textarea.style.overflowY = isMobile ? 'scroll' : 'auto';
+					textarea.style.webkitOverflowScrolling = 'touch';
+				} else {
+					textarea.style.overflowY = 'hidden';
+				}
+			}
 
 		textarea.addEventListener('input', (e) => {
 			// Auto-resize
@@ -18689,10 +18838,6 @@ function updateSelectors() {
 		textarea.addEventListener('blur', (e) => {
 			clearTimeout(saveTimeout);
 			saveDayNotes(dateKey, e.target.value);
-		});
-
-		textarea.addEventListener('focus', (e) => {
-			autoResizeTextarea(e.target);
 		});
         
         return dayEl;
@@ -19695,6 +19840,15 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
             window.scrollTo({ top: navPosition, behavior: 'smooth' });
         }
         
+        // Redimensionner les notes du planning à l'activation de l'onglet
+        if (this.dataset.page === 'planning') {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('#page-planning .day-notes-input').forEach(ta => {
+                    if (ta.value) autoResizeTextarea(ta);
+                });
+            });
+        }
+
         // Rafraîchir la table des items quand on ouvre la page "Liste des Items"
         if (this.dataset.page === 'items') {
             setTimeout(function() {
