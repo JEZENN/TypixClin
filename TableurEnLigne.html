@@ -1004,7 +1004,6 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .resources-config-actions {
     display: flex;
     gap: 0.5rem;
-    justify-content: flex-end;
 }
 
 .resources-config-actions button {
@@ -1017,16 +1016,19 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 }
 
 .resources-cancel-btn {
+    flex: 1;
     background: var(--gray-100);
     border: 1px solid var(--gray-300);
     color: var(--gray-700);
 }
 
 .resources-cancel-btn:hover {
-    background: var(--gray-200);
+    background: var(--danger-light);
+    color: var(--danger);
 }
 
 .resources-save-btn {
+    flex: 2;
     background: var(--primary-gradient);
     border: none;
     color: white;
@@ -1417,10 +1419,12 @@ input[type="date"].modal-input {
 .support-btn.selected { background: var(--support-color); border-color: var(--support-color); color: white; }
 
 .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.75rem; }
-.btn-validate { flex: 1; padding: 0.85rem; background: var(--primary-gradient); color: white; border-radius: var(--border-radius-md); font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: var(--shadow-md); }
+.btn-validate { flex: 1; max-width: 75%; padding: 0.85rem; background: var(--primary-gradient); color: white; border-radius: var(--border-radius-md); font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: var(--shadow-md); }
 .btn-validate:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.btn-reset { padding: 0.85rem 1.25rem; background: var(--gray-100); color: var(--gray-600); border-radius: var(--border-radius-md); font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+.btn-reset { flex: 0 0 80px; padding: 0.85rem; background: var(--gray-100); color: var(--gray-600); border-radius: var(--border-radius-md); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
 .btn-reset:hover { background: var(--danger-light); color: var(--danger); }
+
+.btn-reset.has-data { border: 2px solid var(--danger); color: var(--danger); }
 
 
 /* ===== MODAL SAUVEGARDES ===== */
@@ -2895,7 +2899,7 @@ input[type="date"].modal-input {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.35rem 0.65rem;
+    padding: 0.35rem 1.2rem;
     background: var(--gray-100);
     border: none;
     border-radius: var(--border-radius-sm);
@@ -3229,7 +3233,7 @@ input[type="date"].modal-input {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.35rem 0.65rem;
+    padding: 0.35rem 1.6rem;
     background: #3b82f6;
     border: none;
     border-radius: var(--border-radius-sm);
@@ -9351,6 +9355,12 @@ input[type="date"].modal-input {
 }
 
 
+@media (max-width: 768px) {
+    #specialty-counter {
+        display: none;
+    }
+}
+
 </style>
 </head>
 
@@ -10465,10 +10475,10 @@ input[type="date"].modal-input {
 					</div>
 					<div class="specialty-multi-header-buttons">
 						<button class="specialty-multi-clear" id="specialty-clear-btn">
-							<i class="fas fa-trash"></i> Effacer
+							<i class="fas fa-trash"></i> 
 						</button>
 						<button class="specialty-multi-close" id="specialty-close-btn">
-							<i class="fas fa-check"></i> Valider
+							<i class="fas fa-check"></i> 
 						</button>
 					</div>
 				</div>
@@ -10504,7 +10514,7 @@ input[type="date"].modal-input {
 					</div>
 					
 					<button class="config-resources-btn" onclick="openResourcesConfigModal()">
-						<i class="fas fa-cog"></i> Configurer ressources
+						<i class="fas fa-cog"></i> Ressources
 					</button>
 
 				</div>
@@ -10769,8 +10779,8 @@ input[type="date"].modal-input {
         </div>
         
         <div class="modal-actions">
-            <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i> Enregistrer</button>
-            <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i> Supprimer</button>
+            <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i></button>
+            <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i></button>
         </div>
     </div>
 </div>
@@ -10788,8 +10798,8 @@ input[type="date"].modal-input {
             <!-- Généré par JavaScript -->
         </div>
         <div class="resources-config-actions">
-            <button class="resources-cancel-btn" onclick="closeResourcesConfigModal()">Annuler</button>
-            <button class="resources-save-btn" onclick="saveResourcesConfig()">Enregistrer</button>
+			<button class="resources-cancel-btn" onclick="resetResourcesConfig()"><i class="fas fa-trash"></i></button>
+			<button class="resources-save-btn" onclick="saveResourcesConfig()"><i class="fas fa-check"></i></button>
         </div>
     </div>
 </div>
@@ -11064,6 +11074,12 @@ window.closeResourcesConfigModal = function() {
     const modal = document.getElementById('resources-config-modal');
     modal.classList.add('closing');
     setTimeout(() => modal.classList.remove('active', 'closing'), 180);
+};
+
+window.resetResourcesConfig = function() {
+    tempSelectedResources = [];
+    renderResourcesOptions();
+    updateResourcesCount();
 };
 
 // Fermer le modal de configuration des ressources en cliquant en dehors
@@ -17163,9 +17179,15 @@ if (item) {
     document.getElementById('duration-error')?.classList.remove('visible');
     document.getElementById('date-error')?.classList.remove('visible');
     
+    const btnReset = document.getElementById('btn-reset-tour');
     if (selectedConfidence) {
         document.querySelector('.confidence-btn[data-confidence="' + selectedConfidence + '"]')?.classList.add('selected');
+        btnReset.classList.add('has-data');
+    } else {
+        btnReset.classList.remove('has-data');
     }
+	
+	
     if (selectedSupport) {
         document.querySelector('.support-btn[data-support="' + selectedSupport + '"]')?.classList.add('selected');
     }
