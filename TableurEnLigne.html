@@ -21311,137 +21311,59 @@ function buildPlanningLegendItems() {
 
 // ===== SWIPE TO DISMISS — légende support, légende matière, chronomètre (mobile uniquement) =====
 (function () {
-    const MOBILE_MAX = 768;       // px — uniquement sur petit écran
-    const DISMISS_PX = 80;        // distance min pour valider la fermeture
-    const DISMISS_VEL = 0.45;     // vélocité min (px/ms)
+    var MOBILE_MAX  = 768;
+    var DISMISS_PX  = 60;
+    var DISMISS_VEL = 0.4;
 
-    // Chaque modal + sa fonction de fermeture animée
-    const MODALS = [
-        { id: 'legendModal',         closeFn: function() { closeLegendModalAnimated(); } },
-        { id: 'timerModal',          closeFn: function() { closeTimerModalAnimated(); } },
-        { id: 'planningLegendModal', closeFn: function() { closePlanningLegendModalAnimated(); } },
+    var MODALS = [
+        { id: 'legendModal',         closeFn: function () { closeLegendModalAnimated(); } },
+        { id: 'timerModal',          closeFn: function () { closeTimerModalAnimated(); } },
+        { id: 'planningLegendModal', closeFn: function () { closePlanningLegendModalAnimated(); } },
     ];
 
-    // État du drag en cours
-    var active = null;   // { el, closeFn, isCentered }
     var startX = 0, startY = 0, startTime = 0;
-    var currentDY = 0;
-    var dragging = false;
+    var tracking = false;
 
-    // Renvoie le premier modal actuellement affiché
     function getOpenModal() {
         for (var i = 0; i < MODALS.length; i++) {
             var el = document.getElementById(MODALS[i].id);
-            if (el && el.classList.contains('show')) {
-                return { el: el, closeFn: MODALS[i].closeFn };
-            }
+            if (el && el.classList.contains('show')) return { el: el, closeFn: MODALS[i].closeFn };
         }
         return null;
     }
 
-    // Applique le transform de drag en conservant le centrage CSS
-    function setDragTransform(el, dy) {
-        if (el.id === 'planningLegendModal') {
-            el.style.transform = 'translate(-50%, calc(-50% + ' + dy + 'px))';
-        } else {
-            el.style.transform = 'translateX(-50%) translateY(' + dy + 'px)';
-        }
-    }
-
-    // Remet le transform au CSS (état .show)
-    function resetTransform(el) {
-        if (el.id === 'planningLegendModal') {
-            el.style.transform = 'translate(-50%, -50%)';
-        } else {
-            el.style.transform = 'translateX(-50%) translateY(0)';
-        }
+    function isInsideModal(touch, modalEl) {
+        var rect = modalEl.getBoundingClientRect();
+        return touch.clientX >= rect.left && touch.clientX <= rect.right &&
+               touch.clientY >= rect.top  && touch.clientY <= rect.bottom;
     }
 
     document.addEventListener('touchstart', function (e) {
+        tracking = false;
         if (window.innerWidth > MOBILE_MAX) return;
-
         var modal = getOpenModal();
         if (!modal) return;
-
-        var touch = e.touches[0];
-        var rect = modal.el.getBoundingClientRect();
-        var inside = touch.clientX >= rect.left && touch.clientX <= rect.right &&
-                     touch.clientY >= rect.top  && touch.clientY <= rect.bottom;
-        if (!inside) return;
-
-        active = modal;
-        startX = touch.clientX;
-        startY = touch.clientY;
+        // On track UNIQUEMENT si le doigt démarre EN DEHORS du modal
+        if (isInsideModal(e.touches[0], modal.el)) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
         startTime = Date.now();
-        currentDY = 0;
-        dragging = true;
-
-        // Désactiver la transition pendant le drag pour que ça suive le doigt
-        modal.el.style.transition = 'none';
-        modal.el.style.willChange = 'transform, opacity';
+        tracking = true;
     }, { passive: true });
 
-    document.addEventListener('touchmove', function (e) {
-        if (!dragging || !active || window.innerWidth > MOBILE_MAX) return;
-
-        var touch = e.touches[0];
-        var dy = touch.clientY - startY;
-
-        // Résistance si l'utilisateur tire vers le haut
-        if (dy < 0) dy = dy * 0.25;
-
-        currentDY = dy;
-
-        // Légère opacité pour renforcer le feedback
-        var progress = Math.min(Math.abs(dy) / DISMISS_PX, 1);
-        active.el.style.opacity = String(1 - progress * 0.4);
-
-        setDragTransform(active.el, dy);
-    }, { passive: true });
-
-    document.addEventListener('touchend', function () {
-        if (!dragging || !active || window.innerWidth > MOBILE_MAX) return;
-
+    document.addEventListener('touchend', function (e) {
+        if (!tracking || window.innerWidth > MOBILE_MAX) { tracking = false; return; }
+        tracking = false;
+        var modal = getOpenModal();
+        if (!modal) return;
+        var touch   = e.changedTouches[0];
+        var deltaX  = Math.abs(touch.clientX - startX);
+        var deltaY  = Math.abs(touch.clientY - startY);
         var elapsed = Date.now() - startTime;
-        var velocity = elapsed > 0 ? Math.abs(currentDY) / elapsed : 0;
-        var dismiss = Math.abs(currentDY) >= DISMISS_PX || velocity >= DISMISS_VEL;
-
-        var el = active.el;
-        var closeFn = active.closeFn;
-
-        if (dismiss) {
-            // Animer dans la direction du geste puis fermer
-            var dir = currentDY >= 0 ? 1 : -1;
-            var exitY = dir * 140;
-            el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-            if (el.id === 'planningLegendModal') {
-                el.style.transform = 'translate(-50%, calc(-50% + ' + exitY + 'px))';
-            } else {
-                el.style.transform = 'translateX(-50%) translateY(' + exitY + 'px)';
-            }
-            el.style.opacity = '0';
-            setTimeout(function () {
-                el.style.transform = '';
-                el.style.transition = '';
-                el.style.opacity = '';
-                el.style.willChange = '';
-                closeFn();
-            }, 210);
-        } else {
-            // Snap-back avec un léger rebond
-            el.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease';
-            el.style.opacity = '1';
-            resetTransform(el);
-            setTimeout(function () {
-                el.style.transform = '';
-                el.style.transition = '';
-                el.style.willChange = '';
-            }, 310);
+        var velocity = elapsed > 0 ? deltaY / elapsed : 0;
+        if (deltaY > deltaX && (deltaY >= DISMISS_PX || velocity >= DISMISS_VEL)) {
+            modal.closeFn();
         }
-
-        dragging = false;
-        active = null;
-        currentDY = 0;
     }, { passive: true });
 })();
 
