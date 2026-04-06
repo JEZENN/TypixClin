@@ -5024,6 +5024,11 @@ input[type="date"].modal-input {
 
 }
 
+.calendar-weekdays.is-sticky {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
 @media (max-width: 768px) {
     .calendar-weekdays {
         position: static;  /* Plus de sticky sur mobile */
@@ -5094,13 +5099,16 @@ input[type="date"].modal-input {
     border-left: 4px solid #ec4899;
 }
 
-/* Combinaison today + status */
+/* Combinaison today + status : contour bleu sur 3 côtés, le border-left du statut reste seul à gauche */
 .calendar-day.is-today.status-stage,
 .calendar-day.is-today.status-revision,
 .calendar-day.is-today.status-garde,
 .calendar-day.is-today.status-repos,
 .calendar-day.is-today.status-autre {
-    box-shadow: inset 0 0 0 2px var(--primary);
+    box-shadow:
+        inset 0 2px 0 0 var(--primary),
+        inset -2px 0 0 0 var(--primary),
+        inset 0 -2px 0 0 var(--primary);
 }
 
 /* En-tête du jour */
@@ -10757,8 +10765,8 @@ input[type="date"].modal-input {
         </div>
         
         <div class="modal-actions">
-            <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i> Valider</button>
-            <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i> Réinitialiser</button>
+            <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i> Enregistrer</button>
+            <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i> Supprimer</button>
         </div>
     </div>
 </div>
@@ -13557,7 +13565,32 @@ let premiumStatusCache = null;
 let premiumStatusCacheTime = null;
 const PREMIUM_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// ════════════════════════════════════
+// GESTION DE SESSION : Inactivité (5h) 
+// ════════════════════════════════════
 
+const SESSION_INACTIVITY_LIMIT = 5 * 60 * 60 * 1000;     // 5 heures
+
+let sessionInactivityTimer = null;
+
+function startInactivityTimer() {
+    clearTimeout(sessionInactivityTimer);
+    sessionInactivityTimer = setTimeout(async () => {
+        await signOut(auth);
+        window.location.href = 'auth.html?redirect=TableurEnLigne.html&reason=inactivity';
+    }, SESSION_INACTIVITY_LIMIT);
+}
+
+function stopInactivityTimer() {
+    clearTimeout(sessionInactivityTimer);
+    sessionInactivityTimer = null;
+}
+
+['click', 'keydown', 'scroll', 'mousemove', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, () => {
+        if (sessionInactivityTimer !== null) startInactivityTimer();
+    }, { passive: true });
+});
 
 // ═══════════════════════════════════════════════════════════
 // FONCTION PRINCIPALE DE GESTION DE L'AUTHENTIFICATION
@@ -13565,6 +13598,9 @@ const PREMIUM_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 async function updateUserUI(user) {
     if (user) {
+        startInactivityTimer();
+		
+		
         currentUser = user;
         
         // ═══════════════════════════════════════════════════════════
@@ -13651,6 +13687,7 @@ async function updateUserUI(user) {
         setTimeout(hideLoader, 500);
         
     } else {
+	stopInactivityTimer();
         currentUser = null;
         userAuth.classList.remove('logged-in');
         loginRequired.style.display = 'block';
@@ -20623,7 +20660,7 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
         <div class="help-modal-body" id="helpModalBody"></div>
         <div class="help-modal-footer">
             <button class="help-modal-btn" onclick="closeHelpModal()">
-                Compris <i class="fas fa-check"></i>
+                 <i class="fas fa-check"></i>  
             </button>
         </div>
     </div>
@@ -21442,6 +21479,28 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('load', function() {
     window.scrollTo({ top: 0, behavior: 'instant' });
 });
+
+
+(function () {
+    const weekdays = document.querySelector('.calendar-weekdays');
+    if (!weekdays) return;
+
+    // La sentinelle se place juste au-dessus du header (à top: 70px)
+    const sentinel = document.createElement('div');
+    sentinel.style.cssText = 'position:absolute;top:70px;height:1px;width:100%;pointer-events:none;';
+    weekdays.parentElement.style.position = 'relative';
+    weekdays.parentElement.prepend(sentinel);
+
+    const observer = new IntersectionObserver(
+        ([entry]) => {
+            weekdays.classList.toggle('is-sticky', !entry.isIntersecting);
+        },
+        { threshold: 0, rootMargin: '-70px 0px 0px 0px' }
+    );
+
+    observer.observe(sentinel);
+})();
+
 
 
 </script>
