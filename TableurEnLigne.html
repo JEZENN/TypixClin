@@ -1715,10 +1715,58 @@ input[type="date"].modal-input {
 
 
 .filter-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
-.search-box { flex: 1; min-width: 200px; position: relative; }
-.search-box input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius-lg); font-size: 0.95rem; background: var(--white); }
-.search-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-.search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+
+
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+
+.search-box input {
+    width: 100%;
+		min-height: 40px;
+		padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: var(--font-body);
+    color: var(--gray-700);
+}
+
+.search-box input::placeholder {
+    color: var(--gray-700);
+    opacity: 1;
+}
+
+.search-box input:hover {
+    border-color: var(--primary-light);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-box i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+
 .filter-select { padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius-lg); font-size: 0.95rem; background: var(--white); min-width: 160px; cursor: pointer; }
 .filter-select:focus { outline: none; border-color: var(--primary); }
 
@@ -3419,16 +3467,23 @@ input[type="date"].modal-input {
 }
 
 [data-theme="dark"] .search-box input::placeholder {
-    color: #6b7280;
+    color: #e2e8f0;
+    opacity: 1;
+}
+
+[data-theme="dark"] .search-box input:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 [data-theme="dark"] .search-box input:focus {
     border-color: var(--primary);
-    background: #0f172a;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    outline: none;
 }
 
 [data-theme="dark"] .search-box i {
-    color: #6b7280;
+    color: #60a5fa;
 }
 
 /* Boutons d'action rapide (Réinitialiser les filtres, etc.) */
@@ -17826,23 +17881,24 @@ function createChartConfig(label, data, color, yAxisConfig = {}) {
         type: 'line',
         data: {
             labels: data.labels,
-            datasets: [{
-                label: label,
-                data: data.values,
-                borderColor: color,
-                backgroundColor: color + '20',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: color,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                pointHoverBackgroundColor: color,
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 3
-            }]
+				datasets: [{
+					label: label,
+					data: data.values,
+					borderColor: color,
+					backgroundColor: color + '20',
+					borderWidth: 3,
+					fill: true,
+					tension: 0.4,
+					clip: false,
+					pointBackgroundColor: color,
+					pointBorderColor: '#fff',
+					pointBorderWidth: 2,
+					pointRadius: 5,
+					pointHoverRadius: 7,
+					pointHoverBackgroundColor: color,
+					pointHoverBorderColor: '#fff',
+					pointHoverBorderWidth: 3
+				}]
         },
         options: {
             responsive: true,
@@ -17935,15 +17991,15 @@ function initWeeklyCharts() {
     }
     
     // Graphique Ressenti
-    const ctxFeeling = document.getElementById('chart-feeling-weekly');
-    if (ctxFeeling) {
-        chartFeelingWeekly = new Chart(ctxFeeling, createChartConfig(
-            'Ressenti',
-            { labels, values: feelingData },
-            '#ec4899',
-            { min: 0, max: 5, unit: '' }
-        ));
-    }
+const ctxFeeling = document.getElementById('chart-feeling-weekly');
+if (ctxFeeling) {
+    chartFeelingWeekly = new Chart(ctxFeeling, createChartConfig(
+        'Ressenti',
+        { labels, values: feelingData },
+        '#ec4899',
+        { min: 0, max: 5, unit: '' }
+    ));
+}
     
     // Mettre à jour les totaux
     document.getElementById('weekly-tours-total').textContent = totalTours;
