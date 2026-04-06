@@ -4913,7 +4913,7 @@ input[type="date"].modal-input {
     flex: 1; 
     min-width: 0;
     position: relative;
-    z-index: 1;
+    z-index: 20;
 }
 
 /* Header */
@@ -9216,18 +9216,34 @@ input[type="date"].modal-input {
     min-width: 300px;
     max-width: 380px;
     z-index: var(--z-dropdown);
-    display: none;
     border: 2px solid var(--gray-200);
+    /* iOS-compatible hidden state */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
+    -webkit-transition: opacity 0.15s ease, visibility 0.15s ease, -webkit-transform 0.15s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+    will-change: opacity, transform;
 }
 
 .planning-legend-modal.show {
-    display: block;
-    animation: fadeInUp 0.3s ease-out;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    -webkit-animation: none;
+    animation: none;
 }
 
 .planning-legend-modal.closing {
-    display: block;
-    animation: fadeOutDown 0.2s ease-in forwards;
+    opacity: 0;
+    visibility: visible;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
 }
 
 .planning-legend-modal-items {
@@ -9288,7 +9304,9 @@ input[type="date"].modal-input {
         left: 50%;
         right: auto;
         bottom: auto;
-        transform: translate(-50%, -50%);
+        /* Combiner centrage + état caché dans le même transform */
+        -webkit-transform: translate(-50%, calc(-50% + 8px));
+        transform: translate(-50%, calc(-50% + 8px));
         width: calc(100vw - 2rem);
         max-width: 420px;
         max-height: 80vh;
@@ -9297,7 +9315,15 @@ input[type="date"].modal-input {
     }
 
     .planning-legend-modal.show {
-        animation: fadeInMobile 0.25s ease-out;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        -webkit-animation: none;
+        animation: none;
+    }
+
+    .planning-legend-modal.closing {
+        -webkit-transform: translate(-50%, calc(-50% + 8px));
+        transform: translate(-50%, calc(-50% + 8px));
     }
 
     .planning-legend-modal-items {
@@ -20213,13 +20239,27 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
     padding: 1.5rem;
     min-width: 280px;
     z-index: var(--z-dropdown);
-    display: none;
     border: 2px solid var(--gray-200);
+    /* iOS-compatible hidden state: no display:none toggling */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
+    -webkit-transition: opacity 0.15s ease, visibility 0.15s ease, -webkit-transform 0.15s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+    will-change: opacity, transform;
 }
 
 .timer-modal.show {
-    display: block;
-    animation: fadeInUp 0.3s ease-out;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    /* Forcer un reflow sur iOS Safari */
+    -webkit-animation: none;
+    animation: none;
 }
 
 @keyframes fadeOutDown {
@@ -20228,8 +20268,11 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
 }
 
 .timer-modal.closing {
-    display: block;
-    animation: fadeOutDown 0.2s ease-in forwards;
+    opacity: 0;
+    visibility: visible;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
 }
 
 
@@ -20376,18 +20419,34 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
     min-width: 320px;
     max-width: 400px;
     z-index: var(--z-dropdown);
-    display: none;
     border: 2px solid var(--gray-200);
+    /* iOS-compatible hidden state */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
+    -webkit-transition: opacity 0.15s ease, visibility 0.15s ease, -webkit-transform 0.15s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+    will-change: opacity, transform;
 }
 
 .legend-modal.show {
-    display: block;
-    animation: fadeInUp 0.3s ease-out;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    -webkit-animation: none;
+    animation: none;
 }
 
 .legend-modal.closing {
-    display: block;
-    animation: fadeOutDown 0.2s ease-in forwards;
+    opacity: 0;
+    visibility: visible;
+    pointer-events: none;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
 }
 
 .legend-modal-header {
@@ -20466,22 +20525,35 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
         margin: 0;
     }
     
-    /* Centrer les modals sur mobile */
+    /* Centrer les modals sur mobile avec position:fixed (relatif au viewport, pas au container) */
     .timer-modal,
     .legend-modal {
-        position: absolute;
-        top: calc(100% + 0.5rem);
+        position: fixed;
+        top: calc(var(--header-height) + 0.75rem);
         left: 50%;
         right: auto;
-        transform: translateX(-50%);
+        /* translateX uniquement - pas de translateY pour ne pas casser le centrage */
+        -webkit-transform: translateX(-50%) translateY(8px);
+        transform: translateX(-50%) translateY(8px);
         max-width: calc(100vw - 2rem);
         width: 90vw;
+        /* Réinitialiser la transition pour inclure translateX dans le calcul */
+        -webkit-transition: opacity 0.15s ease, visibility 0.15s ease, -webkit-transform 0.15s ease;
+        transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
     }
     
-    /* Désactiver l'animation fadeInUp sur mobile */
     .timer-modal.show,
     .legend-modal.show {
-        animation: fadeInMobile 0.2s ease-out;
+        -webkit-transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) translateY(0);
+        -webkit-animation: none;
+        animation: none;
+    }
+
+    .timer-modal.closing,
+    .legend-modal.closing {
+        -webkit-transform: translateX(-50%) translateY(8px);
+        transform: translateX(-50%) translateY(8px);
     }
 }
 
@@ -20511,6 +20583,20 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
     .timer-modal,
     .legend-modal {
         width: 95vw;
+        -webkit-transform: translateX(-50%) translateY(8px);
+        transform: translateX(-50%) translateY(8px);
+    }
+
+    .timer-modal.show,
+    .legend-modal.show {
+        -webkit-transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .timer-modal.closing,
+    .legend-modal.closing {
+        -webkit-transform: translateX(-50%) translateY(8px);
+        transform: translateX(-50%) translateY(8px);
     }
 }
 
@@ -21223,38 +21309,139 @@ function buildPlanningLegendItems() {
     container.innerHTML = html;
 }
 
-// ===== FERMETURE PLANNING LEGEND AU SWIPE =====
-(function() {
-    let touchStartX = 0;
-    let touchStartY = 0;
+// ===== SWIPE TO DISMISS — légende support, légende matière, chronomètre (mobile uniquement) =====
+(function () {
+    const MOBILE_MAX = 768;       // px — uniquement sur petit écran
+    const DISMISS_PX = 80;        // distance min pour valider la fermeture
+    const DISMISS_VEL = 0.45;     // vélocité min (px/ms)
 
-    document.addEventListener('touchstart', function(e) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
+    // Chaque modal + sa fonction de fermeture animée
+    const MODALS = [
+        { id: 'legendModal',         closeFn: function() { closeLegendModalAnimated(); } },
+        { id: 'timerModal',          closeFn: function() { closeTimerModalAnimated(); } },
+        { id: 'planningLegendModal', closeFn: function() { closePlanningLegendModalAnimated(); } },
+    ];
+
+    // État du drag en cours
+    var active = null;   // { el, closeFn, isCentered }
+    var startX = 0, startY = 0, startTime = 0;
+    var currentDY = 0;
+    var dragging = false;
+
+    // Renvoie le premier modal actuellement affiché
+    function getOpenModal() {
+        for (var i = 0; i < MODALS.length; i++) {
+            var el = document.getElementById(MODALS[i].id);
+            if (el && el.classList.contains('show')) {
+                return { el: el, closeFn: MODALS[i].closeFn };
+            }
+        }
+        return null;
+    }
+
+    // Applique le transform de drag en conservant le centrage CSS
+    function setDragTransform(el, dy) {
+        if (el.id === 'planningLegendModal') {
+            el.style.transform = 'translate(-50%, calc(-50% + ' + dy + 'px))';
+        } else {
+            el.style.transform = 'translateX(-50%) translateY(' + dy + 'px)';
+        }
+    }
+
+    // Remet le transform au CSS (état .show)
+    function resetTransform(el) {
+        if (el.id === 'planningLegendModal') {
+            el.style.transform = 'translate(-50%, -50%)';
+        } else {
+            el.style.transform = 'translateX(-50%) translateY(0)';
+        }
+    }
+
+    document.addEventListener('touchstart', function (e) {
+        if (window.innerWidth > MOBILE_MAX) return;
+
+        var modal = getOpenModal();
+        if (!modal) return;
+
+        var touch = e.touches[0];
+        var rect = modal.el.getBoundingClientRect();
+        var inside = touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                     touch.clientY >= rect.top  && touch.clientY <= rect.bottom;
+        if (!inside) return;
+
+        active = modal;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startTime = Date.now();
+        currentDY = 0;
+        dragging = true;
+
+        // Désactiver la transition pendant le drag pour que ça suive le doigt
+        modal.el.style.transition = 'none';
+        modal.el.style.willChange = 'transform, opacity';
     }, { passive: true });
 
-    document.addEventListener('touchend', function(e) {
-        const modal = document.getElementById('planningLegendModal');
-        if (!modal || !modal.classList.contains('show')) return;
+    document.addEventListener('touchmove', function (e) {
+        if (!dragging || !active || window.innerWidth > MOBILE_MAX) return;
 
-        const touch = e.changedTouches[0];
+        var touch = e.touches[0];
+        var dy = touch.clientY - startY;
 
-        // Vérifier si le doigt est à l'intérieur du modal via coordonnées réelles
-        const rect = modal.getBoundingClientRect();
-        const isInsideModal = (
-            touch.clientX >= rect.left &&
-            touch.clientX <= rect.right &&
-            touch.clientY >= rect.top  &&
-            touch.clientY <= rect.bottom
-        );
-        if (isInsideModal) return;
+        // Résistance si l'utilisateur tire vers le haut
+        if (dy < 0) dy = dy * 0.25;
 
-        // Swipe vertical dominant d'au moins 40px en dehors du modal → fermer
-        const deltaX = Math.abs(touch.clientX - touchStartX);
-        const deltaY = Math.abs(touch.clientY - touchStartY);
-        if (deltaY > 40 && deltaY > deltaX) {
-            closePlanningLegendModalAnimated();
+        currentDY = dy;
+
+        // Légère opacité pour renforcer le feedback
+        var progress = Math.min(Math.abs(dy) / DISMISS_PX, 1);
+        active.el.style.opacity = String(1 - progress * 0.4);
+
+        setDragTransform(active.el, dy);
+    }, { passive: true });
+
+    document.addEventListener('touchend', function () {
+        if (!dragging || !active || window.innerWidth > MOBILE_MAX) return;
+
+        var elapsed = Date.now() - startTime;
+        var velocity = elapsed > 0 ? Math.abs(currentDY) / elapsed : 0;
+        var dismiss = Math.abs(currentDY) >= DISMISS_PX || velocity >= DISMISS_VEL;
+
+        var el = active.el;
+        var closeFn = active.closeFn;
+
+        if (dismiss) {
+            // Animer dans la direction du geste puis fermer
+            var dir = currentDY >= 0 ? 1 : -1;
+            var exitY = dir * 140;
+            el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+            if (el.id === 'planningLegendModal') {
+                el.style.transform = 'translate(-50%, calc(-50% + ' + exitY + 'px))';
+            } else {
+                el.style.transform = 'translateX(-50%) translateY(' + exitY + 'px)';
+            }
+            el.style.opacity = '0';
+            setTimeout(function () {
+                el.style.transform = '';
+                el.style.transition = '';
+                el.style.opacity = '';
+                el.style.willChange = '';
+                closeFn();
+            }, 210);
+        } else {
+            // Snap-back avec un léger rebond
+            el.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease';
+            el.style.opacity = '1';
+            resetTransform(el);
+            setTimeout(function () {
+                el.style.transform = '';
+                el.style.transition = '';
+                el.style.willChange = '';
+            }, 310);
         }
+
+        dragging = false;
+        active = null;
+        currentDY = 0;
     }, { passive: true });
 })();
 
