@@ -1877,7 +1877,6 @@ input[type="date"].modal-input {
 .confidence-buttons { display: flex; gap: 0.5rem; justify-content: center; }
 .confidence-btn { width: 50px; height: 50px; border-radius: var(--border-radius-md); border: 3px solid transparent; font-size: 1.2rem; font-weight: 700; color: white; cursor: pointer; transition: all var(--transition-fast); opacity: 0.7; }
 .confidence-btn:hover { transform: scale(1.1); opacity: 1; }
-.confidence-btn:active { transform: scale(0.97); opacity: 1; filter: brightness(1); }
 
 .confidence-btn.selected { opacity: 1; transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 .confidence-btn.c1 { background: var(--confidence-1); }
@@ -14609,19 +14608,9 @@ async function updateUserUI(user) {
         hideLoader();
     }
 }
-let cachedAuthToken = null;
+
 // Écouter les changements d'authentification
-onAuthStateChanged(auth, (user) => {
-    updateUserUI(user);
-    if (user) {
-        user.getIdToken().then(token => { cachedAuthToken = token; });
-        setInterval(() => {
-            if (user) user.getIdToken(true).then(token => { cachedAuthToken = token; });
-        }, 50 * 60 * 1000);
-    } else {
-        cachedAuthToken = null;
-    }
-});
+onAuthStateChanged(auth, updateUserUI);
 
 
 // ═══════════════════════════════════════════════════════════
@@ -14910,49 +14899,6 @@ async function forceSaveAsync() {
     }
 }
 
-function toFirestoreValue(val) {
-    if (val === null || val === undefined) return { nullValue: null };
-    if (typeof val === 'boolean') return { booleanValue: val };
-    if (typeof val === 'number') {
-        return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
-    }
-    if (typeof val === 'string') return { stringValue: val };
-    if (Array.isArray(val)) return { arrayValue: { values: val.map(toFirestoreValue) } };
-    if (typeof val === 'object') {
-        const fields = {};
-        for (const [k, v] of Object.entries(val)) fields[k] = toFirestoreValue(v);
-        return { mapValue: { fields } };
-    }
-    return { stringValue: String(val) };
-}
-
-function forceSaveBeacon() {
-    if (!hasUnsavedChanges || !currentUser || !cachedAuthToken || !userData) return;
-    const timestamp = new Date().toISOString();
-    const dataToSave = {
-        items: userData.items,
-        trophies: userData.trophies,
-        planningData: userData.planningData || {},
-        checklistData: userData.checklistData || [],
-        selectedResources: userData.selectedResources || [],
-        lastUpdated: timestamp
-    };
-    const fields = {};
-    for (const [k, v] of Object.entries(dataToSave)) fields[k] = toFirestoreValue(v);
-
-    const url = `https://firestore.googleapis.com/v1/projects/typixclin-b5fa9/databases/(default)/documents/planningRevision/${currentUser.uid}`;
-    fetch(url, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${cachedAuthToken}`
-        },
-        body: JSON.stringify({ fields }),
-        keepalive: true
-    }).catch(e => console.warn('Beacon save failed:', e));
-    hasUnsavedChanges = false;
-}
-
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         // Si modifications en attente, afficher la notification SEULEMENT si changement d'onglet
@@ -14986,10 +14932,22 @@ window.addEventListener('beforeunload', (e) => {
     
     
     
-		if (hasUnsavedChanges && currentUser && !canQuit) {
-			if (saveTimeout) clearTimeout(saveTimeout);
-			forceSaveBeacon(); // keepalive → pas de dialog, survit à la fermeture
-		}
+    if (hasUnsavedChanges && currentUser && !canQuit) {
+        
+        // Forcer la sauvegarde immédiatement
+        forceSave();
+        
+        // Afficher le message Windows SEULEMENT si activé dans la config
+        if (ENABLE_WINDOWS_WARNING) {
+            
+            e.preventDefault();
+            e.returnValue = 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
+            return 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
+        }
+        
+        // Sinon : sauvegarde silencieuse sans bloquer
+        // La notification personnalisée s'affiche seulement au changement d'onglet (visibilitychange)
+    }
     
     
 });
@@ -16681,9 +16639,6 @@ document.getElementById('backup-settings-btn')?.addEventListener('click', openBa
 
 
 
-
-
-
 // ========================================
 // OPTIMISATION FIRESTORE - VERSION SIMPLIFIÉE
 // ========================================
@@ -16696,8 +16651,7 @@ let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
 let hadUnsavedChangesBeforeOffline = false; // Mémoriser les modifications perdues en mode hors ligne
 
-
-const DEBOUNCE_DELAY = 10 * 1000; // 10 secondes de debounce
+const DEBOUNCE_DELAY = 5 * 1000; // 10 secondes de debounce
 
 // OPTION : Afficher le message d'avertissement à la fermeture
 // Note: La modal personnalisée ne peut PAS s'afficher dans beforeunload (restriction navigateur)
@@ -17650,9 +17604,7 @@ function initSpecialtyMultiSelect() {
     const menu = document.getElementById('specialty-menu');
     const list = document.getElementById('specialty-multi-list');
     const clearBtn = document.getElementById('specialty-clear-btn');
-        const searchInput = document.getElementById('specialty-search'); // ← AJOUTE CETTE LIGNE
-const searchInput = document.getElementById('specialty-search');
-
+    
     if (!container || !btn || !menu || !list) return;
     
     // Générer la liste des options
@@ -20873,38 +20825,6 @@ window.SPECIALTY_SHORT   = SPECIALTY_SHORT;
 window.SPECIALTY_CONFIG  = SPECIALTY_CONFIG;
 window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
 
-
-
-// Sauvegarde de sécurité juste avant de quitter / recharger
-window.addEventListener('beforeunload', () => {
-    console.log('beforeunload — hasUnsavedChanges:', hasUnsavedChanges, '| token:', !!cachedAuthToken, '| canQuit:', canQuit);
-
-    // DEBUG TAILLE
-    localStorage.setItem('debug_beacon', JSON.stringify({
-        hasUnsavedChanges,
-        hasToken: !!cachedAuthToken,
-        canQuit,
-        bodySize: userData ? Math.round(new Blob([JSON.stringify(userData)]).size / 1024) + ' KB' : 'no data'
-    }));
-
-    if (timerRunning) {
-        if (!timerPaused) {
-            const now = Date.now();
-            const elapsedMs = timerElapsedBeforePause + (now - timerStartTime);
-            timerSeconds = Math.floor(elapsedMs / 1000);
-        } else {
-            timerSeconds = Math.floor(timerElapsedBeforePause / 1000);
-        }
-    }
-    saveTimerState();
-	sessionStorage.setItem('timerSavedOnRefresh', '1');
-
-});
-
-
-window._userData = userData;
-
-
 </script>
 
 <style>
@@ -22352,6 +22272,24 @@ if (document.readyState === 'loading') {
 } else {
     initTimer();
 }
+
+// Sauvegarde de sécurité juste avant de quitter / recharger
+window.addEventListener('beforeunload', () => {
+    if (timerRunning) {
+        if (!timerPaused) {
+            const now = Date.now();
+            const elapsedMs = timerElapsedBeforePause + (now - timerStartTime);
+            timerSeconds = Math.floor(elapsedMs / 1000);
+        } else {
+            timerSeconds = Math.floor(timerElapsedBeforePause / 1000);
+        }
+    }
+    saveTimerState();
+	sessionStorage.setItem('timerSavedOnRefresh', '1');
+
+});
+
+
 
 
 // ===== LÉGENDE =====
