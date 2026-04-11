@@ -20872,6 +20872,35 @@ window.SPECIALTY_SHORT   = SPECIALTY_SHORT;
 window.SPECIALTY_CONFIG  = SPECIALTY_CONFIG;
 window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
 
+
+
+// Sauvegarde de sécurité juste avant de quitter / recharger
+window.addEventListener('beforeunload', () => {
+    console.log('beforeunload — hasUnsavedChanges:', hasUnsavedChanges, '| token:', !!cachedAuthToken, '| canQuit:', canQuit);
+
+    // DEBUG TAILLE
+    localStorage.setItem('debug_beacon', JSON.stringify({
+        hasUnsavedChanges,
+        hasToken: !!cachedAuthToken,
+        canQuit,
+        bodySize: userData ? Math.round(new Blob([JSON.stringify(userData)]).size / 1024) + ' KB' : 'no data'
+    }));
+
+    if (timerRunning) {
+        if (!timerPaused) {
+            const now = Date.now();
+            const elapsedMs = timerElapsedBeforePause + (now - timerStartTime);
+            timerSeconds = Math.floor(elapsedMs / 1000);
+        } else {
+            timerSeconds = Math.floor(timerElapsedBeforePause / 1000);
+        }
+    }
+    saveTimerState();
+	sessionStorage.setItem('timerSavedOnRefresh', '1');
+
+});
+
+
 </script>
 
 <style>
@@ -22319,34 +22348,6 @@ if (document.readyState === 'loading') {
 } else {
     initTimer();
 }
-
-// Sauvegarde de sécurité juste avant de quitter / recharger
-window.addEventListener('beforeunload', () => {
-    console.log('beforeunload — hasUnsavedChanges:', hasUnsavedChanges, '| token:', !!cachedAuthToken, '| canQuit:', canQuit);
-
-    // DEBUG TAILLE
-    localStorage.setItem('debug_beacon', JSON.stringify({
-        hasUnsavedChanges,
-        hasToken: !!cachedAuthToken,
-        canQuit,
-        bodySize: userData ? Math.round(new Blob([JSON.stringify(userData)]).size / 1024) + ' KB' : 'no data'
-    }));
-
-    if (timerRunning) {
-        if (!timerPaused) {
-            const now = Date.now();
-            const elapsedMs = timerElapsedBeforePause + (now - timerStartTime);
-            timerSeconds = Math.floor(elapsedMs / 1000);
-        } else {
-            timerSeconds = Math.floor(timerElapsedBeforePause / 1000);
-        }
-    }
-    saveTimerState();
-	sessionStorage.setItem('timerSavedOnRefresh', '1');
-
-});
-
-
 
 
 // ===== LÉGENDE =====
