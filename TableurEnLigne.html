@@ -17727,6 +17727,7 @@ function renderSpecialtyOptions(searchTerm = '') {
             </div>
         `;
     });
+
     
     list.innerHTML = html;
 	
@@ -19972,9 +19973,15 @@ function deleteChecklistItem(id) {
     
     // Restaurer le bouton "To-do List" dans le tableau si l'item avait un itemKey
     if (itemKey) {
-        var parts = itemKey.split('-');
-        var specialtyId = parts[0];
-        var fc = parts.slice(1).join('-');
+		var specialtyId = null;
+		var fc = null;
+		for (var i = 0; i < SPECIALTIES_DATA.length; i++) {
+			if (itemKey.startsWith(SPECIALTIES_DATA[i].id + '-')) {
+				specialtyId = SPECIALTIES_DATA[i].id;
+				fc = itemKey.substring(specialtyId.length + 1);
+				break;
+			}
+		}
         
         // Chercher le badge correspondant et le remplacer par un bouton
         var badges = document.querySelectorAll('.added-to-checklist-badge[data-specialty="' + specialtyId + '"][data-fc="' + fc + '"]');
@@ -20711,9 +20718,15 @@ window.showToastNotification = function(message, type, persist, duration) {
 window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('tour')) return;
-    var parts = itemKey.split('-');
-    var specialtyId = parts[0];
-    var fc = parts.slice(1).join('-');
+	var specialtyId = null;
+	var fc = null;
+	for (var i = 0; i < SPECIALTIES_DATA.length; i++) {
+		if (itemKey.startsWith(SPECIALTIES_DATA[i].id + '-')) {
+			specialtyId = SPECIALTIES_DATA[i].id;
+			fc = itemKey.substring(specialtyId.length + 1);
+			break;
+		}
+	}
     
     // Stocker l'ID pour plus tard
     pendingChecklistItemId = checklistItemId;
