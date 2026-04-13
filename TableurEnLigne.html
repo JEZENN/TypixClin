@@ -14900,6 +14900,8 @@ async function forceSaveAsync() {
     }
 }
 
+window.forceSaveAsync = forceSaveAsync;
+
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         // Sauvegarde silencieuse dès que l'onglet perd le focus
@@ -22611,6 +22613,48 @@ document.addEventListener('touchend', (e) => {
     if (now - lastTap < 300) e.preventDefault();
     lastTap = now;
 }, { passive: false });
+
+// ===== SAUVEGARDE FORCÉE AVANT NAVIGATION =====
+document.querySelectorAll(
+    'a.dropdown-item, a.mobile-menu-link, a.footer-nav-link, a.back-home-btn'
+).forEach(function(link) {
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href === 'TableurEnLigne.html') return;
+
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        if (typeof window.forceSaveAsync === 'function') {
+            // Afficher l'indicateur de sauvegarde du header
+            const indicator = document.getElementById('saveIndicatorHeader');
+            if (indicator) {
+                indicator.classList.add('visible', 'saving');
+                indicator.classList.remove('pending', 'saved');
+                indicator.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                indicator.title = 'Sauvegarde en cours...';
+            }
+
+            window.forceSaveAsync()
+                .catch(function() {})
+                .finally(function() {
+                    // Afficher le check vert brièvement avant de partir
+                    if (indicator) {
+                        indicator.classList.remove('saving');
+                        indicator.classList.add('saved');
+                        indicator.innerHTML = '<i class="fas fa-check"></i>';
+                    }
+                    setTimeout(function() {
+                        window.location.href = href;
+                    }, 300);
+                });
+        } else {
+            window.location.href = href;
+        }
+    });
+});
+
+
 
 </script>
 
