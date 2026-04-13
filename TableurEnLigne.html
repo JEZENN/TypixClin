@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -11439,8 +11440,8 @@ input[type="date"].modal-input {
 													<span class="legend-description">Collèges</span>
 												</div>
 												<div class="legend-item">
-													<span class="legend-badge" style="background: #ef4444; color: white;">ANK</span>
-													<span class="legend-description">Anki</span>
+													<span class="legend-badge" style="background: #ef4444; color: white;">LIS</span>
+													<span class="legend-description">Lisa</span>
 												</div>
 												<div class="legend-item">
 													<span class="legend-badge" style="background: #f59e0b; color: white;">PER</span>
@@ -11642,7 +11643,7 @@ input[type="date"].modal-input {
             <div class="support-buttons">
                 <button class="support-btn" data-support="qcm"><i class="fas fa-list-check"></i> QCM/DP</button>
                 <button class="support-btn" data-support="college"><i class="fas fa-book"></i> Collèges</button>
-                <button class="support-btn" data-support="anki"><i class="fas fa-clone"></i> Anki</button>
+                <button class="support-btn" data-support="anki"><i class="fas fa-book"></i> Lisa</button>
                 <button class="support-btn" data-support="perso"><i class="fas fa-pen"></i> Fiche perso</button>
                 <button class="support-btn" data-support="codex"><i class="fas fa-file-lines"></i> EDNi/Codex</button>
                 <button class="support-btn" data-support="conf"><i class="fas fa-chalkboard-user"></i> Conf</button>
@@ -11679,7 +11680,7 @@ input[type="date"].modal-input {
 <div class="saving-indicator" id="saving-indicator"><i class="fas fa-spinner"></i><span>Sauvegarde...</span></div>
 
 <!-- Notification personnalisée pour avertir avant fermeture -->
-<div class="custom-warning-modal" id="custom-warning-modal">
+<div class="custom-warning-modal" id="custom-warning-modal" style="display:none;">
     <div class="custom-warning-content">
         <div class="custom-warning-icon">
             <i class="fas fa-exclamation-triangle"></i>
@@ -14901,55 +14902,72 @@ async function forceSaveAsync() {
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-        // Si modifications en attente, afficher la notification SEULEMENT si changement d'onglet
+        // Sauvegarde silencieuse dès que l'onglet perd le focus
         if (hasUnsavedChanges && currentUser) {
-            // Afficher la modal personnalisée
-            showWarningModal();
-            
-            // Lancer la sauvegarde en arrière-plan
             forceSave();
         }
-    } else if (document.visibilityState === 'visible') {
-        // Revenu sur l'onglet, cacher la modal si elle est visible
-        hideWarningModal();
     }
 });
 
-// MESSAGE DE CONFIRMATION si modifications non sauvegardées
+// MESSAGE DE CONFIRMATION — uniquement en mode hors-ligne critique (données irrécupérables)
 window.addEventListener('beforeunload', (e) => {
-
-    
-    // Vérifier si le toast orange persistant existe
     const persistentToast = document.getElementById('persistent-warning-toast');
-    
-    
     if (persistentToast) {
-        
         e.preventDefault();
         e.returnValue = 'ATTENTION : Vous êtes hors ligne. Vos modifications ne sont PAS sauvegardées et seront PERDUES. Reconnectez-vous avant de quitter.';
         return 'ATTENTION : Vous êtes hors ligne. Vos modifications ne sont PAS sauvegardées et seront PERDUES. Reconnectez-vous avant de quitter.';
     }
-    
-    
-    
-    if (hasUnsavedChanges && currentUser && !canQuit) {
-        
-        // Forcer la sauvegarde immédiatement
-        forceSave();
-        
-        // Afficher le message Windows SEULEMENT si activé dans la config
-        if (ENABLE_WINDOWS_WARNING) {
-            
-            e.preventDefault();
-            e.returnValue = 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
-            return 'Des modifications sont en cours de sauvegarde. Veuillez patienter...';
-        }
-        
-        // Sinon : sauvegarde silencieuse sans bloquer
-        // La notification personnalisée s'affiche seulement au changement d'onglet (visibilitychange)
+    // Pas de blocage en mode connecté — le système pagehide + localStorage gère la sauvegarde
+});
+
+
+// ════════════════════════════════════════════════════════════════════
+// 💾 SAUVEGARDE AUTOMATIQUE À LA FERMETURE — pagehide + localStorage
+// ════════════════════════════════════════════════════════════════════
+//
+// Problème de beforeunload : les appels Firebase (async) ne peuvent pas
+// se terminer avant que le navigateur ferme la page.
+//
+// Solution en deux temps :
+//   1. pagehide  → écriture SYNCHRONE en localStorage (garantie même si la
+//                  page se ferme à l'instant, même sur mobile)
+//   2. Prochain  → onSnapshot Firebase compare les timestamps ; si le
+//      chargement   localStorage est plus récent, on restaure + on sync.
+//
+// Ainsi l'utilisateur ne perd jamais une modification, sans aucun
+// message bloquant.
+// ════════════════════════════════════════════════════════════════════
+
+let _pendingSyncChecked = false; // Ne vérifier le pendingSync qu'une seule fois par session
+
+window.addEventListener('pagehide', () => {
+    if (!hasUnsavedChanges || !currentUser) return;
+
+    // Horodater la modification locale
+    userData.lastUpdated = new Date().toISOString();
+
+    // ── Étape 1 : écriture synchrone en localStorage (toujours exécutée) ──
+    try {
+        const pendingKey = `planning_pending_${currentUser.uid}`;
+        localStorage.setItem(pendingKey, JSON.stringify({
+            data: {
+                items:             userData.items             || {},
+                trophies:          userData.trophies          || {},
+                planningData:      userData.planningData      || {},
+                checklistData:     userData.checklistData     || [],
+                selectedResources: userData.selectedResources || [],
+                lastUpdated:       userData.lastUpdated
+            },
+            savedAt: Date.now()
+        }));
+    } catch (e) {
+        console.warn('⚠️ pagehide – écriture localStorage impossible :', e);
     }
-    
-    
+
+    // ── Étape 2 : tentative de sauvegarde Firebase (best-effort) ──
+    // Si elle aboutit, le pendingSync sera supprimé par saveUserData().
+    // Sinon, il sera restauré au prochain chargement.
+    forceSave();
 });
 
 
@@ -15443,7 +15461,9 @@ function loadUserData(userId) {
 					}
 					
 					// ⚡ OPTIMISATION : Ne re-render que si données différentes
-					const dataChanged = JSON.stringify(userData) !== JSON.stringify(newData);
+					// NOTE : Ce calcul se fait AVANT l'assignment de userData (on compare l'ancien état).
+					// Il sera recalculé après le pendingSync si nécessaire.
+					const dataChangedFromFirebase = JSON.stringify(userData) !== JSON.stringify(newData);
 					
 					// ✅ Données valides : mise à jour sécurisée
 					// 🛡️ BUG #11 CORRIGÉ : S'assurer que planningData/checklistData existent
@@ -15455,6 +15475,53 @@ function loadUserData(userId) {
 							selectedResources: newData.selectedResources || [],
 							lastUpdated: newData.lastUpdated || new Date().toISOString()
 						};
+
+						// ── RESTAURATION PENDINGSYNC ─────────────────────────────────────
+						// Si des données locales plus récentes existent (écriture pagehide),
+						// on les restaure et on les re-synchronise avec Firebase.
+						let _pendingSyncRestored = false;
+						if (!_pendingSyncChecked) {
+							_pendingSyncChecked = true;
+							const _pendingKey = `planning_pending_${userId}`;
+							const _pendingRaw = localStorage.getItem(_pendingKey);
+							if (_pendingRaw) {
+								try {
+									const _pending = JSON.parse(_pendingRaw);
+									const _firebaseTime = new Date(newData.lastUpdated || 0).getTime();
+									const _pendingTime  = new Date(_pending.data?.lastUpdated || 0).getTime();
+									// Restaurer si les données locales sont plus récentes que Firebase.
+									// Pas de limite de durée : si le pendingSync existe encore, c'est que
+									// Firebase n'a jamais reçu ces données (sinon saveUserData() l'aurait supprimé).
+									if (_pending.data && _pendingTime > _firebaseTime) {
+										userData = {
+											items:             _pending.data.items             || userData.items             || {},
+											trophies:          _pending.data.trophies          || userData.trophies          || {},
+											planningData:      _pending.data.planningData      || userData.planningData      || {},
+											checklistData:     _pending.data.checklistData     || userData.checklistData     || [],
+											selectedResources: _pending.data.selectedResources || userData.selectedResources || [],
+											lastUpdated:       _pending.data.lastUpdated
+										};
+										_pendingSyncRestored = true;
+										// Re-synchroniser Firebase avec les données locales restaurées
+										setTimeout(() => {
+											hasUnsavedChanges = true;
+											if (typeof saveUserData === 'function') saveUserData();
+											if (window.showToastNotification) {
+												showToastNotification('Modifications locales restaurées et synchronisées', 'success', false, 3500);
+											}
+										}, 1500);
+									}
+								} catch (_e) {
+									console.warn('⚠️ Erreur restauration pendingSync :', _e);
+								} finally {
+									localStorage.removeItem(_pendingKey);
+								}
+							}
+						}
+						// ─────────────────────────────────────────────────────────────────
+
+						// Recalculer dataChanged en tenant compte d'un éventuel pendingSync
+						const dataChanged = _pendingSyncRestored || dataChangedFromFirebase;
 
                 
 				
@@ -15933,6 +16000,8 @@ if (!firebaseDataLoaded) {
                 const cacheKey = `planning_cache_${currentUser.uid}`;
                 localStorage.setItem(cacheKey, JSON.stringify(userData));
                 localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                // ✅ Effacer le pendingSync : Firebase est maintenant à jour
+                localStorage.removeItem(`planning_pending_${currentUser.uid}`);
             } catch (localError) {
                 console.warn('⚠️ Backup local impossible:', localError);
             }
@@ -15975,6 +16044,8 @@ if (!firebaseDataLoaded) {
                         const cacheKey = `planning_cache_${currentUser.uid}`;
                         localStorage.setItem(cacheKey, JSON.stringify(userData));
                         localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+                        // ✅ Effacer le pendingSync : Firebase est maintenant à jour
+                        localStorage.removeItem(`planning_pending_${currentUser.uid}`);
                         console.log('💾 Backup local créé (setDoc avec merge)');
                     } catch (localError) {
                         console.warn('⚠️ Backup local impossible:', localError);
@@ -16651,13 +16722,13 @@ let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
 let hadUnsavedChangesBeforeOffline = false; // Mémoriser les modifications perdues en mode hors ligne
 
-const DEBOUNCE_DELAY = 5 * 1000; // 10 secondes de debounce
+const DEBOUNCE_DELAY = 5 * 1000; // 5 secondes de debounce
 
 // OPTION : Afficher le message d'avertissement à la fermeture
 // Note: La modal personnalisée ne peut PAS s'afficher dans beforeunload (restriction navigateur)
 // Elle s'affiche seulement au changement d'onglet (visibilitychange)
 // Donc on DOIT utiliser le message Windows pour bloquer la fermeture de page
-const ENABLE_WINDOWS_WARNING = true; // OBLIGATOIRE pour bloquer la fermeture
+const ENABLE_WINDOWS_WARNING = false; // Désactivé — remplacé par le système pagehide + localStorage
 
 // Fonction de sauvegarde avec debounce simple
 function debouncedSave() {
@@ -16672,10 +16743,31 @@ function debouncedSave() {
         saveIndicatorHeader.title = 'En attente d\'autres modifications...';
     }
     
+    // ── Sécurité iOS : écriture localStorage immédiate à chaque modification ──
+    // Sur iOS Safari, pagehide peut ne pas se déclencher si l'OS tue le processus.
+    // On écrit donc en localStorage dès qu'une modification est enregistrée,
+    // sans attendre le pagehide.
+    if (currentUser && userData) {
+        try {
+            const _safeTimestamp = new Date().toISOString();
+            localStorage.setItem(`planning_pending_${currentUser.uid}`, JSON.stringify({
+                data: {
+                    items:             userData.items             || {},
+                    trophies:          userData.trophies          || {},
+                    planningData:      userData.planningData      || {},
+                    checklistData:     userData.checklistData     || [],
+                    selectedResources: userData.selectedResources || [],
+                    lastUpdated:       _safeTimestamp
+                },
+                savedAt: Date.now()
+            }));
+        } catch (_e) { /* quota dépassé ou contexte indisponible — silencieux */ }
+    }
+    
     // Annuler le timeout précédent
     if (saveTimeout) clearTimeout(saveTimeout);
     
-    // Attendre 10 secondes d'inactivité avant de sauvegarder
+    // Attendre 5 secondes d'inactivité avant de sauvegarder Firebase
     saveTimeout = setTimeout(() => {
         
         saveUserData();
@@ -17497,7 +17589,7 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
         const tourBadges = d.tours.map((c, i) => {
             const duration = d.tourDurations ? d.tourDurations[i] : null;
             const support = d.tourSupports ? d.tourSupports[i] : null;
-            const supportLabels = { qcm: 'QCM', college: 'COL', anki: 'ANK', perso: 'PER', codex: 'COD', conf: 'CNF' };
+            const supportLabels = { qcm: 'QCM', college: 'COL', anki: 'LIS', perso: 'PER', codex: 'COD', conf: 'CNF' };
             
             const lastDoneIndex = d.tours.reduce((last, t, idx) => t !== null ? idx : last, -1);
             const nextTourIndex = lastDoneIndex + 1;
@@ -17604,9 +17696,9 @@ function initSpecialtyMultiSelect() {
     const menu = document.getElementById('specialty-menu');
     const list = document.getElementById('specialty-multi-list');
     const clearBtn = document.getElementById('specialty-clear-btn');
+    const searchInput = document.getElementById('specialty-search');
     
-    if (!container || !btn || !menu || !list) return;
-    
+    if (!container || !btn || !menu || !list) return;    
     // Générer la liste des options
     renderSpecialtyOptions();
     
