@@ -15984,6 +15984,13 @@ if (!firebaseDataLoaded) {
         // ✅ CORRECTION : Ne PAS modifier userData.lastUpdated ici
         // userData.lastUpdated = new Date().toISOString(); // ❌ SUPPRIMÉ
         
+	 // 🛡️ PROTECTION : Ne jamais écraser Firebase avec des données vides
+        if (Object.keys(dataToSave.items || {}).length === 0) {
+            console.warn('⚠️ Sauvegarde bloquée : items vides — probable erreur de chargement Firebase');
+            cleanupTimeout();
+            return;
+        }
+		
         // SAUVEGARDE FIREBASE avec les données snapshottées
         await updateDoc(doc(db, 'planningRevision', currentUser.uid), dataToSave);
         
