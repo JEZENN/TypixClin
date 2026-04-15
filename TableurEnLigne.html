@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -324,78 +323,47 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 /* INDICATEUR DE SAUVEGARDE DANS LE HEADER */
 /* ========================================= */
 .save-indicator-header {
-    display: none; /* Caché par défaut */
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
     background: transparent;
     border-radius: var(--border-radius-full);
-    color: var(--gray-400);
     font-size: 1rem;
     margin-left: 1.5rem;
-    transition: all 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    color: var(--gray-400);
+    transition: opacity 0.3s ease, color 0.3s ease;
     position: relative;
 }
-
 .save-indicator-header.visible {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
 }
-
-/* État : En attente de sauvegarde (icône rotation) */
-.save-indicator-header.pending {
+.save-indicator-header.saving {
     color: var(--gray-400);
 }
-
-.save-indicator-header.pending i {
-    animation: rotate 1.5s linear infinite;
-}
-
-/* État : Sauvegarde en cours (icône rotation rapide) */
-.save-indicator-header.saving {
-    color: var(--primary);
-}
-
 .save-indicator-header.saving i {
-    animation: rotate 0.8s linear infinite;
+    animation: spin 0.7s linear infinite;
 }
-
-/* État : Sauvegardé (icône check verte) */
 .save-indicator-header.saved {
     color: var(--success);
 }
-
 .save-indicator-header.saved i {
     animation: none;
 }
-
-/* Animation de rotation pour les flèches circulaires */
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.save-indicator-header.pending {
+    color: var(--gray-400);
 }
-
-/* Mode sombre */
-[data-theme="dark"] .save-indicator-header.pending {
-    color: var(--gray-500);
+.save-indicator-header.pending i {
+    animation: spin 3s linear infinite;
 }
-
-[data-theme="dark"] .save-indicator-header.saving {
-    color: var(--primary-light);
-}
-
-[data-theme="dark"] .save-indicator-header.saved {
-    color: var(--success);
-}
-
-/* Responsive */
+[data-theme="dark"] .save-indicator-header.saving { color: var(--primary-light); }
+[data-theme="dark"] .save-indicator-header.saved  { color: var(--success); }
 @media (max-width: 768px) {
-    .save-indicator-header {
-        width: 28px;
-        height: 28px;
-        font-size: 0.9rem;
-        margin-left: 1rem;
-    }
+    .save-indicator-header { width: 28px; height: 28px; font-size: 0.9rem; margin-left: 1rem; }
 }
 
 .theme-toggle {
@@ -929,10 +897,25 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
         gap: 0.15rem !important;
     }
 
-    .send-to-checklist-btn,
+.send-to-checklist-btn,
     .added-to-checklist-badge {
-        transform: scale(0.82) !important;
-        transform-origin: center !important;
+        width: 22px !important;
+        height: 22px !important;
+        padding: 0 !important;
+        margin-top: 0 !important;
+        position: static !important;
+        vertical-align: middle !important;
+        font-size: 0 !important;
+        gap: 0 !important;
+        transform: none !important;
+    }
+    .send-to-checklist-btn i,
+    .added-to-checklist-badge i {
+        font-size: 0.6rem !important;
+    }
+    .send-to-checklist-btn:active {
+        opacity: 0.65 !important;
+        transform: none !important;
     }
 
     /* Matières préférées */
@@ -2835,6 +2818,33 @@ input[type="date"].modal-input {
     .items-table .item-specialty { max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .items-table td, .items-table th { padding: 0.4rem 0.3rem; }
     .items-table { font-size: 0.78rem; }
+	
+	.send-to-checklist-btn,
+	.added-to-checklist-badge {
+		width: 22px;
+		height: 22px;
+		padding: 0;
+		margin-top: 0;
+		position: static;
+		vertical-align: middle;
+		font-size: 0;
+		gap: 0;
+		transform: none;
+	}
+	.send-to-checklist-btn i,
+	.added-to-checklist-badge i {
+		font-size: 0.6rem;
+	}
+	.send-to-checklist-btn:active {
+		opacity: 0.65;
+		transform: none;
+	}
+
+	.open-notes-btn {
+		position: static;
+		vertical-align: middle;
+	}
+
 }
 
 
@@ -6961,7 +6971,7 @@ input[type="date"].modal-input {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    padding: 0.28rem 0.6rem;
+    padding: 0.24rem 0.6rem;
     margin-top: 0.2rem;
     font-size: 0.7rem;
     font-weight: 600;
@@ -8610,14 +8620,13 @@ input[type="date"].modal-input {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    padding: 0.35rem 0.6rem;
     margin-top: 0;
     transform: translateY(-1px);
     font-size: 0.7rem;
     font-weight: 600;
     background: linear-gradient(135deg, #a855f7, #8b5cf6);
 		border-radius: 8px;
-		padding: 0.35rem 0.5rem;
+		padding: 0.4rem 0.5rem;
     color: white;
     border: none;
     border-radius: 5px;
@@ -10261,9 +10270,7 @@ input[type="date"].modal-input {
         <nav class="nav">
             <ul class="nav-items">
                                <!-- Indicateur de sauvegarde -->
-                <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique">
-                    <i class="fas fa-check"></i>
-                </div>
+                <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique"></div>
 
 			   <!-- OUTILS -->
                 <li class="nav-dropdown">
@@ -11497,14 +11504,14 @@ input[type="date"].modal-input {
                 <thead>
                     <tr>
                         <th data-sort="num">
-                            N° <i class="fas fa-sort sort-icon"></i>
+                            Numéro <i class="fas fa-sort sort-icon"></i>
                         </th>
-                        <th data-sort="name">Nom <i class="fas fa-sort sort-icon"></i></th>
+                        <th data-sort="name">Intitulé de l'item        <i class="fas fa-sort sort-icon"></i></th>
                         <th data-sort="specialty">Spécialité <i class="fas fa-sort sort-icon"></i></th>
                         <th>Tours
 
 						</th>
-                      <th data-sort="days">Dernière révision <i class="fas fa-sort sort-icon"></i></th>
+                      <th data-sort="days">Dernières révisions <i class="fas fa-sort sort-icon"></i></th>
 						<th>Ressources faites</th>
                     </tr>
                 </thead>
@@ -11871,7 +11878,7 @@ input[type="date"].modal-input {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 const firebaseConfig = {
@@ -12117,11 +12124,7 @@ showToastNotification('⚠️ Connexion perdue - Les dernières modifications ne
         hasUnsavedChanges = false;
     }
     
-		if (typeof saveIndicatorHeader !== 'undefined' && saveIndicatorHeader) {
-			saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
-			saveIndicatorHeader.style.color = ''; // Nettoyer la couleur orange
-			saveIndicatorHeader.innerHTML = ''; // Vider l'icône
-		}
+		setSaveIndicator('hidden');
 		
 		    const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
@@ -14360,6 +14363,35 @@ const filterReference = document.getElementById('filter-item-reference')?.value 
 const mainContent = document.getElementById('main-content');
 const savingIndicator = document.getElementById('saving-indicator'); // Ancien (caché)
 const saveIndicatorHeader = document.getElementById('save-indicator-header'); // Nouveau dans header
+
+function setSaveIndicator(state) {
+    if (!saveIndicatorHeader) return;
+    saveIndicatorHeader.classList.remove('visible', 'saving', 'saved', 'pending');
+    saveIndicatorHeader.style.color = '';
+    clearTimeout(saveIndicatorHeader._hideTimer);
+
+    if (state === 'saving') {
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        saveIndicatorHeader.classList.add('visible', 'saving');
+    } else if (state === 'saved') {
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
+        saveIndicatorHeader.classList.add('visible', 'saved');
+        saveIndicatorHeader._hideTimer = setTimeout(function() {
+            saveIndicatorHeader.classList.remove('visible', 'saved');
+        }, 2000);
+    } else if (state === 'error') {
+        saveIndicatorHeader.innerHTML = '<i class="fas fa-times-circle"></i>';
+        saveIndicatorHeader.classList.add('visible');
+        saveIndicatorHeader.style.color = 'var(--danger)';
+        saveIndicatorHeader._hideTimer = setTimeout(function() {
+            saveIndicatorHeader.classList.remove('visible');
+            saveIndicatorHeader.style.color = '';
+        }, 4000);
+    }
+    // state === 'hidden' → reste caché
+}
+
+
 const confidenceModal = document.getElementById('confidence-modal');
 const statItemsDone = document.getElementById('stat-items-done');
 const statToursDone = document.getElementById('stat-tours-done');
@@ -14721,12 +14753,8 @@ if (backupBtnLogout) backupBtnLogout.style.display = 'none';
 
         
         // 2️⃣ Afficher l'indicateur de sauvegarde
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.add('visible', 'saving');
-            saveIndicatorHeader.classList.remove('pending', 'saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
-            saveIndicatorHeader.title = 'Sauvegarde avant déconnexion...';
-        }
+			setSaveIndicator('saving');
+
         
         // 3️⃣ Forcer la sauvegarde immédiate si des modifications existent
         if (hasUnsavedChanges && currentUser) {
@@ -14735,25 +14763,15 @@ if (backupBtnLogout) backupBtnLogout.style.display = 'none';
         }
         
         // ✅ Afficher le check vert (que la sauvegarde ait eu lieu ou non)
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('pending', 'saving');
-            saveIndicatorHeader.classList.add('visible', 'saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
-            saveIndicatorHeader.title = 'Sauvegardé';
-            saveIndicatorHeader.style.color = '';
-            
-            const icon = saveIndicatorHeader.querySelector('i');
-            if (icon) icon.style.animation = 'none';
-        }
+			setSaveIndicator('saved');
+
         
         // ⏱️ Attendre 1 seconde pour voir le check
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 🧹 Nettoyer l'indicateur AVANT la déconnexion
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('visible', 'saved', 'saving', 'pending');
-            saveIndicatorHeader.innerHTML = '';
-        }
+			setSaveIndicator('hidden');
+
         
         // 4️⃣ Déconnexion
         await signOut(auth);
@@ -14780,14 +14798,8 @@ if (backupBtnLogout) backupBtnLogout.style.display = 'none';
         console.error('❌ Erreur lors de la déconnexion:', error);
         
         // Afficher l'erreur dans l'indicateur
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('saving', 'saved', 'pending');
-            saveIndicatorHeader.classList.add('visible');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-            saveIndicatorHeader.title = 'Erreur de sauvegarde';
-            saveIndicatorHeader.style.color = 'var(--danger)';
-            setTimeout(() => saveIndicatorHeader.classList.remove('visible'), 3000);
-        }
+			setSaveIndicator('error');
+
     }
 });
 
@@ -14820,12 +14832,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hideWarningModal();
             
             // Afficher indicateur dans le header
-            if (saveIndicatorHeader) {
-                saveIndicatorHeader.classList.add('visible', 'saving');
-                saveIndicatorHeader.classList.remove('pending', 'saved');
-                saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
-                saveIndicatorHeader.title = 'Sauvegarde en cours...';
-            }
+			setSaveIndicator('saving');
+
             
             // Forcer la sauvegarde immédiate
             await forceSaveAsync();
@@ -15270,12 +15278,7 @@ async function checkAndAutoSaveCloud(userId) {
             
             
             // Afficher une notification discrète
-            if (saveIndicatorHeader) {
-                saveIndicatorHeader.classList.add('visible', 'saving');
-                saveIndicatorHeader.classList.remove('pending', 'saved');
-                saveIndicatorHeader.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
-                saveIndicatorHeader.title = 'Sauvegarde cloud automatique en cours...';
-            }
+            setSaveIndicator('saving');
             
             const result = await saveBackupToFirebase(userId, userData);
             
@@ -15283,18 +15286,8 @@ async function checkAndAutoSaveCloud(userId) {
                 
                 
                 // Notification de succès
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('pending', 'saving');
-                    saveIndicatorHeader.classList.add('visible', 'saved');
-                    saveIndicatorHeader.innerHTML = '<i class="fas fa-check-circle"></i>';
-                    saveIndicatorHeader.title = 'Sauvegarde cloud automatique effectuée';
-                    
-                    setTimeout(() => {
-                        if (saveIndicatorHeader) {
-                            saveIndicatorHeader.classList.remove('visible');
-                        }
-                    }, 3000);
-                }
+				setSaveIndicator('saved');
+
                 
                 // Mettre à jour le modal si ouvert
                 const modal = document.getElementById('backup-modal');
@@ -15305,20 +15298,7 @@ async function checkAndAutoSaveCloud(userId) {
                 console.warn('⚠️ Sauvegarde cloud automatique échouée:', result.error);
                 
                 // Notification d'échec
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('pending', 'saving');
-                    saveIndicatorHeader.classList.add('visible');
-                    saveIndicatorHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                    saveIndicatorHeader.title = 'Échec sauvegarde cloud automatique';
-                    saveIndicatorHeader.style.color = 'var(--warning)';
-                    
-                    setTimeout(() => {
-                        if (saveIndicatorHeader) {
-                            saveIndicatorHeader.classList.remove('visible');
-                            saveIndicatorHeader.style.color = '';
-                        }
-                    }, 3000);
-                }
+                setSaveIndicator('error');
             }
         } else {
             
@@ -15388,11 +15368,7 @@ function loadUserData(userId) {
     if (userId) {
         
 		    firebaseDataLoaded = false;
-    if (saveIndicatorHeader) {
-        saveIndicatorHeader.classList.add('visible');
-        saveIndicatorHeader.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        saveIndicatorHeader.title = 'Chargement des données...';
-    }
+    setSaveIndicator('saving');
 		
 		// 🔥 Cache pour affichage rapide
           const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
@@ -15423,9 +15399,7 @@ function loadUserData(userId) {
 					const newData = docSnap.data();
 					
 					    firebaseDataLoaded = true;
-								if (saveIndicatorHeader) {
-									saveIndicatorHeader.classList.remove('visible');
-								}
+							setSaveIndicator('hidden');
 	
 					
 					// 🛡️ PROTECTION ANTI-CORRUPTION
@@ -15585,9 +15559,7 @@ function loadUserData(userId) {
                 }
 				
 				    firebaseDataLoaded = true;
-						if (saveIndicatorHeader) {
-							saveIndicatorHeader.classList.remove('visible');
-						}
+						setSaveIndicator('hidden');
                 
                 
                 // Vraiment nouveau compte : initialiser avec données vides
@@ -15631,9 +15603,7 @@ function loadUserData(userId) {
             renderAll(); 
 			
 			    firebaseDataLoaded = true;
-    if (saveIndicatorHeader) {
-        saveIndicatorHeader.classList.remove('visible');
-    }
+    setSaveIndicator('hidden');
 	
 	
         });
@@ -15810,14 +15780,7 @@ async function saveUserData(retryCount = 0) {
 // 🛡️ PROTECTION SIMPLE : Attendre que Firebase charge
 if (!firebaseDataLoaded) {
     console.warn('⚠️ SAUVEGARDE BLOQUÉE : Firebase n\'a pas fini de charger');
-    
-    if (saveIndicatorHeader) {
-        saveIndicatorHeader.classList.add('visible');
-        saveIndicatorHeader.classList.remove('pending', 'saving', 'saved');
-        saveIndicatorHeader.innerHTML = '<i class="fas fa-hourglass-half"></i>';
-        saveIndicatorHeader.title = 'Chargement en cours... Patientez';
-        saveIndicatorHeader.style.color = 'var(--warning)';
-    }
+    setSaveIndicator('saving');
     
     // Réessayer dans 2 secondes
     setTimeout(() => {
@@ -15835,14 +15798,7 @@ if (!firebaseDataLoaded) {
     if (!connectionOK) {
         console.warn('⚠️ Connexion instable - Sauvegarde Firebase reportée');
         showConnectionWarning();
-        
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.add('visible', 'pending');
-            saveIndicatorHeader.classList.remove('saving', 'saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-clock"></i>';
-            saveIndicatorHeader.title = 'En attente de connexion stable';
-        }
-        
+        setSaveIndicator('saving');
         return;
     }
     
@@ -15861,18 +15817,7 @@ if (!firebaseDataLoaded) {
     let saveCancelled = false; // 🆕 Flag pour gérer l'annulation proprement
     
     // Afficher l'indicateur de sauvegarde
-    if (saveIndicatorHeader) {
-        saveIndicatorHeader.classList.add('visible', 'saving');
-        saveIndicatorHeader.classList.remove('pending', 'saved');
-        
-        if (retryCount > 0) {
-            saveIndicatorHeader.innerHTML = `<i class="fas fa-sync-alt"></i> Tentative ${retryCount + 1}/${MAX_RETRIES}`;
-            saveIndicatorHeader.title = `Nouvelle tentative (${retryCount + 1}/${MAX_RETRIES})...`;
-        } else {
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>';
-            saveIndicatorHeader.title = 'Sauvegarde en cours...';
-        }
-    }
+    setSaveIndicator('saving');
     
     // ⚠️ TIMEOUT DE SÉCURITÉ - 10 secondes
     const safetyTimeout = setTimeout(() => {
@@ -15884,13 +15829,7 @@ if (!firebaseDataLoaded) {
             if (retryCount < MAX_RETRIES - 1) {
                 const delay = RETRY_DELAY[retryCount];
                 console.log(`🔄 Nouvelle tentative dans ${delay/1000}s...`);
-                
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('saving');
-                    saveIndicatorHeader.classList.add('pending');
-                    saveIndicatorHeader.innerHTML = `<i class="fas fa-clock"></i> Retry dans ${delay/1000}s`;
-                    saveIndicatorHeader.title = `Nouvelle tentative dans ${delay/1000}s`;
-                }
+                setSaveIndicator('saving');
                 
                 setTimeout(() => {
                     saveUserData(retryCount + 1);
@@ -15906,30 +15845,11 @@ if (!firebaseDataLoaded) {
                     localStorage.setItem(cacheKey, JSON.stringify(userData));
                     localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
                     console.log('💾 Sauvegarde locale de secours créée');
-                    
-                    if (saveIndicatorHeader) {
-                        // NE PLUS afficher d'indicateur orange pour la sauvegarde locale
-                        saveIndicatorHeader.classList.remove('saving', 'pending', 'visible');
-                        saveIndicatorHeader.style.color = '';
-                    }
+                    setSaveIndicator('hidden');
                     
                 } catch (localError) {
                     console.error('❌ Impossible de sauvegarder même en local:', localError);
-                    
-                    if (saveIndicatorHeader) {
-                        saveIndicatorHeader.classList.remove('saving', 'pending', 'saved');
-                        saveIndicatorHeader.classList.add('visible');
-                        saveIndicatorHeader.innerHTML = '<i class="fas fa-times-circle"></i>';
-                        saveIndicatorHeader.title = 'Échec de sauvegarde - Vérifiez votre connexion';
-                        saveIndicatorHeader.style.color = 'var(--danger)';
-                        
-                        setTimeout(() => {
-                            if (saveIndicatorHeader) {
-                                saveIndicatorHeader.classList.remove('visible');
-                                saveIndicatorHeader.style.color = '';
-                            }
-                        }, 15000);
-                    }
+                    setSaveIndicator('error');
                 }
             }
         }
@@ -15944,25 +15864,8 @@ if (!firebaseDataLoaded) {
     // Fonction pour afficher le succès
     const showSaveSuccess = () => {
         saveCompleted = true;
-        cleanupTimeout(); // ✅ CORRECTION : Utiliser la fonction de nettoyage
-        
-        if (saveIndicatorHeader) {
-            saveIndicatorHeader.classList.remove('pending', 'saving');
-            saveIndicatorHeader.classList.add('visible', 'saved');
-            saveIndicatorHeader.innerHTML = '<i class="fas fa-check"></i>';
-            saveIndicatorHeader.title = retryCount > 0 
-                ? `Sauvegardé après ${retryCount + 1} tentative(s)` 
-                : 'Tout est sauvegardé';
-            
-            const icon = saveIndicatorHeader.querySelector('i');
-            if (icon) icon.style.animation = 'none';
-            
-            setTimeout(() => {
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('visible', 'saved');
-                }
-            }, 3000);
-        }
+        cleanupTimeout();
+        setSaveIndicator('saved');
     };
     
     // ✅ CORRECTION : Créer un snapshot immuable des données AVANT la sauvegarde
@@ -16744,13 +16647,8 @@ function debouncedSave() {
     // Marquer qu'il y a des modifications non sauvegardées
     hasUnsavedChanges = true;
     
-    // Afficher l'indicateur dans le header (flèches circulaires grises)
-    if (saveIndicatorHeader) {
-        saveIndicatorHeader.classList.add('visible', 'pending');
-        saveIndicatorHeader.classList.remove('saving', 'saved');
-        saveIndicatorHeader.innerHTML = '<i class="fas fa-sync-alt"></i>'; // Flèches circulaires
-        saveIndicatorHeader.title = 'En attente d\'autres modifications...';
-    }
+    // Afficher l'indicateur dans le header (flèches circulaires)
+    setSaveIndicator('saving');
     
     // ── Sécurité iOS : écriture localStorage immédiate à chaque modification ──
     // Sur iOS Safari, pagehide peut ne pas se déclencher si l'OS tue le processus.
@@ -17666,7 +17564,11 @@ const checklistBtn = isInChecklist ?
     '<span class="added-to-checklist-badge" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '"><i class="fas fa-thumbtack"></i></span>' :
     '<button class="send-to-checklist-btn" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i> To-do</button>';
         
-		return '<tr><td class="item-num">' + item.num + '<br>' + checklistBtn + '</td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
+		var _enNotes = item.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+var notesBtn = '<button class="open-notes-btn" onmousedown="event.stopPropagation()" onclick="openNotesModal(\''+item.num+'\',\''+item.specialtyId+'\',\''+item.fc+'\',\''+_enNotes+'\')" title="Mes notes"><i class="fas fa-plus" style="font-size:0.65rem;pointer-events:none;"></i></button>';
+//var notesBtn = '';
+
+return '<tr><td class="item-num">' + item.num + '<br><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:2px;">' + notesBtn + checklistBtn + '</div></td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
             '<td class="tour-cell"><div class="tour-badges">' + tourBadges + '</div><div class="tour-dates">' + tourDates + '</div></td>' +
             '<td class="days-cell">' + daysBadge + '</td><td class="resources-cell">' + resourcesHtml + '</td></tr>';
 
@@ -20922,9 +20824,7 @@ setTimeout(() => {
             try {
                 userData = JSON.parse(cachedData);
                 firebaseDataLoaded = true;
-                if (saveIndicatorHeader) {
-                    saveIndicatorHeader.classList.remove('visible');
-                }
+                setSaveIndicator('hidden');
                 renderAll();
             } catch (e) {
                 console.error('Cache corrompu');
@@ -20938,6 +20838,16 @@ setTimeout(() => {
 window.SPECIALTY_SHORT   = SPECIALTY_SHORT;
 window.SPECIALTY_CONFIG  = SPECIALTY_CONFIG;
 window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
+
+// Bridge Firestore pour les notes (accessibles depuis le script non-module)
+window._notesFirestore = {
+    doc:    doc,
+    getDoc: getDoc,
+    setDoc: setDoc,
+    getDb:          function() { return db; },
+    getCurrentUser: function() { return currentUser; },
+    getItemKey:     function(sId, fc) { return sId + '-' + fc; }
+};
 
 </script>
 
@@ -21746,6 +21656,583 @@ window.SPECIALTIES_DATA  = SPECIALTIES_DATA;
     .label-full { display: none; }
     .label-short { display: inline; }
 }
+
+/* ===== BOUTON NOTES (+) ===== */
+.open-notes-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-left: 3px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    bottom: 1px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.open-notes-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(59,130,246,0.5);
+}
+.open-notes-btn:active { transform: scale(0.9); }
+
+/* ===== OVERLAY NOTES ===== */
+.notes-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+}
+.notes-modal-overlay.active {
+    display: flex;
+    animation: notesOverlayIn 0.2s ease forwards;
+}
+.notes-modal-overlay.closing { animation: notesOverlayOut 0.18s ease forwards; }
+.notes-modal-overlay.closing .notes-modal { animation: notesModalOut 0.18s ease forwards; }
+
+@keyframes notesOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes notesOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes notesModalIn    { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes notesModalOut   { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.94) translateY(16px); } }
+
+/* ===== MODAL NOTES ===== */
+.notes-modal {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    width: 92%;
+    max-width: 980px;
+    height: 82vh;
+    max-height: 820px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: notesModalIn 0.24s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+}
+
+[data-theme="dark"] .notes-modal {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+/* Header */
+.notes-modal-header {
+    background: var(--white);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    border-bottom: 2px solid var(--gray-100);
+}
+[data-theme="dark"] .notes-modal-header {
+    background: #1e293b;
+    border-bottom-color: #334155;
+}
+
+.notes-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.notes-header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.notes-header-top-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.notes-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+}
+
+.notes-header-num {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray-400);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.notes-header-specialty {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.notes-header-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+[data-theme="dark"] .notes-header-name { color: var(--gray-100); }
+
+.notes-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Indicateur sauvegarde discret */
+.notes-autosave-dot {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.notes-autosave-dot.saving { opacity: 1; color: var(--gray-400); }
+.notes-autosave-dot.saved  { opacity: 1; color: var(--success); }
+.notes-autosave-dot.saving #notesAutosaveIcon {
+    animation: notesIconSpin 0.7s linear infinite;
+}
+@keyframes notesIconSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Bouton sauvegarder — même style que le reste du fichier */
+.notes-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-family: var(--font-body);
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.notes-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(59,130,246,0.45); }
+.notes-save-btn:active { transform: scale(0.95); }
+
+/* Bouton fermer — identique au modal d'aide */
+.notes-close-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--danger-light);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--danger);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.notes-close-btn:hover {
+    background: var(--danger);
+    color: white;
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.45);
+}
+.notes-close-btn:active { transform: scale(0.88); }
+[data-theme="dark"] .notes-close-btn { background: rgba(239,68,68,0.6); color: white; border: 1px solid rgba(239,68,68,0.8); }
+[data-theme="dark"] .notes-close-btn:hover { background: var(--danger); border-color: transparent; }
+
+
+/* ===== MINI MODAL CONFIRMATION EFFACER ===== */
+.notes-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.45);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10200;
+    padding: 1rem;
+}
+.notes-confirm-overlay.active { display: flex; animation: notesOverlayIn 0.15s ease; }
+.notes-confirm-box {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    padding: 1.5rem 1.75rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    animation: notesModalIn 0.2s cubic-bezier(0.34,1.3,0.64,1);
+    position: relative;
+}
+[data-theme="dark"] .notes-confirm-box { background: #1e293b; }
+.notes-confirm-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--danger-light);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin: 0 auto 1rem;
+}
+.notes-confirm-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.4rem;
+}
+[data-theme="dark"] .notes-confirm-title { color: var(--gray-100); }
+.notes-confirm-text {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-bottom: 1.4rem;
+    line-height: 1.5;
+}
+.notes-confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+.notes-confirm-cancel {
+    flex: 1;
+    padding: 0.55rem 0;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+}
+.notes-confirm-cancel:hover { background: var(--gray-200); }
+.notes-confirm-delete {
+    flex: 1;
+    padding: 0.55rem 0;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.35);
+}
+.notes-confirm-delete:hover { background: #dc2626; transform: translateY(-1px); }
+.notes-confirm-delete:active { transform: scale(0.95); }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .notes-header-name { font-size: 0.82rem; }
+    .notes-header-num  { display: none; }
+}
+
+/* Corps */
+.notes-modal-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Panneau éditeur */
+.notes-editor-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1.5;
+    min-width: 0;
+    border-right: 1px solid var(--gray-200);
+    background: var(--white);
+}
+[data-theme="dark"] .notes-editor-panel {
+    border-right-color: var(--gray-300);
+}
+
+/* Toolbar */
+.notes-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    row-gap: 4px;
+}
+[data-theme="dark"] .notes-toolbar {
+    background: var(--gray-100);
+    border-bottom-color: var(--gray-300);
+}
+.notes-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gray-600);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-body);
+    user-select: none;
+}
+.notes-tool-btn:hover { background: var(--gray-200); color: var(--gray-900); }
+.notes-tool-btn:active { transform: scale(0.9); }
+.notes-tool-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary-dark);
+}
+.notes-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--gray-300);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Sélecteur taille */
+.notes-font-size-select {
+    height: 28px;
+    padding: 0 4px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--gray-700);
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+}
+
+/* Palettes couleur */
+.notes-color-picker-wrapper { position: relative; display: inline-flex; align-items: center; }
+.notes-color-palette {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    z-index: 10100;
+    display: grid;
+    grid-template-columns: repeat(6, 22px);
+    gap: 5px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.15s ease;
+    pointer-events: none;
+}
+.notes-color-palette.open { opacity: 1; visibility: visible; pointer-events: all; }
+.notes-color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.1s, border-color 0.1s;
+}
+.notes-color-dot:hover { transform: scale(1.25); border-color: var(--gray-400); }
+.notes-color-dot.active { transform: scale(1.10); border-color: var(--gray-600); box-shadow: 0 0 0 2px var(--gray-300); }
+
+
+.notes-color-bar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.notes-color-bar-label { font-size: 0.82rem; font-weight: 800; line-height: 1; }
+.notes-color-bar { width: 16px; height: 3px; border-radius: 2px; transition: background 0.2s; }
+
+/* Zone éditable */
+.notes-editor-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.1rem 1.4rem;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.93rem;
+    line-height: 1.8;
+    color: var(--gray-800);
+    caret-color: var(--primary);
+    word-break: break-word;
+}
+[data-theme="dark"] .notes-editor-area { color: var(--gray-200); }
+.notes-editor-area:focus { outline: none; }
+.notes-editor-area:empty::before {
+    content: "Commencez à écrire vos notes…";
+    color: var(--gray-400);
+    pointer-events: none;
+    font-style: italic;
+}
+.notes-editor-area ul, .notes-editor-area ol { padding-left: 1.4rem; }
+.notes-editor-area li { margin: 0.2rem 0; }
+
+/* Footer éditeur */
+.notes-editor-footer {
+    padding: 6px 14px;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .notes-editor-footer { background: var(--gray-100); border-top-color: var(--gray-300); }
+.notes-char-count { font-size: 0.72rem; color: var(--gray-400); }
+.notes-clear-btn {
+    font-size: 0.72rem;
+    color: var(--gray-400);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+}
+.notes-clear-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+/* Panneau OIC */
+.notes-info-panel {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    background: var(--gray-50);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+[data-theme="dark"] .notes-info-panel { background: var(--gray-100); }
+.notes-info-section-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--gray-200);
+    flex-shrink: 0;
+}
+.notes-info-section-title i { color: var(--primary); }
+
+.oic-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.oic-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    border-left: 3px solid var(--gray-300);
+    transition: box-shadow 0.15s;
+}
+.oic-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.oic-card.rang-a { border-left-color: #3b82f6; }
+.oic-card.rang-b { border-left-color: #10b981; }
+.oic-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.3rem;
+    flex-wrap: wrap;
+}
+.oic-rang-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.1rem 0.38rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+.oic-rang-badge.rang-a { background: #dbeafe; color: #1d4ed8; }
+.oic-rang-badge.rang-b { background: #d1fae5; color: #065f46; }
+.oic-rubrique-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 0.1rem 0.42rem;
+    border-radius: 3px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+.oic-ordre { font-size: 0.6rem; color: var(--gray-400); margin-left: auto; }
+.oic-intitule { font-size: 0.8rem; color: var(--gray-700); line-height: 1.45; }
+.oic-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--gray-400);
+    font-size: 0.85rem;
+}
+.oic-empty i { display: block; font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.35; }
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 640px) {
+    .notes-modal {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+    .notes-modal-overlay { padding: 0; }
+    .notes-modal-body { flex-direction: column; }
+    .notes-editor-panel { flex: none; height: 52vh; border-right: none; border-bottom: 1px solid var(--gray-200); }
+    .notes-info-panel { flex: 1; min-height: 0; }
+    .notes-item-name { display: none; }
+    .notes-modal-header { padding: 14px 16px; }
+}
+
 
 </style>
 
@@ -22654,7 +23141,352 @@ document.querySelectorAll(
     });
 });
 
+// ===== DONNÉES OIC =====
+// Ajoute tes items ici. Clé = numéro sur 3 chiffres.
+const OIC_DATA = {
+  "038": [
+    { rang:"A", rubrique:"Définition", ordre:1, intitule:"Connaître la définition de la fertilité, fécondité, fécondabilité d'un couple" },
+    { rang:"A", rubrique:"Définition", ordre:2, intitule:"Connaître la définition d'un couple infertile" },
+    { rang:"B", rubrique:"Épidémiologie, prévalence", ordre:3, intitule:"Connaître la fertilité et fécondité dans la population générale" },
+    { rang:"B", rubrique:"Diagnostic positif", ordre:4, intitule:"Connaître les éléments de l'interrogatoire et de l'examen clinique chez la femme" },
+    { rang:"B", rubrique:"Diagnostic positif", ordre:5, intitule:"Connaître les éléments de l'interrogatoire et de l'examen clinique chez l'homme" },
+    { rang:"B", rubrique:"Étiologies", ordre:6, intitule:"Connaître l'orientation diagnostique en fonction du contexte et des manifestations associées" },
+    { rang:"B", rubrique:"Examens complémentaires", ordre:7, intitule:"Connaître le bilan de première intention d'une infertilité féminine et/ou masculine" },
+    { rang:"B", rubrique:"Examens complémentaires", ordre:8, intitule:"Connaître les principes d'interprétation d'un spermogramme" },
+    { rang:"B", rubrique:"Étiologies", ordre:9, intitule:"Connaître les principales causes d'infertilité chez la femme" },
+    { rang:"B", rubrique:"Étiologies", ordre:10, intitule:"Connaître les principales causes d'infertilité chez l'homme" },
+  ],
+};
 
+// ===== ÉTAT =====
+var _notesKey      = null;
+var _notesAutoSave = null;
+var _notesLastHtml = null;
+var _notesSaving   = false;
+
+// ===== UTILITAIRES FIRESTORE =====
+async function loadNoteFromFirestore(itemKey) {
+    var _cu = window._notesFirestore.getCurrentUser();
+    if (!_cu) return { html: '', source: 'empty' };
+    try {
+        var _db  = window._notesFirestore.getDb();
+        var noteRef = window._notesFirestore.doc(_db, 'users', _cu.uid, 'notes', itemKey);
+        var snap    = await window._notesFirestore.getDoc(noteRef);
+        if (snap.exists()) return { html: snap.data().html || '', source: 'firestore' };
+    } catch (err) {
+        console.warn('[Notes] Firestore lecture échouée, fallback localStorage :', err);
+    }
+    const lsKey  = 'notes__' + itemKey.replace('-', '__');
+    const lsHtml = localStorage.getItem(lsKey) || '';
+    if (lsHtml) {
+        console.info('[Notes] Migration localStorage → Firestore pour', itemKey);
+        saveNoteToFirestore(itemKey, lsHtml);
+        return { html: lsHtml, source: 'localStorage' };
+    }
+    return { html: '', source: 'empty' };
+}
+
+async function saveNoteToFirestore(itemKey, html) {
+    var _cu = window._notesFirestore.getCurrentUser();
+    if (!_cu || !itemKey) return false;
+    if (html === _notesLastHtml && itemKey === _notesKey) return false;
+    try {
+        var _db  = window._notesFirestore.getDb();
+        var noteRef = window._notesFirestore.doc(_db, 'users', _cu.uid, 'notes', itemKey);
+        await window._notesFirestore.setDoc(noteRef, { html: html, updatedAt: new Date() });
+        _notesLastHtml = html;
+        return true;
+    } catch (err) {
+        console.error('[Notes] Erreur Firestore write :', err);
+        const lsKey = 'notes__' + itemKey.replace('-', '__');
+        localStorage.setItem(lsKey, html);
+        return false;
+    }
+}
+
+function notesSetAutosaveState(state) {
+    var dot  = document.getElementById('notesAutosaveDot');
+    var icon = document.getElementById('notesAutosaveIcon');
+    if (!dot || !icon) return;
+    dot.classList.remove('saving', 'saved');
+    clearTimeout(dot._hideTimer);
+    if (state === 'saving' || state === 'loading') {
+        icon.className = 'fas fa-sync-alt';
+        dot.classList.add('saving');
+    } else if (state === 'saved') {
+        icon.className = 'fas fa-check';
+        dot.classList.add('saved');
+        dot._hideTimer = setTimeout(function() {
+            dot.classList.remove('saved');
+            icon.className = 'fas fa-sync-alt';
+        }, 1500);
+    } else {
+        icon.className = 'fas fa-sync-alt';
+    }
+}
+
+// ===== OUVRIR =====
+function openNotesModal(num, specialtyId, fc, itemName) {
+    _notesKey      = window._notesFirestore.getItemKey(specialtyId, fc);
+    _notesLastHtml = null;
+    _notesSaving   = false;
+    clearTimeout(_notesAutoSave);
+
+    document.getElementById('nTextBar').style.background      = '#111827';
+    document.getElementById('nHighlightBar').style.background = '#f1f5f9';
+
+    document.getElementById('notesHeaderNum').textContent  = 'Item ' + num;
+    document.getElementById('notesHeaderName').textContent = itemName;
+
+    var specPill = document.getElementById('notesHeaderSpecialty');
+    var specData = (typeof SPECIALTIES_DATA !== 'undefined')
+        ? SPECIALTIES_DATA.find(function(s){ return s.id === specialtyId; }) : null;
+    var specCfg  = (typeof SPECIALTY_CONFIG !== 'undefined' && SPECIALTY_CONFIG[specialtyId])
+        ? SPECIALTY_CONFIG[specialtyId] : { color: '#6b7280' };
+    var specName = specData ? specData.name : specialtyId;
+    specPill.textContent      = specName;
+    specPill.style.background = specCfg.color + '20';
+    specPill.style.color      = specCfg.color;
+    specPill.style.border     = '1px solid ' + specCfg.color + '40';
+
+    var overlay = document.getElementById('notesModalOverlay');
+    overlay.classList.remove('closing');
+    overlay.classList.add('active');
+    var sw = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = sw + 'px';
+    document.querySelector('.header').style.paddingRight = sw + 'px';
+
+    var editor = document.getElementById('notesEditorArea');
+    editor.innerHTML = '';
+    notesSetAutosaveState('loading');
+
+    var savedKey = _notesKey;
+    var savedNum = num;
+
+    loadNoteFromFirestore(_notesKey).then(function(result) {
+        if (_notesKey !== savedKey) return;
+        editor.innerHTML = result.html;
+        _notesLastHtml   = result.html;
+        notesUpdateCharCount();
+        notesSetAutosaveState('idle');
+        var padded = String(parseInt(savedNum, 10)).padStart(3, '0');
+        notesBuildOic(padded);
+        setTimeout(function(){ editor.focus(); }, 120);
+    }).catch(function() {
+        if (_notesKey !== savedKey) return;
+        editor.innerHTML = '';
+        notesSetAutosaveState('idle');
+    });
+}
+
+// ===== FERMER =====
+function closeNotesModal() {
+    notesModalSave();
+    var overlay = document.getElementById('notesModalOverlay');
+    overlay.classList.add('closing');
+    setTimeout(function() {
+        overlay.classList.remove('active', 'closing');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.querySelector('.header').style.paddingRight = '';
+        clearTimeout(_notesAutoSave);
+        _notesKey      = null;
+        _notesLastHtml = null;
+        _notesSaving   = false;
+    }, 180);
+}
+
+// Clic sur l'overlay
+var _notesMouseDownOnModal = false;
+document.addEventListener('mousedown', function(e) {
+    var overlay = document.getElementById('notesModalOverlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    _notesMouseDownOnModal = !!e.target.closest('.notes-modal');
+});
+document.addEventListener('click', function(e) {
+    var overlay = document.getElementById('notesModalOverlay');
+    if (overlay && overlay.classList.contains('active') && e.target === overlay && !_notesMouseDownOnModal) {
+        closeNotesModal();
+    }
+});
+
+// Touche Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var overlay = document.getElementById('notesModalOverlay');
+        if (overlay && overlay.classList.contains('active')) closeNotesModal();
+    }
+});
+
+// ===== SAUVEGARDER =====
+function notesModalSave() {
+    if (!_notesKey || _notesSaving) return;
+    var html  = document.getElementById('notesEditorArea').innerHTML;
+    var lsKey = 'notes__' + _notesKey.replace('-', '__');
+    localStorage.setItem(lsKey, html);
+    _notesSaving = true;
+    notesSetAutosaveState('saving');
+    var savedKey = _notesKey;
+    saveNoteToFirestore(_notesKey, html)
+        .then(function(wrote) {
+            _notesSaving = false;
+            if (_notesKey !== savedKey) return;
+            notesSetAutosaveState(wrote ? 'saved' : 'idle');
+        })
+        .catch(function() {
+            _notesSaving = false;
+            notesSetAutosaveState('idle');
+        });
+}
+
+// Sauvegarde auto debounced
+function notesOnInput() {
+    notesUpdateCharCount();
+    clearTimeout(_notesAutoSave);
+    _notesAutoSave = setTimeout(notesModalSave, 1500);
+}
+
+// Ctrl+S
+function notesHandleKey(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); notesModalSave(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); notesExecCmd(e, 'bold'); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); notesExecCmd(e, 'italic'); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); notesExecCmd(e, 'underline'); }
+}
+
+// ===== COMMANDES =====
+function notesExecCmd(event, cmd) {
+    if (event) event.preventDefault();
+    document.getElementById('notesEditorArea').focus();
+    document.execCommand(cmd, false, null);
+    notesUpdateToolbar();
+}
+
+function notesSetFontSize(size) {
+    document.getElementById('notesEditorArea').focus();
+    document.execCommand('fontSize', false, size);
+}
+
+function notesSetColor(event, color, barId) {
+    event.preventDefault();
+    document.getElementById('notesEditorArea').focus();
+    document.execCommand('foreColor', false, color);
+    document.getElementById(barId).style.background = color;
+    notesCloseAllPalettes();
+}
+
+function notesSetHighlight(event, color) {
+    event.preventDefault();
+    document.getElementById('notesEditorArea').focus();
+    document.execCommand('hiliteColor', false, color === 'transparent' ? 'transparent' : color);
+    document.getElementById('nHighlightBar').style.background = color === 'transparent' ? '#f1f5f9' : color;
+    notesCloseAllPalettes();
+}
+
+function notesTogglePalette(id) {
+    var palette = document.getElementById(id);
+    var isOpen = palette.classList.contains('open');
+    notesCloseAllPalettes();
+    if (!isOpen) palette.classList.add('open');
+}
+
+function notesCloseAllPalettes() {
+    document.querySelectorAll('.notes-color-palette').forEach(function(p) { p.classList.remove('open'); });
+}
+
+document.addEventListener('mousedown', function(e) {
+    if (!e.target.closest('.notes-color-picker-wrapper')) {
+        notesCloseAllPalettes();
+    }
+});
+
+function notesClear(event) {
+    event.preventDefault();
+    if (confirm('Effacer toutes les notes de cet item ?')) {
+        document.getElementById('notesEditorArea').innerHTML = '';
+        notesOnInput();
+    }
+}
+
+function notesAskClear() {
+    var overlay = document.getElementById('notesConfirmOverlay');
+    if (overlay) overlay.classList.add('active');
+}
+
+function notesCloseConfirm() {
+    var overlay = document.getElementById('notesConfirmOverlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function notesConfirmClear() {
+    document.getElementById('notesEditorArea').innerHTML = '';
+    notesOnInput();
+    notesCloseConfirm();
+}
+
+function notesRgbToHex(str) {
+    if (!str || str === 'transparent' || str === 'rgba(0, 0, 0, 0)') return 'transparent';
+    var m = str.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!m) return (str || '').toLowerCase().replace(/\s/g, '');
+    return '#' + [m[1], m[2], m[3]].map(function(x) {
+        return ('0' + parseInt(x).toString(16)).slice(-2);
+    }).join('');
+}
+
+
+// ===== TOOLBAR ÉTAT =====
+function notesUpdateToolbar() {
+    var map = { bold: 'nBtnBold', italic: 'nBtnItalic', underline: 'nBtnUnderline', strikeThrough: 'nBtnStrike' };
+    Object.keys(map).forEach(function(cmd) {
+        var btn = document.getElementById(map[cmd]);
+        if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+    });
+	// Couleur texte active
+var textColor = document.queryCommandValue('foreColor');
+var hexColor = notesRgbToHex(textColor);
+document.querySelectorAll('#nTextPalette .notes-color-dot').forEach(function(dot) {
+    var dotColor = notesRgbToHex(dot.style.background);
+    dot.classList.toggle('active', dotColor === hexColor);
+});
+document.getElementById('nTextBar').style.background = hexColor || '#111827';
+
+// Surlignage actif
+var hlColor = document.queryCommandValue('hiliteColor') || document.queryCommandValue('backColor');
+var hexHl = notesRgbToHex(hlColor);
+document.querySelectorAll('#nHighlightPalette .notes-color-dot').forEach(function(dot) {
+    var dotColor = notesRgbToHex(dot.style.background);
+    dot.classList.toggle('active', dotColor === hexHl);
+});
+document.getElementById('nHighlightBar').style.background = (hexHl === 'transparent' || !hexHl) ? '#f1f5f9' : hexHl; 
+}
+
+// ===== COMPTEUR =====
+function notesUpdateCharCount() {
+    var text = document.getElementById('notesEditorArea').innerText || '';
+    var n = text.replace(/\s+/g,' ').trim().length;
+    document.getElementById('notesCharCount').textContent = n + ' caractère' + (n > 1 ? 's' : '');
+}
+
+// ===== OIC =====
+function notesBuildOic(padded) {
+    var container = document.getElementById('oicList');
+    var data = OIC_DATA[padded];
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="oic-empty"><i class="fas fa-book-open"></i>Aucun objectif disponible pour cet item.</div>';
+        return;
+    }
+    container.innerHTML = data.map(function(obj) {
+        return '<div class="oic-card rang-' + obj.rang.toLowerCase() + '">' +
+            '<div class="oic-card-top">' +
+            '<span class="oic-rang-badge rang-' + obj.rang.toLowerCase() + '">Rang ' + obj.rang + '</span>' +
+            '<span class="oic-rubrique-badge">' + obj.rubrique + '</span>' +
+            '<span class="oic-ordre">#' + obj.ordre + '</span>' +
+            '</div>' +
+            '<div class="oic-intitule">' + obj.intitule + '</div>' +
+            '</div>';
+    }).join('');
+}
 
 </script>
 
@@ -22675,6 +23507,168 @@ document.querySelectorAll(
 </div>
 
 <div class="resource-overflow-popup" id="resource-overflow-popup"></div>
+
+<!-- ===== MODAL NOTES ===== -->
+<div class="notes-modal-overlay" id="notesModalOverlay">
+  <div class="notes-modal" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+<div class="notes-modal-header">
+  <div class="notes-modal-title">
+    <div class="notes-header-icon"><i class="fas fa-pencil-alt"></i></div>
+    <div class="notes-header-meta">
+      <div class="notes-header-top-row">
+        <span class="notes-header-num" id="notesHeaderNum">Item —</span>
+        <span class="notes-header-specialty" id="notesHeaderSpecialty"></span>
+      </div>
+      <div class="notes-header-name" id="notesHeaderName">—</div>
+    </div>
+  </div>
+  <div class="notes-header-right">
+		<span class="notes-autosave-dot" id="notesAutosaveDot">
+		  <i id="notesAutosaveIcon" class="fas fa-sync-alt"></i>
+		</span>
+    <button class="notes-close-btn" onclick="closeNotesModal()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+
+    <!-- Corps -->
+    <div class="notes-modal-body">
+
+      <!-- Éditeur -->
+      <div class="notes-editor-panel">
+
+        <!-- Toolbar -->
+        <div class="notes-toolbar">
+
+          <!-- Formatage de base -->
+          <button class="notes-tool-btn" id="nBtnBold"      onmousedown="notesExecCmd(event,'bold')"      title="Gras (Ctrl+B)"><b>G</b></button>
+          <button class="notes-tool-btn" id="nBtnItalic"    onmousedown="notesExecCmd(event,'italic')"    title="Italique (Ctrl+I)"><i>I</i></button>
+          <button class="notes-tool-btn" id="nBtnUnderline" onmousedown="notesExecCmd(event,'underline')" title="Souligné (Ctrl+U)"><u>S</u></button>
+          <button class="notes-tool-btn" id="nBtnStrike"    onmousedown="notesExecCmd(event,'strikeThrough')" title="Barré"><s style="font-size:0.75rem;">B</s></button>
+
+          <div class="notes-toolbar-sep"></div>
+
+          <!-- Taille de police 
+          <select class="notes-font-size-select" onchange="notesSetFontSize(this.value)" title="Taille">
+            <option value="1">Petite</option>
+            <option value="3" selected>Normale</option>
+            <option value="5">Grande</option>
+            <option value="7">Très grande</option>
+          </select>
+
+          <div class="notes-toolbar-sep"></div>-->
+
+          <!-- Couleur du texte -->
+          <div class="notes-color-picker-wrapper">
+            <button class="notes-tool-btn" onmousedown="event.preventDefault(); notesTogglePalette('nTextPalette')" title="Couleur du texte">
+              <span class="notes-color-bar-btn">
+                <span class="notes-color-bar-label">A</span>
+                <span class="notes-color-bar" id="nTextBar" style="background:#ef4444;"></span>
+              </span>
+            </button>
+            <div class="notes-color-palette" id="nTextPalette">
+              <div class="notes-color-dot" style="background:#111827" onmousedown="notesSetColor(event,'#111827','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#ef4444" onmousedown="notesSetColor(event,'#ef4444','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#f97316" onmousedown="notesSetColor(event,'#f97316','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#f59e0b" onmousedown="notesSetColor(event,'#f59e0b','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#10b981" onmousedown="notesSetColor(event,'#10b981','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#3b82f6" onmousedown="notesSetColor(event,'#3b82f6','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#8b5cf6" onmousedown="notesSetColor(event,'#8b5cf6','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#ec4899" onmousedown="notesSetColor(event,'#ec4899','nTextBar')"></div>
+              <div class="notes-color-dot" style="background:#6b7280" onmousedown="notesSetColor(event,'#6b7280','nTextBar')"></div>
+            </div>
+          </div>
+
+          <!-- Surlignage -->
+          <div class="notes-color-picker-wrapper">
+            <button class="notes-tool-btn" onmousedown="event.preventDefault(); notesTogglePalette('nHighlightPalette')" title="Surligner">
+              <span class="notes-color-bar-btn">
+                <i class="fas fa-highlighter" style="font-size:0.7rem;line-height:1;"></i>
+                <span class="notes-color-bar" id="nHighlightBar" style="background:#fef08a;"></span>
+              </span>
+            </button>
+            <div class="notes-color-palette" id="nHighlightPalette">
+              <div class="notes-color-dot" style="background:#fef08a" onmousedown="notesSetHighlight(event,'#fef08a')"></div>
+              <div class="notes-color-dot" style="background:#bbf7d0" onmousedown="notesSetHighlight(event,'#bbf7d0')"></div>
+              <div class="notes-color-dot" style="background:#bfdbfe" onmousedown="notesSetHighlight(event,'#bfdbfe')"></div>
+              <div class="notes-color-dot" style="background:#fecaca" onmousedown="notesSetHighlight(event,'#fecaca')"></div>
+              <div class="notes-color-dot" style="background:#e9d5ff" onmousedown="notesSetHighlight(event,'#e9d5ff')"></div>
+              <div class="notes-color-dot" style="background:#fed7aa" onmousedown="notesSetHighlight(event,'#fed7aa')"></div>
+              <div class="notes-color-dot" style="background:#f1f5f9;border:2px solid #d1d5db;" onmousedown="notesSetHighlight(event,'transparent')"></div>
+            </div>
+          </div>
+
+          <div class="notes-toolbar-sep"></div>
+
+          <!-- Listes -->
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'insertUnorderedList')" title="Liste à puces"><i class="fas fa-list-ul" style="font-size:0.7rem;"></i></button>
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'insertOrderedList')"   title="Liste numérotée"><i class="fas fa-list-ol" style="font-size:0.7rem;"></i></button>
+
+          <div class="notes-toolbar-sep"></div>
+
+          <!-- Alignement 
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'justifyLeft')"   title="Gauche"><i class="fas fa-align-left"   style="font-size:0.7rem;"></i></button>
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'justifyCenter')" title="Centre"><i class="fas fa-align-center" style="font-size:0.7rem;"></i></button>
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'justifyRight')"  title="Droite"><i class="fas fa-align-right"  style="font-size:0.7rem;"></i></button>
+
+          <div class="notes-toolbar-sep"></div>-->
+
+          <!-- Effacer formatage -->
+          <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'removeFormat')" title="Effacer le formatage"><i class="fas fa-eraser" style="font-size:0.7rem;"></i></button>
+        </div>
+
+        <!-- Zone de saisie -->
+        <div class="notes-editor-area"
+             id="notesEditorArea"
+             contenteditable="true"
+             spellcheck="true"
+             onkeydown="notesHandleKey(event)"
+             oninput="notesOnInput()"
+             onmouseup="notesUpdateToolbar()"
+             onkeyup="notesUpdateToolbar()">
+        </div>
+
+        <!-- Footer -->
+		<div class="notes-editor-footer">
+		  <span class="notes-char-count" id="notesCharCount">0 caractère</span>
+		  <button class="notes-clear-btn" onclick="notesAskClear()">
+			<i class="fas fa-trash-alt"></i> Effacer tout
+		  </button>
+</div>
+      </div>
+
+      <!-- Panneau OIC -->
+      <div class="notes-info-panel" id="notesInfoPanel">
+        <div class="notes-info-section-title">
+          <i class="fas fa-graduation-cap"></i> Objectifs de connaissance
+        </div>
+        <div class="oic-list" id="oicList">
+          <div class="oic-empty"><i class="fas fa-book-open"></i>Aucun objectif disponible.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation effacer notes -->
+<div class="notes-confirm-overlay" id="notesConfirmOverlay" onclick="notesCloseConfirm()">
+  <div class="notes-confirm-box" onclick="event.stopPropagation()">
+    <button class="notes-close-btn" onclick="notesCloseConfirm()" style="position:absolute;top:0.75rem;right:0.75rem;">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="notes-confirm-icon"><i class="fas fa-trash-alt"></i></div>
+    <div class="notes-confirm-title">Effacer les notes ?</div>
+    <div class="notes-confirm-text">Toutes les notes de cet item seront supprimées définitivement.</div>
+    <div class="notes-confirm-actions">
+      <button class="notes-confirm-cancel" onclick="notesCloseConfirm()">Annuler</button>
+      <button class="notes-confirm-delete" onclick="notesConfirmClear()">Effacer</button>
+    </div>
+  </div>
+</div>
 
 
 
