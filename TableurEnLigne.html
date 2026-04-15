@@ -29300,11 +29300,27 @@ function notesUpdateCharCount() {
     document.getElementById('notesCharCount').textContent = n + ' caractère' + (n > 1 ? 's' : '');
 }
 
-document.getElementById('notesEditorArea').addEventListener('paste', function(e) {
+document.addEventListener('paste', function(e) {
+    if (!e.target.closest('#notesEditorArea')) return;
     e.preventDefault();
+    var items = (e.clipboardData || window.clipboardData).items;
+    for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) return;
+    }
+    var html = (e.clipboardData || window.clipboardData).getData('text/html');
+    if (html && /<img/i.test(html)) return;
     var text = (e.clipboardData || window.clipboardData).getData('text/plain');
     document.execCommand('insertText', false, text);
 });
+
+document.addEventListener('drop', function(e) {
+    if (!e.target.closest('#notesEditorArea')) return;
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) return;
+    var text = e.dataTransfer.getData('text/plain');
+    if (text) document.execCommand('insertText', false, text);
+});
+
 
 // ===== OIC =====
 function notesBuildOic(padded) {
