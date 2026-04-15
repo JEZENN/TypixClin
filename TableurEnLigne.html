@@ -14739,12 +14739,21 @@ userAvatar?.addEventListener('click', e => { e.stopPropagation(); profileDropdow
 document.addEventListener('click', e => { if (profileDropdown && !profileDropdown.contains(e.target) && !userAvatar?.contains(e.target)) profileDropdown.classList.remove('active'); });
 logoutBtn?.addEventListener('click', async () => {
     
-	if (logoutBtn.disabled) return;
-	try {
-		if (currentUser) {           
+    if (logoutBtn.disabled) return;
+    try {
+        if (currentUser) { }
+
+        // 0️⃣ Fermer le dropdown + afficher le toast "en cours" immédiatement
+        profileDropdown.classList.remove('active');
+        const toast = document.getElementById('toast-logout');
+        if (toast) {
+            toast.querySelector('.toast-logout-title').textContent = 'Déconnexion en cours...';
+            toast.querySelector('.toast-logout-message').textContent = 'Sauvegarde en cours...';
+            toast.classList.add('show');
+            toast.classList.remove('hide');
         }
-		
-		// 1️⃣ Annuler le debounce en cours
+
+        // 1️⃣ Annuler le debounce en cours
         if (saveTimeout) {
             clearTimeout(saveTimeout);
             saveTimeout = null;
@@ -14756,59 +14765,62 @@ logoutBtn?.addEventListener('click', async () => {
             cloudSaveTimeout = null;
         }
 		
-		// 🚫 Cacher immédiatement le bouton de sauvegarde
-const backupBtnLogout = document.getElementById('backup-settings-btn');
-if (backupBtnLogout) backupBtnLogout.style.display = 'none';
+        // 🚫 Cacher immédiatement le bouton de sauvegarde
+        const backupBtnLogout = document.getElementById('backup-settings-btn');
+        if (backupBtnLogout) backupBtnLogout.style.display = 'none';
 
-        
         // 2️⃣ Afficher l'indicateur de sauvegarde
-			setSaveIndicator('saving');
+        setSaveIndicator('saving');
 
-        
         // 3️⃣ Forcer la sauvegarde immédiate si des modifications existent
         if (hasUnsavedChanges && currentUser) {
-            
             await forceSaveAsync();
         }
         
-        // ✅ Afficher le check vert (que la sauvegarde ait eu lieu ou non)
-			setSaveIndicator('saved');
+        // ✅ Afficher le check vert
+        setSaveIndicator('saved');
 
-        
         // ⏱️ Attendre 1 seconde pour voir le check
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // 🧹 Nettoyer l'indicateur AVANT la déconnexion
-			setSaveIndicator('hidden');
+        // 🧹 Nettoyer l'indicateur
+        setSaveIndicator('hidden');
 
-        
-        // 4️⃣ Déconnexion
-        await signOut(auth);
-        profileDropdown.classList.remove('active');
-        
-        // 5️⃣ Réinitialiser le flag
-        hasUnsavedChanges = false;
-        
-        // 6️⃣ Afficher le toast de déconnexion
-        const toast = document.getElementById('toast-logout');
+        // 4️⃣ Faire disparaître le toast "en cours"
         if (toast) {
-            toast.classList.add('show');
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+        }
+
+        // ⏱️ Attendre la fin de la transition CSS (500ms)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 5️⃣ Changer le texte et réafficher le toast "réussie" AVANT signOut
+        if (toast) {
+            toast.querySelector('.toast-logout-title').textContent = 'Déconnexion réussie';
+            toast.querySelector('.toast-logout-message').textContent = 'À bientôt sur TypixClin !';
             toast.classList.remove('hide');
-            
-            setTimeout(() => {
+            toast.classList.add('show');
+        }
+
+        // ⏱️ Laisser le toast apparaître avant de déconnecter
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // 6️⃣ Déconnexion
+        await signOut(auth);
+        hasUnsavedChanges = false;
+
+        // 7️⃣ Cacher le toast après 3s
+        setTimeout(() => {
+            if (toast) {
                 toast.classList.remove('show');
                 toast.classList.add('hide');
-            }, 3000);
-        }
-        
-        
+            }
+        }, 3000);
         
     } catch (error) {
         console.error('❌ Erreur lors de la déconnexion:', error);
-        
-        // Afficher l'erreur dans l'indicateur
-			setSaveIndicator('error');
-
+        setSaveIndicator('error');
     }
 });
 
@@ -23255,8 +23267,16 @@ document.querySelectorAll(
         e.preventDefault();
         e.stopImmediatePropagation();
 
+        // Afficher le toast "Navigation en attente" immédiatement
+        const toast = document.getElementById('toast-logout');
+        if (toast) {
+            toast.querySelector('.toast-logout-title').textContent = 'Navigation en attente...';
+            toast.querySelector('.toast-logout-message').textContent = 'Sauvegarde en cours...';
+            toast.classList.add('show');
+            toast.classList.remove('hide');
+        }
+
         if (typeof window.forceSaveAsync === 'function') {
-            // Afficher l'indicateur de sauvegarde du header
             const indicator = document.getElementById('saveIndicatorHeader');
             if (indicator) {
                 indicator.classList.add('visible', 'saving');
@@ -23268,11 +23288,15 @@ document.querySelectorAll(
             window.forceSaveAsync()
                 .catch(function() {})
                 .finally(function() {
-                    // Afficher le check vert brièvement avant de partir
                     if (indicator) {
                         indicator.classList.remove('saving');
                         indicator.classList.add('saved');
                         indicator.innerHTML = '<i class="fas fa-check"></i>';
+                    }
+                    // Cacher le toast avant de naviguer
+                    if (toast) {
+                        toast.classList.remove('show');
+                        toast.classList.add('hide');
                     }
                     setTimeout(function() {
                         window.location.href = href;
