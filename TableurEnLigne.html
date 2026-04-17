@@ -2240,7 +2240,7 @@ input[type="date"].modal-input {
 .search-box input {
     width: 100%;
 		min-height: 40px;
-		padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+		padding: 0.55rem 2rem 0.55rem 2.25rem;
     background: var(--white);
     border: 2px solid var(--gray-200);
     border-radius: var(--border-radius-md);
@@ -2280,6 +2280,63 @@ input[type="date"].modal-input {
     pointer-events: none;
 }
 
+.search-clear-btn {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.15);
+    border: none;
+    border-radius: 50%;
+    color: #ef4444;
+    font-size: 0.65rem;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.search-clear-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+.search-clear-btn:active {
+    transform: translateY(-50%) scale(0.82);
+    background: #dc2626;
+    color: #ffffff;
+}
+.search-clear-btn i {
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+    color: inherit;
+    pointer-events: none;
+}
+[data-theme="dark"] .search-box .search-clear-btn {
+    background: rgba(239, 68, 68, 0.25) !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .search-box .search-clear-btn:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .search-box .search-clear-btn:active {
+    transform: translateY(-50%) scale(0.82) !important;
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .search-box .search-clear-btn i {
+    color: #ffffff !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    pointer-events: none;
+}
 
 .filter-select { padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: var(--border-radius-lg); font-size: 0.95rem; background: var(--white); min-width: 160px; cursor: pointer; }
 .filter-select:focus { outline: none; border-color: var(--primary); }
@@ -11283,10 +11340,13 @@ color: #7c3aed;
 <div class="app-page active" id="page-dashboard">
 
 <div class="filter-bar">
-    <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" id="search-specialty" placeholder="Rechercher une spécialité..." autocomplete="off">
-    </div>
+	<div class="search-box">
+		<i class="fas fa-search"></i>
+		<input type="text" id="search-specialty" placeholder="Rechercher une spécialité..." autocomplete="off">
+			<button class="search-clear-btn" id="clear-specialty" onclick="clearSearch('search-specialty')" style="display:none;" tabindex="-1" aria-label="Effacer">
+				<i class="fas fa-times"></i>
+			</button>
+	</div>
 
     <div class="custom-select" id="sort-specialty-dropdown">
         <button class="custom-select-btn" type="button">
@@ -11380,7 +11440,13 @@ color: #7c3aed;
 
         <div class="app-page" id="page-items">
 				<div class="filter-bar">
-					<div class="search-box"><i class="fas fa-search"></i><input type="text" id="search-item" placeholder="Rechercher un item..." autocomplete="off"></div>
+					<div class="search-box">
+						<i class="fas fa-search"></i>
+						<input type="text" id="search-item" placeholder="Rechercher un item..." autocomplete="off">
+						<button class="search-clear-btn" id="clear-item" onclick="clearSearch('search-item')" style="display:none;" tabindex="-1" aria-label="Effacer">
+							<i class="fas fa-times"></i>
+						</button>
+					</div>
 						<div class="custom-select" id="reference-dropdown">
 							<button class="custom-select-btn" type="button">
 								<span class="custom-select-icon"><i class="fas fa-list"></i></span>
@@ -18434,13 +18500,32 @@ document.querySelectorAll('.items-table th[data-sort]').forEach(th => {
 });
 document.querySelector('.items-table th[data-sort="num"]')?.classList.add('sorted');
 
+window.clearSearch = function(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    const clearId = 'clear-' + inputId.replace('search-', '');
+    const btn = document.getElementById(clearId);
+    if (btn) btn.style.display = 'none';
+}
 
 document.getElementById('search-item')?.addEventListener('input', renderItemsTable);
 document.getElementById('filter-item-specialty')?.addEventListener('change', renderItemsTable);
 document.getElementById('filter-item-status')?.addEventListener('change', renderItemsTable);
 document.getElementById('filter-item-reference')?.addEventListener('change', renderItemsTable);
 document.getElementById('search-specialty')?.addEventListener('input', renderDashboardSpecialties);
-
+['search-specialty', 'search-item'].forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const clearId = 'clear-' + id.replace('search-', '');
+    const btn = document.getElementById(clearId);
+    if (!btn) return;
+    input.addEventListener('input', () => {
+        btn.style.display = input.value.length > 0 ? 'flex' : 'none';
+    });
+});
 
 
 document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
