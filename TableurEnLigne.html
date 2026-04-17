@@ -11259,7 +11259,7 @@ color: #7c3aed;
 <div class="filter-bar">
     <div class="search-box">
         <i class="fas fa-search"></i>
-        <input type="text" id="search-specialty" placeholder="Rechercher une spécialité...">
+        <input type="text" id="search-specialty" placeholder="Rechercher une spécialité..." autocomplete="off">
     </div>
 
     <div class="custom-select" id="sort-specialty-dropdown">
@@ -11354,7 +11354,7 @@ color: #7c3aed;
 
         <div class="app-page" id="page-items">
 				<div class="filter-bar">
-					<div class="search-box"><i class="fas fa-search"></i><input type="text" id="search-item" placeholder="Rechercher un item..."></div>
+					<div class="search-box"><i class="fas fa-search"></i><input type="text" id="search-item" placeholder="Rechercher un item..." autocomplete="off"></div>
 						<div class="custom-select" id="reference-dropdown">
 							<button class="custom-select-btn" type="button">
 								<span class="custom-select-icon"><i class="fas fa-list"></i></span>
@@ -12553,7 +12553,7 @@ function showTourSuccessAnimation() {
     // Masquer l'overlay
     setTimeout(() => {
         overlay.classList.remove('show');
-    }, 2000);
+    }, 1500);
 }
 
 function createSuccessParticles(container) {
@@ -17616,7 +17616,7 @@ const checklistBtn = isInChecklist ?
     '<span class="table-btn-wrap"><span class="added-to-checklist-badge" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '"><i class="fas fa-thumbtack"></i></span></span>' :
     '<span class="table-btn-wrap"><button class="send-to-checklist-btn" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" onclick="sendToChecklist(this, \'' + item.specialtyId + '\', \'' + item.fc + '\', \'' + item.num + '\', \'' + escapedName + '\')"><i class="fas fa-arrow-right"></i><span class="table-btn-label">To-do</span></button></span>'; 
 		var _enNotes = item.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-var notesBtn = '<span class="table-btn-wrap"><button class="open-notes-btn" onmousedown="event.stopPropagation()" onclick="openNotesModal(\''+item.num+'\',\''+item.specialtyId+'\',\''+item.fc+'\',\''+_enNotes+'\')" title="Mes notes"><i class="fas fa-pencil-alt" style="font-size:0.65rem;pointer-events:none;"></i><span class="table-btn-label" style="pointer-events:none;">Notes</span></button></span>';
+var notesBtn = '<span class="table-btn-wrap"><button class="open-notes-btn" data-specialty="' + item.specialtyId + '" data-fc="' + item.fc + '" onmousedown="event.stopPropagation()" onclick="openNotesModal(\''+item.num+'\',\''+item.specialtyId+'\',\''+item.fc+'\',\''+_enNotes+'\')" title="Mes notes"><i class="fas fa-pencil-alt" style="font-size:0.65rem;pointer-events:none;"></i><span class="table-btn-label" style="pointer-events:none;">Notes</span></button></span>';
 //var notesBtn = '';
 
 return '<tr><td class="item-num">' + item.num + '<br><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:2px;">' + notesBtn + checklistBtn + '</div></td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + item.specialtyName + referenceHtml + '</td>' +					
@@ -18164,6 +18164,12 @@ if (selectedConfidence) {
         document.getElementById('tour-duration-hours').value = '';
         document.getElementById('tour-duration-minutes').value = '';
     }
+	
+	var sw = window.innerWidth - document.documentElement.clientWidth;
+document.body.style.overflow = 'hidden';
+document.body.style.paddingRight = sw + 'px';
+document.querySelector('.header').style.paddingRight = sw + 'px';
+
     
     confidenceModal.classList.add('active');
 };
@@ -18273,6 +18279,11 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     d.tourSupports[tourIndex] = selectedSupport;
     d.lastRevision = selectedDate;
     
+	document.body.style.overflow = '';
+document.body.style.paddingRight = '';
+document.querySelector('.header').style.paddingRight = '';
+
+
     confidenceModal.classList.add('closing');
 setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
     pendingTour = null;
@@ -18315,6 +18326,10 @@ document.getElementById('btn-reset-tour')?.addEventListener('click', function() 
     const remainingDates = d.tourDates.filter(x => x);
     d.lastRevision = remainingDates.length > 0 ? remainingDates[remainingDates.length - 1] : null;
     
+	document.body.style.overflow = '';
+document.body.style.paddingRight = '';
+document.querySelector('.header').style.paddingRight = '';
+
     confidenceModal.classList.add('closing');
 setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
     pendingTour = null;
@@ -18332,6 +18347,10 @@ setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
 });
 
 document.getElementById('confidence-close')?.addEventListener('click', () => { 
+document.body.style.overflow = '';
+document.body.style.paddingRight = '';
+document.querySelector('.header').style.paddingRight = '';
+
     confidenceModal.classList.add('closing');
 setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180); 
     pendingTour = null; 
@@ -18342,6 +18361,11 @@ setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180);
 
 confidenceModal?.addEventListener('click', e => { 
     if (e.target === confidenceModal) { 
+	document.body.style.overflow = '';
+document.body.style.paddingRight = '';
+document.querySelector('.header').style.paddingRight = '';
+
+
         confidenceModal.classList.add('closing');
 setTimeout(() => confidenceModal.classList.remove('active', 'closing'), 180); 
         pendingTour = null;
@@ -20922,6 +20946,8 @@ window._notesFirestore = {
 }
 
 /* Scrollbar */
+[data-theme="dark"] .help-modal-body::-webkit-scrollbar { width: 6px; }
+
 [data-theme="dark"] .help-modal-body::-webkit-scrollbar-track {
     background: #1e293b;
 }
@@ -21750,6 +21776,15 @@ window._notesFirestore = {
     font-family: var(--font-body);
 }
 .open-notes-btn:active { opacity: 0.75; }
+.table-btn-wrap .open-notes-btn.notes-active {
+    max-width: 90px;
+    padding: 0 7px 0 5px;
+    z-index: 50;
+    box-shadow: 0 3px 10px rgba(59,130,246,0.5);
+}
+.table-btn-wrap .open-notes-btn.notes-active .table-btn-label {
+    opacity: 1; width: auto; margin-left: 4px;
+}
 
 .table-btn-wrap {
     display: inline-flex;
@@ -29082,6 +29117,9 @@ if (refBadge) {
 
     var overlay = document.getElementById('notesModalOverlay');
     overlay.classList.remove('closing');
+    document.querySelectorAll('.open-notes-btn.notes-active').forEach(function(b){ b.classList.remove('notes-active'); });
+    var activeBtn = document.querySelector('.open-notes-btn[data-specialty="'+specialtyId+'"][data-fc="'+fc+'"]');
+    if (activeBtn) activeBtn.classList.add('notes-active');
     overlay.classList.add('active');
 	
 	var modal = overlay.querySelector('.notes-modal');
@@ -29121,6 +29159,7 @@ if (refBadge) {
 
 // ===== FERMER =====
 function closeNotesModal() {
+    document.querySelectorAll('.open-notes-btn.notes-active').forEach(function(b){ b.classList.remove('notes-active'); });
     notesModalSave();
     var overlay = document.getElementById('notesModalOverlay');
     overlay.classList.add('closing');
