@@ -10343,11 +10343,73 @@ color: #7c3aed;
   [data-theme="dark"] .notes-action-btn.btn-todo:hover { background: rgba(124,58,237,0.25) !important; color: #c4b5fd !important; }
 
   .notes-close-btn:hover     { background: var(--danger-light) !important; color: var(--danger) !important; transform: none !important; }
-  .notes-tool-btn:hover      { background: transparent !important; }
+    .notes-tool-btn:hover      { background: transparent !important; color: var(--gray-600) !important; }
   .notes-color-dot:hover     { transform: none !important; border-color: transparent !important; }
   .notes-clear-btn:hover     { background: transparent !important; color: var(--gray-500) !important; }
   .notes-confirm-cancel:hover{ background: var(--white) !important; }
-  .notes-confirm-delete:hover{ transform: none !important; }
+.notes-confirm-delete:hover{ transform: none !important; }
+
+  /* ── Fix boutons blancs au tap (iOS/Android) ── */
+  .notes-tool-btn,
+  .notes-action-btn,
+  .notes-close-btn {
+      -webkit-tap-highlight-color: transparent;
+  }
+
+.notes-tool-btn:focus,
+  .notes-tool-btn:focus-visible {
+      background: transparent !important;
+      color: var(--gray-600) !important;
+      outline: none;
+  }
+
+  .notes-action-btn.btn-lisa:focus,
+  .notes-action-btn.btn-lisa:focus-visible {
+      background: #dbeafe !important;
+      color: #1d4ed8 !important;
+      outline: none;
+  }
+  .notes-action-btn.btn-tour:focus,
+  .notes-action-btn.btn-tour:focus-visible {
+      background: #d1fae5 !important;
+      color: #065f46 !important;
+      outline: none;
+  }
+  .notes-action-btn.btn-todo:focus,
+  .notes-action-btn.btn-todo:focus-visible {
+      background: #ede9fe !important;
+      color: #6d28d9 !important;
+      outline: none;
+  }
+
+  .notes-close-btn:focus,
+  .notes-close-btn:focus-visible {
+      background: var(--danger-light) !important;
+      color: var(--danger) !important;
+      outline: none;
+      transform: none !important;
+      box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .notes-action-btn.btn-lisa:focus,
+  [data-theme="dark"] .notes-action-btn.btn-lisa:focus-visible {
+      background: rgba(29,78,216,0.25) !important;
+      color: #93c5fd !important;
+  }
+  [data-theme="dark"] .notes-action-btn.btn-tour:focus,
+  [data-theme="dark"] .notes-action-btn.btn-tour:focus-visible {
+      background: rgba(16,185,129,0.2) !important;
+      color: #6ee7b7 !important;
+  }
+  [data-theme="dark"] .notes-action-btn.btn-todo:focus,
+  [data-theme="dark"] .notes-action-btn.btn-todo:focus-visible {
+      background: rgba(124,58,237,0.25) !important;
+      color: #c4b5fd !important;
+  }
+
+  .notes-tool-btn:active,
+  .notes-action-btn:active,
+  .notes-close-btn:active { transform: none !important; }
 }
 
 @media (max-width: 768px) {
@@ -14759,6 +14821,7 @@ async function updateUserUI(user) {
     } else {
 	stopInactivityTimer();
         currentUser = null;
+		_pendingSyncChecked = false;
         userAuth.classList.remove('logged-in');
         loginRequired.style.display = 'block';
         if (presentationSection) presentationSection.style.display = 'block';
@@ -15041,7 +15104,7 @@ function forceSave() {
         
         // Sauvegarder Firebase uniquement
         saveUserData();
-        hasUnsavedChanges = false;
+       // hasUnsavedChanges = false;
     }
 }
 
@@ -29228,7 +29291,6 @@ function openNotesModal(num, specialtyId, fc, itemName) {
     specPill.style.color      = specCfg.color;
     specPill.style.border     = '1px solid ' + specCfg.color + '40';
 	var refBadge = document.getElementById('notesHeaderReference');
-var refBadge = document.getElementById('notesHeaderReference');
 if (refBadge) {
     // Tester aussi avec le num parsé en entier et avec padding
     var numStr = String(num);
@@ -29285,8 +29347,20 @@ if (refBadge) {
 
 // ===== FERMER =====
 function closeNotesModal() {
-    document.querySelectorAll('.open-notes-btn.notes-active').forEach(function(b){ b.classList.remove('notes-active'); });
-    notesModalSave();
+    document.querySelectorAll('.open-notes-btn.notes-active').forEach(function(b){
+        b.classList.remove('notes-active');
+    });
+
+    // ✅ CORRECTION : Toujours sauvegarder en localStorage avant de fermer,
+    // peu importe si une sauvegarde Firebase est en cours
+    if (_notesKey) {
+        var html = document.getElementById('notesEditorArea').innerHTML;
+        var lsKey = 'notes__' + _notesKey.replace(/-/g, '__');
+        localStorage.setItem(lsKey, html);
+    }
+
+    notesModalSave(); // tente aussi Firebase (peut être bloqué par _notesSaving, c'est ok)
+
     var overlay = document.getElementById('notesModalOverlay');
     overlay.classList.add('closing');
     setTimeout(function() {
@@ -29757,7 +29831,13 @@ function notesBuildOic(padded) {
   </div>
 </div>
 
-
+<script>
+/* Fix boutons blancs au tap sur iOS/Android */
+document.addEventListener('touchend', function(e) {
+    var btn = e.target.closest('.notes-tool-btn, .notes-action-btn, .notes-close-btn');
+    if (btn) setTimeout(function() { btn.blur(); }, 50);
+}, { passive: true });
+</script>
 
 </body>
 </html>
