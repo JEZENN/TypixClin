@@ -1181,6 +1181,22 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .specialty-card { background: var(--white); border-radius: var(--border-radius-lg); border: 1px solid var(--gray-200); padding: 1.25rem; cursor: pointer; position: relative; overflow: hidden; transition: all var(--transition-normal); }
 .specialty-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 .specialty-card:active { box-shadow: var(--shadow-md); transform: translateY(0) scale(0.97); }
+.specialty-card.dragging { opacity: 0.4; transform: scale(0.98); box-shadow: none; }
+.specialty-card.drag-over { border-top: 2px solid var(--primary) !important; }
+.specialty-drag-handle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    color: var(--gray-300);
+    font-size: 0.8rem;
+    cursor: grab;
+    padding: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 2;
+}
+.specialty-card:hover .specialty-drag-handle { opacity: 1; }
 
 .specialty-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
 .specialty-name { font-weight: 700; font-size: 1rem; color: var(--gray-900); flex: 1; display: flex; align-items: center; gap: 0.5rem; }
@@ -15703,6 +15719,14 @@ const podiumOrder = top3.map((s, i) => ({ s, rank: i + 1 }));
 }
 
 
+function loadSpecialtyOrder() {
+    try { return JSON.parse(localStorage.getItem('specialty_custom_order')) || []; }
+    catch(e) { return []; }
+}
+function saveSpecialtyOrder(ids) {
+    localStorage.setItem('specialty_custom_order', JSON.stringify(ids));
+}
+
 function renderDashboardSpecialties() {
     const container = document.getElementById('dashboard-specialties');
     const sortValue = document.getElementById('sort-specialty')?.value || 'default';
@@ -15734,6 +15758,21 @@ function renderDashboardSpecialties() {
         specialtiesWithStats = specialtiesWithStats.filter(s => s.prog.percentage === 100);
     }
     
+    // Appliquer l'ordre personnalisé quand aucun tri n'est actif
+    if (sortValue === 'default') {
+        const savedOrder = loadSpecialtyOrder();
+        if (savedOrder.length > 0) {
+            specialtiesWithStats.sort((a, b) => {
+                const ia = savedOrder.indexOf(a.id);
+                const ib = savedOrder.indexOf(b.id);
+                if (ia === -1 && ib === -1) return 0;
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+            });
+        }
+    }
+
     // Trier
     if (sortValue === 'feeling-asc') {
         specialtiesWithStats.sort((a, b) => (a.prog.avgFeeling || 0) - (b.prog.avgFeeling || 0));
@@ -15771,15 +15810,60 @@ function renderDashboardSpecialties() {
             else feelingClass = 'feeling-c5';
         }
         
-        return '<div class="specialty-card" onclick="navigateToSpecialty(\'' + s.id + '\')" style="border-left: 4px solid ' + cfg.color + ';">' +
+        return '<div class="specialty-card" data-specialty-id="' + s.id + '" onclick="navigateToSpecialty(\'' + s.id + '\')" style="border-left: 4px solid ' + cfg.color + ';">' +
             '<div class="specialty-header"><span class="specialty-name"><span class="specialty-icon" style="background:' + cfg.color + ';"><i class="fas ' + cfg.icon + '"></i></span>' + s.name + '</span><span class="specialty-badge" style="background:' + cfg.color + ';">' + s.items.length + '</span></div>' +
             '<div class="specialty-stats"><span class="specialty-stat ' + (prog.percentage === 100 ? 'completed' : '') + '"><i class="fas fa-check-circle"></i> ' + prog.itemsSeen + '/' + prog.totalItems + ' items</span><span class="specialty-stat"><i class="fas fa-redo"></i> ' + prog.totalTours + ' tours</span></div>' +
             '<div class="specialty-extra-stats">' +
                 '<span class="specialty-extra-stat time-stat"><i class="fas fa-clock"></i> ' + prog.totalTime + '</span>' +
                 '<span class="specialty-extra-stat feeling-stat ' + feelingClass + '"><i class="fas fa-heart"></i> ' + feelingDisplay + '</span>' +
             '</div>' +
-            '<div class="specialty-progress"><div class="progress-bar"><div class="progress-fill" style="width:' + prog.percentage + '%;background:linear-gradient(135deg,' + cfg.color + ',' + cfg.color + 'dd);"></div></div></div></div>';
+            '<div class="specialty-progress"><div class="progress-bar"><div class="progress-fill" style="width:' + prog.percentage + '%;background:linear-gradient(135deg,' + cfg.color + ',' + cfg.color + 'dd);"></div></div></div>' +
+            '<span class="specialty-drag-handle"><i class="fas fa-grip-vertical"></i></span>' +
+            '</div>';
     }).join('');
+
+    // Drag-and-drop : actif uniquement si tri par défaut et pas de recherche
+    if (sortValue === 'default' && !searchTerm) {
+        const cards = container.querySelectorAll('.specialty-card');
+        let dragSrc = null;
+        cards.forEach(function(card) {
+            card.setAttribute('draggable', 'true');
+            // Empecher le click sur le handle de naviguer
+            const handle = card.querySelector('.specialty-drag-handle');
+            if (handle) {
+                handle.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+                handle.addEventListener('click', function(e) { e.stopPropagation(); e.preventDefault(); });
+            }
+            card.addEventListener('dragstart', function(e) {
+                dragSrc = card;
+                setTimeout(function() { card.classList.add('dragging'); }, 0);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            card.addEventListener('dragend', function() {
+                card.classList.remove('dragging');
+                container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
+                var newOrder = Array.from(container.querySelectorAll('.specialty-card')).map(function(c) { return c.dataset.specialtyId; });
+                saveSpecialtyOrder(newOrder);
+            });
+            card.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (!dragSrc || dragSrc === card) return;
+                container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
+                card.classList.add('drag-over');
+                var allCards = Array.from(container.querySelectorAll('.specialty-card'));
+                var srcIdx = allCards.indexOf(dragSrc);
+                var tgtIdx = allCards.indexOf(card);
+                if (srcIdx !== -1 && tgtIdx !== -1 && srcIdx !== tgtIdx) {
+                    if (srcIdx < tgtIdx) card.after(dragSrc);
+                    else card.before(dragSrc);
+                }
+            });
+            card.addEventListener('drop', function(e) {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+            });
+        });
+    }
 }
 
 // ===== PAGINATION ITEMS =====
@@ -16702,19 +16786,20 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     d.tourSupports[tourIndex] = selectedSupport;
     d.lastRevision = selectedDate;
     
+const _pendingTourSnap = pendingTour;
+    pendingTour = null;
+    selectedConfidence = null;
+    selectedSupport = null;
+    debouncedSave();
+    renderAll();
 confidenceModal.classList.add('closing');
 setTimeout(() => {
     confidenceModal.classList.remove('active', 'closing');
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
     document.querySelector('.header').style.paddingRight = '';
-}, 180);
-    pendingTour = null;
-    selectedConfidence = null;
-    selectedSupport = null;
-    debouncedSave();
-    renderAll();
 	showTourSuccessAnimation();
+}, 180);
     
     // Si on vient de la checklist, valider la tâche ET afficher une notification
     if (pendingChecklistItemId !== null) {
@@ -16798,6 +16883,21 @@ setTimeout(() => {
     } 
 });
 
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && confidenceModal && confidenceModal.classList.contains('active')) {
+        confidenceModal.classList.add('closing');
+        setTimeout(() => {
+            confidenceModal.classList.remove('active', 'closing');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            document.querySelector('.header').style.paddingRight = '';
+        }, 180);
+        pendingTour = null;
+        selectedConfidence = null;
+        selectedSupport = null;
+        pendingChecklistItemId = null;
+    }
+});
 
 window.navigateToSpecialty = function(sId) {
     document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
@@ -20367,7 +20467,7 @@ window._notesFirestore = {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
     color: white;
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(59,130,246,0.35);
@@ -21347,6 +21447,7 @@ function openHelpModal(contentId) {
 function closeHelpModal(event) {
     if (event && event.target.id !== 'helpModalOverlay') return;
     const overlay = document.getElementById('helpModalOverlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
     overlay.classList.add('closing');
 setTimeout(() => {
     overlay.classList.remove('active', 'closing');
