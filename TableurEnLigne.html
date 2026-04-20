@@ -1181,22 +1181,45 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .specialty-card { background: var(--white); border-radius: var(--border-radius-lg); border: 1px solid var(--gray-200); padding: 1.25rem; cursor: pointer; position: relative; overflow: hidden; transition: all var(--transition-normal); }
 .specialty-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 .specialty-card:active { box-shadow: var(--shadow-md); transform: translateY(0) scale(0.97); }
-.specialty-card.dragging { opacity: 0.4; transform: scale(0.98); box-shadow: none; }
-.specialty-card.drag-over { border-top: 2px solid var(--primary) !important; }
+.specialty-card.dragging {
+    visibility: hidden;
+    pointer-events: none;
+}
+.specialty-drag-ghost {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(59,130,246,0.45);
+    outline: 3px solid #3b82f6;
+    transform: scale(1.03) rotate(1deg);
+    transition: none;
+    background: var(--white);
+    opacity: 1;
+}
+.specialty-card.drag-over {
+    border-top: 3px solid var(--primary) !important;
+    transform: translateY(2px);
+}
 .specialty-drag-handle {
     position: absolute;
-    top: 50%;
+    top: auto;
+    bottom: 3.8rem;
     right: 0.75rem;
-    transform: translateY(-50%);
+    transform: none;
     color: var(--gray-300);
-    font-size: 0.8rem;
+    font-size: 1.15rem;
     cursor: grab;
-    padding: 0.25rem;
+    padding: 0.4rem;
     opacity: 0;
     transition: opacity 0.15s;
     z-index: 2;
+    touch-action: none;
 }
 .specialty-card:hover .specialty-drag-handle { opacity: 1; }
+@media (hover: none), (max-width: 768px) {
+    .specialty-drag-handle { display: none !important; }
+}
 
 .specialty-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
 .specialty-name { font-weight: 700; font-size: 1rem; color: var(--gray-900); flex: 1; display: flex; align-items: center; gap: 0.5rem; }
@@ -15822,46 +15845,142 @@ function renderDashboardSpecialties() {
             '</div>';
     }).join('');
 
-    // Drag-and-drop : actif uniquement si tri par défaut et pas de recherche
+    // ===== DRAG & DROP (souris + tactile) =====
     if (sortValue === 'default' && !searchTerm) {
-        const cards = container.querySelectorAll('.specialty-card');
+        const cards = Array.from(container.querySelectorAll('.specialty-card'));
         let dragSrc = null;
-        cards.forEach(function(card) {
-            card.setAttribute('draggable', 'true');
-            // Empecher le click sur le handle de naviguer
-            const handle = card.querySelector('.specialty-drag-handle');
-            if (handle) {
-                handle.addEventListener('mousedown', function(e) { e.stopPropagation(); });
-                handle.addEventListener('click', function(e) { e.stopPropagation(); e.preventDefault(); });
+        let touchClone = null;
+        let touchOffsetX = 0;
+        let touchOffsetY = 0;
+
+        function getCardAtPoint(x, y) {
+            var els = document.elementsFromPoint(x, y);
+            for (var i = 0; i < els.length; i++) {
+                if (els[i].classList.contains('specialty-card') && els[i] !== dragSrc) return els[i];
             }
-            card.addEventListener('dragstart', function(e) {
-                dragSrc = card;
-                setTimeout(function() { card.classList.add('dragging'); }, 0);
-                e.dataTransfer.effectAllowed = 'move';
+            return null;
+        }
+
+        var lastTarget = null;
+
+        function insertNear(target) {
+            if (!target || target === dragSrc || target === lastTarget) return;
+            var allCards = Array.from(container.querySelectorAll('.specialty-card'));
+            var srcIdx = allCards.indexOf(dragSrc);
+            var tgtIdx = allCards.indexOf(target);
+            if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
+            lastTarget = target;
+
+            // FLIP : enregistrer positions avant
+            var before = {};
+            allCards.forEach(function(c) {
+                if (c !== dragSrc) before[c.dataset.specialtyId] = c.getBoundingClientRect();
             });
-            card.addEventListener('dragend', function() {
-                card.classList.remove('dragging');
-                container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
-                var newOrder = Array.from(container.querySelectorAll('.specialty-card')).map(function(c) { return c.dataset.specialtyId; });
-                saveSpecialtyOrder(newOrder);
+
+            container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
+            target.classList.add('drag-over');
+            if (srcIdx < tgtIdx) target.after(dragSrc);
+            else target.before(dragSrc);
+
+            // FLIP : animer depuis l'ancienne position
+            Array.from(container.querySelectorAll('.specialty-card')).forEach(function(c) {
+                if (c === dragSrc || !before[c.dataset.specialtyId]) return;
+                var prev = before[c.dataset.specialtyId];
+                var next = c.getBoundingClientRect();
+                var dy = prev.top - next.top;
+                var dx = prev.left - next.left;
+                if (Math.abs(dy) < 1 && Math.abs(dx) < 1) return;
+                c.style.transition = 'none';
+                c.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        c.style.transition = 'transform 0.2s ease';
+                        c.style.transform = '';
+                        c.addEventListener('transitionend', function h() {
+                            c.style.transition = '';
+                            c.removeEventListener('transitionend', h);
+                        });
+                    });
+                });
             });
-            card.addEventListener('dragover', function(e) {
+        }
+
+        function finalizeDrag() {
+            if (dragSrc) dragSrc.classList.remove('dragging');
+            container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
+            var newOrder = Array.from(container.querySelectorAll('.specialty-card')).map(function(c) { return c.dataset.specialtyId; });
+            saveSpecialtyOrder(newOrder);
+            dragSrc = null;
+        }
+
+        function startDrag(card, clientX, clientY) {
+            var rect = card.getBoundingClientRect();
+            touchOffsetX = clientX - rect.left;
+            touchOffsetY = clientY - rect.top;
+            dragSrc = card;
+            lastTarget = null;
+
+            // Créer le ghost opaque
+            touchClone = card.cloneNode(true);
+            touchClone.classList.add('specialty-drag-ghost');
+            touchClone.style.width = rect.width + 'px';
+            touchClone.style.left = (clientX - touchOffsetX) + 'px';
+            touchClone.style.top  = (clientY - touchOffsetY) + 'px';
+            document.body.appendChild(touchClone);
+            card.classList.add('dragging');
+        }
+
+        function moveDrag(clientX, clientY) {
+            if (!dragSrc) return;
+            if (touchClone) {
+                touchClone.style.left = (clientX - touchOffsetX) + 'px';
+                touchClone.style.top  = (clientY - touchOffsetY) + 'px';
+            }
+            var target = getCardAtPoint(clientX, clientY);
+            insertNear(target);
+        }
+
+        function endDrag() {
+            if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
+            finalizeDrag();
+        }
+
+        // Événements globaux souris
+        var _onMouseMove = function(e) { moveDrag(e.clientX, e.clientY); };
+        var _onMouseUp   = function()  { endDrag(); document.removeEventListener('mousemove', _onMouseMove); document.removeEventListener('mouseup', _onMouseUp); };
+
+        cards.forEach(function(card) {
+            // Bloquer le drag HTML5 natif
+            card.setAttribute('draggable', 'false');
+
+            var handle = card.querySelector('.specialty-drag-handle');
+            var trigger = handle || card;
+
+            // ---- SOURIS ----
+            trigger.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;
                 e.preventDefault();
-                if (!dragSrc || dragSrc === card) return;
-                container.querySelectorAll('.specialty-card').forEach(function(c) { c.classList.remove('drag-over'); });
-                card.classList.add('drag-over');
-                var allCards = Array.from(container.querySelectorAll('.specialty-card'));
-                var srcIdx = allCards.indexOf(dragSrc);
-                var tgtIdx = allCards.indexOf(card);
-                if (srcIdx !== -1 && tgtIdx !== -1 && srcIdx !== tgtIdx) {
-                    if (srcIdx < tgtIdx) card.after(dragSrc);
-                    else card.before(dragSrc);
-                }
+                e.stopPropagation();
+                startDrag(card, e.clientX, e.clientY);
+                document.addEventListener('mousemove', _onMouseMove);
+                document.addEventListener('mouseup', _onMouseUp);
             });
-            card.addEventListener('drop', function(e) {
+
+            // ---- TACTILE (desktop uniquement) ----
+            if (window.innerWidth > 768) {
+            trigger.addEventListener('touchstart', function(e) {
+                var touch = e.touches[0];
+                startDrag(card, touch.clientX, touch.clientY);
+            }, { passive: true });
+
+            card.addEventListener('touchmove', function(e) {
                 e.preventDefault();
-                card.classList.remove('drag-over');
-            });
+                var touch = e.touches[0];
+                moveDrag(touch.clientX, touch.clientY);
+            }, { passive: false });
+
+            card.addEventListener('touchend', endDrag);
+            }
         });
     }
 }
