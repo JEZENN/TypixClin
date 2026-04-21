@@ -3,6 +3,7 @@
 <head>
 
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 
 
 <!-- Google Tag Manager -->
@@ -13504,10 +13505,9 @@ async function saveBackupToFirebase(userId, data) {
         const content = countDataContent(data);
         
         // Ne sauvegarder que si les données ont du contenu significatif
-        if (content.items < 10) {
-            
-            return { success: false, error: 'Pas assez de données (minimum 10 fiches)' };
-        }
+		if (content.items === 0) {
+			return { success: false, error: 'Aucune donnée à sauvegarder' };
+		}
         
         // ✅ CRÉER backupData
         const backupData = {
@@ -13628,10 +13628,9 @@ async function saveCloudBackup(userId, data, isManual = false) {
         const content = countDataContent(data);
         
         // Vérification minimum
-        if (content.items < 10) {
-            
-            return;
-        }
+		if (content.items === 0) {
+			return;
+		}
         
         const backupDocRef = doc(db, 'planningBackups', userId);
         
@@ -13746,10 +13745,9 @@ async function checkAndAutoSaveCloud(userId) {
     const content = countDataContent(userData);
     
     // Vérifier qu'il y a assez de données (minimum 10 fiches)
-    if (content.items < 10) {
-       
-        return;
-    }
+		if (content.items === 0) {
+			return;
+		}
     
     try {
         const cloudBackup = await getCloudBackup(userId);
@@ -15045,16 +15043,16 @@ async function forceManualBackup() {
     
     const content = countDataContent(userData);
     
-    if (content.items < 10) {
-        await showCustomAlert({
-            type: 'warning',
-            icon: 'exclamation-triangle',
-            title: 'Pas assez de données',
-            message: 'Vous devez avoir au moins 10 fiches pour créer une sauvegarde.',
-            okText: 'Compris'
-        });
-        return;
-    }
+if (content.items === 0) {
+    await showCustomAlert({
+        type: 'warning',
+        icon: 'exclamation-triangle',
+        title: 'Aucune donnée à sauvegarder',
+        message: 'Commencez à renseigner vos fiches avant de créer une sauvegarde.',
+        okText: 'Compris'
+    });
+    return;
+}
     
     // Afficher un indicateur de chargement
     const btn = document.querySelector('.backup-force-btn');
@@ -16286,7 +16284,8 @@ function initSpecialtyMultiSelect() {
     const clearBtn = document.getElementById('specialty-clear-btn');
     const searchInput = document.getElementById('specialty-search');
     
-    if (!container || !btn || !menu || !list) return;    
+    if (!container || !btn || !menu || !list || !searchInput) return;
+    
     // Générer la liste des options
     renderSpecialtyOptions();
     
@@ -16659,12 +16658,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Fermer si clic ailleurs
-    document.addEventListener('click', function(e) {
-        if (!paginationDropdown.contains(e.target)) {
-            paginationBtn.classList.remove('active');
-            paginationMenu.classList.remove('active');
-        }
-    });
+		document.addEventListener('click', function(e) {
+			if (!paginationDropdown || !paginationDropdown.contains(e.target)) {
+				paginationBtn.classList.remove('active');
+				paginationMenu.classList.remove('active');
+			}
+		});
 });
 
 // Fonction pour mettre à jour le dropdown depuis l'extérieur
@@ -22174,7 +22173,27 @@ document.querySelectorAll(
 });
 
 // ===== DONNÉES OIC =====
-// Ajoute tes items ici. Clé = numéro sur 3 chiffres.
+
+// ===== SÉCURITÉ : Configuration DOMPurify pour l'éditeur de notes =====
+var NOTES_DOMPURIFY_CONFIG = {
+    ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'span', 'br',
+                   'ul', 'ol', 'li', 'div', 'p', 'font'],
+    ALLOWED_ATTR: ['style', 'color'],
+    ALLOWED_STYLE: {
+        '*': {
+            'color':            [/^#[0-9a-f]{3,6}$/i, /^rgb\(/],
+            'background-color': [/^#[0-9a-f]{3,6}$/i, /^rgb\(/],
+            'font-weight':      [/^bold$/, /^normal$/],
+            'font-style':       [/^italic$/, /^normal$/],
+            'text-decoration':  [/^underline$/, /^line-through$/, /^none$/]
+        }
+    }
+};
+
+function notesSanitize(html) {
+    if (typeof DOMPurify === 'undefined') return html; // fallback sécurisé si lib absente
+    return DOMPurify.sanitize(html, NOTES_DOMPURIFY_CONFIG);
+}
 
 // ===== ÉTAT =====
 var _notesKey      = null;
@@ -22194,13 +22213,14 @@ async function loadNoteFromFirestore(itemKey) {
     } catch (err) {
         console.warn('[Notes] Firestore lecture échouée, fallback localStorage :', err);
     }
-    const lsKey  = 'notes__' + itemKey.replace('-', '__');
-    const lsHtml = localStorage.getItem(lsKey) || '';
-    if (lsHtml) {
-        console.info('[Notes] Migration localStorage → Firestore pour', itemKey);
-        saveNoteToFirestore(itemKey, lsHtml);
-        return { html: lsHtml, source: 'localStorage' };
-    }
+	const lsKeyNew = 'notes__' + itemKey.replace(/-/g, '__');
+	const lsKeyOld = 'notes__' + itemKey.replace('-', '__');
+	let lsHtml = localStorage.getItem(lsKeyNew) || localStorage.getItem(lsKeyOld) || '';
+		if (lsHtml) {
+			const lsHtmlSafe = notesSanitize(lsHtml); // nettoyer AVANT migration
+			saveNoteToFirestore(itemKey, lsHtmlSafe);
+			return { html: lsHtmlSafe, source: 'localStorage' };
+		}
     return { html: '', source: 'empty' };
 }
 
@@ -22216,7 +22236,7 @@ async function saveNoteToFirestore(itemKey, html) {
         return true;
     } catch (err) {
         console.error('[Notes] Erreur Firestore write :', err);
-        const lsKey = 'notes__' + itemKey.replace('-', '__');
+        const lsKey = 'notes__' + itemKey.replace(/-/g, '__');
         localStorage.setItem(lsKey, html);
         return false;
     }
@@ -22329,8 +22349,9 @@ if (refBadge) {
 
     loadNoteFromFirestore(_notesKey).then(function(result) {
         if (_notesKey !== savedKey) return;
-        editor.innerHTML = result.html;
-        _notesLastHtml   = result.html;
+		var _sanitized   = notesSanitize(result.html);
+		editor.innerHTML = _sanitized;
+		_notesLastHtml   = _sanitized;
         notesUpdateCharCount();
         notesSetAutosaveState('idle');
         var padded = String(parseInt(savedNum, 10)).padStart(3, '0');
@@ -22399,10 +22420,17 @@ document.addEventListener('keydown', function(e) {
 
 // ===== SAUVEGARDER =====
 function notesModalSave() {
-    if (!_notesKey || _notesSaving) return;
+    if (!_notesKey) return;
+
     var html  = document.getElementById('notesEditorArea').innerHTML;
-    var lsKey = 'notes__' + _notesKey.replace('-', '__');
+
+    // ✅ localStorage : toujours, sans condition
+    var lsKey = 'notes__' + _notesKey.replace(/-/g, '__'); // clé unifiée
     localStorage.setItem(lsKey, html);
+
+    // ✅ Firebase : seulement si pas déjà en cours
+    if (_notesSaving) return;
+
     _notesSaving = true;
     notesSetAutosaveState('saving');
     var savedKey = _notesKey;
