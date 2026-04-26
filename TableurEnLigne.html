@@ -8793,7 +8793,6 @@ input[type="date"].modal-input {
     transition: transform 0.22s ease;
     opacity: 0.85;
 }
-.train-cl-status-option:hover .train-cl-chevron,
 .train-cl-status-option.expanded .train-cl-chevron {
     transform: rotate(180deg);
 }
@@ -8806,8 +8805,18 @@ input[type="date"].modal-input {
     transition: max-height 0.26s ease, opacity 0.2s ease, padding-top 0.22s ease;
     padding-top: 0;
 }
-/* Desktop : hover. Mobile : tap via classe .expanded ajoutée en JS */
-.train-cl-status-option:hover .train-cl-statuts-expand,
+/* Desktop : hover uniquement sur vrais devices pointeurs (pas iOS/Android) */
+@media (hover: hover) {
+    .train-cl-status-option:hover .train-cl-statuts-expand {
+        max-height: 56px;
+        opacity: 1;
+        padding-top: 8px;
+    }
+    .train-cl-status-option:hover .train-cl-chevron {
+        transform: rotate(180deg);
+    }
+}
+/* Mobile : tap via classe .expanded ajoutée en JS */
 .train-cl-status-option.expanded .train-cl-statuts-expand {
     max-height: 56px;
     opacity: 1;
@@ -12175,7 +12184,7 @@ color: #7c3aed;
 
 <!-- ===== MODAL AJOUTER ENTRAINEMENT ===== -->
 <div class="modal" id="train-modal">
-  <div class="modal-content train-modal-redesign" style="max-height:96vh;">
+  <div class="modal-content train-modal-redesign" style="max-height:88vh;">
     <!-- Header unifié -->
     <div class="unified-modal-header">
       <div class="unified-modal-title">
@@ -19607,6 +19616,12 @@ function showChecklistChoicePopup(itemId, event) {
     const popup = document.getElementById('checklist-choice-popup');
     if (!popup) return;
 
+    // Toggle : si déjà ouvert, fermer (évite la réouverture sur double-tap iOS)
+    if (popup.classList.contains('show')) {
+        _slideClosePopup(popup);
+        return;
+    }
+
     popup.dataset.itemId = itemId;
 
     // Positionner avant d'afficher (opacity:0 le cache déjà)
@@ -19706,9 +19721,17 @@ function showTrainChecklistPopup(itemId, event) {
     var _otherPopup = document.getElementById('checklist-choice-popup');
     if (_otherPopup) _otherPopup.classList.remove('show');
 
-    _trainCLPendingId = itemId;
     var popup = document.getElementById('train-checklist-popup');
     if (!popup) return;
+
+    // Toggle : si déjà ouvert, fermer (évite la réouverture sur double-tap iOS)
+    if (popup.classList.contains('show')) {
+        _slideClosePopup(popup);
+        _trainCLPendingId = null;
+        return;
+    }
+
+    _trainCLPendingId = itemId;
 
     // Reset expanded state
     var statusOption = popup.querySelector('.train-cl-status-option');
@@ -25081,7 +25104,8 @@ document.addEventListener('touchend', function(e) {
 .notes-confirm-overlay.closing { animation: notesOverlayOut 0.18s ease forwards; pointer-events: none; overflow: hidden; }
 
 /* Pin badge train */
-.train-checklist-badge { display: inline-flex; align-items: center; justify-content: center; height: 34px; width: 34px; border-radius: 8px; background: #ede9fe; color: #7c3aed; flex-shrink: 0; font-size: 0.85rem; }
+.train-checklist-badge { display: inline-flex; align-items: center; justify-content: center; height: 34px !important; width: 34px !important; min-width: 34px !important; max-width: 34px !important; border-radius: 8px !important; background: #ede9fe; color: #7c3aed; flex-shrink: 0; font-size: 0.85rem; transform: none !important; padding: 0 !important; cursor: default; }
+.train-checklist-badge i { font-size: 0.85rem !important; }
 [data-theme="dark"] .train-checklist-badge { background: rgba(139,92,246,0.25); color: #c4b5fd; }
 [data-theme="dark"] .added-to-checklist-badge { background: rgba(139,92,246,0.25); color: #c4b5fd; }
 /* delete-btn default handled above */
@@ -25211,6 +25235,8 @@ document.addEventListener('touchend', function(e) {
   /* Plateforme reste visible — on slide horizontalement */
   .train-action-btn { padding: 0.28rem 0.45rem; font-size: 0.72rem; }
   .train-action-btn span:not(.fa) { display: none; }
+  .train-checklist-badge { font-size: 0.72rem !important; height: 34px !important; width: 34px !important; min-width: 34px !important; max-width: 34px !important; transform: none !important; padding: 0 !important; }
+  .train-checklist-badge i { font-size: 0.72rem !important; }
 }
 </style>
 
@@ -26521,7 +26547,8 @@ window._sendTrainToTodo = function(id, btn) {
   var SC = (typeof SPECIALTY_CONFIG !== 'undefined') ? SPECIALTY_CONFIG : {};
   var cfg = (t.matiere && SC[t.matiere]) ? SC[t.matiere] : { color:'#8b5cf6' };
   var result = window.PlanningModule.addItemFromTable('train', String(id), '', t.title, cfg.color, t.matiere||'', { trainType: t.type||'', trainPlateforme: t.plateforme||'' });
-  if (window.showToastNotification) window.showToastNotification(result.message, result.success ? 'success' : 'warning');
+  var toastMsg = result.success ? 'Entraînement ajouté à la To-do !' : result.message;
+  if (window.showToastNotification) window.showToastNotification(toastMsg, result.success ? 'success' : 'warning');
   if (result.success && btn) {
     var badge = document.createElement('span');
     badge.className = 'added-to-checklist-badge train-checklist-badge';
