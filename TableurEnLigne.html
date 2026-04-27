@@ -155,26 +155,31 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 
 /* ===== SCROLLBAR PERSONNALISEE ===== */
 
-/* Reset neutre pour tous les elements internes (modals, dropdowns, etc.) */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+/* Tous les elements internes : barre ultra-discrete (Chrome 121+, Firefox) */
+* { scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
 
-/* Barre principale de la page uniquement */
+/* Webkit fallback - reset global tres discret */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Barre principale de la page - coloree et plus large */
+html { scrollbar-width: thin; scrollbar-color: #3b82f6 #e5e7eb; }
 html::-webkit-scrollbar { width: 8px; }
 html::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 9999px; }
 html::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 9999px; border: 2px solid #e5e7eb; }
 html::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #1d4ed8 0%, #7c3aed 100%); border-width: 1px; }
 
 /* Mode sombre - barre principale violette */
+html[data-theme="dark"] { scrollbar-color: #a855f7 #1e293b; }
 html[data-theme="dark"]::-webkit-scrollbar-track { background: #1e293b; }
 html[data-theme="dark"]::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #a855f7 0%, #7c3aed 100%); border-color: #1e293b; }
 html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #c084fc 0%, #a855f7 100%); }
 
-/* Firefox - barre principale uniquement */
-html { scrollbar-width: thin; scrollbar-color: #3b82f6 #e5e7eb; }
-html[data-theme="dark"] { scrollbar-color: #a855f7 #1e293b; }
+/* Mode sombre - elements internes */
+[data-theme="dark"] * { scrollbar-color: #475569 transparent; }
+
 
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -3548,13 +3553,22 @@ input[type="date"].modal-input {
     color: var(--primary);
 }
 
+.custom-select-option.selected:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.custom-select-option.selected:hover .option-icon {
+    color: white;
+}
+
 /* Scrollbar du menu */
 .custom-select-menu::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 .custom-select-menu::-webkit-scrollbar-track {
-    background: var(--gray-100);
+    background: transparent;
     border-radius: 3px;
 }
 
@@ -3565,6 +3579,11 @@ input[type="date"].modal-input {
 
 .custom-select-menu::-webkit-scrollbar-thumb:hover {
     background: var(--gray-400);
+}
+
+.custom-select-menu {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
 }
 
 /* Responsive */
@@ -3921,18 +3940,17 @@ input[type="date"].modal-input {
 
 /* Scrollbar */
 .specialty-multi-list::-webkit-scrollbar {
-    width: 6px;
+    width: 3px !important;
 }
 
 .specialty-multi-list::-webkit-scrollbar-track {
-    background: var(--gray-100);
+    background: transparent !important;
 }
 
 .specialty-multi-list::-webkit-scrollbar-thumb {
-    background: var(--gray-300);
-    border-radius: 3px;
+    background: #d1d5db !important;
+    border-radius: 9999px !important;
 }
-
 
 /* ===== MODE NUIT ===== */
 [data-theme="dark"] .specialty-multi-btn {
@@ -4060,7 +4078,7 @@ input[type="date"].modal-input {
 }
 
 [data-theme="dark"] .specialty-multi-list::-webkit-scrollbar-thumb {
-    background: #64748b;
+    background: #475569 !important;
 }
 
 [data-theme="dark"] .specialty-chip-remove {
@@ -11695,13 +11713,13 @@ color: #7c3aed;
 
     <div class="custom-select" id="filter-specialty-dropdown">
         <button class="custom-select-btn" type="button">
-            <span class="custom-select-icon"><i class="fas fa-filter"></i></span>
+            <span class="custom-select-icon"><i class="fas fa-bars"></i></span>
             <span class="custom-select-text">Tous les statuts</span>
             <i class="fas fa-chevron-down custom-select-arrow"></i>
         </button>
         <div class="custom-select-menu">
             <div class="custom-select-option selected" data-value="all">
-                <span class="option-icon"><i class="fas fa-list"></i></span>
+                <span class="option-icon"><i class="fas fa-bars"></i></span>
                 <span>Tous les statuts</span>
             </div>
             <div class="custom-select-option" data-value="not-started">
@@ -11810,13 +11828,13 @@ color: #7c3aed;
 
 					<div class="custom-select" id="status-dropdown">
 						<button class="custom-select-btn" type="button">
-							<span class="custom-select-icon"><i class="fas fa-tasks"></i></span>
+							<span class="custom-select-icon"><i class="fas fa-bars"></i></span>
 							<span class="custom-select-text">Tous les statuts</span>
 							<i class="fas fa-chevron-down custom-select-arrow"></i>
 						</button>
 						<div class="custom-select-menu">
 							<div class="custom-select-option selected" data-value="all">
-								<span class="option-icon"><i class="fas fa-tasks"></i></span>
+								<span class="option-icon"><i class="fas fa-bars"></i></span>
 								<span>Tous les statuts</span>
 							</div>
 							<div class="custom-select-option" data-value="not-started">
@@ -11987,7 +12005,7 @@ color: #7c3aed;
             
             <div class="custom-dropdown pagination-dropdown" id="pagination-dropdown">
                 <button class="custom-dropdown-btn" id="pagination-dropdown-btn">
-                    <span class="custom-dropdown-icon"><i class="fas fa-layer-group"></i></span>
+                    <span class="custom-dropdown-icon"><i class="fas fa-bars"></i></span>
                     <span class="custom-dropdown-text" id="pagination-dropdown-text">50 / page</span>
                     <i class="fas fa-chevron-down"></i>
                 </button>
@@ -12044,7 +12062,7 @@ color: #7c3aed;
     <!-- Filtre Type (multi-select) -->
     <div class="specialty-multi-select" id="train-type-dropdown">
       <button class="specialty-multi-btn" type="button" id="train-type-multi-btn">
-        <span class="specialty-multi-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="specialty-multi-icon"><i class="fas fa-bars"></i></span>
         <div class="specialty-multi-content">
           <span class="specialty-multi-placeholder" id="train-type-placeholder">Tous les types</span>
         </div>
@@ -12061,7 +12079,7 @@ color: #7c3aed;
           </div>
         </div>
         <div class="specialty-multi-list" id="train-type-multi-list">
-          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleTypeFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-layer-group" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les types</span></div>
+          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleTypeFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-bars" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les types</span></div>
           <div class="specialty-multi-option" data-value="masterclass" onclick="trainToggleTypeFilter('masterclass',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-type-dot type-masterclass"></span><span class="specialty-multi-option-text">Masterclass</span></div>
           <div class="specialty-multi-option" data-value="spe360" onclick="trainToggleTypeFilter('spe360',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-type-dot type-spe360"></span><span class="specialty-multi-option-text">Spé 360°</span></div>
           <div class="specialty-multi-option" data-value="annale" onclick="trainToggleTypeFilter('annale',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-type-dot type-annale"></span><span class="specialty-multi-option-text">Annale</span></div>
@@ -12126,7 +12144,7 @@ color: #7c3aed;
     <!-- Filtre Statut (multi-select) -->
     <div class="specialty-multi-select" id="train-statut-dropdown">
       <button class="specialty-multi-btn" type="button" id="train-statut-multi-btn">
-        <span class="specialty-multi-icon"><i class="fas fa-circle-check"></i></span>
+        <span class="specialty-multi-icon"><i class="fas fa-bars"></i></span>
         <div class="specialty-multi-content">
           <span class="specialty-multi-placeholder" id="train-statut-placeholder">Tous les statuts</span>
         </div>
@@ -12143,7 +12161,7 @@ color: #7c3aed;
           </div>
         </div>
         <div class="specialty-multi-list" id="train-statut-multi-list">
-          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleStatutFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-circle-check" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les statuts</span></div>
+          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleStatutFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-bars" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les statuts</span></div>
           <div class="specialty-multi-option" data-value="non-fait"  onclick="trainToggleStatutFilter('non-fait',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-non-fait"></span><span class="specialty-multi-option-text">Non fait</span></div>
           <div class="specialty-multi-option" data-value="a-faire"   onclick="trainToggleStatutFilter('a-faire',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-a-faire"></span><span class="specialty-multi-option-text">À faire</span></div>
           <div class="specialty-multi-option" data-value="a-refaire" onclick="trainToggleStatutFilter('a-refaire',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-a-refaire"></span><span class="specialty-multi-option-text">À refaire</span></div>
@@ -12232,7 +12250,7 @@ color: #7c3aed;
         <button class="pagination-btn" id="train-pagination-last" title="Dernière page"><i class="fas fa-angles-right"></i></button>
         <div class="custom-dropdown pagination-dropdown" id="train-pagination-dropdown">
           <button class="custom-dropdown-btn" id="train-pagination-dropdown-btn">
-            <span class="custom-dropdown-icon"><i class="fas fa-layer-group"></i></span>
+            <span class="custom-dropdown-icon"><i class="fas fa-bars"></i></span>
             <span class="custom-dropdown-text" id="train-pagination-dropdown-text">50 / page</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -17991,7 +18009,7 @@ renderSpecialtyOptions();
     const statusDropdown = document.getElementById('status-dropdown');
     if (statusDropdown) {
         statusDropdown.querySelector('.custom-select-text').textContent = 'Tous les statuts';
-        statusDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-tasks"></i>';
+        statusDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-bars"></i>';
         statusDropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
         statusDropdown.querySelector('[data-value="all"]').classList.add('selected');
     }
@@ -18063,7 +18081,7 @@ document.getElementById('btn-reset-filters-specialty')?.addEventListener('click'
     const filterDropdown = document.getElementById('filter-specialty-dropdown');
     if (filterDropdown) {
         filterDropdown.querySelector('.custom-select-text').textContent = 'Tous les statuts';
-        filterDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-filter"></i>';
+        filterDropdown.querySelector('.custom-select-icon').innerHTML = '<i class="fas fa-bars"></i>';
         filterDropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
         filterDropdown.querySelector('[data-value="all"]').classList.add('selected');
     }
