@@ -12009,7 +12009,7 @@ color: #7c3aed;
       <button class="specialty-multi-btn" type="button" id="train-matiere-multi-btn">
         <span class="specialty-multi-icon"><i class="fas fa-book-medical"></i></span>
         <div class="specialty-multi-content">
-          <span class="specialty-multi-placeholder" id="train-matiere-placeholder">Matière</span>
+          <span class="specialty-multi-placeholder" id="train-matiere-placeholder">Toutes les spécialités</span>
         </div>
         <i class="fas fa-chevron-down specialty-multi-arrow"></i>
       </button>
@@ -25476,9 +25476,14 @@ function _trainUpdateMatiereBtn() {
     counter.classList.toggle('max-reached', trainFilterMatieres.length >= MAX_TRAIN_MATIERE);
   }
   if (trainFilterMatieres.length === 0) {
-    content.innerHTML = '<span class="specialty-multi-placeholder" id="train-matiere-placeholder">Matière</span>';
+    content.innerHTML = '<span class="specialty-multi-placeholder" id="train-matiere-placeholder">Toutes les sp\u00e9cialit\u00e9s</span>';
+    var allOpt = document.querySelector('#train-matiere-multi-list .specialty-multi-option[data-value="all"]');
+    if (allOpt) allOpt.classList.add('selected');
     return;
   }
+  // S'assurer que "Toutes" est décoché quand une sélection est active
+  var allOpt2 = document.querySelector('#train-matiere-multi-list .specialty-multi-option[data-value="all"]');
+  if (allOpt2) allOpt2.classList.remove('selected');
   var SH = window.TRAIN_SPECIALTY_SHORT || window.SPECIALTY_SHORT || {};
   var SC = window.TRAIN_SPECIALTY_CONFIG || window.SPECIALTY_CONFIG || {};
   var html = trainFilterMatieres.map(function(id) {
@@ -25495,7 +25500,6 @@ window.trainRemoveMatiereChip = function(e, id) {
   e.stopPropagation();
   var idx = trainFilterMatieres.indexOf(id);
   if (idx > -1) trainFilterMatieres.splice(idx, 1);
-  // Décocher dans le menu
   var opt = document.querySelector('#train-matiere-multi-list .specialty-multi-option[data-value="'+id+'"]');
   if (opt) opt.classList.remove('selected');
   _trainUpdateMatiereBtn();
@@ -25601,7 +25605,7 @@ function trainInitDropdowns() {
   // Multi-selects open/close/clear
   [
     ['train-type-multi-btn',       'train-type-dropdown',       'train-type-clear-btn',       'train-type-close-btn',       '#train-type-multi-list',       trainFilterTypes,       'train-type-counter',       TRAIN_TYPE_LABELS,       'Type'],
-    ['train-matiere-multi-btn',    'train-matiere-dropdown',    'train-matiere-clear-btn',    'train-matiere-close-btn',    '#train-matiere-multi-list',    trainFilterMatieres,    'train-matiere-counter',    {},                      'Matière'],
+    ['train-matiere-multi-btn',    'train-matiere-dropdown',    'train-matiere-clear-btn',    'train-matiere-close-btn',    '#train-matiere-multi-list',    trainFilterMatieres,    'train-matiere-counter',    {},                      'Toutes les spécialités'],
     ['train-plateforme-multi-btn', 'train-plateforme-dropdown', 'train-plateforme-clear-btn', 'train-plateforme-close-btn', '#train-plateforme-multi-list', trainFilterPlateformes, 'train-plateforme-counter', TRAIN_PLAT_LABELS,       'Plateforme'],
     ['train-statut-multi-btn',     'train-statut-dropdown',     'train-statut-clear-btn',     'train-statut-close-btn',     '#train-statut-multi-list',     trainFilterStatuts,     'train-statut-counter',     TRAIN_STATUT_LABELS,     'Statut'],
   ].forEach(function(cfg) {
@@ -25640,6 +25644,19 @@ function trainInitDropdowns() {
       if (menuEl) menuEl.addEventListener('click', function(e) { e.stopPropagation(); });
     }
   });
+
+  // Override spécifique pour la poubelle Matière → appelle _trainUpdateMatiereBtn
+  var matClearBtn = document.getElementById('train-matiere-clear-btn');
+  if (matClearBtn) {
+    matClearBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      trainFilterMatieres.length = 0;
+      document.querySelectorAll('#train-matiere-multi-list .specialty-multi-option').forEach(function(o){ o.classList.remove('selected'); });
+      var ctr = document.getElementById('train-matiere-counter'); if (ctr) ctr.textContent = '0';
+      _trainUpdateMatiereBtn(); // remet "Toutes les spécialités" + coche l'option "all"
+      renderTrainTable();
+    });
+  }
 
   // Click extérieur
   document.addEventListener('click', function(e) {
