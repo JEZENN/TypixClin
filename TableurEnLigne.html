@@ -11713,7 +11713,7 @@ color: #7c3aed;
 
 <div class="specialty-multi-select" id="specialty-dropdown">
     <button class="specialty-multi-btn" type="button" id="specialty-multi-btn">
-        <span class="specialty-multi-icon"><i class="fas fa-list"></i></span>
+        <span class="specialty-multi-icon"><i class="fas fa-book-medical"></i></span>
         <div class="specialty-multi-content">
             <span class="specialty-multi-placeholder">Toutes les spécialités</span>
         </div>
@@ -17189,7 +17189,7 @@ function renderSpecialtyOptions(searchTerm = '') {
     html += `
         <div class="specialty-multi-option specialty-multi-all ${isAllSelected ? 'selected' : ''}" data-value="all">
             <div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>
-            <span class="specialty-multi-option-icon"><i class="fas fa-list" style="color: var(--primary)"></i></span>
+            <span class="specialty-multi-option-icon"><i class="fas fa-book-medical" style="color: var(--primary)"></i></span>
             <span class="specialty-multi-option-text">Toutes les spécialités</span>
         </div>
     `;
@@ -17203,13 +17203,12 @@ function renderSpecialtyOptions(searchTerm = '') {
         
         if (!matchesSearch && searchTerm) return;
         
+        const shortCode = (typeof SPECIALTY_SHORT !== 'undefined' && SPECIALTY_SHORT[s.id]) ? SPECIALTY_SHORT[s.id] : s.id.substring(0,3).toUpperCase();
         html += `
             <div class="specialty-multi-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" 
                  data-value="${s.id}" data-name="${s.name}">
                 <div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>
-                <span class="specialty-multi-option-icon" style="color: ${cfg.color}">
-                    <i class="fas ${cfg.icon}"></i>
-                </span>
+                <span style="background:${cfg.color};color:white;width:36px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;margin-right:0.5rem;flex-shrink:0;">${shortCode}</span>
                 <span class="specialty-multi-option-text">${s.name}</span>
             </div>
         `;
@@ -25393,14 +25392,19 @@ function trainBuildMatiereFilter() {
   var _TSC = window.TRAIN_SPECIALTY_CONFIG || window.SPECIALTY_CONFIG;
   if (!list || !_TSH) return;
   var dataArr = window.SPECIALTIES_DATA || [];
-  list.innerHTML = Object.keys(_TSH).map(function(id) {
+  var isAllSelected = trainFilterMatieres.length === 0;
+  var allOption = '<div class="specialty-multi-option specialty-multi-all '+(isAllSelected?'selected':'')+'" data-value="all" onclick="window._trainToggleMatiereFilter(\'all\',this)">' +
+    '<div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>' +
+    '<span class="specialty-multi-option-icon"><i class="fas fa-book-medical" style="color: var(--primary)"></i></span>' +
+    '<span class="specialty-multi-option-text">Toutes les sp\u00e9cialit\u00e9s</span></div>';
+  list.innerHTML = allOption + Object.keys(_TSH).map(function(id) {
     var short = _TSH[id];
     var cfg = (_TSC && _TSC[id]) || { color:'#6b7280' };
     var spec = dataArr.find(function(s){ return s.id === id; });
     var name = spec ? spec.name : ((window.TRAIN_SPECIALTY_NAMES && window.TRAIN_SPECIALTY_NAMES[id]) || id);
     return '<div class="specialty-multi-option" data-value="'+id+'" onclick="window._trainToggleMatiereFilter(\''+id+'\',this)">' +
       '<div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>' +
-      '<span style="background:'+cfg.color+';color:white;width:32px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;margin-right:0.5rem;flex-shrink:0;">'+short+'</span>' +
+      '<span style="background:'+cfg.color+';color:white;width:36px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;margin-right:0.5rem;flex-shrink:0;">'+short+'</span>' +
       '<span class="specialty-multi-option-text">'+name+'</span></div>';
   }).join('');
 }
@@ -25499,10 +25503,24 @@ window.trainRemoveMatiereChip = function(e, id) {
 };
 
 window._trainToggleMatiereFilter = function(val, el) {
+  if (val === 'all') {
+    trainFilterMatieres.length = 0;
+    document.querySelectorAll('#train-matiere-multi-list .specialty-multi-option').forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('train-matiere-dropdown').classList.remove('open');
+    _trainUpdateMatiereBtn();
+    renderTrainTable();
+    return;
+  }
+  // Désélectionner "Toutes"
+  var allOpt = document.querySelector('#train-matiere-multi-list .specialty-multi-option[data-value="all"]');
+  if (allOpt) allOpt.classList.remove('selected');
   var idx = trainFilterMatieres.indexOf(val);
   if (idx > -1) {
     trainFilterMatieres.splice(idx, 1);
     el.classList.remove('selected');
+    // Si plus rien, re-sélectionner "Toutes"
+    if (trainFilterMatieres.length === 0 && allOpt) allOpt.classList.add('selected');
   } else {
     if (trainFilterMatieres.length >= MAX_TRAIN_MATIERE) return;
     trainFilterMatieres.push(val);
@@ -25557,6 +25575,8 @@ window.resetTrainFilters = function(btn) {
   var inp = document.getElementById('search-train'); if (inp) inp.value = '';
   var clr = document.getElementById('clear-train'); if (clr) clr.style.display = 'none';
   document.querySelectorAll('#train-type-multi-list .specialty-multi-option,#train-matiere-multi-list .specialty-multi-option,#train-plateforme-multi-list .specialty-multi-option,#train-statut-multi-list .specialty-multi-option').forEach(function(o){ o.classList.remove('selected'); });
+  var allOpt = document.querySelector('#train-matiere-multi-list .specialty-multi-option[data-value="all"]');
+  if (allOpt) allOpt.classList.add('selected');
   ['train-type-counter','train-plateforme-counter','train-statut-counter'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent='0'; });
   _trainUpdatePlaceholder('train-type-placeholder',[],'{}','Type');
   _trainUpdateMatiereBtn();
