@@ -17187,9 +17187,14 @@ function initSpecialtyMultiSelect() {
 // Toggle du menu
 btn.addEventListener('click', function(e) {
     e.stopPropagation();
-    // Fermer tous les autres dropdowns
     document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
     container.classList.toggle('open');
+    if (container.classList.contains('open')) {
+        if (window.closeLegendModalAnimated) window.closeLegendModalAnimated();
+        if (window.closeTimerModalAnimated) window.closeTimerModalAnimated();
+        if (window.closePlanningLegendModalAnimated) window.closePlanningLegendModalAnimated();
+        if (window.closeTrainLegendModal) window.closeTrainLegendModal();
+    }
 			if (container.classList.contains('open')) {
 				searchInput.focus();
 				
@@ -23195,6 +23200,7 @@ function buildPlanningLegendItems() {
         { id: 'legendModal',         closeFn: function () { closeLegendModalAnimated(); } },
         { id: 'timerModal',          closeFn: function () { closeTimerModalAnimated(); } },
         { id: 'planningLegendModal', closeFn: function () { closePlanningLegendModalAnimated(); } },
+        { id: 'trainLegendModal',    closeFn: function () { if (window.closeTrainLegendModal) window.closeTrainLegendModal(); } },
     ];
 
     var startX = 0, startY = 0, startTime = 0;
@@ -23339,6 +23345,19 @@ function closePlanningLegendModal() {
 
 
 // ===== FERMETURE DES MODALS EN CLIQUANT AILLEURS =====
+(function() {
+    var scrollTimeout;
+    window.addEventListener('scroll', function() {
+        if (window.innerWidth > 768) return;
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function() {
+            if (window.closeLegendModalAnimated) { var lm = document.getElementById('legendModal'); if (lm && lm.classList.contains('show')) window.closeLegendModalAnimated(); }
+            if (window.closeTimerModalAnimated) { var tm = document.getElementById('timerModal'); if (tm && tm.classList.contains('show')) window.closeTimerModalAnimated(); }
+            if (window.closePlanningLegendModalAnimated) { var pm = document.getElementById('planningLegendModal'); if (pm && pm.classList.contains('show')) window.closePlanningLegendModalAnimated(); }
+            if (window.closeTrainLegendModal) { var trm = document.getElementById('trainLegendModal'); if (trm && trm.classList.contains('show')) window.closeTrainLegendModal(); }
+        }, 50);
+    }, { passive: true });
+})();
 document.addEventListener('click', function(event) {
     const timerModal = document.getElementById('timerModal');
     const timerButton = document.getElementById('timerButton');
@@ -23729,7 +23748,7 @@ function notesModalSave() {
 
     // 🔵 Mise à jour de l'indicateur “notes remplies” en temps réel
     if (!window._itemNotesExistSet) _buildItemNotesExistSet();
-    var _hasNoteContent = !!(html && html.replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,'').trim());
+    var _hasNoteContent = !_editorIsReallyEmpty(html);
     if (_hasNoteContent) window._itemNotesExistSet.add(lsKey);
     else window._itemNotesExistSet.delete(lsKey);
     // Mettre à jour le bouton visible sans re-render complet
@@ -23761,8 +23780,21 @@ function notesModalSave() {
 var NOTES_MAX_CHARS = 10000;
 
 // Sauvegarde auto debounced
+// Helper : détecter si un éditeur contenteditable est vraiment vide
+function _editorIsReallyEmpty(html) {
+    if (!html) return true;
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() === '';
+}
+// Nettoyer l'éditeur si vide pour déclencher le :empty CSS (placeholder)
+function _cleanEditorIfEmpty(editorEl) {
+    if (editorEl && _editorIsReallyEmpty(editorEl.innerHTML)) {
+        editorEl.innerHTML = '';
+    }
+}
+
 function notesOnInput() {
     notesUpdateCharCount();
+    _cleanEditorIfEmpty(document.getElementById('notesEditorArea'));
     clearTimeout(_notesAutoSave);
     _notesAutoSave = setTimeout(notesModalSave, 10000);
 }
@@ -25045,10 +25077,53 @@ document.addEventListener('touchend', function(e) {
   #train-filter-bar .train-search-inline { flex: 1 1 100%; max-width: 100%; order: -1; }
 }
 
-/* Train legend modal : aligné à droite pour ne pas déborder */
+/* Train legend modal : aligné à droite pour ne pas déborder (desktop) */
 #trainLegendModal {
   left: auto !important;
   right: 0 !important;
+}
+@media (max-width: 768px) {
+    #trainLegendModal {
+        position: fixed !important;
+        top: calc(var(--header-height) + 0.75rem) !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        -webkit-transform: translateX(-50%) translateY(8px) !important;
+        transform: translateX(-50%) translateY(8px) !important;
+        width: 90vw !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+    #trainLegendModal.show {
+        -webkit-transform: translateX(-50%) translateY(0) !important;
+        transform: translateX(-50%) translateY(0) !important;
+    }
+    #trainLegendModal.closing {
+        -webkit-transform: translateX(-50%) translateY(8px) !important;
+        transform: translateX(-50%) translateY(8px) !important;
+    }
+}
+@media (max-width: 480px) {
+    #trainLegendModal { width: 95vw !important; }
+}
+@media (max-width: 1024px) {
+  #page-entrainements .train-section-header-sticky #train-header-pagination { display: none !important; }
+  #page-entrainements .train-section-header-sticky .quick-actions .quick-action-btn,
+  #page-entrainements .train-section-header-sticky .quick-actions .legend-button {
+    width: 38px !important; height: 38px !important; padding: 0 !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0;
+  }
+  #page-entrainements .train-section-header-sticky .quick-actions .legend-button span { display: none !important; }
+  #page-entrainements .train-section-header-sticky .quick-actions .legend-button i { margin: 0 !important; font-size: 1rem !important; }
+}
+@media (max-width: 768px) {
+  #page-entrainements .train-section-header-sticky { padding: 0.65rem 0.75rem !important; gap: 0.3rem !important; }
+  #page-entrainements .train-section-header-sticky .quick-actions { gap: 0.3rem !important; }
+  #page-entrainements .train-section-header-sticky .quick-actions .quick-action-btn,
+  #page-entrainements .train-section-header-sticky .quick-actions .legend-button,
+  #page-entrainements .train-section-header-sticky .train-add-main-btn {
+    width: 32px !important; height: 32px !important; min-width: 32px !important; padding: 0 !important; font-size: 0.8rem !important;
+  }
 }
 
 /* Icône + du bouton Ajouter : blanc sur fond bleu */
@@ -25551,10 +25626,15 @@ function trainBuildLegend() {
 
 window.toggleTrainLegendModal = function(e) {
   e.stopPropagation();
-  document.getElementById('trainLegendModal').classList.toggle('show');
+  var modal = document.getElementById('trainLegendModal');
+  if (!modal) return;
+  if (modal.classList.contains('show')) { window.closeTrainLegendModal(); } else { modal.classList.add('show'); }
 };
 window.closeTrainLegendModal = function() {
-  document.getElementById('trainLegendModal').classList.remove('show');
+  var modal = document.getElementById('trainLegendModal');
+  if (!modal || !modal.classList.contains('show')) return;
+  modal.classList.add('closing');
+  setTimeout(function() { modal.classList.remove('show', 'closing'); }, 200);
 };
 
 // ---- FILTRES ----
@@ -25743,6 +25823,10 @@ function trainInitDropdowns() {
     if (openBtnEl) openBtnEl.addEventListener('click', function(e) {
       e.stopPropagation();
       _closeAllTrainDDs(ddId);
+      if (window.closeTrainLegendModal) window.closeTrainLegendModal();
+      if (window.closeLegendModalAnimated) window.closeLegendModalAnimated();
+      if (window.closeTimerModalAnimated) window.closeTimerModalAnimated();
+      if (window.closePlanningLegendModalAnimated) window.closePlanningLegendModalAnimated();
       document.getElementById(ddId).classList.toggle('open');
     });
     if (clearBtnEl) clearBtnEl.addEventListener('click', function(e) {
@@ -26291,8 +26375,9 @@ window.saveTrainModal = function() {
   }
   saveTrainings();
   renderTrainTable();
+  var _wasEdit = trainEditId !== null;
   window.closeTrainModal();
-  if (window.showToastNotification) window.showToastNotification(trainEditId !== null ? 'Entrainement modifié !' : 'Entrainement ajouté !', 'success');
+  if (window.showToastNotification) window.showToastNotification(_wasEdit ? 'Entrainement modifié !' : 'Entrainement ajouté !', 'success');
 };
 
 // ---- SUPPRIMER ----
@@ -26526,7 +26611,7 @@ window.saveTrainNotes = function() {
     if (window.userData && window.userData.trainings) {
       var tObj = window.userData.trainings.find(function(x){ return x.id === noteId; });
       if (tObj) {
-        var newFlag = !!(content && content.trim() && content.trim() !== '<br>');
+        var newFlag = !_editorIsReallyEmpty(content);
         if (tObj.notesExist !== newFlag) {
           tObj.notesExist = newFlag;
           saveTrainings();
@@ -26548,6 +26633,7 @@ window.saveTrainNotes = function() {
 window.trainNotesAutoSave = function() {
   trainNotesDirty = true;
   trainNotesUpdateCharCount();
+  _cleanEditorIfEmpty(document.getElementById('trainNotesEditor'));
   if (_trainNotesAutoSaveTimer) clearTimeout(_trainNotesAutoSaveTimer);
   _trainNotesAutoSaveTimer = setTimeout(function() {
     window.saveTrainNotes();
