@@ -17203,7 +17203,7 @@ btn.addEventListener('click', function(e) {
         if (window.closeTrainLegendModal) window.closeTrainLegendModal();
     }
 			if (container.classList.contains('open')) {
-				searchInput.focus();
+				if (searchInput) searchInput.focus();
 				
 				// Capturer les touches du clavier
 				const keyHandler = (e) => {
@@ -17211,7 +17211,7 @@ btn.addEventListener('click', function(e) {
 					if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') return;
 					
 					// Si l'utilisateur tape et que le focus n'est pas sur la recherche
-					if (document.activeElement !== searchInput && e.key.length === 1) {
+					if (searchInput && document.activeElement !== searchInput && e.key.length === 1) {
 						searchInput.focus();
 					}
 				};
@@ -17249,7 +17249,7 @@ if (closeBtn) {
 	closeBtn.addEventListener('click', function(e) {
 		e.stopPropagation();
 		container.classList.remove('open');
-		searchInput.value = ''; // Réinitialiser la recherche
+		if (searchInput) searchInput.value = ''; // Réinitialiser la recherche
 		renderSpecialtyOptions(''); // Réafficher toutes les options
 		
 		// Retirer l'écouteur de touches
@@ -17265,7 +17265,7 @@ if (closeBtn) {
 		document.addEventListener('click', function(e) {
 			if (!container.contains(e.target)) {
 				container.classList.remove('open');
-				searchInput.value = ''; // Réinitialiser la recherche
+				if (searchInput) searchInput.value = ''; // Réinitialiser la recherche
 				renderSpecialtyOptions(''); // Réafficher toutes les options
 				
 				// Retirer l'écouteur de touches
@@ -21815,33 +21815,27 @@ window._notesFirestore = {
     font-family: var(--font-display);
     font-size: 0 !important; /* masque le texte "Item NNN" */
     font-weight: 700;
-    color: var(--gray-400);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
     white-space: nowrap;
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    background: #dbeafe;
-    border-radius: 6px;
-    padding: 2px 8px;
-    min-width: 26px;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    min-width: 0;
     flex-shrink: 0;
 }
 .notes-header-num::after {
-    content: 'Item ' attr(data-num);
+    content: 'ITEM ' attr(data-num);
     font-size: 0.72rem;
     font-weight: 700;
-    color: #1e40af;
-    letter-spacing: 0;
-    text-transform: none;
+    color: var(--gray-400);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     font-family: var(--font-display);
 }
-[data-theme="dark"] .notes-header-num {
-    background: rgba(59, 130, 246, 0.18);
-}
 [data-theme="dark"] .notes-header-num::after {
-    color: #60a5fa;
+    color: var(--gray-500);
 }
 
 .notes-header-specialty {
@@ -22035,6 +22029,8 @@ window._notesFirestore = {
 .train-statut-popup-item.current { outline: 2px solid currentColor; outline-offset: -2px; }
 /* Désactiver TOUT hover sur écran tactile — gel complet de l'apparence */
 @media (pointer: coarse) {
+  /* Sur tactile : bloquer uniquement les effets visuels (expand, shadow, transform)
+     mais conserver la couleur du statut actuel */
   .notes-action-btn.btn-train-statut:hover,
   .notes-action-btn.btn-train-statut.statut-non-fait:hover,
   .notes-action-btn.btn-train-statut.statut-a-faire:hover,
@@ -22042,9 +22038,16 @@ window._notesFirestore = {
   .notes-action-btn.btn-train-statut.statut-fait:hover,
   .notes-action-btn.btn-train-statut.statut-relu:hover {
     max-width: 30px !important; padding: 0 !important;
-    background: revert !important; color: revert !important;
     transform: none !important; box-shadow: none !important;
   }
+  /* Conserver la bonne couleur par statut au hover tactile */
+  .notes-action-btn.btn-train-statut:hover,
+  .notes-action-btn.btn-train-statut.statut-non-fait:hover { background: #e5e7eb !important; color: #4b5563 !important; }
+  .notes-action-btn.btn-train-statut.statut-a-faire:hover   { background: #fed7aa !important; color: #92400e !important; }
+  .notes-action-btn.btn-train-statut.statut-a-refaire:hover { background: #bfdbfe !important; color: #1e40af !important; }
+  .notes-action-btn.btn-train-statut.statut-fait:hover      { background: #bbf7d0 !important; color: #064e3b !important; }
+  .notes-action-btn.btn-train-statut.statut-relu:hover      { background: #ddd6fe !important; color: #4c1d95 !important; }
+
   .notes-action-btn.btn-train-statut:hover .notes-btn-label,
   .notes-action-btn.btn-train-statut.statut-non-fait:hover .notes-btn-label,
   .notes-action-btn.btn-train-statut.statut-a-faire:hover .notes-btn-label,
@@ -22053,10 +22056,17 @@ window._notesFirestore = {
   .notes-action-btn.btn-train-statut.statut-relu:hover .notes-btn-label {
     opacity: 0 !important; max-width: 0 !important; margin-left: 0 !important;
   }
-  /* popup-open reste actif sur tactile (état explicite, pas hover) */
+
+  /* popup-open : forcer la bonne couleur par statut + expansion */
   .notes-action-btn.btn-train-statut.popup-open {
     max-width: 130px !important; padding: 0 10px 0 8px !important;
+    background: #e5e7eb !important; color: #4b5563 !important;
   }
+  .notes-action-btn.btn-train-statut.statut-a-faire.popup-open   { background: #fed7aa !important; color: #92400e !important; }
+  .notes-action-btn.btn-train-statut.statut-a-refaire.popup-open { background: #bfdbfe !important; color: #1e40af !important; }
+  .notes-action-btn.btn-train-statut.statut-fait.popup-open      { background: #bbf7d0 !important; color: #064e3b !important; }
+  .notes-action-btn.btn-train-statut.statut-relu.popup-open      { background: #ddd6fe !important; color: #4c1d95 !important; }
+
   .notes-action-btn.btn-train-statut.popup-open .notes-btn-label {
     opacity: 1 !important; max-width: 100px !important; margin-left: 5px !important;
   }
@@ -22180,10 +22190,13 @@ window._notesFirestore = {
     min-width: 0;
     border-right: 1px solid var(--gray-200);
     background: var(--white);
+    position: relative;
 }
 [data-theme="dark"] .notes-editor-panel {
     border-right-color: var(--gray-300);
 }
+
+/* (watermark supprimé) */
 
 /* Toolbar */
 .notes-toolbar {
@@ -22338,6 +22351,9 @@ window._notesFirestore = {
     color: var(--gray-800);
     caret-color: var(--primary);
     word-break: break-word;
+    position: relative;
+    z-index: 1;
+    background: transparent;
 }
 [data-theme="dark"] .notes-editor-area { color: var(--gray-900) !important; }
 /* Remplace le texte noir (inline style) par du blanc en dark mode */
@@ -25619,9 +25635,173 @@ document.addEventListener('touchend', function(e) {
   .train-checklist-badge { font-size: 0.72rem !important; height: 34px !important; width: 34px !important; min-width: 34px !important; max-width: 34px !important; transform: none !important; padding: 0 !important; }
   .train-checklist-badge i { font-size: 0.72rem !important; }
 }
-</style>
 
-<!-- ===== JAVASCRIPT ENTRAINEMENTS ===== -->
+/* ================================================================
+   FILTRES MOBILE / IPAD — Mise en page en grille (≤ 1024px)
+   ================================================================ */
+@media (max-width: 1024px) {
+
+  /* ── Pastilles sur le bouton filtre ────────────────────────── */
+  .specialty-chip {
+    padding: 2px 6px !important;
+    font-size: 11px !important;
+    border-radius: 5px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+  .specialty-chip-remove {
+    width: 13px !important;
+    height: 13px !important;
+    font-size: 0.55rem !important;
+  }
+
+  /* ── Hauteur fixe pour tous les boutons de filtre ────────── */
+  #page-dashboard .filter-bar .search-box input,
+  #page-items .filter-bar .search-box input,
+  #train-filter-bar .train-search-inline input {
+    height: 46px !important;
+    min-height: 46px !important;
+  }
+
+  #page-dashboard .filter-bar .custom-select-btn,
+  #page-items .filter-bar .custom-select-btn,
+  #page-items .filter-bar .specialty-multi-btn,
+  #page-items .filter-bar .config-resources-btn,
+  #train-filter-bar .specialty-multi-btn {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* ── Empêche les cellules grille de grandir avec le contenu ─ */
+  /* overflow: visible pour que les menus déroulants s'affichent */
+  #page-dashboard .filter-bar > *,
+  #page-items .filter-bar > *,
+  #train-filter-bar > * {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+  .specialty-multi-content {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex-wrap: nowrap !important;
+  }
+  .specialty-multi-placeholder {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+  }
+  .custom-select-text {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+  }
+
+  /* ── PAGE SPÉCIALITÉS ─────────────────────────────────────── */
+  /* Ligne 1 : Recherche pleine largeur
+     Ligne 2 : Classer par | Tous les statuts (50/50) */
+  #page-dashboard .filter-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    flex-wrap: unset;
+  }
+  #page-dashboard .filter-bar .search-box {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #page-dashboard .filter-bar #sort-specialty-dropdown,
+  #page-dashboard .filter-bar #filter-specialty-dropdown {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  #page-dashboard .filter-bar .custom-select-menu { width: 100%; min-width: unset; }
+
+  /* ── PAGE ITEMS ───────────────────────────────────────────── */
+  /* Grille 4 colonnes :
+     Ligne 1 : Recherche             (4/4)
+     Ligne 2 : Tous les items (2/4) | Toutes les spé (2/4)  = 50/50
+     Ligne 3 : Tous les statuts (3/4) | Ressources (1/4) = 75/25 */
+  #page-items .filter-bar {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 0.6rem !important;
+    flex-wrap: unset !important;
+    flex-direction: unset !important;
+  }
+  #page-items .filter-bar .search-box           { grid-column: 1 / -1; width: 100% !important; min-width: 0 !important; }
+  #page-items .filter-bar #reference-dropdown   { grid-column: 1 / 4;  width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #page-items .filter-bar #specialty-dropdown   { grid-column: 4 / 7;  width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #page-items .filter-bar #status-dropdown      { grid-column: 1 / 5;  width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #page-items .filter-bar .config-resources-btn { grid-column: 5 / 7;  width: 100% !important; min-width: 0 !important; max-width: 100% !important; justify-content: center; white-space: nowrap; }
+  #page-items .filter-bar .custom-select-menu   { width: 100%; min-width: unset; left: 0; right: 0; }
+  #page-items .filter-bar .specialty-multi-menu { width: 100%; min-width: unset; left: 0; right: 0; }
+
+  /* ── PAGE ENTRAÎNEMENTS ───────────────────────────────────── */
+  /* Ligne 1 : Recherche (full)
+     Ligne 2 : Types | Spécialités (50/50)
+     Ligne 3 : Plateformes | Statuts (50/50) */
+  #train-filter-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.6rem !important;
+    flex-wrap: unset !important;
+    flex-direction: unset !important;
+  }
+  #train-filter-bar .train-search-inline       { grid-column: 1 / -1 !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: unset !important; }
+  #train-filter-bar #train-type-dropdown       { grid-column: 1 / 2; width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #train-filter-bar #train-matiere-dropdown    { grid-column: 2 / 3; width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #train-filter-bar #train-plateforme-dropdown { grid-column: 1 / 2; width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #train-filter-bar #train-statut-dropdown     { grid-column: 2 / 3; width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+  #train-filter-bar .specialty-multi-menu { width: 100%; min-width: unset; left: 0; right: 0; }
+}
+/* ================================================================
+   FILTRES TÉLÉPHONE — Pastilles petites + cases moins hautes (≤ 480px)
+   ================================================================ */
+@media (max-width: 480px) {
+
+  /* Pastilles plus petites sur téléphone */
+  .specialty-chip {
+    padding: 1px 4px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    gap: 3px !important;
+  }
+  .specialty-chip-remove {
+    width: 11px !important;
+    height: 11px !important;
+    font-size: 0.5rem !important;
+  }
+
+  /* Cases de filtre et recherche moins hautes */
+  #page-dashboard .filter-bar .search-box input,
+  #page-items .filter-bar .search-box input,
+  #train-filter-bar .train-search-inline input {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+  #page-dashboard .filter-bar .custom-select-btn,
+  #page-items .filter-bar .custom-select-btn,
+  #page-items .filter-bar .specialty-multi-btn,
+  #page-items .filter-bar .config-resources-btn,
+  #train-filter-bar .specialty-multi-btn {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+  }
+}
+</style>
 <script>
 (function() {
 
