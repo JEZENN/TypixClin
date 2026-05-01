@@ -12144,7 +12144,7 @@ color: #7c3aed;
     <!-- Filtre Statut (multi-select) -->
     <div class="specialty-multi-select" id="train-statut-dropdown">
       <button class="specialty-multi-btn" type="button" id="train-statut-multi-btn">
-        <span class="specialty-multi-icon"><i class="fas fa-bars"></i></span>
+        <span class="specialty-multi-icon"><i class="fas fa-flag"></i></span>
         <div class="specialty-multi-content">
           <span class="specialty-multi-placeholder" id="train-statut-placeholder">Tous les statuts</span>
         </div>
@@ -12161,7 +12161,7 @@ color: #7c3aed;
           </div>
         </div>
         <div class="specialty-multi-list" id="train-statut-multi-list">
-          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleStatutFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-bars" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les statuts</span></div>
+          <div class="specialty-multi-option specialty-multi-all selected" data-value="all" onclick="trainToggleStatutFilter('all',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="specialty-multi-option-icon"><i class="fas fa-flag" style="color:var(--primary)"></i></span><span class="specialty-multi-option-text">Tous les statuts</span></div>
           <div class="specialty-multi-option" data-value="non-fait"  onclick="trainToggleStatutFilter('non-fait',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-non-fait"></span><span class="specialty-multi-option-text">Non fait</span></div>
           <div class="specialty-multi-option" data-value="a-faire"   onclick="trainToggleStatutFilter('a-faire',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-a-faire"></span><span class="specialty-multi-option-text">À faire</span></div>
           <div class="specialty-multi-option" data-value="a-refaire" onclick="trainToggleStatutFilter('a-refaire',this)"><div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div><span class="train-statut-dot statut-a-refaire"></span><span class="specialty-multi-option-text">À refaire</span></div>
@@ -12368,6 +12368,11 @@ color: #7c3aed;
         <span class="notes-autosave-dot" id="trainNotesAutosaveDot" title="Sauvegarde automatique">
           <i id="trainNotesAutosaveIcon" class="fas fa-sync-alt"></i>
         </span>
+        <span id="trainNotesTodoZone"></span>
+        <button class="notes-action-btn btn-train-statut" id="trainNotesStatutBtn" onclick="trainNotesOpenStatut(event)" title="Changer le statut">
+          <i class="fas fa-flag"></i>
+          <span class="notes-btn-label">Statut</span>
+        </button>
         <button class="notes-close-btn" onclick="closeTrainNotesModal()">
           <i class="fas fa-times"></i>
         </button>
@@ -12490,7 +12495,7 @@ color: #7c3aed;
 </div>
         
         <div class="modal-section">
-            <label class="modal-label">Date</label>
+            <label class="modal-label">Date <span style="color:#ef4444">*</span></label>
 			<input type="date" id="tour-date" class="modal-input" max="">
 			<div class="confidence-error" id="date-error">Erreur de date</div>
 
@@ -21954,10 +21959,10 @@ window._notesFirestore = {
 [data-theme="dark"] .notes-action-btn.btn-tour  { background: rgba(16,185,129,0.2); color: #6ee7b7; }
 [data-theme="dark"] .notes-action-btn.btn-tour:hover  { background: #10b981; color: white; }
 
-.notes-action-btn.btn-todo  { background: #ede9fe; color: #6d28d9; }
+.notes-action-btn.btn-todo  { background: #ddd6fe; color: #5b21b6; }
 .notes-action-btn.btn-todo:hover  { background: #7c3aed; color: white; box-shadow: 0 4px 12px rgba(124,58,237,0.45); }
 .notes-action-btn.btn-todo:active { background: #5b21b6; color: white; transform: scale(0.92); box-shadow: none; }
-[data-theme="dark"] .notes-action-btn.btn-todo  { background: rgba(124,58,237,0.25); color: #c4b5fd; }
+[data-theme="dark"] .notes-action-btn.btn-todo  { background: rgba(124,58,237,0.35); color: #c4b5fd; }
 [data-theme="dark"] .notes-action-btn.btn-todo:hover  { background: #7c3aed; color: white; }
 
 /* Badge épingle dans le header notes (item déjà dans la todo) */
@@ -21969,6 +21974,70 @@ window._notesFirestore = {
     cursor: default;
 }
 [data-theme="dark"] .notes-todo-badge { background: rgba(124,58,237,0.25); color: #c4b5fd; }
+
+/* Bouton statut dans modal cahier d'erreurs entraînements */
+.notes-action-btn.btn-train-statut { background: #e5e7eb; color: #4b5563; }
+/* Hover desktop : s'étend mais garde la couleur du statut, plus foncée */
+.notes-action-btn.btn-train-statut:hover                    { background: #d1d5db;  color: #374151;  box-shadow: 0 4px 12px rgba(55,65,81,0.25); }
+.notes-action-btn.btn-train-statut.statut-non-fait:hover    { background: #d1d5db;  color: #374151;  box-shadow: 0 4px 12px rgba(55,65,81,0.25); }
+.notes-action-btn.btn-train-statut.statut-a-faire:hover     { background: #fbbf77;  color: #92400e;  box-shadow: 0 4px 12px rgba(245,158,11,0.35); }
+.notes-action-btn.btn-train-statut.statut-a-refaire:hover   { background: #93c5fd;  color: #1e40af;  box-shadow: 0 4px 12px rgba(59,130,246,0.35); }
+.notes-action-btn.btn-train-statut.statut-fait:hover        { background: #6ee7b7;  color: #064e3b;  box-shadow: 0 4px 12px rgba(16,185,129,0.35); }
+.notes-action-btn.btn-train-statut.statut-relu:hover        { background: #c4b5fd;  color: #4c1d95;  box-shadow: 0 4px 12px rgba(139,92,246,0.35); }
+.notes-action-btn.btn-train-statut:active { opacity: 0.75; transform: scale(0.92); box-shadow: none; }
+/* Bouton déployé et maintenu ouvert tant que le popup statut est visible */
+.notes-action-btn.btn-train-statut.popup-open {
+  max-width: 130px !important;
+  padding: 0 10px 0 8px !important;
+}
+.notes-action-btn.btn-train-statut.popup-open .notes-btn-label {
+  opacity: 1 !important;
+  max-width: 100px !important;
+  margin-left: 5px !important;
+}
+.notes-action-btn.btn-train-statut.statut-non-fait  { background: #e5e7eb; color: #4b5563; }
+.notes-action-btn.btn-train-statut.statut-a-faire   { background: #fed7aa; color: #92400e; }
+.notes-action-btn.btn-train-statut.statut-a-refaire { background: #bfdbfe; color: #1e40af; }
+.notes-action-btn.btn-train-statut.statut-fait      { background: #bbf7d0; color: #064e3b; }
+.notes-action-btn.btn-train-statut.statut-relu      { background: #ddd6fe; color: #4c1d95; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut                  { background: rgba(107,114,128,0.4); color: #d1d5db; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut.statut-non-fait  { background: rgba(107,114,128,0.4); color: #d1d5db; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut.statut-a-faire   { background: rgba(245,158,11,0.4);  color: #fcd34d; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut.statut-a-refaire { background: rgba(59,130,246,0.4);  color: #93c5fd; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut.statut-fait      { background: rgba(16,185,129,0.4);  color: #6ee7b7; }
+[data-theme="dark"] .notes-action-btn.btn-train-statut.statut-relu      { background: rgba(139,92,246,0.4);  color: #c4b5fd; }
+/* Statut actuel encadré dans le popup (PC + mobile) */
+.train-statut-popup-item.current { outline: 2px solid currentColor; outline-offset: -2px; }
+/* Désactiver TOUT hover sur écran tactile — gel complet de l'apparence */
+@media (pointer: coarse) {
+  .notes-action-btn.btn-train-statut:hover,
+  .notes-action-btn.btn-train-statut.statut-non-fait:hover,
+  .notes-action-btn.btn-train-statut.statut-a-faire:hover,
+  .notes-action-btn.btn-train-statut.statut-a-refaire:hover,
+  .notes-action-btn.btn-train-statut.statut-fait:hover,
+  .notes-action-btn.btn-train-statut.statut-relu:hover {
+    max-width: 30px !important; padding: 0 !important;
+    background: revert !important; color: revert !important;
+    transform: none !important; box-shadow: none !important;
+  }
+  .notes-action-btn.btn-train-statut:hover .notes-btn-label,
+  .notes-action-btn.btn-train-statut.statut-non-fait:hover .notes-btn-label,
+  .notes-action-btn.btn-train-statut.statut-a-faire:hover .notes-btn-label,
+  .notes-action-btn.btn-train-statut.statut-a-refaire:hover .notes-btn-label,
+  .notes-action-btn.btn-train-statut.statut-fait:hover .notes-btn-label,
+  .notes-action-btn.btn-train-statut.statut-relu:hover .notes-btn-label {
+    opacity: 0 !important; max-width: 0 !important; margin-left: 0 !important;
+  }
+  /* popup-open reste actif sur tactile (état explicite, pas hover) */
+  .notes-action-btn.btn-train-statut.popup-open {
+    max-width: 130px !important; padding: 0 10px 0 8px !important;
+  }
+  .notes-action-btn.btn-train-statut.popup-open .notes-btn-label {
+    opacity: 1 !important; max-width: 100px !important; margin-left: 5px !important;
+  }
+}
+  }
+}
 
 
 
@@ -26662,6 +26731,27 @@ window._openTrainNotes = function(id) {
   _trainScrollLock();
   document.getElementById('trainNotesOverlay').classList.add('active');
 
+  // ── Bouton Todo ──
+  var tnTodoZone = document.getElementById('trainNotesTodoZone');
+  if (tnTodoZone) {
+    var alreadyInTodo = window.PlanningModule && window.PlanningModule.isItemInChecklist
+      ? window.PlanningModule.isItemInChecklist('train', String(id)) : false;
+    if (alreadyInTodo) {
+      tnTodoZone.innerHTML = '<span class="notes-todo-badge" title="Déjà dans la To-do"><i class="fas fa-thumbtack"></i></span>';
+    } else {
+      tnTodoZone.innerHTML = '<button class="notes-action-btn btn-todo" onclick="trainNotesTodo()">' +
+        '<i class="fas fa-arrow-right"></i>' +
+        '<span class="notes-btn-label">To-do list</span>' +
+        '</button>';
+    }
+  }
+
+  // ── Bouton Statut — couleur selon statut courant ──
+  var tnStatutBtn = document.getElementById('trainNotesStatutBtn');
+  if (tnStatutBtn) {
+    tnStatutBtn.className = 'notes-action-btn btn-train-statut statut-' + (t.statut || 'non-fait');
+  }
+
   // ── Lecture depuis users/{uid}/notesEntrainements/{id} ──
   (typeof window.loadTrainNoteFromFirestore === 'function'
     ? window.loadTrainNoteFromFirestore(id)
@@ -26955,6 +27045,98 @@ window._sendTrainToTodo = function(id, btn) {
     badge.innerHTML = '<i class="fas fa-thumbtack"></i>';
     btn.parentNode.replaceChild(badge, btn);
   }
+};
+
+// ---- BOUTONS MODAL CAHIER D'ERREURS ----
+
+/* Envoyer vers la To-do list depuis le modal erreurs */
+window.trainNotesTodo = function() {
+  initTrainingsData();
+  var id = trainNotesCurrentId;
+  var t = window.userData.trainings.find(function(x){ return x.id === id; });
+  if (!t || !window.PlanningModule) return;
+  var SC = (typeof SPECIALTY_CONFIG !== 'undefined') ? SPECIALTY_CONFIG : {};
+  var cfg = (t.matiere && SC[t.matiere]) ? SC[t.matiere] : { color:'#8b5cf6' };
+  var result = window.PlanningModule.addItemFromTable('train', String(id), '', t.title, cfg.color, t.matiere||'', { trainType: t.type||'', trainPlateforme: t.plateforme||'' });
+  var toastMsg = result.success ? 'Entraînement ajouté à la To-do !' : result.message;
+  if (window.showToastNotification) window.showToastNotification(toastMsg, result.success ? 'success' : 'warning');
+  if (result.success) {
+    var tnTodoZone = document.getElementById('trainNotesTodoZone');
+    if (tnTodoZone) tnTodoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la To-do"><i class="fas fa-thumbtack"></i></span>';
+    // Mettre à jour le bouton dans le tableau si visible
+    document.querySelectorAll('[onclick*="_sendTrainToTodo(' + id + ',"]').forEach(function(btn){
+      var badge = document.createElement('span');
+      badge.className = 'added-to-checklist-badge train-checklist-badge';
+      badge.innerHTML = '<i class="fas fa-thumbtack"></i>';
+      btn.parentNode.replaceChild(badge, btn);
+    });
+  }
+};
+
+/* Ouvrir le sélecteur de statut depuis le modal erreurs */
+window.trainNotesOpenStatut = function(event) {
+  event.stopPropagation();
+  var btn = document.getElementById('trainNotesStatutBtn');
+  var popup = document.getElementById('trainNotesStatutPopupEl');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'trainNotesStatutPopupEl';
+    popup.className = 'train-statut-popup';
+    popup.style.zIndex = '10100'; /* au-dessus du modal notes (z-index: 10000) */
+    var _labels = { 'non-fait':'Non fait','a-faire':'À faire','a-refaire':'À refaire','fait':'Fait','relu':'Relu' };
+    popup.innerHTML = ['non-fait','a-faire','a-refaire','fait','relu'].map(function(s){
+      return '<button class="train-statut-popup-item '+s+'" onclick="trainNotesSetStatut(\''+s+'\')">'+_labels[s]+'</button>';
+    }).join('');
+    document.body.appendChild(popup);
+  }
+  var rect = event.currentTarget.getBoundingClientRect();
+  popup.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 168)) + 'px';
+  popup.style.top  = (rect.bottom + 6) + 'px';
+  /* Marquer le statut courant */
+  initTrainingsData();
+  var _t = window.userData.trainings.find(function(x){ return x.id === trainNotesCurrentId; });
+  var _current = _t ? (_t.statut || 'non-fait') : 'non-fait';
+  popup.querySelectorAll('.train-statut-popup-item').forEach(function(it){
+    it.classList.toggle('current', it.classList.contains(_current));
+  });
+  var alreadyOpen = popup.classList.contains('show');
+  popup.classList.toggle('show', !alreadyOpen);
+  /* Garder le bouton déployé tant que le popup est ouvert */
+  if (btn) btn.classList.toggle('popup-open', !alreadyOpen);
+  if (!alreadyOpen) {
+    setTimeout(function() {
+      function _closeStatutPopup(e) {
+        var p = document.getElementById('trainNotesStatutPopupEl');
+        if (p && !p.contains(e.target)) {
+          p.classList.remove('show');
+          if (btn) btn.classList.remove('popup-open');
+          document.removeEventListener('click', _closeStatutPopup);
+        }
+      }
+      document.addEventListener('click', _closeStatutPopup);
+    }, 10);
+  }
+};
+
+/* Appliquer le nouveau statut depuis le modal erreurs */
+window.trainNotesSetStatut = function(statut) {
+  var popup = document.getElementById('trainNotesStatutPopupEl');
+  if (popup) popup.classList.remove('show');
+  var statBtn = document.getElementById('trainNotesStatutBtn');
+  if (statBtn) statBtn.classList.remove('popup-open');
+  initTrainingsData();
+  var t = window.userData.trainings.find(function(x){ return x.id === trainNotesCurrentId; });
+  if (!t) return;
+  t.statut = statut;
+  saveTrainings();
+  if (typeof renderTrainTable === 'function') renderTrainTable();
+  /* Mettre à jour la couleur du bouton */
+  if (statBtn) statBtn.className = 'notes-action-btn btn-train-statut statut-' + statut;
+  /* Mettre à jour l'encadrement dans le popup */
+  var _popup = document.getElementById('trainNotesStatutPopupEl');
+  if (_popup) _popup.querySelectorAll('.train-statut-popup-item').forEach(function(it){
+    it.classList.toggle('current', it.classList.contains(statut));
+  });
 };
 
 // ---- INIT ----
