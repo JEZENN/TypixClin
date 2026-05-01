@@ -11878,6 +11878,12 @@ color: #7c3aed;
 							</div>
 							
 							<div class="quick-actions" style="position: relative;">
+								
+								<!-- Bouton Réinitialiser (en premier) -->
+								<button class="quick-action-btn" id="btn-reset-filters">
+									<i class="fas fa-filter-circle-xmark"></i>
+								</button>
+
 								<!-- Bouton Légende -->
 								<button class="legend-button" onclick="toggleLegendModal(event)">
 									<i class="fas fa-palette"></i>
@@ -11942,10 +11948,6 @@ color: #7c3aed;
 									</div>
 								</div>
 								
-								<!-- Bouton Réinitialiser -->
-								<button class="quick-action-btn" id="btn-reset-filters">
-									<i class="fas fa-filter-circle-xmark"></i>
-								</button>
 							</div>
 						</div>
 
@@ -22036,8 +22038,6 @@ window._notesFirestore = {
     opacity: 1 !important; max-width: 100px !important; margin-left: 5px !important;
   }
 }
-  }
-}
 
 
 
@@ -25139,30 +25139,30 @@ document.addEventListener('touchend', function(e) {
 .train-statut-btn.a-refaire:not(.selected):hover { background: #3b82f6; color: white; border-color: #3b82f6; transform: scale(1.03); }
 .train-statut-btn.fait:not(.selected):hover      { background: #10b981; color: white; border-color: #10b981; transform: scale(1.03); }
 .train-statut-btn.relu:not(.selected):hover      { background: #8b5cf6; color: white; border-color: #8b5cf6; transform: scale(1.03); }
-[data-theme="dark"] .train-statut-btn.non-fait  { background: rgba(107,114,128,0.15); }
-[data-theme="dark"] .train-statut-btn.a-faire   { background: rgba(245,158,11,0.15); }
-[data-theme="dark"] .train-statut-btn.a-refaire { background: rgba(59,130,246,0.15); }
-[data-theme="dark"] .train-statut-btn.fait      { background: rgba(16,185,129,0.15); }
-[data-theme="dark"] .train-statut-btn.relu      { background: rgba(139,92,246,0.15); }
+[data-theme="dark"] .train-statut-btn.non-fait  { background: rgba(107,114,128,0.35); color: #e5e7eb; }
+[data-theme="dark"] .train-statut-btn.a-faire   { background: rgba(245,158,11,0.35);  color: #fde68a; }
+[data-theme="dark"] .train-statut-btn.a-refaire { background: rgba(59,130,246,0.35);  color: #bfdbfe; }
+[data-theme="dark"] .train-statut-btn.fait      { background: rgba(16,185,129,0.35);  color: #a7f3d0; }
+[data-theme="dark"] .train-statut-btn.relu      { background: rgba(139,92,246,0.35);  color: #ddd6fe; }
 
 /* Badges statut dans tableau */
 .train-statut-badge { display: inline-flex; align-items: center; padding: 0.3rem 0.7rem; border-radius: var(--border-radius-full); font-size: 0.78rem; font-weight: 600; white-space: nowrap; cursor: pointer; border: none; transition: all var(--transition-fast); }
-.train-statut-badge.non-fait  { background: #f3f4f6; color: #6b7280; }
-.train-statut-badge.a-faire   { background: #fff7ed; color: #f59e0b; }
-.train-statut-badge.a-refaire { background: #eff6ff; color: #3b82f6; }
-.train-statut-badge.fait      { background: #f0fdf4; color: #10b981; }
-.train-statut-badge.relu      { background: #faf5ff; color: #8b5cf6; }
+.train-statut-badge.non-fait  { background: #e5e7eb; color: #374151; }
+.train-statut-badge.a-faire   { background: #fed7aa; color: #92400e; }
+.train-statut-badge.a-refaire { background: #bfdbfe; color: #1e40af; }
+.train-statut-badge.fait      { background: #bbf7d0; color: #064e3b; }
+.train-statut-badge.relu      { background: #ddd6fe; color: #4c1d95; }
 .train-statut-badge:hover {
   filter: brightness(0.88);
   transform: scale(1.06);
   box-shadow: 0 2px 8px rgba(0,0,0,0.14);
   cursor: pointer;
 }
-[data-theme="dark"] .train-statut-badge.non-fait  { background: rgba(107,114,128,0.18); }
-[data-theme="dark"] .train-statut-badge.a-faire   { background: rgba(245,158,11,0.18); }
-[data-theme="dark"] .train-statut-badge.a-refaire { background: rgba(59,130,246,0.18); }
-[data-theme="dark"] .train-statut-badge.fait      { background: rgba(16,185,129,0.18); }
-[data-theme="dark"] .train-statut-badge.relu      { background: rgba(139,92,246,0.18); }
+[data-theme="dark"] .train-statut-badge.non-fait  { background: rgba(107,114,128,0.40); color: #e5e7eb; }
+[data-theme="dark"] .train-statut-badge.a-faire   { background: rgba(245,158,11,0.40);  color: #fde68a; }
+[data-theme="dark"] .train-statut-badge.a-refaire { background: rgba(59,130,246,0.40);  color: #bfdbfe; }
+[data-theme="dark"] .train-statut-badge.fait      { background: rgba(16,185,129,0.40);  color: #a7f3d0; }
+[data-theme="dark"] .train-statut-badge.relu      { background: rgba(139,92,246,0.40);  color: #ddd6fe; }
 
 /* Badge type */
 .train-type-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: var(--border-radius-sm); font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
@@ -26673,6 +26673,13 @@ window._openTrainStatutPopup = function(id, event) {
   var rect = event.target.getBoundingClientRect();
   popup.style.left = Math.min(rect.left, window.innerWidth - 160) + 'px';
   popup.style.top  = (rect.bottom + 6) + 'px';
+  /* Marquer le statut courant */
+  initTrainingsData();
+  var _tc = window.userData.trainings.find(function(x){ return x.id === id; });
+  var _cs = _tc ? (_tc.statut || 'non-fait') : 'non-fait';
+  popup.querySelectorAll('.train-statut-popup-item').forEach(function(it){
+    it.classList.toggle('current', it.classList.contains(_cs));
+  });
   popup.classList.add('show');
 };
 
@@ -26680,7 +26687,13 @@ window._setTrainStatut = function(statut) {
   initTrainingsData();
   var t = window.userData.trainings.find(function(x){ return x.id === _trainStatutPopupId; });
   if (t) { t.statut = statut; saveTrainings(); renderTrainTable(); }
-  var p = document.getElementById('train-statut-popup'); if(p) p.classList.remove('show');
+  var p = document.getElementById('train-statut-popup');
+  if (p) {
+    p.querySelectorAll('.train-statut-popup-item').forEach(function(it){
+      it.classList.toggle('current', it.classList.contains(statut));
+    });
+    p.classList.remove('show');
+  }
 };
 
 // ---- NOTES ----
