@@ -499,6 +499,255 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .profile-menu-item.logout:hover { background: #fef2f2; color: #dc2626; }
 [data-theme="dark"] .profile-menu-item.logout { color: #f87171; }
 [data-theme="dark"] .profile-menu-item.logout:hover { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+
+/* ===== FEEDBACK BUTTON IN MENU ===== */
+.profile-menu-item.feedback-btn-menu { color: var(--primary); }
+.profile-menu-item.feedback-btn-menu:hover { background: rgba(59, 130, 246, 0.08); color: var(--primary-dark); }
+[data-theme="dark"] .profile-menu-item.feedback-btn-menu { color: var(--primary-light); }
+
+/* ===== FEEDBACK MODAL ===== */
+.feedback-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10200;
+    padding: 1rem;
+    pointer-events: none;
+}
+.feedback-modal-overlay.active { display: flex; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); pointer-events: auto; animation: modalOverlayIn 0.2s ease forwards; }
+.feedback-modal-overlay.closing { animation: modalOverlayOut 0.18s ease forwards; }
+.feedback-modal-overlay.closing .feedback-modal-inner { animation: modalContentOut 0.18s ease forwards; }
+
+.feedback-modal-inner {
+    background: var(--white); border-radius: var(--border-radius-xl);
+    width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+    overflow: hidden;
+    max-height: calc(100dvh - 2rem);
+    display: flex; flex-direction: column;
+}
+
+.feedback-modal-body {
+    padding: 1.25rem 1.75rem 0.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
+    /* Réserve l'espace de la barre de défilement pour éviter le décalage du contenu */
+    scrollbar-gutter: stable;
+}
+
+/* Scrollbar du corps du modal feedback — assez large pour que les flèches soient visibles */
+.feedback-modal-body::-webkit-scrollbar { width: 8px; }
+.feedback-modal-body::-webkit-scrollbar-track { background: transparent; }
+.feedback-modal-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+.feedback-modal-body::-webkit-scrollbar-thumb:hover { background: var(--gray-400); background-clip: content-box; border: 2px solid transparent; }
+.feedback-modal-body::-webkit-scrollbar-button { display: block; height: 6px; background: transparent; }
+[data-theme="dark"] .feedback-modal-body::-webkit-scrollbar-thumb { background: var(--gray-400); background-clip: content-box; border: 2px solid transparent; }
+
+[data-theme="dark"] .feedback-modal-inner { background: var(--white); }
+/* Dark mode type buttons */
+[data-theme="dark"] .feedback-type-btn { background: var(--gray-100); border-color: var(--gray-300); color: var(--gray-600); }
+/* Dark hover pastel */
+[data-theme="dark"] .feedback-type-btn[data-type="bug"]:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #f87171; }
+[data-theme="dark"] .feedback-type-btn[data-type="suggestion"]:hover { background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.3); color: #93c5fd; }
+[data-theme="dark"] .feedback-type-btn[data-type="amelioration"]:hover { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.3); color: #6ee7b7; }
+[data-theme="dark"] .feedback-type-btn[data-type="autre"]:hover { background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.3); color: #c4b5fd; }
+/* Dark actif : couleur foncée adaptée dark + texte blanc */
+[data-theme="dark"] .feedback-type-btn[data-type="bug"].selected { background: #ef4444; color: #ffffff; border-color: #ef4444; }
+[data-theme="dark"] .feedback-type-btn[data-type="suggestion"].selected { background: #3b82f6; color: #ffffff; border-color: #3b82f6; }
+[data-theme="dark"] .feedback-type-btn[data-type="amelioration"].selected { background: #10b981; color: #ffffff; border-color: #10b981; }
+[data-theme="dark"] .feedback-type-btn[data-type="autre"].selected { background: #8b5cf6; color: #ffffff; border-color: #8b5cf6; }
+/* Dark mode success screen */
+[data-theme="dark"] .feedback-success-title { color: var(--gray-900); }
+[data-theme="dark"] .feedback-success-sub { color: var(--gray-500); }
+
+/* Type pills */
+.feedback-type-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;
+}
+.feedback-type-btn {
+    padding: 0.6rem 0.75rem; border-radius: var(--border-radius-md);
+    font-size: 0.85rem; font-weight: 600; border: 1.5px solid transparent;
+    cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    justify-content: center; transition: all var(--transition-fast);
+    background: var(--gray-100); color: var(--gray-600);
+    border-color: var(--gray-200);
+}
+.feedback-type-btn:hover { transform: translateY(-1px); }
+/* Hover pastel par type */
+.feedback-type-btn[data-type="bug"]:hover { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #dc2626; }
+.feedback-type-btn[data-type="suggestion"]:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.25); color: #2563eb; }
+.feedback-type-btn[data-type="amelioration"]:hover { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); color: #059669; }
+.feedback-type-btn[data-type="autre"]:hover { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.25); color: #7c3aed; }
+/* Actif : couleur foncée + texte blanc */
+.feedback-type-btn.selected { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.feedback-type-btn[data-type="bug"].selected { background: #dc2626; color: #ffffff; border-color: #dc2626; }
+.feedback-type-btn[data-type="suggestion"].selected { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+.feedback-type-btn[data-type="amelioration"].selected { background: #059669; color: #ffffff; border-color: #059669; }
+.feedback-type-btn[data-type="autre"].selected { background: #7c3aed; color: #ffffff; border-color: #7c3aed; }
+
+/* Satisfaction rating — étoiles SVG pleine largeur */
+.feedback-mood-row {
+    display: flex; gap: 0.25rem; width: 100%;
+}
+.feedback-mood-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 0.4rem 0; background: none; border: none; cursor: pointer;
+}
+.feedback-star-svg {
+    width: 100%; max-width: 44px; height: auto;
+    fill: var(--gray-200); stroke: var(--gray-300); stroke-width: 1.2;
+    stroke-linejoin: round;
+    transition: fill 0.12s ease, stroke 0.12s ease, transform 0.12s ease, filter 0.12s ease;
+    display: block;
+}
+.feedback-mood-btn:hover .feedback-star-svg {
+    transform: scale(1.18);
+}
+/* Étoiles actives (toutes avant et jusqu'à la sélectionnée) */
+.feedback-mood-btn.fill .feedback-star-svg {
+    fill: #f59e0b;
+    stroke: #d97706;
+    filter: drop-shadow(0 2px 6px rgba(245,158,11,0.45));
+}
+/* Hover cascade */
+.feedback-mood-btn.hover-fill .feedback-star-svg {
+    fill: #fbbf24;
+    stroke: #f59e0b;
+    transform: scale(1.18);
+}
+[data-theme="dark"] .feedback-star-svg { fill: var(--gray-500); stroke: var(--gray-400); }
+[data-theme="dark"] .feedback-mood-btn.fill .feedback-star-svg { fill: #f59e0b; stroke: #d97706; }
+
+/* Textarea */
+.feedback-textarea {
+    width: 100%; border: 1.5px solid var(--gray-200); border-radius: var(--border-radius-md);
+    padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 0.9rem;
+    color: var(--gray-800); background: var(--white); resize: none;
+    min-height: 90px; overflow-y: hidden;
+    transition: border-color var(--transition-fast);
+    line-height: 1.6;
+}
+.feedback-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+[data-theme="dark"] .feedback-textarea { background: var(--gray-100); color: var(--gray-900); border-color: var(--gray-300); }
+[data-theme="dark"] .feedback-textarea:focus { border-color: var(--primary); }
+
+/* Page pills sélectionnables */
+.feedback-page-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+}
+.feedback-page-btn {
+    padding: 0.45rem 0.5rem; border-radius: var(--border-radius-md);
+    font-size: 0.82rem; font-weight: 600; border: 1.5px solid var(--gray-200);
+    cursor: pointer; background: var(--gray-50); color: var(--gray-500);
+    transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.feedback-page-btn:hover {
+    border-color: rgba(59,130,246,0.3); color: var(--primary);
+    background: rgba(59,130,246,0.06);
+    transform: translateY(-1px);
+    box-shadow: none;
+}
+.feedback-page-btn.selected {
+    background: #2563eb; color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+    transform: translateY(-1px);
+}
+.feedback-page-btn.selected:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+[data-theme="dark"] .feedback-page-btn { background: var(--gray-100); border-color: var(--gray-300); color: var(--gray-500); }
+[data-theme="dark"] .feedback-page-btn:hover { border-color: rgba(96,165,250,0.3); color: var(--primary); background: rgba(96,165,250,0.06); box-shadow: none; }
+[data-theme="dark"] .feedback-page-btn.selected { background: #3b82f6; color: #ffffff; border-color: #3b82f6; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
+
+/* Success state */
+.feedback-success {
+    display: none; flex-direction: column; align-items: center;
+    gap: 1rem; padding: 2rem 1.75rem; text-align: center;
+}
+.feedback-success.show { display: flex; }
+.feedback-success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--success-light); color: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+}
+.feedback-success-title { font-size: 1.2rem; font-weight: 700; color: var(--gray-900); }
+.feedback-success-sub { font-size: 0.9rem; color: var(--gray-500); }
+
+/* Erreurs animées du modal feedback (même technique que confidence-error) */
+.feedback-error-hint {
+    display: block !important;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none;
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: max-height 0.28s ease, opacity 0.28s ease, margin-top 0.28s ease;
+}
+/* L'erreur de type est centrée (standalone), l'erreur message est dans un flex row */
+#feedback-type-error { text-align: center; }
+.feedback-error-hint.show {
+    max-height: 2rem;
+    opacity: 1;
+    margin-top: 0.45rem;
+    pointer-events: auto;
+}
+#feedback-stars-error { text-align: center; }
+
+/* Footer fixe hors du bloc scrollable — empêche la barre de défilement d'atteindre le bord arrondi */
+.feedback-modal-footer {
+    padding: 0.75rem 1.75rem 1.25rem;
+    flex-shrink: 0;
+    border-top: 1px solid var(--gray-100);
+    background: var(--white);
+    display: flex;
+    align-items: center;
+}
+[data-theme="dark"] .feedback-modal-footer { border-top-color: var(--gray-200); background: var(--white); }
+
+@media (max-width: 480px) {
+    .feedback-modal-inner { max-width: 100%; border-radius: var(--border-radius-lg); }
+    .feedback-type-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Bouton de fermeture écran succès feedback */
+.feedback-success-close-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    box-shadow: var(--shadow-md);
+}
+.feedback-success-close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-blue);
+    filter: brightness(1.08);
+}
+.feedback-success-close-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: var(--shadow-sm);
+    filter: brightness(0.92);
+}
 .user-auth .auth-btn { display: flex; }
 .user-auth .user-avatar { display: none; }
 .user-auth .profile-dropdown { display: none; }
@@ -7065,13 +7314,9 @@ input[type="date"].modal-input {
         width: 100%;
     }
     
-    /* Ligne 2 : Dropdowns Mois/Année */
+    /* Ligne 2 : Dropdowns Mois/Année — masqués sur mobile */
     .planning-date-selector {
-        order: 2;
-        justify-content: center;
-        width: 100%;
-        max-width: 260px;
-        gap: 0.5rem;
+        display: none;
     }
     
     /* Ligne 3 : Navigation (flèches + Aujourd'hui) */
@@ -10747,6 +10992,7 @@ color: #7c3aed;
 								Mon abonnement
 							</a>-->
 							<!--<button class="profile-menu-item" id="backup-settings-btn"><i class="fas fa-shield-alt"></i><span>Sauvegardes</span></button>-->
+							<button class="profile-menu-item feedback-btn-menu" id="open-feedback-btn" onclick="openFeedbackModal()"><i class="fas fa-comment-dots"></i><span>Donnez votre avis</span></button>
 							<button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
                         </div>
                     </div>
@@ -11820,7 +12066,7 @@ color: #7c3aed;
 					</div>
 					
 					<button class="config-resources-btn" onclick="openResourcesConfigModal()">
-						<i class="fas fa-cog"></i> Ressources
+						<i class="fas fa-sliders"></i> Ressources
 					</button>
 
 				</div>
@@ -12704,6 +12950,125 @@ color: #7c3aed;
 </div>
 
 
+<!-- ===== MODAL FEEDBACK ===== -->
+<div class="feedback-modal-overlay" id="feedback-modal-overlay">
+    <div class="feedback-modal-inner" id="feedback-modal-inner">
+
+        <!-- Header unifié (même pattern que les autres modals) -->
+        <div class="unified-modal-header">
+            <div class="unified-modal-title">
+                <div class="unified-modal-icon"><i class="fas fa-comment-dots"></i></div>
+                <h3 class="unified-modal-heading">Donnez votre avis</h3>
+            </div>
+            <button class="notes-close-btn" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="feedback-modal-body" id="feedback-form-body">
+
+            <!-- Type -->
+            <div class="modal-section" style="margin-bottom:0;">
+                <label class="modal-label">Type de feedback <span style="color:var(--gray-400);font-weight:400;font-size:0.8rem;">(optionnel)</span></label>
+                <div class="feedback-type-grid">
+                    <button class="feedback-type-btn" data-type="bug">
+                        <i class="fas fa-bug"></i> Bug
+                    </button>
+                    <button class="feedback-type-btn" data-type="suggestion">
+                        <i class="fas fa-lightbulb"></i> Suggestion
+                    </button>
+                    <button class="feedback-type-btn" data-type="amelioration">
+                        <i class="fas fa-wand-magic-sparkles"></i> Amélioration
+                    </button>
+                    <button class="feedback-type-btn" data-type="autre">
+                        <i class="fas fa-comment"></i> Autre
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <div class="modal-section" style="margin-bottom:0;">
+                <label class="modal-label">Message <span style="color:var(--gray-400);font-weight:400;font-size:0.8rem;">(optionnel)</span></label>
+                <textarea class="feedback-textarea" id="feedback-message" placeholder="Décrivez votre retour, votre idée ou le problème rencontré…" maxlength="500" oninput="feedbackCharCount(this)"></textarea>
+                <div style="position:relative;margin-top:0.25rem;min-height:1.25rem;display:flex;justify-content:flex-end;align-items:center;">
+                    <span id="feedback-char-count" style="font-size:0.75rem;color:var(--gray-400);position:relative;z-index:1;">0 / 500</span>
+                </div>
+            </div>
+
+            <!-- Page concernée (optionnel, toggle) -->
+            <div class="modal-section" style="margin-bottom:0;">
+                <label class="modal-label">Page concernée <span style="color:var(--gray-400);font-weight:400;font-size:0.8rem;">(optionnel)</span></label>
+                <div class="feedback-page-grid">
+                    <button class="feedback-page-btn" data-page="Statistiques">
+                        <i class="fas fa-chart-pie"></i> Stats
+                    </button>
+                    <button class="feedback-page-btn" data-page="Spécialités">
+                        <i class="fas fa-hospital"></i> Spés
+                    </button>
+                    <button class="feedback-page-btn" data-page="Items">
+                        <i class="fas fa-list-check"></i> Items
+                    </button>
+                    <button class="feedback-page-btn" data-page="Entraînements">
+                        <i class="fas fa-dumbbell"></i> Entraînement
+                    </button>
+                    <button class="feedback-page-btn" data-page="Planning">
+                        <i class="fas fa-calendar-alt"></i> Planning
+                    </button>
+                    <button class="feedback-page-btn feedback-page-btn--all" data-page="Toutes">
+                        <i class="fas fa-layer-group"></i> Toutes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Satisfaction globale (en dernier) -->
+            <div class="modal-section" style="margin-bottom:0;">
+                <label class="modal-label">Satisfaction globale <span style="color:#ef4444">*</span></label>
+                <div class="feedback-mood-row" id="feedback-stars">
+                    <button class="feedback-mood-btn" data-star="1">
+                        <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </button>
+                    <button class="feedback-mood-btn" data-star="2">
+                        <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </button>
+                    <button class="feedback-mood-btn" data-star="3">
+                        <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </button>
+                    <button class="feedback-mood-btn" data-star="4">
+                        <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </button>
+                    <button class="feedback-mood-btn" data-star="5">
+                        <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                    </button>
+                </div>
+                <div class="feedback-error-hint" id="feedback-stars-error">Veuillez sélectionner une note</div>
+            </div>
+
+        </div><!-- /.feedback-modal-body -->
+
+        <!-- Footer fixe (hors du bloc scrollable pour que la flèche basse de la scrollbar ne soit pas clippée) -->
+        <div class="feedback-modal-footer" id="feedback-modal-footer">
+            <div class="modal-actions" style="margin-bottom:0; margin-top:0; width:100%;">
+                <button class="btn-validate" id="feedback-submit-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <button class="btn-reset" title="Réinitialiser">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Écran succès -->
+        <div class="feedback-success" id="feedback-success-screen">
+            <div class="feedback-success-icon"><i class="fas fa-heart"></i></div>
+            <div class="feedback-success-title">Merci pour votre avis !</div>
+            <div class="feedback-success-sub">Votre retour a bien été pris en compte et contribue à améliorer la plateforme. Il est possible que je vous contacte si cela est nécessaire.</div>
+            <button onclick="closeFeedbackModal()" class="feedback-success-close-btn">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+
+    </div>
+</div>
+
 <!-- Modal Sauvegardes -->
 <div class="modal backup-modal" id="backup-modal">
     <div class="modal-content">
@@ -12759,7 +13124,7 @@ color: #7c3aed;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 const firebaseConfig = {
@@ -12787,6 +13152,7 @@ const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'europe-west1');
 const auth = getAuth(app);
 const db = getFirestore(app);
+window._db = db;
 
 
 // ===== CONFIGURATION DES RESSOURCES PERSONNALISÉES =====
@@ -20781,7 +21147,32 @@ window._notesFirestore = {
 }
 
 /* Footer du modal */
-[data-theme="dark"] .help-modal-footer {
+[data-theme="dark"] 
+.help-tip-blue {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    border-left: 4px solid #3b82f6;
+}
+.help-tip-blue .help-tip-icon {
+    background: #3b82f6;
+}
+.help-tip-blue .help-tip-content strong {
+    color: #1e3a8a;
+}
+.help-tip-blue .help-tip-content p {
+    color: #1e40af;
+}
+[data-theme="dark"] .help-tip-blue {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.2) 100%);
+    border-left-color: #60a5fa;
+}
+[data-theme="dark"] .help-tip-blue .help-tip-content strong { color: #93c5fd; }
+[data-theme="dark"] .help-tip-blue .help-tip-content p { color: #bfdbfe; }
+.help-modal-footer {
     background: #0f0f0f;
     border-top-color: #2a2a2a;
 }
@@ -22696,6 +23087,13 @@ const helpContent = {
                     <strong>Personnalisation</strong>
                     <p>Réorganisez les cases à votre guise : <strong style="display:inline">maintenez le clic</strong> sur une carte et <strong style="display:inline">glissez-la</strong> à l’emplacement souhaité. L’ordre est sauvegardé automatiquement.</p>
                 </div>
+        </div>
+        <div class="help-key-points">
+            <div class="help-key-points-title"><i class="fas fa-comment-dots"></i> Donnez votre avis !</div>
+            <ul>
+                <li>Vous avez remarqué une <strong>erreur</strong> ou un <strong>bug</strong> ? Signalez-le via le bouton <strong>« Donnez votre avis »</strong> dans votre profil.</li>
+                <li>Vous avez une <strong>idée d'amélioration</strong> ? N'hésitez pas à me la soumettre, vos retours comptent !</li>
+            </ul>
         </div>
     `
 },
@@ -27575,6 +27973,218 @@ var _trainUserWatcher = setInterval(function() {
 }, 2000);
 
 })();
+</script>
+
+<!-- ===== SCRIPT FEEDBACK ===== -->
+<script type="module">
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ---- État global ----
+window._feedbackType  = null;
+window._feedbackStars = 0;
+window._feedbackPage  = null;
+
+// ---- Scroll lock ----
+function _fbScrollLock() {
+    var sw = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = sw + 'px';
+    var h = document.querySelector('.header');
+    if (h) h.style.paddingRight = sw + 'px';
+}
+function _fbScrollUnlock() {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    var h = document.querySelector('.header');
+    if (h) h.style.paddingRight = '';
+}
+
+// ---- Reset ----
+window.feedbackResetAll = function() {
+    window._feedbackType  = null;
+    window._feedbackStars = 0;
+    window._feedbackPage  = null;
+    document.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.feedback-page-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.feedback-mood-btn').forEach(s => s.classList.remove('fill','hover-fill','active'));
+    const ta = document.getElementById('feedback-message');
+    if (ta) { ta.value = ''; ta.style.height = ''; }
+    const cc = document.getElementById('feedback-char-count');
+    if (cc) cc.textContent = '0 / 500';
+    const btn = document.getElementById('feedback-submit-btn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+    const formBody = document.getElementById('feedback-form-body');
+    if (formBody) formBody.style.display = '';
+    const footer = document.getElementById('feedback-modal-footer');
+    if (footer) footer.style.display = '';
+    const success = document.getElementById('feedback-success-screen');
+    if (success) success.classList.remove('show');
+    const starsErr = document.getElementById('feedback-stars-error');
+    if (starsErr) starsErr.classList.remove('show');
+};
+
+// ---- Ouvrir ----
+window.openFeedbackModal = function() {
+    const dd = document.getElementById('profile-dropdown');
+    if (dd) dd.classList.remove('active');
+    window.feedbackResetAll();
+    _fbScrollLock();
+    const overlay = document.getElementById('feedback-modal-overlay');
+    overlay.classList.remove('closing');
+    overlay.classList.add('active');
+    setTimeout(() => {
+        const ta = document.getElementById('feedback-message');
+        if (ta) ta.focus();
+    }, 300);
+};
+
+// ---- Fermer ----
+window.closeFeedbackModal = function() {
+    const overlay = document.getElementById('feedback-modal-overlay');
+    overlay.classList.add('closing');
+    setTimeout(() => {
+        overlay.classList.remove('active','closing');
+        _fbScrollUnlock();
+        window.feedbackResetAll();
+    }, 180);
+};
+
+// ---- Clic fond + Escape ----
+var _fbMouseDownInside = false;
+document.addEventListener('mousedown', function(e) {
+    var overlay = document.getElementById('feedback-modal-overlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    _fbMouseDownInside = !!e.target.closest('#feedback-modal-inner');
+});
+document.getElementById('feedback-modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this && !_fbMouseDownInside) window.closeFeedbackModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    const overlay = document.getElementById('feedback-modal-overlay');
+    if (overlay && overlay.classList.contains('active')) window.closeFeedbackModal();
+});
+
+// ---- Type ----
+window.feedbackSelectType = function(btn) {
+    const already = btn.classList.contains('selected');
+    document.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('selected'));
+    if (!already) { btn.classList.add('selected'); window._feedbackType = btn.dataset.type; }
+    else { window._feedbackType = null; }
+};
+
+// ---- Page ----
+window.feedbackTogglePage = function(btn) {
+    const already = btn.classList.contains('selected');
+    document.querySelectorAll('.feedback-page-btn').forEach(b => b.classList.remove('selected'));
+    if (!already) { btn.classList.add('selected'); window._feedbackPage = btn.dataset.page; }
+    else { window._feedbackPage = null; }
+};
+
+// ---- Attacher tous les boutons dans le module ----
+document.getElementById('feedback-submit-btn').addEventListener('click', function() {
+    window.submitFeedback();
+});
+const _resetBtn = document.querySelector('.btn-reset[title="Réinitialiser"]');
+if (_resetBtn) _resetBtn.addEventListener('click', function() { window.feedbackResetAll(); });
+document.querySelectorAll('.feedback-type-btn').forEach(btn => {
+    btn.addEventListener('click', function() { window.feedbackSelectType(this); });
+});
+document.querySelectorAll('.feedback-page-btn').forEach(btn => {
+    btn.addEventListener('click', function() { window.feedbackTogglePage(this); });
+});
+
+// ---- Étoiles ----
+function _renderStars(n) {
+    document.querySelectorAll('.feedback-mood-btn').forEach(s => {
+        const v = parseInt(s.dataset.star);
+        s.classList.toggle('fill', v <= n && n > 0);
+        s.classList.remove('hover-fill');
+    });
+}
+function _setStarValue(n) {
+    window._feedbackStars = (window._feedbackStars === n) ? 0 : n;
+    _renderStars(window._feedbackStars);
+    if (window._feedbackStars > 0) {
+        const e = document.getElementById('feedback-stars-error');
+        if (e) e.classList.remove('show');
+    }
+}
+window.feedbackSetStar = _setStarValue;
+
+// Listeners étoiles (click + hover) attachés directement dans le module
+document.querySelectorAll('.feedback-mood-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        _setStarValue(parseInt(this.dataset.star));
+    });
+    btn.addEventListener('mouseenter', function() {
+        const n = parseInt(this.dataset.star);
+        document.querySelectorAll('.feedback-mood-btn').forEach(s => {
+            s.classList.remove('hover-fill');
+            if (parseInt(s.dataset.star) <= n) s.classList.add('hover-fill');
+        });
+    });
+    btn.addEventListener('mouseleave', function() {
+        document.querySelectorAll('.feedback-mood-btn').forEach(s => s.classList.remove('hover-fill'));
+    });
+});
+
+// ---- Compteur textarea ----
+window.feedbackCharCount = function(ta) {
+    const cc = document.getElementById('feedback-char-count');
+    if (cc) cc.textContent = ta.value.length + ' / 500';
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+};
+
+// ---- Soumission ----
+window.submitFeedback = async function() {
+    if (!window._feedbackStars) {
+        const err = document.getElementById('feedback-stars-error');
+        if (err) err.classList.add('show');
+        return;
+    }
+    const user = window.currentUser;
+    if (!user) {
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Erreur', "Vous devez être connecté pour envoyer un feedback.", 'error');
+        } else {
+            alert("Vous devez être connecté pour envoyer un feedback.");
+        }
+        return;
+    }
+    const btn = document.getElementById('feedback-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    const msgEl = document.getElementById('feedback-message');
+    const msg = msgEl ? (msgEl.value || '').trim() : '';
+    try {
+        const db = window._db || getFirestore();
+        await addDoc(collection(db, 'feedbacks'), {
+            type:      window._feedbackType  || '',
+            note:      window._feedbackStars,
+            message:   msg,
+            page:      window._feedbackPage  || '',
+            userId:    user.uid,
+            userEmail: user.email || '',
+            createdAt: new Date().toISOString(),
+            appVersion: 'TableurEnLigne'
+        });
+        document.getElementById('feedback-form-body').style.display = 'none';
+        const fbFooter = document.getElementById('feedback-modal-footer');
+        if (fbFooter) fbFooter.style.display = 'none';
+        document.getElementById('feedback-success-screen').classList.add('show');
+    } catch (err) {
+        console.error('Erreur envoi feedback :', err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Erreur', "Impossible d'envoyer le feedback. Vérifiez votre connexion.", 'error');
+        } else {
+            alert("Une erreur est survenue. Veuillez réessayer.");
+        }
+    }
+};
 </script>
 
 </body>
