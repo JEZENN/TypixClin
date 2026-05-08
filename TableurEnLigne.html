@@ -13957,8 +13957,106 @@ let cachedStats = null;
 let cachedStatsTime = null;
 const STATS_CACHE_DURATION = 30000;
 let unsubscribe = null;
+let unsubscribeUserSettings = null; // 🎨 Listener temps réel pour les préférences utilisateur
 let saveTimeout = null;
 let cloudSaveTimeout = null; // ⏱️ Timeout pour la sauvegarde cloud automatique
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 SYNCHRONISATION DES PRÉFÉRENCES UTILISATEUR (users/{uid})
+// Thème dark/light, NbrItemsPage, NbrEntrainementsPage
+// ═══════════════════════════════════════════════════════════
+
+// Sauvegarde les préférences dans users/{uid} (debounced)
+let _userSettingsSaveTimeout = null;
+async function saveUserSettings(settings) {
+    if (!currentUser) return;
+    try {
+        await updateDoc(doc(db, 'users', currentUser.uid), settings);
+    } catch (e) {
+        // Si le doc n'existe pas encore, on le crée
+        try {
+            await setDoc(doc(db, 'users', currentUser.uid), settings, { merge: true });
+        } catch (e2) {
+            console.warn('[UserSettings] Erreur sauvegarde préférences :', e2);
+        }
+    }
+}
+// Exposer sur window : trainChangePageSize est dans un <script> classique (pas module)
+// et ne peut pas accéder directement aux fonctions du module → on passe par window
+window._saveUserSettings = saveUserSettings;
+
+// Applique les préférences reçues depuis Firestore sans écraser les données locales
+function applyUserSettings(data) {
+    if (!data) return;
+
+    // 🌙 Thème
+    // Bug fix : themeIcon est la variable const déclarée plus haut (themeToggle.querySelector('i'))
+    // Il n'existe pas d'élément avec id="theme-icon", on utilise directement la variable.
+    if (data.theme && ['dark', 'light'].includes(data.theme)) {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme !== data.theme) {
+            document.documentElement.setAttribute('data-theme', data.theme);
+            localStorage.setItem('theme', data.theme);
+            // themeIcon = variable const déclarée ligne ~13892 : themeToggle.querySelector('i')
+            if (themeIcon) {
+                themeIcon.classList.remove('fa-sun', 'fa-moon');
+                themeIcon.classList.add(data.theme === 'dark' ? 'fa-moon' : 'fa-sun');
+            }
+        }
+    }
+
+    // 📄 NbrItemsPage
+    // On appelle window._changePageSize (exposé après la déclaration de changePageSize plus bas).
+    // Le flag _noFirebase=true évite de re-sauvegarder ce qu'on vient de lire depuis Firebase.
+    if (data.NbrItemsPage !== undefined) {
+        const val = data.NbrItemsPage;
+        const newSize = val === 'all' ? 'all' : parseInt(val);
+        if (newSize !== itemsPerPage) {
+            if (typeof window._changePageSize === 'function') {
+                window._changePageSize(val, true);
+            } else {
+                // Fallback si pas encore disponible (ne devrait pas arriver)
+                setTimeout(function() {
+                    if (typeof window._changePageSize === 'function') window._changePageSize(val, true);
+                }, 500);
+            }
+        }
+    }
+
+    // 🏋️ NbrEntrainementsPage
+    // On appelle window._trainChangePageSize (exposé après la déclaration plus bas dans le script).
+    // Le flag _noFirebase=true évite la boucle lecture → écriture → lecture.
+    if (data.NbrEntrainementsPage !== undefined) {
+        const val = parseInt(data.NbrEntrainementsPage);
+        if (!isNaN(val)) {
+            if (typeof window._trainChangePageSize === 'function') {
+                window._trainChangePageSize(val, true);
+            } else {
+                // Différer si le script train n'est pas encore chargé
+                setTimeout(function() {
+                    if (typeof window._trainChangePageSize === 'function') window._trainChangePageSize(val, true);
+                }, 500);
+            }
+        }
+    }
+}
+
+// Active le listener temps réel sur users/{uid}
+function startUserSettingsListener(userId) {
+    if (unsubscribeUserSettings) { unsubscribeUserSettings(); unsubscribeUserSettings = null; }
+    unsubscribeUserSettings = onSnapshot(doc(db, 'users', userId), (snap) => {
+        if (snap.exists()) {
+            applyUserSettings(snap.data());
+        }
+    }, (err) => {
+        console.warn('[UserSettings] Erreur listener :', err);
+    });
+}
+
+// Stoppe le listener
+function stopUserSettingsListener() {
+    if (unsubscribeUserSettings) { unsubscribeUserSettings(); unsubscribeUserSettings = null; }
+}
 let currentSort = { field: 'num', direction: 'asc' };
 let pendingTour = null;
 
@@ -13984,14 +14082,19 @@ mobileMenuBtn?.addEventListener('click', () => {
     mobileMenuBtn.innerHTML = mobileMenu.classList.contains('active') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
 });
 
-function setTheme(theme) {
+function setTheme(theme, saveToFirebase = false) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
     themeIcon.classList.remove('fa-sun', 'fa-moon');
     themeIcon.classList.add(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+    // Sauvegarder dans Firebase si demandé (action utilisateur) et si connecté
+    if (saveToFirebase && currentUser) {
+        saveUserSettings({ theme });
+    }
 }
 setTheme(localStorage.getItem('theme') || 'light');
-themeToggle?.addEventListener('click', () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+// Quand l'utilisateur clique : basculer le thème ET sauvegarder dans Firebase
+themeToggle?.addEventListener('click', () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true));
 
 window.addEventListener('scroll', () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -14114,6 +14217,8 @@ async function updateUserUI(user) {
         // ⚠️ CRITIQUE : Ceci DOIT être fait AVANT toute vérification premium
         // Sinon, si erreur réseau → redirection → données jamais chargées
         loadUserData(user.uid);
+        // 🎨 Démarrer le listener de préférences utilisateur (thème, pagination)
+        startUserSettingsListener(user.uid);
         
         // ═══════════════════════════════════════════════════════════
         // ÉTAPE 2 : Mise à jour UI
@@ -14202,6 +14307,7 @@ async function updateUserUI(user) {
         if (presentationSection) presentationSection.style.display = 'block';
         mainContent.classList.remove('active');
         if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        stopUserSettingsListener(); // 🎨 Arrêter le listener de préférences
 		// 🚫 Cacher le bouton de sauvegarde
 			const backupBtn = document.getElementById('backup-settings-btn');
 			if (backupBtn) backupBtn.style.display = 'none';
@@ -17256,7 +17362,7 @@ function goToPage(page) {
     }
 }
 
-function changePageSize(size) {
+function changePageSize(size, _noFirebase) {
     if (size === 'all') {
         itemsPerPage = 'all';
     } else {
@@ -17268,6 +17374,11 @@ function changePageSize(size) {
     updatePaginationDropdown(size);
     
     renderItemsTable();
+    
+    // 🔥 Sauvegarder dans Firebase (sauf si appelé depuis applyUserSettings pour éviter la boucle)
+    if (!_noFirebase && currentUser) {
+        saveUserSettings({ NbrItemsPage: size === 'all' ? 'all' : parseInt(size) });
+    }
     
     // Remonter en haut
     const filterBar = document.querySelector('#page-items .filter-bar');
@@ -17282,6 +17393,8 @@ function changePageSize(size) {
         });
     }
 }
+// Exposer sur window pour applyUserSettings (déclaré plus haut dans le module)
+window._changePageSize = changePageSize;
 
 // Initialiser les événements de pagination
 function initPagination() {
@@ -26417,7 +26530,7 @@ function trainGoToPage(page) {
     window.scrollTo({ top: navPosition, behavior: 'smooth' });
   }
 }
-function trainChangePageSize(size) {
+function trainChangePageSize(size, _noFirebase) {
   trainItemsPerPage = parseInt(size);
   trainCurrentPage = 1;
   var textEl = document.getElementById('train-pagination-dropdown-text');
@@ -26425,7 +26538,13 @@ function trainChangePageSize(size) {
   var menu = document.getElementById('train-pagination-dropdown-menu');
   if (menu) menu.querySelectorAll('.custom-dropdown-option').forEach(function(o){ o.classList.toggle('selected', o.dataset.value === String(size)); });
   renderTrainTable();
+  // 🔥 Sauvegarder dans Firebase (sauf si appelé depuis applyUserSettings pour éviter la boucle)
+  if (!_noFirebase && window._saveUserSettings) {
+    window._saveUserSettings({ NbrEntrainementsPage: parseInt(size) });
+  }
 }
+// Exposer sur window pour applyUserSettings (déclaré plus haut dans le module)
+window._trainChangePageSize = trainChangePageSize;
 function trainInitPagination() {
   document.getElementById('train-pagination-first')?.addEventListener('click', function(){ trainGoToPage(1); });
   document.getElementById('train-pagination-prev')?.addEventListener('click', function(){ trainGoToPage(trainCurrentPage-1); });
