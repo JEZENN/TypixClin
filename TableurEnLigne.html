@@ -12556,7 +12556,7 @@ color: #7c3aed;
       <button class="btn-validate" onclick="saveTrainModal()">
         <i class="fas fa-check"></i>
       </button>
-      <button class="btn-reset" onclick="closeTrainModal()" title="Annuler">
+      <button class="btn-reset" onclick="resetTrainModal()" title="Réinitialiser">
         <i class="fas fa-trash"></i>
       </button>
     </div>
@@ -18200,39 +18200,53 @@ setTimeout(() => {
 document.getElementById('btn-reset-tour')?.addEventListener('click', function() {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('tour')) return;
-    
+
     if (!pendingTour) return;
-    
+
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
     const tourIndex = pendingTour.tour;
-    
+    const isEdit = !!d.tours[tourIndex]; // tour déjà enregistré = mode modification
+
     d.tours[tourIndex] = null;
     d.tourDates[tourIndex] = null;
     if (d.tourDurations) d.tourDurations[tourIndex] = null;
     if (d.tourSupports) d.tourSupports[tourIndex] = null;
-    
+
     const remainingDates = d.tourDates.filter(x => x);
     d.lastRevision = remainingDates.length > 0 ? remainingDates[remainingDates.length - 1] : null;
-    
-confidenceModal.classList.add('closing');
-setTimeout(() => {
-    confidenceModal.classList.remove('active', 'closing');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.querySelector('.header').style.paddingRight = '';
-}, 180);
-    pendingTour = null;
+
     selectedConfidence = null;
     selectedSupport = null;
     debouncedSave();
     renderAll();
-	
-	    // Vérifier les trophées après validation
+
     if (typeof TrophiesSystem !== 'undefined') {
         setTimeout(() => TrophiesSystem.checkTrophies(), 500);
     }
-	
-	
+
+    if (isEdit) {
+        // Mode modification → fermer le modal
+        confidenceModal.classList.add('closing');
+        setTimeout(() => {
+            confidenceModal.classList.remove('active', 'closing');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            document.querySelector('.header').style.paddingRight = '';
+        }, 180);
+        pendingTour = null;
+    } else {
+        // Mode ajout → réinitialiser les champs sans fermer
+        document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('confidence-error')?.classList.remove('visible');
+        document.getElementById('duration-error')?.classList.remove('visible');
+        document.getElementById('date-error')?.classList.remove('visible');
+        document.getElementById('tour-duration-hours').value = '';
+        document.getElementById('tour-duration-minutes').value = '';
+        document.getElementById('tour-date').value = new Date().toISOString().split('T')[0];
+        this.classList.remove('has-data');
+        document.getElementById('confidence-modal-title').textContent = 'Enregistrer un tour';
+    }
 });
 
 document.getElementById('confidence-close')?.addEventListener('click', () => { 
@@ -27197,6 +27211,39 @@ window.closeTrainModal = function() {
     _trainScrollUnlock();
   }, 180);
   trainEditId = null;
+};
+
+window.resetTrainModal = function() {
+  if (trainEditId !== null) {
+    // Mode modification → fermer directement
+    window.closeTrainModal();
+    return;
+  }
+  // Mode ajout → réinitialiser les champs sans fermer
+  _trainModalMatieres = [];
+  var TYPE_BG  = { masterclass:'rgba(139,92,246,0.10)', spe360:'rgba(59,130,246,0.10)', annale:'rgba(245,158,11,0.10)', ccb:'rgba(16,185,129,0.10)', r2c:'rgba(239,68,68,0.10)' };
+  var TYPE_CLR = { masterclass:'#7c3aed', spe360:'#2563eb', annale:'#b45309', ccb:'#059669', r2c:'#dc2626' };
+  var TYPE_BDR = { masterclass:'rgba(139,92,246,0.3)', spe360:'rgba(59,130,246,0.3)', annale:'rgba(245,158,11,0.3)', ccb:'rgba(16,185,129,0.3)', r2c:'rgba(239,68,68,0.3)' };
+  var PLAT_BG  = { edni:'rgba(6,182,212,0.10)', asclepia:'rgba(236,72,153,0.10)', hypocampus:'rgba(99,102,241,0.10)', uness:'rgba(249,115,22,0.10)' };
+  var PLAT_CLR = { edni:'#0e7490', asclepia:'#be185d', hypocampus:'#4338ca', uness:'#c2410c' };
+  var PLAT_BDR = { edni:'rgba(6,182,212,0.3)', asclepia:'rgba(236,72,153,0.3)', hypocampus:'rgba(99,102,241,0.3)', uness:'rgba(249,115,22,0.3)' };
+  document.querySelectorAll('#train-type-btns .train-modal-type-btn').forEach(function(b){
+    var v = b.dataset.value; b.classList.remove('selected');
+    b.style.background = TYPE_BG[v]||''; b.style.color = TYPE_CLR[v]||''; b.style.borderColor = TYPE_BDR[v]||''; b.style.removeProperty('--_btn-color'); b.style.boxShadow='';
+  });
+  document.querySelectorAll('#train-plateforme-btns .train-modal-type-btn').forEach(function(b){
+    var v = b.dataset.value; b.classList.remove('selected');
+    b.style.background = PLAT_BG[v]||''; b.style.color = PLAT_CLR[v]||''; b.style.borderColor = PLAT_BDR[v]||''; b.style.removeProperty('--_btn-color'); b.style.boxShadow='';
+  });
+  document.getElementById('train-title-input').value = '';
+  var search = document.getElementById('train-modal-matiere-search');
+  if (search) search.value = '';
+  document.getElementById('train-type-error').classList.remove('error-visible');
+  document.getElementById('train-title-error').classList.remove('error-visible');
+  document.getElementById('train-modal-title').textContent = 'Ajouter un entrainement';
+  _trainModalUpdateCtx();
+  _trainModalUpdateMatiereCounter();
+  _trainModalBuildMatiereList('');
 };
 
 window.trainSelectType = function(btn) {
