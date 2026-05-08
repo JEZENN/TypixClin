@@ -9628,7 +9628,7 @@ color: #7c3aed;
 }
 @media (max-width: 480px) {
     .toast-logout {
-        top: auto;
+
         bottom: 20px;
         right: 15px;
         left: 15px;
@@ -13050,7 +13050,7 @@ color: #7c3aed;
                 <button class="btn-validate" id="feedback-submit-btn">
                     <i class="fas fa-paper-plane"></i>
                 </button>
-                <button class="btn-reset" title="Réinitialiser">
+                <button class="btn-reset" id="feedback-reset-btn" title="Réinitialiser">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -13153,6 +13153,10 @@ const functions = getFunctions(app, 'europe-west1');
 const auth = getAuth(app);
 const db = getFirestore(app);
 window._db = db;
+// Exposer les fonctions Firestore nécessaires au script nudge (non-module)
+window._fsDoc = doc;
+window._fsGetDoc = getDoc;
+window._fsUpdateDoc = updateDoc;
 
 
 // ===== CONFIGURATION DES RESSOURCES PERSONNALISÉES =====
@@ -28137,7 +28141,7 @@ window.feedbackTogglePage = function(btn) {
 document.getElementById('feedback-submit-btn').addEventListener('click', function() {
     window.submitFeedback();
 });
-const _resetBtn = document.querySelector('.btn-reset[title="Réinitialiser"]');
+const _resetBtn = document.getElementById('feedback-reset-btn');
 if (_resetBtn) _resetBtn.addEventListener('click', function() { window.feedbackResetAll(); });
 document.querySelectorAll('.feedback-type-btn').forEach(btn => {
     btn.addEventListener('click', function() { window.feedbackSelectType(this); });
@@ -28237,6 +28241,372 @@ window.submitFeedback = async function() {
         }
     }
 };
+</script>
+
+<!-- ===== FEEDBACK NUDGE TOAST ===== -->
+<style>
+#feedback-nudge {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: calc(var(--z-toast) + 50);
+    width: 320px;
+    background: var(--white);
+    border-radius: 1.125rem;
+    box-shadow: 0 8px 32px -4px rgba(59,130,246,0.18), 0 2px 12px -2px rgba(0,0,0,0.10);
+    border: 1.5px solid rgba(59,130,246,0.13);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(calc(100% + 2rem));
+    transition: opacity 0.42s cubic-bezier(0.34,1.56,0.64,1), transform 0.42s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+}
+#feedback-nudge.show {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+#feedback-nudge.hide {
+    opacity: 0;
+    transform: translateX(calc(100% + 2rem));
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    pointer-events: none;
+}
+
+/* Barre colorée en haut */
+.fn-topbar {
+    height: 4px;
+    background: var(--primary);
+    border-radius: 1.125rem 1.125rem 0 0;
+}
+
+.fn-body {
+    padding: 1.1rem 1.15rem 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.fn-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.fn-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #dbeafe, #ede9fe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #3b82f6;
+}
+[data-theme="dark"] .fn-icon {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+}
+
+.fn-texts {
+    flex: 1;
+    min-width: 0;
+}
+
+.fn-title {
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+.fn-desc {
+    font-size: 0.775rem;
+    color: var(--gray-500);
+    line-height: 1.45;
+}
+
+#feedback-nudge .fn-close {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--danger-light) !important;
+    color: var(--danger) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+}
+#feedback-nudge .fn-close:hover {
+    background: var(--danger) !important;
+    color: #fff !important;
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.45);
+}
+#feedback-nudge .fn-close:active {
+    transform: scale(0.92) !important;
+    box-shadow: none !important;
+}
+
+.fn-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+}
+
+.fn-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.22rem 0.4rem;
+    border-radius: 999px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+    white-space: nowrap;
+}
+.fn-tag i { font-size: 0.62rem; }
+.fn-tag.blue  { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.fn-tag.purple{ background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+.fn-tag.pink  { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+[data-theme="dark"] .fn-tag { background: var(--gray-100); border-color: var(--gray-200); }
+[data-theme="dark"] .fn-tag.blue   { background: rgba(37,99,235,0.15);  border-color: rgba(37,99,235,0.3); }
+[data-theme="dark"] .fn-tag.purple { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); }
+[data-theme="dark"] .fn-tag.pink   { background: rgba(190,24,93,0.15);  border-color: rgba(190,24,93,0.3); }
+
+.fn-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.fn-btn-primary {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1rem;
+    border-radius: 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font-display);
+    background: var(--primary-gradient);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+.fn-btn-primary:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(59,130,246,0.4);
+}
+.fn-btn-primary:active { transform: translateY(0); }
+
+#feedback-nudge .fn-btn-later {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: var(--font-body);
+    color: var(--danger) !important;
+    background: var(--danger-light) !important;
+    border: none;
+    cursor: pointer;
+    padding: 0.55rem 0.9rem;
+    border-radius: var(--border-radius-md);
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
+    white-space: nowrap;
+}
+#feedback-nudge .fn-btn-later:hover {
+    background: var(--danger) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(239,68,68,0.35);
+}
+#feedback-nudge .fn-btn-later:active {
+    transform: scale(0.95) !important;
+    box-shadow: none !important;
+}
+
+/* Progress bar auto-dismiss */
+.fn-progress {
+    height: 3px;
+    background: var(--gray-200);
+    overflow: hidden;
+}
+.fn-progress-inner {
+    height: 100%;
+    width: 100%;
+    background: var(--primary);
+    transform-origin: left;
+    transform: scaleX(1);
+    animation: fn-progress-shrink 10s linear forwards;
+    animation-play-state: paused;
+}
+@keyframes fn-progress-shrink {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+@media (max-width: 480px) {
+    #feedback-nudge {
+        width: calc(100vw - 2rem);
+        top: auto;
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+}
+</style>
+
+<div id="feedback-nudge" role="alert" aria-live="polite">
+    <div class="fn-topbar"></div>
+    <div class="fn-body">
+        <div class="fn-header">
+            <div class="fn-icon"><i class="fas fa-comment-dots"></i></div>
+            <div class="fn-texts">
+                <div class="fn-title">Votre avis compte ✨</div>
+                <div class="fn-desc">Partagez vos idées, signalez un bug ou donnez votre avis depuis votre <strong>pastille de profil</strong> <i class="fas fa-circle-user" style="color:var(--primary);font-size:0.8em;"></i> en <strong>haut à droite</strong> — c'est rapide !</div>
+            </div>
+            <button class="fn-close" onclick="feedbackNudgeDismiss()" title="Fermer" aria-label="Fermer">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div class="fn-tags">
+            <span class="fn-tag blue"><i class="fas fa-star"></i> Avis général</span>
+            <span class="fn-tag purple"><i class="fas fa-lightbulb"></i> Idées</span>
+            <span class="fn-tag pink"><i class="fas fa-bug"></i> Bug</span>
+        </div>
+        <div class="fn-cta">
+            <button class="fn-btn-primary" onclick="feedbackNudgeOpen()">
+                <i class="fas fa-pen-to-square"></i> Donner mon avis
+            </button>
+            <button class="fn-btn-later" onclick="feedbackNudgeDismiss()">Plus tard</button>
+        </div>
+    </div>
+    <div class="fn-progress"><div class="fn-progress-inner" id="fn-progress-bar"></div></div>
+</div>
+
+<script>
+(function() {
+
+    var nudge = document.getElementById('feedback-nudge');
+    var autoDismissTimer = null;
+    var _nudgeShown = false; // garde-fou anti-double affichage
+
+    function showNudge() {
+        if (_nudgeShown) return;
+        _nudgeShown = true;
+        nudge.classList.add('show');
+        var bar = document.getElementById('fn-progress-bar');
+        if (bar) bar.style.animationPlayState = 'running';
+        // Auto-dismiss après 10s (durée de la progress bar)
+        autoDismissTimer = setTimeout(function() {
+            feedbackNudgeDismiss();
+        }, 10000);
+    }
+
+    // Marque le champ feedbackNudgeSeen:true sur le doc utilisateur Firestore
+    function markSeenInFirestore() {
+        var user = window.currentUser || window._currentUser;
+        if (!user) return;
+        var db = window._db;
+        var fsDoc = window._fsDoc;
+        var fsUpdateDoc = window._fsUpdateDoc;
+        if (!db || !fsDoc || !fsUpdateDoc) {
+            console.warn('[Nudge] Firestore non disponible pour écriture');
+            return;
+        }
+        fsUpdateDoc(fsDoc(db, 'users', user.uid), { feedbackNudgeSeen: true })
+            .catch(function(e) { console.warn('[Nudge] Firestore write error:', e); });
+    }
+
+    window.feedbackNudgeDismiss = function() {
+        if (autoDismissTimer) clearTimeout(autoDismissTimer);
+        nudge.classList.remove('show');
+        nudge.classList.add('hide');
+        markSeenInFirestore();
+    };
+
+    window.feedbackNudgeOpen = function() {
+        feedbackNudgeDismiss();
+        setTimeout(function() {
+            if (typeof openFeedbackModal === 'function') openFeedbackModal();
+        }, 180);
+    };
+
+    // Vérifie Firestore puis affiche si pas encore vu
+    function checkAndShow(uid) {
+        var db = window._db;
+        var fsDoc = window._fsDoc;
+        var fsGetDoc = window._fsGetDoc;
+        if (!db || !fsDoc || !fsGetDoc) {
+            // Firestore pas encore prêt, on affiche directement
+            showNudge();
+            return;
+        }
+        fsGetDoc(fsDoc(db, 'users', uid))
+            .then(function(snap) {
+                var data = snap.exists() ? snap.data() : {};
+                if (!data.feedbackNudgeSeen) {
+                    showNudge();
+                }
+            })
+            .catch(function() {
+                // En cas d'erreur réseau, on affiche quand même
+                showNudge();
+            });
+    }
+
+    // Écoute la connexion de l'utilisateur
+    var userAuth = document.querySelector('.user-auth');
+    if (!userAuth) return;
+
+    function onLoggedIn() {
+        // Attendre que window.currentUser soit défini (il est assigné juste avant logged-in)
+        var tries = 0;
+        var interval = setInterval(function() {
+            var user = window.currentUser || window._currentUser;
+            if (user && user.uid) {
+                clearInterval(interval);
+                setTimeout(function() { checkAndShow(user.uid); }, 2500);
+            }
+            if (++tries > 20) clearInterval(interval); // max 2s d'attente
+        }, 100);
+    }
+
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.type === 'attributes' && m.attributeName === 'class') {
+                if (userAuth.classList.contains('logged-in')) {
+                    observer.disconnect();
+                    onLoggedIn();
+                }
+            }
+        });
+    });
+    observer.observe(userAuth, { attributes: true });
+
+    if (userAuth.classList.contains('logged-in')) {
+        onLoggedIn();
+    }
+})();
 </script>
 
 </body>
