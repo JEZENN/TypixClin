@@ -1350,7 +1350,7 @@ button {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
@@ -1365,6 +1365,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Exposer pour le script classique (setTheme)
+window._firebaseAuth = auth;
+window._firebaseDb = db;
+window._firebaseUpdateDoc = updateDoc;
+window._firebaseSetDoc = setDoc;
+window._firebaseDoc = doc;
 
 const userAuth = document.getElementById('user-auth');
 const userAvatar = document.getElementById('user-avatar');
@@ -1392,6 +1399,13 @@ async function updateUserUI(user) {
             const displayName = userData.displayName || user.displayName || 'Utilisateur';
             const email = user.email || '';
             const photoURL = userData.photoURL || user.photoURL || '';
+
+            // Appliquer le thème depuis Firestore
+            if (userData.theme && ['dark', 'light'].includes(userData.theme)) {
+                if (typeof window._setTheme === 'function') {
+                    window._setTheme(userData.theme);
+                }
+            }
             
             if (photoURL) {
                 avatarInitials.innerHTML = `<img src="${photoURL}" alt="Photo de profil">`;
@@ -1757,18 +1771,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Theme toggle
-    function setTheme(theme) {
+    function setTheme(theme, saveToFirebase = false) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         themeIcon.classList.remove('fa-sun', 'fa-moon');
         themeIcon.classList.add(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+
+        if (saveToFirebase) {
+            const user = window._firebaseAuth && window._firebaseAuth.currentUser;
+            if (user && window._firebaseDb && window._firebaseUpdateDoc && window._firebaseDoc) {
+                window._firebaseUpdateDoc(window._firebaseDoc(window._firebaseDb, 'users', user.uid), { theme })
+                    .catch(() => window._firebaseSetDoc(window._firebaseDoc(window._firebaseDb, 'users', user.uid), { theme }, { merge: true }));
+            }
+        }
     }
+
+    // Exposer pour updateUserUI (module séparé)
+    window._setTheme = setTheme;
     
     setTheme(localStorage.getItem('theme') || 'light');
     
     themeToggle.addEventListener('click', function() {
         const current = document.documentElement.getAttribute('data-theme');
-        setTheme(current === 'dark' ? 'light' : 'dark');
+        setTheme(current === 'dark' ? 'light' : 'dark', true);
     });
     
     // Header scroll behavior

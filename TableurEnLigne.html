@@ -669,8 +669,12 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .feedback-success {
     display: none; flex-direction: column; align-items: center;
     gap: 1rem; padding: 2rem 1.75rem; text-align: center;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.4s cubic-bezier(0.4,0,0.2,1);
 }
 .feedback-success.show { display: flex; }
+.feedback-success.show-animate { opacity: 1; transform: translateY(0); }
 .feedback-success-icon {
     width: 72px; height: 72px; border-radius: 50%;
     background: var(--success-light); color: var(--success);
@@ -13001,7 +13005,7 @@ color: #7c3aed;
 
             <!-- Page concernée (optionnel, toggle) -->
             <div class="modal-section" style="margin-bottom:0;">
-                <label class="modal-label">Page concernée <span style="color:var(--gray-400);font-weight:400;font-size:0.8rem;">(optionnel)</span></label>
+                <label class="modal-label">Page(s) concernée(s) <span style="color:var(--gray-400);font-weight:400;font-size:0.8rem;">(optionnel)</span></label>
                 <div class="feedback-page-grid">
                     <button class="feedback-page-btn" data-page="Statistiques">
                         <i class="fas fa-chart-pie"></i> Stats
@@ -28184,6 +28188,7 @@ window.feedbackResetAll = function() {
     window._feedbackType  = null;
     window._feedbackStars = 0;
     window._feedbackPage  = null;
+    window._feedbackPages = [];
     document.querySelectorAll('.feedback-type-btn').forEach(b => b.classList.remove('selected'));
     document.querySelectorAll('.feedback-page-btn').forEach(b => b.classList.remove('selected'));
     document.querySelectorAll('.feedback-mood-btn').forEach(s => s.classList.remove('fill','hover-fill','active'));
@@ -28194,11 +28199,11 @@ window.feedbackResetAll = function() {
     const btn = document.getElementById('feedback-submit-btn');
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
     const formBody = document.getElementById('feedback-form-body');
-    if (formBody) formBody.style.display = '';
+    if (formBody) { formBody.style.display = ''; formBody.style.opacity = ''; formBody.style.transition = ''; }
     const footer = document.getElementById('feedback-modal-footer');
-    if (footer) footer.style.display = '';
+    if (footer) { footer.style.display = ''; footer.style.opacity = ''; footer.style.transition = ''; }
     const success = document.getElementById('feedback-success-screen');
-    if (success) success.classList.remove('show');
+    if (success) success.classList.remove('show', 'show-animate');
     const starsErr = document.getElementById('feedback-stars-error');
     if (starsErr) starsErr.classList.remove('show');
 };
@@ -28253,12 +28258,18 @@ window.feedbackSelectType = function(btn) {
     else { window._feedbackType = null; }
 };
 
-// ---- Page ----
+// ---- Page (multi-sélection) ----
+window._feedbackPages = [];
 window.feedbackTogglePage = function(btn) {
-    const already = btn.classList.contains('selected');
-    document.querySelectorAll('.feedback-page-btn').forEach(b => b.classList.remove('selected'));
-    if (!already) { btn.classList.add('selected'); window._feedbackPage = btn.dataset.page; }
-    else { window._feedbackPage = null; }
+    btn.classList.toggle('selected');
+    const page = btn.dataset.page;
+    const idx = window._feedbackPages.indexOf(page);
+    if (btn.classList.contains('selected')) {
+        if (idx === -1) window._feedbackPages.push(page);
+    } else {
+        if (idx !== -1) window._feedbackPages.splice(idx, 1);
+    }
+    window._feedbackPage = window._feedbackPages.join(', ') || null;
 };
 
 // ---- Attacher tous les boutons dans le module ----
@@ -28350,10 +28361,18 @@ window.submitFeedback = async function() {
             createdAt: new Date().toISOString(),
             appVersion: 'TableurEnLigne'
         });
-        document.getElementById('feedback-form-body').style.display = 'none';
+        const formBody = document.getElementById('feedback-form-body');
         const fbFooter = document.getElementById('feedback-modal-footer');
-        if (fbFooter) fbFooter.style.display = 'none';
-        document.getElementById('feedback-success-screen').classList.add('show');
+        const successScreen = document.getElementById('feedback-success-screen');
+        formBody.style.transition = 'opacity 0.25s ease';
+        formBody.style.opacity = '0';
+        if (fbFooter) { fbFooter.style.transition = 'opacity 0.25s ease'; fbFooter.style.opacity = '0'; }
+        setTimeout(() => {
+            formBody.style.display = 'none';
+            if (fbFooter) fbFooter.style.display = 'none';
+            successScreen.classList.add('show');
+            requestAnimationFrame(() => requestAnimationFrame(() => successScreen.classList.add('show-animate')));
+        }, 250);
     } catch (err) {
         console.error('Erreur envoi feedback :', err);
         btn.disabled = false;
