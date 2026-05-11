@@ -4036,9 +4036,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (tableurWrapper) {
-        tableurWrapper.addEventListener('mouseenter', openTableurDropdown);
-        tableurWrapper.addEventListener('mouseleave', closeTableurDropdown);
+        // Sur écran tactile, mouseenter/mouseleave provoquent un double-tap car le 1er touch
+        // déclenche mouseenter (ouverture) puis click (fermeture) simultanément.
+        // On désactive hover sur touch et on gère uniquement le tap.
+        let isTouch = false;
+        document.addEventListener('touchstart', () => { isTouch = true; }, { once: true, passive: true });
+
+        tableurWrapper.addEventListener('mouseenter', () => { if (!isTouch) openTableurDropdown(); });
+        tableurWrapper.addEventListener('mouseleave', () => { if (!isTouch) closeTableurDropdown(); });
+
+        tableurBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // empêche la synthèse du click fantôme
+            e.stopPropagation();
+            if (tableurDropdown.classList.contains('open')) {
+                closeTableurDropdown();
+            } else {
+                openTableurDropdown();
+            }
+        }, { passive: false });
+
         tableurBtn.addEventListener('click', (e) => {
+            if (isTouch) return; // déjà géré par touchstart
             e.stopPropagation();
             if (tableurDropdown.classList.contains('open')) {
                 closeTableurDropdown();
@@ -4046,6 +4064,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 openTableurDropdown();
             }
         });
+
         document.addEventListener('click', (e) => {
             if (!tableurWrapper.contains(e.target)) {
                 tableurDropdown.classList.remove('open');
@@ -4053,6 +4072,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 tableurBtn.setAttribute('aria-expanded', 'false');
             }
         });
+        document.addEventListener('touchstart', (e) => {
+            if (!tableurWrapper.contains(e.target)) {
+                tableurDropdown.classList.remove('open');
+                tableurBtn.classList.remove('active');
+                tableurBtn.setAttribute('aria-expanded', 'false');
+            }
+        }, { passive: true });
     }
 
 	    // ===== SCROLL SPY - Activer les liens du header au scroll =====
