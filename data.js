@@ -1282,7 +1282,7 @@ var SPECIALTIES_DATA=[
 {"fc":"FC06","num":"318","name":"Leucémie lymphoïde chronique"},
 {"fc":"FC07","num":"320","name":"Myélome multiple"},
 {"fc":"FC08","num":"220","name":"Adénopathie superficielle de l’adulte et de l’enfant"},
-{"fc":"FC09","num":"318","name":"Lymphomes malins"},
+{"fc":"FC09","num":"319","name":"Lymphomes malins"},
 {"fc":"FC10","num":"217","name":"Syndrome mononucléosique"},
 {"fc":"FC11","num":"275","name":"Splénomégalie"},
 {"fc":"FC12","num":"218","name":"Éosinophilie"},
