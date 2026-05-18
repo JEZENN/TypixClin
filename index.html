@@ -545,6 +545,17 @@ button {
     flex-shrink: 0;
 }
 
+/* Pont invisible entre le bouton et le dropdown pour éviter le mouseleave intempestif */
+.tableur-pill-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 310px;
+    height: 18px; /* couvre le gap entre bouton et dropdown (top: calc(100% + 14px)) */
+    pointer-events: auto;
+}
+
 .tableur-pill {
     display: flex;
     align-items: center;
@@ -572,9 +583,10 @@ button {
 .tableur-dropdown {
     position: absolute;
     top: calc(100% + 14px);
-    right: 50%;
-    transform: translateX(50%) translateY(-8px);
+    right: 0;
+    transform: translateX(0) translateY(-8px);
     width: 310px;
+    max-width: calc(100vw - 1rem);
     background: var(--white);
     border-radius: 1.25rem;
     box-shadow: 0 20px 60px rgba(0,0,0,0.13), 0 4px 16px rgba(16,185,129,0.10);
@@ -593,14 +605,15 @@ button {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateX(50%) translateY(0);
+    transform: translateX(0) translateY(0);
 }
 
 .tableur-dropdown-arrow {
     position: absolute;
     top: -7px;
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
+    right: 13px;
+    left: auto;
+    transform: rotate(45deg);
     width: 14px;
     height: 14px;
     background: var(--white);
@@ -4025,6 +4038,9 @@ document.addEventListener('DOMContentLoaded', function() {
         tableurDropdown.classList.add('open');
         tableurBtn.classList.add('active');
         tableurBtn.setAttribute('aria-expanded', 'true');
+        // Fermer le dropdown profil s'il est ouvert
+        var pd = document.getElementById('profile-dropdown');
+        if (pd) pd.classList.remove('active');
     }
 
     function closeTableurDropdown() {
