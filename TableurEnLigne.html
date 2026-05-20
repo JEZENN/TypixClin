@@ -14142,7 +14142,7 @@ window._getScrollbarWidth = function() {
             <div class="friends-panel" id="fpanel-requests">
                 <div class="friends-compartment">
                     <div class="friends-compartment-header">
-                        <div class="friends-compartment-icon green"><i class="fas fa-inbox"></i></div>
+                        <div class="friends-compartment-icon blue"><i class="fas fa-inbox"></i></div>
                         <span class="friends-compartment-title">Demandes reçues</span>
                         <span class="friends-section-count" id="friends-received-count">0</span>
                     </div>
@@ -16897,7 +16897,40 @@ function loadUserData(userId) {
                     }
                     
                     renderAll();
-                    
+
+                    // 🔵 FIX CONTOUR BLEU : précharger l'index des notes depuis Firestore
+                    // Sans ça, _buildItemNotesExistSet() ne lit que le localStorage (vide au 1er chargement)
+                    // et les boutons n'ont pas la classe has-notes au démarrage.
+                    if (!window._notesIndexPreloaded) {
+                        window._notesIndexPreloaded = true;
+                        setTimeout(function() {
+                            try {
+                                var _uid = userId;
+                                var _lsUidPrefix = 'notes__' + _uid + '__';
+                                getDocs(collection(db, 'users', _uid, 'notes')).then(function(snap) {
+                                    if (snap.empty) return;
+                                    var _needsRerender = false;
+                                    if (!window._itemNotesExistSet) _buildItemNotesExistSet();
+                                    snap.forEach(function(noteDoc) {
+                                        var _html = (noteDoc.data() && noteDoc.data().html) ? noteDoc.data().html : '';
+                                        var _isEmpty = !_html || !_html.replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,'').replace(/<[^>]+>/g,'').trim();
+                                        var _lsKey = _lsUidPrefix + noteDoc.id.replace(/-/g, '__');
+                                        if (!_isEmpty) {
+                                            // Mettre en cache localStorage pour les prochains rechargements
+                                            try { if (!localStorage.getItem(_lsKey)) localStorage.setItem(_lsKey, _html); } catch(e) {}
+                                            if (!window._itemNotesExistSet.has(_lsKey)) {
+                                                window._itemNotesExistSet.add(_lsKey);
+                                                _needsRerender = true;
+                                            }
+                                        }
+                                    });
+                                    // Re-render le tableau uniquement si des nouveaux indicateurs ont été ajoutés
+                                    if (_needsRerender && typeof renderItemsTable === 'function') renderItemsTable();
+                                }).catch(function() {});
+                            } catch(e) {}
+                        }, 800); // Petit délai pour ne pas bloquer le rendu initial
+                    }
+
                     // 🔄 Merge des nouveaux entraînements par défaut (data.js mis à jour)
                     if (syncDefaultTrainings()) {
                         hasUnsavedChanges = true;
@@ -27590,6 +27623,29 @@ if (refBadge) {
         editor._notesLoadReady = true;
         notesUpdateCharCount();
         notesSetAutosaveState('idle');
+
+        // 🔵 FIX : mettre à jour l'indicateur "contour bleu" dès le chargement Firestore
+        // Sans ça, le contour n'apparaît qu'à la fermeture/sauvegarde du modal
+        (function() {
+            var _hasContent = !_editorIsReallyEmpty(_sanitized);
+            if (!window._itemNotesExistSet) _buildItemNotesExistSet();
+            var _lsUid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : '';
+            var _lsKey = 'notes__' + (_lsUid ? _lsUid + '__' : '') + savedKey.replace(/-/g, '__');
+            if (_hasContent) {
+                window._itemNotesExistSet.add(_lsKey);
+                try { localStorage.setItem(_lsKey, _sanitized); } catch(e) {}
+            } else {
+                window._itemNotesExistSet.delete(_lsKey);
+                try { localStorage.removeItem(_lsKey); } catch(e) {}
+            }
+            var _specId = window._notesCurrentSpecialtyId;
+            var _fcId   = window._notesCurrentFc;
+            if (_specId && _fcId) {
+                var _btn = document.querySelector('.open-notes-btn[data-specialty="'+_specId+'"][data-fc="'+_fcId+'"]');
+                if (_btn) _btn.classList.toggle('has-notes', _hasContent);
+            }
+        })();
+
         var padded = String(parseInt(savedNum, 10)).padStart(3, '0');
         notesBuildOic(padded);
 		var panel = document.getElementById('notesInfoPanel');
