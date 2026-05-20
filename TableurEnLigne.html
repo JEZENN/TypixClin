@@ -15818,16 +15818,20 @@ async function updateUserUI(user) {
                         .catch((e) => console.warn('⚠️ Impossible de créer users/', user.uid, e));
                 } else {
                     // ── CAS 2 : Doc existant → UPDATE (champs manquants seulement)
-                    // email est immutable dans les règles → ne jamais l'inclure ici
+                    // Les règles Firestore autorisent l'écriture si le champ n'existe pas encore
                     const _updatePatch = {};
                     if (user.displayName && !userInfo.displayName) _updatePatch.displayName = user.displayName;
+                    if (user.email       && !userInfo.email)       _updatePatch.email       = user.email;
                     if (user.displayName && !userInfo.firstName) {
                         const _p = user.displayName.trim().split(' ');
                         _updatePatch.firstName = _p[0] || '';
                         _updatePatch.lastName  = _p.slice(1).join(' ') || '';
                     }
-                    if (user.photoURL && !userInfo.photoURL) _updatePatch.photoURL = user.photoURL;
-                    if (!userInfo.shortId) _updatePatch.shortId = shortId;
+                    if (user.photoURL && !userInfo.photoURL)    _updatePatch.photoURL    = user.photoURL;
+                    if (!userInfo.shortId)                      _updatePatch.shortId     = shortId;
+                    if (!userInfo.isPremium)                    _updatePatch.isPremium   = true;
+                    if (!userInfo.premiumType)                  _updatePatch.premiumType = 'grace_period';
+                    if (!userInfo.gracePeriodEnd)               _updatePatch.gracePeriodEnd = new Date('2026-10-26T22:59:59.000Z');
                     if (Object.keys(_updatePatch).length > 0) {
                         setDoc(doc(db, 'users', user.uid), _updatePatch, { merge: true })
                             .catch((e) => console.warn('⚠️ Impossible de mettre à jour users/', user.uid, e));
@@ -15887,19 +15891,14 @@ async function updateUserUI(user) {
                         // ✅ NOUVEAU : Au lieu de rediriger, afficher un message
                         // mais PERMETTRE l'accès en lecture aux données déjà chargées
                         console.warn('⚠️ Impossible de vérifier le statut premium - Accès limité');
-                        showPremiumVerificationError();
+                        // showPremiumVerificationError(); // désactivé pendant la période de grâce
                         return; // Sortir sans rediriger
                     }
                 }
             }
             
-            // ✅ NOUVEAU : Vérification non bloquante
-            if (!isPremium) {
-                // Au lieu de rediriger immédiatement, proposer des options
-                showPremiumRequiredMessage();
-            } else {
-                
-            }
+            // ✅ Vérification premium désactivée pendant la période de grâce
+            // if (!isPremium) { showPremiumRequiredMessage(); }
         })();
         
         setTimeout(hideLoader, 500);
