@@ -15793,22 +15793,46 @@ async function updateUserUI(user) {
                     });
                 };
             }
-            // ── Créer le doc users/{uid} s'il n'existe pas encore ──────
-            // Couvre les users "minimalistes" qui n'ont jamais déclenché
-            // une écriture dans users/ (settings, amis, spécialités…)
-            if (!userDoc.exists()) {
-                setDoc(doc(db, 'users', user.uid), {
-                    displayName: user.displayName || '',
-                    email:       user.email       || '',
-                    shortId:     shortId,
-                    createdAt:   new Date()
-                }, { merge: true }).catch((e) => {
-                    console.warn('⚠️ Impossible de créer le doc users/', user.uid, e);
-                });
-            }
-            // Persister le shortId dans Firestore (couvre les anciens comptes sans shortId)
-            else if (!userInfo.shortId) {
-                updateDoc(doc(db, 'users', user.uid), { shortId }).catch(() => {});
+            // ── Synchroniser les infos de base depuis Firebase Auth ──────
+            // Crée le doc s'il n'existe pas, complète les champs manquants sinon.
+            // merge:true garantit qu'on n'écrase jamais isPremium, gracePeriodEnd, etc.
+            {
+                const _patch = {};
+                if (!userDoc.exists()) {
+                    // ── CAS 1 : Doc inexistant → CRÉATION ──────────────────────
+                    // Règle Firestore exige : email, displayName, createdAt, isPremium
+                    const _parts = (user.displayName || '').trim().split(' ');
+                    const _createPatch = {
+                        displayName: user.displayName || '',
+                        email:       user.email       || '',
+                        firstName:   _parts[0] || '',
+                        lastName:    _parts.slice(1).join(' ') || '',
+                        photoURL:    user.photoURL || '',
+                        shortId:     shortId,
+                        createdAt:   new Date(),
+                        isPremium:   true,
+                        premiumType: 'grace_period',
+                        gracePeriodEnd: new Date('2026-10-26T22:59:59.000Z') // 26 oct 2026 23:59:59 UTC+1
+                    };
+                    setDoc(doc(db, 'users', user.uid), _createPatch, { merge: true })
+                        .catch((e) => console.warn('⚠️ Impossible de créer users/', user.uid, e));
+                } else {
+                    // ── CAS 2 : Doc existant → UPDATE (champs manquants seulement)
+                    // email est immutable dans les règles → ne jamais l'inclure ici
+                    const _updatePatch = {};
+                    if (user.displayName && !userInfo.displayName) _updatePatch.displayName = user.displayName;
+                    if (user.displayName && !userInfo.firstName) {
+                        const _p = user.displayName.trim().split(' ');
+                        _updatePatch.firstName = _p[0] || '';
+                        _updatePatch.lastName  = _p.slice(1).join(' ') || '';
+                    }
+                    if (user.photoURL && !userInfo.photoURL) _updatePatch.photoURL = user.photoURL;
+                    if (!userInfo.shortId) _updatePatch.shortId = shortId;
+                    if (Object.keys(_updatePatch).length > 0) {
+                        setDoc(doc(db, 'users', user.uid), _updatePatch, { merge: true })
+                            .catch((e) => console.warn('⚠️ Impossible de mettre à jour users/', user.uid, e));
+                    }
+                }
             }
             // Démarrer le listener temps-réel des amis
             if (typeof window.startFriendsListener === 'function') {
