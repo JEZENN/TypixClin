@@ -15793,8 +15793,21 @@ async function updateUserUI(user) {
                     });
                 };
             }
-            // Persister le shortId dans Firestore (couvre les anciens comptes)
-            if (!userInfo.shortId) {
+            // ── Créer le doc users/{uid} s'il n'existe pas encore ──────
+            // Couvre les users "minimalistes" qui n'ont jamais déclenché
+            // une écriture dans users/ (settings, amis, spécialités…)
+            if (!userDoc.exists()) {
+                setDoc(doc(db, 'users', user.uid), {
+                    displayName: user.displayName || '',
+                    email:       user.email       || '',
+                    shortId:     shortId,
+                    createdAt:   new Date()
+                }, { merge: true }).catch((e) => {
+                    console.warn('⚠️ Impossible de créer le doc users/', user.uid, e);
+                });
+            }
+            // Persister le shortId dans Firestore (couvre les anciens comptes sans shortId)
+            else if (!userInfo.shortId) {
                 updateDoc(doc(db, 'users', user.uid), { shortId }).catch(() => {});
             }
             // Démarrer le listener temps-réel des amis
