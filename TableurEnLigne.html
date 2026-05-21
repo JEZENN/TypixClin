@@ -15667,11 +15667,11 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
         if (window._syncNavPill) window._syncNavPill(false);
 
         if (this.dataset.page === 'planning') {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 document.querySelectorAll('#page-planning .day-notes-input').forEach(ta => {
                     if (ta.value) autoResizeTextarea(ta);
                 });
-            });
+            }, 350);
         }
 
         const appNav = document.querySelector('.app-nav');
@@ -21144,7 +21144,7 @@ window.addEventListener('scroll', () => {
 					}
 					
 					document.getElementById('specialty-popup').classList.remove('active');
-					document.getElementById('specialty-search').value = '';
+					const _ss = document.getElementById('specialty-search'); if (_ss) _ss.value = '';
 					activeSpecialtyZone?.classList.remove('popup-open');
 					activeSpecialtyZone = null;
 				}
@@ -21165,7 +21165,7 @@ window.addEventListener('scroll', () => {
 					}
 					
 					document.getElementById('specialty-popup').classList.remove('active');
-					document.getElementById('specialty-search').value = '';
+					const _ss = document.getElementById('specialty-search'); if (_ss) _ss.value = '';
 					activeSpecialtyZone?.classList.remove('popup-open');
 					activeSpecialtyZone = null;
 				}
@@ -21242,12 +21242,14 @@ function filterSpecialties(query) {
 }
 
 function autoResizeTextarea(textarea) {
-    textarea.style.height = 'auto';
+    // 'inherit' puis lecture de scrollHeight pour forcer le vrai calcul du contenu
+    textarea.style.height = 'inherit';
+    const scrollH = textarea.scrollHeight;
 
     const isMobile = window.innerWidth <= 768;
     const minHeight = isMobile ? 28 : 45;
     const maxHeight = isMobile ? 120 : 150;
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    const newHeight = Math.min(Math.max(scrollH, minHeight), maxHeight);
 
     textarea.style.height = newHeight + 'px';
 
@@ -21401,13 +21403,14 @@ function updateSelectors() {
         }
 
         // Si la page planning est déjà visible, redimensionner les textareas tout de suite
+        // Redimensionner après que le layout soit calculé (350ms = après animation 300ms)
         const planningPage = document.getElementById('page-planning');
         if (planningPage && planningPage.classList.contains('active')) {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 grid.querySelectorAll('.day-notes-input').forEach(ta => {
                     if (ta.value) autoResizeTextarea(ta);
                 });
-            });
+            }, 350);
         }
     }
     
@@ -21492,6 +21495,11 @@ function updateSelectors() {
 					textarea.style.overflowY = 'hidden';
 				}
 			}
+
+		textarea.addEventListener('focus', (e) => {
+			// Auto-resize immédiat au clic (focus sur la case)
+			autoResizeTextarea(e.target);
+		});
 
 		textarea.addEventListener('input', (e) => {
 			// Auto-resize
@@ -22646,6 +22654,7 @@ const api = {
 
 		// Exposer globalement
 		window.PlanningModule = api;
+		window.autoResizeTextarea = autoResizeTextarea;
 
 		return api;
 })();
@@ -22676,11 +22685,11 @@ document.querySelectorAll('.app-nav-btn').forEach(btn => {
         
         // Redimensionner les notes du planning à l'activation de l'onglet
         if (this.dataset.page === 'planning') {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 document.querySelectorAll('#page-planning .day-notes-input').forEach(ta => {
                     if (ta.value) autoResizeTextarea(ta);
                 });
-            });
+            }, 350);
         }
 
         // Rafraîchir la table des items quand on ouvre la page "Liste des Items"
