@@ -21708,6 +21708,45 @@ waitForScrollEnd(() => positionAndShow());
     }
 }
     
+// Mise à jour ciblée d'une case sans reconstruire tout le calendrier
+function updateDayCell(dateKey) {
+    const headerZone = document.querySelector(`.day-header-zone[data-date="${dateKey}"]`);
+    if (!headerZone) return;
+    const dayEl = headerZone.closest('.calendar-day');
+    if (!dayEl) return;
+    const dayData = planningData[dateKey] || {};
+
+    // Mettre à jour les classes de statut sur la case
+    dayEl.className = dayEl.className.replace(/\bstatus-\w+\b/g, '').trim();
+    if (dayData.status) dayEl.classList.add('status-' + dayData.status);
+
+    // Mettre à jour le badge statut dans le header
+    const existingBadge = headerZone.querySelector('.day-status-badge');
+    if (existingBadge) existingBadge.remove();
+    if (dayData.status) {
+        const badge = document.createElement('span');
+        badge.className = `day-status-badge ${dayData.status}`;
+        badge.textContent = statusLabels[dayData.status];
+        headerZone.appendChild(badge);
+    }
+
+    // Mettre à jour la zone spécialités
+    const specialtyZone = dayEl.querySelector('.day-specialty-zone');
+    if (specialtyZone) {
+        let speList = [];
+        if (dayData.specialties && Array.isArray(dayData.specialties)) {
+            speList = dayData.specialties;
+        } else if (dayData.specialty) {
+            speList = [dayData.specialty];
+        }
+        const badges = speList.map(speId => {
+            const spe = specialties.find(s => s.id === speId);
+            return spe ? `<span class="day-specialty-badge ${spe.class}">${spe.name}</span>` : '';
+        }).join('');
+        specialtyZone.innerHTML = badges || `<span class="day-specialty-placeholder">+ Spécialité</span>`;
+    }
+}
+
 function setDayStatus(dateKey, status) {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('planning-status')) return;
@@ -21717,7 +21756,7 @@ function setDayStatus(dateKey, status) {
         if (!status) delete planningData[dateKey].status;
         cleanupDayData(dateKey);
         saveData();
-        renderCalendar();
+        updateDayCell(dateKey);
     }
 	
 function fillWeekWithStatus(mondayDateKey, status) {
@@ -21748,7 +21787,12 @@ function fillWeekWithStatus(mondayDateKey, status) {
         }
         
         saveData();
-        renderCalendar();
+        // Mise à jour ciblée de chaque case de la semaine
+        for (let i = 0; i < daysToFill; i++) {
+            const _d = new Date(startDate);
+            _d.setDate(startDate.getDate() + i);
+            updateDayCell(formatDateKey(_d));
+        }
     }
 	
     
@@ -21783,7 +21827,12 @@ function fillWeekWithSpecialties(mondayDateKey, specialtiesArray) {
         }
         
         saveData();
-        renderCalendar();
+        // Mise à jour ciblée de chaque case de la semaine
+        for (let i = 0; i < daysToFill; i++) {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
+            updateDayCell(formatDateKey(d));
+        }
     }
 	
 	
@@ -21805,7 +21854,7 @@ function setDaySpecialties(dateKey, specialtiesArray) {
         
         cleanupDayData(dateKey);
         saveData();
-        renderCalendar();
+        updateDayCell(dateKey);
     }
     
     // Sauvegarder notes
