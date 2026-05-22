@@ -5192,10 +5192,7 @@ if (toastCloseBtn) {
         }
         var auth = window._firebaseAuth;
         var user = auth && auth.currentUser;
-        if (!user) {
-            alert("Vous devez être connecté pour envoyer un feedback.");
-            return;
-        }
+
         var btn = document.getElementById('fb-submit-btn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -5203,7 +5200,6 @@ if (toastCloseBtn) {
         var msg = (document.getElementById('fb-message').value || '').trim();
         var db = window._firebaseDb;
 
-        // Utiliser les fonctions Firestore exposées par le module
         var addDocFn = window._firebaseAddDoc;
         var collectionFn = window._firebaseCollection;
 
@@ -5220,8 +5216,8 @@ if (toastCloseBtn) {
             message:   msg,
             page:      _page  || '',
             app:       _app === 'outils' ? 'OutilsCliniques' : 'TableurEnLigne',
-            userId:    user.uid,
-            userEmail: user.email || '',
+            userId:    user ? user.uid   : '',
+            userEmail: user ? user.email : '',
             createdAt: new Date().toISOString(),
             appVersion: 'Index'
         }).then(function() {

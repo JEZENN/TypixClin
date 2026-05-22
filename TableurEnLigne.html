@@ -1443,6 +1443,7 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
     overflow: hidden;
+    height: 740px;
     max-height: calc(100dvh - 2rem);
     display: flex; flex-direction: column;
 }
@@ -1601,7 +1602,7 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .feedback-success-title { font-size: 1.2rem; font-weight: 700; color: var(--gray-900); }
 .feedback-success-sub { font-size: 0.9rem; color: var(--gray-500); }
 
-/* Erreurs animées du modal feedback (même technique que confidence-error) */
+/* Erreurs animées du modal feedback — même technique que index.html */
 .feedback-error-hint {
     display: block !important;
     overflow: hidden;
@@ -1609,20 +1610,19 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     opacity: 0;
     margin-top: 0;
     pointer-events: none;
-    color: var(--danger);
+    color: #ef4444;
     font-size: 0.8rem;
     font-weight: 500;
-    transition: max-height 0.28s ease, opacity 0.28s ease, margin-top 0.28s ease;
+    white-space: nowrap;
+    transition: max-height 0.28s ease, opacity 0.28s ease;
 }
-/* L'erreur de type est centrée (standalone), l'erreur message est dans un flex row */
 #feedback-type-error { text-align: center; }
 .feedback-error-hint.show {
     max-height: 2rem;
     opacity: 1;
-    margin-top: 0.45rem;
     pointer-events: auto;
 }
-#feedback-stars-error { text-align: center; }
+#feedback-stars-error { text-align: right; }
 
 /* Footer fixe hors du bloc scrollable — empêche la barre de défilement d'atteindre le bord arrondi */
 .feedback-modal-footer {
@@ -1669,6 +1669,176 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     box-shadow: var(--shadow-sm);
     filter: brightness(0.92);
 }
+
+/* ===== FEEDBACK — ONGLETS PRINCIPAUX (Donner son avis / Messages reçus) ===== */
+.fb-main-tabs {
+    flex-shrink: 0;
+    padding: 0.75rem 1.25rem 0.6rem;
+}
+.fb-main-tab-wrap {
+    position: relative; display: flex;
+    background: var(--gray-100); border-radius: 0.75rem;
+    padding: 0.3rem; border: 1.5px solid var(--gray-200); overflow: hidden;
+}
+[data-theme="dark"] .fb-main-tab-wrap { background: #0f172a; border-color: #334155; }
+.fb-main-tab-slider {
+    position: absolute; top: 0.3rem; bottom: 0.3rem; left: 0.3rem;
+    width: calc(50% - 0.3rem);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+    transition: transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+    pointer-events: none; z-index: 0;
+}
+.fb-main-tab-slider.right { transform: translateX(100%); }
+.fb-main-tab {
+    flex: 1; position: relative; z-index: 1;
+    padding: 0.5rem 0.4rem; border: none; background: none; cursor: pointer;
+    font-size: 0.8rem; font-weight: 600; color: var(--gray-500);
+    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+    border-radius: 0.5rem; transition: color 0.2s; white-space: nowrap;
+}
+.fb-main-tab.active { color: #fff; }
+.fb-main-tab:not(.active):hover { color: var(--primary); }
+[data-theme="dark"] .fb-main-tab { color: #64748b; }
+[data-theme="dark"] .fb-main-tab.active { color: #fff; }
+
+/* Badge count sur l'onglet Messages reçus */
+.fb-msg-badge {
+    display: none; min-width: 17px; height: 17px;
+    background: #ef4444; color: white;
+    border-radius: 9px; font-size: 0.68rem; font-weight: 700;
+    padding: 0 4px; align-items: center; justify-content: center;
+    line-height: 1; margin-left: 0.1rem;
+}
+.fb-msg-badge.show { display: inline-flex; }
+.fb-main-tab.active .fb-msg-badge { background: rgba(255,255,255,0.85); color: #ef4444; }
+
+/* ===== PANEL MESSAGES REÇUS ===== */
+.feedback-messages-body {
+    padding: 0.9rem 1.25rem;
+    overflow-y: auto; overflow-x: hidden;
+    flex: 1; display: flex; flex-direction: column; gap: 0.75rem;
+    scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent;
+    scrollbar-gutter: stable;
+}
+#feedback-messages-list {
+    display: flex; flex-direction: column; gap: 1rem;
+}
+.feedback-messages-body::-webkit-scrollbar { width: 8px; }
+.feedback-messages-body::-webkit-scrollbar-track { background: transparent; }
+.feedback-messages-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+.fb-no-messages {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.65rem; padding: 2.5rem 1rem; text-align: center;
+    color: var(--gray-400); font-size: 0.88rem;
+}
+.fb-no-messages i { font-size: 2.2rem; opacity: 0.45; }
+.fb-reply-card {
+    background: var(--gray-50); border: 1.5px solid var(--gray-200);
+    border-radius: 0.9rem; padding: 0.9rem 1rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+}
+[data-theme="dark"] .fb-reply-card { background: #0f172a; border-color: #334155; }
+.fb-reply-feedback-date {
+    font-size: 0.72rem; color: var(--gray-400); font-weight: 500;
+    display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;
+}
+.fb-reply-feedback-quote {
+    font-size: 0.81rem; color: var(--gray-500); font-style: italic;
+    padding: 0.2rem 0.5rem; border-left: 3px solid var(--gray-300);
+    line-height: 1.45;
+}
+[data-theme="dark"] .fb-reply-feedback-quote { border-left-color: #334155; }
+.fb-reply-separator {
+    height: 1px; background: var(--gray-200); margin: 0.1rem 0;
+}
+[data-theme="dark"] .fb-reply-separator { background: #334155; }
+.fb-reply-msg {
+    background: linear-gradient(135deg, rgba(59,130,246,0.07), rgba(37,99,235,0.04));
+    border: 1.5px solid rgba(59,130,246,0.15);
+    border-radius: 0.65rem; padding: 0.65rem 0.85rem;
+    font-size: 0.88rem; color: var(--gray-800); line-height: 1.55;
+    display: flex; flex-direction: column; gap: 0.25rem;
+}
+[data-theme="dark"] .fb-reply-msg { color: var(--gray-300); background: rgba(59,130,246,0.06); }
+.fb-reply-msg-meta {
+    font-size: 0.7rem; color: var(--gray-400); margin-top: 0.15rem;
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.fb-reply-from {
+    font-size: 0.72rem; font-weight: 700; color: #2563eb;
+    display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.1rem;
+}
+[data-theme="dark"] .fb-reply-from { color: #60a5fa; }
+
+/* ===== TOAST SUCCÈS FEEDBACK (hors modal) ===== */
+.fb-sent-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 10400; padding: 1rem;
+    pointer-events: none;
+}
+.fb-sent-overlay.active {
+    display: flex; pointer-events: auto;
+    animation: fbSentOverlayIn 0.22s ease forwards;
+}
+.fb-sent-overlay.closing {
+    animation: fbSentOverlayOut 0.22s ease forwards;
+}
+@keyframes fbSentOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fbSentOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+.fb-sent-card {
+    background: var(--white);
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem 2rem;
+    max-width: 340px; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 0.85rem;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.28);
+    animation: fbSentCardIn 0.35s cubic-bezier(0.34,1.3,0.64,1) forwards;
+}
+.fb-sent-overlay.closing .fb-sent-card {
+    animation: fbSentCardOut 0.2s ease forwards;
+}
+@keyframes fbSentCardIn  { from { opacity:0; transform:scale(0.82) translateY(24px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes fbSentCardOut { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.9) translateY(12px); } }
+[data-theme="dark"] .fb-sent-card { background: #1e293b; }
+.fb-sent-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--success-light);
+    color: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    animation: fbSentHeartPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;
+}
+@keyframes fbSentHeartPop { from { transform: scale(0.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+.fb-sent-title { font-size: 1.2rem; font-weight: 700; color: var(--gray-900); }
+[data-theme="dark"] .fb-sent-title { color: #f1f5f9; }
+.fb-sent-sub { font-size: 0.88rem; color: var(--gray-500); line-height: 1.55; max-width: 260px; }
+.fb-sent-close {
+    margin-top: 0.5rem; width: 100%; padding: 0.85rem;
+    background: var(--primary-gradient); color: white;
+    border: none; border-radius: 0.6rem; font-weight: 700; font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    box-shadow: var(--shadow-md);
+}
+.fb-sent-close:hover { transform: translateY(-2px); box-shadow: var(--shadow-blue); filter: brightness(1.08); }
+.fb-sent-close:active { transform: scale(0.97); filter: brightness(0.92); }
+
+/* Dot de notif sur "Donnez votre avis" dans le menu */
+.feedback-msg-notif-dot {
+    width: 8px; height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: none;
+}
+.feedback-msg-notif-dot.show { display: block; }
+
 .user-auth .auth-btn { display: flex; }
 .user-auth .avatar-wrapper { display: none; }
 .user-auth .profile-dropdown { display: none; }
@@ -12054,7 +12224,7 @@ window._getScrollbarWidth = function() {
                                 <i class="fas fa-user-group"></i><span>Mes amis</span>
                                 <span class="friends-notif-dot" id="friends-notif-dot"></span>
                             </button>
-							<button class="profile-menu-item feedback-btn-menu" id="open-feedback-btn" onclick="openFeedbackModal()"><i class="fas fa-comment-dots"></i><span>Donnez votre avis</span></button>
+							<button class="profile-menu-item feedback-btn-menu" id="open-feedback-btn" onclick="openFeedbackModal()"><i class="fas fa-comment-dots"></i><span>Donnez votre avis</span><span class="feedback-msg-notif-dot" id="feedback-msg-notif-dot"></span></button>
 							<button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
                         </div>
                     </div>
@@ -14207,6 +14377,20 @@ window._getScrollbarWidth = function() {
             <button class="notes-close-btn" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button>
         </div>
 
+        <!-- Onglets principaux -->
+        <div class="fb-main-tabs" id="fb-main-tabs">
+            <div class="fb-main-tab-wrap">
+                <button class="fb-main-tab active" id="fb-main-tab-form" onclick="fbSwitchMainTab('form')">
+                    <i class="fas fa-comment-dots"></i> Donner son avis
+                </button>
+                <div class="fb-main-tab-slider" id="fb-main-tab-slider"></div>
+                <button class="fb-main-tab" id="fb-main-tab-messages" onclick="fbSwitchMainTab('messages')">
+                    <i class="fas fa-inbox"></i> Messages reçus
+                    <span class="fb-msg-badge" id="fb-msg-badge"></span>
+                </button>
+            </div>
+        </div>
+
         <!-- Formulaire -->
         <div class="feedback-modal-body" id="feedback-form-body">
 
@@ -14265,7 +14449,10 @@ window._getScrollbarWidth = function() {
 
             <!-- Satisfaction globale (en dernier) -->
             <div class="modal-section" style="margin-bottom:0;">
-                <label class="modal-label">Satisfaction globale <span style="color:#ef4444">*</span></label>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                    <label class="modal-label" style="margin-bottom:0;">Satisfaction globale <span style="color:#ef4444">*</span></label>
+                    <div class="feedback-error-hint" id="feedback-stars-error">Veuillez sélectionner une note</div>
+                </div>
                 <div class="feedback-mood-row" id="feedback-stars">
                     <button class="feedback-mood-btn" data-star="1">
                         <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
@@ -14283,10 +14470,19 @@ window._getScrollbarWidth = function() {
                         <svg class="feedback-star-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
                     </button>
                 </div>
-                <div class="feedback-error-hint" id="feedback-stars-error">Veuillez sélectionner une note</div>
             </div>
 
         </div><!-- /.feedback-modal-body -->
+
+        <!-- Panel 2 : Messages reçus -->
+        <div class="feedback-messages-body" id="feedback-messages-body" style="display:none;">
+            <div id="feedback-messages-list">
+                <div class="fb-no-messages">
+                    <i class="fas fa-inbox"></i>
+                    <span>Aucun message reçu</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Footer fixe (hors du bloc scrollable pour que la flèche basse de la scrollbar ne soit pas clippée) -->
         <div class="feedback-modal-footer" id="feedback-modal-footer">
@@ -14300,16 +14496,16 @@ window._getScrollbarWidth = function() {
             </div>
         </div>
 
-        <!-- Écran succès -->
-        <div class="feedback-success" id="feedback-success-screen">
-            <div class="feedback-success-icon"><i class="fas fa-heart"></i></div>
-            <div class="feedback-success-title">Merci pour votre avis !</div>
-            <div class="feedback-success-sub">Votre retour a bien été pris en compte et contribue à améliorer la plateforme. Je reste à votre écoute si besoin.</div>
-            <button onclick="closeFeedbackModal()" class="feedback-success-close-btn">
-                <i class="fas fa-check"></i>
-            </button>
-        </div>
+    </div>
+</div>
 
+<!-- Toast succès envoi feedback (hors modal, transition douce) -->
+<div class="fb-sent-overlay" id="fb-sent-overlay">
+    <div class="fb-sent-card">
+        <div class="fb-sent-icon"><i class="fas fa-heart"></i></div>
+        <div class="fb-sent-title">Merci pour votre avis !</div>
+        <div class="fb-sent-sub">Votre retour a bien été pris en compte et contribue à améliorer la plateforme. Je reste à votre écoute si besoin.</div>
+        <button class="fb-sent-close" onclick="closeFbSentToast()"><i class="fas fa-check"></i></button>
     </div>
 </div>
 
@@ -31779,6 +31975,13 @@ function _fbScrollUnlock() {
     window._setScrollbarComp(0);
 }
 
+window.closeFbSentToast = function() {
+    const overlay = document.getElementById('fb-sent-overlay');
+    if (!overlay) return;
+    overlay.classList.add('closing');
+    setTimeout(() => overlay.classList.remove('active', 'closing'), 240);
+};
+
 // ---- Reset ----
 window.feedbackResetAll = function() {
     window._feedbackType  = null;
@@ -31798,8 +32001,6 @@ window.feedbackResetAll = function() {
     if (formBody) { formBody.style.display = ''; formBody.style.opacity = ''; formBody.style.transition = ''; }
     const footer = document.getElementById('feedback-modal-footer');
     if (footer) { footer.style.display = ''; footer.style.opacity = ''; footer.style.transition = ''; }
-    const success = document.getElementById('feedback-success-screen');
-    if (success) success.classList.remove('show', 'show-animate');
     const starsErr = document.getElementById('feedback-stars-error');
     if (starsErr) starsErr.classList.remove('show');
 };
@@ -31959,18 +32160,17 @@ window.submitFeedback = async function() {
             createdAt: new Date().toISOString(),
             appVersion: 'TableurEnLigne'
         });
-        const formBody = document.getElementById('feedback-form-body');
-        const fbFooter = document.getElementById('feedback-modal-footer');
-        const successScreen = document.getElementById('feedback-success-screen');
-        formBody.style.transition = 'opacity 0.25s ease';
-        formBody.style.opacity = '0';
-        if (fbFooter) { fbFooter.style.transition = 'opacity 0.25s ease'; fbFooter.style.opacity = '0'; }
+        // Fermer le modal feedback puis afficher le toast succès
+        // Marquer les messages comme lus pour éviter que la notif revienne
+        if (window._fbMarkAsRead) window._fbMarkAsRead();
+        window.closeFeedbackModal();
         setTimeout(() => {
-            formBody.style.display = 'none';
-            if (fbFooter) fbFooter.style.display = 'none';
-            successScreen.classList.add('show');
-            requestAnimationFrame(() => requestAnimationFrame(() => successScreen.classList.add('show-animate')));
-        }, 250);
+            const overlay = document.getElementById('fb-sent-overlay');
+            if (overlay) {
+                overlay.classList.remove('closing');
+                overlay.classList.add('active');
+            }
+        }, 220);
     } catch (err) {
         console.error('Erreur envoi feedback :', err);
         btn.disabled = false;
@@ -31982,6 +32182,236 @@ window.submitFeedback = async function() {
         }
     }
 };
+</script>
+
+<!-- ===== SCRIPT MESSAGES FEEDBACK (réponses admin) ===== -->
+<script type="module">
+import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ── Stockage : map { feedbackId → max sentAt vu (ms) } ──────────────────────
+// Stockée dans Firestore sur users/{uid}.feedbackSeenMap pour sync multi-appareils
+// + localStorage comme cache instantané au chargement
+const _LS_KEY_PREFIX = 'fbSeen_';
+let _currentUid   = null;
+let _fbMsgUnsub   = null;
+let _fbMsgAllData = [];
+let _seenMap      = {};
+window._feedbackUnreadCount = 0;
+
+// ── Lire / écrire dans localStorage (cache local) ────────────────────────────
+function _loadSeenMapLocal(uid) {
+    try {
+        const raw = localStorage.getItem(_LS_KEY_PREFIX + uid);
+        _seenMap = raw ? JSON.parse(raw) : {};
+    } catch(e) { _seenMap = {}; }
+}
+function _saveSeenMapLocal(uid) {
+    try { localStorage.setItem(_LS_KEY_PREFIX + uid, JSON.stringify(_seenMap)); } catch(e) {}
+}
+
+// ── Lire depuis Firestore au démarrage ───────────────────────────────────────
+async function _loadSeenMapFirestore(uid) {
+    try {
+        const db = window._db || getFirestore();
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+            const remote = snap.data().feedbackSeenMap || {};
+            // Merger : garder le max entre local et remote pour chaque feedbackId
+            for (const [id, t] of Object.entries(remote)) {
+                if (!_seenMap[id] || t > _seenMap[id]) _seenMap[id] = t;
+            }
+            _saveSeenMapLocal(uid); // mettre à jour le cache local
+        }
+    } catch(e) { /* silencieux : on utilise le cache local */ }
+}
+
+// ── Écrire dans Firestore (async, non bloquant) ──────────────────────────────
+function _saveSeenMapFirestore(uid) {
+    try {
+        const db = window._db || getFirestore();
+        updateDoc(doc(db, 'users', uid), { feedbackSeenMap: _seenMap });
+    } catch(e) {}
+}
+
+// ── Marquer tous les feedbacks actuels comme lus ─────────────────────────────
+function _markAllRead() {
+    const uid = _currentUid || window.currentUser?.uid;
+    if (!uid) return;
+    _currentUid = uid;
+    for (const fb of _fbMsgAllData) {
+        if (!fb.adminReplies || !fb.adminReplies.length) continue;
+        const maxSentAt = fb.adminReplies.reduce((m, r) => {
+            const t = r.sentAt ? new Date(r.sentAt).getTime() : 0;
+            return t > m ? t : m;
+        }, 0);
+        if (maxSentAt > (_seenMap[fb.id] || 0)) _seenMap[fb.id] = maxSentAt;
+    }
+    _saveSeenMapLocal(uid);
+    _saveSeenMapFirestore(uid);
+}
+window._fbMarkAsRead = _markAllRead;
+
+// ── Compter les réponses non lues ────────────────────────────────────────────
+function _countUnread(feedbacks) {
+    let n = 0;
+    for (const fb of feedbacks) {
+        if (!fb.adminReplies) continue;
+        const lastSeen = _seenMap[fb.id] || 0;
+        for (const r of fb.adminReplies) {
+            const t = r.sentAt ? new Date(r.sentAt).getTime() : 0;
+            if (t > lastSeen) n++;
+        }
+    }
+    return n;
+}
+
+// ── Mettre à jour tous les indicateurs visuels ───────────────────────────────
+function _updateDots(count) {
+    window._feedbackUnreadCount = count;
+    const menuDot = document.getElementById('feedback-msg-notif-dot');
+    if (menuDot) menuDot.classList.toggle('show', count > 0);
+    const badge = document.getElementById('fb-msg-badge');
+    if (badge) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.toggle('show', count > 0);
+    }
+    const avatarDot = document.getElementById('avatar-notif-dot');
+    if (avatarDot) {
+        const hasFriends = (window._friendsData?.friendRequestsReceived?.length > 0);
+        avatarDot.classList.toggle('show', hasFriends || count > 0);
+    }
+}
+
+// ── Formater une date en français ────────────────────────────────────────────
+function _fmtDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }); }
+    catch(e) { return iso; }
+}
+function _fmtDateTime(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+    catch(e) { return iso; }
+}
+
+// ── Rendu des messages ───────────────────────────────────────────────────────
+function _renderMessages(feedbacks) {
+    const list = document.getElementById('feedback-messages-list');
+    if (!list) return;
+    const allReplies = [];
+    for (const fb of feedbacks) {
+        for (const r of (fb.adminReplies || [])) {
+            allReplies.push({
+                text: r.text || r.message || '', sentAt: r.sentAt || '',
+                fbDate: fb.createdAt || '', fbType: fb.type || '',
+                fbNote: fb.note || 0, fbMessage: fb.message || ''
+            });
+        }
+    }
+    if (allReplies.length === 0) {
+        list.innerHTML = `<div class="fb-no-messages"><i class="fas fa-inbox"></i><span>Aucun message reçu</span></div>`;
+        return;
+    }
+    allReplies.sort((a, b) => new Date(a.sentAt || 0) - new Date(b.sentAt || 0));
+    let html = '';
+    for (const r of allReplies) {
+        const rDate = _fmtDateTime(r.sentAt);
+        const fbDate = _fmtDate(r.fbDate);
+        const typeLabel = r.fbType ? `<span style="text-transform:capitalize;background:rgba(59,130,246,0.1);color:#2563eb;padding:0.1rem 0.4rem;border-radius:0.3rem;font-size:0.65rem;font-weight:700;">${r.fbType}</span>` : '';
+        const starsHtml = r.fbNote ? `<span style="color:#f59e0b;font-size:0.7rem;">${'★'.repeat(r.fbNote)}${'☆'.repeat(5-r.fbNote)}</span>` : '';
+        html += `<div class="fb-reply-card">
+            <div class="fb-reply-feedback-date"><i class="fas fa-calendar-alt"></i> En réponse à votre feedback du ${fbDate} ${typeLabel} ${starsHtml}</div>
+            ${r.fbMessage ? `<div class="fb-reply-feedback-quote">"${r.fbMessage}"</div>` : ''}
+            <div class="fb-reply-separator"></div>
+            <div class="fb-reply-msg">
+                <div class="fb-reply-from"><i class="fas fa-reply"></i> Réponse</div>
+                <span>${r.text}</span>
+                ${rDate ? `<span class="fb-reply-msg-meta"><i class="fas fa-clock"></i> ${rDate}</span>` : ''}
+            </div>
+        </div>`;
+    }
+    list.innerHTML = html;
+}
+
+// ── Basculer entre les onglets ───────────────────────────────────────────────
+window.fbSwitchMainTab = function(tab) {
+    const tabForm    = document.getElementById('fb-main-tab-form');
+    const tabMsg     = document.getElementById('fb-main-tab-messages');
+    const slider     = document.getElementById('fb-main-tab-slider');
+    const formBody   = document.getElementById('feedback-form-body');
+    const formFooter = document.getElementById('feedback-modal-footer');
+    const msgsBody   = document.getElementById('feedback-messages-body');
+    if (tab === 'messages') {
+        tabForm?.classList.remove('active');
+        tabMsg?.classList.add('active');
+        slider?.classList.add('right');
+        if (formBody)   formBody.style.display = 'none';
+        if (formFooter) formFooter.style.display = 'none';
+        if (msgsBody)   msgsBody.style.display = '';
+        _markAllRead();
+        _updateDots(0);
+        _renderMessages(_fbMsgAllData);
+    } else {
+        tabForm?.classList.add('active');
+        tabMsg?.classList.remove('active');
+        slider?.classList.remove('right');
+        if (msgsBody)   msgsBody.style.display = 'none';
+        if (formBody)   formBody.style.display = '';
+        if (formFooter) formFooter.style.display = '';
+    }
+};
+
+// ── Patch openFeedbackModal ──────────────────────────────────────────────────
+(function() {
+    const _orig = window.openFeedbackModal;
+    window.openFeedbackModal = function() {
+        if (_orig) _orig.apply(this, arguments);
+        document.getElementById('fb-main-tab-slider')?.classList.remove('right');
+        document.getElementById('fb-main-tab-form')?.classList.add('active');
+        document.getElementById('fb-main-tab-messages')?.classList.remove('active');
+        const msgsBody = document.getElementById('feedback-messages-body');
+        const formBody = document.getElementById('feedback-form-body');
+        const formFooter = document.getElementById('feedback-modal-footer');
+        if (msgsBody)   msgsBody.style.display = 'none';
+        if (formBody)   formBody.style.display = '';
+        if (formFooter) formFooter.style.display = '';
+    };
+})();
+
+// ── Listener Firestore ───────────────────────────────────────────────────────
+function _startListener(uid) {
+    if (_fbMsgUnsub) { _fbMsgUnsub(); _fbMsgUnsub = null; }
+    _currentUid = uid;
+    // 1. Charger le cache local immédiatement (instantané)
+    _loadSeenMapLocal(uid);
+    // 2. Enrichir depuis Firestore en arrière-plan, puis recalculer
+    _loadSeenMapFirestore(uid).then(() => {
+        const unread = _countUnread(_fbMsgAllData);
+        _updateDots(unread);
+    });
+    const db = window._db || getFirestore();
+    const q  = query(collection(db, 'feedbacks'), where('userId', '==', uid));
+    _fbMsgUnsub = onSnapshot(q, snap => {
+        _fbMsgAllData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const unread = _countUnread(_fbMsgAllData);
+        _updateDots(unread);
+        const msgsBody = document.getElementById('feedback-messages-body');
+        if (msgsBody && msgsBody.style.display !== 'none') {
+            _renderMessages(_fbMsgAllData);
+            _markAllRead();
+            _updateDots(0);
+        }
+    }, err => console.warn('[FeedbackMsg]', err));
+}
+
+// ── Attendre currentUser ─────────────────────────────────────────────────────
+(function _waitForUser() {
+    if (window.currentUser) { _startListener(window.currentUser.uid); return; }
+    const _iv = setInterval(() => {
+        if (window.currentUser) { clearInterval(_iv); _startListener(window.currentUser.uid); }
+    }, 400);
+})();
+
 </script>
 
 <!-- ===== SCRIPT AMIS ===== -->
@@ -32164,9 +32594,12 @@ function updateFriendsNotifDot(data) {
         badge.textContent = received.length;
         badge.classList.toggle('hidden', !hasNotif);
     }
-    // Pastille rouge sur la pastille de profil
+    // Pastille rouge sur la pastille de profil (combinée avec messages feedback)
     const avatarDot = document.getElementById('avatar-notif-dot');
-    if (avatarDot) avatarDot.classList.toggle('show', hasNotif);
+    if (avatarDot) {
+        const hasFeedbackMsg = (window._feedbackUnreadCount > 0);
+        avatarDot.classList.toggle('show', hasNotif || hasFeedbackMsg);
+    }
 }
 
 // ── Rendu des panneaux ───────────────────────────────────────────────────────
