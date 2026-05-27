@@ -2602,10 +2602,10 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 }
 .specialty-drag-handle {
     position: absolute;
-    top: auto;
-    bottom: 3.8rem;
+    top: 50%;
+    bottom: auto;
     right: 0.75rem;
-    transform: none;
+    transform: translateY(-50%);
     color: var(--gray-300);
     font-size: 1.15rem;
     cursor: grab;
@@ -2614,10 +2614,28 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     transition: opacity 0.15s;
     z-index: 2;
     touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
 }
 .specialty-card:hover .specialty-drag-handle { opacity: 1; }
-@media (hover: none), (max-width: 768px) {
-    .specialty-drag-handle { display: none !important; }
+/* Sur appareils tactiles : handle toujours visible, centré à droite */
+@media (hover: none) {
+    .specialty-drag-handle {
+        opacity: 0.4 !important;
+        top: 54%;
+        bottom: auto;
+        right: 0.5rem;
+        transform: translateY(-50%);
+        font-size: 1.35rem;
+        padding: 0.6rem 0.45rem;
+        color: var(--gray-400);
+        background: transparent;
+        border-radius: var(--border-radius-sm);
+    }
+    .specialty-card:active .specialty-drag-handle { opacity: 0.7 !important; }
 }
 
 .specialty-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
@@ -19174,18 +19192,56 @@ function renderDashboardSpecialties() {
             card.classList.add('dragging');
         }
 
+        // ── Auto-scroll pendant le drag (bords haut / bas) ──
+        var _scrollRAF    = null;
+        var _scrollSpeed  = 0;
+        var _scrollEl     = document.scrollingElement || document.documentElement;
+
+        function _runAutoScroll() {
+            if (_scrollSpeed !== 0) {
+                _scrollEl.scrollTop += _scrollSpeed;
+                _scrollRAF = requestAnimationFrame(_runAutoScroll);
+            } else {
+                _scrollRAF = null;
+            }
+        }
+
+        function _updateAutoScroll(clientY) {
+            var vh   = window.innerHeight;
+            var zone = Math.round(vh * 0.42); // 42% du viewport en haut et en bas
+            if (clientY < zone) {
+                var t = Math.max(0, 1 - clientY / zone);
+                _scrollSpeed = -(14 + Math.round(46 * t)); // 14→60 px/frame
+            } else if (clientY > vh - zone) {
+                var t = Math.max(0, 1 - (vh - clientY) / zone);
+                _scrollSpeed = (14 + Math.round(46 * t));
+            } else {
+                _scrollSpeed = 0;
+            }
+            if (_scrollSpeed !== 0 && !_scrollRAF) {
+                _scrollRAF = requestAnimationFrame(_runAutoScroll);
+            }
+        }
+
+        function _stopAutoScroll() {
+            _scrollSpeed = 0;
+            if (_scrollRAF) { cancelAnimationFrame(_scrollRAF); _scrollRAF = null; }
+        }
+
         function moveDrag(clientX, clientY) {
             if (!dragSrc) return;
             if (touchClone) {
                 touchClone.style.left = (clientX - touchOffsetX) + 'px';
                 touchClone.style.top  = (clientY - touchOffsetY) + 'px';
             }
+            _updateAutoScroll(clientY);
             var target = getCardAtPoint(clientX, clientY);
             if (target !== lastTarget) lastTarget = null;
             insertNear(target);
         }
 
         function endDrag() {
+            _stopAutoScroll();
             if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
             finalizeDrag();
         }
@@ -19211,21 +19267,25 @@ function renderDashboardSpecialties() {
                 document.addEventListener('mouseup', _onMouseUp);
             });
 
-            // ---- TACTILE (desktop uniquement) ----
-            if (window.innerWidth > 768) {
+            // ---- TACTILE (tous appareils : mobile, tablette, desktop tactile) ----
             trigger.addEventListener('touchstart', function(e) {
                 var touch = e.touches[0];
                 startDrag(card, touch.clientX, touch.clientY);
             }, { passive: true });
 
             card.addEventListener('touchmove', function(e) {
+                // Ne bloquer le scroll QUE si un drag est réellement en cours
+                if (!dragSrc) return;
                 e.preventDefault();
                 var touch = e.touches[0];
                 moveDrag(touch.clientX, touch.clientY);
             }, { passive: false });
 
-            card.addEventListener('touchend', endDrag);
-            }
+            card.addEventListener('touchend', function(e) {
+                // Empêche le onclick (navigateToSpecialty) après un drag
+                if (dragSrc) e.preventDefault();
+                endDrag();
+            });
         });
     }
 }
@@ -26572,7 +26632,7 @@ button.notes-clear-btn[onclick*="trainNotesAskClear"]:active {
                 </div>
                 <div class="whats-new-section-text">
                     <h4>Réorganisation des spécialités</h4>
-                    <p>Sur la page liste des spécialités, glissez-déposez vos spécialités pour les agencer dans l'ordre qui vous convient — disponible uniquement sur ordinateur.</p>
+                    <p>Sur la page liste des spécialités, glissez-déposez vos spécialités pour les agencer dans l'ordre qui vous convient.</p>
                 </div>
             </div>
 
