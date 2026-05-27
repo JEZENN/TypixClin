@@ -19120,7 +19120,7 @@ function renderDashboardSpecialties() {
 
         var lastTarget = null;
         var lastInsertTime = 0;
-        var INSERT_COOLDOWN = 280;
+        var INSERT_COOLDOWN = 80;
 
         function insertNear(target) {
             if (!target || target === dragSrc || target === lastTarget) return;
@@ -19196,10 +19196,15 @@ function renderDashboardSpecialties() {
         var _scrollRAF    = null;
         var _scrollSpeed  = 0;
         var _scrollEl     = document.scrollingElement || document.documentElement;
+        var _lastClientX  = 0;
+        var _lastClientY  = 0;
 
         function _runAutoScroll() {
             if (_scrollSpeed !== 0) {
                 _scrollEl.scrollTop += _scrollSpeed;
+                // Mettre à jour l'insertion à chaque frame pendant le scroll auto
+                var target = getCardAtPoint(_lastClientX, _lastClientY);
+                insertNear(target);
                 _scrollRAF = requestAnimationFrame(_runAutoScroll);
             } else {
                 _scrollRAF = null;
@@ -19208,13 +19213,13 @@ function renderDashboardSpecialties() {
 
         function _updateAutoScroll(clientY) {
             var vh   = window.innerHeight;
-            var zone = Math.round(vh * 0.42); // 42% du viewport en haut et en bas
+            var zone = Math.round(vh * 0.15); // 15% du viewport en haut et en bas
             if (clientY < zone) {
                 var t = Math.max(0, 1 - clientY / zone);
-                _scrollSpeed = -(14 + Math.round(46 * t)); // 14→60 px/frame
+                _scrollSpeed = -(10 + Math.round(30 * t)); // 10→40 px/frame
             } else if (clientY > vh - zone) {
                 var t = Math.max(0, 1 - (vh - clientY) / zone);
-                _scrollSpeed = (14 + Math.round(46 * t));
+                _scrollSpeed = (10 + Math.round(30 * t));
             } else {
                 _scrollSpeed = 0;
             }
@@ -19230,6 +19235,8 @@ function renderDashboardSpecialties() {
 
         function moveDrag(clientX, clientY) {
             if (!dragSrc) return;
+            _lastClientX = clientX;
+            _lastClientY = clientY;
             if (touchClone) {
                 touchClone.style.left = (clientX - touchOffsetX) + 'px';
                 touchClone.style.top  = (clientY - touchOffsetY) + 'px';
