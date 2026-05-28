@@ -2651,9 +2651,8 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .items-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .items-table th { background: var(--gray-50); padding: 0.75rem; text-align: left; font-weight: 600; color: var(--gray-700); border-bottom: 2px solid var(--gray-200); white-space: nowrap; cursor: pointer; user-select: none; }
 .items-table th:hover { background: var(--gray-100); }
-.items-table th .sort-icon { margin-left: 0.5rem; opacity: 0.5; font-size: 0.7rem; transition: transform 0.18s ease, opacity 0.18s; }
+.items-table th .sort-icon { margin-left: 0.5rem; opacity: 0.4; font-size: 0.7rem; transition: opacity 0.18s; color: var(--gray-400); }
 .items-table th.sorted .sort-icon { opacity: 1; color: var(--primary); }
-.items-table th.sort-desc .sort-icon { transform: rotate(180deg); }
 .items-table td { padding: 0.75rem; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
 .items-table tr:hover { background: var(--gray-50); }
 .items-table .item-num { font-weight: 700; color: var(--primary); min-width: 76px; }
@@ -5099,6 +5098,47 @@ input[type="date"].modal-input {
     background: rgba(255,255,255,0.5);
 }
 
+/* ===== TOOLTIP PASTILLES SPÉCIALITÉ ===== */
+#tx-chip-tooltip {
+    position: fixed;
+    z-index: 99999;
+    pointer-events: none;
+    background: linear-gradient(135deg, #1e2d45 0%, #111827 100%);
+    color: #f8fafc;
+    padding: 0.32rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px rgba(59,130,246,0.12);
+    letter-spacing: 0.01em;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    will-change: transform;
+}
+#tx-chip-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #111827;
+    pointer-events: none;
+}
+#tx-chip-tooltip.tx-tip-below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #111827;
+}
+#tx-chip-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Flèche */
 .specialty-multi-arrow {
     font-size: 0.7rem;
@@ -7173,7 +7213,8 @@ input[type="date"].modal-input {
     gap: 0.6rem;
     max-height: 450px;
     overflow-y: auto;
-    padding-right: 0.5rem;
+    scrollbar-gutter: stable;
+    padding-right: 0.25rem;
 }
 
 .checklist-items::-webkit-scrollbar { width: 5px; }
@@ -19868,7 +19909,7 @@ function updateSpecialtySelection() {
                 const cfg = SPECIALTY_CONFIG[sId] || { color: '#6b7280' };
 						const abbrev = SPECIALTY_SHORT[sId] || spec.name.substring(0, 3).toUpperCase();
 						chipsHtml += `
-							<div class="specialty-chip" style="background: ${cfg.color}" data-id="${sId}" title="${spec.name}" onclick="removeSpecialtyChip(event, '${sId}')">
+							<div class="specialty-chip" style="background: ${cfg.color}" data-id="${sId}" data-tooltip="${spec.name}" onclick="removeSpecialtyChip(event, '${sId}')">
 								<span>${abbrev}</span>
 								<span class="specialty-chip-remove" onclick="removeSpecialtyChip(event, '${sId}')">
 									<i class="fas fa-times"></i>
@@ -20470,13 +20511,20 @@ document.querySelectorAll('#page-items .items-table th[data-sort]').forEach(th =
         const field = this.dataset.sort;
         if (currentSort.field === field) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         else { currentSort.field = field; currentSort.direction = 'asc'; }
-        document.querySelectorAll('#page-items .items-table th').forEach(h => h.classList.remove('sorted', 'sort-desc'));
+        document.querySelectorAll('#page-items .items-table th[data-sort]').forEach(h => {
+            h.classList.remove('sorted', 'sort-desc');
+            const ic = h.querySelector('.sort-icon');
+            if (ic) { ic.classList.remove('fa-arrow-down','fa-arrow-up'); ic.classList.add('fa-sort'); }
+        });
         this.classList.add('sorted');
         if (currentSort.direction === 'desc') this.classList.add('sort-desc');
+        const icon = this.querySelector('.sort-icon');
+        if (icon) { icon.classList.remove('fa-sort'); icon.classList.add(currentSort.direction === 'desc' ? 'fa-arrow-up' : 'fa-arrow-down'); }
         renderItemsTable();
     });
 });
 document.querySelector('#page-items .items-table th[data-sort="num"]')?.classList.add('sorted');
+(function(){ const d = document.querySelector('#page-items .items-table th[data-sort="num"]'); if(d){ const ic=d.querySelector('.sort-icon'); if(ic){ic.classList.remove('fa-sort');ic.classList.add('fa-arrow-down');} } })();
 
 window.clearSearch = function(inputId) {
     const input = document.getElementById(inputId);
@@ -20550,8 +20598,12 @@ renderSpecialtyOptions();
     renderItemsTable();
     
     // Retirer l'indicateur visuel de tri (sélecteur bleu)
-    document.querySelectorAll('#page-items .items-table th').forEach(h => h.classList.remove('sorted', 'sort-desc'));
-    document.querySelector('#page-items .items-table th[data-sort="num"]')?.classList.add('sorted'); // ✅ ajouté
+    document.querySelectorAll('#page-items .items-table th[data-sort]').forEach(h => {
+        h.classList.remove('sorted', 'sort-desc');
+        const ic = h.querySelector('.sort-icon'); if(ic){ic.classList.remove('fa-arrow-down','fa-arrow-up');ic.classList.add('fa-sort');}
+    });
+    const _defNum = document.querySelector('#page-items .items-table th[data-sort="num"]');
+    if (_defNum) { _defNum.classList.add('sorted'); const ic=_defNum.querySelector('.sort-icon'); if(ic){ic.classList.remove('fa-sort');ic.classList.add('fa-arrow-down');} } // ✅ ajouté
 
     // Scroll jusqu'aux boutons de navigation
     const appNav = document.querySelector('.app-nav');
@@ -29945,9 +29997,8 @@ document.addEventListener('touchend', function(e) {
 .train-table th:nth-child(6) { width: 180px; }
 .train-table th[data-sort] { cursor: pointer; user-select: none; }
 .train-table th[data-sort]:hover { background: var(--gray-100); }
-.train-table th[data-sort] .sort-icon { margin-left: 0.4rem; opacity: 0.4; font-size: 0.7rem; transition: transform 0.18s ease, opacity 0.18s; }
+.train-table th[data-sort] .sort-icon { margin-left: 0.4rem; opacity: 0.4; font-size: 0.7rem; transition: opacity 0.18s; color: var(--gray-400); }
 .train-table th[data-sort].sorted .sort-icon { opacity: 1; color: var(--primary); }
-.train-table th[data-sort].sort-desc .sort-icon { transform: rotate(180deg); }
 
 /* ===== Train notes modal : largeur réduite + header inline ===== */
 #trainNotesOverlay .notes-modal {
@@ -30582,10 +30633,14 @@ function _trainUpdateMatiereBtn() {
   if (allOpt2) allOpt2.classList.remove('selected');
   var SH = window.TRAIN_SPECIALTY_SHORT || window.SPECIALTY_SHORT || {};
   var SC = window.TRAIN_SPECIALTY_CONFIG || window.SPECIALTY_CONFIG || {};
+  var _DA = (typeof SPECIALTIES_DATA !== 'undefined') ? SPECIALTIES_DATA : [];
+  var _TSN = window.TRAIN_SPECIALTY_NAMES || {};
   var html = trainFilterMatieres.map(function(id) {
     var short = SH[id] || id.substring(0,3).toUpperCase();
     var color = (SC[id] || {}).color || '#6b7280';
-    return '<div class="specialty-chip" style="background:' + color + '" title="' + id + '" onclick="trainRemoveMatiereChip(event,\'' + id + '\')">' +
+    var _spec = _DA.find(function(s){ return s.id === id; });
+    var name = _spec ? _spec.name : (_TSN[id] || id);
+    return '<div class="specialty-chip" style="background:' + color + '" data-tooltip="' + name + '" onclick="trainRemoveMatiereChip(event,\'' + id + '\')">' +
       '<span>' + short + '</span>' +
       '<span class="specialty-chip-remove"><i class="fas fa-times"></i></span></div>';
   }).join('');
@@ -30649,9 +30704,12 @@ window.resetTrainFilters = function(btn) {
   trainSortValue = 'type'; trainSortDir = 'asc';
   var sortBtn = document.getElementById('train-sort-statut-btn');
   if (sortBtn) sortBtn.classList.remove('active');
-  document.querySelectorAll('#page-entrainements .train-table th[data-sort]').forEach(function(h){ h.classList.remove('sorted','sort-desc'); });
+  document.querySelectorAll('#page-entrainements .train-table th[data-sort]').forEach(function(h){ 
+    h.classList.remove('sorted','sort-desc');
+    var ic=h.querySelector('.sort-icon'); if(ic){ic.classList.remove('fa-arrow-down','fa-arrow-up');ic.classList.add('fa-sort');}
+  });
   var _defTh = document.querySelector('#page-entrainements .train-table th[data-sort="type"]');
-  if (_defTh) _defTh.classList.add('sorted');
+  if (_defTh) { _defTh.classList.add('sorted'); var _ic=_defTh.querySelector('.sort-icon'); if(_ic){_ic.classList.remove('fa-sort');_ic.classList.add('fa-arrow-down');} }
   trainFilterSearch = '';
   var inp = document.getElementById('search-train'); if (inp) inp.value = '';
   var clr = document.getElementById('clear-train'); if (clr) clr.style.display = 'none';
@@ -30837,6 +30895,8 @@ window.renderTrainTable = function() {
 
   var SH = window.TRAIN_SPECIALTY_SHORT || (typeof SPECIALTY_SHORT !== 'undefined' ? SPECIALTY_SHORT : {});
   var SC = window.TRAIN_SPECIALTY_CONFIG || (typeof SPECIALTY_CONFIG !== 'undefined' ? SPECIALTY_CONFIG : {});
+  var _DA  = (typeof SPECIALTIES_DATA !== 'undefined') ? SPECIALTIES_DATA : [];
+  var _TSN = window.TRAIN_SPECIALTY_NAMES || {};
 
   while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
@@ -30880,7 +30940,9 @@ window.renderTrainTable = function() {
           var pill = document.createElement('span');
           pill.className = 'train-matiere-pill';
           pill.style.cssText = 'background:'+cfg.color+';color:white;font-weight:700;padding:0.2rem 0.45rem;border-radius:var(--border-radius-sm);font-size:0.68rem;';
-          pill.title = m; pill.textContent = SH[m];
+          var _specPill = _DA.find(function(s){ return s.id === m; });
+          var _namePill = _specPill ? _specPill.name : (_TSN[m] || m);
+          pill.setAttribute('data-tooltip', _namePill); pill.textContent = SH[m];
           pillWrap.appendChild(pill);
         });
         td3.appendChild(pillWrap);
@@ -31091,7 +31153,7 @@ function _trainModalBuildMatiereList(query) {
       var color = (SC[id] || {}).color || '#6b7280';
       var spec = DA.find(function(s){ return s.id === id; });
       var name = spec ? spec.name : (TSN[id] || id);
-      return '<div class="specialty-chip" style="background:'+color+'" title="'+name+'" onclick="trainModalRemoveMatiere(\''+id+'\')">'+
+      return '<div class="specialty-chip" style="background:'+color+'" data-tooltip="'+name+'" onclick="trainModalRemoveMatiere(\''+id+'\')">'+
         '<span>'+short+'</span><span class="specialty-chip-remove"><i class="fas fa-times"></i></span></div>';
     }).join('');
   }
@@ -31964,16 +32026,21 @@ function _initTrainPage() {
       }
       document.querySelectorAll('#page-entrainements .train-table th[data-sort]').forEach(function(h) {
         h.classList.remove('sorted', 'sort-desc');
+        var ic = h.querySelector('.sort-icon'); if(ic){ic.classList.remove('fa-arrow-down','fa-arrow-up');ic.classList.add('fa-sort');}
       });
       this.classList.add('sorted');
       if (trainSortDir === 'desc') this.classList.add('sort-desc');
+      var _ic = this.querySelector('.sort-icon'); if(_ic){_ic.classList.remove('fa-sort');_ic.classList.add(trainSortDir==='desc'?'fa-arrow-up':'fa-arrow-down');}
       trainCurrentPage = 1;
       renderTrainTable();
     });
   });
   // Colonne Type active par défaut
   var _defTh = document.querySelector('#page-entrainements .train-table th[data-sort="type"]');
-  if (_defTh) _defTh.classList.add('sorted');
+  if (_defTh) {
+    _defTh.classList.add('sorted');
+    var _ic = _defTh.querySelector('.sort-icon'); if(_ic){_ic.classList.remove('fa-sort');_ic.classList.add('fa-arrow-down');}
+  }
 
   // Détection sticky → coins droits
   var sentinel = document.getElementById('train-sticky-sentinel');
@@ -35539,6 +35606,80 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     _setupImgBtnSpinner('notesImageBtn',      'notesImageFileInput');
     _setupImgBtnSpinner('trainNotesImageBtn', 'trainNotesImageFileInput');
   });
+})();
+</script>
+<!-- ===== TOOLTIP PASTILLES SPÉCIALITÉ ===== -->
+<script>
+(function() {
+    var _tip = null;
+    var _active = null;
+    var _arrowH = 5; // hauteur de la flèche en px
+
+    function _init() {
+        _tip = document.createElement('div');
+        _tip.id = 'tx-chip-tooltip';
+        document.body.appendChild(_tip);
+    }
+
+    function _show(chip) {
+        if (!_tip) _init();
+        _active = chip;
+        var label = chip.getAttribute('data-tooltip');
+        if (!label) return;
+        _tip.textContent = label;
+        _tip.classList.remove('tx-tip-below');
+        _tip.classList.remove('visible');
+        // Rendre visible hors-écran pour mesurer
+        _tip.style.left = '-9999px';
+        _tip.style.top  = '-9999px';
+        _tip.style.visibility = 'visible';
+
+        var rect = chip.getBoundingClientRect();
+        var tw = _tip.offsetWidth;
+        var th = _tip.offsetHeight;
+        var gap = 8;
+
+        var left = rect.left + rect.width / 2 - tw / 2;
+        var top  = rect.top - th - _arrowH - gap;
+        var below = false;
+
+        if (top < gap) { // Pas assez de place en haut → passer en dessous
+            top   = rect.bottom + _arrowH + gap;
+            below = true;
+        }
+        // Garder dans la fenêtre horizontalement
+        left = Math.max(gap, Math.min(left, window.innerWidth - tw - gap));
+
+        if (below) _tip.classList.add('tx-tip-below');
+        _tip.style.left = left + 'px';
+        _tip.style.top  = top  + 'px';
+        _tip.classList.add('visible');
+    }
+
+    function _hide() {
+        _active = null;
+        if (!_tip) return;
+        _tip.classList.remove('visible');
+        _tip.style.visibility = 'hidden';
+    }
+
+    document.addEventListener('mouseover', function(e) {
+        var chip = e.target.closest && e.target.closest('.specialty-chip[data-tooltip], .train-matiere-pill[data-tooltip]');
+        if (!chip || chip === _active) return;
+        _show(chip);
+    });
+
+    document.addEventListener('mouseout', function(e) {
+        if (!_active) return;
+        var chip = e.target.closest && e.target.closest('.specialty-chip[data-tooltip], .train-matiere-pill[data-tooltip]');
+        if (chip === _active) _hide();
+    });
+
+    // Sécurité : masquer au scroll / resize
+    window.addEventListener('scroll', _hide, true);
+    window.addEventListener('resize', _hide);
+
+    document.addEventListener('DOMContentLoaded', _init);
 })();
 </script>
 </body>
