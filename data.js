@@ -161,6 +161,8 @@ var ITEM_BADGES = {
 
 var ITEM_REFERENCE = {
     // Format: 'numéro|idCollège': true
+    '10|medecine-interne': true,
+    '270|urologie': true,
     '01|medecine-interne': true,
     '02|medecine-interne': true,
     '03|medecine-interne': true,
@@ -1618,7 +1620,8 @@ var SPECIALTIES_DATA=[
 {"fc":"FC33","num":"324","name":"Éducation thérapeutique et observance"},
 {"fc":"FC35","num":"45","name":"Spécificités des maladies génétiques"},
 {"fc":"FC36","num":"46","name":"Médecine génomique"},
-{"fc":"FC34","num":"330","name":"Anti-inflammatoires et corticoïdes"}
+{"fc":"FC34","num":"330","name":"Anti-inflammatoires et corticoïdes"},
+{"fc":"FC38","num":"10","name":"Approches transversales du corps (LISA UNIQUEMENT)"}
 ]},
 
 {"id":"oncologie","name":"Onco - Anapath.","items":[
@@ -1698,7 +1701,8 @@ var SPECIALTIES_DATA=[
 {"fc":"FC17","num":"50","name":"Pathologie génitoscrotale chez le garçon et l’homme"},
 {"fc":"FC18","num":"201","name":"Transplantation d’organes"},
 {"fc":"FC19","num":"348","name":"Insuffisance rénale aiguë – anurie"},
-{"fc":"FC20","num":"40","name":"Algies pelviennes chez la femme : syndrome de la douleur vésicale"}]},
+{"fc":"FC20","num":"40","name":"Algies pelviennes chez la femme : syndrome de la douleur vésicale"},
+{"fc":"FC21","num":"270","name":"Douleurs lombaires aigues"}]},
 
 {"id":"medecine-legale","name":"MT - Médecine légale","items":[{"fc":"FC01","num":"05","name":"Responsabilités médicales pénale, civile, administrative et disciplinaire"},
 {"fc":"FC02","num":"07","name":"Droits individuels et collectifs du patient"},
@@ -1982,7 +1986,8 @@ var OIC_DATA = {
   { rang:"B", rubrique:"Définition", ordre:17, intitule:"Connaître les différents types d'autopsies" },
 ],
 "014": [
-  { rang:"B", rubrique:"Diagnostic positif", ordre:2, intitule:"L’horizon de la mort dans la maladie grave (approche psychologique, existentielle) 2C-014-DP-B01" },
+  { rang:"A", rubrique:"Définition", ordre:1, intitule:"Connaître les principales représentations et les pratiques sociales autour de la mort (anthropologie)" },
+  { rang:"B", rubrique:"Diagnostic positif", ordre:2, intitule:"L’horizon de la mort dans la maladie grave (approche psychologique, existentielle)" },
 ],
 "015": [
   { rang:"B", rubrique:"Définition", ordre:1, intitule:"Principes du soin psychiatrique sans consentement" },
@@ -7466,11 +7471,8 @@ var DEFAULT_TRAININGS = [
   {id:1000120,title:'CCB EDNi 2023',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000121,title:'CCB ECNi R2C 2023',type:'r2c',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000122,title:'Concours ECN juin 2024',type:'annale',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000123,title:'ECNnf blanc mars 2023',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000124,title:'CCB septembre 2023',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
+  {id:1000124,title:'CCB EDN septembre 2023',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000125,title:'CCB EDNi 2025',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000126,title:'ECNnf blanc juin 2024',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000127,title:'ECNnf blanc avril 2023',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000128,title:'Concours ECN 2020',type:'annale',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000129,title:'Concours ECN 2021',type:'annale',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000130,title:'CCB Hypocampus 2024',type:'ccb',plateforme:'hypocampus',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
@@ -7490,9 +7492,9 @@ var DEFAULT_TRAININGS = [
   {id:1000234,title:'CCB Hypocampus 2026',type:'ccb',plateforme:'hypocampus',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000235,title:'CCB EDNi 2026',type:'ccb',plateforme:'edni',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000236,title:'CCB Asclepia 2026',type:'ccb',plateforme:'asclepia',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000238,title:'CCB EDNp juillet 2025',type:'ccb',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
+  {id:1000238,title:'CCB EDN juillet 2025',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000239,title:'Annales rattrapages janvier 2025',type:'annale',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
-  {id:1000240,title:'CCB EDNp juillet 2024',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
+  {id:1000240,title:'CCB EDN juillet 2024',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000241,title:'CCB ECN avril 2023',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000242,title:'CCB ECN mars 2023',type:'ccb',plateforme:'uness',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
   {id:1000243,title:'Concours EDN octobre 2026',type:'annale',plateforme:'',matiere:'',matieres:[],statut:'non-fait',isDefault:true},
