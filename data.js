@@ -1545,7 +1545,7 @@ var SPECIALTIES_DATA=[
 {"fc":"FC22","num":"94","name":"Rachialgie"},
 {"fc":"FC23","num":"104","name":"Sclérose en plaques"},
 {"fc":"FC24","num":"106","name":"Maladie de Parkinson"},
-{"fc":"FC25","num":"109","name":"Troubles de la marche et de l’équilibre"},
+{"fc":"FC25","num":"131","name":"Troubles de la marche et de l’équilibre : particularités chez le sujet âgé"},
 {"fc":"FC26","num":"118","name":"La personne handicapée (+ITEM 119 LISA)"},
 {"fc":"FC27","num":"120","name":"Complications hypomobilité et du décubitus (ITEM 120 LISA UNIQUE)"},
 {"fc":"FC28","num":"122","name":"Principales techniques de rééducation et de réadaptation"},
