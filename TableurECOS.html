@@ -28988,6 +28988,7 @@ window.ECOSPlanningModule = (function () {
         return '';
     }
     function renderChecklist() {
+	setupChecklistEventListeners();
         const container = document.getElementById('checklist-items');
         const countEl   = document.getElementById('checklist-count');
         if (!container) return;
@@ -29061,19 +29062,53 @@ window.ECOSPlanningModule = (function () {
             return '<div class="legend-item"><span class="legend-badge" style="background:' + color + ';">' + escapeHtml(specShortLabel(sp.id)) + '</span><span class="legend-description">' + escapeHtml(sp.name) + '</span></div>';
         }).join('');
     }
+	
+	/* Initialise les événements de la To-Do une seule fois */
+function setupChecklistEventListeners() {
+    const addButton = document.getElementById('checklist-add-btn');
+    const input = document.getElementById('checklist-new-item');
+
+    if (
+        addButton &&
+        addButton.dataset.checklistEventsInitialized !== 'true'
+    ) {
+        addButton.dataset.checklistEventsInitialized = 'true';
+
+        addButton.addEventListener('click', addManualTask);
+    }
+
+    if (
+        input &&
+        input.dataset.checklistEventsInitialized !== 'true'
+    ) {
+        input.dataset.checklistEventsInitialized = 'true';
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addManualTask();
+            }
+        });
+
+        input.addEventListener('input', (e) => {
+            const errorNotif =
+                document.getElementById('ecos-checklist-error');
+
+            if (errorNotif) {
+                errorNotif.classList.remove('show');
+            }
+
+            e.target.classList.remove('error');
+        });
+    }
+}
+
 
     /* ================= INIT UI (une seule fois) ================= */
     function setupEventListeners() {
         document.getElementById('planning-prev-month')?.addEventListener('click', () => navigateMonth(-1));
         document.getElementById('planning-next-month')?.addEventListener('click', () => navigateMonth(1));
         document.getElementById('planning-today')?.addEventListener('click', goToToday);
-        document.getElementById('checklist-add-btn')?.addEventListener('click', addManualTask);
-        document.getElementById('checklist-new-item')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') addManualTask(); });
-        document.getElementById('checklist-new-item')?.addEventListener('input', (e) => {
-            const err = document.getElementById('ecos-checklist-error');
-            if (err) err.classList.remove('show');
-            e.target.classList.remove('error');
-        });
+setupChecklistEventListeners();
 
         document.addEventListener('click', (e) => {
             const sp = document.getElementById('status-popup');
