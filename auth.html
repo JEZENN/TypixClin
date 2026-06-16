@@ -1244,13 +1244,10 @@ if (logoutBtn) {
                 
                 <!-- RESSOURCES -->
                 <li class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">
-                        <i class="fas fa-folder-open"></i> Ressources
-                        <i class="fas fa-chevron-down dropdown-chevron"></i>
-                    </button>
+                    <button class="nav-dropdown-trigger"><i class="fas fa-folder-open"></i> Ressources <i class="fas fa-chevron-down dropdown-chevron"></i></button>
                     <div class="nav-dropdown-content">
-                        <a href="FichierGsheet.html" class="dropdown-item"><i class="fas fa-table"></i> Tableur Gsheet Externat</a>
-                        <a href="TableurEnLigne.html" class="dropdown-item"><i class="fas fa-calculator"></i> Tableur en ligne Externat</a>
+                        <a href="TableurEnLigne.html" class="dropdown-item"><i class="fas fa-calculator"></i> Tableur révision EDN</a>
+                        <a href="TableurECOS.html" class="dropdown-item"><i class="fas fa-user-doctor"></i> Tableur révision ECOS</a>
                         <a href="index.html" class="dropdown-item"><i class="fas fa-book"></i> Carnet de stage</a>
                     </div>
                 </li>
@@ -1299,8 +1296,8 @@ if (logoutBtn) {
     
     <div class="mobile-menu-section">
         <div class="mobile-menu-title"><i class="fas fa-folder-open"></i> Ressources</div>
-        <a href="FichierGsheet.html" class="mobile-menu-link"><i class="fas fa-table"></i> Tableur Gsheet Externat</a>
-        <a href="TableurEnLigne.html" class="mobile-menu-link"><i class="fas fa-calculator"></i> Tableur en ligne Externat</a>
+        <a href="TableurEnLigne.html" class="mobile-menu-link"><i class="fas fa-calculator"></i> Tableur révision EDN</a>        
+		<a href="TableurECOS.html" class="mobile-menu-link"><i class="fas fa-user-doctor"></i> Tableur révision ECOS</a>
         <a href="index.html" class="mobile-menu-link"><i class="fas fa-book"></i> Carnet de stage</a>
     </div>
 </div>
@@ -1448,10 +1445,9 @@ if (logoutBtn) {
                 <div class="footer-nav-links">
                     <a href="Fiche-examen-clinique.html" class="footer-nav-link">Fiche Examen Clinique</a>
                     <a href="Fiche-ECG.html" class="footer-nav-link">Fiche ECG</a>
-					<a href="FichierGsheet.html" class="footer-nav-link">Tableur Gsheet Externat</a>
-					<a href="TableurEnLigne.html" class="footer-nav-link">Tableur en ligne Externat</a>
-					<a href="index.html" class="footer-nav-link">Carnet de stage</a>
-
+                    <a href="TableurEnLigne.html" class="footer-nav-link">Tableur révision EDN</a>
+                    <a href="TableurECOS.html" class="footer-nav-link">Tableur révision ECOS</a>
+                    <a href="index.html" class="footer-nav-link">Carnet de stage</a>
                 </div>
             </div>
             
@@ -1527,7 +1523,17 @@ function showSuccess() {
 
 // Récupérer la page de redirection depuis l'URL
 const urlParams = new URLSearchParams(window.location.search);
-const redirectPage = urlParams.get('redirect') || 'index.html';
+// Sécurisation : on n'autorise que des chemins relatifs internes (anti open-redirect).
+// Couvre les pages du site, dont TableurECOS.html et TableurEnLigne.html.
+function resolveRedirect() {
+    const raw = urlParams.get('redirect') || 'index.html';
+    // Refuser les URL absolues / externes / protocoles (http://, //, javascript:, etc.)
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith('//') || raw.startsWith('/')) {
+        return 'index.html';
+    }
+    return raw;
+}
+const redirectPage = resolveRedirect();
 
 const reason = urlParams.get('reason');
 if (reason === 'inactivity') {
@@ -1776,7 +1782,20 @@ document.getElementById('forgot-password-link').addEventListener('click', async 
 });
 
 
-onAuthStateChanged(auth, (user) => { if (user) { /* window.location.href = 'index.html'; */ } });
+// ── Redirection automatique si l'utilisateur est DÉJÀ connecté ──
+// Un seul déclenchement, sur la première résolution de l'état d'authentification.
+// Cela évite de bloquer sur auth.html un utilisateur déjà connecté qui arrive
+// via auth.html?redirect=TableurECOS.html (ou toute autre page interne).
+// Les connexions fraîches passent par les gestionnaires de formulaire (showSuccess + redirect),
+// qui s'exécutent après cette première résolution (initialement à null).
+let _redirectHandled = false;
+onAuthStateChanged(auth, (user) => {
+    if (_redirectHandled) return;
+    _redirectHandled = true;
+    if (user && user.emailVerified) {
+        window.location.href = redirectPage;
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const header = document.getElementById('header');
