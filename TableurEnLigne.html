@@ -32688,9 +32688,21 @@ function notesAddToTodo() {
     var result = window.PlanningModule.addItemFromTable(specialtyId, fc, num, name, specCfg.color, specName);
 
     if (result.success) {
-        // Transformer en badge épingle, sans toast
+        // Animation check intermédiaire → épingle (aligné sur le tableur ECOS)
         var todoZone = document.getElementById('notesTodoZone');
-        if (todoZone) {
+        var todoBtn = todoZone && todoZone.querySelector('button.btn-todo');
+        if (todoBtn) {
+            todoBtn.disabled = true;
+            todoBtn.innerHTML = '<i class="fas fa-check"></i>';
+            todoBtn.style.cssText = 'background:#10b981!important;color:#fff!important;border-color:#10b981!important;transition:all .18s ease;';
+            setTimeout(function() {
+                todoBtn.style.transition = 'opacity .25s ease';
+                todoBtn.style.opacity = '0';
+                setTimeout(function() {
+                    if (todoZone) todoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la Todo"><i class="fas fa-thumbtack"></i></span>';
+                }, 220);
+            }, 750);
+        } else if (todoZone) {
             todoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la Todo"><i class="fas fa-thumbtack"></i></span>';
         }
         // Mettre à jour l'épingle dans le tableau si visible
@@ -36278,11 +36290,26 @@ window.trainNotesTodo = function() {
   var SC = (typeof SPECIALTY_CONFIG !== 'undefined') ? SPECIALTY_CONFIG : {};
   var cfg = (t.matiere && SC[t.matiere]) ? SC[t.matiere] : { color:'#8b5cf6' };
   var result = window.PlanningModule.addItemFromTable('train', String(id), '', t.title, cfg.color, t.matiere||'', { trainType: t.type||'', trainPlateforme: t.plateforme||'' });
-  var toastMsg = result.success ? 'Entraînement ajouté à la To-do !' : result.message;
-  if (window.showToastNotification) window.showToastNotification(toastMsg, result.success ? 'success' : 'warning');
+  // Pas de notification en cas de succès (l'animation check → épingle suffit) ; on avertit seulement en cas d'échec
+  if (!result.success && window.showToastNotification) window.showToastNotification(result.message, 'warning');
   if (result.success) {
     var tnTodoZone = document.getElementById('trainNotesTodoZone');
-    if (tnTodoZone) tnTodoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la To-do"><i class="fas fa-thumbtack"></i></span>';
+    var tnTodoBtn = tnTodoZone && tnTodoZone.querySelector('button.btn-todo');
+    // Animation check intermédiaire → épingle (aligné sur le tableur ECOS)
+    if (tnTodoBtn) {
+      tnTodoBtn.disabled = true;
+      tnTodoBtn.innerHTML = '<i class="fas fa-check"></i>';
+      tnTodoBtn.style.cssText = 'background:#10b981!important;color:#fff!important;border-color:#10b981!important;transition:all .18s ease;';
+      setTimeout(function() {
+        tnTodoBtn.style.transition = 'opacity .25s ease';
+        tnTodoBtn.style.opacity = '0';
+        setTimeout(function() {
+          if (tnTodoZone) tnTodoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la To-do"><i class="fas fa-thumbtack"></i></span>';
+        }, 220);
+      }, 750);
+    } else if (tnTodoZone) {
+      tnTodoZone.innerHTML = '<span class="notes-todo-badge" title="Ajouté à la To-do"><i class="fas fa-thumbtack"></i></span>';
+    }
     // Mettre à jour le bouton dans le tableau si visible
     document.querySelectorAll('[onclick*="_sendTrainToTodo(' + id + ',"]').forEach(function(btn){
       var badge = document.createElement('span');
@@ -40501,6 +40528,8 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   margin-right: 3px;
   opacity: 0.85;
 }
+
+
 </style>
 
 <!-- ===== SPINNER BOUTON IMAGE - JS ===== -->
@@ -43678,7 +43707,42 @@ if (!window._ednScrollLock) {
 .day-detail-open-btn:active { transform: scale(0.9); }
 [data-theme="dark"] .day-detail-open-btn { background: rgba(96,165,250,0.2); color: #93c5fd; }
 [data-theme="dark"] .day-detail-open-btn:hover { background: #3b82f6; color: #fff; }
-@media (max-width: 768px) { .pdd-modal { width: calc(100vw - 1rem); height: calc(100dvh - 1rem); } .pdd-controls { width: 100%; } }
+@media (max-width: 768px) {
+    .pdd-modal { width: calc(100vw - 1rem); height: calc(100dvh - 1rem); }
+    /* Bouton fermer toujours en haut à droite (aligné sur le tableur ECOS) */
+    .pdd-head-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        align-items: center;
+        column-gap: 0.7rem;
+        row-gap: 0.8rem;
+        width: 100%;
+    }
+    .pdd-head-row > .pdd-icon { grid-column: 1; grid-row: 1; align-self: center; }
+    .pdd-head-row > .pdd-titles { grid-column: 2; grid-row: 1; min-width: 0; margin: 0; }
+    .pdd-head-row > .pdd-close { grid-column: 3; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
+    .pdd-head-row > .pdd-controls {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.65rem;
+        width: 100%;
+        margin: 0;
+    }
+    .pdd-controls .pdd-spec-btn,
+    .pdd-controls .pdd-status-wrap,
+    .pdd-controls .pdd-status-btn {
+        width: 100%;
+        min-width: 0;
+    }
+    .pdd-controls .pdd-chip {
+        min-height: 44px;
+        justify-content: center;
+        padding: 0.5rem 0.7rem;
+    }
+}
 /* ===== Dimensions des cases du planning alignées sur ECOS (cases plus hautes) ===== */
 .calendar-day { min-height: 205px; }
 @media (max-width: 1400px) { .calendar-day { min-height: 185px; } }
