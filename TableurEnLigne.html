@@ -8189,12 +8189,70 @@ body.tours-compact .ranking-extra-stat.time-stat {
     gap: 1rem;
 }
 
+/* =========================================================
+   HEADER PLANNING — NAVIGATION TOUJOURS CENTRÉE (robuste)
+   Centre les boutons sans les déplacer selon la longueur du mois,
+   sans débordement ni chevauchement (iPad large, téléphone paysage).
+   ========================================================= */
+@media (min-width: 1367px) {
+    .planning-header-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .planning-month-display {
+        justify-self: start;
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+
+    .planning-nav-controls {
+        justify-self: center;
+        flex: 0 0 auto;
+    }
+
+    .planning-date-selector {
+        justify-self: end;
+        min-width: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
 
 .planning-date-selector {
     justify-self: end;
 }
 
 
+
+/* Tablettes / iPad (jusqu'au 12,9" paysage = 1366px) : en-tête du planning sur UNE
+   seule ligne et sans le sélecteur Mois/Année (la navigation se fait avec les flèches
+   et « Aujourd'hui »). Le sélecteur ne réapparaît qu'au-delà, sur desktop large. */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .planning-date-selector { display: none !important; }
+    .planning-header-row {
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .planning-month-display { min-width: 0; flex: 1 1 auto; }
+    .planning-month-title { min-width: 0; }
+    .planning-month-title #current-month-name { white-space: nowrap; }
+    .planning-nav-controls { flex: 0 0 auto; }
+}
+
+/* Empêche tout débordement horizontal du planning vers la droite, quelle que soit
+   la largeur. `clip` ne crée pas de conteneur de défilement : l'en-tête de semaine
+   sticky et les menus déroulants (qui s'ouvrent vers le bas) restent intacts, et le
+   défilement horizontal du calendrier reste géré par son propre wrapper interne. */
+@media (min-width: 769px) {
+    #page-planning { max-width: 100%; overflow-x: clip; }
+}
 
 .planning-month-display { display: flex; align-items: center; gap: 1rem; }
 
@@ -8309,7 +8367,7 @@ body.tours-compact .ranking-extra-stat.time-stat {
     }
 	
 .calendar-container {
-    min-width: 900px !important;
+    min-width: 1300px !important;
     width: 100% !important;
     max-width: none !important;
     flex-shrink: 0;
@@ -8326,6 +8384,45 @@ body.tours-compact .ranking-extra-stat.time-stat {
         width: 100%;
     }
 
+}
+
+/* iPad large (11"/12,9" paysage, 1025–1366px) : reproduire le comportement du
+   téléphone — cases plus larges grâce à une largeur minimale du calendrier, avec
+   défilement horizontal interne si le planning dépasse (pas de débordement de page). */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .calendar-scroll-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
+    }
+    .calendar-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 3px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+    .calendar-weekdays {
+        position: static !important;
+        box-shadow: none;
+    }
+
+    .calendar-container {
+        min-width: 1300px !important;
+        width: 100% !important;
+        max-width: none !important;
+        flex-shrink: 0;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
+    }
+
+    .planning-main {
+        overflow: visible;
+        width: 100%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -9022,6 +9119,13 @@ body.tours-compact .ranking-extra-stat.time-stat {
     .calendar-day { min-height: 150px; }
     .day-notes-input { font-size: 0.68rem; min-height: 50px; }
     .day-specialty-zone { min-height: 28px; }
+}
+
+/* Tablettes / iPad (769–1366px) : cases-notes du planning un peu plus hautes */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .calendar-day { min-height: 188px; }
+    .day-notes-zone { min-height: 72px; }
+    .day-notes-input { min-height: 112px; max-height: 200px; }
 }
 
 @media (max-width: 768px) {
@@ -44378,8 +44482,8 @@ window.openPlanningDayDetailModal = openModal;
    BOUTON TO-DO — RESPONSIVE TÉLÉPHONE ET IPAD
    ========================================================= */
 
-/* Petit iPad et tablette */
-@media (max-width: 1024px) {
+/* Petit iPad et tablette → 12,9" paysage (jusqu'à 1366px) : To-Do en icône seule */
+@media (max-width: 1366px) {
     .edn-nav-row {
         flex-wrap: nowrap;
         align-items: stretch;
@@ -44409,6 +44513,13 @@ window.openPlanningDayDetailModal = openModal;
     .edn-todo-btn > i {
         font-size: 1.3rem;
     }
+}
+
+/* Nav onglets en icônes seules jusqu'à 1366px (évite le débordement du bouton To-Do) */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .app-nav-btn span { display: none; }
+    .app-nav-btn i { font-size: 1.2rem; }
+    .app-nav-btn { min-width: auto; padding: 0.75rem 1rem; }
 }
 
 /* Téléphones */
