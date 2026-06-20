@@ -14,9 +14,9 @@ var ECOS_DATA_META = {
         "SDD_specialites_badges_familles(1).pdf",
         "Toutes_les_SDD_LiSA_2025(2).pdf"
     ],
-    "sddCount": 356,
-    "specialtyCount": 25,
-    "familyCount": 5,
+    "sddCount": 364,
+    "specialtyCount": 26,
+    "familyCount": 6,
     "notes": "Données extraites automatiquement des PDF fournis. Vérifier manuellement les lignes complexes si nécessaire."
 };
 
@@ -120,6 +120,10 @@ var ECOS_BADGE_CONFIG = {
     "medecine-generale": {
         "label": "MGE",
         "class": "medecine-generale"
+    },
+    "procedures": {
+        "label": "PRO",
+        "class": "procedures"
     }
 };
 
@@ -148,7 +152,8 @@ var ECOS_SPECIALTY_SHORT = {
     "urologie": "URO",
     "medecine-legale": "MTL",
     "sante-publique": "SPU",
-    "medecine-generale": "MGE"
+    "medecine-generale": "MGE",
+    "procedures": "PRO"
 };
 
 var ECOS_SPECIALTIES = [
@@ -301,6 +306,12 @@ var ECOS_SPECIALTIES = [
         "name": "Urologie",
         "badge": "URO",
         "count": 13
+    },
+    {
+        "id": "procedures",
+        "name": "Procédures",
+        "badge": "PRO",
+        "count": 8
     }
 ];
 
@@ -329,6 +340,11 @@ var ECOS_SDD_FAMILIES = [
         "id": "symptomes-signes-cliniques",
         "name": "Symptômes/signes cliniques",
         "count": 180
+    },
+    {
+        "id": "procedures",
+        "name": "Procédures",
+        "count": 8
     }
 ];
 
@@ -43830,6 +43846,1715 @@ var ECOS_SDD_DATA = [
             }
         ],
         "expectedStageRaw": "Informer l'accompagnant des stratégies analgésiques et des        Education/prévention               Communicateur\nsituations nécessitant une consultation en urgence\nGérer spécifiquement les traitements habituels dans la période    Stratégie pertinente de prise en   Clinicien\npéri-opératoire                                                   charge\nEchanger avec le chirurgien, l'opérateur, l'anesthésiste pour     Communication                      Coopérateur\noptimiser la prise en charge péri-opératoire                      inter-professionnelle\nS'assurer que les critères d'aptitude de retour à domicile sont   Stratégie pertinente de prise en   Clinicien\nréunis                                                            charge"
+    },
+    {
+        "id": "PROC-P1",
+        "number": "P1",
+        "code": "P1",
+        "sortOrder": 1,
+        "title": "Palpation mammaire",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [
+                "ATTENTION : possible association d’anomalies mammaires et ganglionnaires",
+                "ATTENTION : possible examen normal"
+            ],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient,",
+                        "Rappeler l’indication de l’examen mammaire."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander à la patiente si elle a DEJA VECU ce geste :",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, inspection puis palpation des seins et ganglions,",
+                        "Objectifs, recherche d’anomalie des différentes structures,",
+                        "Risques, examen desagréable et parfois douloureux.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste :",
+                        "Expliquer la possibilité d’arrêter à tout moment.",
+                        "Demander au patient de SE DESHABILLER."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Analyse visuelle des seins :",
+                        "Volume et symétrie, en comparant les 2 seins,",
+                        "Régularité, avec aspect évocateur de masse,",
+                        "Placard inflammatoire, avec rougeur et peau d’orange,",
+                        "Lésion cutanée, comme rétractation, ulcération ou plaie.",
+                        "Analyse visuelle du mamelon :",
+                        "Taille et symétrie, avec recherche d’invagination,",
+                        "Lésion cutanée et écoulement spontané, avec sang, lait...",
+                        "Inflammation, avec chaleur, rougeur et peau d’orange,",
+                        "Recherche d’adénopathie claviculaire ou axillaire visible."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, initialement assise mains derrière la tête,",
+                        "HYGIENE, avec lavage des mains au SHA,",
+                        "POSITIONNEMENT du côté où la main dominante est en haut,",
+                        "INFORMATION DU PATIENT que l’on va commencer le geste,",
+                        "STABILISATION DU SEIN avec la main non dominante :",
+                        "Commencer du côté où le patient n’a pas de plainte,",
+                        "Attraper délicatement la base du sein pour le bloquer.",
+                        "PALPATION RAPIDE des différentes structures avec la main dominante :",
+                        "Quadrant par quadrant, en rayon de roue vers le mamelon,",
+                        "Avec les 2 premières phalanges de tous les doigts,",
+                        "Palpation douce pour première évaluation des lésions.",
+                        "CHANGEMENT DE POSITION, allongée mains derrière la tête pour la suite,",
+                        "PALPATION PRECISE des différentes structures avec la main dominante :",
+                        "Même méthode que la palpation en position debout,",
+                        "Palpation plus intense pour évaluer les lésions en détail,",
+                        "Eventuellement manoeuvre de Tillaux cherchant adhérence pectorale.",
+                        "PRESSION DU MAMELON, pour chercher un écoulement.",
+                        "EXAMEN GANGLIONNAIRE à la suite de l’examen mammaire :",
+                        "Exploration de l’aire axillaire idéalement assise bras relâché,",
+                        "Exploration sus-claviculaire et sous-claviculaire allongée."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "DIAGNOSTIC à donner en justifiant avec la vignette et l’examen,",
+                        "PRISE EN CHARGE en quelques mots pour conclure."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "Localisation, en précisant la latéralité et le quadrant atteint,",
+                        "Taille, forme et contours nets ou évasés,",
+                        "Consistance et homogénéité, avec aspect souple ou pierreux,",
+                        "Douleur provoquée à la palpation,",
+                        "Adhérence au plan profond, à la fois du sein et du pectoral."
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Adénofibrome",
+                    "vignette": [
+                        "Femme jeune voire adolescente."
+                    ],
+                    "findings": [
+                        "Masse de 15 mm, ronde et mobile,",
+                        "Consistance ferme et régulière,",
+                        "Pas de douleur à la palpation,",
+                        "Généralement pas d’adénopathies."
+                    ],
+                    "nextSteps": [
+                        "Echographie mammaire pour confirmation,",
+                        "Microbiopsie si risque de malignité :",
+                        "Age supérieur à 30 ans,",
+                        "Antécédent familial de cancer du sein",
+                        "Imagerie ou clinique atypique."
+                    ],
+                    "tag": "Bénin, rassurer la patiente"
+                },
+                {
+                    "title": "Kyste",
+                    "vignette": [
+                        "Femme d’âge moyen entre 35 et 50 ans,",
+                        "Parfois associé à placard de mastose."
+                    ],
+                    "findings": [
+                        "Masse de 15 mm, sphérique et immobile,",
+                        "Consistance ferme et régulière,",
+                        "Pas de douleur à la palpation,",
+                        "Généralement pas d’adénopathies."
+                    ],
+                    "nextSteps": [
+                        "Mammographie et échographie à faire,",
+                        "Microbiopsie si présentation atypique,",
+                        "RHD, arrêt des excitants et bon soutien,",
+                        "Progestatifs en 2e partie de cycle."
+                    ],
+                    "tag": "Bénin, rassurer la patiente"
+                },
+                {
+                    "title": "Mastose fibro-kystique",
+                    "vignette": [
+                        "Femme d’âge moyen entre 35 et 50 ans,",
+                        "Parfois associé à kyste isolé."
+                    ],
+                    "findings": [
+                        "Placard de 7x3 cm, ovalaire et immobile,",
+                        "Consistance ferme avec gros lobules,",
+                        "Pas de douleur à la palpation,",
+                        "Généralement pas d’adénopathies."
+                    ],
+                    "nextSteps": [
+                        "Mammographie et échographie à faire,",
+                        "Microbiopsie si présentation atypique,",
+                        "RHD, arrêt des excitants et bon soutien,",
+                        "Progestatifs en 2e partie de cycle."
+                    ],
+                    "tag": "Bénin, rassurer la patiente"
+                },
+                {
+                    "title": "Carcinome mammaire",
+                    "vignette": [
+                        "Femme plutôt âgée mais jeune possible,",
+                        "Découverte fortuite par dépistage,",
+                        "Autopalpation de masse du sein,",
+                        "Antécédents évocateurs de tumeur,",
+                        "AEG, métastases osseuses ou respiratoires"
+                    ],
+                    "findings": [
+                        "Masse de 2, 3 ou 5 cm et immobile,",
+                        "Consistance pierreuse et irrégulière,",
+                        "Possibles adénopathies toujours mobiles,",
+                        "Aspect inflammatoire si stade T à 4D,",
+                        "Douleurs à la palpation si stade T à 4D."
+                    ],
+                    "nextSteps": [
+                        "Mammographie et échographie à faire,",
+                        "Macrobiopsie selon résultats,",
+                        "Consultation oncogénétique si FDR,",
+                        "RCP pertinente à évoquer."
+                    ],
+                    "tag": "Malin",
+                    "dayJNote": "Max 4 ganglions sur mannequin"
+                },
+                {
+                    "title": "Classifications TNM possibles sur mannequin",
+                    "vignette": [],
+                    "findings": [
+                        "T pour la tumeur primitive :",
+                        "T0 si non palpable donc ganglions seuls,",
+                        "T1 si masse de 2 cm,",
+                        "T2 si masse de 3 ou 5 cm,",
+                        "T4d si précision de signes inflammatoires.",
+                        "N pour l’extension ganglionnaire :",
+                        "N0 si absence d’envahissement,",
+                        "N1 si adénopathies axillaires mobiles,",
+                        "N3 si adénopathies claviculaires.",
+                        "M pour l’envahissement métastatique :",
+                        "M0 si pas de signes de métastases,",
+                        "M1 si signes en faveur dans la vignette."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Mannequin"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à une palpation mammaire.",
+                "Je vérifie tout d'abord l'identité de la patiente avec son nom, son prénom et sa date de naissance.",
+                "J'explique à la patiente que l'examen consiste à inspecter puis palper les deux seins, les mamelons et les aires ganglionnaires. Le but est de rechercher une anomalie de forme, de taille, une masse, une douleur, un écoulement mamelonnaire ou des ganglions. Je lui précise que l'examen peut être gênant car il nécessite d'être dévêtue à partir de la taille, mais qu'il ne doit pas être douloureux. Je ferme bien la porte, je respecte son intimité, et je lui demande son accord avant de commencer.",
+                "Je lui demande également si elle présente actuellement une douleur mammaire, un écoulement, une modification récente du sein ou du mamelon.",
+                "Je me lave les mains avec une solution hydroalcoolique, et je réchauffe mes mains avant de débuter l'examen.",
+                "Je commence par l'inspection, de façon bilatérale et comparative. J'observe les seins en position assise ou debout, les bras le long du corps, puis les bras levés derrière la tête, puis les mains sur les hanches en contractant les pectoraux.",
+                "À l'inspection, je recherche une asymétrie récente, une modification du volume ou du galbe des seins, une voussure, une rétraction cutanée, une rétraction mamelonnaire, une rougeur, un œdème, une peau d'orange, une ulcération, une lésion cutanée, un aspect inflammatoire ou un écoulement spontané du mamelon.",
+                "Je poursuis par la palpation mammaire. J'installe la patiente en décubitus dorsal, avec le bras du côté examiné placé derrière la tête. Je palpe les deux seins de manière systématique et comparative, quadrant par quadrant, avec la pulpe des doigts et les deux premières phalanges. Je réalise une pression douce puis une pression plus profonde, en faisant rouler la glande mammaire sur le grill costal.",
+                "Je n'oublie pas la région rétro-aréolaire ni le mamelon. Je recherche une masse. Si je palpe une masse, je la décris précisément : sa taille en centimètres, le côté, le quadrant ou le rayon horaire, sa distance par rapport au mamelon, sa consistance molle, ferme ou pierreuse, ses contours réguliers ou irréguliers, son caractère douloureux ou non, et sa mobilité par rapport à la peau et au plan profond, notamment avec la manœuvre de Tillaux.",
+                "Je recherche ensuite un écoulement provoqué par une pression douce du sein vers le mamelon. Si un écoulement est présent, je précise s'il est uni ou bilatéral, unipore ou multipore, et son aspect : séreux, sanglant, lactescent ou verdâtre.",
+                "Je termine par la palpation des aires ganglionnaires, toujours de façon bilatérale et comparative. Je palpe les creux axillaires, les aires sus-claviculaires et sous-claviculaires. Si je retrouve une adénopathie, je précise son nombre, sa taille, sa consistance, sa sensibilité, ses limites et sa mobilité.",
+                "Je fais ensuite la synthèse de mes observations cliniques.",
+                "Si je retrouve une masse dure, irrégulière, peu mobile, associée ou non à une adénopathie, cela constitue une anomalie suspecte. Je complète alors par une imagerie mammaire avec mammographie bilatérale et échographie mammaire, puis j'adresse la patiente en filière sénologique pour la suite de la prise en charge.",
+                "Je rhabille la patiente, je lui explique mes constatations, je réponds à ses questions, puis je me lave les mains."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P2",
+        "number": "P2",
+        "code": "P2",
+        "sortOrder": 2,
+        "title": "Palpation testiculaire",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [
+                "ATTENTION : possible examen normal"
+            ],
+
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient,",
+                        "Rappeler l’indication de l’examen testiculaire."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander au patient s’il a DEJA VECU ce geste :",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, examen visuel puis palpation du scrotum,",
+                        "Objectifs, recherche d’anomalie des différentes structures,",
+                        "Risques, examen desagréable et parfois douloureux.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste :",
+                        "Expliquer la possibilité d’arrêter à tout moment.",
+                        "Demander au patient de SE DESHABILLER."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Recherche de lésion cutanée directement visible :",
+                        "Décrire rapidement l’aspect avec couleur et taille,",
+                        "Dire que c’est évocateur d’un cancer du pénis.",
+                        "Analyse visuelle du scrotum, recherchant :",
+                        "Volume, augmenté de taille ou normal,",
+                        "Régularité, avec aspect évocateur de hernie ou varicocèle.",
+                        "Signes inflammatoires, avec chaleur et rougeur."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, allongée et confortable pour le patient,",
+                        "HYGIENE, avec lavage des mains au SHA et port de gants non stériles,",
+                        "POSITIONNEMENT du côté où la main dominante est en bas,",
+                        "INFORMATION DU PATIENT que l’on va commencer le geste,",
+                        "STABILISATION DU TESTICULE avec la main non dominante :",
+                        "Commencer du côté où le patient n’a pas de plainte,",
+                        "Attraper délicatement la base du scrotum pour bloquer le testicule.",
+                        "PALPATION des différentes structures avec la main dominante :",
+                        "Testicule, avec évaluation de taille, consistance et sensibilité,",
+                        "Sillon épididymo-testiculaire, présent ou non,",
+                        "Epididyme, en évaluant taille, consistance et sensibilité,",
+                        "Cordon spermatique, recherchant une douleur ou une masse,",
+                        "Orifices herniaires, en remontant de doigt dans le canal inguinal.",
+                        "TRANSILLUMINATION en cas de clinique d’hydrocèle ou kyste."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "DIAGNOSTIC à donner en justifiant avec la vignette et l’examen,",
+                        "PRISE EN CHARGE en quelques mots pour conclure."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "A résumer en une phrase avec la vignette"
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Varicocèle",
+                    "vignette": [
+                        "Homme plutôt jeune,",
+                        "Tuméfaction ou pesanteur progressive,",
+                        "Difficultés à procréer,",
+                        "Masse rénale ou cancer du rein connu."
+                    ],
+                    "findings": [
+                        "Tuméfaction possible de la bourse,",
+                        "Varicosité visible ou palpable,",
+                        "Pas de signes inflammatoires,",
+                        "Testicule, sillon et épididyme normaux,",
+                        "Orifices herniaires libres."
+                    ],
+                    "nextSteps": [
+                        "Echographie testiculaire pour confirmer."
+                    ],
+                    "tag": null,
+                    "dayJNote": "A gauche sur le mannequin"
+                },
+                {
+                    "title": "Tumeur de testicule et pénis",
+                    "vignette": [
+                        "Homme plutôt jeune mais âgé possible,",
+                        "Tuméfaction progressive et indolore,",
+                        "Antécédents évocateurs de tumeur,",
+                        "AEG et signes respiratoires ou osseux."
+                    ],
+                    "findings": [
+                        "Tuméfaction possible de la bourse,",
+                        "Masse testiculaire pierreuse et indolore,",
+                        "Pas de signes inflammatoires,",
+                        "Sillon et épididyme normaux,",
+                        "Orifices herniaires libres."
+                    ],
+                    "nextSteps": [
+                        "Echographie pour confirmation."
+                    ],
+                    "tag": "Malin",
+                    "dayJNote": "A gauche avec lésion pénienne sur le mannequin"
+                },
+                {
+                    "title": "Kyste épididymaire",
+                    "vignette": [
+                        "Homme plutôt jeune voire enfant,",
+                        "Tuméfaction ou pesanteur progressive,",
+                        "Clinique pauvre en dehors."
+                    ],
+                    "findings": [
+                        "Tuméfaction possible de la bourse,",
+                        "Masse épididymaire ronde et indolore,",
+                        "Transillumination positive du kyste,",
+                        "Pas de signes inflammatoires,",
+                        "Testicule et sillon normaux,",
+                        "Orifices herniaires libres."
+                    ],
+                    "nextSteps": [
+                        "Echographie testiculaire pour confirmer."
+                    ],
+                    "tag": null,
+                    "dayJNote": "A gauche sur le mannequin"
+                },
+                {
+                    "title": "Epididymite et orchite",
+                    "vignette": [
+                        "Tuméfaction et douleur rapide,",
+                        "Ecoulement, SFU ou fièvre possibles."
+                    ],
+                    "findings": [
+                        "Clinique évocatrice, soulagée par préhension :",
+                        "Tuméfaction douloureuse de la bourse,",
+                        "Signes inflammatoires présents,",
+                        "Epidydime tuméfié et douloureux,",
+                        "Si orchite associée :",
+                        "Absence du sillon du fait de l’oedème,",
+                        "Testicule tuméfié et douloureux,",
+                        "Orifices herniaires libres."
+                    ],
+                    "nextSteps": [
+                        "Antibiothérapie probabiliste adaptée."
+                    ],
+                    "tag": null,
+                    "dayJNote": "Epididymite à droite et orchi-épididymite à gauche"
+                },
+                {
+                    "title": "Hydrocèle",
+                    "vignette": [
+                        "Homme de tout âge y compris enfant,",
+                        "Tuméfaction ou pesanteur progressive,",
+                        "Volume testiculaire variable en journée."
+                    ],
+                    "findings": [
+                        "Tuméfaction importante de la bourse,",
+                        "Pas de signes inflammatoires,",
+                        "Palpation difficile des reliefs,",
+                        "Testicule, sillon et épididyme normaux,",
+                        "Transillumination positive de la bourse,",
+                        "Orifices herniaires libres sauf si enfant."
+                    ],
+                    "nextSteps": [
+                        "Echographie scrotale pour confirmer."
+                    ],
+                    "tag": null,
+                    "dayJNote": "A gauche sur le mannequin"
+                },
+                {
+                    "title": "Hernie inguinale indirecte",
+                    "vignette": [
+                        "Tuméfaction ou pesanteur progressive,",
+                        "Douleur brutale et occlusion si étranglée,",
+                        "FDR comme toux chronique ou surpoids."
+                    ],
+                    "findings": [
+                        "Tuméfaction possible de la bourse,",
+                        "Pas de signes inflammatoires,",
+                        "Testicule, sillon et épididyme normaux,",
+                        "Orifices herniaires pleins non réductible,",
+                        "Matériel digestif distinct des testicules."
+                    ],
+                    "nextSteps": [
+                        "Chirurgie en urgence si étranglée,",
+                        "Surveillance si hernie simple."
+                    ],
+                    "tag": null,
+                    "dayJNote": "Matériel digestif dans scrotum sur le mannequin"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à une palpation testiculaire et à un examen génital masculin.",
+                "Je vérifie tout d'abord l'identité du patient avec son nom, son prénom et sa date de naissance.",
+                "J'explique au patient que l'examen consiste à inspecter puis palper les testicules, les épididymes, les cordons spermatiques, le scrotum et le pénis. L'objectif est de rechercher une masse, une infection, une hydrocèle, une varicocèle, une hernie ou des signes de torsion testiculaire.",
+                "Je lui précise que l'examen peut être gênant ou désagréable, mais qu'il ne doit pas être douloureux. Je lui demande de me signaler toute douleur pendant l'examen. Je recueille son consentement.",
+                "J'installe le patient en décubitus dorsal. Je peux également l'examiner debout si je recherche une varicocèle. Je me lave les mains avec une solution hydroalcoolique, puis j'enfile des gants non stériles.",
+                "Je commence par l'inspection des bourses, de manière bilatérale et comparative. Je recherche une asymétrie de taille, de position ou de coloration, une tuméfaction, un aspect inflammatoire du scrotum avec rougeur ou œdème, un aspect variqueux évocateur de varicocèle, une ascension testiculaire, une horizontalisation du testicule, une anomalie cutanée ou un orifice herniaire.",
+                "J'inspecte également le pénis, le gland et le méat urinaire, à la recherche d'un écoulement, d'un érythème du méat, d'une anomalie cutanée, d'un hypospadias ou d'un épispadias.",
+                "Je commence toujours par le côté non douloureux. Je réalise une palpation bimanuelle de chaque testicule : une main soutient et stabilise le testicule, et l'autre main explore. Je palpe le testicule, l'épididyme et le cordon spermatique. Je recherche une douleur, une masse, un kyste, un tour de spire, une modification de taille, de consistance ou de régularité.",
+                "Si je retrouve une masse, je la décris précisément : taille, localisation, consistance, régularité, caractère douloureux ou non, mobilité, et rapport avec le testicule et l'épididyme.",
+                "Je recherche ensuite le sillon épididymo-testiculaire. S'il est conservé, cela peut orienter vers une tumeur testiculaire. S'il est effacé, cela peut orienter vers une orchi-épididymite.",
+                "Je recherche le signe de Prehn : je soulève doucement le testicule douloureux. Une diminution de la douleur peut orienter vers une orchi-épididymite, tandis qu'une absence de soulagement peut orienter vers une torsion du cordon spermatique.",
+                "Je recherche également le réflexe crémastérien, qui peut être aboli dans la torsion testiculaire.",
+                "Si la bourse est augmentée de volume, je réalise une transillumination, testicule par testicule. Une transillumination positive, avec passage homogène de la lumière à travers le scrotum, évoque une hydrocèle.",
+                "Si je recherche une varicocèle, je peux demander au patient de réaliser une manœuvre de Valsalva, qui peut faire apparaître ou majorer une tuméfaction variqueuse.",
+                "Je palpe également les orifices herniaires à la recherche d'une hernie ; en cas de hernie, je recherche des signes d'engouement ou d'étranglement.",
+                "Je fais ensuite la synthèse.",
+                "Devant une masse intratesticulaire ferme, irrégulière et indolore, je suspecte une tumeur testiculaire. Je demande alors une échographie testiculaire en urgence relative et un bilan de marqueurs tumoraux avec AFP, bêta-HCG totale et LDH, puis j'adresse le patient en urologie.",
+                "Devant une douleur aiguë avec testicule ascensionné, horizontalisé, réflexe crémastérien aboli et absence de soulagement au signe de Prehn, je suspecte une torsion du cordon spermatique. C'est une urgence chirurgicale, j'adresse immédiatement le patient aux urgences urologiques sans retarder la prise en charge.",
+                "Devant une douleur avec scrotum inflammatoire et sillon épididymo-testiculaire effacé, je suspecte une orchi-épididymite. Je complète alors par un ECBU, une recherche d'IST selon le contexte, et un traitement adapté.",
+                "Je retire mes gants, je les jette, je me lave les mains, puis j'explique au patient la suite de la prise en charge."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P3",
+        "number": "P3",
+        "code": "P3",
+        "sortOrder": 3,
+        "title": "Massage cardiaque externe",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Vérifier rapidement la sécurité de l'environnement avant de s'approcher du patient.",
+                        "Vérifier l'identité si elle est connue ou disponible.",
+                        "Installer le patient en décubitus dorsal sur un plan dur ; demander de l'aide à voix haute.",
+                        "En milieu hospitalier : réanimateur / équipe d'urgence vitale, chariot d'urgence, défibrillateur, BAVU, oxygène, matériel de VVP.",
+                        "En extra-hospitalier : appeler le 15 et apporter un défibrillateur automatisé externe.",
+                        "Transmettre : fonction, prise en charge d'un ACR, heure de début, localisation exacte (service / chambre), rester joignable, ne pas raccrocher sans autorisation."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Patient inconscient sans respiration normale = arrêt cardio-respiratoire, urgence vitale.",
+                        "Noter l’heure de constatation de l’arrêt."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Stimuler le patient verbalement et physiquement (« Monsieur, vous m'entendez ? Serrez-moi la main. Ouvrez les yeux. »).",
+                        "Libérer les voies aériennes : bascule prudente de la tête en arrière, élévation du menton, recherche d'un corps étranger visible.",
+                        "Vérifier la respiration quelques secondes : regarder le thorax, écouter, ressentir un souffle.",
+                        "Patient inconscient sans respiration normale = arrêt cardio-respiratoire, urgence vitale.",
+                        "Noter l'heure de constatation de l'arrêt."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "Se placer à genoux à côté du patient ; dégager le thorax.",
+                        "Talon d'une main au centre du thorax, sur la moitié inférieure du sternum, l'autre main par-dessus.",
+                        "Bras tendus, épaules à la verticale des mains.",
+                        "Fréquence 100 à 120 par minute, profondeur 5 à 6 cm chez l'adulte.",
+                        "Laisser le thorax se réexpanser complètement (temps de compression = temps de relâchement).",
+                        "Limiter au maximum les interruptions.",
+                        "30 compressions puis 2 insufflations au BAVU si matériel et aide disponibles.",
+                        "Sinon, compressions en continu en attendant le matériel.",
+                        "Demander un relais du masseur toutes les 2 minutes pour maintenir un massage efficace.",
+                        "Pédiatrie : 5 insufflations initiales avant le massage.",
+                        "Enfant : 15 compressions pour 2 insufflations s'il y a deux sauveteurs.",
+                        "Position des mains : adulte deux mains ; enfant > 1 an talon d'une main ; nourrisson < 1 an deux pouces ou deux doigts selon la situation.",
+                        "Dès l'arrivée : allumer et suivre les instructions ; poser les électrodes (sous la clavicule droite, latérale gauche sous le mamelon) sans interrompre le massage plus que nécessaire.",
+                        "Demander à tout le monde de s'écarter pendant l'analyse du rythme.",
+                        "Vérifier que personne ne touche le patient, annoncer « écartez-vous », délivrer le choc.",
+                        "Reprendre immédiatement le massage après le choc, sans rechercher de pouls.",
+                        "Chocs répétés toutes les 2 minutes selon l'analyse, avec poursuite du massage entre chaque analyse.",
+                        "Reprendre immédiatement le massage et poursuivre la réanimation.",
+                        "Réévaluer le rythme toutes les 2 minutes.",
+                        "Poser une voie veineuse périphérique dès que possible.",
+                        "Rythme non choquable : adrénaline 1 mg toutes les 4 minutes selon le protocole.",
+                        "Coordonner : massage efficace, ventilation au BAVU avec oxygène, défibrillation si indiquée, pose de VVP, préparation des médicaments, recherche d'une cause réversible, relais régulier toutes les 2 minutes.",
+                        "Surveiller en permanence l'efficacité du massage, la qualité des compressions, la réexpansion thoracique, le rythme et l'apparition de signes de reprise d'activité circulatoire."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "En cas de reprise : arrêter le massage, réévaluer (respiration, pouls, tension, saturation, conscience), organiser la prise en charge post-arrêt avec la réanimation.",
+                        "Tant qu'il n'y a pas de reprise ni de décision d'arrêt : poursuivre la RCP en alternant compressions, ventilations, analyse toutes les 2 minutes, défibrillation si rythme choquable, adrénaline selon le protocole."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "Coordonner : massage efficace, ventilation au BAVU avec oxygène, défibrillation si indiquée, pose de VVP, préparation des médicaments, recherche d'une cause réversible, relais régulier toutes les 2 minutes.",
+                        "Surveiller en permanence l'efficacité du massage, la qualité des compressions, la réexpansion thoracique, le rythme et l'apparition de signes de reprise d'activité circulatoire."
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Adulte",
+                    "vignette": [],
+                    "findings": [
+                        "Compressions 100 à 120/min, profondeur 5 à 6 cm",
+                        "Deux mains au centre du thorax",
+                        "Séquence 30:2"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                },
+                {
+                    "title": "Pédiatrie",
+                    "vignette": [],
+                    "findings": [
+                        "5 insufflations initiales avant le massage",
+                        "Enfant : 15 compressions pour 2 insufflations à deux sauveteurs",
+                        "Enfant > 1 an : talon d'une main ; nourrisson < 1 an : deux pouces ou deux doigts"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                },
+                {
+                    "title": "Rythme choquable",
+                    "vignette": [],
+                    "findings": [
+                        "Écarter tout le monde, délivrer le choc",
+                        "Reprise immédiate du massage après le choc",
+                        "Chocs répétés toutes les 2 minutes"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                },
+                {
+                    "title": "Rythme non choquable",
+                    "vignette": [],
+                    "findings": [
+                        "Reprise immédiate du massage",
+                        "Adrénaline 1 mg toutes les 4 minutes",
+                        "Réévaluation du rythme toutes les 2 minutes"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                },
+                {
+                    "title": "Reprise circulatoire",
+                    "vignette": [],
+                    "findings": [
+                        "Arrêt du massage",
+                        "Réévaluation : respiration, pouls, tension, saturation, conscience",
+                        "Prise en charge post-arrêt avec la réanimation"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                },
+                {
+                    "title": "Alerte intra ou extra-hospitalière",
+                    "vignette": [],
+                    "findings": [
+                        "Intra-hospitalier : réanimateur / équipe d'urgence vitale, chariot d'urgence, défibrillateur, BAVU, oxygène, VVP",
+                        "Extra-hospitalier : appeler le 15 et apporter un DAE"
+                    ],
+                    "nextSteps": [],
+                    "tag": null
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais prendre en charge un arrêt cardio-respiratoire.",
+                "Je vérifie rapidement la sécurité de l'environnement, puis je m'approche du patient. Je vérifie son identité si elle est connue ou disponible.",
+                "Je recherche immédiatement les signes de vie. Je stimule le patient verbalement et physiquement : monsieur, vous m'entendez ? Serrez-moi la main. Ouvrez les yeux.",
+                "Le patient ne répond pas à l'appel ni à la stimulation : il est inconscient.",
+                "Je libère les voies aériennes supérieures en réalisant une bascule prudente de la tête en arrière avec élévation du menton. Je regarde rapidement dans la bouche s'il existe un corps étranger visible que je pourrais retirer. Puis je vérifie la respiration pendant quelques secondes : je regarde si le thorax se soulève, j'écoute et je ressens un éventuel souffle respiratoire.",
+                "Il n'y a pas de respiration normale, pas de respiration spontanée efficace. Je reconnais donc un arrêt cardio-respiratoire. C'est une urgence vitale. Je note l'heure de constatation de l'arrêt cardio-respiratoire.",
+                "J'installe immédiatement le patient en décubitus dorsal sur un plan dur. Je demande de l'aide à voix haute.",
+                "J'alerte immédiatement. En milieu hospitalier, je demande qu'on appelle le réanimateur ou l'équipe d'urgence vitale, qu'on apporte le chariot d'urgence, le défibrillateur, le BAVU, l'oxygène et le matériel de voie veineuse périphérique.",
+                "En extra-hospitalier, je demande qu'on appelle le 15 et qu'on apporte un défibrillateur automatisé externe.",
+                "Je communique les informations essentielles : je suis interne de médecine générale, je prends en charge un arrêt cardio-respiratoire, je précise l'heure de début ou de constatation de l'ACR, la localisation exacte, le service ou le numéro de chambre si je suis à l'hôpital, et je reste joignable. Je ne raccroche pas sans autorisation.",
+                "Je débute immédiatement le massage cardiaque externe. Je me place à genoux à côté du patient. Je dégage le thorax. Je place le talon d'une main au centre du thorax, sur la moitié inférieure du sternum, puis l'autre main par-dessus. Je garde les bras tendus, les épaules à la verticale de mes mains.",
+                "Je réalise des compressions thoraciques efficaces, à une fréquence de 100 à 120 par minute, avec une profondeur de 5 à 6 centimètres chez l'adulte. Je laisse le thorax se réexpanser complètement entre chaque compression, avec un temps de compression égal au temps de relâchement. Je limite au maximum les interruptions du massage.",
+                "Je fais 30 compressions thoraciques, puis 2 insufflations au BAVU si le matériel et l'aide sont disponibles. Sinon, je poursuis les compressions en continu en attendant le matériel. Je demande un relais toutes les 2 minutes pour maintenir un massage efficace.",
+                "Si je suis en pédiatrie, je commence par 5 insufflations initiales avant le massage cardiaque. Chez l'enfant, le rythme est de 15 compressions pour 2 insufflations s'il y a deux sauveteurs. Pour la position des mains : chez l'adulte, j'utilise les deux mains ; chez l'enfant de plus d'un an, le talon d'une main peut suffire ; chez le nourrisson de moins d'un an, j'utilise deux pouces ou deux doigts selon la situation.",
+                "Dès que le défibrillateur arrive, je l'allume et je suis ses instructions. Je fais poser les électrodes sans interrompre le massage plus que nécessaire : une électrode sous la clavicule droite, l'autre en position latérale gauche sous le mamelon gauche. Je demande à tout le monde de s'écarter pendant l'analyse du rythme.",
+                "Si le rythme est choquable, je vérifie que personne ne touche le patient, j'annonce clairement « écartez-vous », puis je délivre le choc. Je reprends immédiatement le massage cardiaque après le choc, sans perdre de temps à rechercher un pouls.",
+                "Si le rythme n'est pas choquable, je reprends immédiatement le massage cardiaque et je poursuis la réanimation. Je fais réévaluer le rythme toutes les 2 minutes par le défibrillateur.",
+                "Je demande la pose d'une voie veineuse périphérique dès que possible. Si le rythme est non choquable, je demande l'administration d'adrénaline 1 mg toutes les 4 minutes selon le protocole. Si le rythme est choquable, les chocs sont répétés toutes les 2 minutes selon l'analyse du défibrillateur, avec poursuite du massage entre chaque analyse.",
+                "Pendant toute la réanimation, je coordonne l'équipe : massage efficace, ventilation au BAVU avec oxygène, défibrillation si indiquée, pose de voie veineuse, préparation des médicaments, recherche d'une cause réversible, et relais régulier du masseur toutes les 2 minutes.",
+                "Je surveille en permanence l'efficacité du massage, la qualité des compressions, la bonne réexpansion thoracique, le rythme du défibrillateur et l'apparition éventuelle de signes de reprise d'une activité circulatoire spontanée.",
+                "En cas de reprise d'une activité circulatoire spontanée, j'arrête le massage, je réévalue le patient, je vérifie la respiration, le pouls, la tension artérielle, la saturation, la conscience, et j'organise la prise en charge post-arrêt cardio-respiratoire avec l'équipe de réanimation.",
+                "Tant qu'il n'y a pas de reprise d'activité circulatoire spontanée et pas de décision médicale d'arrêt, je poursuis la réanimation cardio-pulmonaire en alternant compressions, ventilations, analyse du rythme toutes les 2 minutes, défibrillation si rythme choquable, et adrénaline selon le protocole."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P4",
+        "number": "P4",
+        "code": "P4",
+        "sortOrder": 4,
+        "title": "Points de suture",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander au patient s’il a DEJA VECU ce geste,",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, avec anesthésie locale puis points de suture,",
+                        "Objectifs, bonne cicatrisation et protection contre infection,",
+                        "Effets indésirables possibles :",
+                        "Saignement lors du geste mais sous contrôle du médecin,",
+                        "Allergie ou risque associés à l’injection IV de LIDOCAÏNE.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Précautions A vérifier avant",
+                        "Confirmer l’indication de la suture :",
+                        "Plaie profonde avec risque infectieux et de cicatrisation difficile,",
+                        "Saignement abondant qui ne se tarit pas.",
+                        "Vérifier l’absence de contre-indications au geste :",
+                        "Aspect sale, contaminé par des corps étrangers,",
+                        "Plaie profonde, avec des lésions nerveuses ou vasculaires,",
+                        "Allergies, à l’anesthésiant ou au désinfectant.",
+                        "S’assurer de la réalisation d’anesthésie locale et désinfection."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, assise ou allongée pour prévenir un éventiel malaise,",
+                        "HYGIENE, avec lavage des mains au SHA et port de tenue stérile,",
+                        "PREPARATION DU MATERIEL pour réaliser la suture :",
+                        "Porte aiguille, pince à griffes, ciseaux et fil pour le geste,",
+                        "Compresses avec désinfectant à proximité,",
+                        "Montage de l’aiguille sur le porte aiguille à 90° et au niveau du tiers distal.",
+                        "VERIFICATION DE L’ANESTHESIE par recherche de douleur avec la pince à griffe,",
+                        "PREVENTION DU PATIENT que l’on va commencer le geste,",
+                        "REALISATION DES POINTS en respectant la procédure :",
+                        "Passage du fil dans la peau :",
+                        "Commencer par le milieu de la plaie dans la longueur,",
+                        "Entrée à environ 5 mm de la berge de la plaie,",
+                        "Sortie au centre par un mouvement de rotation du poignet :",
+                        "Lâcher l’aiguille puis la récupérer sans la toucher avec les doigts,",
+                        "Vérifier que l’on a bien attrapé l’hypoderme,",
+                        "Sortir de façon symétrique sur la 2e berge soit à 5 mm également,",
+                        "Tirer délicatement le fil pour obtenir un brin court.",
+                        "Noeud à l’aide du porte aiguille :",
+                        "Enrouler le fil 2 fois dans un sens autour du porte aiguille,",
+                        "Attraper le brin court et faire coulisser le noeud,",
+                        "Serrer délicatement le noeud en tirant à la perpendiculaire de la plaie,",
+                        "Sécuriser avec un tour dans l’autre sens puis un dans le premier sens,",
+                        "Placer le noeud sur une berge et non au centre de la plaie.",
+                        "Si nécessaire, faire d’autres points espacés d’environ 1 cm.",
+                        "COUPER LE FIL à l’aide des ciseaux à environ 1 cm de la plaie,",
+                        "SECURITE, élimination des déchets dont l’aiguille dans la DASRI et lavage au SHA."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "PREVENTION, avec recherche de réalisation du vaccin tétanos,",
+                        "CONSIGNES liées à la présence d’une suture :",
+                        "Entretien, nettoyer délicatement la plaie à l’eau et au savon,",
+                        "Complications, avec signes inflammatoires ou écoulement,",
+                        "Ablation des fils entre 7 et 15 jours par une IDE,",
+                        "Protection solaire, à visée esthétique après cicatrisation."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "A résumer en une phrase avec la vignette"
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Indications",
+                    "vignette": [],
+                    "findings": [
+                        "Plaie profonde avec risque infectieux et de cicatrisation difficile,",
+                        "Saignement abondant qui ne se tarit pas."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Indication"
+                },
+                {
+                    "title": "Contre-indications",
+                    "vignette": [],
+                    "findings": [
+                        "Aspect sale, contaminé par des corps étrangers,",
+                        "Plaie profonde, avec des lésions nerveuses ou vasculaires,",
+                        "Allergies, à l’anesthésiant ou au désinfectant."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Contre-indication"
+                },
+                {
+                    "title": "Complications",
+                    "vignette": [],
+                    "findings": [
+                        "Complications, avec signes inflammatoires ou écoulement,"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Complication"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à un point de suture.",
+                "Je vérifie tout d'abord l'identité du patient avec son nom, son prénom et sa date de naissance.",
+                "Le patient présente une plaie cutanée simple nécessitant une fermeture par suture. J'explique que le but de la suture est de rapprocher les berges de la plaie afin de permettre une bonne cicatrisation, de limiter le saignement et d'obtenir le meilleur résultat esthétique possible.",
+                "J'explique le déroulement du geste : je vais d'abord nettoyer et désinfecter la plaie, puis réaliser une anesthésie locale, vérifier qu'elle est efficace, explorer la plaie, puis réaliser les points de suture.",
+                "Je précise les risques : douleur au moment de l'anesthésie, saignement, hématome, infection, cicatrice, désunion de la plaie ou réaction allergique à l'anesthésiant.",
+                "Je recherche les contre-indications ou les situations particulières : allergie à la lidocaïne ou aux antiseptiques, plaie articulaire, atteinte vasculaire, nerveuse ou tendineuse, corps étranger, morsure, plaie souillée, trouble de l'hémostase ou traitement anticoagulant. Je vérifie également le statut vaccinal antitétanique du patient.",
+                "Je propose une antalgie si nécessaire, par exemple du paracétamol. Je demande ensuite son consentement avant de débuter.",
+                "Je vérifie le matériel : champ stérile, kit de suture avec porte-aiguille, pince, ciseaux, fil de suture, compresses stériles, gants stériles, antiseptique, lidocaïne, seringue, aiguille, pansement, poubelle DASRI et collecteur à aiguilles.",
+                "Je me lave les mains. Je réalise une détersion et une désinfection de la plaie en plusieurs temps. Je mets mes gants stériles et je place le champ stérile.",
+                "Je réalise ensuite l'anesthésie locale. Je vérifie l'absence d'allergie à la lidocaïne, je préviens le patient que je vais piquer, puis j'injecte progressivement l'anesthésiant. J'attends quelques minutes et je vérifie l'efficacité de l'anesthésie avant de suturer.",
+                "J'explore la plaie pour vérifier l'absence de corps étranger, l'absence de plaie profonde, et la bonne viabilité des berges. Si je retrouve un corps étranger, je l'enlève et je refais une détersion.",
+                "Je monte l'aiguille sur le porte-aiguille à environ la jonction du tiers externe et des deux tiers internes de l'aiguille. Je tiens la pince à disséquer comme un stylo. Je saisis délicatement les berges de la plaie avec la pince, puis je pique perpendiculairement à la peau, en commençant par le centre de la plaie. Je fais pivoter le poignet pour faire pénétrer l'aiguille, sans appuyer excessivement sur la peau. Je ressors au milieu de la plaie avant de repasser sur l'autre côté de la plaie.",
+                "Je réalise les nœuds : un double nœud initial, puis deux nœuds simples en sens opposés. Je place les nœuds sur le côté de la plaie, et non directement sur la cicatrice. Je coupe les fils en laissant environ 5 à 10 millimètres de longueur.",
+                "Je vérifie la bonne coaptation des berges, sans tension excessive et sans chevauchement. Je poursuis les points si nécessaire, en respectant l'espacement : environ 5 millimètres sur le visage, environ 1 centimètre sur les autres zones. La distance entre deux points doit être équivalente à la distance entre un point et la berge.",
+                "Je range immédiatement l'aiguille dans le collecteur adapté. Je nettoie la zone et je mets un pansement.",
+                "Je donne ensuite les consignes au patient : surveiller les signes d'alerte comme rougeur, chaleur, douleur croissante, écoulement purulent, fièvre ou désunion de la plaie. Je lui explique de ne pas se baigner avant cicatrisation, de protéger la cicatrice du soleil pendant un an, et d'éviter le tabac qui retarde la cicatrisation.",
+                "Je précise la date de retrait des fils : environ 5 jours pour le visage, environ 10 jours pour les autres localisations, à adapter selon la zone et l'évolution.",
+                "Je vérifie ou mets à jour la vaccination antitétanique selon le statut vaccinal et le type de plaie. Je me lave les mains, je range le matériel, et je note le geste dans le dossier."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P5",
+        "number": "P5",
+        "code": "P5",
+        "sortOrder": 5,
+        "title": "Toucher rectal masculin",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [
+                "ATTENTION : possible association d’anomalies rectales et prostatiques",
+                "ATTENTION : possible examen normal"
+            ],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient,",
+                        "Rappeler l’indication du toucher rectal :",
+                        "Prostatique avec PSA élevés ou SFU par exemple,",
+                        "Digestive comme rectorragies."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander au patient s’il a DEJA VECU ce geste :",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, examen visuel puis insertion de l’index dans le rectum :",
+                        "Palpation de la prostate dans un premier temps,",
+                        "Examen des parois rectales ensuite.",
+                        "Objectifs, recherche d’anomalie des différentes structures,",
+                        "Risques, examen desagréable mais non douloureux sauf si prostatite.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste :",
+                        "Expliquer la possibilité d’arrêter à tout moment.",
+                        "Demander au patient de SE DESHABILLER."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "INSPECTION DE LA MARGE ANALE en écartant les fesses :",
+                        "Hémorroïdes voire thrombose hémorroïdaire externe,",
+                        "Mariques, correspondant à des hémorroïdes cicatrisées,",
+                        "Fissure, fistule ou abcès de la marche anale."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, allongée jambes fléchies ou en décubitus latéral,",
+                        "HYGIENE, avec lavage au SHA et gants non stérile sur la main dominante,",
+                        "UTILISATION DE VASELINE, une noisette au bout de l’index,",
+                        "INFORMATION DU PATIENT que l’on va commencer le geste,",
+                        "INTRODUCTION DELICATE de l’index dans le rectum :",
+                        "Main non dominante posée sur le ventre si patient en décubitus dorsal,",
+                        "Evaluation du tonus du sphincter anal,",
+                        "Demande au patient pour vérifier qu’il est confortable.",
+                        "PALPATION PROSTATIQUE à la face antérieure :",
+                        "Evaluation des lobes et du sillon médian de la prostate,",
+                        "Estimation du volume par la palpation des sillons latéraux,",
+                        "Recherche d’une anomalie et caractérisation de celle-ci.",
+                        "PALPATION RECTALE avec évaluation à 360° :",
+                        "Mouvement de rotation du bras pour bien montrer,",
+                        "Recherche d’une anomalie pariétale et caractérisation de celle-ci,",
+                        "Recherche d’une anomalie endoluminale et caractérisation.",
+                        "RETRAIT DELICAT du doigt après palpation complète,",
+                        "ANALYSE DU GANT pour chercher des matières, du sang ou des glaires."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "DIAGNOSTIC à donner en justifiant avec la vignette et l’examen,",
+                        "PRISE EN CHARGE en quelques mots pour conclure."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "CONSISTANCE PROSTATIQUE, souple et élastique ou dure,",
+                        "VOLUME PROSTATIQUE, normal ou augmenté,",
+                        "REGULARITE, à la fois de la prostate et de la paroi rectale,",
+                        "MASSE, qui doit être caractérisée le cas échéant par :",
+                        "Localisation, taille et consistance, préciser les lobes atteints,",
+                        "Forme et contours nets ou évasés,",
+                        "Douleur provoquée à la palpation,",
+                        "Saignement au contact si masse rectale."
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Prostatite aiguë",
+                    "vignette": [
+                        "Douleur sus-pubienne d’apparition rapide,",
+                        "SFU notamment pollakiurie et brûlures,",
+                        "Signes infectieux généraux tels fièvre,",
+                        "Possibles signes de choc septique."
+                    ],
+                    "findings": [
+                        "Douleur à la palpation de la prostate,",
+                        "Taille, consistance et sillon normaux,",
+                        "Pas de masse prostatique,",
+                        "Pas d’anomalie de la paroi rectale,",
+                        "Pas d’anomalie endoluminale."
+                    ],
+                    "nextSteps": [
+                        "ECBU pour confirmation."
+                    ],
+                    "tag": "Urgence"
+                },
+                {
+                    "title": "Prostatite chronique",
+                    "vignette": [
+                        "Douleur sus-pubienne chronique,",
+                        "SFU notamment pollakiurie et dysurie,",
+                        "Pas de signes infectieux généraux,",
+                        "Antécédents d’infection urinaire."
+                    ],
+                    "findings": [
+                        "Sensibilité à la palpation de la prostate,",
+                        "Consistance dure mais pas de masse,",
+                        "Taille et sillon normaux,",
+                        "Pas d’anomalie de la paroi rectale,",
+                        "Pas d’anomalie endoluminale."
+                    ],
+                    "nextSteps": [
+                        "ECBU et échographie pour exploration."
+                    ],
+                    "tag": null,
+                    "dayJNote": "Uniquement si vignette typique"
+                },
+                {
+                    "title": "Hypertrophie bénigne",
+                    "vignette": [
+                        "Homme âgé de plus de 50 ans,",
+                        "Signes fonctionnels urinaires progressifs,",
+                        "Elévation des PSA à la biologie."
+                    ],
+                    "findings": [
+                        "Prostate augmentée de volume,",
+                        "Disparition du sillon médian,",
+                        "Absence de douleur à la palpation,",
+                        "Consistance normale et homogène,",
+                        "Pas d’anomalie de la paroi rectale,",
+                        "Pas d’anomalie endoluminale."
+                    ],
+                    "nextSteps": [
+                        "ECBU et échographie pour exploration"
+                    ],
+                    "tag": "Bénin"
+                },
+                {
+                    "title": "Adénocarcinome prostatique",
+                    "vignette": [
+                        "Homme âgé de plus de 50 ans,",
+                        "Asymptomatique ou SFU possibles,",
+                        "Antécédents évocateurs de tumeur,",
+                        "AEG et signes osseux si avancé."
+                    ],
+                    "findings": [
+                        "Masse lobaire dure et hétérogène,",
+                        "Possible augmentation de volume,",
+                        "Sillon et reste de la glande normaux,",
+                        "Absence de douleur à la palpation,",
+                        "Pas d’anomalie rectale."
+                    ],
+                    "nextSteps": [
+                        "Biopsie échoguidée pour confirmation."
+                    ],
+                    "tag": "Malin"
+                },
+                {
+                    "title": "Adénocarcinome du bas rectum",
+                    "vignette": [
+                        "Homme âgé de plus de 50 ans,",
+                        "Rectorragies ou masse rectale,",
+                        "Antécédents évocateurs de tumeur,",
+                        "AEG et signes hépatiques si avancé."
+                    ],
+                    "findings": [
+                        "Masse irrégulière de la paroi rectale,",
+                        "Sang rouge possible sur le doigtier,",
+                        "Pas d’anomalie endoluminale,",
+                        "Prostate indolore à la palpation,",
+                        "Taille, consistance et sillon normaux."
+                    ],
+                    "nextSteps": [
+                        "Rectosigmoïdoscopie pour confirmer."
+                    ],
+                    "tag": "Malin"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à un toucher rectal.",
+                "Je vérifie tout d'abord l'identité du patient avec son nom, son prénom et sa date de naissance.",
+                "J'explique au patient que le toucher rectal permet d'examiner la marge anale, le canal anal, le bas rectum, le tonus du sphincter anal et, chez l'homme, la prostate. Dans son cas, l'objectif est notamment de rechercher une anomalie prostatique pouvant expliquer une élévation des PSA, des troubles urinaires ou une suspicion d'hypertrophie bénigne de prostate.",
+                "Je lui explique que l'examen consiste à introduire doucement un index ganté et lubrifié dans le rectum. Je précise que c'est un geste rapide, qui peut être gênant et inconfortable, mais qui ne doit pas être douloureux. Je lui demande son consentement, et je lui rappelle qu'il peut me demander d'arrêter à tout moment.",
+                "Je recherche une contre-indication ou une situation qui rendrait le geste trop douloureux, notamment une fissure anale douloureuse. Puis j'installe le patient en décubitus latéral gauche ou en position genu-pectorale, selon son confort et la situation.",
+                "Je me lave les mains, je mets des gants non stériles, et je mets de la vaseline sur l'index de ma main dominante. Je préviens le patient avant de commencer.",
+                "Je débute par l'inspection de la marge anale, en déplissant les plis radiés de l'anus. Je recherche une tuméfaction, une fissure, une fistule, des hémorroïdes externes, un condylome, une marisque, une ulcération ou un kyste pilonidal.",
+                "Je palpe ensuite la marge anale pour rechercher une induration ou une douleur localisée.",
+                "Je demande ensuite au patient de pousser afin de rechercher un prolapsus rectal ou des hémorroïdes internes qui s'extérioriseraient.",
+                "Je préviens le patient, puis j'introduis doucement mon index. Je m'arrête quelques secondes pour vérifier que le patient tolère bien le geste. Je teste le tonus basal du sphincter anal, puis je demande au patient de contracter autour de mon doigt afin d'évaluer la contraction volontaire. Je lui demande ensuite de relâcher pour évaluer le relâchement sphinctérien.",
+                "J'explore ensuite toute la circonférence du rectum sur 360 degrés. Je recherche une ulcération, un fécalome, un nodule, une masse indurée, irrégulière ou fixée.",
+                "Puis je palpe la prostate, située à la face antérieure du rectum. Je recherche le sillon médian, les deux lobes prostatiques et les culs-de-sac latéraux. Je décris le volume de la prostate, sa consistance, sa régularité, sa symétrie, sa surface, son caractère douloureux ou non, et la présence éventuelle d'un nodule.",
+                "Je recherche également une douleur provoquée à la palpation de la prostate, ce qui pourrait orienter vers une prostatite.",
+                "Au retrait du doigt, je regarde s'il y a du sang ou des selles anormales sur le gant.",
+                "Je fais ensuite la synthèse.",
+                "Si la prostate est souple, régulière, augmentée de volume, avec un sillon médian conservé, cela évoque plutôt une hypertrophie bénigne de prostate. Je complète alors par un calendrier mictionnel, un ECBU, une créatininémie, une échographie des voies urinaires avec recherche de résidu post-mictionnel et une débitmétrie selon le contexte.",
+                "Si je palpe un nodule pierreux, induré, irrégulier ou asymétrique, je suspecte une lésion prostatique maligne. J'adresse alors le patient à un urologue pour réaliser une IRM prostatique multiparamétrique puis discuter de biopsies prostatiques.",
+                "Je retire mes gants, je les jette, je me lave les mains, je rhabille le patient et je lui explique la suite de la prise en charge."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P6",
+        "number": "P6",
+        "code": "P6",
+        "sortOrder": 6,
+        "title": "Examen de l'oreille",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [
+                "ATTENTION : possible examen normal",
+                "ATTENTION : liste non exhaustive"
+            ],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient,",
+                        "Rappeler l’indication de l’otoscopie."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander au patient s’il a DEJA VECU ce geste :",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, inspection de l’oreille puis examen à l’otoscope,",
+                        "Objectifs, recherche d’anomalie des différentes structures,",
+                        "Risques, examen desagréable et parfois douloureux.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Analyse visuelle du pavillon :",
+                        "Aspect général, normal ou avec malformation,",
+                        "Inflammation du cartilage évoquant une chondrite,",
+                        "Vésicules ou plaies orientant vers un zona,",
+                        "Ecoulement spontané avec caractérisation de celui-ci.",
+                        "Recherche de signes de mastoïdite :",
+                        "Oreille décollée avec oedème et rougeur derrière le pavillon,",
+                        "Paralysie faciale périphérique en cas de complications."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, installation confortable et généralement assise,",
+                        "HYGIENE, avec lavage des mains au SHA avant le geste,",
+                        "PREPARATION, avec spéculum sur l’otoscope et allumage de la lumière,",
+                        "INFORMATION DU PATIENT que l’on va commencer le geste :",
+                        "Toujours débuter par le côté sans plainte.",
+                        "DEGAGEMENT DU CONDUIT par traction délicate du pavillon de l’oreille :",
+                        "Réalisé avec la main non dominante,",
+                        "Annule la courbure antérieure du conduit auditif externe.",
+                        "INTRODUCTION DE L’OTOSCOPE sous contrôle de la vue :",
+                        "Le tenir dans la main dominante manche orienté à 1h,",
+                        "Avancer progressivement et rechercher une douleur,",
+                        "Analyse du conduit auditif externe et du tympan,",
+                        "Ajustement pour visualiser la pars flaccida en antéro-supérieur.",
+                        "RETRAIT DE L’OTOSCOPE progressivement sous contrôle de la vue :",
+                        "Vérifier que le spéculum ne reste pas dans l’oreille."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "DIAGNOSTIC à donner en justifiant avec la vignette et l’examen,",
+                        "PRISE EN CHARGE en quelques mots pour conclure."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "CONDUIT AUDITIF EXTERNE, attention à ne pas l’oublier :",
+                        "Vacuité, libre ou présence de corps étranger ou de bouchon de cérumen,",
+                        "Aspect des parois, normal ou sténosé avec aspect d’inflammation ou d’ostéomes.",
+                        "TYMPAN, avec description selon 4 quadrants :",
+                        "Reliefs, normaux, effacés par un bombement ou accentués par une rétraction,",
+                        "Couleur, normalement gris avec triangle lumineux, sinon mat, rouge, blanc...",
+                        "Cadre, habituellement rond ou parfois irrégulier en cas de destruction,",
+                        "Intégrité, normalement présent partout mais possible perforation."
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Otite moyenne aiguë",
+                    "vignette": [
+                        "Sujet jeune, généralement enfant,",
+                        "Douleur souvent assez intense,",
+                        "Symptômes infectieux autres possibles."
+                    ],
+                    "findings": [
+                        "Otite congestive",
+                        "Otites suppurées"
+                    ],
+                    "nextSteps": [
+                        "Antalgique et antipyrétique si congestive,",
+                        "Antibiothérapie 5 jours si suppurée."
+                    ],
+                    "tag": null
+                },
+                {
+                    "title": "Otite séro-muqueuse",
+                    "vignette": [
+                        "Enfant ou sujet âgé selon la cause,",
+                        "Hypoacousie avec sensation de plénitude,",
+                        "Antécédents d’OMA 4 à 6 semaines avant."
+                    ],
+                    "findings": [
+                        "Otites séro-muqueuses",
+                        "Aérateur yoyo"
+                    ],
+                    "nextSteps": [
+                        "Nasofibroscopie chez adulte,",
+                        "Adénoïdectomie et aérateurs chez enfant."
+                    ],
+                    "tag": null
+                },
+                {
+                    "title": "Otite externe",
+                    "vignette": [
+                        "Sujet de tout âge,",
+                        "Douleur généralement très intense,",
+                        "Contexte de baignade ou traumatisme,",
+                        "Ostéite de la base du crâne si maligne."
+                    ],
+                    "findings": [
+                        "Otites externes fongiques"
+                    ],
+                    "nextSteps": [
+                        "Traitement local si tympan intact."
+                    ],
+                    "tag": null
+                },
+                {
+                    "title": "Cholestéatome",
+                    "vignette": [
+                        "Sujet de tout âge,",
+                        "Hypoacousie progressive le plus souvent,",
+                        "Possible otorhée purulente,",
+                        "Complications comme méningite."
+                    ],
+                    "findings": [
+                        "Lésion pars tensa",
+                        "Lésions pars flaccida"
+                    ],
+                    "nextSteps": [
+                        "Scanner non injecté pour exploration."
+                    ],
+                    "tag": null
+                },
+                {
+                    "title": "Perforation tympanique",
+                    "vignette": [
+                        "Antécédents d’OMA ou traumatisme,",
+                        "Possible hypoacousie persistante,",
+                        "Possible otorhée associée."
+                    ],
+                    "findings": [
+                        "Perforation",
+                        "Double perforation",
+                        "Tympanosclérose"
+                    ],
+                    "nextSteps": [
+                        "Pas de prise en charge particulière,",
+                        "Contre-indication aux gouttes auriculaires."
+                    ],
+                    "tag": null
+                },
+                {
+                    "title": "Rétraction tympanique",
+                    "vignette": [
+                        "Antécédents touchant l’oreille interne,",
+                        "Possible hypoacousie persistante."
+                    ],
+                    "findings": [
+                        "Poche auto-nettoyante propre",
+                        "Poche non auto-nettoyante avec squames"
+                    ],
+                    "nextSteps": [
+                        "Pas de prise en charge particulière."
+                    ],
+                    "tag": null
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à un examen de l'oreille, aussi appelé otoscopie.",
+                "Je vérifie tout d'abord l'identité du patient avec son nom, son prénom et sa date de naissance.",
+                "J'explique au patient que l'examen consiste à regarder le pavillon de l'oreille, le conduit auditif externe puis le tympan à l'aide d'un otoscope muni d'un spéculum jetable. Le but est de rechercher un bouchon de cérumen, une otite externe, une otite moyenne aiguë, une otite séreuse, une perforation tympanique ou une autre anomalie du tympan.",
+                "Je précise que l'examen peut être désagréable ou douloureux si l'oreille est inflammatoire ou si le patient bouge. Je lui demande donc de rester bien immobile et de me signaler toute douleur. Je recueille son accord.",
+                "Je me lave les mains avec une solution hydroalcoolique. Je vérifie le fonctionnement de l'otoscope, je mets un spéculum jetable adapté, et je tiens l'otoscope comme un stylo.",
+                "Je commence toujours par l'oreille non douloureuse. J'inspecte d'abord le pavillon de l'oreille. Je recherche une rougeur, un œdème, une douleur à la traction du pavillon ou à la pression du tragus, ce qui peut orienter vers une otite externe. J'inspecte également l'arrière de l'oreille à la recherche de signes en faveur d'une mastoïdite, un décollement de l'oreille, un érythème cutané et une douleur à la palpation de la mastoïde.",
+                "J'inspecte ensuite l'entrée du conduit auditif externe. Je tire doucement le pavillon vers le haut et l'arrière chez l'adulte, puis j'introduis doucement l'otoscope dans le conduit auditif externe.",
+                "Je décris le conduit auditif externe : présence ou absence de cérumen, d'œdème, de rougeur, de sécrétions, de mycose, de corps étranger ou de diminution du calibre.",
+                "Je regarde ensuite le tympan. Je décris son intégrité, sa couleur, sa transparence, sa position, la visibilité du manche du marteau, la présence du triangle lumineux, l'absence ou la présence d'un épanchement rétro-tympanique, d'une perforation, d'une poche de rétraction ou d'une otorrhée.",
+                "Je fais ensuite exactement la même chose du côté douloureux.",
+                "Devant un tympan rouge, inflammatoire, bombant, avec disparition des reliefs du marteau, associé à une otalgie et de la fièvre, j'évoque une otite moyenne aiguë suppurée.",
+                "Devant un tympan inflammatoire mais non bombant, j'évoque plutôt une otite moyenne aiguë congestive.",
+                "Devant un tympan terne, rétracté, avec bulles ou niveau liquidien rétro-tympanique, j'évoque une otite séreuse.",
+                "Devant un conduit auditif externe inflammatoire et douloureux, avec douleur à la traction du pavillon ou à la pression du tragus, j'évoque une otite externe.",
+                "Devant une perforation tympanique, je précise sa localisation, sa taille, si elle est sèche ou associée à une otorrhée, et si elle est marginale ou non.",
+                "Je termine l'examen, je retire l'otoscope, je jette le spéculum, puis je me lave les mains au SHA.",
+                "Je fais la synthèse au patient. Si je diagnostique une otite moyenne aiguë, j'adapte la prise en charge à l'âge, au terrain et à la sévérité : antalgiques, antipyrétiques, lavage de nez si contexte rhinopharyngé, et antibiothérapie si indication.",
+                "Je donne les consignes de surveillance : reconsulter en cas de persistance de la douleur ou de la fièvre à 48-72 heures, aggravation, otorrhée, baisse importante de l'audition, vertiges ou altération de l'état général."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P7",
+        "number": "P7",
+        "code": "P7",
+        "sortOrder": 7,
+        "title": "Injection intramusculaire",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Vérifier systématiquement l’IDENTITE du patient."
+                    ]
+                },
+                {
+                    "title": "Explications",
+                    "icon": "fa-comments",
+                    "items": [
+                        "Demander au patient s’il a DEJA VECU ce geste :",
+                        "Expliquer le geste en détail au patient :",
+                        "Déroulement, injection de produit dans le muscle deltoïde,",
+                        "Objectifs de l’injection intra-musculaire :",
+                        "Thérapeutique dans le cadre de l’urgence,",
+                        "Préventif dans le cadre de la vaccination.",
+                        "Effets indésirables possibles :",
+                        "Hématome, réaction locale et infection,",
+                        "Syndrome pseudo-grippal en cas de vaccination.",
+                        "Rechercher le CONSENTEMENT au début et tout au long du geste :",
+                        "Expliquer la possibilité d’arrêter à tout moment."
+                    ]
+                },
+                {
+                    "title": "Inspection",
+                    "icon": "fa-eye",
+                    "items": [
+                        "Précautions A vérifier avant",
+                        "Confirmer l’indication de l’injection intra-musculaire :",
+                        "URGENCE VITALE en l’absence de voie IV :",
+                        "Anaphylaxie, nécessitant 0,5 mg d’ADRENALINE,",
+                        "Mal épileptique, nécessitant 10 mg de MIDAZOLAM,",
+                        "Purpura fulminans, nécessitant 1 à 2g de CEFTRIAXONE,",
+                        "Insuffisance surrénale, nécessitant 100 à 200 mg d’HYDROCORTISONE.",
+                        "PREVENTION, avec vaccination selon calendrier vaccinal ou contexte.",
+                        "Vérifier l’absence de contre-indications au geste :",
+                        "LIES AU MEDICAMENT, notamment allergie ou contre-indication",
+                        "Allergies à l’oeuf ou réaction à un ancien vaccin notamment,",
+                        "Grossesse ou immunodépression pour vaccins vivants.",
+                        "LIES A LA VOIE, à cause des risques possibles :",
+                        "Hémorragique avec problème de coagulation ou anticoagulant,",
+                        "Infectieux avec plaie ou lésion au point de ponction."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hand",
+                    "items": [
+                        "POSITION, assise ou allongée pour prévenir un éventiel malaise,",
+                        "HYGIENE, avec lavage des mains au SHA et port de gants non stériles,",
+                        "PREPARATION DU MATERIEL pour l’injection :",
+                        "Vérifier qu’on a tout le matériel et qu’il s’agit du bon produit,",
+                        "Calculer la dose à administrer s’il ne s’agit pas d’un vaccin,",
+                        "Monter une aiguille verte s’il ne s’agit pas d’une seringue complète,",
+                        "Pas de purge s’il s’agit d’une seringue pré-remplie ou d’un vaccin.",
+                        "PREPARATION du point de ponction choisi :",
+                        "Choisir une solution alcoolique, CHLOREXIDINE si allergie à BETADINE,",
+                        "Désinfecter en escargot avec la compresse imbibée,",
+                        "Ecraser la graisse en étendant la peau avec la main non dominante.",
+                        "INFORMATION DU PATIENT que l’on va commencer le geste,",
+                        "PIQÛRE INTRA-MUSCULAIRE avec toute l’aiguille d’un coup :",
+                        "Tenir l’aiguille comme un stylo et l’insérer rapidement,",
+                        "Prendre appui avec l’auriculaire en cas de tremblements.",
+                        "VERIFICATION DE POSITION MUSCULAIRE avec recherche de reflux,",
+                        "INJECTION, totale et lente, avec un débit de 1 mL toutes les 10 secondes,",
+                        "RETRAIT de l’aiguille d’un seul coup en préparant une compresse sèche."
+                    ]
+                },
+                {
+                    "title": "Suites",
+                    "icon": "fa-arrow-right",
+                    "items": [
+                        "COMPRESSION par le patient avec la compresse pendant 15 secondes,",
+                        "PANSEMENT à appliquer sur le point de ponction,",
+                        "SECURITE, avec élimination des déchets dont l’aiguille dans la DASRI,",
+                        "SURVEILLANCE 15 MINUTES dans la salle d’attente :",
+                        "Recherche de réaction locale importante,",
+                        "Sécurité pour une éventuelle anaphylaxie.",
+                        "PARACETAMOL ET HYDRATATION après un vaccin."
+                    ]
+                },
+                {
+                    "title": "Synthèse",
+                    "icon": "fa-clipboard-check",
+                    "items": [
+                        "A résumer en une phrase avec la vignette"
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalCards": [
+                {
+                    "title": "Anaphylaxie",
+                    "vignette": [],
+                    "findings": [
+                        "Anaphylaxie, nécessitant 0,5 mg d’ADRENALINE,"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Urgence"
+                },
+                {
+                    "title": "Mal épileptique",
+                    "vignette": [],
+                    "findings": [
+                        "Mal épileptique, nécessitant 10 mg de MIDAZOLAM,"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Urgence"
+                },
+                {
+                    "title": "Purpura fulminans",
+                    "vignette": [],
+                    "findings": [
+                        "Purpura fulminans, nécessitant 1 à 2g de CEFTRIAXONE,"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Urgence"
+                },
+                {
+                    "title": "Insuffisance surrénale",
+                    "vignette": [],
+                    "findings": [
+                        "Insuffisance surrénale, nécessitant 100 à 200 mg d’HYDROCORTISONE."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Urgence"
+                },
+                {
+                    "title": "Prévention",
+                    "vignette": [],
+                    "findings": [
+                        "PREVENTION, avec vaccination selon calendrier vaccinal ou contexte."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Indication"
+                },
+                {
+                    "title": "Liés au médicament",
+                    "vignette": [],
+                    "findings": [
+                        "Allergies à l’oeuf ou réaction à un ancien vaccin notamment,",
+                        "Grossesse ou immunodépression pour vaccins vivants."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Contre-indication"
+                },
+                {
+                    "title": "Liés à la voie",
+                    "vignette": [],
+                    "findings": [
+                        "Hémorragique avec problème de coagulation ou anticoagulant,",
+                        "Infectieux avec plaie ou lésion au point de ponction."
+                    ],
+                    "nextSteps": [],
+                    "tag": "Contre-indication"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais procéder à une injection intramusculaire, notamment dans le cadre d'une vaccination.",
+                "Je vérifie tout d'abord l'identité du patient avec son nom, son prénom et sa date de naissance.",
+                "J'explique au patient que le geste consiste à injecter un produit dans le muscle. Dans le cadre d'un vaccin, l'objectif est de prévenir une infection. L'injection se fait généralement dans le muscle deltoïde chez l'adulte et l'enfant de plus de deux ans, ou dans la face antéro-latérale de la cuisse chez le nourrisson ou l'enfant de moins de deux ans.",
+                "J'explique les risques : douleur locale, rougeur, hématome, infection, réaction allergique, malaise, fièvre ou fatigue après vaccination.",
+                "Je recherche les contre-indications : allergie connue au produit ou à l'un de ses composants, antécédent de réaction allergique sévère, trouble de l'hémostase, traitement anticoagulant ou antiagrégant selon le contexte, dermatose ou infection au point d'injection.",
+                "S'il s'agit d'un vaccin, je vérifie le carnet de santé, le nom du vaccin, le numéro de lot, la date de péremption et les conditions de conservation du vaccin. Je vérifie également si une prémédication est nécessaire, notamment du paracétamol en cas de fièvre ou de douleur.",
+                "Je recueille le consentement du patient ou des parents. Chez l'enfant, je prévois des mesures antalgiques et de distraction : allaitement, solution sucrée, patch EMLA si anticipé, présence des parents et position confortable.",
+                "Je prépare le matériel : seringue, aiguille adaptée, compresses, antiseptique, pansement, collecteur DASRI et solution hydroalcoolique. Je me lave les mains au SHA.",
+                "J'installe le patient en position assise ou allongée, avec le muscle bien relâché. Je choisis le site d'injection : deltoïde si le patient a plus de deux ans, face antéro-latérale de la cuisse si l'enfant a moins de deux ans.",
+                "Je désinfecte la zone en deux temps avec un antiseptique et je laisse sécher environ trente secondes.",
+                "Pour un vaccin, je ne purge pas l'aiguille et je ne réalise pas de test d'aspiration. Pour une injection intramusculaire médicamenteuse non vaccinale, je me réfère aux recommandations du produit, et je peux purger la seringue et vérifier l'absence de reflux si indiqué.",
+                "Je tends la peau sans pincer. Je préviens le patient que je vais piquer. J'introduis l'aiguille perpendiculairement à la peau, à 90 degrés, jusqu'au muscle.",
+                "J'injecte le produit. Pour un vaccin, j'injecte rapidement. Pour un traitement intramusculaire non vaccinal, j'injecte doucement, par exemple environ 1 mL en 10 secondes selon le produit.",
+                "Pendant l'injection, je vérifie que le patient ne présente pas de douleur excessive, de malaise ou de signe allergique.",
+                "Je retire l'aiguille, je comprime avec une compresse sans masser, puis je jette immédiatement l'aiguille dans le collecteur DASRI. Je mets ensuite un pansement adapté.",
+                "Je donne les consignes de surveillance. Après un vaccin, je conseille une surveillance d'environ 15 à 20 minutes sur place, afin de dépister une éventuelle réaction allergique immédiate. Je préviens que des effets transitoires sont possibles : douleur au point d'injection, rougeur, fièvre modérée, fatigue, irritabilité chez l'enfant, troubles du sommeil ou malaise.",
+                "Je conseille du paracétamol si besoin, selon l'âge et le poids.",
+                "Je complète le carnet de vaccination avec la date de réalisation, le nom du vaccin, le numéro de lot, l'identification du vaccinateur et ma signature. Je mentionne également la date du prochain vaccin si nécessaire.",
+                "Je me lave les mains et je range le matériel."
+            ]
+        }
+    },
+    {
+        "id": "PROC-P8",
+        "number": "P8",
+        "code": "P8",
+        "sortOrder": 8,
+        "title": "Mettre des gants stériles",
+        "lisaUrl": null,
+        "specialties": [
+            "procedures"
+        ],
+        "specialtyNames": [
+            "Procédures"
+        ],
+        "badges": [
+            "PRO"
+        ],
+        "family": "Procédures",
+        "contentType": "procedure",
+        "allowedPassageTypes": [
+            "sans_ps",
+            "faire_passer"
+        ],
+        "procedureContent": {
+            "alerts": [],
+            "dayJNotes": [],
+            "steps": [
+                {
+                    "title": "Introduction",
+                    "icon": "fa-user-doctor",
+                    "items": [
+                        "Toquer à la porte et se laver les mains avec le SHA à l’entrée,",
+                        "Repréciser le nom MARDIJUIN ou MERCREDIJUIN et sa fonction,",
+                        "Rappeler l’indication au port de gants stériles."
+                    ]
+                },
+                {
+                    "title": "Précautions",
+                    "icon": "fa-shield-halved",
+                    "items": [
+                        "Réalisation d’une DESINFECTION CHIRURGICALE au savon :",
+                        "Lavage des mains jusqu’aux coudes pendant 1 min,",
+                        "Lavage des ongles avec bosse spécifique pendant 1 min,",
+                        "Séchage avec du papier en tamponnant.",
+                        "Vérifier l’absence d’allergie au latex, nécessitant des gants spécifiques,",
+                        "OUVERTURE STERILE du paquet des gants :",
+                        "Vérifier l’intégrité du paquet poure préserver la stérilité,",
+                        "Disposer les gants dans leur papier sur le champ stérile.",
+                        "Réalisation d’une DESINFECTION CHIRURGICALE au SHA :",
+                        "Lavage des mains jusqu’aux coudes avec une première pompe,",
+                        "Lavage précautionneux des mains avec une seconde pompe,",
+                        "Préciser un temps de friction de 2 min minimum,",
+                        "Séchage spontané à l’air libre."
+                    ]
+                },
+                {
+                    "title": "Réalisation",
+                    "icon": "fa-hands",
+                    "items": [
+                        "DEPLIER LE PAPIER, sans toucher les gants,",
+                        "PRENDRE LES GANTS face à face dans la main dominante par la partie pliée,",
+                        "GLISSER LA MAIN NON DOMINANTE dans le gant correspondant :",
+                        "Faire attention à ne pas toucher la partie stérile,",
+                        "Ne pas replacer le gant avec la main nue si mal mis,",
+                        "Ne pas déplier la base du gant avec la main nue.",
+                        "PREPARER L’AUTRE GANT pour la main dominante :",
+                        "Tirer légèrement sur les doits du gants pour décoler le pli,",
+                        "Glisser tous les doigts de la main gantée dans le pli pour faire levier,",
+                        "Mettre le gant sur la main dominante en le dépliant entièrement.",
+                        "REPLACER LES GANTS en faisant attention à ne pas rompre la stérilité,",
+                        "VERIFIER L’INTEGRITE DES GANTS, pour éviter la rupture de stérilité,",
+                        "SIGNALER UNE RUPTURE D’ASEPSIE si problème à tout moment du geste."
+                    ]
+                }
+            ],
+            "clinicalSectionTitle": "Précautions et ruptures d’asepsie",
+            "clinicalCards": [
+                {
+                    "title": "Désinfection chirurgicale au savon",
+                    "vignette": [],
+                    "findings": [
+                        "Lavage des mains jusqu'aux coudes (1 min)",
+                        "Lavage des ongles à la brosse (1 min)",
+                        "Séchage au papier en tamponnant"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Précaution"
+                },
+                {
+                    "title": "Allergie au latex",
+                    "vignette": [],
+                    "findings": [
+                        "Vérifier l'absence d'allergie au latex",
+                        "Prévoir des gants sans latex le jour J"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Précaution"
+                },
+                {
+                    "title": "Contrôle et ouverture du paquet",
+                    "vignette": [],
+                    "findings": [
+                        "Vérifier l'intégrité du paquet",
+                        "Disposer les gants dans leur papier sur le champ stérile"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Précaution"
+                },
+                {
+                    "title": "Désinfection au SHA jusqu'aux coudes",
+                    "vignette": [],
+                    "findings": [
+                        "Première pompe : mains jusqu'aux coudes",
+                        "Seconde pompe : lavage précautionneux des mains",
+                        "Friction ≥ 2 min, séchage à l'air libre"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Précaution"
+                },
+                {
+                    "title": "Contrôle d'intégrité",
+                    "vignette": [],
+                    "findings": [
+                        "Vérifier l'intégrité des gants après enfilage",
+                        "Replacer sans rompre la stérilité"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Précaution"
+                },
+                {
+                    "title": "Rupture d'asepsie",
+                    "vignette": [],
+                    "findings": [
+                        "Ne pas toucher la partie stérile",
+                        "Ne pas replacer un gant mal mis avec la main nue",
+                        "Signaler toute rupture d'asepsie à tout moment"
+                    ],
+                    "nextSteps": [],
+                    "tag": "Alerte"
+                }
+            ],
+            "scriptTitle": "Texte type",
+            "scriptParagraphs": [
+                "Bonjour, je suis Mardi JUIN, interne de médecine générale, et je vais mettre des gants stériles.",
+                "Je toque à la porte et je me lave les mains avec une solution hydroalcoolique à l'entrée. Je rappelle l'indication au port de gants stériles.",
+                "Je réalise d'abord une désinfection chirurgicale au savon : je lave les mains jusqu'aux coudes pendant une minute, je lave les ongles avec la brosse spécifique pendant une minute, puis je sèche avec du papier en tamponnant.",
+                "Je vérifie l'absence d'allergie au latex, qui nécessiterait des gants spécifiques.",
+                "Je procède à l'ouverture stérile du paquet de gants : je vérifie l'intégrité du paquet pour préserver la stérilité, puis je dispose les gants dans leur papier sur le champ stérile.",
+                "Je réalise ensuite une désinfection chirurgicale au SHA : une première pompe pour laver les mains jusqu'aux coudes, une seconde pompe pour un lavage précautionneux des mains, avec un temps de friction de deux minutes minimum, puis un séchage spontané à l'air libre.",
+                "Je déplie le papier sans toucher les gants. Je prends les gants face à face dans la main dominante, par la partie pliée.",
+                "Je glisse la main non dominante dans le gant correspondant, en faisant attention à ne pas toucher la partie stérile. Je ne replace pas le gant avec la main nue s'il est mal mis, et je ne déplie pas la base du gant avec la main nue.",
+                "Je prépare l'autre gant pour la main dominante : je tire légèrement sur les doigts du gant pour décoller le pli, je glisse tous les doigts de la main gantée dans le pli pour faire levier, puis je mets le gant sur la main dominante en le dépliant entièrement.",
+                "Je replace les gants en faisant attention à ne pas rompre la stérilité, je vérifie l'intégrité des gants pour éviter une rupture de stérilité, et je signale toute rupture d'asepsie si un problème survient à un moment quelconque du geste."
+            ]
+        }
     }
 ];
 
