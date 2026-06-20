@@ -8658,6 +8658,30 @@ body.tours-compact .ranking-extra-stat.time-stat {
 
 
 
+/* Tablettes / iPad (jusqu'au 12,9" paysage = 1366px) : en-tête du planning sur UNE
+   seule ligne et sans le sélecteur Mois/Année (la navigation se fait avec les flèches
+   et « Aujourd'hui »). Le sélecteur ne réapparaît qu'au-delà, sur desktop large. */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .planning-date-selector { display: none !important; }
+    .planning-header-row {
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .planning-month-display { min-width: 0; flex: 1 1 auto; }
+    .planning-month-title { min-width: 0; }
+    .planning-month-title #current-month-name { white-space: nowrap; }
+    .planning-nav-controls { flex: 0 0 auto; }
+}
+
+/* Empêche tout débordement horizontal du planning vers la droite, quelle que soit
+   la largeur. `clip` ne crée pas de conteneur de défilement : l'en-tête de semaine
+   sticky et les menus déroulants (qui s'ouvrent vers le bas) restent intacts, et le
+   défilement horizontal du calendrier reste géré par son propre wrapper interne. */
+@media (min-width: 769px) {
+    #page-planning { max-width: 100%; overflow-x: clip; }
+}
+
 .planning-month-display { display: flex; align-items: center; gap: 1rem; }
 
 .planning-month-title {
@@ -8771,7 +8795,7 @@ body.tours-compact .ranking-extra-stat.time-stat {
     }
 	
 .calendar-container {
-    min-width: 900px !important;
+    min-width: 1300px !important;
     width: 100% !important;
     max-width: none !important;
     flex-shrink: 0;
@@ -8788,6 +8812,45 @@ body.tours-compact .ranking-extra-stat.time-stat {
         width: 100%;
     }
 
+}
+
+/* iPad large (11"/12,9" paysage, 1025–1366px) : reproduire le comportement du
+   téléphone — cases plus larges grâce à une largeur minimale du calendrier, avec
+   défilement horizontal interne si le planning dépasse (pas de débordement de page). */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .calendar-scroll-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
+    }
+    .calendar-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 3px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+    .calendar-weekdays {
+        position: static !important;
+        box-shadow: none;
+    }
+
+    .calendar-container {
+        min-width: 1300px !important;
+        width: 100% !important;
+        max-width: none !important;
+        flex-shrink: 0;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
+    }
+
+    .planning-main {
+        overflow: visible;
+        width: 100%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -9417,6 +9480,13 @@ body.tours-compact .ranking-extra-stat.time-stat {
     .calendar-day { min-height: 150px; }
     .day-notes-input { font-size: 0.68rem; min-height: 50px; }
     .day-specialty-zone { min-height: 28px; }
+}
+
+/* Tablettes / iPad (769–1366px) : cases-notes du planning un peu plus hautes */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .calendar-day { min-height: 188px; }
+    .day-notes-zone { min-height: 72px; }
+    .day-notes-input { min-height: 112px; max-height: 200px; }
 }
 
 @media (max-width: 768px) {
@@ -20098,6 +20168,225 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 .sdd-badge.medecine-generale{ background: #3b82f6; }
 .sdd-badge.gen             { background: #0ea5e9; }
 .sdd-badge.rad             { background: #334155; }
+.sdd-badge.procedures      { background: #06b6d4; }
+/* Boutons / cellules de passage verrouillés (procédures : pas de PS/PSS) */
+.notes-action-btn.passage-locked,
+.todo-sdd-passage-pill.passage-locked { opacity: .4; cursor: not-allowed; filter: grayscale(.6); pointer-events: none; }
+.ct-zone.passage-locked { cursor: not-allowed; }
+.ct-tile.passage-locked { opacity: .45; }
+.ct-tile.passage-locked .ct-zone { pointer-events: none; cursor: not-allowed; }
+
+/* ============================================================
+   PROCÉDURES — panneau « Fiche procédure » (scopé .procedure-panel)
+   ============================================================ */
+.procedure-panel { display: flex; flex-direction: column; gap: 1rem; }
+.procedure-panel .procedure-section { margin-bottom: .25rem; }
+.procedure-panel .procedure-section-title {
+    display: flex; align-items: center; gap: .5rem;
+    font-weight: 700; font-size: .95rem; color: var(--gray-800, #1f2937);
+    margin: .25rem 0 .6rem;
+}
+.procedure-panel .procedure-section-title i { color: #06b6d4; }
+/* Étapes : timeline numérotée */
+.procedure-panel .procedure-steps { list-style: none; margin: 0; padding: 0; position: relative; }
+.procedure-panel .procedure-step {
+    position: relative; padding: 0 0 .9rem 2.25rem; border-left: 2px solid rgba(6,182,212,.25); margin-left: .6rem;
+}
+.procedure-panel .procedure-step:last-child { border-left-color: transparent; padding-bottom: 0; }
+.procedure-panel .procedure-step .procedure-step-dot {
+    position: absolute; left: -.85rem; top: 0; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+    background: #06b6d4; color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; box-shadow: 0 0 0 3px var(--white, #fff);
+}
+.procedure-panel .procedure-step .procedure-step-head {
+    display: flex; align-items: center; gap: .45rem; font-weight: 650; color: var(--gray-800, #1f2937); margin-bottom: .3rem;
+}
+.procedure-panel .procedure-step .procedure-step-head i { color: #0891b2; font-size: .9rem; }
+.procedure-panel .procedure-step ul { margin: .15rem 0 0; padding-left: 1.1rem; }
+.procedure-panel .procedure-step li { margin: .18rem 0; line-height: 1.4; color: var(--gray-700, #374151); }
+/* Cartes cliniques */
+.procedure-panel .procedure-cards { display: grid; grid-template-columns: 1fr; gap: .7rem; }
+.procedure-panel .procedure-card {
+    border: 1px solid rgba(6,182,212,.25); border-radius: 12px; padding: .7rem .8rem; background: rgba(6,182,212,.05);
+}
+.procedure-panel .procedure-card-title {
+    display: flex; align-items: center; justify-content: space-between; gap: .4rem;
+    font-weight: 700; color: var(--gray-800, #1f2937); margin-bottom: .35rem;
+}
+.procedure-panel .procedure-card-tag {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    padding: .12rem .45rem; border-radius: 999px; background: #06b6d4; color: #fff; white-space: nowrap;
+}
+.procedure-panel .procedure-card-tag.urgence,
+.procedure-panel .procedure-card-tag.alerte { background: #dc2626; }
+.procedure-panel .procedure-card-tag.malin { background: #be123c; }
+.procedure-panel .procedure-card-tag.benin { background: #059669; }
+.procedure-panel .procedure-card-sub { font-size: .72rem; font-weight: 700; color: #0891b2; text-transform: uppercase; letter-spacing: .02em; margin: .4rem 0 .15rem; }
+.procedure-panel .procedure-card ul { margin: 0; padding-left: 1.05rem; }
+.procedure-panel .procedure-card li { margin: .12rem 0; line-height: 1.35; font-size: .85rem; color: var(--gray-700, #374151); }
+/* Texte type (dépliable) */
+.procedure-panel .procedure-script { border: 1px solid var(--gray-200, #e5e7eb); border-radius: 12px; overflow: hidden; }
+.procedure-panel .procedure-script > summary {
+    cursor: pointer; list-style: none; padding: .6rem .8rem; font-weight: 700; color: var(--gray-800, #1f2937);
+    display: flex; align-items: center; gap: .5rem; background: var(--gray-50, #f9fafb); user-select: none;
+}
+.procedure-panel .procedure-script > summary::-webkit-details-marker { display: none; }
+.procedure-panel .procedure-script > summary i { color: #06b6d4; transition: transform .2s; }
+.procedure-panel .procedure-script[open] > summary i.chevron { transform: rotate(90deg); }
+.procedure-panel .procedure-script-body { padding: .7rem .85rem; }
+.procedure-panel .procedure-script-body p { margin: 0 0 .6rem; line-height: 1.5; color: var(--gray-700, #374151); }
+.procedure-panel .procedure-script-body p:last-child { margin-bottom: 0; }
+@media (max-width: 768px) {
+    .procedure-panel .procedure-cards { grid-template-columns: 1fr; }
+}
+[data-theme="dark"] .procedure-panel .procedure-section-title,
+[data-theme="dark"] .procedure-panel .procedure-step .procedure-step-head,
+[data-theme="dark"] .procedure-panel .procedure-card-title { color: var(--gray-100, #f3f4f6); }
+[data-theme="dark"] .procedure-panel .procedure-step li,
+[data-theme="dark"] .procedure-panel .procedure-card li,
+[data-theme="dark"] .procedure-panel .procedure-script-body p { color: var(--gray-300, #d1d5db); }
+[data-theme="dark"] .procedure-panel .procedure-card { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.3); }
+[data-theme="dark"] .procedure-panel .procedure-step .procedure-step-dot { box-shadow: 0 0 0 3px var(--gray-900, #111827); }
+[data-theme="dark"] .procedure-panel .procedure-script { border-color: var(--gray-700, #374151); }
+[data-theme="dark"] .procedure-panel .procedure-script > summary { background: var(--gray-800, #1f2937); color: var(--gray-100, #f3f4f6); }
+
+/* =========================================================
+   ALERTES DES FICHES DE PROCÉDURES
+   ========================================================= */
+
+.procedure-panel .procedure-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.procedure-panel .procedure-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+
+    padding: 0.7rem 0.8rem;
+
+    border: 1px solid #fecaca;
+    border-left: 4px solid #dc2626;
+    border-radius: 10px;
+
+    background: #fef2f2;
+    color: #991b1b;
+
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.procedure-panel .procedure-alert i {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   NOTES GÉNÉRALES « JOUR J »
+   ========================================================= */
+
+.procedure-panel .procedure-dayj-box {
+    padding: 0.7rem 0.8rem;
+
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+
+    background: #eff6ff;
+}
+
+.procedure-panel .procedure-dayj-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+
+    margin-bottom: 0.35rem;
+
+    color: #1d4ed8;
+
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.procedure-panel .procedure-dayj-box ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.procedure-panel .procedure-dayj-box li {
+    margin: 0.15rem 0;
+
+    color: var(--gray-700, #374151);
+
+    font-size: 0.84rem;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   NOTE « JOUR J » LIÉE À UNE PATHOLOGIE
+   ========================================================= */
+
+.procedure-panel .procedure-card-dayj {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+
+    margin: 0.45rem 0;
+    padding: 0.45rem 0.55rem;
+
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+
+    background: #eff6ff;
+    color: #1d4ed8;
+
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.procedure-panel .procedure-card-dayj i {
+    flex-shrink: 0;
+    margin-top: 0.12rem;
+}
+
+
+/* =========================================================
+   MODE SOMBRE
+   ========================================================= */
+
+[data-theme="dark"] .procedure-panel .procedure-alert {
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(127, 29, 29, 0.22);
+    color: #fecaca;
+}
+
+[data-theme="dark"] .procedure-panel .procedure-alert i {
+    color: #f87171;
+}
+
+[data-theme="dark"] .procedure-panel .procedure-dayj-box,
+[data-theme="dark"] .procedure-panel .procedure-card-dayj {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(30, 64, 175, 0.2);
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .procedure-panel .procedure-dayj-title {
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .procedure-panel .procedure-dayj-box li {
+    color: var(--gray-300, #d1d5db);
+}
+
 
 /* ---- Compteurs +/- dans la liste des SDD ---- */
 .sdd-counter { display: inline-flex; align-items: center; gap: 6px; }
@@ -21859,8 +22148,17 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 [data-theme="dark"] .pdt-sep { background: #334155; }
 
 /* Animation entrée / sortie du modal détaillé */
-.planning-day-detail-overlay.closing { opacity: 0; }
-.planning-day-detail-overlay.closing .planning-day-detail-modal { transform: scale(0.94) translateY(14px); opacity: 0; }
+.planning-day-detail-overlay.closing { opacity: 0; pointer-events: none; transition: opacity .24s ease; }
+.planning-day-detail-overlay.closing .planning-day-detail-modal {
+    animation: planningDayDetailModalOut .26s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+@keyframes planningDayDetailModalOut {
+    from { transform: scale(1) translateY(0); opacity: 1; }
+    to   { transform: scale(0.9) translateY(24px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .planning-day-detail-overlay.closing .planning-day-detail-modal { animation-duration: .01ms; }
+}
 
 /* Sous-modal spécialités : pastilles codes uniquement (compact) */
 .planning-spec-submodal-grid { gap: 0.45rem; }
@@ -24139,8 +24437,55 @@ function renderECOSAll() {
 /* ----------------------------------------------------------------------------
    COMPTEURS PS/PSS, SANS PS, FAITES PASSER
    ---------------------------------------------------------------------------- */
+/* =========================================================================
+   PROCÉDURES — helpers centraux (codes P1..P8, tri, interdiction PS/PSS)
+   ========================================================================= */
+function getSDDDisplayCode(meta) {
+    if (!meta) return "";
+    return String(meta.code || meta.number || "");
+}
+function getSDDSortKey(meta) {
+    if (!meta) return [99, 999999];
+    if (meta.contentType === "procedure") {
+        return [1, Number(meta.sortOrder || 0)];
+    }
+    return [0, Number(meta.number || 0)];
+}
+function compareSDDDefault(a, b) {
+    const ka = getSDDSortKey(a);
+    const kb = getSDDSortKey(b);
+    return ka[0] - kb[0] || ka[1] - kb[1];
+}
+function isProcedureSDD(metaOrId) {
+    var m = (metaOrId && typeof metaOrId === 'object') ? metaOrId : getSDDMeta(metaOrId);
+    return !!(m && m.contentType === 'procedure');
+}
+function getAllowedPassageTypes(metaOrId) {
+    var m = (metaOrId && typeof metaOrId === 'object') ? metaOrId : getSDDMeta(metaOrId);
+    if (m && Array.isArray(m.allowedPassageTypes)) return m.allowedPassageTypes.slice();
+    if (isProcedureSDD(m)) return ['sans_ps', 'faire_passer'];
+    return ['ps_pss', 'sans_ps', 'faire_passer'];
+}
+function isPassageTypeAllowed(metaOrId, type) {
+    return getAllowedPassageTypes(metaOrId).indexOf(type) !== -1;
+}
+if (typeof window !== 'undefined') {
+    window.getSDDDisplayCode = getSDDDisplayCode;
+    window.getSDDSortKey = getSDDSortKey;
+    window.compareSDDDefault = compareSDDDefault;
+    window.isProcedureSDD = isProcedureSDD;
+    window.getAllowedPassageTypes = getAllowedPassageTypes;
+    window.isPassageTypeAllowed = isPassageTypeAllowed;
+}
+
 function sddIncrement(sddId, type) {
     // type: 'ps_pss' | 'sans_ps' | 'faire_passer'
+    if (!isPassageTypeAllowed(sddId, type)) {
+        if (window.showEcosToast) {
+            window.showEcosToast("Les procédures ne peuvent être enregistrées qu'en Sans PS ou Fait passer.", "info");
+        }
+        return false;
+    }
     if (window.canPerformEcosAction && !window.canPerformEcosAction('increment')) return;
     confPickerContext = { sddId, type };
     if (type === 'faire_passer') {
@@ -24152,6 +24497,14 @@ function sddIncrement(sddId, type) {
 }
 
 function applySDDIncrement(sddId, type, confidence) {
+    // Garde centrale : les procédures (P1..P8) n'acceptent que sans_ps / faire_passer.
+    // Empêche toute mutation du compteur et de l'historique, y compris en appel direct.
+    if (!isPassageTypeAllowed(sddId, type)) {
+        if (window.showEcosToast) {
+            window.showEcosToast("Les procédures ne peuvent être enregistrées qu'en Sans PS ou Fait passer.", "info");
+        }
+        return false;
+    }
     const s = ensureSDDState(sddId);
     const today = ecosTodayKey();
     if (type === 'ps_pss') { s.psPssCount++; }
@@ -24277,8 +24630,9 @@ function _buildValidationPopoverHTML(selectedType) {
     var sddId = (pendingTodoSDDValidation && pendingTodoSDDValidation.sddId) || null;
     var curConf = (typeof getSDDState === 'function' && sddId) ? (getSDDState(sddId).confidence || 0) : 0;
 
+    var _psAllowed = (typeof isPassageTypeAllowed !== 'function') || isPassageTypeAllowed(sddId, 'ps_pss');
     var pillsHTML =
-        '<button class="todo-sdd-passage-pill ps' + (selectedType === 'ps_pss' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;ps_pss&apos;)"><i class="fas fa-user-doctor"></i> PS/PSS</button>' +
+        (_psAllowed ? '<button class="todo-sdd-passage-pill ps' + (selectedType === 'ps_pss' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;ps_pss&apos;)"><i class="fas fa-user-doctor"></i> PS/PSS</button>' : '') +
         '<button class="todo-sdd-passage-pill sans' + (selectedType === 'sans_ps' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;sans_ps&apos;)"><i class="fas fa-flag"></i> Sans PS</button>' +
         '<button class="todo-sdd-passage-pill pass' + (selectedType === 'faire_passer' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();confirmTodoSDDValidationType(&apos;faire_passer&apos;, this)"><i class="fas fa-handshake"></i> Fait passer</button>';
 
@@ -24889,7 +25243,7 @@ function openPriorityModal(sddId) {
     const cur = getSDDState(sddId).priority || 'none';
     document.querySelectorAll('#ecos-prio-overlay .prio-choice').forEach(c => c.classList.toggle('sel', c.dataset.level === cur));
     const meta = getSDDMeta(sddId);
-    document.getElementById('ecos-prio-sdd-title').textContent = meta ? (meta.number + ' — ' + meta.title) : sddId;
+    document.getElementById('ecos-prio-sdd-title').textContent = meta ? (getSDDDisplayCode(meta) + ' — ' + meta.title) : sddId;
     document.getElementById('ecos-prio-overlay').classList.add('active');
 }
 function setSDDPriority(level) {
@@ -24937,7 +25291,8 @@ var ECOS_SPEC_COLORS = {
     'sante-publique':   '#059669',  /* EDN spe-sante-pub */
     'medecine-generale':'#3b82f6',
     'gen':              '#0ea5e9',
-    'rad':              '#334155'
+    'rad':              '#334155',
+    'procedures':       '#06b6d4'
 };
 function getSpecColor(spId) {
     if (!spId) return '#6b7280';
@@ -24970,7 +25325,7 @@ function getFilteredSDDs() {
     let list = (typeof ECOS_SDD_DATA !== 'undefined') ? ECOS_SDD_DATA.slice() : [];
     const term = sddSearchTerm.trim().toLowerCase();
     if (term) {
-        list = list.filter(s => (s.title || '').toLowerCase().includes(term) || String(s.number).includes(term) || (s.id || '').toLowerCase().includes(term));
+        list = list.filter(s => (s.title || '').toLowerCase().includes(term) || String(s.number).toLowerCase().includes(term) || String(s.code || '').toLowerCase().includes(term) || (s.id || '').toLowerCase().includes(term));
     }
     // 3.10 — filtre multi-spécialités (au moins une des spécialités sélectionnées)
     if (Array.isArray(sddFilterSpecialties) && sddFilterSpecialties.length) {
@@ -24998,7 +25353,7 @@ function getFilteredSDDs() {
             case 'faire_passer': va = sa.fairePasserCount; vb = sb.fairePasserCount; break;
             case 'confidence': va = sa.confidence || 0; vb = sb.confidence || 0; break;
             case 'lastRevision': va = sa.lastRevision || ''; vb = sb.lastRevision || ''; return va.localeCompare(vb) * dir;
-            default: va = a.number; vb = b.number;
+            default: return compareSDDDefault(a, b) * dir;
         }
         return (va - vb) * dir;
     });
@@ -25141,6 +25496,23 @@ function ecosDateClass(iso) {
 function counterHTML(sddId, type, val) {
     var n = val || 0;
     var p = ecosPalAt(n);
+    // Procédures : la colonne PS/PSS est verrouillée (seuls Sans PS / Fait passer)
+    if (type === 'ps_pss' && (typeof isPassageTypeAllowed === 'function') && !isPassageTypeAllowed(sddId, 'ps_pss')) {
+        return '<div class="compact-tours">' +
+            '<div class="ct-block">' +
+            '<div class="ct-tile-border passage-locked" style="background:' + p.border + '" data-ecos-tooltip="PS/PSS indisponible pour les procédures">' +
+                '<div class="ct-tile" data-count="0" style="background:' + p.pastel + '">' +
+                    '<div class="ct-zone ct-zone-l ct-zone-disabled passage-locked" onclick="return false;"></div>' +
+                    '<div class="ct-zone ct-zone-r passage-locked" onclick="return false;"></div>' +
+                    '<div class="ct-div ct-div-top" style="background:' + p.border + '"></div>' +
+                    '<div class="ct-div ct-div-bot" style="background:' + p.border + '"></div>' +
+                    '<div class="ct-num" style="color:' + p.text + '"><i class="fas fa-lock" style="font-size:.7rem;"></i></div>' +
+                '</div>' +
+            '</div>' +
+            '<span class="ct-cap">PS/PSS</span>' +
+        '</div>' +
+        '</div>';
+    }
     var leftDisabled = n <= 0 ? ' ct-zone-disabled' : '';
 	var removeAction = n <= 0
   ? 'onclick="return false;"'
@@ -25322,7 +25694,8 @@ var ECOS_SPEC_FILTER_LIST = [
     { id: 'rhumatologie',     name: 'Rhumato - Ortho.' },
     { id: 'sante-publique',   name: 'Santé publique' },
     { id: 'therapeutique',    name: 'Thérapeutique' },
-    { id: 'urologie',         name: 'Urologie' }
+    { id: 'urologie',         name: 'Urologie' },
+    { id: 'procedures',       name: 'Procédures' }
 ];
 const MAX_SDD_SPECIALTY_SELECTION = 4;
 
@@ -25722,7 +26095,7 @@ function openSDDResourcesModal(sddId) {
     const meta = getSDDMeta(sddId);
     const s = getSDDState(sddId);
     const titleEl = document.getElementById('sdd-res-modal-title');
-    if (titleEl) titleEl.textContent = meta ? (meta.number + ' — ' + meta.title) : 'Ressources';
+    if (titleEl) titleEl.textContent = meta ? (getSDDDisplayCode(meta) + ' — ' + meta.title) : 'Ressources';
     const body = document.getElementById('sdd-res-modal-body');
     if (body) {
         body.innerHTML = '<div class="resources-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">' +
@@ -25863,7 +26236,8 @@ var ECOS_SPEC_ICONS = {
 
     'medecine-generale': 'fa-house-medical',
     'gen':               'fa-house-medical',
-    'rad':               'fa-radiation'
+    'rad':               'fa-radiation',
+    'procedures':        'fa-hand-sparkles'
 };
 
 window.ECOS_SPEC_ICONS = ECOS_SPEC_ICONS;
@@ -27433,7 +27807,17 @@ function openSDDNotesModal(sddId) {
     const meta = getSDDMeta(sddId);
     if (!meta) return;
     const numEl = document.getElementById('sdd-notes-num');
-    numEl.textContent = 'SDD-' + String(meta.number).padStart(3, '0');
+    numEl.textContent = (meta.contentType === 'procedure') ? getSDDDisplayCode(meta) : ('SDD-' + String(meta.number).padStart(3, '0'));
+    // Procédures : verrouiller le bouton PS/PSS (seuls Sans PS / Fait passer autorisés)
+    (function () {
+        var _isProc = (meta.contentType === 'procedure');
+        var _psBtn = document.querySelector('.notes-action-btn.sdd-quick-ps');
+        if (_psBtn) {
+            _psBtn.classList.toggle('passage-locked', _isProc);
+            _psBtn.disabled = _isProc;
+            _psBtn.setAttribute('data-tooltip', _isProc ? 'PS/PSS indisponible pour les procédures' : 'PS/PSS');
+        }
+    })();
     document.getElementById('sdd-notes-title').textContent = meta.title;
     // badges spécialités + noms complets sur desktop
     const badges = (meta.specialties || []).map(specialtyBadgeHTML).join('');
@@ -27465,6 +27849,10 @@ function openSDDNotesModal(sddId) {
     if (window._bodyLock) window._bodyLock('sddNotes');
 }
 function renderSDDObjectives(meta) {
+    if (meta && meta.contentType === "procedure") {
+        renderProcedureContent(meta);
+        return;
+    }
     const right = document.getElementById('sdd-notes-objectives');
     let bodyHtml = '';
 
@@ -27508,6 +27896,244 @@ function renderSDDObjectives(meta) {
         '</div>' +
         '<div class="sdd-obj-panel-body">' + bodyHtml + '</div>';
 }
+
+
+function renderProcedureContent(meta) {
+    const right = document.getElementById('sdd-notes-objectives');
+    if (!right) return;
+
+    const esc = (typeof escapeHtml === 'function')
+        ? escapeHtml
+        : function (s) {
+            return String(s == null ? '' : s);
+        };
+
+    const pc = (meta && meta.procedureContent) || {};
+
+    const steps = Array.isArray(pc.steps) ? pc.steps : [];
+    const cards = Array.isArray(pc.clinicalCards) ? pc.clinicalCards : [];
+    const paras = Array.isArray(pc.scriptParagraphs) ? pc.scriptParagraphs : [];
+    const alerts = Array.isArray(pc.alerts) ? pc.alerts : [];
+    const dayJNotes = Array.isArray(pc.dayJNotes) ? pc.dayJNotes : [];
+
+    const tagClass = function (t) {
+        var s = String(t || '').toLowerCase();
+
+        if (s.indexOf('urgence') !== -1) return 'urgence';
+
+        if (
+            s.indexOf('alerte') !== -1 ||
+            s.indexOf("d'alerte") !== -1
+        ) {
+            return 'alerte';
+        }
+
+        if (
+            s.indexOf('malin') !== -1 ||
+            s.indexOf('malign') !== -1
+        ) {
+            return 'malin';
+        }
+
+        if (
+            s.indexOf('bénin') !== -1 ||
+            s.indexOf('benin') !== -1
+        ) {
+            return 'benin';
+        }
+
+        return '';
+    };
+
+    var html = '';
+
+    // Mentions ATTENTION
+    if (alerts.length) {
+        html += '<div class="procedure-alerts">' +
+            alerts.map(function (text) {
+                return '<div class="procedure-alert">' +
+                    '<i class="fas fa-triangle-exclamation"></i>' +
+                    '<span>' + esc(text) + '</span>' +
+                '</div>';
+            }).join('') +
+        '</div>';
+    }
+
+    // Notes générales du jour J
+    if (dayJNotes.length) {
+        html += '<div class="procedure-dayj-box">' +
+            '<div class="procedure-dayj-title">' +
+                '<i class="fas fa-calendar-check"></i>' +
+                '<span>Notes jour J</span>' +
+            '</div>' +
+            '<ul>' +
+                dayJNotes.map(function (text) {
+                    return '<li>' + esc(text) + '</li>';
+                }).join('') +
+            '</ul>' +
+        '</div>';
+    }
+
+    // 1. Introduction, Explications, Inspection,
+    // Réalisation, Suites et Synthèse
+    if (steps.length) {
+        html += '<div class="procedure-section">' +
+            '<div class="procedure-section-title">' +
+                '<i class="fas fa-list-ol"></i> Grandes étapes' +
+            '</div>' +
+            '<ol class="procedure-steps">' +
+                steps.map(function (st, i) {
+                    var items = Array.isArray(st.items) ? st.items : [];
+
+                    var icon = st.icon
+                        ? '<i class="fas ' + esc(st.icon) + '"></i> '
+                        : '';
+
+                    return '<li class="procedure-step">' +
+                        '<span class="procedure-step-dot">' + (i + 1) + '</span>' +
+                        '<div class="procedure-step-head">' +
+                            icon +
+                            esc(st.title || '') +
+                        '</div>' +
+                        (
+                            items.length
+                                ? '<ul>' +
+                                    items.map(function (it) {
+                                        return '<li>' + esc(it) + '</li>';
+                                    }).join('') +
+                                  '</ul>'
+                                : ''
+                        ) +
+                    '</li>';
+                }).join('') +
+            '</ol>' +
+        '</div>';
+    }
+
+    // 2. Pathologies possibles
+    if (cards.length) {
+        html += '<div class="procedure-section">' +
+            '<div class="procedure-section-title">' +
+                '<i class="fas fa-notes-medical"></i> ' +
+                esc(pc.clinicalSectionTitle || 'Pathologies possibles') +
+            '</div>' +
+            '<div class="procedure-cards">' +
+                cards.map(function (c) {
+                    var vignette = Array.isArray(c.vignette)
+                        ? c.vignette
+                        : [];
+
+                    var findings = Array.isArray(c.findings)
+                        ? c.findings
+                        : [];
+
+                    var nextSteps = Array.isArray(c.nextSteps)
+                        ? c.nextSteps
+                        : [];
+
+                    var inner = '';
+
+                    if (vignette.length) {
+                        inner +=
+                            '<div class="procedure-card-sub">Vignette</div>' +
+                            '<ul>' +
+                                vignette.map(function (v) {
+                                    return '<li>' + esc(v) + '</li>';
+                                }).join('') +
+                            '</ul>';
+                    }
+
+                    if (findings.length) {
+                        inner +=
+                            '<div class="procedure-card-sub">Ce que je recherche</div>' +
+                            '<ul>' +
+                                findings.map(function (v) {
+                                    return '<li>' + esc(v) + '</li>';
+                                }).join('') +
+                            '</ul>';
+                    }
+
+                    if (nextSteps.length) {
+                        inner +=
+                            '<div class="procedure-card-sub">Suite / orientation</div>' +
+                            '<ul>' +
+                                nextSteps.map(function (v) {
+                                    return '<li>' + esc(v) + '</li>';
+                                }).join('') +
+                            '</ul>';
+                    }
+
+                    var tag = c.tag
+                        ? '<span class="procedure-card-tag ' +
+                            tagClass(c.tag) +
+                            '">' +
+                            esc(c.tag) +
+                          '</span>'
+                        : '';
+
+                    var cardDayJ = c.dayJNote
+                        ? '<div class="procedure-card-dayj">' +
+                            '<i class="fas fa-location-dot"></i>' +
+                            '<span>' + esc(c.dayJNote) + '</span>' +
+                          '</div>'
+                        : '';
+
+                    return '<div class="procedure-card">' +
+                        '<div class="procedure-card-title">' +
+                            '<span>' + esc(c.title || '') + '</span>' +
+                            tag +
+                        '</div>' +
+                        cardDayJ +
+                        inner +
+                    '</div>';
+                }).join('') +
+            '</div>' +
+        '</div>';
+    }
+
+    // 3. Texte type à la fin
+    if (paras.length) {
+        var openAttr = (paras.length <= 6) ? ' open' : '';
+
+        html += '<div class="procedure-section">' +
+            '<details class="procedure-script"' + openAttr + '>' +
+                '<summary>' +
+                    '<i class="fas fa-chevron-right chevron"></i>' +
+                    '<i class="fas fa-comment-dots"></i> ' +
+                    esc(pc.scriptTitle || 'Texte type') +
+                '</summary>' +
+                '<div class="procedure-script-body">' +
+                    paras.map(function (p) {
+                        return '<p>' + esc(p) + '</p>';
+                    }).join('') +
+                '</div>' +
+            '</details>' +
+        '</div>';
+    }
+
+    if (!html) {
+        html =
+            '<div class="sdd-obj-empty">' +
+                '<i class="fas fa-inbox"></i>' +
+                '<span>Aucun contenu de procédure renseigné.</span>' +
+            '</div>';
+    }
+
+    right.innerHTML =
+        '<div class="sdd-obj-panel-header">' +
+            '<div class="sdd-obj-panel-header-icon">' +
+                '<i class="fas fa-hand-sparkles"></i>' +
+            '</div>' +
+            '<span class="sdd-obj-panel-header-text">Fiche procédure</span>' +
+        '</div>' +
+        '<div class="sdd-obj-panel-body">' +
+            '<div class="procedure-panel">' +
+                html +
+            '</div>' +
+        '</div>';
+}
+
+
 function objItemHTML(o) {
     const meta = [];
     if (o.domain) meta.push('<span class="sdd-obj-tag domain">' + escapeHtml(o.domain) + '</span>');
@@ -27716,6 +28342,10 @@ function notesAddToTodo() {
 window.sddNotesQuickPassage = function(type, event) {
     const sddId = currentSDDId || window.speErrCurrentId || null;
     if (!sddId) return;
+    if (!isPassageTypeAllowed(sddId, type)) {
+        if (window.showEcosToast) window.showEcosToast("Les procédures ne peuvent être enregistrées qu'en Sans PS ou Fait passer.", "info");
+        return;
+    }
     if (typeof canPerformAction === 'function' && !canPerformAction('tour')) return;
 
     if (type === 'faire_passer') {
@@ -28145,10 +28775,22 @@ function closePlanningDayDetailModal() {
     }
     closePlanningStatusMenu();
     closePlanningSpecSubmodal();
-    // Animation de sortie : le retrait de .active déclenche la transition opacity/visibility
-    overlay.classList.remove('active');
+    // Animation de disparition : .closing joue le keyframe de sortie ;
+    // on retire .active + .closing à la fin de l'animation (filet de sécurité en secours).
+    overlay.classList.add('closing');
     overlay.setAttribute('aria-hidden', 'true');
-    if (window._bodyUnlock) window._bodyUnlock('planningDetail'); else document.body.style.overflow = '';
+    var _ddModal = overlay.querySelector('.planning-day-detail-modal');
+    var _ddCleanup = function () {
+        // ne rien réinitialiser si le modal a été rouvert entre-temps
+        if (overlay.classList.contains('closing')) {
+            overlay.classList.remove('active', 'closing');
+            // Restaurer la barre de défilement de la page SEULEMENT après l'animation,
+            // pour éviter que la réapparition du scrollbar ne décale le modal sur la gauche.
+            if (window._bodyUnlock) window._bodyUnlock('planningDetail'); else document.body.style.overflow = '';
+        }
+    };
+    if (_ddModal) { _ddModal.addEventListener('animationend', _ddCleanup, { once: true }); }
+    setTimeout(_ddCleanup, 340);
     if (_planningEscHandler) { document.removeEventListener('keydown', _planningEscHandler, true); _planningEscHandler = null; }
     var prevDate = currentPlanningDetailDate;
     currentPlanningDetailDate = null;
@@ -29806,6 +30448,8 @@ function rstationPick(opts) {
         order.forEach(function (x) { if (sansLeft > 0) { x.mode = 'sans_ps'; sansLeft--; } });
         chosen.forEach(function (x) { if (!x.mode) x.mode = 'ps_pss'; });
     }
+    // Procédures : toujours générées en Sans PS, jamais en PS/PSS (exclues des quotas PS/PSS)
+    chosen.forEach(function (x) { if (x.sdd && x.sdd.contentType === 'procedure') x.mode = 'sans_ps'; });
     return chosen;
 }
 
@@ -29843,7 +30487,7 @@ function rstationCardHTML(sddId, options) {
     return '<div class="rstation-card' + (options.anim ? ' anim' : '') + '" data-sdd="' + sddId + '" data-mode="' + (options.mode || '') + '" style="--rs-card-color:' + color + ';' + (options.delay ? 'animation-delay:' + options.delay + 'ms;' : '') + '">' +
         '<div class="rstation-card-top">' +
             '<div class="rstation-card-id">' +
-                '<div class="rstation-card-num">SDD-' + String(num).padStart(3, '0') + '</div>' +
+                '<div class="rstation-card-num">' + ((meta && meta.contentType === 'procedure') ? escapeHtml(getSDDDisplayCode(meta)) : ('SDD-' + String(num).padStart(3, '0'))) + '</div>' +
                 '<div class="rstation-card-title">' + escapeHtml(meta.title || sddId) + '</div>' +
                 '<div class="rstation-card-badges">' + badges + '</div>' +
             '</div>' +
@@ -37346,28 +37990,37 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
 }
 /* =========================================================
-   HEADER PLANNING — NAVIGATION TOUJOURS CENTRÉE
+   HEADER PLANNING — NAVIGATION TOUJOURS CENTRÉE (robuste)
+   Centre les boutons sans les déplacer selon la longueur du mois,
+   sans débordement ni chevauchement (iPad large, téléphone paysage).
    ========================================================= */
 
-@media (min-width: 769px) {
+@media (min-width: 1367px) {
     .planning-header-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: center;
         gap: 1rem;
+        width: 100%;
+        max-width: 100%;
     }
 
     .planning-month-display {
         justify-self: start;
         min-width: 0;
+        flex-wrap: wrap;
     }
 
     .planning-nav-controls {
         justify-self: center;
+        flex: 0 0 auto;
     }
 
     .planning-date-selector {
         justify-self: end;
+        min-width: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 }
 
@@ -37798,3 +38451,5 @@ if (document.readyState === 'loading') {
 
 </body>
 </html>
+
+
