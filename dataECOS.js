@@ -43855,13 +43855,16 @@ var ECOS_SDD_DATA = [
         "title": "Palpation mammaire",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "gynecologie"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "Gynéco - Obs."
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "GYN"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -43890,7 +43893,6 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander à la patiente si elle a DEJA VECU ce geste :",
                         "Expliquer le geste en détail au patient :",
                         "Déroulement, inspection puis palpation des seins et ganglions,",
                         "Objectifs, recherche d’anomalie des différentes structures,",
@@ -44097,13 +44099,16 @@ var ECOS_SDD_DATA = [
         "title": "Palpation testiculaire",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "urologie"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "Urologie"
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "URO"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -44131,7 +44136,6 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander au patient s’il a DEJA VECU ce geste :",
                         "Expliquer le geste en détail au patient :",
                         "Déroulement, examen visuel puis palpation du scrotum,",
                         "Objectifs, recherche d’anomalie des différentes structures,",
@@ -44353,13 +44357,16 @@ var ECOS_SDD_DATA = [
         "title": "Massage cardiaque externe",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "mir"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "MIR - Anesthésie"
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "MIR"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -44448,7 +44455,8 @@ var ECOS_SDD_DATA = [
                     ]
                 }
             ],
-            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalSectionTitle": "Particularités",
+            "hideFindingsLabel": true,
             "clinicalCards": [
                 {
                     "title": "Adulte",
@@ -44582,7 +44590,6 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander au patient s’il a DEJA VECU ce geste,",
                         "Expliquer le geste en détail au patient :",
                         "Déroulement, avec anesthésie locale puis points de suture,",
                         "Objectifs, bonne cicatrisation et protection contre infection,",
@@ -44596,7 +44603,7 @@ var ECOS_SDD_DATA = [
                     "title": "Inspection",
                     "icon": "fa-eye",
                     "items": [
-                        "Précautions A vérifier avant",
+                        "Précautions à vérifier avant",
                         "Confirmer l’indication de la suture :",
                         "Plaie profonde avec risque infectieux et de cicatrisation difficile,",
                         "Saignement abondant qui ne se tarit pas.",
@@ -44659,7 +44666,8 @@ var ECOS_SDD_DATA = [
                     ]
                 }
             ],
-            "clinicalSectionTitle": "Pathologies possibles",
+            "clinicalSectionTitle": "Particularités",
+            "hideFindingsLabel": true,
             "clinicalCards": [
                 {
                     "title": "Indications",
@@ -44723,13 +44731,16 @@ var ECOS_SDD_DATA = [
         "title": "Toucher rectal masculin",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "urologie"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "Urologie"
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "URO"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -44760,11 +44771,10 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander au patient s’il a DEJA VECU ce geste :",
                         "Expliquer le geste en détail au patient :",
-                        "Déroulement, examen visuel puis insertion de l’index dans le rectum :",
+                        "Déroulement, examen visuel puis insertion de l’index dans le rectum,",
                         "Palpation de la prostate dans un premier temps,",
-                        "Examen des parois rectales ensuite.",
+                        "Examen des parois rectales ensuite,",
                         "Objectifs, recherche d’anomalie des différentes structures,",
                         "Risques, examen desagréable mais non douloureux sauf si prostatite.",
                         "Rechercher le CONSENTEMENT au début et tout au long du geste :",
@@ -44964,13 +44974,19 @@ var ECOS_SDD_DATA = [
         "title": "Examen de l'oreille",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "orl",
+            "pediatrie"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "ORL - CMF",
+            "Pédiatrie"
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "ORL",
+            "PED"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -44999,7 +45015,6 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander au patient s’il a DEJA VECU ce geste :",
                         "Expliquer le geste en détail au patient :",
                         "Déroulement, inspection de l’oreille puis examen à l’otoscope,",
                         "Objectifs, recherche d’anomalie des différentes structures,",
@@ -45199,13 +45214,19 @@ var ECOS_SDD_DATA = [
         "title": "Injection intramusculaire",
         "lisaUrl": null,
         "specialties": [
-            "procedures"
+            "procedures",
+            "pediatrie",
+            "mir"
         ],
         "specialtyNames": [
-            "Procédures"
+            "Procédures",
+            "Pédiatrie",
+            "MIR - Anesthésie"
         ],
         "badges": [
-            "PRO"
+            "PRO",
+            "PED",
+            "MIR"
         ],
         "family": "Procédures",
         "contentType": "procedure",
@@ -45230,7 +45251,6 @@ var ECOS_SDD_DATA = [
                     "title": "Explications",
                     "icon": "fa-comments",
                     "items": [
-                        "Demander au patient s’il a DEJA VECU ce geste :",
                         "Expliquer le geste en détail au patient :",
                         "Déroulement, injection de produit dans le muscle deltoïde,",
                         "Objectifs de l’injection intra-musculaire :",
@@ -45247,7 +45267,7 @@ var ECOS_SDD_DATA = [
                     "title": "Inspection",
                     "icon": "fa-eye",
                     "items": [
-                        "Précautions A vérifier avant",
+                        "Précautions à vérifier avant",
                         "Confirmer l’indication de l’injection intra-musculaire :",
                         "URGENCE VITALE en l’absence de voie IV :",
                         "Anaphylaxie, nécessitant 0,5 mg d’ADRENALINE,",
@@ -45256,7 +45276,7 @@ var ECOS_SDD_DATA = [
                         "Insuffisance surrénale, nécessitant 100 à 200 mg d’HYDROCORTISONE.",
                         "PREVENTION, avec vaccination selon calendrier vaccinal ou contexte.",
                         "Vérifier l’absence de contre-indications au geste :",
-                        "LIES AU MEDICAMENT, notamment allergie ou contre-indication",
+                        "LIES AU MEDICAMENT, notamment allergie ou contre-indication :",
                         "Allergies à l’oeuf ou réaction à un ancien vaccin notamment,",
                         "Grossesse ou immunodépression pour vaccins vivants.",
                         "LIES A LA VOIE, à cause des risques possibles :",
@@ -45310,6 +45330,7 @@ var ECOS_SDD_DATA = [
                 }
             ],
             "clinicalSectionTitle": "Pathologies possibles",
+            "hideFindingsLabel": true,
             "clinicalCards": [
                 {
                     "title": "Anaphylaxie",
@@ -45476,6 +45497,7 @@ var ECOS_SDD_DATA = [
                 }
             ],
             "clinicalSectionTitle": "Précautions et ruptures d’asepsie",
+            "hideFindingsLabel": true,
             "clinicalCards": [
                 {
                     "title": "Désinfection chirurgicale au savon",

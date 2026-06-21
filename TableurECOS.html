@@ -20204,6 +20204,66 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 .procedure-panel .procedure-step .procedure-step-head i { color: #0891b2; font-size: .9rem; }
 .procedure-panel .procedure-step ul { margin: .15rem 0 0; padding-left: 1.1rem; }
 .procedure-panel .procedure-step li { margin: .18rem 0; line-height: 1.4; color: var(--gray-700, #374151); }
+/* Liste d'étapes : puces personnalisées (○ pour les points, → pour les sous-points),
+   sans décalage à droite des sous-points. */
+.procedure-panel .procedure-step ul.procedure-step-items { list-style: none; padding-left: 0; }
+.procedure-panel .procedure-step-items li { position: relative; padding-left: 1.15rem; }
+.procedure-panel .procedure-step-items li::before { position: absolute; left: 0; top: 0; }
+.procedure-panel .procedure-step-items li.procedure-mainitem::before { content: "○"; color: var(--gray-400, #9ca3af); font-size: .8em; top: .12em; }
+.procedure-panel .procedure-step-items li.procedure-subitem::before { content: "\2192"; color: var(--gray-400, #9ca3af); font-weight: 700; }
+[data-theme="dark"] .procedure-panel .procedure-step-items li.procedure-subitem::before { color: var(--gray-500, #6b7280); }
+/* Léger décalage horizontal des sous-points (pas de liste imbriquée) */
+.procedure-panel .procedure-step-items li.procedure-subitem { margin-left: 0.45rem; }
+/* Mots-clés importants (saisis en MAJUSCULES par l'auteur) : gras + noir */
+.procedure-panel .proc-key { font-weight: 800; color: #111827; }
+[data-theme="dark"] .procedure-panel .proc-key { color: #f3f4f6; }
+/* ---- Images facultatives dans les cartes de pathologies ---- */
+.procedure-panel .procedure-card-image { margin: 0.55rem 0 0.65rem; }
+.procedure-panel .procedure-image-button {
+    display: block; width: 100%; padding: 0; border: 0; border-radius: 10px;
+    overflow: hidden; background: var(--gray-100, #f3f4f6); cursor: zoom-in;
+}
+.procedure-panel .procedure-card-image img {
+    display: block; width: 100%; max-height: 260px; object-fit: contain;
+    margin: 0 auto; background: var(--gray-100, #f3f4f6);
+}
+.procedure-panel .procedure-card-image figcaption {
+    margin-top: 0.35rem; color: var(--gray-500, #6b7280);
+    font-size: 0.75rem; line-height: 1.35; text-align: center;
+}
+.procedure-panel .procedure-image-error-message {
+    display: none; align-items: center; justify-content: center; gap: 0.4rem;
+    min-height: 90px; color: var(--gray-500, #6b7280); font-size: 0.8rem;
+}
+.procedure-panel .procedure-card-image.image-error img,
+.procedure-panel .procedure-card-image.image-error figcaption { display: none; }
+.procedure-panel .procedure-card-image.image-error .procedure-image-error-message { display: flex; }
+[data-theme="dark"] .procedure-panel .procedure-image-button,
+[data-theme="dark"] .procedure-panel .procedure-card-image img { background: var(--gray-200, #1e293b); }
+
+/* ---- Visualiseur d'image (overlay au-dessus du modal de notes) ---- */
+.procedure-image-viewer {
+    position: fixed; inset: 0; z-index: calc(var(--z-max) + 10);
+    display: none; align-items: center; justify-content: center; padding: 2rem;
+    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(4px);
+}
+.procedure-image-viewer.active { display: flex; }
+.procedure-image-viewer img {
+    display: block; max-width: min(1100px, 94vw); max-height: 90vh;
+    object-fit: contain; border-radius: 12px; background: #ffffff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.procedure-image-viewer-close {
+    position: fixed; top: 1rem; right: 1rem; width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center; border: 0;
+    border-radius: 50%; background: rgba(255, 255, 255, 0.95); color: #111827;
+    font-size: 1.1rem; cursor: pointer;
+}
+@media (max-width: 768px) {
+    .procedure-panel .procedure-card-image img { max-height: 220px; }
+    .procedure-image-viewer { padding: 1rem; }
+    .procedure-image-viewer img { max-width: 96vw; max-height: 84vh; }
+}
 /* Cartes cliniques */
 .procedure-panel .procedure-cards { display: grid; grid-template-columns: 1fr; gap: .7rem; }
 .procedure-panel .procedure-card {
@@ -23269,7 +23329,7 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 
 <!-- Modal Notes SDD -->
 <div class="notes-modal-overlay" id="sdd-notes-overlay">
-    <div class="notes-modal" onclick="event.stopPropagation()" style="max-width:1000px;width:94vw;">
+    <div class="notes-modal" onclick="event.stopPropagation()" style="max-width:1320px;width:96vw;">
         <div class="notes-modal-header">
             <div class="notes-modal-title">
                 <div class="notes-header-icon"><i class="fas fa-book"></i></div>
@@ -23344,6 +23404,68 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
         </div>
     </div>
 </div>
+
+<!-- Visualiseur d'image des cartes de procédures (instance unique, réutilisée) -->
+<div id="procedure-image-viewer" class="procedure-image-viewer" aria-hidden="true">
+    <button type="button" class="procedure-image-viewer-close" aria-label="Fermer l'image">
+        <i class="fas fa-times"></i>
+    </button>
+    <img id="procedure-image-viewer-img" src="" alt="">
+</div>
+<script>
+(function () {
+    'use strict';
+    var viewer = document.getElementById('procedure-image-viewer');
+    var viewerImg = document.getElementById('procedure-image-viewer-img');
+    if (!viewer || !viewerImg) return;
+
+    function openViewer(src, alt) {
+        if (!src) return;
+        viewerImg.setAttribute('src', src);
+        viewerImg.setAttribute('alt', alt || '');
+        viewer.classList.add('active');
+        viewer.setAttribute('aria-hidden', 'false');
+    }
+    function closeViewer() {
+        if (!viewer.classList.contains('active')) return;
+        viewer.classList.remove('active');
+        viewer.setAttribute('aria-hidden', 'true');
+        viewerImg.setAttribute('src', '');
+    }
+
+    // Ouverture : délégation en phase CAPTURE (le modal de notes fait stopPropagation
+    // sur le bubbling ; la capture s'exécute avant et atteint donc le clic).
+    document.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest
+            ? e.target.closest('.procedure-image-button')
+            : null;
+        if (!btn) return;
+        e.preventDefault();
+        openViewer(btn.getAttribute('data-img-src'), btn.getAttribute('data-img-alt'));
+    }, true);
+
+    // Fermeture par le bouton croix
+    var closeBtn = viewer.querySelector('.procedure-image-viewer-close');
+    if (closeBtn) closeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        closeViewer();
+    });
+
+    // Fermeture par clic sur le fond (uniquement le fond, pas l'image)
+    viewer.addEventListener('click', function (e) {
+        if (e.target === viewer) closeViewer();
+    });
+
+    // Fermeture par Échap — sans propager (ne touche pas le modal de notes)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && viewer.classList.contains('active')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeViewer();
+        }
+    }, true);
+})();
+</script>
 
 <!-- Modal Choisir une station aléatoire -->
 <div class="help-modal-overlay" id="fstation-overlay" onclick="if(event.target===this)closeFriendStationModal()">
@@ -27908,7 +28030,27 @@ function renderProcedureContent(meta) {
             return String(s == null ? '' : s);
         };
 
+    // Met en gras + noir les mots-clés importants (séquences en MAJUSCULES de 2+
+    // lettres, p.ex. POSITION, HYGIÈNE, INFORMATION DU PATIENT, IDENTITÉ…).
+    // L'échappement HTML est fait AVANT pour ne jamais casser le balisage.
+    const emphasizeProc = function (s) {
+        var out = esc(s);
+        return out.replace(
+            /[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ0-9'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ0-9'’\-]*)*/g,
+            function (m) {
+                var letters = m.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, '');
+                if (letters.length >= 2 && letters === letters.toUpperCase()) {
+                    return '<strong class="proc-key">' + m + '</strong>';
+                }
+                return m;
+            }
+        );
+    };
+
     const pc = (meta && meta.procedureContent) || {};
+
+    // Masquer le seul libellé « Ce que je recherche » (le contenu reste affiché)
+    const hideFindingsLabel = pc.hideFindingsLabel === true;
 
     const steps = Array.isArray(pc.steps) ? pc.steps : [];
     const cards = Array.isArray(pc.clinicalCards) ? pc.clinicalCards : [];
@@ -27974,6 +28116,47 @@ function renderProcedureContent(meta) {
         '</div>';
     }
 
+    // Détection des sous-points : un point se terminant par « : » introduit des
+    // sous-points, qui courent jusqu'au prochain point « principal » (commençant par
+    // un mot-clé en MAJUSCULES). Les sous-points ne sont pas décalés à droite : leur
+    // puce « ○ » est remplacée par une flèche « → ».
+    var classifyStepItems = function (items) {
+        var out = [];
+        var inSub = false;
+        items.forEach(function (raw) {
+            var t = String(raw == null ? '' : raw).trim();
+            var firstWord = t.split(/[\s,:.;]/)[0] || '';
+            var letters = firstWord.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, '');
+            var isCapsKeyword = letters.length >= 2 && letters === letters.toUpperCase();
+            var endsColon = /:\s*$/.test(t);
+            // Une fin de phrase (. ! ?) clôt un bloc de sous-points.
+            // Les points de suspension (… ou ...) sont une continuation : ne ferment PAS.
+            var endsEllipsis = /(\.\.\.|\u2026)\s*$/.test(t);
+            var endsClose = !endsEllipsis && /[.!?]\s*$/.test(t);
+
+            var isSub;
+            if (endsColon) {
+                // En-tête : point PRINCIPAL qui ouvre un bloc de sous-points.
+                isSub = false;
+                inSub = true;
+            } else if (isCapsKeyword) {
+                // Mot-clé en MAJUSCULES : point PRINCIPAL ; clôt tout bloc en cours
+                // (filet de sécurité si un « : » ou un « . » a été oublié).
+                isSub = false;
+                inSub = false;
+            } else if (inSub) {
+                // À l'intérieur d'un bloc ouvert : SOUS-point.
+                isSub = true;
+                if (endsClose) inSub = false; // une fin de phrase ferme le bloc
+            } else {
+                // Aucun bloc ouvert : point PRINCIPAL.
+                isSub = false;
+            }
+            out.push({ text: t, sub: isSub });
+        });
+        return out;
+    };
+
     // 1. Introduction, Explications, Inspection,
     // Réalisation, Suites et Synthèse
     if (steps.length) {
@@ -27997,9 +28180,11 @@ function renderProcedureContent(meta) {
                         '</div>' +
                         (
                             items.length
-                                ? '<ul>' +
-                                    items.map(function (it) {
-                                        return '<li>' + esc(it) + '</li>';
+                                ? '<ul class="procedure-step-items">' +
+                                    classifyStepItems(items).map(function (o) {
+                                        return '<li class="' +
+                                            (o.sub ? 'procedure-subitem' : 'procedure-mainitem') +
+                                            '">' + emphasizeProc(o.text) + '</li>';
                                     }).join('') +
                                   '</ul>'
                                 : ''
@@ -28038,17 +28223,21 @@ function renderProcedureContent(meta) {
                             '<div class="procedure-card-sub">Vignette</div>' +
                             '<ul>' +
                                 vignette.map(function (v) {
-                                    return '<li>' + esc(v) + '</li>';
+                                    return '<li>' + emphasizeProc(v) + '</li>';
                                 }).join('') +
                             '</ul>';
                     }
 
                     if (findings.length) {
                         inner +=
-                            '<div class="procedure-card-sub">Ce que je recherche</div>' +
+                            (
+                                hideFindingsLabel
+                                    ? ''
+                                    : '<div class="procedure-card-sub">Ce que je recherche</div>'
+                            ) +
                             '<ul>' +
                                 findings.map(function (v) {
-                                    return '<li>' + esc(v) + '</li>';
+                                    return '<li>' + emphasizeProc(v) + '</li>';
                                 }).join('') +
                             '</ul>';
                     }
@@ -28058,7 +28247,7 @@ function renderProcedureContent(meta) {
                             '<div class="procedure-card-sub">Suite / orientation</div>' +
                             '<ul>' +
                                 nextSteps.map(function (v) {
-                                    return '<li>' + esc(v) + '</li>';
+                                    return '<li>' + emphasizeProc(v) + '</li>';
                                 }).join('') +
                             '</ul>';
                     }
@@ -28078,12 +28267,54 @@ function renderProcedureContent(meta) {
                           '</div>'
                         : '';
 
+                    // Image facultative de la carte (chemin local images/ ou HTTPS uniquement).
+                    var image = (
+                        c.image &&
+                        typeof c.image === 'object' &&
+                        typeof c.image.src === 'string' &&
+                        c.image.src.trim() &&
+                        /^(images\/|https:\/\/)/.test(c.image.src.trim())
+                    )
+                        ? c.image
+                        : null;
+
+                    var imageHtml = '';
+
+                    if (image) {
+                        var imageSrc = esc(image.src.trim());
+                        var imageAlt = esc(image.alt || c.title || 'Illustration médicale');
+                        var imageCaption = image.caption
+                            ? '<figcaption>' + esc(image.caption) + '</figcaption>'
+                            : '';
+
+                        imageHtml =
+                            '<figure class="procedure-card-image">' +
+                                '<button type="button" class="procedure-image-button" ' +
+                                    'data-img-src="' + imageSrc + '" ' +
+                                    'data-img-alt="' + imageAlt + '" ' +
+                                    'aria-label="Agrandir l\'image : ' + imageAlt + '">' +
+                                    '<img ' +
+                                        'src="' + imageSrc + '" ' +
+                                        'alt="' + imageAlt + '" ' +
+                                        'loading="lazy" ' +
+                                        'decoding="async" ' +
+                                        'onerror="this.closest(\'figure\').classList.add(\'image-error\')">' +
+                                '</button>' +
+                                imageCaption +
+                                '<div class="procedure-image-error-message">' +
+                                    '<i class="fas fa-image"></i>' +
+                                    '<span>Image indisponible</span>' +
+                                '</div>' +
+                            '</figure>';
+                    }
+
                     return '<div class="procedure-card">' +
                         '<div class="procedure-card-title">' +
                             '<span>' + esc(c.title || '') + '</span>' +
                             tag +
                         '</div>' +
                         cardDayJ +
+                        imageHtml +
                         inner +
                     '</div>';
                 }).join('') +
@@ -38451,5 +38682,3 @@ if (document.readyState === 'loading') {
 
 </body>
 </html>
-
-
