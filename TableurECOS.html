@@ -22355,6 +22355,9 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
                             </div>
                         </div>
                         <div class="profile-menu">
+                            <button type="button" class="profile-menu-item" id="admin-menu-link" style="display:none;color:var(--primary)" onclick="location.href='admin.html'">
+                                <i class="fas fa-shield-alt"></i><span>Administration</span>
+                            </button>
                             <button class="profile-menu-item whats-new-btn-menu" onclick="openWhatsNewModal()">
                                 <i class="fas fa-gift"></i><span>Nouveautés</span>
                                 <span class="whats-new-badge" id="whats-new-badge"></span>
@@ -33988,6 +33991,7 @@ async function flushPendingEcosData() {
     };
     try {
         await setDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave, { merge: true });
+        if (window.bumpMetric) window.bumpMetric('writes', 1);
         writeLocalECOSCache(currentUser.uid, window.ecosData);
         clearPendingECOS();
         ecosHasUnsavedChanges = false;
@@ -34256,6 +34260,7 @@ function loadECOSUserData(uid) {
     window._ecosFirstSnapshot = true;
     if (ecosUnsub) ecosUnsub();
     ecosUnsub = onSnapshot(doc(db, 'ECOSRevision', uid), snap => {
+        if (window.bumpMetric) window.bumpMetric('reads', 1);
         // Distinguer : document inexistant / vide / présent
         const exists = snap.exists();
         let data = exists ? snap.data() : null;
@@ -34402,6 +34407,7 @@ async function saveECOSUserData(retryCount = 0) {
     const MAX = 3; const DELAYS = [2000, 4000, 8000];
     try {
         await updateDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave);
+        if (window.bumpMetric) window.bumpMetric('writes', 1);
         window.ecosData.lastUpdated = timestamp;
         ecosHasUnsavedChanges = false;
         setSaveIndicator('saved');
@@ -38678,6 +38684,79 @@ if (document.readyState === 'loading') {
 }
 
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     INTÉGRATION ADMIN TYPIXCLIN (présence, compteur, lastLogin, lien admin)
+     APP_ID = 'ecos'. Vérifiez RTDB_URL dans Firebase Console → Realtime Database.
+     ═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+import { getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDatabase, ref as rRef, onValue, onDisconnect, set as rSet } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const APP_ID  = 'ecos';
+const RTDB_URL = "https://typixclin-b5fa9-default-rtdb.europe-west1.firebasedatabase.app";
+
+let app, db, auth, rtdb = null;
+try {
+  app  = getApp();
+  db   = getFirestore(app);
+  auth = getAuth(app);
+  try { rtdb = getDatabase(app, RTDB_URL); } catch (e) { console.warn('[Admin] RTDB indisponible :', e.message); }
+} catch (e) { console.warn('[Admin] App Firebase introuvable :', e.message); }
+
+// ── Compteur d'usage : 1 écriture/min max (tampon groupé) ──
+let _mBuf = { reads:0, writes:0, deletes:0 }, _mTimer = null;
+window.bumpMetric = function (kind, n = 1) {
+  if (!db) return;
+  _mBuf[kind] = (_mBuf[kind] || 0) + n;
+  if (!_mTimer) _mTimer = setTimeout(_flushMetrics, 60000);
+};
+async function _flushMetrics() {
+  _mTimer = null;
+  const b = _mBuf; _mBuf = { reads:0, writes:0, deletes:0 };
+  if (!b.reads && !b.writes && !b.deletes) return;
+  const d = new Date();
+  const key = `usage_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const patch = { updatedAt: serverTimestamp() };
+  ['reads','writes','deletes'].forEach(k => { if (b[k]) { patch[k] = increment(b[k]); patch[`${k}_${APP_ID}`] = increment(b[k]); } });
+  try { await setDoc(doc(db, 'metrics', key), patch, { merge:true }); } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _flushMetrics(); });
+
+// ── Présence + lastLogin + lien admin (à la connexion) ──
+let _presenceDone = false;
+if (auth) onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  updateDoc(doc(db, 'users', user.uid), { lastLogin: serverTimestamp() }).catch(() => {});
+  // Actif du jour (DAU) : 1 incrément par utilisateur / app / jour, dédupliqué via localStorage
+  try {
+    const _d = new Date();
+    const _day = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+    const _flag = `tc_dau_${APP_ID}_${_day}`;
+    if (!localStorage.getItem(_flag)) {
+      localStorage.setItem(_flag, '1');
+      setDoc(doc(db, 'metrics', 'usage_' + _day), { ['dau_' + APP_ID]: increment(1), updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+    }
+  } catch (e) {}
+  try {
+    const s = await getDoc(doc(db, 'users', user.uid));
+    const a = document.getElementById('admin-menu-link');
+    if (a) a.style.display = (s.exists() && s.data().isAdmin) ? 'flex' : 'none';
+  } catch (e) {}
+  if (rtdb && !_presenceDone) {
+    _presenceDone = true;
+    const sid  = user.uid + '_' + Math.random().toString(36).slice(2, 9);
+    const me   = rRef(rtdb, 'presence/' + sid);
+    const conn = rRef(rtdb, '.info/connected');
+    onValue(conn, snap => {
+      if (snap.val() === false) return;
+      onDisconnect(me).remove().then(() => rSet(me, { uid: user.uid, app: APP_ID, lastActive: Date.now() }));
+    });
+  }
+});
 </script>
 
 </body>

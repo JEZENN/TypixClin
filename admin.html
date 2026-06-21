@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — TypixClin</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #060d1f;
+    --sidebar-bg: #0b1530;
+    --card: #0e1d3a;
+    --card-alt: #112044;
+    --border: rgba(59,130,246,0.13);
+    --border-strong: rgba(59,130,246,0.28);
+    --text: #e2e8f0;
+    --text-muted: #7a90b4;
+    --text-faint: #3d5278;
+    --blue: #3b82f6;
+    --blue-glow: rgba(59,130,246,0.2);
+    --green: #10b981;
+    --green-glow: rgba(16,185,129,0.2);
+    --amber: #f59e0b;
+    --amber-glow: rgba(245,158,11,0.2);
+    --red: #ef4444;
+    --red-glow: rgba(239,68,68,0.2);
+    --purple: #8b5cf6;
+    --sidebar-w: 240px;
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Space Grotesk', sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --trans: 200ms cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; scrollbar-width:thin; scrollbar-color: var(--blue) var(--bg); }
+body { font-family:var(--font-body); background:var(--bg); color:var(--text); line-height:1.5; overflow-x:hidden; }
+h1,h2,h3,h4 { font-family:var(--font-display); font-weight:700; }
+button { cursor:pointer; font-family:var(--font-body); border:none; background:none; transition:all var(--trans); }
+input, select, textarea { font-family:var(--font-body); }
+a { color:var(--blue); text-decoration:none; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--blue); border-radius:99px; }
+
+/* ─── AUTH GATE ─── */
+#auth-gate {
+    position:fixed; inset:0; background:var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    z-index:9999; flex-direction:column; gap:1rem;
+}
+.gate-card {
+    background:var(--card); border:1px solid var(--border-strong);
+    border-radius:var(--radius-lg); padding:2.5rem 3rem;
+    text-align:center; max-width:380px; width:90%;
+    box-shadow: 0 0 60px rgba(59,130,246,0.1);
+}
+.gate-logo { font-family:var(--font-display); font-size:2rem; font-weight:800; color:var(--blue); margin-bottom:0.5rem; }
+.gate-sub { color:var(--text-muted); font-size:0.875rem; margin-bottom:2rem; }
+.gate-spinner { width:36px; height:36px; border:3px solid var(--border-strong); border-top-color:var(--blue); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
+.gate-message { color:var(--text-muted); font-size:0.9rem; }
+.gate-error { color:var(--red); font-size:0.9rem; }
+.gate-icon-big { font-size:3rem; margin-bottom:1rem; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ─── LAYOUT ─── */
+#admin-panel { display:flex; min-height:100vh; }
+
+/* ─── SIDEBAR ─── */
+#sidebar {
+    width:var(--sidebar-w); background:var(--sidebar-bg);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:fixed; top:0; left:0; bottom:0; z-index:100;
+    transition:transform var(--trans);
+}
+.sidebar-header {
+    padding:1.5rem 1.25rem 1rem;
+    border-bottom:1px solid var(--border);
+}
+.sidebar-logo { font-family:var(--font-display); font-size:1.4rem; font-weight:800; color:var(--blue); }
+.sidebar-badge {
+    display:inline-block; background:rgba(239,68,68,0.15);
+    color:var(--red); font-size:0.65rem; font-weight:700;
+    padding:2px 7px; border-radius:99px; border:1px solid rgba(239,68,68,0.3);
+    margin-left:0.5rem; vertical-align:middle; letter-spacing:0.05em;
+}
+
+.sidebar-nav { flex:1; padding:1rem 0.75rem; display:flex; flex-direction:column; gap:2px; overflow-y:auto; }
+.nav-section-label {
+    font-size:0.65rem; font-weight:700; color:var(--text-faint);
+    letter-spacing:0.12em; text-transform:uppercase;
+    padding:0.75rem 0.5rem 0.4rem;
+}
+.nav-item {
+    display:flex; align-items:center; gap:0.75rem;
+    padding:0.6rem 0.75rem; border-radius:var(--radius);
+    color:var(--text-muted); font-size:0.875rem; font-weight:500;
+    cursor:pointer; transition:all var(--trans);
+    border:1px solid transparent;
+}
+.nav-item i { width:18px; text-align:center; font-size:0.875rem; }
+.nav-item:hover { background:var(--blue-glow); color:var(--text); }
+.nav-item.active {
+    background:rgba(59,130,246,0.15);
+    color:var(--blue); border-color:var(--border-strong);
+}
+.nav-item .nav-badge {
+    margin-left:auto; background:var(--blue); color:#fff;
+    font-size:0.65rem; font-weight:700;
+    padding:1px 6px; border-radius:99px;
+}
+
+.sidebar-footer {
+    padding:1rem 0.75rem; border-top:1px solid var(--border);
+}
+.admin-user {
+    display:flex; align-items:center; gap:0.75rem;
+    padding:0.6rem 0.75rem; border-radius:var(--radius);
+    background:var(--card);
+}
+.admin-avatar {
+    width:32px; height:32px; background:var(--blue);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:0.75rem; font-weight:700; color:#fff; flex-shrink:0;
+}
+.admin-info { flex:1; min-width:0; }
+.admin-name { font-size:0.8rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.admin-role { font-size:0.7rem; color:var(--text-muted); }
+.logout-btn { color:var(--text-faint); font-size:0.875rem; padding:4px; border-radius:6px; }
+.logout-btn:hover { color:var(--red); }
+
+/* ─── MAIN CONTENT ─── */
+#main-content {
+    margin-left:var(--sidebar-w);
+    flex:1; min-height:100vh;
+    padding:2rem;
+    max-width:calc(100vw - var(--sidebar-w));
+}
+
+.page-header { margin-bottom:2rem; }
+.page-title { font-size:1.75rem; font-weight:800; color:var(--text); }
+.page-subtitle { color:var(--text-muted); font-size:0.9rem; margin-top:0.25rem; }
+
+/* ─── STATS GRID ─── */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+.stat-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:1.25rem 1.5rem;
+    position:relative; overflow:hidden;
+    transition:border-color var(--trans), box-shadow var(--trans);
+}
+.stat-card:hover { border-color:var(--border-strong); }
+.stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+}
+.stat-card.blue::before { background:var(--blue); }
+.stat-card.green::before { background:var(--green); }
+.stat-card.amber::before { background:var(--amber); }
+.stat-card.red::before { background:var(--red); }
+.stat-card.purple::before { background:var(--purple); }
+
+.stat-label { font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; }
+.stat-value { font-family:var(--font-display); font-size:2rem; font-weight:800; line-height:1; }
+.stat-card.blue .stat-value { color:var(--blue); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.amber .stat-value { color:var(--amber); }
+.stat-card.red .stat-value { color:var(--red); }
+.stat-card.purple .stat-value { color:var(--purple); }
+.stat-sub { font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem; }
+.stat-icon {
+    position:absolute; right:1.25rem; top:50%; transform:translateY(-50%);
+    font-size:2rem; opacity:0.07;
+}
+
+/* ─── QUOTA BAR ─── */
+.quota-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:1.5rem;
+    margin-bottom:1.5rem;
+}
+.quota-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
+.quota-title { font-family:var(--font-display); font-size:1rem; font-weight:700; }
+.quota-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; }
+.quota-item label { display:block; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem; }
+.quota-bar-track { background:rgba(255,255,255,0.06); border-radius:99px; height:8px; overflow:hidden; }
+.quota-bar-fill { height:100%; border-radius:99px; transition:width 0.8s cubic-bezier(0.4,0,0.2,1); }
+.quota-bar-fill.ok { background:var(--green); }
+.quota-bar-fill.warn { background:var(--amber); }
+.quota-bar-fill.danger { background:var(--red); }
+.quota-nums { display:flex; justify-content:space-between; margin-top:0.4rem; font-size:0.7rem; color:var(--text-muted); }
+
+/* ─── DATA GRID (2 col) ─── */
+.data-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+
+/* ─── CARD ─── */
+.card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-lg); overflow:hidden;
+}
+.card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.25rem 1.5rem; border-bottom:1px solid var(--border);
+}
+.card-title { font-family:var(--font-display); font-size:1rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; }
+.card-title i { color:var(--blue); font-size:0.875rem; }
+.card-body { padding:1.5rem; }
+
+/* ─── USERS TABLE ─── */
+.table-toolbar {
+    display:flex; gap:0.75rem; padding:1.25rem 1.5rem;
+    border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.search-input {
+    flex:1; min-width:200px; background:var(--card-alt);
+    border:1px solid var(--border-strong); border-radius:var(--radius);
+    padding:0.5rem 0.75rem 0.5rem 2rem;
+    color:var(--text); font-size:0.875rem;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a90b4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:0.6rem center;
+    transition:border-color var(--trans);
+}
+.search-input:focus { outline:none; border-color:var(--blue); }
+.filter-select {
+    background:var(--card-alt); border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:0.5rem 0.75rem;
+    color:var(--text); font-size:0.875rem; cursor:pointer;
+}
+.filter-select:focus { outline:none; border-color:var(--blue); }
+
+.users-table { width:100%; border-collapse:collapse; }
+.users-table th {
+    text-align:left; padding:0.75rem 1rem;
+    font-size:0.7rem; font-weight:700; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.08em;
+    border-bottom:1px solid var(--border); background:var(--card);
+    position:sticky; top:0; z-index:1;
+}
+.users-table td {
+    padding:0.9rem 1rem; border-bottom:1px solid rgba(59,130,246,0.06);
+    font-size:0.875rem; vertical-align:middle;
+}
+.users-table tr:hover td { background:rgba(59,130,246,0.04); }
+.users-table tr:last-child td { border-bottom:none; }
+
+/* ─── EN-TÊTES TRIABLES ─── */
+.users-table th[data-sort] { cursor:pointer; user-select:none; transition:background var(--trans), color var(--trans); }
+.users-table th[data-sort]:hover { background:rgba(59,130,246,0.08); color:var(--text); }
+.users-table th .sort-icon { margin-left:0.4rem; opacity:0.35; font-size:0.7rem; color:var(--text-faint); transition:opacity 0.2s ease, transform 0.28s cubic-bezier(0.4,0,0.2,1); transform:rotate(0deg); }
+.users-table th.sorted .sort-icon { opacity:1; color:var(--blue); }
+.users-table th.sorted.sort-desc .sort-icon { transform:rotate(180deg); }
+
+.user-cell { display:flex; align-items:center; gap:0.75rem; }
+.user-avatar-sm {
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.7rem; font-weight:700; color:#fff; flex-shrink:0;
+    font-family:var(--font-display);
+}
+.user-name { font-weight:600; color:var(--text); }
+.user-email { font-size:0.75rem; color:var(--text-muted); }
+
+.badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:99px; font-size:0.7rem; font-weight:700;
+    white-space:nowrap;
+}
+.badge-premium { background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
+.badge-grace { background:rgba(139,92,246,0.15); color:var(--purple); border:1px solid rgba(139,92,246,0.3); }
+.badge-free { background:rgba(122,144,180,0.1); color:var(--text-muted); border:1px solid rgba(122,144,180,0.2); }
+.badge-active { background:rgba(16,185,129,0.12); color:var(--green); border:1px solid rgba(16,185,129,0.25); }
+.badge-cancelled { background:rgba(239,68,68,0.12); color:var(--red); border:1px solid rgba(239,68,68,0.25); }
+.badge-expired { background:rgba(122,144,180,0.1); color:var(--text-muted); border:1px solid rgba(122,144,180,0.2); }
+.badge-admin { background:rgba(59,130,246,0.15); color:var(--blue); border:1px solid rgba(59,130,246,0.3); }
+
+.btn-icon {
+    width:30px; height:30px; border-radius:8px; display:inline-flex;
+    align-items:center; justify-content:center; font-size:0.75rem;
+    transition:all var(--trans);
+}
+.btn-icon-blue { background:rgba(59,130,246,0.1); color:var(--blue); }
+.btn-icon-blue:hover { background:rgba(59,130,246,0.2); }
+.btn-icon-red { background:rgba(239,68,68,0.1); color:var(--red); }
+.btn-icon-red:hover { background:rgba(239,68,68,0.2); }
+.btn-icon-green { background:rgba(16,185,129,0.1); color:var(--green); }
+.btn-icon-green:hover { background:rgba(16,185,129,0.2); }
+
+.btn {
+    display:inline-flex; align-items:center; gap:0.5rem;
+    padding:0.5rem 1rem; border-radius:var(--radius);
+    font-size:0.875rem; font-weight:600; transition:all var(--trans);
+    cursor:pointer; border:1px solid transparent;
+}
+.btn-primary { background:var(--blue); color:#fff; }
+.btn-primary:hover { background:#2563eb; box-shadow:0 0 20px var(--blue-glow); }
+.btn-success { background:var(--green); color:#fff; }
+.btn-success:hover { background:#059669; }
+.btn-danger { background:var(--red); color:#fff; }
+.btn-danger:hover { background:#dc2626; }
+.btn-ghost { background:transparent; color:var(--text-muted); border-color:var(--border-strong); }
+.btn-ghost:hover { color:var(--text); border-color:var(--text-muted); }
+.btn-sm { padding:0.35rem 0.75rem; font-size:0.8rem; }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+.table-container { overflow-x:auto; max-height:550px; overflow-y:auto; }
+
+/* ─── BACKUP SECTION ─── */
+.backup-search {
+    display:flex; gap:0.75rem; margin-bottom:1.5rem;
+}
+.uid-input {
+    flex:1; background:var(--card-alt); border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:0.6rem 1rem;
+    color:var(--text); font-size:0.875rem; font-family:var(--font-body);
+}
+.uid-input::placeholder { color:var(--text-faint); }
+.uid-input:focus { outline:none; border-color:var(--blue); }
+
+.backup-info-card {
+    background:var(--card-alt); border:1px solid var(--border-strong);
+    border-radius:var(--radius-lg); padding:1.5rem;
+    margin-bottom:1.5rem;
+}
+.backup-info-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
+.backup-info-title { font-family:var(--font-display); font-weight:700; display:flex; align-items:center; gap:0.5rem; }
+.backup-info-title i { color:var(--green); }
+.backup-meta { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.25rem; }
+.backup-meta-item { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem 1rem; }
+.backup-meta-label { font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem; text-transform:uppercase; letter-spacing:0.06em; }
+.backup-meta-value { font-family:var(--font-display); font-weight:700; font-size:1.1rem; }
+.backup-meta-value.green { color:var(--green); }
+.backup-meta-value.blue { color:var(--blue); }
+.backup-meta-value.amber { color:var(--amber); }
+
+.backup-actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
+
+.no-backup { text-align:center; padding:3rem; color:var(--text-muted); }
+.no-backup i { font-size:2.5rem; margin-bottom:0.75rem; opacity:0.3; display:block; }
+
+/* ─── MODALS ─── */
+.modal-overlay {
+    position:fixed; inset:0; background:rgba(6,13,31,0.85);
+    backdrop-filter:blur(4px); z-index:9000;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; transition:all var(--trans);
+    padding:1rem;
+}
+.modal-overlay.active { opacity:1; visibility:visible; }
+.modal {
+    background:var(--card); border:1px solid var(--border-strong);
+    border-radius:var(--radius-lg); width:100%; max-width:540px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    transform:translateY(20px) scale(0.98);
+    transition:transform var(--trans);
+    overflow:hidden;
+}
+.modal-overlay.active .modal { transform:translateY(0) scale(1); }
+.modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.25rem 1.5rem; border-bottom:1px solid var(--border);
+}
+.modal-title { font-family:var(--font-display); font-size:1.1rem; font-weight:700; }
+.modal-close { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:6px; color:var(--text-muted); }
+.modal-close:hover { background:var(--card-alt); color:var(--text); }
+.modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
+.modal-footer { padding:1rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.75rem; }
+
+.form-group { display:flex; flex-direction:column; gap:0.4rem; }
+.form-group label { font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+.form-input, .form-select {
+    background:var(--card-alt); border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:0.6rem 0.875rem;
+    color:var(--text); font-size:0.9rem; font-family:var(--font-body);
+    transition:border-color var(--trans);
+    width:100%;
+}
+.form-input:focus, .form-select:focus { outline:none; border-color:var(--blue); }
+.form-input::placeholder { color:var(--text-faint); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-hint { font-size:0.75rem; color:var(--text-faint); }
+
+/* ─── ALERTS ─── */
+.alert {
+    padding:0.75rem 1rem; border-radius:var(--radius);
+    font-size:0.85rem; display:flex; align-items:center; gap:0.5rem;
+}
+.alert-warning { background:var(--amber-glow); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
+.alert-info { background:var(--blue-glow); color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+.alert-success { background:var(--green-glow); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+.alert-danger { background:var(--red-glow); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+
+/* ─── TOASTS ─── */
+#toast-container {
+    position:fixed; bottom:1.5rem; right:1.5rem;
+    display:flex; flex-direction:column; gap:0.5rem; z-index:99999;
+}
+.toast {
+    background:var(--card-alt); border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:0.75rem 1.25rem;
+    display:flex; align-items:center; gap:0.75rem;
+    font-size:0.875rem; box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    animation:toast-in 0.25s ease forwards;
+    min-width:240px; max-width:340px;
+}
+.toast.success { border-left:3px solid var(--green); }
+.toast.error { border-left:3px solid var(--red); }
+.toast.warning { border-left:3px solid var(--amber); }
+.toast.success i { color:var(--green); }
+.toast.error i { color:var(--red); }
+.toast.warning i { color:var(--amber); }
+@keyframes toast-in { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+/* ─── SPINNER ─── */
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; }
+.spinner.blue { border-color:var(--blue-glow); border-top-color:var(--blue); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state { text-align:center; padding:3rem 2rem; color:var(--text-muted); }
+.empty-state i { font-size:2.5rem; margin-bottom:0.75rem; display:block; opacity:0.3; }
+.empty-state p { font-size:0.9rem; }
+
+/* ─── LIVE DOT ─── */
+.live-dot { width:8px; height:8px; background:var(--green); border-radius:50%; display:inline-block; box-shadow:0 0 6px var(--green); animation:pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+
+/* ─── SECTION TOGGLE ─── */
+.section { display:none; }
+.section.active { display:block; }
+
+/* ─── MOBILE BURGER ─── */
+#sidebar-toggle {
+    display:none; position:fixed; top:1rem; left:1rem;
+    z-index:200; background:var(--card); border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:0.5rem 0.75rem;
+    color:var(--text); font-size:1rem;
+}
+#sidebar-overlay { display:none; }
+
+@media (max-width:900px) {
+    :root { --sidebar-w: 240px; }
+    #sidebar { transform:translateX(-100%); }
+    #sidebar.open { transform:translateX(0); }
+    #main-content { margin-left:0; max-width:100vw; }
+    #sidebar-toggle { display:block; }
+    #sidebar-overlay { display:block; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; display:none; }
+    #sidebar-overlay.visible { display:block; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .quota-grid { grid-template-columns:1fr; }
+    .data-grid-2 { grid-template-columns:1fr; }
+    .form-row { grid-template-columns:1fr; }
+    .backup-meta { grid-template-columns:repeat(2,1fr); }
+}
+
+@media (max-width:560px) {
+    .stats-grid { grid-template-columns:1fr 1fr; }
+    #main-content { padding:1.25rem; padding-top:4rem; }
+}
+
+/* ─── LOADING SKELETON ─── */
+.skeleton { background:linear-gradient(90deg, var(--card) 25%, var(--card-alt) 50%, var(--card) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ─── CONFIRM MODAL ─── */
+#confirm-modal .modal { max-width:400px; }
+.confirm-icon { font-size:2.5rem; text-align:center; padding:0.5rem 0; }
+.confirm-msg { text-align:center; color:var(--text-muted); font-size:0.9rem; }
+
+/* ─── SECTION HEADER ─── */
+.section-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem; }
+
+/* Chevron links */
+.text-link { color:var(--blue); font-size:0.8rem; font-weight:600; cursor:pointer; }
+.text-link:hover { text-decoration:underline; }
+
+/* config-notice */
+.config-notice {
+    background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25);
+    border-radius:var(--radius); padding:0.6rem 0.875rem;
+    font-size:0.8rem; color:var(--amber);
+    display:flex; align-items:center; gap:0.5rem;
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile sidebar toggle -->
+<button id="sidebar-toggle" onclick="toggleMobileSidebar()"><i class="fas fa-bars"></i></button>
+<div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<!-- Auth gate -->
+<div id="auth-gate">
+    <div class="gate-card">
+        <div class="gate-logo">TypixClin</div>
+        <div class="gate-sub">Panneau d'administration</div>
+        <div class="gate-spinner" id="gate-spinner"></div>
+        <div class="gate-message" id="gate-message">Vérification des accès…</div>
+    </div>
+</div>
+
+<!-- Admin panel -->
+<div id="admin-panel" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">TypixClin<span class="sidebar-badge">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Tableau de bord</div>
+            <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard', this)">
+                <i class="fas fa-chart-line"></i> Vue d'ensemble
+            </div>
+            <div class="nav-section-label">Gestion</div>
+            <div class="nav-item" data-section="users" onclick="showSection('users', this)">
+                <i class="fas fa-users"></i> Utilisateurs
+                <span class="nav-badge" id="nav-badge-users">…</span>
+            </div>
+            <div class="nav-item" data-section="subscriptions" onclick="showSection('subscriptions', this)">
+                <i class="fas fa-crown"></i> Abonnements
+            </div>
+            <div class="nav-section-label">Données</div>
+            <div class="nav-item" data-section="backups" onclick="showSection('backups', this)">
+                <i class="fas fa-database"></i> Sauvegardes
+            </div>
+        </nav>
+			<div class="sidebar-footer">
+				<a href="TableurEnLigne.html" style="
+					display:flex;align-items:center;gap:0.75rem;
+					padding:0.6rem 0.75rem;border-radius:var(--radius);
+					color:var(--text-muted);font-size:0.875rem;font-weight:500;
+					border:1px solid var(--border);margin-bottom:0.5rem;
+					text-decoration:none;transition:all 200ms;
+				"
+				onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--border-strong)'"
+				onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">
+					<i class="fas fa-arrow-left" style="width:18px;text-align:center"></i>
+					<span>Retour au tableur</span>
+				</a>
+				<div class="admin-user">
+                <div class="admin-avatar" id="admin-avatar-initials">A</div>
+                <div class="admin-info">
+                    <div class="admin-name" id="admin-display-name">Admin</div>
+                    <div class="admin-role">Super Admin</div>
+                </div>
+                <button class="logout-btn" title="Déconnexion" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content">
+
+        <!-- ═══ DASHBOARD ═══ -->
+        <section id="section-dashboard" class="section active">
+            <div class="page-header">
+                <h1 class="page-title">Vue d'ensemble <span class="live-dot" style="margin-left:0.5rem"></span></h1>
+                <p class="page-subtitle">Supervision en temps réel de votre plateforme</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-label">En ligne maintenant</div>
+                    <div class="stat-value" id="stat-online">—</div>
+                    <div class="stat-sub" id="stat-online-sub">Connexion au système de présence…</div>
+                    <i class="fas fa-circle stat-icon" style="color:var(--blue)"></i>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Utilisateurs total</div>
+                    <div class="stat-value" id="stat-total-users">…</div>
+                    <div class="stat-sub" id="stat-premium-sub">dont <span id="stat-premium-count">…</span> premium</div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+                <div class="stat-card amber">
+                    <div class="stat-label">Lectures aujourd'hui</div>
+                    <div class="stat-value" id="stat-reads-today">—</div>
+                    <div class="stat-sub" id="stat-reads-today-sub">En attente du compteur…</div>
+                    <i class="fas fa-book-open stat-icon"></i>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-label">Écritures aujourd'hui</div>
+                    <div class="stat-value" id="stat-writes-today">—</div>
+                    <div class="stat-sub" id="stat-writes-today-sub">En attente du compteur…</div>
+                    <i class="fas fa-pen-nib stat-icon"></i>
+                </div>
+            </div>
+
+            <!-- Utilisateurs actifs du jour (DAU) par app -->
+            <div class="quota-card">
+                <div class="quota-header">
+                    <h3 class="quota-title">
+                        <i class="fas fa-user-clock" style="color:var(--blue);margin-right:0.5rem"></i>Utilisateurs actifs aujourd'hui
+                    </h3>
+                    <span style="font-size:0.75rem;color:var(--text-muted)">Comptés une fois / jour · remis à zéro à minuit</span>
+                </div>
+                <div style="display:flex;gap:2.5rem;flex-wrap:wrap">
+                    <div>
+                        <div class="stat-label">Tableur EDN</div>
+                        <div class="stat-value" id="dau-edn" style="color:var(--amber)">—</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">Tableur ECOS</div>
+                        <div class="stat-value" id="dau-ecos" style="color:var(--purple)">—</div>
+                    </div>
+                </div>
+                <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-faint)" id="dau-note">En attente du compteur…</div>
+            </div>
+
+            <!-- Quota -->
+            <div class="quota-card">
+                <div class="quota-header">
+                    <h3 class="quota-title">
+                        <i class="fas fa-tachometer-alt" style="color:var(--blue);margin-right:0.5rem"></i>Consommation Firestore du jour
+                        <span class="live-dot" id="quota-live-dot" style="margin-left:0.5rem;display:none"></span>
+                    </h3>
+                    <a href="https://console.firebase.google.com/project/typixclin-b5fa9/firestore/usage" target="_blank" class="btn btn-ghost btn-sm">
+                        <i class="fas fa-chart-bar"></i> Vérifier sur la console
+                    </a>
+                </div>
+
+                <div class="alert alert-info" id="quota-not-installed">
+                    <i class="fas fa-info-circle"></i>
+                    Le compteur en direct n'est pas encore installé dans vos tableurs. Tant qu'il est absent, ces jauges restent vides — ajoutez le mouchard fourni dans ECOS et EDN pour les remplir. La console Firebase reste la source officielle.
+                </div>
+
+                <div class="quota-grid" id="quota-bars" style="display:none">
+                    <div class="quota-item">
+                        <label>Lectures <span id="q-reads-split" style="color:var(--text-faint)"></span></label>
+                        <div class="quota-bar-track"><div class="quota-bar-fill ok" id="q-reads-bar" style="width:0%"></div></div>
+                        <div class="quota-nums"><span><span id="q-reads-used">0</span> / <span id="q-reads-limit">50 000</span></span><span id="q-reads-pct">0%</span></div>
+                    </div>
+                    <div class="quota-item">
+                        <label>Écritures <span id="q-writes-split" style="color:var(--text-faint)"></span></label>
+                        <div class="quota-bar-track"><div class="quota-bar-fill ok" id="q-writes-bar" style="width:0%"></div></div>
+                        <div class="quota-nums"><span><span id="q-writes-used">0</span> / <span id="q-writes-limit">20 000</span></span><span id="q-writes-pct">0%</span></div>
+                    </div>
+                    <div class="quota-item">
+                        <label>Suppressions <span id="q-deletes-split" style="color:var(--text-faint)"></span></label>
+                        <div class="quota-bar-track"><div class="quota-bar-fill ok" id="q-deletes-bar" style="width:0%"></div></div>
+                        <div class="quota-nums"><span><span id="q-deletes-used">0</span> / <span id="q-deletes-limit">20 000</span></span><span id="q-deletes-pct">0%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent users + quick actions -->
+            <div class="data-grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-user-plus"></i> Derniers inscrits</div>
+                        <span class="text-link" onclick="showSection('users', document.querySelector('[data-section=users]'))">Voir tous →</span>
+                    </div>
+                    <div id="recent-users-list" style="padding:0.5rem 0">
+                        <div class="empty-state"><div class="spinner blue"></div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-crown"></i> Abonnements actifs</div>
+                    </div>
+                    <div class="card-body" id="subs-summary">
+                        <div class="empty-state"><div class="spinner blue"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ USERS ═══ -->
+        <section id="section-users" class="section">
+            <div class="section-toolbar">
+                <div>
+                    <h1 class="page-title">Utilisateurs</h1>
+                    <p class="page-subtitle" id="users-subtitle">Chargement…</p>
+                </div>
+                <button class="btn btn-primary" onclick="loadUsers(true)"><i class="fas fa-sync-alt"></i> Actualiser Firestore</button>
+                <button class="btn btn-ghost" onclick="clearUsersCache()"><i class="fas fa-trash-alt"></i> Vider le cache</button>
+            </div>
+
+            <div class="card">
+                <div class="table-toolbar">
+                    <input type="text" class="search-input" id="users-search" placeholder="Rechercher par nom, email, UID…" oninput="filterUsers()">
+                    <select class="filter-select" id="users-plan-filter" onchange="filterUsers()">
+                        <option value="">Tous les plans</option>
+                        <option value="premium">Premium</option>
+                        <option value="grace">Période de grâce</option>
+                        <option value="free">Gratuit</option>
+                    </select>
+                    <select class="filter-select" id="users-status-filter" onchange="filterUsers()">
+                        <option value="">Tous les statuts</option>
+                        <option value="active">Actif</option>
+                        <option value="cancelled">Annulé</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Utilisateur <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="uid">UID <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="createdAt">Inscription <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="lastSeen">Dernière connexion <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="plan">Plan <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="status">Statut <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="7"><div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Chargement des utilisateurs…</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SUBSCRIPTIONS ═══ -->
+        <section id="section-subscriptions" class="section">
+            <div class="section-toolbar">
+                <div>
+                    <h1 class="page-title">Abonnements</h1>
+                    <p class="page-subtitle">Gérer les abonnements de tous les utilisateurs</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="table-toolbar">
+                    <input type="text" class="search-input" id="subs-search" placeholder="Rechercher…" oninput="filterSubs()">
+                    <select class="filter-select" id="subs-filter" onchange="filterSubs()">
+                        <option value="">Tous</option>
+                        <option value="premium">Premium</option>
+                        <option value="grace">Période de grâce</option>
+                        <option value="free">Gratuit</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Utilisateur <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="plan">Plan actuel <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="stripe">Stripe ID <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="start">Début <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="end">Fin / Expiration <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="status">Statut <i class="fas fa-sort sort-icon"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subs-tbody">
+                            <tr><td colspan="7"><div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Chargement…</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ BACKUPS ═══ -->
+        <section id="section-backups" class="section">
+            <div class="page-header">
+                <h1 class="page-title">Restauration de sauvegarde</h1>
+                <p class="page-subtitle">Recherchez un utilisateur par UID puis choisissez quelle version restaurer</p>
+            </div>
+
+            <div class="alert alert-warning" style="margin-bottom:1.5rem">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Attention :</strong> La restauration écrase le planning EDN de l'utilisateur (collection <code>planningRevision</code>). L'abonnement et le compte ne sont pas touchés.
+            </div>
+
+            <div class="backup-search">
+                <input type="text" class="uid-input" id="backup-uid-input"
+                    placeholder="UID utilisateur (ex: abc123XYZ789…)"
+                    onkeydown="if(event.key==='Enter') searchBackup()">
+                <button class="btn btn-primary" id="backup-search-btn" onclick="searchBackup()">
+                    <i class="fas fa-search"></i> Charger les sauvegardes
+                </button>
+            </div>
+
+            <div id="backup-result-area">
+                <div class="empty-state">
+                    <i class="fas fa-database"></i>
+                    <p>Entrez un UID utilisateur pour afficher ses sauvegardes</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- ═══ MODAL : ÉDITION ABONNEMENT ═══ -->
+<div class="modal-overlay" id="sub-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-crown" style="color:var(--amber);margin-right:0.5rem"></i>Gérer l'abonnement</div>
+            <button class="modal-close" onclick="closeModal('sub-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="sub-modal-uid">
+            <div class="alert alert-info" id="sub-modal-user-info">
+                <i class="fas fa-user"></i> <span id="sub-modal-name">—</span>
+            </div>
+            <div class="form-group">
+                <label>Plan</label>
+                <select class="form-select" id="sub-plan" onchange="onPlanChange()">
+                    <option value="free">Gratuit</option>
+                    <option value="grace">Période de grâce (offert)</option>
+                    <option value="premium_stripe">Premium (Stripe)</option>
+                    <option value="premium_manual">Premium (manuel / offert)</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date de début</label>
+                    <input type="date" class="form-input" id="sub-start-date">
+                </div>
+                <div class="form-group">
+                    <label>Date de fin / expiration</label>
+                    <input type="date" class="form-input" id="sub-end-date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Statut</label>
+                <select class="form-select" id="sub-status">
+                    <option value="active">Actif</option>
+                    <option value="cancelled">Annulé</option>
+                    <option value="expired">Expiré</option>
+                    <option value="trial">Essai</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>ID Stripe (optionnel)</label>
+                <input type="text" class="form-input" id="sub-stripe-id" placeholder="sub_…">
+            </div>
+            <div class="form-group">
+                <label>ID Client Stripe (optionnel)</label>
+                <input type="text" class="form-input" id="sub-stripe-customer" placeholder="cus_…">
+            </div>
+            <!-- Presets rapides -->
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="presetFree()"><i class="fas fa-ban"></i> Annuler l'abo</button>
+                <button class="btn btn-ghost btn-sm" onclick="presetGrace()"><i class="fas fa-gift"></i> Offrir période de grâce</button>
+                <button class="btn btn-ghost btn-sm" onclick="presetPremium1m()"><i class="fas fa-crown"></i> Offrir 1 mois</button>
+                <button class="btn btn-ghost btn-sm" onclick="presetPremium1y()"><i class="fas fa-crown"></i> Offrir 1 an</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('sub-modal')">Annuler</button>
+            <button class="btn btn-primary" id="sub-save-btn" onclick="saveSubscription()"><i class="fas fa-save"></i> Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODAL : CONFIRMATION ═══ -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="confirm-title">Confirmer l'action</div>
+            <button class="modal-close" onclick="closeModal('confirm-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="confirm-icon" id="confirm-icon">⚠️</div>
+            <p class="confirm-msg" id="confirm-msg">Êtes-vous sûr ?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">Annuler</button>
+            <button class="btn btn-danger" id="confirm-ok-btn">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODAL : CONFIG QUOTAS ═══ -->
+<div class="modal-overlay" id="quota-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-sliders-h" style="color:var(--blue);margin-right:0.5rem"></i>Configurer les quotas</div>
+            <button class="modal-close" onclick="closeModal('quota-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-info"><i class="fas fa-info-circle"></i> Ces valeurs correspondent aux limites de votre plan Firebase.</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Lectures / jour</label>
+                    <input type="number" class="form-input" id="q-cfg-reads" value="50000">
+                </div>
+                <div class="form-group">
+                    <label>Écritures / jour</label>
+                    <input type="number" class="form-input" id="q-cfg-writes" value="20000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Suppressions / jour</label>
+                    <input type="number" class="form-input" id="q-cfg-deletes" value="20000">
+                </div>
+                <div class="form-group">
+                    <label>Stockage (Go)</label>
+                    <input type="number" class="form-input" id="q-cfg-storage" value="1">
+                </div>
+            </div>
+            <p class="form-hint">⚠️ Pour afficher les compteurs en temps réel, vous devez ajouter l'instrumentation dans votre app principale (voir la notice en bas de page).</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('quota-modal')">Annuler</button>
+            <button class="btn btn-primary" onclick="saveQuotaConfig()"><i class="fas fa-save"></i> Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+    getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
+    serverTimestamp, Timestamp, query, orderBy, limit, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+    getDatabase, ref as rtdbRef, onValue
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
+    authDomain: "typixclin-b5fa9.firebaseapp.com",
+    projectId: "typixclin-b5fa9",
+    // ⚠️ Vérifiez cette URL dans Firebase Console → Realtime Database (elle peut être en ...europe-west1...).
+    databaseURL: "https://typixclin-b5fa9-default-rtdb.europe-west1.firebasedatabase.app",
+    storageBucket: "typixclin-b5fa9.firebasestorage.app",
+    messagingSenderId: "726560091078",
+    appId: "1:726560091078:web:5ce8b31da0bfbbc1f720c7",
+    measurementId: "G-9CZ2QB6TNK"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let rtdb = null;
+try { rtdb = getDatabase(app); } catch(e) { console.warn('RTDB indisponible :', e.message); }
+
+// ─── STATE ───
+let allUsers = [];
+// État de tri des deux tableaux + dernière vue (filtrée) rendue, pour re-trier au clic
+let usersSort = { field: 'createdAt', dir: 'desc' };
+let subsSort  = { field: 'name', dir: 'asc' };
+let usersView = [];
+let subsView  = [];
+let currentAdmin = null;
+let onlineUnsubscribe = null;
+let quotaConfig = JSON.parse(localStorage.getItem('tc_quota_cfg') || '{"reads":50000,"writes":20000,"deletes":20000,"storage":1}');
+const USERS_CACHE_KEY = 'tc_admin_users_cache';
+const USERS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// ─── AUTH GATE ───
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        showGateError('Vous devez être connecté pour accéder à l\'administration.', 'Connectez-vous sur <a href="auth.html">auth.html</a>');
+        return;
+    }
+    try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || !userDoc.data().isAdmin) {
+            showGateError('Accès refusé', 'Votre compte ne dispose pas des droits administrateur.');
+            return;
+        }
+        currentAdmin = { uid: user.uid, ...userDoc.data() };
+        bootAdminPanel();
+    } catch (e) {
+        showGateError('Erreur de vérification', e.message);
+    }
+});
+
+function showGateError(title, sub) {
+    document.getElementById('gate-spinner').style.display = 'none';
+    const msg = document.getElementById('gate-message');
+    msg.innerHTML = `<div class="gate-icon-big">🔒</div><strong class="gate-error">${title}</strong><br><span style="font-size:0.8rem;color:var(--text-muted)">${sub}</span>`;
+}
+
+function bootAdminPanel() {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'flex';
+
+    const name = currentAdmin.displayName || currentAdmin.email || 'Admin';
+    document.getElementById('admin-display-name').textContent = name;
+    document.getElementById('admin-avatar-initials').textContent = getInitials(name);
+
+    loadUsers(); // cache localStorage → 0 lecture si récent
+    startPresenceListener();  // RTDB — 0 lecture Firestore
+    startMetricsListener();   // lit metrics/usage_AAAA-MM-JJ en direct
+}
+
+// ─── UTILS ───
+function getInitials(name) {
+    if (!name) return 'A';
+    const parts = name.trim().split(' ');
+    return parts.length >= 2 ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase() : name.substring(0,2).toUpperCase();
+}
+
+function avatarColor(uid) {
+    const colors = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+    let h = 0;
+    for (let i = 0; i < (uid||'').length; i++) h = (h * 31 + uid.charCodeAt(i)) & 0xffff;
+    return colors[h % colors.length];
+}
+
+function formatDate(val) {
+    if (!val) return '—';
+    let d;
+    if (val?.toDate) d = val.toDate();
+    else if (val?.seconds) d = new Date(val.seconds * 1000);
+    else d = new Date(val);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function formatDateTime(val) {
+    if (!val) return '—';
+    let d;
+    if (val?.toDate) d = val.toDate();
+    else if (val?.seconds) d = new Date(val.seconds * 1000);
+    else d = new Date(val);
+    if (isNaN(d)) return '—';
+    return d.toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function getPlanLabel(user) {
+    if (user.isPremium) {
+        if (user.premiumType === 'grace_period') return { label:'Grâce', cls:'badge-grace' };
+        if (user.premiumType === 'manual') return { label:'Premium Offert', cls:'badge-premium' };
+        return { label:'Premium', cls:'badge-premium' };
+    }
+    return { label:'Gratuit', cls:'badge-free' };
+}
+
+function getStatusBadge(user) {
+    const s = user.subscriptionStatus;
+    if (!s || s === 'null') return '<span class="badge badge-free">—</span>';
+    if (s === 'active') return '<span class="badge badge-active"><i class="fas fa-circle" style="font-size:6px"></i> Actif</span>';
+    if (s === 'cancelled') return '<span class="badge badge-cancelled">Annulé</span>';
+    if (s === 'expired') return '<span class="badge badge-expired">Expiré</span>';
+    return `<span class="badge badge-free">${s}</span>`;
+}
+
+window.showSection = function(id, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    if (el) el.classList.add('active');
+    closeMobileSidebar();
+
+    // Lazy-load
+    if (id === 'users' && allUsers.length > 0) renderUsersTable(allUsers);
+    if (id === 'subscriptions' && allUsers.length > 0) renderSubsTable(allUsers);
+};
+
+window.doLogout = function() {
+    signOut(auth).then(() => window.location.href = 'auth.html');
+};
+
+// ─── LOAD USERS ───
+window.loadUsers = async function(forceRefresh = false) {
+    try {
+        // ── Cache localStorage : évite 91 lectures à chaque ouverture ──
+        if (!forceRefresh) {
+            try {
+                const cached = localStorage.getItem(USERS_CACHE_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < USERS_CACHE_TTL && data.length > 0) {
+                        allUsers = data;
+                        updateUserStats();
+                        renderUsersTable(allUsers);
+                        renderSubsTable(allUsers);
+                        renderRecentUsers(allUsers.slice(0, 5));
+                        renderSubsSummary(allUsers);
+                        if(!rtdb) fallbackOnlineEstimate('Realtime Database non activée');
+                        document.getElementById('users-subtitle').textContent =
+                            `${allUsers.length} utilisateurs (cache — ${Math.round((Date.now() - timestamp) / 60000)} min)`;
+                        return;
+                    }
+                }
+            } catch(e) { /* cache corrompu, on recharge */ }
+        }
+
+        const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')));
+        allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+
+        // Sauvegarder dans le cache
+        try {
+            localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({ data: allUsers, timestamp: Date.now() }));
+        } catch(e) { /* quota localStorage plein */ }
+
+        updateUserStats();
+        renderUsersTable(allUsers);
+        renderSubsTable(allUsers);
+        renderRecentUsers(allUsers.slice(0, 5));
+        renderSubsSummary(allUsers);
+        if(!rtdb) fallbackOnlineEstimate('Realtime Database non activée');
+        document.getElementById('users-subtitle').textContent = `${allUsers.length} utilisateurs trouvés`;
+
+        if (forceRefresh) toast('Liste actualisée depuis Firestore', 'success');
+    } catch (e) {
+        toast('Erreur chargement utilisateurs : ' + e.message, 'error');
+    }
+};
+
+window.clearUsersCache = function() {
+    localStorage.removeItem(USERS_CACHE_KEY);
+    loadUsers(true);
+};
+
+
+function updateUserStats() {
+    document.getElementById('nav-badge-users').textContent = allUsers.length;
+    document.getElementById('stat-total-users').textContent = allUsers.length;
+    // Uniquement les vrais premium (pas grace_period)
+    const premiumCount = allUsers.filter(u => u.isPremium && u.premiumType !== 'grace_period').length;
+    const graceCount = allUsers.filter(u => u.premiumType === 'grace_period').length;
+    document.getElementById('stat-premium-count').textContent = premiumCount;
+    document.getElementById('stat-premium-sub').innerHTML =
+        `dont <span id="stat-premium-count">${premiumCount}</span> premium · ${graceCount} en grâce`;
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('users-tbody');
+    usersView = users;
+    if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i><p>Aucun utilisateur trouvé</p></div></td></tr>';
+        updateSortIndicators('#section-users', usersSort);
+        return;
+    }
+    const sorted = [...users].sort((a, b) => sortCompare(userSortValue(a, usersSort.field), userSortValue(b, usersSort.field), usersSort.dir));
+    tbody.innerHTML = sorted.map(u => {
+        const plan = getPlanLabel(u);
+        return `<tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar-sm" style="background:${avatarColor(u.uid)}">${getInitials(u.displayName || u.email)}</div>
+                    <div>
+                        <div class="user-name">${u.displayName || '—'}${u.isAdmin ? ' <span class="badge badge-admin" style="font-size:0.6rem">ADMIN</span>' : ''}</div>
+                        <div class="user-email">${u.email || '—'}</div>
+                    </div>
+                </div>
+            </td>
+            <td><code style="font-size:0.7rem;color:var(--text-muted)">${u.uid.substring(0,12)}…</code></td>
+            <td>${formatDate(u.createdAt)}</td>
+            <td>${formatDate(u.lastLogin || u.lastUpdated)}</td>
+            <td><span class="badge ${plan.cls}">${plan.label}</span></td>
+            <td>${getStatusBadge(u)}</td>
+            <td>
+                <div style="display:flex;gap:4px">
+                    <button class="btn-icon btn-icon-blue" title="Gérer l'abonnement" onclick="openSubModal('${u.uid}')"><i class="fas fa-crown"></i></button>
+                    <button class="btn-icon btn-icon-green" title="Voir les sauvegardes" onclick="goToBackup('${u.uid}')"><i class="fas fa-database"></i></button>
+                    <button class="btn-icon" style="background:rgba(122,144,180,0.1);color:var(--text-muted)" title="Copier l'UID" onclick="copyUID('${u.uid}')"><i class="fas fa-copy"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    updateSortIndicators('#section-users', usersSort);
+}
+
+function renderSubsTable(users) {
+    const tbody = document.getElementById('subs-tbody');
+    subsView = users;
+    if (!users.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Aucun utilisateur</p></div></td></tr>'; updateSortIndicators('#section-subscriptions', subsSort); return; }
+    const sorted = [...users].sort((a, b) => sortCompare(subSortValue(a, subsSort.field), subSortValue(b, subsSort.field), subsSort.dir));
+    tbody.innerHTML = sorted.map(u => {
+        const plan = getPlanLabel(u);
+        return `<tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar-sm" style="background:${avatarColor(u.uid)}">${getInitials(u.displayName||u.email)}</div>
+                    <div>
+                        <div class="user-name">${u.displayName || '—'}</div>
+                        <div class="user-email">${u.email || '—'}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge ${plan.cls}">${plan.label}</span></td>
+            <td><code style="font-size:0.7rem;color:var(--text-muted)">${u.stripeSubscriptionId || '—'}</code></td>
+            <td>${u.gracePeriodEnd ? '—' : formatDate(u.subscriptionStartDate)}</td>
+            <td>${formatDate(u.subscriptionEndDate || u.gracePeriodEnd)}</td>
+            <td>${getStatusBadge(u)}</td>
+            <td>
+                <button class="btn btn-ghost btn-sm" onclick="openSubModal('${u.uid}')"><i class="fas fa-edit"></i> Modifier</button>
+            </td>
+        </tr>`;
+    }).join('');
+    updateSortIndicators('#section-subscriptions', subsSort);
+}
+
+// ─── TRI DES TABLEAUX ───
+function _toMsVal(v) {
+    if (!v) return 0;
+    if (v.toDate) return v.toDate().getTime();
+    if (v.seconds) return v.seconds * 1000;
+    return new Date(v).getTime() || 0;
+}
+function planRank(u) {
+    if (u.isPremium && u.premiumType !== 'grace_period') return 3; // premium payant/manuel
+    if (u.premiumType === 'grace_period') return 2;                // grâce
+    return 1;                                                      // gratuit
+}
+function userSortValue(u, field) {
+    switch (field) {
+        case 'name':      return (u.displayName || u.email || '').toLowerCase();
+        case 'uid':       return (u.uid || '').toLowerCase();
+        case 'createdAt': return _toMsVal(u.createdAt);
+        case 'lastSeen':  return _toMsVal(u.lastLogin || u.lastUpdated);
+        case 'plan':      return planRank(u);
+        case 'status':    return (u.subscriptionStatus || '').toLowerCase();
+        default:          return 0;
+    }
+}
+function subSortValue(u, field) {
+    switch (field) {
+        case 'name':   return (u.displayName || u.email || '').toLowerCase();
+        case 'plan':   return planRank(u);
+        case 'stripe': return (u.stripeSubscriptionId || '').toLowerCase();
+        case 'start':  return u.gracePeriodEnd ? 0 : _toMsVal(u.subscriptionStartDate);
+        case 'end':    return _toMsVal(u.subscriptionEndDate || u.gracePeriodEnd);
+        case 'status': return (u.subscriptionStatus || '').toLowerCase();
+        default:       return 0;
+    }
+}
+function sortCompare(a, b, dir) {
+    const d = dir === 'asc' ? 1 : -1;
+    if (typeof a === 'string' || typeof b === 'string') return String(a).localeCompare(String(b), 'fr') * d;
+    return (a - b) * d;
+}
+function updateSortIndicators(sectionSel, sortState) {
+    document.querySelectorAll(`${sectionSel} th[data-sort]`).forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        const active = th.dataset.sort === sortState.field;
+        th.classList.toggle('sorted', active);
+        th.classList.toggle('sort-desc', active && sortState.dir === 'desc');
+        if (icon) { icon.classList.remove('fa-sort', 'fa-arrow-down'); icon.classList.add(active ? 'fa-arrow-down' : 'fa-sort'); }
+    });
+}
+window.setUsersSort = function(field) {
+    if (usersSort.field === field) usersSort.dir = usersSort.dir === 'asc' ? 'desc' : 'asc';
+    else usersSort = { field, dir: (field === 'createdAt' || field === 'lastSeen') ? 'desc' : 'asc' };
+    renderUsersTable(usersView);
+};
+window.setSubsSort = function(field) {
+    if (subsSort.field === field) subsSort.dir = subsSort.dir === 'asc' ? 'desc' : 'asc';
+    else subsSort = { field, dir: (field === 'start' || field === 'end') ? 'desc' : 'asc' };
+    renderSubsTable(subsView);
+};
+// Branchement des clics sur les en-têtes (les éléments existent dès le chargement)
+document.querySelectorAll('#section-users th[data-sort]').forEach(th => th.addEventListener('click', () => setUsersSort(th.dataset.sort)));
+document.querySelectorAll('#section-subscriptions th[data-sort]').forEach(th => th.addEventListener('click', () => setSubsSort(th.dataset.sort)));
+
+function renderRecentUsers(users) {
+    const el = document.getElementById('recent-users-list');
+    if (!users.length) { el.innerHTML = '<div class="empty-state"><p>Aucun utilisateur</p></div>'; return; }
+    el.innerHTML = users.map(u => {
+        const plan = getPlanLabel(u);
+        return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1.5rem;border-bottom:1px solid var(--border)">
+            <div class="user-avatar-sm" style="background:${avatarColor(u.uid)}">${getInitials(u.displayName||u.email)}</div>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:0.875rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.displayName||'—'}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">${formatDate(u.createdAt)}</div>
+            </div>
+            <span class="badge ${plan.cls}">${plan.label}</span>
+        </div>`;
+    }).join('');
+}
+
+function renderSubsSummary(users) {
+    const el = document.getElementById('subs-summary');
+    const total = users.length;
+    const premium = users.filter(u => u.isPremium && u.premiumType !== 'grace_period').length;
+    const grace = users.filter(u => u.premiumType === 'grace_period').length;
+    const free = users.filter(u => !u.isPremium).length;
+    const cancelled = users.filter(u => u.subscriptionStatus === 'cancelled').length;
+
+    el.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+            ${summaryRow('fas fa-crown', 'Premium payant', premium, 'var(--amber)')}
+            ${summaryRow('fas fa-gift', 'Période de grâce', grace, 'var(--purple)')}
+            ${summaryRow('fas fa-user', 'Gratuit', free, 'var(--text-muted)')}
+            ${summaryRow('fas fa-ban', 'Abonnement annulé', cancelled, 'var(--red)')}
+        </div>
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.8rem;color:var(--text-muted)">
+            Taux de conversion : <strong style="color:var(--text)">${total ? Math.round((premium/total)*100) : 0}%</strong>
+        </div>`;
+}
+
+function summaryRow(icon, label, count, color) {
+    return `<div style="display:flex;align-items:center;gap:0.75rem">
+        <i class="${icon}" style="color:${color};width:16px;text-align:center"></i>
+        <span style="flex:1;font-size:0.875rem;color:var(--text-muted)">${label}</span>
+        <strong style="color:var(--text)">${count}</strong>
+    </div>`;
+}
+
+// ─── FILTER ───
+window.filterUsers = function() {
+    const search = document.getElementById('users-search').value.toLowerCase();
+    const plan = document.getElementById('users-plan-filter').value;
+    const status = document.getElementById('users-status-filter').value;
+
+    const filtered = allUsers.filter(u => {
+        const matchSearch = !search ||
+            (u.displayName||'').toLowerCase().includes(search) ||
+            (u.email||'').toLowerCase().includes(search) ||
+            u.uid.toLowerCase().includes(search);
+        const matchPlan = !plan ||
+            (plan === 'premium' && u.isPremium && u.premiumType !== 'grace_period') ||
+            (plan === 'grace' && u.premiumType === 'grace_period') ||
+            (plan === 'free' && !u.isPremium);
+        const matchStatus = !status || u.subscriptionStatus === status;
+        return matchSearch && matchPlan && matchStatus;
+    });
+    renderUsersTable(filtered);
+};
+
+window.filterSubs = function() {
+    const search = document.getElementById('subs-search').value.toLowerCase();
+    const plan = document.getElementById('subs-filter').value;
+    const filtered = allUsers.filter(u => {
+        const matchSearch = !search || (u.displayName||'').toLowerCase().includes(search) || (u.email||'').toLowerCase().includes(search);
+        const matchPlan = !plan ||
+            (plan === 'premium' && u.isPremium && u.premiumType !== 'grace_period') ||
+            (plan === 'grace' && u.premiumType === 'grace_period') ||
+            (plan === 'free' && !u.isPremium);
+        return matchSearch && matchPlan;
+    });
+    renderSubsTable(filtered);
+};
+
+// ─── SUBSCRIPTION MODAL ───
+window.openSubModal = function(uid) {
+    const user = allUsers.find(u => u.uid === uid);
+    if (!user) { toast('Utilisateur introuvable', 'error'); return; }
+
+    document.getElementById('sub-modal-uid').value = uid;
+    document.getElementById('sub-modal-name').textContent = `${user.displayName || '?'} — ${user.email}`;
+
+    // Determine current plan
+    let plan = 'free';
+    if (user.isPremium) {
+        if (user.premiumType === 'grace_period') plan = 'grace';
+        else if (user.premiumType === 'manual') plan = 'premium_manual';
+        else plan = 'premium_stripe';
+    }
+    document.getElementById('sub-plan').value = plan;
+
+    document.getElementById('sub-status').value = user.subscriptionStatus || 'active';
+    document.getElementById('sub-stripe-id').value = user.stripeSubscriptionId || '';
+    document.getElementById('sub-stripe-customer').value = user.stripeCustomerId || '';
+
+    // Dates
+    function toInputDate(val) {
+        if (!val) return '';
+        let d;
+        if (val?.toDate) d = val.toDate();
+        else if (val?.seconds) d = new Date(val.seconds * 1000);
+        else d = new Date(val);
+        return isNaN(d) ? '' : d.toISOString().split('T')[0];
+    }
+    document.getElementById('sub-start-date').value = toInputDate(user.subscriptionStartDate);
+    document.getElementById('sub-end-date').value = toInputDate(user.subscriptionEndDate || user.gracePeriodEnd);
+
+    openModal('sub-modal');
+};
+
+window.onPlanChange = function() {
+    // Auto-fill logic could go here
+};
+
+window.presetFree = function() {
+    document.getElementById('sub-plan').value = 'free';
+    document.getElementById('sub-status').value = 'cancelled';
+    document.getElementById('sub-end-date').value = new Date().toISOString().split('T')[0];
+};
+
+window.presetGrace = function() {
+    document.getElementById('sub-plan').value = 'grace';
+    document.getElementById('sub-status').value = 'active';
+    const end = new Date(); end.setDate(end.getDate() + 56); // ~2 months
+    document.getElementById('sub-end-date').value = end.toISOString().split('T')[0];
+    document.getElementById('sub-start-date').value = new Date().toISOString().split('T')[0];
+};
+
+window.presetPremium1m = function() {
+    document.getElementById('sub-plan').value = 'premium_manual';
+    document.getElementById('sub-status').value = 'active';
+    const start = new Date();
+    const end = new Date(); end.setMonth(end.getMonth() + 1);
+    document.getElementById('sub-start-date').value = start.toISOString().split('T')[0];
+    document.getElementById('sub-end-date').value = end.toISOString().split('T')[0];
+};
+
+window.presetPremium1y = function() {
+    document.getElementById('sub-plan').value = 'premium_manual';
+    document.getElementById('sub-status').value = 'active';
+    const start = new Date();
+    const end = new Date(); end.setFullYear(end.getFullYear() + 1);
+    document.getElementById('sub-start-date').value = start.toISOString().split('T')[0];
+    document.getElementById('sub-end-date').value = end.toISOString().split('T')[0];
+};
+
+window.saveSubscription = async function() {
+    const uid = document.getElementById('sub-modal-uid').value;
+    const plan = document.getElementById('sub-plan').value;
+    const status = document.getElementById('sub-status').value;
+    const startDateStr = document.getElementById('sub-start-date').value;
+    const endDateStr = document.getElementById('sub-end-date').value;
+    const stripeId = document.getElementById('sub-stripe-id').value.trim();
+    const stripeCustomer = document.getElementById('sub-stripe-customer').value.trim();
+
+    const btn = document.getElementById('sub-save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Enregistrement…';
+
+    try {
+        let isPremium = false, premiumType = null;
+        let gracePeriodEnd = null;
+
+        if (plan === 'grace') {
+            isPremium = true; premiumType = 'grace_period';
+            if (endDateStr) gracePeriodEnd = Timestamp.fromDate(new Date(endDateStr));
+        } else if (plan === 'premium_stripe') {
+            isPremium = true; premiumType = 'stripe';
+        } else if (plan === 'premium_manual') {
+            isPremium = true; premiumType = 'manual';
+        } else {
+            isPremium = false; premiumType = null; gracePeriodEnd = null;
+        }
+
+        const updateData = {
+            isPremium,
+            premiumType,
+            gracePeriodEnd,
+            subscriptionStatus: status,
+            subscriptionStartDate: startDateStr ? Timestamp.fromDate(new Date(startDateStr)) : null,
+            subscriptionEndDate: endDateStr ? Timestamp.fromDate(new Date(endDateStr)) : null,
+            stripeSubscriptionId: stripeId || null,
+            stripeCustomerId: stripeCustomer || null,
+            lastUpdated: serverTimestamp()
+        };
+
+        await updateDoc(doc(db, 'users', uid), updateData);
+
+        // Update local cache
+        const idx = allUsers.findIndex(u => u.uid === uid);
+        if (idx !== -1) allUsers[idx] = { ...allUsers[idx], ...updateData };
+
+        renderUsersTable(allUsers);
+        renderSubsTable(allUsers);
+        renderSubsSummary(allUsers);
+        closeModal('sub-modal');
+        toast('Abonnement mis à jour avec succès', 'success');
+    } catch (e) {
+        toast('Erreur : ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+    }
+};
+
+// ─── BACKUP ───
+window.searchBackup = async function() {
+    const uid = document.getElementById('backup-uid-input').value.trim();
+    if (!uid) { toast('Entrez un UID utilisateur', 'error'); return; }
+
+    const btn = document.getElementById('backup-search-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Chargement…';
+    document.getElementById('backup-result-area').innerHTML = '<div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Recherche des sauvegardes…</p></div>';
+
+    try {
+        // Legacy doc + user + historique de versions (sous-collection)
+        let versionsSnap = { docs: [] };
+        try {
+            versionsSnap = await getDocs(query(collection(db, 'planningBackups', uid, 'versions'), orderBy('createdAt', 'desc'), limit(20)));
+        } catch(e) { /* sous-collection absente = pas d'historique, on continue */ }
+
+        const [backupSnap, userSnap] = await Promise.all([
+            getDoc(doc(db, 'planningBackups', uid)),
+            getDoc(doc(db, 'users', uid))
+        ]);
+
+        if (!backupSnap.exists() && !userSnap.exists() && versionsSnap.docs.length === 0) {
+            document.getElementById('backup-result-area').innerHTML = `<div class="no-backup"><i class="fas fa-search"></i><p>Aucun utilisateur ni sauvegarde trouvé pour cet UID.</p></div>`;
+            return;
+        }
+
+        const userData = userSnap.exists() ? userSnap.data() : null;
+        const legacy = backupSnap.exists() ? backupSnap.data() : null;
+        const versions = versionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        renderBackupResult(uid, userData, legacy, versions);
+    } catch (e) {
+        document.getElementById('backup-result-area').innerHTML = `<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erreur : ${e.message}</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Charger les sauvegardes';
+    }
+};
+
+function renderBackupResult(uid, user, legacy, versions) {
+    const area = document.getElementById('backup-result-area');
+    let html = '';
+
+    if (user) {
+        html += `<div class="alert alert-info" style="margin-bottom:1rem">
+            <i class="fas fa-user"></i>
+            <strong>${user.displayName || '?'}</strong> — ${user.email || '?'}
+            <span style="margin-left:1rem;font-size:0.75rem;color:var(--text-muted)">UID: ${uid}</span>
+        </div>`;
+    }
+
+    let cards = '';
+
+    // 1) Historique versionné (le plus récent en haut) — si vous installez les versions
+    versions.forEach((v, i) => {
+        const data = v.data || v.cloudBackup;
+        cards += renderBackupCard({
+            uid, source: 'version', versionId: v.id,
+            title: i === 0 ? 'Version la plus récente' : `Version du ${formatDate(v.createdAt || v.timestamp)}`,
+            date: v.createdAt || v.timestamp,
+            items: v.itemsCount ?? (data && data.items ? Object.keys(data.items).length : null),
+            details: v.details,
+            hasData: !!data,
+            isManual: v.isManual
+        });
+    });
+
+    // 2) Sauvegarde « principale » (doc legacy planningBackups/{uid})
+    if (legacy && (legacy.data || legacy.timestamp)) {
+        cards += renderBackupCard({
+            uid, source: 'main',
+            title: 'Sauvegarde principale',
+            date: legacy.timestamp || legacy.date,
+            items: legacy.itemsCount,
+            details: legacy.details,
+            hasData: !!legacy.data
+        });
+    }
+
+    // 3) Sauvegarde cloud (champ cloudBackup du doc legacy)
+    if (legacy && legacy.cloudBackup && legacy.cloudBackupDate) {
+        cards += renderBackupCard({
+            uid, source: 'cloud',
+            title: 'Sauvegarde cloud',
+            date: legacy.cloudBackupDate,
+            items: legacy.cloudBackup.items ? Object.keys(legacy.cloudBackup.items).length : null,
+            details: null,
+            hasData: true,
+            isManual: legacy.isManual
+        });
+    }
+
+    if (!cards) {
+        cards = `<div class="no-backup"><i class="fas fa-database"></i><p>Aucune donnée restaurable pour cet utilisateur (le document existe peut-être mais est vide).</p></div>`;
+    } else if (versions.length > 0) {
+        html += `<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem"><i class="fas fa-clock-rotate-left"></i> ${versions.length} version(s) dans l'historique. Choisissez celle à restaurer.</div>`;
+    }
+
+    area.innerHTML = html + cards;
+}
+
+function renderBackupCard({ uid, source, versionId, title, date, items, details, hasData, isManual }) {
+    const itemsHtml = items != null
+        ? `<div class="backup-meta-item"><div class="backup-meta-label">Éléments</div><div class="backup-meta-value blue">${items}</div></div>`
+        : '';
+    const manualBadge = isManual ? '<span class="badge badge-premium" style="font-size:0.65rem">Manuelle</span>' : '';
+    const vId = versionId ? `, '${versionId}'` : '';
+
+    return `<div class="backup-info-card">
+        <div class="backup-info-header">
+            <div class="backup-info-title">
+                <i class="fas fa-database"></i> ${title} ${manualBadge}
+            </div>
+            ${hasData ? '<span class="badge badge-active"><i class="fas fa-check"></i> Données disponibles</span>' : '<span class="badge badge-cancelled">Données manquantes</span>'}
+        </div>
+        <div class="backup-meta" style="margin-bottom:1.25rem">
+            <div class="backup-meta-item">
+                <div class="backup-meta-label">Date</div>
+                <div class="backup-meta-value green" style="font-size:0.875rem">${formatDateTime(date)}</div>
+            </div>
+            ${itemsHtml}
+            ${details ? `<div class="backup-meta-item"><div class="backup-meta-label">Matières</div><div class="backup-meta-value blue">${details.specialties||'—'}</div></div>` : ''}
+        </div>
+        ${hasData ? `<div class="backup-actions">
+            <button class="btn btn-success" onclick="confirmRestore('${uid}', '${source}'${vId})">
+                <i class="fas fa-undo-alt"></i> Restaurer cette version
+            </button>
+        </div>` : ''}
+    </div>`;
+}
+
+window.confirmRestore = function(uid, source, versionId) {
+    const user = allUsers.find(u => u.uid === uid);
+    const name = user ? user.displayName || user.email : uid;
+    confirmAction(
+        '⚠️ Restaurer la sauvegarde',
+        `Restaurer le planning EDN de <strong>${name}</strong> à partir de cette version ?<br><br>Les données de planning actuelles (collection <code>planningRevision</code>) seront remplacées. L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
+        async () => { await doRestore(uid, source, versionId); }
+    );
+};
+
+async function doRestore(uid, source, versionId) {
+    try {
+        let dataToRestore = null;
+
+        if (source === 'version') {
+            const vSnap = await getDoc(doc(db, 'planningBackups', uid, 'versions', versionId));
+            if (!vSnap.exists()) throw new Error('Version introuvable');
+            const v = vSnap.data();
+            dataToRestore = v.data || v.cloudBackup;
+        } else {
+            const backupSnap = await getDoc(doc(db, 'planningBackups', uid));
+            if (!backupSnap.exists()) throw new Error('Sauvegarde introuvable');
+            const backup = backupSnap.data();
+            dataToRestore = source === 'cloud' ? backup.cloudBackup : backup.data;
+        }
+        if (!dataToRestore) throw new Error('Données de sauvegarde vides');
+
+        // Champs réellement lus par le tableur EDN (doc planningRevision/{uid})
+        const planningFields = ['items', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'trainings', 'deletedDefaultIds'];
+        const updateData = {};
+        planningFields.forEach(f => { if (dataToRestore[f] !== undefined) updateData[f] = dataToRestore[f]; });
+
+        if (Object.keys(updateData).length === 0) throw new Error('Aucun champ de planning à restaurer');
+
+        // Sécurité anti-corruption : refuser une restauration qui viderait le planning
+        if (updateData.items && Object.keys(updateData.items).length === 0) {
+            throw new Error('Cette version ne contient aucun item — restauration annulée');
+        }
+
+        updateData.lastUpdated = serverTimestamp();
+        await setDoc(doc(db, 'planningRevision', uid), updateData, { merge: true });
+
+        // Trace côté users (sans toucher à l'abonnement)
+        await updateDoc(doc(db, 'users', uid), {
+            lastRestoredAt: serverTimestamp(),
+            lastRestoredBy: currentAdmin.uid
+        }).catch(()=>{});
+
+        toast('Planning restauré — l\'utilisateur le verra en temps réel', 'success');
+    } catch (e) {
+        toast('Erreur de restauration : ' + e.message, 'error');
+    }
+}
+
+window.goToBackup = function(uid) {
+    document.getElementById('backup-uid-input').value = uid;
+    showSection('backups', document.querySelector('[data-section=backups]'));
+    searchBackup();
+};
+
+window.copyUID = function(uid) {
+    navigator.clipboard.writeText(uid).then(() => toast('UID copié', 'success'));
+};
+
+// ─── DASHBOARD STATS ───
+
+// ─── PRÉSENCE EN DIRECT (Realtime Database — 0 lecture Firestore) ───
+let presenceStarted = false;
+function startPresenceListener() {
+    if (presenceStarted) return;
+    presenceStarted = true;
+    const onlineEl = document.getElementById('stat-online');
+    const subEl = document.getElementById('stat-online-sub');
+
+    if (!rtdb) { fallbackOnlineEstimate('Realtime Database non activée'); return; }
+    try {
+        // Chaque app écrit /presence/{uid} = { app, lastActive } quand l'utilisateur est connecté,
+        // et le supprime automatiquement à la déconnexion via onDisconnect().
+        onValue(rtdbRef(rtdb, 'presence'), snap => {
+            const val = snap.val() || {};
+            const sessions = Object.values(val);
+            const total = sessions.length;
+            const ecos = sessions.filter(s => s && s.app === 'ecos').length;
+            const edn  = sessions.filter(s => s && s.app === 'edn').length;
+            onlineEl.textContent = total;
+            subEl.innerHTML = total
+                ? `<span style="color:var(--amber)">${edn} EDN</span> · <span style="color:var(--purple)">${ecos} ECOS</span> · en temps réel`
+                : 'Personne de connecté';
+        }, err => fallbackOnlineEstimate('Présence inaccessible : ' + err.message));
+    } catch(e) {
+        fallbackOnlineEstimate(e.message);
+    }
+}
+
+// Repli si la présence RTDB n'est pas dispo : estimation depuis le cache utilisateurs.
+function fallbackOnlineEstimate(reason) {
+    const onlineEl = document.getElementById('stat-online');
+    const subEl = document.getElementById('stat-online-sub');
+    const toMs = v => v?.toDate ? v.toDate().getTime() : v?.seconds ? v.seconds*1000 : (new Date(v).getTime()||0);
+    const recent = allUsers.filter(u => toMs(u.lastLogin || u.lastUpdated) > Date.now() - 30*60*1000).length;
+    onlineEl.textContent = recent || '0';
+    subEl.innerHTML = `<span style="color:var(--amber)">estimation</span> · actifs &lt;30 min (${reason})`;
+}
+
+// ─── USAGE DU JOUR (compteur Firestore metrics/usage_YYYY-MM-DD) ───
+let metricsUnsub = null;
+function todayKey() {
+    const d = new Date();
+    return `usage_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function startMetricsListener() {
+    if (metricsUnsub) return;
+    // 1 lecture à l'ouverture + 1 lecture par mise à jour live tant que l'onglet admin est ouvert.
+    metricsUnsub = onSnapshot(doc(db, 'metrics', todayKey()), snap => {
+        if (!snap.exists()) { showMetricsMissing(); return; }
+        renderMetrics(snap.data());
+    }, err => {
+        console.warn('Metrics indisponibles :', err.message);
+        showMetricsMissing();
+    });
+}
+function showMetricsMissing() {
+    document.getElementById('quota-not-installed').style.display = 'flex';
+    document.getElementById('quota-bars').style.display = 'none';
+    document.getElementById('quota-live-dot').style.display = 'none';
+    document.getElementById('stat-reads-today').textContent = '—';
+    document.getElementById('stat-writes-today').textContent = '—';
+    document.getElementById('stat-reads-today-sub').textContent = 'Compteur non installé';
+    document.getElementById('stat-writes-today-sub').textContent = 'Compteur non installé';
+    document.getElementById('dau-edn').textContent = '—';
+    document.getElementById('dau-ecos').textContent = '—';
+    document.getElementById('dau-note').textContent = 'Compteur non installé';
+}
+function renderMetrics(m) {
+    document.getElementById('quota-not-installed').style.display = 'none';
+    document.getElementById('quota-bars').style.display = 'grid';
+    document.getElementById('quota-live-dot').style.display = 'inline-block';
+
+    const reads   = (m.reads   ?? (m.reads_edn   ||0)+(m.reads_ecos   ||0)) || 0;
+    const writes  = (m.writes  ?? (m.writes_edn  ||0)+(m.writes_ecos  ||0)) || 0;
+    const deletes = (m.deletes ?? (m.deletes_edn ||0)+(m.deletes_ecos ||0)) || 0;
+
+    document.getElementById('stat-reads-today').textContent  = reads.toLocaleString('fr-FR');
+    document.getElementById('stat-writes-today').textContent = writes.toLocaleString('fr-FR');
+    document.getElementById('stat-reads-today-sub').innerHTML  = splitLabel(m.reads_edn, m.reads_ecos);
+    document.getElementById('stat-writes-today-sub').innerHTML = splitLabel(m.writes_edn, m.writes_ecos);
+
+    updateQuotaBar('reads', reads, quotaConfig.reads, m.reads_edn, m.reads_ecos);
+    updateQuotaBar('writes', writes, quotaConfig.writes, m.writes_edn, m.writes_ecos);
+    updateQuotaBar('deletes', deletes, quotaConfig.deletes, m.deletes_edn, m.deletes_ecos);
+
+    // Utilisateurs actifs du jour (DAU) par app
+    document.getElementById('dau-edn').textContent  = (m.dau_edn  || 0).toLocaleString('fr-FR');
+    document.getElementById('dau-ecos').textContent = (m.dau_ecos || 0).toLocaleString('fr-FR');
+    document.getElementById('dau-note').textContent =
+        ((m.dau_edn || 0) + (m.dau_ecos || 0)) === 0
+            ? 'Aucune connexion enregistrée aujourd\'hui pour le moment'
+            : 'Un même utilisateur présent sur les deux apps est compté dans chacune';
+}
+function splitLabel(edn, ecos) {
+    if (edn == null && ecos == null) return 'Total projet';
+    return `<span style="color:var(--amber)">${(edn||0).toLocaleString('fr-FR')} EDN</span> · <span style="color:var(--purple)">${(ecos||0).toLocaleString('fr-FR')} ECOS</span>`;
+}
+function updateQuotaBar(prefix, used, limit, edn, ecos) {
+    const pct = Math.min(100, (used / limit) * 100);
+    const fill = document.getElementById(`q-${prefix}-bar`);
+    fill.style.width = pct + '%';
+    fill.className = 'quota-bar-fill ' + (pct < 60 ? 'ok' : pct < 85 ? 'warn' : 'danger');
+    document.getElementById(`q-${prefix}-used`).textContent = used.toLocaleString('fr-FR');
+    document.getElementById(`q-${prefix}-pct`).textContent = pct.toFixed(1) + '%';
+    document.getElementById(`q-${prefix}-limit`).textContent = limit.toLocaleString('fr-FR');
+    const split = document.getElementById(`q-${prefix}-split`);
+    if (split) split.textContent = (edn != null || ecos != null) ? `· ${(edn||0).toLocaleString('fr-FR')} EDN / ${(ecos||0).toLocaleString('fr-FR')} ECOS` : '';
+}
+
+// ─── QUOTA CONFIG ───
+window.openQuotaConfig = function() {}; // désactivé
+
+// ─── MODAL HELPERS ───
+window.openModal = function(id) {
+    document.getElementById(id).classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal(overlay.id);
+    });
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
+    }
+});
+
+let _confirmCallback = null;
+function confirmAction(title, msg, callback) {
+    document.getElementById('confirm-title').textContent = title.replace(/[⚠️🗑️]/g, '').trim();
+    document.getElementById('confirm-msg').innerHTML = msg;
+    _confirmCallback = callback;
+    openModal('confirm-modal');
+}
+
+document.getElementById('confirm-ok-btn').addEventListener('click', async () => {
+    if (_confirmCallback) {
+        closeModal('confirm-modal');
+        await _confirmCallback();
+        _confirmCallback = null;
+    }
+});
+
+// ─── TOAST ───
+window.toast = function(msg, type = 'success') {
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle' };
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fas ${icons[type]||icons.success}"></i><span>${msg}</span>`;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; el.style.transition = '0.3s'; setTimeout(() => el.remove(), 300); }, 3500);
+};
+
+// ─── MOBILE SIDEBAR ───
+window.toggleMobileSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+};
+
+window.closeMobileSidebar = function() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('visible');
+};
+
+</script>
+
+</body>
+</html>
