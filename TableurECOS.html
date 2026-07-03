@@ -17021,24 +17021,8 @@ body.ecos-offline-locked .send-to-checklist-btn {
     display: flex;
     align-items: center;
 }
-/* Sur mobile : le switch passe sur une nouvelle ligne et occupe toute la largeur */
-@media (max-width: 600px) {
-    .notes-toolbar-switch-wrapper {
-        margin-left: 0;
-        width: 100%;
-        justify-content: center;
-        order: 99;
-        padding-top: 2px;
-    }
-    .notes-mode-switch {
-        width: 100%;
-        justify-content: center;
-    }
-    .notes-mode-btn {
-        flex: 1;
-        justify-content: center;
-    }
-}
+/* (Ancien passage du switch en pleine largeur sur mobile : supprimé —
+   le switch est désormais épinglé à droite de la toolbar défilante.) */
 
 /* Bouton statut dans modal cahier d'erreurs entraînements */
 .notes-action-btn.btn-train-statut { background: #e5e7eb; color: #4b5563; }
@@ -18000,32 +17984,30 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     .notes-info-panel:not(.oic-collapsed) { max-height: 45vh; overflow-y: auto; }
     .notes-item-name { display: none; }
     .notes-modal-header { padding: 14px 16px; }
-    /* Toolbar mobile : outils ligne 1, switch ligne 2 */
+    /* Toolbar mobile : une seule ligne qui défile horizontalement
+       (même disposition que le carnet de stage), contenu inchangé */
     .notes-toolbar {
-        flex-wrap: wrap;
-        padding: 10px 12px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        padding: 8px 12px;
         gap: 5px;
-        row-gap: 6px;
-        min-height: 56px;
     }
-    .notes-toolbar > *:not(.notes-toolbar-switch-wrapper) {
-        flex-shrink: 0;
-    }
+    .notes-toolbar::-webkit-scrollbar { display: none; }
+    .notes-toolbar > * { flex-shrink: 0; }
     .notes-toolbar-switch-wrapper {
-        flex-basis: 100%;
+        flex-basis: auto;
+        flex-shrink: 0;
         display: flex;
-        justify-content: center;
-        padding: 3px 0 4px;
+        align-items: center;
+        padding: 0;
         margin-top: 0;
+        margin-left: 6px;
     }
-    .notes-mode-switch {
-        width: 100%;
-    }
-    .notes-mode-btn {
-        flex: 1;
-        justify-content: center;
-    }
-    .notes-tool-btn { min-width: 42px; height: 42px; padding: 0 8px; font-size: 0.95rem; }
+    .notes-mode-switch { width: auto; }
+    .notes-tool-btn { min-width: 44px; height: 44px; padding: 0 9px; font-size: 1rem; }
 }
 
 /* ===== RESPONSIVE IPAD (641px – 1024px) ===== */
@@ -18050,37 +18032,29 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     }
     /* Bouton toggle OIC masqué sur iPad (visible sur mobile seulement) */
     /* .oic-toggle-btn — reste display:none sur iPad */
-    /* Toolbar sur iPad : outils ligne 1, switch ligne 2 */
+    /* Toolbar sur iPad : une seule ligne qui défile horizontalement */
     .notes-toolbar {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
         padding: 6px 12px;
         gap: 4px;
-        row-gap: 5px;
     }
-    .notes-toolbar > *:not(.notes-toolbar-switch-wrapper) {
-        flex-shrink: 0;
-    }
-    /* Switch : nouvelle ligne, pleine largeur (comme mobile) */
+    .notes-toolbar::-webkit-scrollbar { display: none; }
+    .notes-toolbar > * { flex-shrink: 0; }
     .notes-toolbar-switch-wrapper {
-        flex-basis: 100%;
+        flex-basis: auto;
         flex-shrink: 0;
         display: flex;
-        justify-content: center;
         align-items: center;
-        margin-left: 0;
-        padding: 2px 0 3px;
+        margin-left: 6px;
+        padding: 0;
         margin-top: 0;
     }
-    /* Pleine largeur sur iPad aussi */
-    .notes-toolbar-switch-wrapper .notes-mode-switch {
-        width: 100%;
-        justify-content: center;
-    }
-    .notes-toolbar-switch-wrapper .notes-mode-btn {
-        flex: 1;
-        justify-content: center;
-    }
-    .notes-tool-btn { min-width: 34px; height: 32px; padding: 0 6px; }
+    .notes-toolbar-switch-wrapper .notes-mode-switch { width: auto; }
+    .notes-tool-btn { min-width: 40px; height: 38px; padding: 0 7px; }
     /* Quand OIC replié : éditeur prend la place */
     .notes-info-panel.oic-collapsed ~ .notes-editor-panel,
     .notes-editor-panel:has(~ .notes-info-panel.oic-collapsed) {
@@ -20915,6 +20889,41 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     .sdd-notes-body.sdd-right-max .sdd-notes-right { flex: 1 1 0% !important; }
 }
 
+/* ═══ Bouton « Agrandir le texte » (toolbar) : masque la partie inférieure
+   du modal (fiche/objectifs ou flashcards) pour mieux voir la zone de texte.
+   Visible uniquement quand les panneaux sont empilés. ═══ */
+.notes-textmax-sep, .notes-textmax-group { display: none; }
+
+.notes-modal-body.notes-text-max .sdd-notes-right,
+.notes-modal-body.notes-text-max .spe-flash-info-panel { display: none !important; }
+.notes-modal-body.notes-text-max .sdd-notes-left,
+.notes-modal-body.notes-text-max .notes-editor-panel { border-bottom: none !important; }
+
+.notes-textmax-btn[aria-pressed="true"] {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 1px 4px rgba(59,130,246,0.4) !important;
+}
+.notes-textmax-btn[aria-pressed="true"] i { color: #fff; }
+
+/* Modal SDD : empilé jusqu'à 860px */
+@media (max-width: 860px) {
+    #sdd-notes-overlay .notes-textmax-sep { display: block; }
+    #sdd-notes-overlay .notes-textmax-group { display: inline-flex; }
+}
+/* Cahier d'erreurs : empilé jusqu'à 920px */
+@media (max-width: 920px) {
+    #ecosErrOverlay .notes-textmax-sep { display: block; }
+    #ecosErrOverlay .notes-textmax-group { display: inline-flex; }
+}
+/* Écrans larges : état neutralisé (rotation / redimensionnement) */
+@media (min-width: 861px) {
+    .sdd-notes-body.notes-text-max .sdd-notes-right { display: flex !important; }
+}
+@media (min-width: 921px) {
+    #ecosErrModalInner .notes-modal-body.notes-text-max .spe-flash-info-panel { display: flex !important; }
+}
+
 /* ---- Modal Priorité ---- */
 .prio-choices { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0 1.2rem; }
 .prio-choice {
@@ -23527,6 +23536,10 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
                         <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'insertOrderedList')" data-tooltip="Liste numérotée"><i class="fas fa-list-ol" style="font-size:0.72rem;"></i></button>
                         <button class="notes-tool-btn" onmousedown="notesExecCmd(event,'removeFormat')" data-tooltip="Effacer le formatage"><i class="fas fa-eraser" style="font-size:0.72rem;"></i></button>
                     </div>
+                    <div class="notes-toolbar-sep notes-textmax-sep"></div>
+                    <div class="notes-toolbar-group notes-textmax-group">
+                        <button class="notes-tool-btn notes-textmax-btn" type="button" onmousedown="event.preventDefault()" onclick="toggleNotesTextMax(this)" data-tooltip="Agrandir le texte" aria-pressed="false"><i class="fas fa-expand" style="font-size:0.72rem;"></i></button>
+                    </div>
                 </div>
                 <div class="notes-editor-area" id="sdd-notes-editor" contenteditable="true" spellcheck="true"
                      onmouseup="notesUpdateToolbar()"
@@ -24245,6 +24258,10 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
           <div class="notes-toolbar-sep"></div>
           <div class="notes-toolbar-group">
             <button class="notes-tool-btn" onmousedown="ecosErrCmd(event,'removeFormat')" ontouchstart="ecosErrCmd(event,'removeFormat')" data-tooltip="Effacer le formatage"><i class="fas fa-eraser" style="font-size:0.72rem;"></i></button>
+          </div>
+          <div class="notes-toolbar-sep notes-textmax-sep"></div>
+          <div class="notes-toolbar-group notes-textmax-group">
+              <button class="notes-tool-btn notes-textmax-btn" type="button" onmousedown="event.preventDefault()" onclick="toggleNotesTextMax(this)" data-tooltip="Agrandir le texte" aria-pressed="false"><i class="fas fa-expand" style="font-size:0.72rem;"></i></button>
           </div>
         </div>
         <div class="notes-editor-area" id="ecosErrEditor"
@@ -26733,6 +26750,7 @@ function openEcosErrModal(speId) {
     var sp    = (ECOS_SPECIALTIES || []).find(function(s) { return s.id === speId; });
     var name  = sp ? sp.name : speId;
     _ecosErrCurrentId = speId; _ecosErrDirty = false;
+    if (typeof resetNotesTextMax === 'function') resetNotesTextMax('#ecosErrOverlay');
     var iconWrap = document.getElementById('ecosErrHeaderIcon');
     if (iconWrap) iconWrap.style.background = 'linear-gradient(135deg,' + color + ',' + color + 'cc)';
     var iconI = document.getElementById('ecosErrHeaderIconI');
@@ -28102,6 +28120,7 @@ function openSDDNotesModal(sddId) {
     (function () {
         var _b = document.querySelector('#sdd-notes-overlay .sdd-notes-body');
         if (_b) _b.classList.remove('sdd-right-max');
+        if (typeof resetNotesTextMax === 'function') resetNotesTextMax('#sdd-notes-overlay');
     })();
     // objectifs
     renderSDDObjectives(meta);
@@ -28139,10 +28158,46 @@ function sddPanelExpandBtnHTML() {
         '<span class="sdd-expand-label">' + (isMax ? 'R\u00e9duire' : 'Agrandir') + '</span>' +
         '</button>';
 }
+/* ── Agrandir le texte (toolbar) : masque la partie inférieure du modal ── */
+function toggleNotesTextMax(btn) {
+    var body = btn && btn.closest ? btn.closest('.notes-modal-body') : null;
+    if (!body) return;
+    var isMax = body.classList.toggle('notes-text-max');
+    // Exclusif avec l'agrandissement du panneau droit (modal SDD)
+    if (isMax && body.classList.contains('sdd-right-max')) {
+        var pb = body.querySelector('.sdd-panel-expand-btn');
+        if (pb && typeof toggleSDDPanelMax === 'function') toggleSDDPanelMax(pb);
+        else body.classList.remove('sdd-right-max');
+    }
+    if (btn) {
+        btn.setAttribute('aria-pressed', isMax ? 'true' : 'false');
+        btn.setAttribute('data-tooltip', isMax ? 'R\u00e9afficher le panneau' : 'Agrandir le texte');
+        var ic = btn.querySelector('i');
+        if (ic) ic.className = 'fas ' + (isMax ? 'fa-compress' : 'fa-expand');
+    }
+}
+function resetNotesTextMax(rootSel) {
+    var body = document.querySelector(rootSel + ' .notes-modal-body');
+    if (!body) return;
+    body.classList.remove('notes-text-max');
+    var b = body.querySelector('.notes-textmax-btn');
+    if (b) {
+        b.setAttribute('aria-pressed', 'false');
+        b.setAttribute('data-tooltip', 'Agrandir le texte');
+        var ic = b.querySelector('i');
+        if (ic) ic.className = 'fas fa-expand';
+    }
+}
 function toggleSDDPanelMax(btn) {
     var body = document.querySelector('#sdd-notes-overlay .sdd-notes-body');
     if (!body) return;
     var isMax = body.classList.toggle('sdd-right-max');
+    // Exclusif avec le mode texte agrandi
+    if (isMax && body.classList.contains('notes-text-max')) {
+        var tb = body.querySelector('.notes-textmax-btn');
+        if (tb) toggleNotesTextMax(tb);
+        else body.classList.remove('notes-text-max');
+    }
     if (btn) {
         btn.setAttribute('aria-pressed', isMax ? 'true' : 'false');
         btn.title = isMax ? 'R\u00e9duire le panneau' : 'Agrandir le panneau';
@@ -39220,5 +39275,19 @@ if (auth) onAuthStateChanged(auth, async (user) => {
 });
 </script>
 
+<script>
+/* Toolbars notes : les commandes restent sur mousedown (comme le modal SDD ECOS).
+   On retire les ontouchstart inline des boutons de toolbar : leur preventDefault
+   sur touchstart empêchait le défilement horizontal de la toolbar au doigt. */
+(function () {
+    function _fixToolbarTouch() {
+        document.querySelectorAll('.notes-toolbar [ontouchstart]').forEach(function (el) {
+            el.removeAttribute('ontouchstart');
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _fixToolbarTouch);
+    else _fixToolbarTouch();
+})();
+</script>
 </body>
 </html>
