@@ -17788,9 +17788,9 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     z-index: 50;
 }
 #sdd-notes-overlay #sddNotesImageBtn[data-tooltip]:hover::after,
-#ecosErrOverlay #ecosErrImageBtn[data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+#ecosErrOverlay #ecosErrImageBtn[data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); transition-delay: 0s; }
 #sdd-notes-overlay #sddNotesImageBtn[data-tooltip]:hover::before,
-#ecosErrOverlay #ecosErrImageBtn[data-tooltip]:hover::before { opacity: 1; }
+#ecosErrOverlay #ecosErrImageBtn[data-tooltip]:hover::before { opacity: 1; transition-delay: 0s; }
 [data-theme="dark"] #sdd-notes-overlay #sddNotesImageBtn[data-tooltip]::after,
 [data-theme="dark"] #ecosErrOverlay #ecosErrImageBtn[data-tooltip]::after { background:#0f172a; }
 [data-theme="dark"] #sdd-notes-overlay #sddNotesImageBtn[data-tooltip]::before,
@@ -17816,7 +17816,8 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     box-shadow: 0 6px 18px rgba(15,23,42,0.28);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    /* Fermeture douce : léger délai + fondu prolongé au retrait du survol */
+    transition: opacity 0.22s ease 0.06s, transform 0.22s ease 0.06s;
     z-index: 60;
 }
 #sdd-notes-overlay .notes-tool-btn[data-tooltip]::before,
@@ -17831,13 +17832,13 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     border-bottom-color: #1e293b;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.22s ease 0.06s;
     z-index: 60;
 }
 #sdd-notes-overlay .notes-tool-btn[data-tooltip]:hover::after,
-#ecosErrOverlay .notes-tool-btn[data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+#ecosErrOverlay .notes-tool-btn[data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); transition-delay: 0s; }
 #sdd-notes-overlay .notes-tool-btn[data-tooltip]:hover::before,
-#ecosErrOverlay .notes-tool-btn[data-tooltip]:hover::before { opacity: 1; }
+#ecosErrOverlay .notes-tool-btn[data-tooltip]:hover::before { opacity: 1; transition-delay: 0s; }
 [data-theme="dark"] #sdd-notes-overlay .notes-tool-btn[data-tooltip]::after,
 [data-theme="dark"] #ecosErrOverlay .notes-tool-btn[data-tooltip]::after { background:#0f172a; }
 [data-theme="dark"] #sdd-notes-overlay .notes-tool-btn[data-tooltip]::before,
@@ -20930,6 +20931,68 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 }
 @media (min-width: 921px) {
     #ecosErrModalInner .notes-modal-body.notes-text-max .spe-flash-info-panel { display: flex !important; }
+}
+
+/* ═══ Cahier d'erreurs : agrandir le panneau Flashcards (symétrique du
+   bouton « Agrandir le texte » de la toolbar — mutuellement exclusifs) ═══ */
+.flash-expand-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 11px;
+    border: 1px solid var(--gray-200);
+    border-radius: 999px;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+.flash-expand-btn i { font-size: 0.72rem; }
+.flash-expand-btn:hover { background: var(--gray-200); color: var(--gray-800); }
+.flash-expand-btn:active { transform: scale(0.96); }
+[data-theme="dark"] .flash-expand-btn { background: var(--gray-200); border-color: #334155; }
+
+/* État agrandi : le panneau Flashcards occupe tout le corps du modal */
+.notes-modal-body.flash-right-max .notes-editor-panel { display: none !important; }
+.notes-modal-body.flash-right-max .spe-flash-info-panel {
+    flex: 1 1 auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+}
+.notes-modal-body.flash-right-max .flash-expand-btn {
+    background: rgba(59,130,246,0.12);
+    border-color: rgba(59,130,246,0.35);
+    color: var(--primary);
+}
+[data-theme="dark"] .notes-modal-body.flash-right-max .flash-expand-btn {
+    background: rgba(59,130,246,0.2);
+    border-color: rgba(59,130,246,0.45);
+    color: #93c5fd;
+}
+
+/* Visible uniquement quand les panneaux sont empilés (≤920px) */
+@media (max-width: 920px) {
+    .flash-expand-btn { display: inline-flex; }
+}
+@media (max-width: 480px) {
+    .flash-expand-btn { width: 32px; height: 32px; padding: 0; border-radius: 50%; }
+    .flash-expand-btn .flash-expand-label { display: none; }
+}
+/* Écrans larges : bouton masqué, état neutralisé (rotation / resize) */
+@media (min-width: 921px) {
+    .flash-expand-btn { display: none; }
+    #ecosErrModalInner .notes-modal-body.flash-right-max .notes-editor-panel { display: flex !important; }
+    #ecosErrModalInner .notes-modal-body.flash-right-max .spe-flash-info-panel { flex: 0 0 50% !important; max-width: 50% !important; }
 }
 
 /* ---- Modal Priorité ---- */
@@ -24316,6 +24379,9 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
         <span class="spe-flash-panel-subtitle">Révisions espacées des erreurs</span>
       </div>
     </div>
+    <button type="button" class="flash-expand-btn" onclick="toggleErrFlashMax(this)" aria-pressed="false" title="Agrandir le panneau">
+      <i class="fas fa-expand" aria-hidden="true"></i><span class="flash-expand-label">Agrandir</span>
+    </button>
   </div>
 
   <div class="flash-panel-scroll" id="speFlashView_manage"></div>
@@ -28177,11 +28243,35 @@ function toggleNotesTextMax(btn) {
         if (pb && typeof toggleSDDPanelMax === 'function') toggleSDDPanelMax(pb);
         else body.classList.remove('sdd-right-max');
     }
+    if (isMax && body.classList.contains('flash-right-max')) {
+        var fb2 = body.querySelector('.flash-expand-btn');
+        if (fb2 && typeof toggleErrFlashMax === 'function') toggleErrFlashMax(fb2);
+        else body.classList.remove('flash-right-max');
+    }
     if (btn) {
         btn.setAttribute('aria-pressed', isMax ? 'true' : 'false');
         btn.setAttribute('data-tooltip', isMax ? 'R\u00e9afficher le panneau' : 'Agrandir le texte');
         var ic = btn.querySelector('i');
         if (ic) ic.className = 'fas ' + (isMax ? 'fa-compress' : 'fa-expand');
+    }
+}
+function toggleErrFlashMax(btn) {
+    var body = btn && btn.closest ? btn.closest('.notes-modal-body') : null;
+    if (!body) return;
+    var isMax = body.classList.toggle('flash-right-max');
+    // Exclusif avec le mode texte agrandi
+    if (isMax && body.classList.contains('notes-text-max')) {
+        var tb = body.querySelector('.notes-textmax-btn');
+        if (tb && typeof toggleNotesTextMax === 'function') toggleNotesTextMax(tb);
+        else body.classList.remove('notes-text-max');
+    }
+    if (btn) {
+        btn.setAttribute('aria-pressed', isMax ? 'true' : 'false');
+        btn.title = isMax ? 'R\u00e9duire le panneau' : 'Agrandir le panneau';
+        var ic = btn.querySelector('i');
+        if (ic) ic.className = 'fas ' + (isMax ? 'fa-compress' : 'fa-expand');
+        var lb = btn.querySelector('.flash-expand-label');
+        if (lb) lb.textContent = isMax ? 'R\u00e9duire' : 'Agrandir';
     }
 }
 function resetNotesTextMax(rootSel) {
@@ -28194,6 +28284,17 @@ function resetNotesTextMax(rootSel) {
         b.setAttribute('data-tooltip', 'Agrandir le texte');
         var ic = b.querySelector('i');
         if (ic) ic.className = 'fas fa-expand';
+    }
+    // Réinitialiser aussi l'agrandissement du panneau Flashcards
+    body.classList.remove('flash-right-max');
+    var fb = body.querySelector('.flash-expand-btn');
+    if (fb) {
+        fb.setAttribute('aria-pressed', 'false');
+        fb.title = 'Agrandir le panneau';
+        var fi = fb.querySelector('i');
+        if (fi) fi.className = 'fas fa-expand';
+        var fl = fb.querySelector('.flash-expand-label');
+        if (fl) fl.textContent = 'Agrandir';
     }
 }
 function toggleSDDPanelMax(btn) {
@@ -37001,11 +37102,15 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
   }
 
   #sdd-notes-overlay .notes-action-btn {
-    width: 30px !important;
+    /* width:auto + clamp max-width : la fermeture du survol s'anime
+       via max-width (width auto→30px n'est pas animable = fermeture brutale) */
+    width: auto !important;
     height: 30px !important;
     min-width: 30px !important;
     max-width: 30px !important;
-    border-radius: 50% !important;
+    /* 15px = hauteur/2 : même rond au repos que 50%, mais pas d'ellipse
+       pendant l'étirement (50% suit la largeur et déforme le bouton) */
+    border-radius: 15px !important;
     font-size: 0.82rem !important;
   }
 
@@ -37021,7 +37126,6 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
 /* (le patch desktop figeait max-width:30px !important, ce qui bloquait l'expansion) */
 @media (hover: hover) {
   #sdd-notes-overlay .notes-action-btn:hover {
-    width: auto !important;
     max-width: 160px !important;
     padding: 0 10px 0 8px !important;
     border-radius: 15px !important;
