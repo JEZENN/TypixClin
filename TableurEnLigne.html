@@ -29847,9 +29847,15 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .notes-tool-btn:active { transform: scale(0.88); }
 .notes-tool-btn.active {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 1px 4px rgba(59,130,246,0.35);
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.25), 0 2px 8px rgba(59,130,246,0.35) !important;
+}
+.notes-tool-btn.active i,
+.notes-tool-btn.active b,
+.notes-tool-btn.active u,
+.notes-tool-btn.active s {
+    color: #fff !important;
 }
 .notes-toolbar-sep {
     width: 1px;
@@ -29923,9 +29929,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Bouton surligné quand sa palette est ouverte */
 .notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 1px 4px rgba(59,130,246,0.35);
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 1px 4px rgba(59,130,246,0.35) !important;
 }
 
 
@@ -30369,13 +30375,17 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
-        scrollbar-width: none;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
         padding: 8px 12px;
         gap: 5px;
     }
-    .notes-toolbar::-webkit-scrollbar { display: none; }
+    .notes-toolbar::-webkit-scrollbar { height: 5px; }
+    .notes-toolbar::-webkit-scrollbar-track { background: transparent; }
+    .notes-toolbar::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 999px; }
+    [data-theme="dark"] .notes-toolbar::-webkit-scrollbar-thumb { background: var(--gray-400); }
     .notes-toolbar > * { flex-shrink: 0; }
     /* Switch Notes/Reçues : épinglé à droite, toujours visible pendant
        que les outils défilent dessous */
@@ -30429,13 +30439,17 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
-        scrollbar-width: none;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x;
         padding: 6px 12px;
         gap: 4px;
     }
-    .notes-toolbar::-webkit-scrollbar { display: none; }
+    .notes-toolbar::-webkit-scrollbar { height: 5px; }
+    .notes-toolbar::-webkit-scrollbar-track { background: transparent; }
+    .notes-toolbar::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 999px; }
+    [data-theme="dark"] .notes-toolbar::-webkit-scrollbar-thumb { background: var(--gray-400); }
     .notes-toolbar > * { flex-shrink: 0; }
     .notes-toolbar { padding-right: 0; }
     .notes-toolbar-switch-wrapper {
@@ -32824,6 +32838,39 @@ function notesSetHighlight(event, color) {
     notesCloseAllPalettes();
 }
 
+/* Toolbar défilante (mobile/iPad) : l'overflow coupe les palettes en position
+   absolue. On les repositionne en 'fixed', en tenant compte d'un éventuel
+   ancêtre transformé (le modal animé) qui devient leur bloc conteneur. */
+function _notesFixedBase(el) {
+    var a = el.parentElement;
+    while (a && a !== document.documentElement) {
+        var cs = getComputedStyle(a);
+        if (cs.transform !== 'none' || cs.filter !== 'none' || cs.perspective !== 'none') return a;
+        a = a.parentElement;
+    }
+    return null;
+}
+function _notesRepositionPalette(palette) {
+    var toolbar = palette.closest('.notes-toolbar');
+    if (!toolbar) return;
+    var ovx = getComputedStyle(toolbar).overflowX;
+    if (ovx !== 'auto' && ovx !== 'scroll') return; // desktop : comportement normal
+    var wrapper = palette.closest('.notes-color-picker-wrapper');
+    var btn = wrapper ? (wrapper.querySelector('.notes-tool-btn') || wrapper) : palette;
+    var r = btn.getBoundingClientRect();
+    var bx = 0, by = 0, base = _notesFixedBase(palette);
+    if (base) {
+        var br = base.getBoundingClientRect(), bcs = getComputedStyle(base);
+        bx = br.left + (parseFloat(bcs.borderLeftWidth) || 0);
+        by = br.top + (parseFloat(bcs.borderTopWidth) || 0);
+    }
+    palette.style.position = 'fixed';
+    var pw = palette.offsetWidth || 178;
+    var cx = Math.max(pw / 2 + 8, Math.min(window.innerWidth - pw / 2 - 8, r.left + r.width / 2));
+    palette.style.left = (cx - bx) + 'px';
+    palette.style.top = (r.bottom + 6 - by) + 'px';
+    palette.style.transform = 'translateX(-50%)';
+}
 var _notesLastTouchPalette = 0;
 function notesTogglePalette(id, event) {
     if (event) {
@@ -32833,11 +32880,14 @@ function notesTogglePalette(id, event) {
     var palette = document.getElementById(id);
     var isOpen = palette.classList.contains('open');
     notesCloseAllPalettes();
-    if (!isOpen) palette.classList.add('open');
+    if (!isOpen) { palette.classList.add('open'); if (typeof _notesRepositionPalette === 'function') _notesRepositionPalette(palette); }
 }
 
 function notesCloseAllPalettes() {
-    document.querySelectorAll('.notes-color-palette').forEach(function(p) { p.classList.remove('open'); });
+    document.querySelectorAll('.notes-color-palette').forEach(function(p) {
+        p.classList.remove('open');
+        p.style.position = ''; p.style.left = ''; p.style.top = ''; p.style.transform = '';
+    });
 }
 
 document.addEventListener('mousedown', function(e) {
@@ -36353,7 +36403,7 @@ window.trainNotesTogglePalette = function(id, event) {
   if (!palette) return;
   var isOpen = palette.classList.contains('open');
   notesCloseAllPalettes();
-  if (!isOpen) palette.classList.add('open');
+  if (!isOpen) { palette.classList.add('open'); if (typeof _notesRepositionPalette === 'function') _notesRepositionPalette(palette); }
 };
 
 window.trainNotesSetColor = function(event, color, barId) {
@@ -37015,7 +37065,7 @@ var _trainUserWatcher = setInterval(function() {
     if (!palette) return;
     var isOpen = palette.classList.contains('open');
     if (typeof notesCloseAllPalettes === 'function') notesCloseAllPalettes();
-    if (!isOpen) palette.classList.add('open');
+    if (!isOpen) { palette.classList.add('open'); if (typeof _notesRepositionPalette === 'function') _notesRepositionPalette(palette); }
   };
 
   window.speErrSetColor = function(event, color, barId) {
@@ -42804,8 +42854,8 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (event) event.preventDefault();
     var pal = document.getElementById(id); if (!pal) return;
     var isOpen = pal.classList.contains('open');
-    document.querySelectorAll('.notes-color-palette.open').forEach(function(p){ p.classList.remove('open'); });
-    if (!isOpen) pal.classList.add('open');
+    document.querySelectorAll('.notes-color-palette.open').forEach(function(p){ p.classList.remove('open'); p.style.position=''; p.style.left=''; p.style.top=''; p.style.transform=''; });
+    if (!isOpen) { pal.classList.add('open'); if (typeof _notesRepositionPalette === 'function') _notesRepositionPalette(pal); }
   }
   function _flashSetColor(event, color, barId) {
     if (event) event.preventDefault();
