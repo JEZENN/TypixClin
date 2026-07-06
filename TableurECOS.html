@@ -6376,7 +6376,9 @@ input[type="date"].modal-input {
 .specialty-multi-select.open .specialty-multi-menu {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    /* none (= identité) plutôt que translateY(0) : un transform résiduel
+       sur le conteneur casse l'inertie du scroll interne sur iOS */
+    transform: none;
 }
 
 /* Header du menu */
@@ -6474,6 +6476,12 @@ input[type="date"].modal-input {
     max-height: 250px;
     overflow-y: auto;
     padding: 0.5rem 0;
+    /* Mobile : inertie native + le scroll reste confiné dans la liste
+       (sans ça, le geste "fuit" vers la page dès qu'un bord est atteint
+       et la liste s'arrête avant le bout) */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 
 /* Option */
@@ -17990,6 +17998,10 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
+        /* verrouille l'axe vertical : les palettes/tooltips positionnés
+           sous la toolbar étendaient sa zone de scroll vers le bas, et
+           un glissé en diagonale la décalait vers le haut */
+        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
@@ -18041,6 +18053,7 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
+        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
@@ -21951,7 +21964,11 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     position: absolute; top: calc(100% + 6px); left: 0; z-index: 1000;
     background: var(--white); border: 1px solid var(--gray-200);
     border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
-    width: 300px; max-height: 340px; overflow-y: auto; padding: 0.4rem;
+    width: 300px; padding: 0.4rem;
+    /* PAS de max-height/overflow ici : le scroll est géré par la liste
+       interne (.specialty-multi-list). Deux conteneurs scrollables
+       imbriqués bloquaient le défilement au doigt sur mobile
+       (obligation de relever le doigt entre les deux scrolls). */
     opacity: 0; visibility: hidden; transform: translateY(-6px);
     transition: opacity .18s ease, transform .18s ease, visibility .18s;
 }
@@ -37158,7 +37175,7 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
     justify-content: space-between !important;
     flex-wrap: nowrap !important;
 
-    padding: 7px 8px !important;
+    padding: 10px 10px !important;
     gap: 6px !important;
     min-height: 0 !important;
 
@@ -37180,12 +37197,12 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
   }
 
   #sdd-notes-overlay .notes-header-icon {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    border-radius: 9px !important;
-    font-size: 0.72rem !important;
-    box-shadow: 0 4px 10px rgba(59,130,246,0.28) !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 12px !important;
+    font-size: 1.1rem !important;
+    box-shadow: 0 5px 14px rgba(59,130,246,0.32) !important;
   }
 
   #sdd-notes-overlay .notes-header-meta {
@@ -37203,10 +37220,13 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
     align-items: center !important;
     justify-content: flex-start !important;
 
-    flex-wrap: nowrap !important;
+    /* wrap : les pastilles passent à la ligne au lieu d'être rognées
+       à droite depuis l'agrandissement des boutons du header */
+    flex-wrap: wrap !important;
     gap: 4px !important;
-    overflow: hidden !important;
-    white-space: nowrap !important;
+    row-gap: 3px !important;
+    overflow: visible !important;
+    white-space: normal !important;
     max-width: 100% !important;
   }
 
@@ -37226,14 +37246,15 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
     line-height: 1 !important;
   }
 
-  /* Pastilles de matière : toujours sur une seule ligne, jamais empilées */
+  /* Pastilles de matière : peuvent passer à la ligne, jamais rognées */
   #sdd-notes-overlay .notes-header-specialty {
     display: inline-flex !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
     gap: 4px !important;
+    row-gap: 3px !important;
     min-width: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   #sdd-notes-overlay .sdd-badge {
@@ -37273,20 +37294,20 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
   }
 
   #sdd-notes-overlay .notes-action-btn {
-    width: 27px !important;
-    height: 27px !important;
-    min-width: 27px !important;
-    max-width: 27px !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
     border-radius: 50% !important;
-    font-size: 0.66rem !important;
+    font-size: 0.85rem !important;
   }
 
   #sdd-notes-overlay .notes-close-btn {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
-    max-width: 28px !important;
-    font-size: 0.82rem !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    font-size: 1rem !important;
   }
 }
 
@@ -37303,24 +37324,27 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
   }
 
   #sdd-notes-overlay .notes-action-btn {
-    width: 25px !important;
-    height: 25px !important;
-    min-width: 25px !important;
-    max-width: 25px !important;
-    font-size: 0.6rem !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    font-size: 0.85rem !important;
   }
 
   #sdd-notes-overlay .notes-close-btn {
-    width: 27px !important;
-    height: 27px !important;
-    min-width: 27px !important;
-    max-width: 27px !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    font-size: 1rem !important;
   }
 
   #sdd-notes-overlay .notes-header-icon {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 12px !important;
+    font-size: 1.1rem !important;
   }
 
   #sdd-notes-overlay .notes-header-name {
@@ -39129,6 +39153,27 @@ html[data-theme="dark"] .res-cfg-pill.resource-box.ecos.ecostbc {
         border-color: rgba(125, 211, 252, 0.68) !important;
     }
 }
+
+/* =========================================================
+   TOOLTIPS SUR TACTILE — désactivés
+   Sur téléphone les tooltips (affordance de survol) restaient
+   collés après un tap et étaient rognés par les conteneurs
+   défilants (toolbars en overflow-x:auto → clipping des
+   pseudo-éléments : on ne voyait que le haut du tooltip).
+   Un pseudo-élément ne peut pas échapper à ce clipping,
+   et sans souris ils n'ont aucune utilité : on les masque.
+   ========================================================= */
+@media (hover: none), (pointer: coarse) {
+    [data-tooltip]::after,
+    [data-tooltip]::before,
+    [data-ecos-tooltip]::after,
+    [data-ecos-tooltip]::before,
+    [data-tip]::after,
+    [data-tip]::before {
+        display: none !important;
+        content: none !important;
+    }
+}
 </style>
 
 </style>
@@ -39399,6 +39444,49 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _fixToolbarTouch);
     else _fixToolbarTouch();
+})();
+</script>
+<script>
+/* =========================================================
+   TOOLTIPS SUR TACTILE — suppression définitive
+   Certains tooltips sont définis avec des sélecteurs à forte
+   spécificité (#modal .btn[data-tooltip]::after { display:block
+   !important }) qu'une règle CSS générique ne peut pas battre.
+   On retire donc les attributs eux-mêmes sur appareil tactile :
+   sans attribut, aucun sélecteur [data-tooltip] ne matche.
+   Un MutationObserver couvre les éléments créés dynamiquement.
+   ========================================================= */
+(function () {
+    if (!window.matchMedia || !window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+    var ATTRS = ['data-tooltip', 'data-ecos-tooltip', 'data-tip'];
+    var SEL = ATTRS.map(function (a) { return '[' + a + ']'; }).join(',');
+    function strip(root) {
+        if (!root || !root.querySelectorAll) return;
+        ATTRS.forEach(function (a) {
+            if (root.removeAttribute && root.hasAttribute && root.hasAttribute(a)) root.removeAttribute(a);
+        });
+        root.querySelectorAll(SEL).forEach(function (el) {
+            ATTRS.forEach(function (a) { el.removeAttribute(a); });
+        });
+    }
+    function start() {
+        strip(document.body);
+        new MutationObserver(function (muts) {
+            muts.forEach(function (m) {
+                if (m.type === 'attributes') { strip(m.target); }
+                else if (m.addedNodes) {
+                    m.addedNodes.forEach(function (n) { if (n.nodeType === 1) strip(n); });
+                }
+            });
+        }).observe(document.body, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ATTRS
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
 })();
 </script>
 </body>

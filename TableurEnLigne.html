@@ -29878,7 +29878,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .notes-tool-btn { min-width: 38px; height: 36px; }
 }
 @media (max-width: 480px) {
-    .notes-toolbar { padding: 4px 6px; gap: 2px; flex-wrap: nowrap; overflow-x: auto; }
+    .notes-toolbar { padding: 4px 6px; gap: 2px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
     .notes-tool-btn { min-width: 28px; width: 28px; height: 28px; padding: 0 4px; font-size: 0.72rem; flex-shrink: 0; }
     .notes-toolbar-sep { margin: 0; }
     .notes-font-size-select { height: 24px; font-size: 0.72rem; min-width: 40px; }
@@ -30380,6 +30380,10 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
+        /* verrouille l'axe vertical : les palettes/tooltips positionnés
+           sous la toolbar étendaient sa zone de scroll vers le bas, et
+           un glissé en diagonale la décalait vers le haut */
+        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
@@ -30403,18 +30407,33 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
         flex-shrink: 0;
         display: flex;
         align-items: center;
-        padding: 0 12px 0 30px;
+        padding: 0 6px 0 8px;
         margin-top: 0;
         margin-left: auto;
         width: auto;
         order: 0;
         justify-content: flex-start;
-        /* Fondu : les outils s'estompent en passant sous le switch */
-        background: linear-gradient(to right, transparent, var(--white) 26px);
+        /* Plus de bande rectangulaire : le switch a son propre fond
+           opaque arrondi, les outils glissent simplement dessous */
+        background: none;
     }
-    [data-theme="dark"] .notes-toolbar-switch-wrapper { background: linear-gradient(to right, transparent, var(--gray-100) 26px); }
+    [data-theme="dark"] .notes-toolbar-switch-wrapper { background: none; }
     .notes-mode-switch { width: auto; }
-    .notes-mode-btn { flex: 0 0 auto; }
+    /* Switch compact : icônes seules, mais zone tactile généreuse */
+    .notes-mode-btn {
+        flex: 0 0 auto;
+        font-size: 0 !important;
+        min-width: 44px;
+        height: 30px;
+        padding: 0 8px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .notes-mode-btn i {
+        font-size: 0.85rem !important;
+        margin-right: 0 !important;
+    }
     .notes-tool-btn { min-width: 44px; height: 44px; padding: 0 9px; font-size: 1rem; }
 }
 
@@ -30444,6 +30463,7 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
     .notes-toolbar {
         flex-wrap: nowrap;
         overflow-x: auto;
+        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: var(--gray-300) transparent;
         -webkit-overflow-scrolling: touch;
@@ -30469,12 +30489,12 @@ button.notes-clear-btn[onclick*="speErrAskClear"]:active {
         width: auto;
         order: 0;
         justify-content: flex-start;
-        padding: 0 12px 0 30px;
+        padding: 0 8px 0 10px;
         margin-top: 0;
-        /* Fondu : les outils s'estompent en passant sous le switch */
-        background: linear-gradient(to right, transparent, var(--white) 26px);
+        /* Plus de bande rectangulaire : le switch a son propre fond opaque */
+        background: none;
     }
-    [data-theme="dark"] .notes-toolbar-switch-wrapper { background: linear-gradient(to right, transparent, var(--gray-100) 26px); }
+    [data-theme="dark"] .notes-toolbar-switch-wrapper { background: none; }
     .notes-toolbar-switch-wrapper .notes-mode-switch { width: auto; }
     .notes-mode-btn { flex: 0 0 auto; }
     .notes-tool-btn { min-width: 40px; height: 38px; padding: 0 7px; }
@@ -32925,17 +32945,22 @@ function _notesRepositionPalette(palette) {
     var wrapper = palette.closest('.notes-color-picker-wrapper');
     var btn = wrapper ? (wrapper.querySelector('.notes-tool-btn') || wrapper) : palette;
     var r = btn.getBoundingClientRect();
-    var bx = 0, by = 0, base = _notesFixedBase(palette);
-    if (base) {
-        var br = base.getBoundingClientRect(), bcs = getComputedStyle(base);
-        bx = br.left + (parseFloat(bcs.borderLeftWidth) || 0);
-        by = br.top + (parseFloat(bcs.borderTopWidth) || 0);
+    /* Sort la palette de la toolbar : le modal garde un transform résiduel
+       (animation "forwards"), ce qui re-soumet le position:fixed au clipping
+       de la toolbar défilante (overflow-x:auto) → la palette n'apparaissait
+       pas. Déplacée dans <body> le temps de l'ouverture (coordonnées
+       viewport pures), puis restaurée à la fermeture. */
+    if (palette.parentElement !== document.body) {
+        palette._notesOrigParent = palette.parentElement;
+        palette._notesOrigNext = palette.nextSibling;
+        document.body.appendChild(palette);
     }
     palette.style.position = 'fixed';
+    palette.style.zIndex = '100050';
     var pw = palette.offsetWidth || 178;
     var cx = Math.max(pw / 2 + 8, Math.min(window.innerWidth - pw / 2 - 8, r.left + r.width / 2));
-    palette.style.left = (cx - bx) + 'px';
-    palette.style.top = (r.bottom + 6 - by) + 'px';
+    palette.style.left = cx + 'px';
+    palette.style.top = (r.bottom + 6) + 'px';
     palette.style.transform = 'translateX(-50%)';
 }
 var _notesLastTouchPalette = 0;
@@ -32954,11 +32979,20 @@ function notesCloseAllPalettes() {
     document.querySelectorAll('.notes-color-palette').forEach(function(p) {
         p.classList.remove('open');
         p.style.position = ''; p.style.left = ''; p.style.top = ''; p.style.transform = '';
+        p.style.zIndex = '';
+        /* Restaure la palette à sa place d'origine si elle a été déplacée dans <body> */
+        if (p._notesOrigParent && p.parentElement === document.body) {
+            if (p._notesOrigNext && p._notesOrigNext.parentNode === p._notesOrigParent) {
+                p._notesOrigParent.insertBefore(p, p._notesOrigNext);
+            } else {
+                p._notesOrigParent.appendChild(p);
+            }
+        }
     });
 }
 
 document.addEventListener('mousedown', function(e) {
-    if (!e.target.closest('.notes-color-picker-wrapper')) {
+    if (!e.target.closest('.notes-color-picker-wrapper') && !e.target.closest('.notes-color-palette')) {
         notesCloseAllPalettes();
     }
 });
@@ -44194,6 +44228,36 @@ if (!window._ednScrollLock) {
 .pdd-spec-chip { width: 100%; border: 1.5px solid transparent; cursor: pointer; font-size: 0.72rem; font-weight: 800; padding: 0.5rem 0.3rem; border-radius: 0.55rem; transition: all .15s ease; }
 .pdd-spec-chip.selected { box-shadow: inset 0 0 0 2px currentColor; border-color: currentColor; }
 .pdd-spec-grid.at-max .pdd-spec-chip:not(.selected) { opacity: 0.4; pointer-events: none; }
+/* ── Mobile : cases de spécialité alignées sur la taille du tableur ECOS.
+      Neutralise le rétrécissement global du planning
+      (.day-specialty-badge { font-size:0.5rem !important } en ≤768px)
+      qui rendait les cases minuscules dans ce popup. ── */
+@media (max-width: 768px) {
+    .pdd-spec-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 0.45rem; }
+    .pdd-spec-grid .pdd-spec-chip.day-specialty-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 38px !important;
+        font-size: 0.8rem !important;
+        font-weight: 800 !important;
+        padding: 0.5rem 0.4rem !important;
+        border-radius: 0.6rem !important;
+        line-height: 1.3 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    /* Pastilles de spé dans le bouton du header du modal (alignées sur ECOS .pdd-spec-pill) */
+    .pdd-spec-pills .day-specialty-badge {
+        font-size: 0.68rem !important;
+        padding: 0.15rem 0.45rem !important;
+        border-radius: 0.45rem !important;
+        line-height: 1.3 !important;
+    }
+}
 `;
 
     /* ---------- HTML ---------- */
