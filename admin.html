@@ -1888,20 +1888,56 @@ function startPresenceListener() {
     try {
         // Chaque app écrit /presence/{uid} = { app, lastActive } quand l'utilisateur est connecté,
         // et le supprime automatiquement à la déconnexion via onDisconnect().
+        //
+        // ⚠️ IMPORTANT : onDisconnect() n'est PAS fiable à 100 % (onglet tué, appli mobile
+        // mise en arrière-plan, réseau coupé brutalement, crash) → des nœuds « fantômes »
+        // restent bloqués et gonflent le total. On ne compte donc PAS aveuglément tous les
+        // nœuds : on ne garde que les présences FRAÎCHES (lastActive récent). Cela suppose
+        // que chaque app rafraîchisse lastActive périodiquement (heartbeat ≤ ~45 s — voir le
+        // snippet fourni). Un recalcul périodique fait « expirer » les fantômes tout seuls,
+        // même sans nouvel événement RTDB.
         onValue(rtdbRef(rtdb, 'presence'), snap => {
-            const val = snap.val() || {};
-            const sessions = Object.values(val);
-            const total = sessions.length;
-            const ecos = sessions.filter(s => s && s.app === 'ecos').length;
-            const edn  = sessions.filter(s => s && s.app === 'edn').length;
-            onlineEl.textContent = total;
-            subEl.innerHTML = total
-                ? `<span style="color:var(--amber)">${edn} EDN</span> · <span style="color:var(--purple)">${ecos} ECOS</span> · en temps réel`
-                : 'Personne de connecté';
+            _presenceVal = snap.val() || {};
+            renderPresence();
         }, err => fallbackOnlineEstimate('Présence inaccessible : ' + err.message));
+        // Recalcul régulier pour purger l'affichage des sessions périmées.
+        if (!_presenceTimer) _presenceTimer = setInterval(renderPresence, 30 * 1000);
     } catch(e) {
         fallbackOnlineEstimate(e.message);
     }
+}
+
+// Fenêtre de fraîcheur : au-delà, une présence est considérée périmée (fantôme).
+// À garder > à l'intervalle du heartbeat des apps (heartbeat 30 s → fenêtre 2 min OK).
+const ONLINE_STALE_MS = 2 * 60 * 1000;
+let _presenceVal = {};
+let _presenceTimer = null;
+function _presenceMs(v) {
+    if (v == null) return null;
+    if (typeof v === 'number') return v;              // RTDB ServerValue.TIMESTAMP / Date.now()
+    const n = Number(v); if (!Number.isNaN(n)) return n;
+    const d = new Date(v).getTime(); return Number.isNaN(d) ? null : d;
+}
+function renderPresence() {
+    const onlineEl = document.getElementById('stat-online');
+    const subEl = document.getElementById('stat-online-sub');
+    if (!onlineEl || !subEl) return;
+    const now = Date.now();
+    const sessions = Object.values(_presenceVal).filter(s => {
+        if (!s) return false;
+        const t = _presenceMs(s.lastActive);
+        // Rétro-compatibilité : si lastActive est absent (app pas encore instrumentée
+        // avec un heartbeat), on garde l'entrée pour ne pas risquer un sous-comptage.
+        if (t == null) return true;
+        return (now - t) < ONLINE_STALE_MS;
+    });
+    const total = sessions.length;
+    const ecos = sessions.filter(s => s.app === 'ecos').length;
+    const edn  = sessions.filter(s => s.app === 'edn').length;
+    onlineEl.textContent = total;
+    subEl.innerHTML = total
+        ? `<span style="color:var(--amber)">${edn} EDN</span> · <span style="color:var(--purple)">${ecos} ECOS</span> · en temps réel`
+        : 'Personne de connecté';
 }
 
 // Repli si la présence RTDB n'est pas dispo : estimation depuis le cache utilisateurs.
