@@ -7381,7 +7381,7 @@ input[type="date"].modal-input {
     max-height: calc(100vh - var(--header-height));
     overflow-y: auto;
     background-color: var(--white);
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     z-index: calc(var(--z-sticky) - 1);
     box-shadow: var(--shadow-lg);
     transform: translateY(-100%);
@@ -7401,7 +7401,11 @@ input[type="date"].modal-input {
 }
 
 .mobile-menu-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-menu-section:last-child {
+    margin-bottom: 0;
 }
 
 .mobile-menu-title {
@@ -7413,16 +7417,16 @@ input[type="date"].modal-input {
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.5rem 0;
+    padding: 0.3rem 0;
     border-bottom: 2px solid var(--primary);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.35rem;
 }
 
 .mobile-menu-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0.85rem 1rem;
+    padding: 0.55rem 1rem;
     color: var(--gray-700);
     text-decoration: none;
     border-radius: 8px;
@@ -7526,6 +7530,31 @@ input[type="date"].modal-input {
         width: 36px;
         height: 36px;
         font-size: 1rem;
+    }
+    
+    .mobile-menu {
+        padding: 0.5rem 0.85rem;
+    }
+    
+    .mobile-menu-section {
+        margin-bottom: 0.4rem;
+    }
+    
+    .mobile-menu-title {
+        padding: 0.2rem 0;
+        margin-bottom: 0.2rem;
+        font-size: 0.78rem;
+    }
+    
+    .mobile-menu-link {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.9rem;
+        gap: 10px;
+    }
+    
+    .mobile-menu-link i {
+        font-size: 0.9rem;
+        width: 20px;
     }
 }
 
@@ -24806,7 +24835,7 @@ function switchEcosPage(page) {
         const appNav = document.querySelector('.app-nav');
         if (appNav) {
             const navTop = appNav.getBoundingClientRect().top + window.pageYOffset - 80;
-            window.scrollTo({ top: navTop, behavior: 'smooth' });
+            window.scrollTo({ top: Math.max(0, navTop), behavior: 'instant' });
         }
     } catch (e) {}
 }
@@ -29398,7 +29427,7 @@ function closePlanningDayDetailModal() {
     currentPlanningDetailDate = null;
     try {
         var btn = document.querySelector('.day-detail-open-btn[data-date="' + prevDate + '"]');
-        if (btn) btn.focus(); else if (planningDetailLastFocusedElement && planningDetailLastFocusedElement.focus) planningDetailLastFocusedElement.focus();
+        if (btn) btn.focus({ preventScroll: true }); else if (planningDetailLastFocusedElement && planningDetailLastFocusedElement.focus) planningDetailLastFocusedElement.focus({ preventScroll: true });
     } catch (e) {}
 }
 window.closePlanningDayDetailModal = closePlanningDayDetailModal;
@@ -39303,7 +39332,7 @@ html[data-theme="dark"] .res-cfg-pill.resource-box.ecos.ecostbc {
             setTimeout(function () {
                 overlay.classList.remove("active", "closing");
                 if (window._bodyUnlock) window._bodyUnlock("globalTodo");
-                if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+                if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus({ preventScroll: true });
             }, 260);
         }
         btn.addEventListener("click", function () { isOpen() ? closeDrawer() : openDrawer(); });
@@ -39514,6 +39543,82 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
+})();
+</script>
+<!-- ─── Verrou de défilement mobile pour les modals (sans repositionnement) ────
+     Sur PC, body{overflow:hidden} suffit. Sur mobile, il ne bloque pas le
+     défilement tactile de la page derrière le modal. On NE fige PAS le body
+     (l'ancienne méthode position:fixed + scrollTo provoquait un saut visuel
+     agaçant à la fermeture). À la place, tant qu'un modal est ouvert (body en
+     overflow:hidden), on empêche le geste de défilement de « fuir » vers la page
+     de fond : on laisse défiler l'intérieur des zones scrollables du modal, et on
+     bloque le reste. Aucune position n'est modifiée → aucun repositionnement. -->
+<script>
+(function () {
+  var active = false, startX = 0, startY = 0;
+  function isTouch() {
+    if (!window.matchMedia) return window.innerWidth <= 768;
+    return window.matchMedia('(hover: none) and (pointer: coarse)').matches
+        || window.matchMedia('(max-width: 768px)').matches;
+  }
+  // Remonte depuis la cible pour trouver un conteneur réellement défilable
+  // (le corps d'un modal). Renvoie true si ce conteneur peut absorber le geste.
+  function scrollableAncestorCanScroll(node, dy) {
+    for (var el = node; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+      var st;
+      try { st = getComputedStyle(el); } catch (e) { continue; }
+      var oy = st.overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+        var atTop = el.scrollTop <= 0;
+        var atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        // On laisse passer sauf si on tire au-delà d'un bord (sinon la page de fond scrollerait)
+        if (dy < 0 && atTop) return false;
+        if (dy > 0 && atBottom) return false;
+        return true;
+      }
+    }
+    return false;
+  }
+  function onTouchStart(e) {
+    if (!active || e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }
+  function onTouchMove(e) {
+    if (!active || e.touches.length !== 1) return;
+    var dx = startX - e.touches[0].clientX;
+    var dy = startY - e.touches[0].clientY; // >0 : on descend, <0 : on monte
+    // Geste à dominante HORIZONTALE (slider / barre d'outils / scroll horizontal
+    // dans un modal) : on ne bloque JAMAIS. Le défilement horizontal interne doit
+    // rester possible, et la page de fond ne défile pas horizontalement.
+    if (Math.abs(dx) > Math.abs(dy)) return;
+    // Geste vertical : on bloque seulement s'il ne peut être absorbé par une zone
+    // à défilement vertical du modal (sinon la page de fond scrollerait).
+    if (!scrollableAncestorCanScroll(e.target, dy)) {
+      // preventDefault suffit, le body ne bouge pas : pas de repositionnement.
+      if (e.cancelable) e.preventDefault();
+    }
+  }
+  document.addEventListener('touchstart', onTouchStart, { passive: false });
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+
+  // Suit l'état d'ouverture des modals via le signal commun body.overflow:hidden,
+  // et fige la gouttière de défilement (overscroll-behavior) sans figer le body.
+  function sync() {
+    var hidden = document.body.style.overflow === 'hidden';
+    active = hidden && isTouch();
+    var val = active ? 'contain' : '';
+    document.documentElement.style.overscrollBehavior = val;
+    document.body.style.overscrollBehavior = val;
+  }
+  function start() {
+    if (!document.body) { document.addEventListener('DOMContentLoaded', start); return; }
+    try {
+      new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['style'] });
+    } catch (e) {}
+    sync();
+  }
+  start();
 })();
 </script>
 </body>
