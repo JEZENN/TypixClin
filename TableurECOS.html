@@ -592,6 +592,10 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .profile-id-badge i { font-size: 0.65rem; }
 
 /* ===== FRIENDS BUTTON IN MENU ===== */
+.profile-menu-item.premium-btn-menu { color: var(--primary); }
+.profile-menu-item.premium-btn-menu:hover { background: rgba(59,130,246,0.08); color: var(--primary-dark); }
+[data-theme="dark"] .profile-menu-item.premium-btn-menu { color: var(--primary-light); }
+[data-theme="dark"] .profile-menu-item.premium-btn-menu:hover { background: rgba(96,165,250,0.1); color: #bfdbfe; }
 .profile-menu-item.whats-new-btn-menu { color: var(--primary); position: relative; }
 .profile-menu-item.whats-new-btn-menu:hover { background: rgba(59,130,246,0.08); color: var(--primary-dark); }
 [data-theme="dark"] .profile-menu-item.whats-new-btn-menu { color: var(--primary-light); }
@@ -22376,6 +22380,15 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 
 /* La case affiche le HTML enrichi (lecture seule de mise en forme) */
 .day-notes-input.day-notes-editor { white-space: pre-wrap; word-break: break-word; cursor: text; }
+/* Écran tactile : au repos la case n'est pas éditable, pour que le glissement
+   latéral du doigt fasse défiler le calendrier au lieu d'être capté par
+   l'éditeur ; un tap (toucher sans glissement) active l'édition. */
+.day-notes-input.day-notes-editor.touch-idle {
+    touch-action: pan-x pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
 .day-notes-input.day-notes-editor ul { margin: 0.15rem 0 0.15rem 1rem; padding-left: 0.4rem; }
 .day-notes-input.day-notes-editor:empty::before { content: attr(data-placeholder); color: var(--gray-400, #9ca3af); pointer-events: none; }
 
@@ -22635,6 +22648,10 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
                             <button type="button" class="profile-menu-item" id="admin-menu-link" style="display:none;color:var(--primary)" onclick="location.href='admin.html'">
                                 <i class="fas fa-shield-alt"></i><span>Administration</span>
                             </button>
+                            <!--
+							<button class="profile-menu-item premium-btn-menu" id="open-premium-btn" onclick="localStorage.setItem('premiumReturnTableur','ecos'); location.href='comptepremium.html?from=ecos';">
+                                <i class="fas fa-crown"></i><span>Compte premium</span>
+                            </button> -->
                             <button class="profile-menu-item whats-new-btn-menu" onclick="openWhatsNewModal()">
                                 <i class="fas fa-gift"></i><span>Nouveautés</span>
                                 <span class="whats-new-badge" id="whats-new-badge"></span>
@@ -24782,7 +24799,8 @@ window._onECOSDataLoaded = function (data) {
 /* ----------------------------------------------------------------------------
    NAVIGATION ENTRE PAGES
    ---------------------------------------------------------------------------- */
-function switchEcosPage(page) {
+function switchEcosPage(page, opts) {
+    opts = opts || {};
     ecosCurrentPage = page;
     document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active', 'page-entering'));
@@ -24834,8 +24852,13 @@ function switchEcosPage(page) {
     try {
         const appNav = document.querySelector('.app-nav');
         if (appNav) {
+            // Aligné sur le tableur EDN : défilement doux vers la barre d'onglets
+            // pour les clics d'onglet, mais repositionnement instantané pour les
+            // navigations programmées (ex : clic sur une carte de spécialité),
+            // comme le fait navigateToSpecialty côté EDN — sinon on voit une
+            // remontée animée disgracieuse depuis le bas de la page.
             const navTop = appNav.getBoundingClientRect().top + window.pageYOffset - 80;
-            window.scrollTo({ top: Math.max(0, navTop), behavior: 'instant' });
+            window.scrollTo({ top: Math.max(0, navTop), behavior: opts.scrollBehavior || 'smooth' });
         }
     } catch (e) {}
 }
@@ -26251,7 +26274,7 @@ function goToSDDsForSpecialty(spId) {
     sddPage = 1;
     updateSDDSpecMultiText();
     buildSDDSpecialtyFilter();
-    switchEcosPage('sdd');
+    switchEcosPage('sdd', { scrollBehavior: 'instant' });
 }
 
 /* 3.8 — Légende des spécialités (modal) */
@@ -27357,7 +27380,7 @@ function goToSDDsForSpecialtyLegacy(spId) {
     sddPage = 1;
     if (typeof updateSDDSpecMultiText === 'function') updateSDDSpecMultiText();
     if (typeof buildSDDSpecialtyFilter === 'function') buildSDDSpecialtyFilter();
-    switchEcosPage('sdd');
+    switchEcosPage('sdd', { scrollBehavior: 'instant' });
 }
 
 /* ----------------------------------------------------------------------------
@@ -29144,9 +29167,9 @@ function prioritySendToTodo(btn, sddId) {
 
 /* Palette de couleurs autorisée (et rien d'autre). */
 var PLANNING_NOTE_COLORS = {
-    red:   { hex: '#dc2626', cls: 'planning-note-red',  rgb: ['rgb(220,38,38)', 'rgb(239,68,68)', 'rgb(225,29,72)'] },
-    blue:  { hex: '#2563eb', cls: 'planning-note-blue', rgb: ['rgb(37,99,235)', 'rgb(59,130,246)', 'rgb(29,78,216)'] },
-    green: { hex: '#16a34a', cls: 'planning-note-green',rgb: ['rgb(22,163,74)', 'rgb(34,197,94)', 'rgb(21,128,61)'] }
+    red:   { hex: '#dc2626', cls: 'planning-note-red',  rgb: ['rgb(220,38,38)', 'rgb(239,68,68)', 'rgb(225,29,72)', 'rgb(248,113,113)'] },
+    blue:  { hex: '#2563eb', cls: 'planning-note-blue', rgb: ['rgb(37,99,235)', 'rgb(59,130,246)', 'rgb(29,78,216)', 'rgb(96,165,250)'] },
+    green: { hex: '#16a34a', cls: 'planning-note-green',rgb: ['rgb(22,163,74)', 'rgb(34,197,94)', 'rgb(21,128,61)', 'rgb(74,222,128)'] }
 };
 
 /* Distingue une note enrichie (HTML) d'une ancienne note texte brut. */
@@ -29479,13 +29502,39 @@ function _planningExec(cmd, value, useCSS) {
     try { document.execCommand(cmd, false, value || null); } catch (e) {}
     _planningDetailNotesInput(); _planningUpdateToolbarState();
 }
+/* Convertit les classes de couleur de l'éditeur en styles inline.
+   Indispensable pour que execCommand('foreColor') puisse scinder / écraser
+   correctement les portions colorées lors d'un changement de couleur
+   (il ne sait pas manipuler des couleurs portées par des classes CSS).
+   Les styles inline sont reconvertis en classes par sanitizePlanningNoteHTML
+   au moment de la sauvegarde. */
+function _planningNormalizeEditorColors(editor) {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var DISPLAY = {
+        'planning-note-red':   dark ? '#f87171' : '#dc2626',
+        'planning-note-blue':  dark ? '#60a5fa' : '#2563eb',
+        'planning-note-green': dark ? '#4ade80' : '#16a34a'
+    };
+    Object.keys(DISPLAY).forEach(function (cls) {
+        var els = editor.querySelectorAll('.' + cls);
+        for (var i = 0; i < els.length; i++) {
+            var el = els[i];
+            el.classList.remove(cls);
+            if (!el.classList.length) el.removeAttribute('class');
+            el.style.color = DISPLAY[cls];
+        }
+    });
+}
+
 function _planningApplyColor(colorName) {
     var editor = document.getElementById('planning-day-detail-editor');
     if (!editor) return;
 
     editor.focus();
 
-    var color;
+    // Classes de couleur -> styles inline pour que la commande foreColor
+    // puisse réellement remplacer / retirer la couleur de la sélection.
+    _planningNormalizeEditorColors(editor);
 
     if (
         colorName &&
@@ -29493,19 +29542,35 @@ function _planningApplyColor(colorName) {
         PLANNING_NOTE_COLORS[colorName]
     ) {
         // Rouge, bleu ou vert
-        color = PLANNING_NOTE_COLORS[colorName].hex;
+        try {
+            document.execCommand('styleWithCSS', false, true);
+        } catch (e) {}
+        try {
+            document.execCommand('foreColor', false, PLANNING_NOTE_COLORS[colorName].hex);
+        } catch (e) {}
     } else {
-        // Couleur normale réellement adaptée au thème actif
-        color = window.getComputedStyle(editor).color;
+        // Couleur normale : appliquer une couleur sentinelle pour que le
+        // navigateur découpe proprement les spans autour de la sélection,
+        // puis retirer cette couleur -> le texte reprend la couleur du thème.
+        var SENTINEL = 'rgb(1, 2, 3)';
+
+        try {
+            document.execCommand('styleWithCSS', false, true);
+        } catch (e) {}
+        try {
+            document.execCommand('foreColor', false, SENTINEL);
+        } catch (e) {}
+
+        var styled = editor.querySelectorAll('[style]');
+        for (var i = 0; i < styled.length; i++) {
+            var el = styled[i];
+            var c = (el.style && el.style.color) ? el.style.color.replace(/\s+/g, '') : '';
+            if (c === 'rgb(1,2,3)') {
+                el.style.color = '';
+                if (!el.getAttribute('style')) el.removeAttribute('style');
+            }
+        }
     }
-
-    try {
-        document.execCommand('styleWithCSS', false, true);
-    } catch (e) {}
-
-    try {
-        document.execCommand('foreColor', false, color);
-    } catch (e) {}
 
     _planningDetailNotesInput();
     _planningUpdateToolbarState();
@@ -29808,6 +29873,7 @@ window.ECOSPlanningModule = (function () {
 					);
 
 					if (restored) {
+						if (restored.classList.contains('touch-idle')) { restored.setAttribute('contenteditable', 'true'); restored.classList.remove('touch-idle'); }
 						restored.focus({ preventScroll: true });
 
 						try {
@@ -29868,8 +29934,72 @@ window.ECOSPlanningModule = (function () {
         dayEl.querySelector('.day-specialty-zone').addEventListener('click', (e) => { e.stopPropagation(); closePlanningLegendModal(); openSpecialtyPopup(dateKey, e.currentTarget); });
 
         const editor = dayEl.querySelector('.day-notes-input');
+
+        /* ── Tactile : glissement latéral possible sur les cases notes ──
+           Au repos, la case est en lecture seule (contenteditable=false) : le
+           navigateur laisse alors le geste tactile faire défiler le
+           .calendar-scroll-wrapper. Un tap sans glissement (re)active
+           l'édition et place le curseur au point touché. */
+        const _isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
+
+        function _enableTouchEditing(clientX, clientY) {
+            if (document.body.classList.contains('ecos-offline-locked')) return;
+            if (window.canPerformEcosAction && !window.canPerformEcosAction('planning')) return;
+            editor.setAttribute('contenteditable', 'true');
+            editor.classList.remove('touch-idle');
+            try {
+                editor.focus();
+                let placed = false;
+                if (typeof clientX === 'number' && typeof clientY === 'number') {
+                    let range = null;
+                    if (document.caretRangeFromPoint) {
+                        range = document.caretRangeFromPoint(clientX, clientY);
+                    } else if (document.caretPositionFromPoint) {
+                        const pos = document.caretPositionFromPoint(clientX, clientY);
+                        if (pos) { range = document.createRange(); range.setStart(pos.offsetNode, pos.offset); range.collapse(true); }
+                    }
+                    if (range && editor.contains(range.startContainer)) {
+                        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+                        placed = true;
+                    }
+                }
+                if (!placed) _placeCaretEnd(editor);
+            } catch (err) {}
+        }
+
+        if (_isTouchDevice) {
+            editor.setAttribute('contenteditable', 'false');
+            editor.classList.add('touch-idle');
+
+            let _tsX = 0, _tsY = 0, _tMoved = false;
+            editor.addEventListener('touchstart', (e) => {
+                const t = e.touches[0]; if (!t) return;
+                _tsX = t.clientX; _tsY = t.clientY; _tMoved = false;
+            }, { passive: true });
+            editor.addEventListener('touchmove', (e) => {
+                const t = e.touches[0]; if (!t) return;
+                if (Math.abs(t.clientX - _tsX) > 8 || Math.abs(t.clientY - _tsY) > 8) _tMoved = true;
+            }, { passive: true });
+            editor.addEventListener('touchend', (e) => {
+                if (_tMoved) return; // glissement : laisser défiler
+                if (editor.getAttribute('contenteditable') === 'true') return; // déjà en édition
+                e.preventDefault();
+                const t = e.changedTouches && e.changedTouches[0];
+                _enableTouchEditing(t ? t.clientX : undefined, t ? t.clientY : undefined);
+            });
+            editor.addEventListener('blur', () => {
+                // Retour en lecture seule pour rendre la main au défilement tactile
+                editor.setAttribute('contenteditable', 'false');
+                editor.classList.add('touch-idle');
+            });
+        }
+
         dayEl.querySelector('.day-notes-zone').addEventListener('click', (e) => {
-            if (e.target === editor || editor.contains(e.target)) return;
+            if (e.target === editor || editor.contains(e.target)) {
+                if (_isTouchDevice && editor.getAttribute('contenteditable') !== 'true') _enableTouchEditing(e.clientX, e.clientY);
+                return;
+            }
+            if (_isTouchDevice && editor.getAttribute('contenteditable') !== 'true') { _enableTouchEditing(); return; }
             try { editor.focus(); _placeCaretEnd(editor); } catch (err) {}
         });
 

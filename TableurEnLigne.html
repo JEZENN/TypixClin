@@ -620,6 +620,10 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .profile-id-badge i { font-size: 0.65rem; }
 
 /* ===== FRIENDS BUTTON IN MENU ===== */
+.profile-menu-item.premium-btn-menu { color: var(--primary); }
+.profile-menu-item.premium-btn-menu:hover { background: rgba(59,130,246,0.08); color: var(--primary-dark); }
+[data-theme="dark"] .profile-menu-item.premium-btn-menu { color: var(--primary-light); }
+[data-theme="dark"] .profile-menu-item.premium-btn-menu:hover { background: rgba(96,165,250,0.1); color: #bfdbfe; }
 .profile-menu-item.whats-new-btn-menu { color: var(--primary); position: relative; }
 .profile-menu-item.whats-new-btn-menu:hover { background: rgba(59,130,246,0.08); color: var(--primary-dark); }
 [data-theme="dark"] .profile-menu-item.whats-new-btn-menu { color: var(--primary-light); }
@@ -8670,7 +8674,11 @@ body.tours-compact .ranking-extra-stat.time-stat {
     box-sizing: border-box;
 }
 
-/* Aperçu enrichi des notes du planning */
+/* Éditeur enrichi des notes du planning (contenteditable — porté du tableur ECOS).
+   La case affiche ET édite directement le HTML enrichi : la mise en forme faite
+   dans le modal « Organisation de la journée » n'est plus perdue lors d'une
+   modification directe dans la case. */
+.day-notes-input.day-notes-editor,
 .day-notes-preview {
     flex: 1 1 auto;
     min-height: 82px;
@@ -8686,12 +8694,15 @@ body.tours-compact .ranking-extra-stat.time-stat {
     cursor: text;
 }
 
+.day-notes-input.day-notes-editor ul,
+.day-notes-input.day-notes-editor ol,
 .day-notes-preview ul,
 .day-notes-preview ol {
     margin: 0.15rem 0 0.15rem 1rem;
     padding-left: 0.4rem;
 }
 
+.day-notes-input.day-notes-editor:empty::before,
 .day-notes-preview:empty::before {
     content: attr(data-placeholder);
     color: var(--gray-400);
@@ -8700,41 +8711,47 @@ body.tours-compact .ranking-extra-stat.time-stat {
     pointer-events: none;
 }
 
-/* Affichage enrichi au repos, textarea pendant l’édition */
-.day-notes-zone:not(.is-editing) .day-notes-input {
-    display: none;
+[data-theme="dark"] .day-notes-input.day-notes-editor:empty::before {
+    color: #64748b;
 }
 
-.day-notes-zone.is-editing .day-notes-preview {
-    display: none;
+/* Écran tactile : au repos la case n'est pas éditable, pour que le glissement
+   latéral du doigt fasse défiler le calendrier au lieu d'être capté par
+   l'éditeur ; un tap (toucher sans glissement) active l'édition. */
+.day-notes-input.day-notes-editor.touch-idle {
+    touch-action: pan-x pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
 }
 
 /* Couleurs provenant du modal Organisation de la journée */
-.day-notes-preview .planning-note-red {
+.day-notes-zone .planning-note-red {
     color: #dc2626;
 }
 
-.day-notes-preview .planning-note-blue {
+.day-notes-zone .planning-note-blue {
     color: #2563eb;
 }
 
-.day-notes-preview .planning-note-green {
+.day-notes-zone .planning-note-green {
     color: #16a34a;
 }
 
-[data-theme="dark"] .day-notes-preview .planning-note-red {
+[data-theme="dark"] .day-notes-zone .planning-note-red {
     color: #f87171;
 }
 
-[data-theme="dark"] .day-notes-preview .planning-note-blue {
+[data-theme="dark"] .day-notes-zone .planning-note-blue {
     color: #60a5fa;
 }
 
-[data-theme="dark"] .day-notes-preview .planning-note-green {
+[data-theme="dark"] .day-notes-zone .planning-note-green {
     color: #4ade80;
 }
 
 @media (max-width: 600px) {
+    .day-notes-input.day-notes-editor,
     .day-notes-preview {
         font-size: 0.78rem;
     }
@@ -13779,14 +13796,14 @@ window._getScrollbarWidth = function() {
                             </div>
                         </div>
                         <div class="profile-menu">
-       					 <!--  <a href="comptepremium.html" class="profile-menu-item">
-								<i class="fas fa-crown"></i>
-								Mon abonnement
-							</a>-->
 							<!--<button class="profile-menu-item" id="backup-settings-btn"><i class="fas fa-shield-alt"></i><span>Sauvegardes</span></button>-->
 							<button type="button" class="profile-menu-item" id="admin-menu-link" style="display:none;color:var(--primary)" onclick="location.href='admin.html'">
                                 <i class="fas fa-shield-alt"></i><span>Administration</span>
                             </button>
+							<!--
+							<button class="profile-menu-item premium-btn-menu" id="open-premium-btn" onclick="localStorage.setItem('premiumReturnTableur','edn'); location.href='comptepremium.html?from=edn';">
+                                <i class="fas fa-crown"></i><span>Compte premium</span>
+                            </button>-->
 							<button class="profile-menu-item settings-btn-menu" id="open-settings-btn" onclick="window.openSettingsModal && window.openSettingsModal()">
                                 <i class="fas fa-sliders-h"></i><span>Paramètres</span>
                             </button>
@@ -18306,12 +18323,13 @@ function disableOfflineActions() {
     
     // 🆕 BLOQUER LES INPUTS DU PLANNING
     // 1. Désactiver les textarea de notes
-    document.querySelectorAll('.day-notes-input').forEach(textarea => {
-        textarea.dataset.offlineDisabled = 'true';
-        textarea.disabled = true;
-        textarea.style.opacity = '0.5';
-        textarea.style.cursor = 'not-allowed';
-        textarea.placeholder = 'Mode hors ligne';
+    document.querySelectorAll('.day-notes-input').forEach(editor => {
+        editor.dataset.offlineDisabled = 'true';
+        editor.setAttribute('contenteditable', 'false');
+        editor.classList.remove('touch-idle');
+        editor.style.opacity = '0.5';
+        editor.style.cursor = 'not-allowed';
+        editor.setAttribute('data-placeholder', 'Mode hors ligne');
     });
 	
 	// Désactiver les boutons Notes items
@@ -18534,10 +18552,22 @@ function enableOfflineActions() {
         if (element.tagName === 'INPUT') {
             element.disabled = false;
         }
-        // Réactiver les contenteditable (éditeurs notes et cahier d'erreur)
+        // Réactiver les contenteditable (éditeurs notes, cahier d'erreur et cases du planning)
         if (element.getAttribute('contenteditable') === 'false' &&
             (element.id === 'notesEditorArea' || element.id === 'trainNotesEditor')) {
             element.contentEditable = 'true';
+        }
+        // Cases du planning : lever le verrou hors ligne. Sur écran tactile, la case
+        // reste en lecture seule au repos (touch-idle) et redevient éditable au tap.
+        if (element.classList && element.classList.contains('day-notes-input')) {
+            element.setAttribute('data-placeholder', 'Notes...');
+            const touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
+            if (touch) {
+                element.setAttribute('contenteditable', 'false');
+                element.classList.add('touch-idle');
+            } else {
+                element.contentEditable = 'true';
+            }
         }
     });
 }
@@ -25207,10 +25237,7 @@ function updateSelectors() {
         if (focusedInput && focusedInput.classList.contains('day-notes-input') && grid.contains(focusedInput)) {
             savedFocus = {
                 dateKey:   focusedInput.dataset.date,
-                selStart:  focusedInput.selectionStart,
-                selEnd:    focusedInput.selectionEnd,
-                scrollTop: focusedInput.scrollTop,
-                value:     focusedInput.value
+                scrollTop: focusedInput.scrollTop
             };
         }
 
@@ -25251,25 +25278,22 @@ function updateSelectors() {
             grid.appendChild(dayEl);
         }
 
-        // Si la page planning est déjà visible, redimensionner les textareas au prochain frame
+        // Si la page planning est déjà visible, redimensionner les cases au prochain frame
         const planningPage = document.getElementById('page-planning');
         if (planningPage && planningPage.classList.contains('active')) {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    grid.querySelectorAll('.day-notes-input').forEach(ta => {
-                        if (ta.value) autoResizeTextarea(ta);
+                    grid.querySelectorAll('.day-notes-input').forEach(ed => {
+                        if ((ed.textContent || '').length) autoResizeTextarea(ed);
                     });
-                    // ── Restaurer focus + curseur après re-render ──
+                    // ── Restaurer focus + curseur après re-render (contenteditable) ──
                     if (savedFocus) {
                         const restored = grid.querySelector(`.day-notes-input[data-date="${savedFocus.dateKey}"]`);
                         if (restored) {
-						    if (zone) {
-									zone.classList.add('is-editing');
-								}
-
+                            if (restored.classList.contains('touch-idle')) { restored.setAttribute('contenteditable', 'true'); restored.classList.remove('touch-idle'); }
                             restored.focus({ preventScroll: true });
                             try {
-                                restored.setSelectionRange(savedFocus.selStart, savedFocus.selEnd);
+                                _placeCaretEnd(restored);
                                 restored.scrollTop = savedFocus.scrollTop;
                             } catch(e) {}
                         }
@@ -25281,13 +25305,9 @@ function updateSelectors() {
             requestAnimationFrame(() => {
                 const restored = grid.querySelector(`.day-notes-input[data-date="${savedFocus.dateKey}"]`);
                 if (restored) {
-				
-				    if (zone) {
-							zone.classList.add('is-editing');
-						}
-
+                    if (restored.classList.contains('touch-idle')) { restored.setAttribute('contenteditable', 'true'); restored.classList.remove('touch-idle'); }
                     restored.focus({ preventScroll: true });
-                    try { restored.setSelectionRange(savedFocus.selStart, savedFocus.selEnd); } catch(e) {}
+                    try { _placeCaretEnd(restored); } catch(e) {}
                 }
             });
         }
@@ -25342,8 +25362,11 @@ function updateSelectors() {
 
 			<div class="day-notes-zone">
 				<div
-					class="day-notes-preview"
+					class="day-notes-input day-notes-editor"
 					data-date="${dateKey}"
+					contenteditable="true"
+					role="textbox"
+					aria-multiline="true"
 					data-placeholder="Notes..."
 				>${typeof window.planningNoteToSafeHTML === 'function'
 					? window.planningNoteToSafeHTML(
@@ -25352,13 +25375,6 @@ function updateSelectors() {
 							: (dayData.notes || '')
 					  )
 					: escapeHtml(dayData.notes || '').replace(/\n/g, '<br>')}</div>
-
-				<textarea
-					class="day-notes-input"
-					data-date="${dateKey}"
-					placeholder="Notes..."
-					maxlength="1000"
-				></textarea>
 			</div>
 
 			<div class="day-specialty-zone" data-date="${dateKey}">
@@ -25388,77 +25404,157 @@ function updateSelectors() {
             openSpecialtyPopup(dateKey, e.currentTarget);
         });
 
-// Affichage enrichi + édition texte conservée dans le textarea
+// Édition enrichie directement dans la case (contenteditable — porté du tableur ECOS).
+// La mise en forme réalisée via le modal « Organisation de la journée » est conservée.
 const notesZone = dayEl.querySelector('.day-notes-zone');
-const textarea = dayEl.querySelector('.day-notes-input');
-const preview = dayEl.querySelector('.day-notes-preview');
+const editor = dayEl.querySelector('.day-notes-input');
 
 let saveTimeout;
 let noteDirty = false;
 
-function updatePreviewFromTextarea() {
-    if (!preview) return;
+/* ── Tactile : glissement latéral possible sur les cases notes ──
+   Au repos, la case est en lecture seule (contenteditable=false) : le
+   navigateur laisse alors le geste tactile faire défiler le calendrier.
+   Un tap sans glissement (re)active l'édition et place le curseur au
+   point touché. Le mode hors ligne est détecté via data-offline-disabled
+   (et non plus via contenteditable, désormais utilisé par le mode tactile). */
+const _isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
 
-    preview.innerHTML =
-        typeof window.planningNoteToSafeHTML === 'function'
-            ? window.planningNoteToSafeHTML(textarea.value)
-            : escapeHtml(textarea.value).replace(/\n/g, '<br>');
+function _enableTouchEditing(clientX, clientY) {
+    if (editor.dataset.offlineDisabled === 'true') {
+        if (typeof canPerformAction === 'function') canPerformAction('planning-text');
+        return;
+    }
+    editor.setAttribute('contenteditable', 'true');
+    editor.classList.remove('touch-idle');
+    try {
+        editor.focus();
+        let placed = false;
+        if (typeof clientX === 'number' && typeof clientY === 'number') {
+            let range = null;
+            if (document.caretRangeFromPoint) {
+                range = document.caretRangeFromPoint(clientX, clientY);
+            } else if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(clientX, clientY);
+                if (pos) { range = document.createRange(); range.setStart(pos.offsetNode, pos.offset); range.collapse(true); }
+            }
+            if (range && editor.contains(range.startContainer)) {
+                const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+                placed = true;
+            }
+        }
+        if (!placed) _placeCaretEnd(editor);
+    } catch (err) {}
 }
 
-textarea.value =
-    typeof window.planningNoteForCalendarCell === 'function'
-        ? window.planningNoteForCalendarCell(dayData.notes || '')
-        : (dayData.notes || '');
+if (_isTouchDevice) {
+    editor.setAttribute('contenteditable', 'false');
+    editor.classList.add('touch-idle');
 
-autoResizeTextarea(textarea);
+    let _tsX = 0, _tsY = 0, _tMoved = false;
+    editor.addEventListener('touchstart', (e) => {
+        const t = e.touches[0]; if (!t) return;
+        _tsX = t.clientX; _tsY = t.clientY; _tMoved = false;
+    }, { passive: true });
+    editor.addEventListener('touchmove', (e) => {
+        const t = e.touches[0]; if (!t) return;
+        if (Math.abs(t.clientX - _tsX) > 8 || Math.abs(t.clientY - _tsY) > 8) _tMoved = true;
+    }, { passive: true });
+    editor.addEventListener('touchend', (e) => {
+        if (_tMoved) return; // glissement : laisser défiler
+        if (editor.getAttribute('contenteditable') === 'true') return; // déjà en édition
+        e.preventDefault();
+        const t = e.changedTouches && e.changedTouches[0];
+        _enableTouchEditing(t ? t.clientX : undefined, t ? t.clientY : undefined);
+    });
+}
 
 notesZone.addEventListener('click', (e) => {
-    if (e.target === textarea) return;
+    if (e.target === editor || editor.contains(e.target)) {
+        if (_isTouchDevice && editor.getAttribute('contenteditable') !== 'true') _enableTouchEditing(e.clientX, e.clientY);
+        return;
+    }
 
-    if (textarea.disabled) {
+    if (editor.dataset.offlineDisabled === 'true') {
         if (typeof canPerformAction === 'function') {
             canPerformAction('planning-text');
         }
         return;
     }
 
-    notesZone.classList.add('is-editing');
-    textarea.focus();
+    if (_isTouchDevice && editor.getAttribute('contenteditable') !== 'true') { _enableTouchEditing(); return; }
 
-    const len = textarea.value.length;
-    textarea.setSelectionRange(len, len);
+    try { editor.focus(); _placeCaretEnd(editor); } catch (err) {}
 });
 
-textarea.addEventListener('focus', () => {
-    notesZone.classList.add('is-editing');
-    autoResizeTextarea(textarea);
+editor.addEventListener('focus', () => autoResizeTextarea(editor));
+
+// Dans la case : pas de mise en forme. Gras/italique/souligné/listes/couleurs
+// se font dans le modal « Organisation de la journée ».
+editor.addEventListener('beforeinput', (e) => {
+    const blocked = ['formatBold','formatItalic','formatUnderline','formatStrikeThrough','insertOrderedList','insertUnorderedList','formatBackColor','formatFontColor','formatFontName'];
+    if (blocked.indexOf(e.inputType) !== -1) { e.preventDefault(); return; }
+    const insertTypes = ['insertText','insertCompositionText','insertFromPaste','insertParagraph','insertLineBreak','insertFromDrop'];
+    if (insertTypes.indexOf(e.inputType) !== -1 && (editor.textContent || '').length >= 1000) {
+        e.preventDefault();
+        if (window.showToastNotification) window.showToastNotification('Limite de 1000 caractères atteinte pour cette note.', 'info');
+    }
 });
 
-textarea.addEventListener('input', (e) => {
+// Raccourcis clavier de mise en forme désactivés dans la case
+editor.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['b','i','u'].indexOf((e.key || '').toLowerCase()) !== -1) { e.preventDefault(); return; }
+});
+
+// Collage en texte brut uniquement
+editor.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData ? e.clipboardData.getData('text/plain') : '') || '';
+    try { document.execCommand('insertText', false, text); } catch (err) {}
+});
+
+editor.addEventListener('input', () => {
     noteDirty = true;
-    autoResizeTextarea(e.target);
+    requestAnimationFrame(() => autoResizeTextarea(editor));
+
+    // Mise à jour mémoire immédiate (HTML normalisé) + synchro du modal si ouvert
+    if (window._ednPlanningBridge && window._ednPlanningBridge.setNotesInMemory) {
+        window._ednPlanningBridge.setNotesInMemory(dateKey, editor.innerHTML);
+    }
+    if (window._pddCurrentDate === dateKey) {
+        const dEd = document.getElementById('pdd-editor');
+        if (dEd && document.activeElement !== dEd) {
+            dEd.innerHTML = (typeof window.planningNoteToSafeHTML === 'function')
+                ? window.planningNoteToSafeHTML((planningData[dateKey] || {}).notes || '')
+                : ((planningData[dateKey] || {}).notes || '');
+        }
+    }
 
     clearTimeout(saveTimeout);
-
     saveTimeout = setTimeout(() => {
         if (!noteDirty) return;
-
-        saveDayNotes(dateKey, e.target.value);
-        updatePreviewFromTextarea();
+        if (window._ednPlanningBridge && window._ednPlanningBridge.saveDayNotesRich) {
+            window._ednPlanningBridge.saveDayNotesRich(dateKey, editor.innerHTML);
+        }
         noteDirty = false;
     }, 500);
 });
 
-textarea.addEventListener('blur', (e) => {
+editor.addEventListener('blur', () => {
+    // Tactile : retour en lecture seule pour rendre la main au défilement
+    if (_isTouchDevice && editor.dataset.offlineDisabled !== 'true') {
+        editor.setAttribute('contenteditable', 'false');
+        editor.classList.add('touch-idle');
+    }
+
     clearTimeout(saveTimeout);
 
     if (noteDirty) {
-        saveDayNotes(dateKey, e.target.value);
-        updatePreviewFromTextarea();
+        if (window._ednPlanningBridge && window._ednPlanningBridge.saveDayNotesRich) {
+            window._ednPlanningBridge.saveDayNotesRich(dateKey, editor.innerHTML);
+        }
         noteDirty = false;
     }
-
-    notesZone.classList.remove('is-editing');
 
     if (window._planningRerenderPending) {
         window._planningRerenderPending = false;
@@ -25478,7 +25574,15 @@ textarea.addEventListener('blur', (e) => {
         
         return dayEl;
     }
-    
+
+    /* Place le curseur à la fin d'un éditeur contenteditable (porté du tableur ECOS). */
+    function _placeCaretEnd(el) {
+        try {
+            const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+            const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        } catch (e) {}
+    }
+
 let scrollWaitId = 0;
 
 let activeStatusZone    = null;
@@ -26849,12 +26953,14 @@ function renderSpecialtyLegend() {
         else delete planningData[dateKey].notes;
     }
 function _ednUpdateNotesTextarea(dateKey) {
-    var ta = document.querySelector(
+    /* Met à jour la case (éditeur contenteditable) sans reconstruire le calendrier.
+       Porté du tableur ECOS : la case affiche le HTML enrichi. */
+    var ed = document.querySelector(
         '.day-notes-input[data-date="' + dateKey + '"]'
     );
 
-    if (!ta) return;
-    if (document.activeElement === ta) return;
+    if (!ed) return;
+    if (document.activeElement === ed) return; // ne pas perturber la saisie en cours
 
     var raw =
         (planningData[dateKey] && planningData[dateKey].notes) || '';
@@ -26864,30 +26970,14 @@ function _ednUpdateNotesTextarea(dateKey) {
             ? window.getPlanningNoteReadValue(raw)
             : raw;
 
-    ta.value =
-        typeof window.planningNoteForCalendarCell === 'function'
-            ? window.planningNoteForCalendarCell(readable)
-            : (
-                typeof window.planningNoteToPlainText === 'function'
-                    ? window.planningNoteToPlainText(readable)
-                    : readable
-              );
-
-    var preview = document.querySelector(
-        '.day-notes-preview[data-date="' + dateKey + '"]'
-    );
-
-    if (preview) {
-        if (typeof window.planningNoteToSafeHTML === 'function') {
-            preview.innerHTML =
-                window.planningNoteToSafeHTML(readable);
-        } else {
-            preview.textContent = readable;
-        }
+    if (typeof window.planningNoteToSafeHTML === 'function') {
+        ed.innerHTML = window.planningNoteToSafeHTML(readable);
+    } else {
+        ed.textContent = readable;
     }
 
     if (typeof autoResizeTextarea === 'function') {
-        autoResizeTextarea(ta);
+        autoResizeTextarea(ed);
     }
 }
     window._ednPlanningBridge = {
@@ -44551,6 +44641,7 @@ function openModal(dateKey) {
 
     lastFocused = document.activeElement;
     curDate = dateKey;
+    window._pddCurrentDate = dateKey; // synchro case <-> modal
 
     var dd = B().getPlanningData()[dateKey] || {};
 
@@ -44692,6 +44783,7 @@ function closeModal() {
 
     var prev = curDate;
     curDate = null;
+    window._pddCurrentDate = null;
 
     /*
      * Attendre la fin de l’animation avant de rendre
