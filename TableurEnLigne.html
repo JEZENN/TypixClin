@@ -19144,7 +19144,16 @@ window.addEventListener('scroll', () => {
     initStickyCorners('dashboard-sticky-sentinel', '#page-dashboard .section-header', '#page-dashboard .section-card');
     initStickyCorners('items-sticky-sentinel',     '#page-items .section-header',     '#page-items .section-card');
 })();
-backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+// Remonte juste au-dessus de la barre d'onglets (.app-nav), pas tout en haut de page
+backToTop?.addEventListener('click', () => {
+    const appNav = document.querySelector('.app-nav');
+    if (appNav && appNav.offsetParent !== null) {
+        const top = appNav.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
 
 /* ── Pill glissante de navigation ── */
 (function() {
