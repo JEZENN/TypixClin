@@ -22565,6 +22565,18 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 /* ===== FIN PLANNING — CASES ET MODAL DÉTAILLÉ ===== */
 
 </style>
+<script>
+/* RGPD : helper de consentement (ECOS n'embarque pas Google Analytics,
+   mais le compteur d'audience DAU respecte le même consentement) */
+window.tcAnalyticsAllowed = function () {
+    try {
+        var c = JSON.parse(localStorage.getItem('tc_cookie_consent') || 'null');
+        return !!(c && c.analytics === true);
+    } catch (e) { return false; }
+};
+window.tcLoadAnalytics = function () {};
+window.tcStopAnalytics = function () {};
+</script>
 </head>
 <body>
 
@@ -39647,7 +39659,8 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     const _d = new Date();
     const _day = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     const _flag = `tc_dau_${APP_ID}_${_day}`;
-    if (!localStorage.getItem(_flag)) {
+    const _okAudience = (typeof window.tcAnalyticsAllowed === 'function') ? window.tcAnalyticsAllowed() : false;
+    if (_okAudience && !localStorage.getItem(_flag)) {
       localStorage.setItem(_flag, '1');
       setDoc(doc(db, 'metrics', 'usage_' + _day), { ['dau_' + APP_ID]: increment(1), updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
     }
@@ -40231,6 +40244,8 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
     }
 })();
 </script>
+
+
 
 </body>
 </html>

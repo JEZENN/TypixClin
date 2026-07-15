@@ -1,22 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-KGHT97MD');</script>
-<!-- End Google Tag Manager -->
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1"></script>
+<!-- ═══ RGPD : Google Tag Manager + GA4 chargés UNIQUEMENT après consentement ═══ -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-C2D5ENP3F1');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.tcAnalyticsAllowed = function () {
+    try {
+        var c = JSON.parse(localStorage.getItem('tc_cookie_consent') || 'null');
+        return !!(c && c.analytics === true);
+    } catch (e) { return false; }
+};
+window.tcLoadAnalytics = function () {
+    if (window._tcAnalyticsLoaded || !window.tcAnalyticsAllowed()) return;
+    window._tcAnalyticsLoaded = true;
+    window['ga-disable-G-C2D5ENP3F1'] = false;
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KGHT97MD');
+    var _s = document.createElement('script');
+    _s.async = true; _s.src = 'https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1';
+    document.head.appendChild(_s);
+    gtag('js', new Date());
+    gtag('config', 'G-C2D5ENP3F1');
+};
+window.tcStopAnalytics = function () {
+    window['ga-disable-G-C2D5ENP3F1'] = true; /* coupe les mesures GA immédiatement */
+};
+window.tcLoadAnalytics();
 </script>
+
+<!-- gtag.js : chargé par tcLoadAnalytics() après consentement -->
 
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -2364,7 +2380,7 @@ button {
 .back-to-top {
     position: fixed;
     bottom: 2rem;
-    right: 2rem;
+    right: calc(2rem + var(--scrollbar-w, 0px)); /* compense la disparition de la scrollbar (modals) */
     width: 50px;
     height: 50px;
     border-radius: var(--border-radius-full);
@@ -2378,7 +2394,10 @@ button {
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
-    transition: all var(--transition-normal);
+    /* PAS de transition sur 'right' : le repositionnement lié à la scrollbar
+       (--scrollbar-w, ouverture des modals) doit être instantané, sinon le
+       bouton glisse visiblement de droite à gauche. */
+    transition: opacity var(--transition-normal), visibility var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-normal);
     box-shadow: var(--shadow-md);
     z-index: var(--z-elevated);
 }
@@ -3114,8 +3133,7 @@ button {
 
 <body>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGHT97MD"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- GTM noscript retiré : incompatible avec le consentement préalable (RGPD) -->
 <!-- End Google Tag Manager (noscript) -->
 
 <!-- Loader -->
@@ -3211,6 +3229,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 								Mon abonnement
 							</a>-->
 					<div class="profile-menu">
+                        <button class="profile-menu-item cookies-menu-item" id="open-cookies-btn" onclick="window.openTcCookieModal && window.openTcCookieModal()">
+                            <i class="fas fa-cookie-bite"></i>
+                            <span>Préférences cookies</span>
+                        </button>
                         <button class="profile-menu-item logout" id="logout-btn">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Se déconnecter</span>
@@ -5434,5 +5456,293 @@ var selectedAppMetadata =
 addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, message: msg, page: _page || '', /* Application concernée */ app: selectedAppMetadata.app, source: selectedAppMetadata.source, module: selectedAppMetadata.module, /* Origine du formulaire */ origin: 'index', appVersion: 'Index', /* * L'utilisateur peut envoyer un avis sans être connecté. * Dans ce cas, les champs d'identification restent vides. */ userId: user ? user.uid : '', userEmail: user ? (user.email || '') : '', userName: user ? (user.displayName || user.email || '') : '', anonymous: !user, createdAt: new Date().toISOString() }).then(function() { var formBody = document.getElementById('fb-form-body'); var footer = document.getElementById('fb-modal-footer'); var success = document.getElementById('fb-success-screen'); /* Animation de disparition du formulaire */ if (formBody) { formBody.style.transition = 'opacity 0.25s ease'; formBody.style.opacity = '0'; } if (footer) { footer.style.transition = 'opacity 0.25s ease'; footer.style.opacity = '0'; } setTimeout(function() { if (formBody) { formBody.style.display = 'none'; } if (footer) { footer.style.display = 'none'; } if (success) { success.classList.add('show'); requestAnimationFrame(function() { requestAnimationFrame(function() { success.classList.add('show-animate'); }); }); } }, 250); }).catch(function(err) { console.error('Erreur envoi feedback :', err); btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; alert( "Impossible d'envoyer le feedback. " + "Vérifiez votre connexion." ); }); }); })();
 </script>
 
+
+
+
+<!-- ═══════════ COOKIES (RGPD) : bannière + préférences ═══════════ -->
+<style>
+/* ── Bannière cookies v3 : compacte et discrète, header identique aux modals ── */
+.tc-cookie-banner {
+    position: fixed; left: 1.25rem; bottom: 1.25rem; transform: translateY(16px);
+    z-index: 4000; width: min(440px, calc(100vw - 2rem));
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--gray-200); border-radius: 16px;
+    box-shadow: 0 16px 44px rgba(15, 23, 42, 0.22);
+    overflow: hidden; opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.tc-cookie-banner.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+[data-theme="dark"] .tc-cookie-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155; box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+}
+.tc-cookie-banner .help-modal-header { padding: 12px 16px; }
+.tc-cookie-banner .help-modal-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 0.95rem; }
+.tc-cookie-banner .help-modal-title h3 { font-size: 0.98rem; }
+.tc-cb-body { padding: 14px 16px 15px; }
+.tc-cb-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.55rem; }
+.tc-cb-row > i {
+    width: 26px; height: 26px; flex: 0 0 26px; border-radius: 8px; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; color: #fff;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+.tc-cb-row.audience > i { background: linear-gradient(135deg, var(--accent, #8b5cf6), var(--accent-dark, #6d28d9)); }
+.tc-cb-row span { font-size: 0.76rem; line-height: 1.45; color: var(--gray-600); }
+.tc-cb-row span b { color: var(--gray-800); font-weight: 700; }
+.tc-cb-legal { margin: 0.15rem 0 0.8rem; font-size: 0.68rem; line-height: 1.4; color: var(--gray-500, #6b7280); }
+.tc-cookie-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.tc-cookie-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.5rem 1.2rem; border-radius: var(--border-radius-full);
+    font-family: var(--font-body); font-weight: 600; font-size: 0.83rem;
+    cursor: pointer; border: 1px solid transparent; transition: all var(--transition-normal, 0.25s ease);
+}
+.tc-cookie-btn.refuse { background: transparent; color: var(--gray-600); border-color: var(--gray-300); }
+.tc-cookie-btn.refuse:hover { background: var(--gray-100); color: var(--gray-800); }
+.tc-cookie-btn.accept { background: var(--primary-gradient); color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35); }
+.tc-cookie-btn.accept:hover { transform: translateY(-1px); box-shadow: 0 7px 16px rgba(59, 130, 246, 0.45); }
+@media (max-width: 520px) {
+    .tc-cookie-banner { left: 0.75rem; bottom: 0.75rem; width: calc(100vw - 1.5rem); }
+    .tc-cookie-actions { justify-content: stretch; }
+    .tc-cookie-btn { flex: 1; }
+}
+
+/* ── Entrée « Préférences cookies » du menu profil : bleue ── */
+.profile-menu-item.cookies-menu-item { color: var(--primary); }
+.profile-menu-item.cookies-menu-item i { color: var(--primary); }
+.profile-menu-item.cookies-menu-item:hover { background: rgba(59, 130, 246, 0.08); color: var(--primary-dark); }
+[data-theme="dark"] .profile-menu-item.cookies-menu-item,
+[data-theme="dark"] .profile-menu-item.cookies-menu-item i { color: var(--primary-light); }
+[data-theme="dark"] .profile-menu-item.cookies-menu-item:hover { background: rgba(96, 165, 250, 0.1); }
+
+/* ── Modal préférences : identique aux modals du tableur en ligne ── */
+@keyframes modalOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalContentIn  { from { opacity: 0; transform: scale(0.94) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes modalContentOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.94) translateY(14px); } }
+.help-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 10000;
+}
+.help-modal-overlay.active { display: flex; animation: modalOverlayIn 0.2s ease forwards; opacity: 1; }
+.help-modal {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    max-width: 480px; width: 90%; max-height: 85vh; overflow: hidden;
+    transform: scale(0.94) translateY(14px);
+    display: flex; flex-direction: column;
+}
+[data-theme="dark"] .help-modal {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+.help-modal-overlay.active .help-modal { transform: scale(1) translateY(0); animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.help-modal-overlay.closing              { animation: modalOverlayOut 0.18s ease forwards; }
+.help-modal-overlay.closing .help-modal  { animation: modalContentOut 0.18s ease forwards; }
+.help-modal-header {
+    background: var(--white); padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    flex-shrink: 0; border-bottom: 2px solid var(--gray-200);
+}
+[data-theme="dark"] .help-modal-header { background: #1e293b; border-bottom-color: #475569; }
+.help-modal-title { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.help-modal-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: white; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+.help-modal-title h3 {
+    font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;
+    color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.help-modal-close {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--danger-light, #fee2e2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: var(--danger, #ef4444);
+    transition: all 0.15s ease; flex-shrink: 0;
+}
+.help-modal-close:hover { background: var(--danger, #ef4444); color: white; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
+.help-modal-close:active { transform: scale(0.88); }
+[data-theme="dark"] .help-modal-close { background: rgba(239, 68, 68, 0.6); color: white; border: 1px solid rgba(239, 68, 68, 0.8); }
+[data-theme="dark"] .help-modal-close:hover { background: var(--danger, #ef4444); border-color: transparent; }
+.help-modal-body { padding: 24px; overflow-y: auto; }
+.tc-ck-intro { margin: 0 0 1.1rem; font-size: 0.85rem; line-height: 1.55; color: var(--gray-600); }
+.tc-ck-cat {
+    display: flex; align-items: flex-start; gap: 0.85rem;
+    padding: 0.95rem 1rem; border-radius: var(--border-radius-lg); margin-bottom: 0.7rem;
+    background: var(--gray-50, #f9fafb); border: 1px solid var(--gray-200);
+}
+.tc-ck-cat-icon {
+    width: 36px; height: 36px; flex: 0 0 36px; border-radius: var(--border-radius-md, 0.75rem);
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem;
+    background: var(--primary-gradient); box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);
+}
+.tc-ck-cat-icon.audience { background: linear-gradient(135deg, var(--accent, #8b5cf6), var(--accent-dark, #6d28d9)); box-shadow: 0 3px 10px rgba(139, 92, 246, 0.3); }
+.tc-ck-cat-text { flex: 1; font-size: 0.79rem; line-height: 1.5; color: var(--gray-600); }
+.tc-ck-cat-text b { display: block; font-size: 0.9rem; margin-bottom: 3px; font-family: var(--font-display); font-weight: 700; color: var(--primary); }
+.tc-ck-always { font-size: 0.66rem; font-weight: 700; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; margin-top: 10px; }
+.tc-switch { position: relative; width: 46px; height: 25px; flex: 0 0 46px; margin-top: 7px; cursor: pointer; }
+.tc-switch input { opacity: 0; width: 0; height: 0; }
+.tc-switch .tc-slider { position: absolute; inset: 0; border-radius: 999px; background: var(--gray-300); transition: background 0.2s ease; }
+.tc-switch .tc-slider::before {
+    content: ''; position: absolute; width: 19px; height: 19px; left: 3px; top: 3px;
+    border-radius: 50%; background: #fff; transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+.tc-switch input:checked + .tc-slider { background: var(--primary-gradient); }
+.tc-switch input:checked + .tc-slider::before { transform: translateX(21px); }
+.tc-ck-save {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; margin-top: 0.6rem; padding: 0.85rem 1.2rem; border: none;
+    border-radius: var(--border-radius-full); background: var(--primary-gradient); color: #fff;
+    font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; cursor: pointer;
+    box-shadow: var(--shadow-blue); transition: all var(--transition-normal, 0.25s ease);
+}
+.tc-ck-save:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -5px rgba(59, 130, 246, 0.55); }
+.tc-ck-note { margin-top: 0.8rem; text-align: center; font-size: 0.73rem; color: var(--gray-500, #6b7280); }
+</style>
+
+<div class="tc-cookie-banner" id="tc-cookie-banner" role="dialog" aria-label="Consentement aux cookies">
+    <div class="help-modal-header">
+        <div class="help-modal-title">
+            <div class="help-modal-icon"><i class="fas fa-cookie-bite"></i></div>
+            <h3>Cookies</h3>
+        </div>
+        <button class="help-modal-close" id="tc-cookie-close" aria-label="Fermer"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="tc-cb-body">
+        <div class="tc-cb-row">
+            <i class="fas fa-shield-alt"></i>
+            <span><b>Essentiels</b> — connexion à votre compte, sauvegarde de vos données et préférences (thème, affichage). Toujours actifs.</span>
+        </div>
+        <div class="tc-cb-row audience">
+            <i class="fas fa-chart-line"></i>
+            <span><b>Mesure d'audience</b> — Google Analytics et compteur d'utilisateurs actifs. Statistiques agrégées, jamais publicitaires ni revendues.</span>
+        </div>
+        <p class="tc-cb-legal">Conformément au RGPD, le refus ne limite pas l'accès au site. Choix modifiable à tout moment depuis votre profil.</p>
+        <div class="tc-cookie-actions">
+            <button type="button" class="tc-cookie-btn refuse" id="tc-cookie-refuse">Refuser</button>
+            <button type="button" class="tc-cookie-btn accept" id="tc-cookie-accept"><i class="fas fa-check"></i> Accepter</button>
+        </div>
+    </div>
+</div>
+
+<div class="help-modal-overlay" id="tc-ck-overlay" onclick="if(event.target===this)closeTcCookieModal()">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-cookie-bite"></i></div>
+                <h3>Préférences cookies</h3>
+            </div>
+            <button class="help-modal-close" onclick="closeTcCookieModal()" aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="help-modal-body">
+            <p class="tc-ck-intro">Conformément au RGPD, choisissez les données que TypixClin peut collecter. Votre choix s'applique à l'ensemble du site (page d'accueil et tableurs) et reste modifiable à tout moment.</p>
+            <div class="tc-ck-cat">
+                <div class="tc-ck-cat-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="tc-ck-cat-text"><b>Essentiels</b>Connexion à votre compte (Firebase), sauvegarde de vos données et de vos préférences (thème, affichage). Indispensables au fonctionnement du site.</div>
+                <span class="tc-ck-always">Toujours actifs</span>
+            </div>
+            <div class="tc-ck-cat">
+                <div class="tc-ck-cat-icon audience"><i class="fas fa-chart-line"></i></div>
+                <div class="tc-ck-cat-text"><b>Mesure d'audience</b>Google Analytics et compteur d'utilisateurs actifs&nbsp; Statistiques agrégées, jamais publicitaires ni revendues.</div>
+                <label class="tc-switch"><input type="checkbox" id="tc-ck-audience"><span class="tc-slider"></span></label>
+            </div>
+            <button type="button" class="tc-ck-save" onclick="saveTcCookiePrefs()"><i class="fas fa-check"></i> Enregistrer mes préférences</button>
+            <div class="tc-ck-note">Le refus de la mesure d'audience ne limite en rien l'accès aux fonctionnalités.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    function saveConsent(analytics) {
+        try { localStorage.setItem('tc_cookie_consent', JSON.stringify({ analytics: analytics, ts: Date.now() })); } catch (e) {}
+    }
+    /* ── Bannière ── */
+    var banner = document.getElementById('tc-cookie-banner');
+    function hideBanner() { if (banner) banner.classList.remove('show'); }
+    (function initBanner() {
+        if (!banner) return;
+        var dismissed = false;
+        try { dismissed = sessionStorage.getItem('tc_cookie_banner_dismissed') === '1'; } catch (e) {}
+        /* Accepté → plus jamais affichée. Refusé → masquée pour la session,
+           réaffichée à la prochaine consultation (le refus reste appliqué entre-temps). */
+        if (window.tcAnalyticsAllowed() || dismissed) return;
+        setTimeout(function () { banner.classList.add('show'); }, 600);
+        document.getElementById('tc-cookie-accept').addEventListener('click', function () {
+            saveConsent(true); hideBanner(); window.tcLoadAnalytics();
+        });
+        document.getElementById('tc-cookie-refuse').addEventListener('click', function () {
+            saveConsent(false);
+            try { sessionStorage.setItem('tc_cookie_banner_dismissed', '1'); } catch (e) {}
+            hideBanner(); window.tcStopAnalytics();
+        });
+        /* Croix : fermeture simple, aucun choix enregistré (donc pas de mesure d'audience),
+           la bannière réapparaîtra à la prochaine consultation de la page. */
+        document.getElementById('tc-cookie-close').addEventListener('click', function () {
+            try { sessionStorage.setItem('tc_cookie_banner_dismissed', '1'); } catch (e) {}
+            hideBanner();
+        });
+    })();
+    /* ── Modal préférences (menu profil) : mêmes animations et même compensation
+          de scrollbar que les modals des tableurs (aucun décalage de mise en page).
+          Reprise de window._setScrollbarComp du tableur EDN : padding équivalent
+          à la largeur de la barre appliqué au body ET au header fixe. ── */
+    function _setScrollbarComp(px) {
+        var val = px > 0 ? px + 'px' : '';
+        document.body.style.paddingRight = val;
+        document.documentElement.style.setProperty('--scrollbar-w', px > 0 ? px + 'px' : '0px');
+        var h = document.querySelector('.header');
+        if (h) h.style.paddingRight = val;
+    }
+    var _prevOverflowHtml = '', _prevOverflowBody = '';
+    window.openTcCookieModal = function () {
+        var ov = document.getElementById('tc-ck-overlay');
+        if (!ov || ov.classList.contains('active')) return;
+        var cb = document.getElementById('tc-ck-audience');
+        if (cb) cb.checked = window.tcAnalyticsAllowed();
+        ov.classList.remove('closing');
+        ov.classList.add('active');
+        /* mesurer la barre AVANT de la masquer, puis compenser le décalage */
+        var sw = window.innerWidth - document.documentElement.clientWidth;
+        _prevOverflowHtml = document.documentElement.style.overflow;
+        _prevOverflowBody = document.body.style.overflow;
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        _setScrollbarComp(sw);
+    };
+    window.closeTcCookieModal = function () {
+        var ov = document.getElementById('tc-ck-overlay');
+        if (!ov || !ov.classList.contains('active') || ov.classList.contains('closing')) return;
+        ov.classList.add('closing');
+        setTimeout(function () {
+            ov.classList.remove('active', 'closing');
+            document.documentElement.style.overflow = _prevOverflowHtml || '';
+            document.body.style.overflow = _prevOverflowBody || '';
+            _setScrollbarComp(0);
+        }, 200);
+    };
+    window.saveTcCookiePrefs = function () {
+        var cb = document.getElementById('tc-ck-audience');
+        var allowed = !!(cb && cb.checked);
+        saveConsent(allowed);
+        if (allowed) window.tcLoadAnalytics(); else window.tcStopAnalytics();
+        hideBanner();
+        window.closeTcCookieModal();
+    };
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var ov = document.getElementById('tc-ck-overlay');
+        if (ov && ov.classList.contains('active')) window.closeTcCookieModal();
+    });
+})();
+</script>
 </body>
 </html>

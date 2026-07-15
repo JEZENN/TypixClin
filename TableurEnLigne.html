@@ -6,22 +6,38 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 
 
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-KGHT97MD');</script>
-<!-- End Google Tag Manager -->
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1"></script>
+<!-- ═══ RGPD : Google Tag Manager + GA4 chargés UNIQUEMENT après consentement ═══ -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-C2D5ENP3F1');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.tcAnalyticsAllowed = function () {
+    try {
+        var c = JSON.parse(localStorage.getItem('tc_cookie_consent') || 'null');
+        return !!(c && c.analytics === true);
+    } catch (e) { return false; }
+};
+window.tcLoadAnalytics = function () {
+    if (window._tcAnalyticsLoaded || !window.tcAnalyticsAllowed()) return;
+    window._tcAnalyticsLoaded = true;
+    window['ga-disable-G-C2D5ENP3F1'] = false;
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KGHT97MD');
+    var _s = document.createElement('script');
+    _s.async = true; _s.src = 'https://www.googletagmanager.com/gtag/js?id=G-C2D5ENP3F1';
+    document.head.appendChild(_s);
+    gtag('js', new Date());
+    gtag('config', 'G-C2D5ENP3F1');
+};
+window.tcStopAnalytics = function () {
+    window['ga-disable-G-C2D5ENP3F1'] = true; /* coupe les mesures GA immédiatement */
+};
+window.tcLoadAnalytics();
 </script>
+
+<!-- gtag.js : chargé par tcLoadAnalytics() après consentement -->
 
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -13710,7 +13726,7 @@ window._getScrollbarWidth = function() {
 
 
 <body>
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KGHT97MD" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- GTM noscript retiré : incompatible avec le consentement préalable (RGPD) -->
 
 <div class="loader-wrapper" id="loader">
     <div class="loader">
@@ -46020,7 +46036,8 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     const _d = new Date();
     const _day = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     const _flag = `tc_dau_${APP_ID}_${_day}`;
-    if (!localStorage.getItem(_flag)) {
+    const _okAudience = (typeof window.tcAnalyticsAllowed === 'function') ? window.tcAnalyticsAllowed() : false;
+    if (_okAudience && !localStorage.getItem(_flag)) {
       localStorage.setItem(_flag, '1');
       setDoc(doc(db, 'metrics', 'usage_' + _day), { ['dau_' + APP_ID]: increment(1), updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
     }
@@ -46553,6 +46570,8 @@ body.tpx-premium-locked .checklist-delete {
 
 })();
 </script>
+
+
 
 </body>
 </html>
