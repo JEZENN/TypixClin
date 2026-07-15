@@ -46573,5 +46573,65 @@ body.tpx-premium-locked .checklist-delete {
 
 
 
+
+<!-- ═══════════ CORRECTIF CLAVIER VIRTUEL (iPad / iPhone) ═══════════ -->
+<style>
+/* Quand le clavier est ouvert, les overlays épousent le viewport VISIBLE
+   (au-dessus du clavier) au lieu du viewport de mise en page, et les modals
+   se limitent à cette hauteur : le champ édité reste toujours visible. */
+body.tc-kb-open .notes-modal-overlay.active,
+body.tc-kb-open .help-modal-overlay.active {
+    top: var(--tc-vv-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--tc-vv-h, 100vh) !important;
+    align-items: flex-start !important;
+    padding-top: 8px !important;
+}
+body.tc-kb-open .notes-modal-overlay.active .notes-modal,
+body.tc-kb-open .help-modal-overlay.active .help-modal {
+    max-height: calc(var(--tc-vv-h, 100vh) - 16px) !important;
+}
+</style>
+<script>
+(function () {
+    'use strict';
+    if (!window.visualViewport) return; /* navigateurs sans l'API : comportement inchangé */
+    var root = document.documentElement;
+    var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
+    var raf = null;
+
+    function apply() {
+        var vv = window.visualViewport;
+        var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        var open = kb > KB_MIN;
+        root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
+        root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
+        document.body.classList.toggle('tc-kb-open', open);
+        if (open) scrollFocusedIntoView();
+    }
+    function onChange() {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; apply(); });
+    }
+    window.visualViewport.addEventListener('resize', onChange);
+    window.visualViewport.addEventListener('scroll', onChange);
+
+    /* Ramène le champ en cours d'édition dans la zone visible (gère aussi les
+       zones défilantes internes des modals : notes, cahiers d'erreurs, planning). */
+    function scrollFocusedIntoView() {
+        var el = document.activeElement;
+        if (!el) return;
+        var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
+                       (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
+        if (!editable) return;
+        setTimeout(function () {
+            try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+        }, 120);
+    }
+    /* À la prise de focus, le clavier arrive avec un léger délai sur iOS */
+    document.addEventListener('focusin', function () { setTimeout(onChange, 300); });
+    document.addEventListener('focusout', function () { setTimeout(onChange, 300); });
+})();
+</script>
 </body>
 </html>

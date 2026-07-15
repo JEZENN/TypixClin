@@ -5570,7 +5570,13 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
 .help-modal-close:active { transform: scale(0.88); }
 [data-theme="dark"] .help-modal-close { background: rgba(239, 68, 68, 0.6); color: white; border: 1px solid rgba(239, 68, 68, 0.8); }
 [data-theme="dark"] .help-modal-close:hover { background: var(--danger, #ef4444); border-color: transparent; }
-.help-modal-body { padding: 24px; overflow-y: auto; }
+.help-modal-body {
+    padding: 24px; overflow-y: auto;
+    overscroll-behavior: contain;          /* pas de chaînage du scroll vers la page */
+    -webkit-overflow-scrolling: touch;
+}
+.help-modal-overlay { touch-action: none; }          /* le fond ne défile pas au doigt */
+.help-modal-overlay .help-modal-body { touch-action: pan-y; } /* le corps du modal, si */
 .tc-ck-intro { margin: 0 0 1.1rem; font-size: 0.85rem; line-height: 1.55; color: var(--gray-600); }
 .tc-ck-cat {
     display: flex; align-items: flex-start; gap: 0.85rem;
@@ -5622,7 +5628,7 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
         </div>
         <div class="tc-cb-row audience">
             <i class="fas fa-chart-line"></i>
-            <span><b>Mesure d'audience</b> — Google Analytics et compteur d'utilisateurs actifs. Statistiques agrégées, jamais publicitaires ni revendues.</span>
+            <span><b>Mesure d'audience</b> — Google Analytics et compteur d'utilisateurs actifs : pages consultées, durée de visite, type d'appareil. Statistiques agrégées, jamais publicitaires ni revendues.</span>
         </div>
         <p class="tc-cb-legal">Conformément au RGPD, le refus ne limite pas l'accès au site. Choix modifiable à tout moment depuis votre profil.</p>
         <div class="tc-cookie-actions">
@@ -5650,7 +5656,7 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
             </div>
             <div class="tc-ck-cat">
                 <div class="tc-ck-cat-icon audience"><i class="fas fa-chart-line"></i></div>
-                <div class="tc-ck-cat-text"><b>Mesure d'audience</b>Google Analytics et compteur d'utilisateurs actifs&nbsp; Statistiques agrégées, jamais publicitaires ni revendues.</div>
+                <div class="tc-ck-cat-text"><b>Mesure d'audience</b>Google Analytics et compteur d'utilisateurs actifs&nbsp;: pages consultées, durée de visite, type d'appareil. Statistiques agrégées, jamais publicitaires ni revendues.</div>
                 <label class="tc-switch"><input type="checkbox" id="tc-ck-audience"><span class="tc-slider"></span></label>
             </div>
             <button type="button" class="tc-ck-save" onclick="saveTcCookiePrefs()"><i class="fas fa-check"></i> Enregistrer mes préférences</button>
@@ -5702,6 +5708,27 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
         var h = document.querySelector('.header');
         if (h) h.style.paddingRight = val;
     }
+    /* iOS/iPadOS : overflow:hidden n'empêche PAS le défilement tactile de la page
+       derrière le modal (effet élastique). On bloque donc touchmove au niveau du
+       document pendant l'ouverture, sauf à l'intérieur du corps du modal quand
+       celui-ci a réellement du contenu à faire défiler. */
+    var _tcTouchGuard = null;
+    function _tcEnableTouchLock() {
+        if (_tcTouchGuard) return;
+        _tcTouchGuard = function (e) {
+            var ov = document.getElementById('tc-ck-overlay');
+            if (!ov || !ov.classList.contains('active')) return;
+            var mb = ov.querySelector('.help-modal-body');
+            var inBody = mb && mb.contains(e.target);
+            if (!inBody || mb.scrollHeight <= mb.clientHeight) e.preventDefault();
+        };
+        document.addEventListener('touchmove', _tcTouchGuard, { passive: false });
+    }
+    function _tcDisableTouchLock() {
+        if (!_tcTouchGuard) return;
+        document.removeEventListener('touchmove', _tcTouchGuard, { passive: false });
+        _tcTouchGuard = null;
+    }
     var _prevOverflowHtml = '', _prevOverflowBody = '';
     window.openTcCookieModal = function () {
         var ov = document.getElementById('tc-ck-overlay');
@@ -5717,6 +5744,7 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
         _setScrollbarComp(sw);
+        _tcEnableTouchLock();
     };
     window.closeTcCookieModal = function () {
         var ov = document.getElementById('tc-ck-overlay');
@@ -5727,6 +5755,7 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
             document.documentElement.style.overflow = _prevOverflowHtml || '';
             document.body.style.overflow = _prevOverflowBody || '';
             _setScrollbarComp(0);
+            _tcDisableTouchLock();
         }, 200);
     };
     window.saveTcCookiePrefs = function () {

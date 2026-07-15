@@ -28257,7 +28257,19 @@ let _notesAutoSaveTimer = null;
 let _notesSavedFlag = true;
 
 function openSDDNotesModal(sddId) {
-    if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
+    /* Premium : les FICHES PROCÉDURES restent consultables librement ;
+       seules les SDD classiques sont bloquées en lecture seule. */
+    if (window.tpxPremiumLocked && !(typeof isProcedureSDD === 'function' && isProcedureSDD(sddId))) {
+        if (window.tpxPremiumNudge) window.tpxPremiumNudge();
+        return;
+    }
+    /* Procédure ouverte en mode verrouillé : l'éditeur de notes passe en lecture seule */
+    setTimeout(function () {
+        var _ed = document.getElementById('sdd-notes-editor');
+        if (!_ed) return;
+        if (window.tpxPremiumLocked) { _ed.contentEditable = 'false'; _ed.dataset.tpxNotesLocked = '1'; }
+        else if (_ed.dataset.tpxNotesLocked === '1') { _ed.contentEditable = 'true'; delete _ed.dataset.tpxNotesLocked; }
+    }, 0);
     currentSDDId = sddId;
     const meta = getSDDMeta(sddId);
     if (!meta) return;
@@ -39895,6 +39907,7 @@ body.tpx-premium-locked .priority-send-btn,
 body.tpx-premium-locked .send-to-checklist-btn {
     opacity: 0.55;
 }
+body.tpx-premium-locked .open-notes-btn.tpx-free { opacity: 1; }
 body.tpx-premium-locked .daily-stat-card.clickable,
 body.tpx-premium-locked .weekly-chart-card.clickable {
     cursor: default !important;
@@ -40101,6 +40114,7 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
         if (window.tpxPremiumLocked) return;
         window.tpxPremiumLocked = true;
         document.body.classList.add('tpx-premium-locked');
+        tpxStartFreeObs();
         var inp = document.getElementById('checklist-new-item');
         if (inp && !inp.readOnly) {
             inp.dataset.tpxLocked = '1';
@@ -40114,6 +40128,7 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
         if (!window.tpxPremiumLocked && !document.body.classList.contains('tpx-premium-locked')) return;
         window.tpxPremiumLocked = false;
         document.body.classList.remove('tpx-premium-locked');
+        tpxStopFreeObs();
         var inp = document.getElementById('checklist-new-item');
         if (inp && inp.dataset.tpxLocked === '1') {
             inp.readOnly = false;
@@ -40122,6 +40137,28 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
             delete inp.dataset.tpxPrevPlaceholder;
         }
     }
+
+    /* Fiches procédures : accessibles même en lecture seule → leurs boutons
+       Notes gardent leur pleine opacité (classe tpx-free), re-marqués à chaque
+       re-rendu du tableau via un MutationObserver léger. */
+    var _tpxFreeObs = null;
+    function tpxMarkFreeProcNotes() {
+        if (!window.tpxPremiumLocked || typeof window.isProcedureSDD !== 'function') return;
+        document.querySelectorAll('.open-notes-btn[data-sdd-id]:not(.tpx-free)').forEach(function (b) {
+            if (window.isProcedureSDD(b.getAttribute('data-sdd-id'))) b.classList.add('tpx-free');
+        });
+    }
+    function tpxStartFreeObs() {
+        tpxMarkFreeProcNotes();
+        if (_tpxFreeObs || !window.MutationObserver) return;
+        var pending = false;
+        _tpxFreeObs = new MutationObserver(function () {
+            if (pending) return; pending = true;
+            requestAnimationFrame(function () { pending = false; tpxMarkFreeProcNotes(); });
+        });
+        _tpxFreeObs.observe(document.body, { childList: true, subtree: true });
+    }
+    function tpxStopFreeObs() { if (_tpxFreeObs) { _tpxFreeObs.disconnect(); _tpxFreeObs = null; } }
 
     /* Nudge : à chaque tentative bloquée, le bouton couronne se déploie
        entièrement (« Débloquez tout le tableur ») pendant ~2,5 s + pulsation.
@@ -40247,5 +40284,70 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
 
 
 
+
+<!-- ═══════════ CORRECTIF CLAVIER VIRTUEL (iPad / iPhone) ═══════════ -->
+<style>
+/* Quand le clavier est ouvert, les overlays épousent le viewport VISIBLE
+   (au-dessus du clavier) au lieu du viewport de mise en page, et les modals
+   se limitent à cette hauteur : le champ édité reste toujours visible. */
+body.tc-kb-open .notes-modal-overlay.active,
+body.tc-kb-open .help-modal-overlay.active,
+body.tc-kb-open .planning-day-detail-overlay.active {
+    top: var(--tc-vv-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--tc-vv-h, 100vh) !important;
+    align-items: flex-start !important;
+    padding-top: 8px !important;
+}
+body.tc-kb-open .notes-modal-overlay.active .notes-modal,
+body.tc-kb-open .help-modal-overlay.active .help-modal,
+body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-modal {
+    height: auto !important;
+}
+body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-modal {
+    max-height: calc(var(--tc-vv-h, 100vh) - 16px) !important;
+}
+</style>
+<script>
+(function () {
+    'use strict';
+    if (!window.visualViewport) return; /* navigateurs sans l'API : comportement inchangé */
+    var root = document.documentElement;
+    var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
+    var raf = null;
+
+    function apply() {
+        var vv = window.visualViewport;
+        var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        var open = kb > KB_MIN;
+        root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
+        root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
+        document.body.classList.toggle('tc-kb-open', open);
+        if (open) scrollFocusedIntoView();
+    }
+    function onChange() {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; apply(); });
+    }
+    window.visualViewport.addEventListener('resize', onChange);
+    window.visualViewport.addEventListener('scroll', onChange);
+
+    /* Ramène le champ en cours d'édition dans la zone visible (gère aussi les
+       zones défilantes internes des modals : notes, cahiers d'erreurs, planning). */
+    function scrollFocusedIntoView() {
+        var el = document.activeElement;
+        if (!el) return;
+        var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
+                       (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
+        if (!editable) return;
+        setTimeout(function () {
+            try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+        }, 120);
+    }
+    /* À la prise de focus, le clavier arrive avec un léger délai sur iOS */
+    document.addEventListener('focusin', function () { setTimeout(onChange, 300); });
+    document.addEventListener('focusout', function () { setTimeout(onChange, 300); });
+})();
+</script>
 </body>
 </html>
