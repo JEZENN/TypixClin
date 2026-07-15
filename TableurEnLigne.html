@@ -43552,6 +43552,9 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   function evaluateCard(rating) { var s=_flashSession; if(!s) return; var card=s.cards[s.idx]; if(s.results[rating]) s.results[rating].push(card); updateCardAfterReview(card.id,card,rating); showFlashCard(s.idx+1); }
   function showFlashEndScreen(results) {
     var s = _flashSession; if (!s) return; var e = s.els;
+    // Récap : la pastille de matière du header disparaît (elle reste visible pendant les cartes)
+    var _spLabEnd = document.getElementById('flashSessSpeLabel');
+    if (_spLabEnd) _spLabEnd.style.display = 'none';
     if (e.progress) e.progress.style.width='100%';
     if (e.counter) e.counter.textContent='Terminé';
     if (!e.stage) return;
@@ -46580,15 +46583,34 @@ body.tpx-premium-locked .checklist-delete {
    (au-dessus du clavier) au lieu du viewport de mise en page, et les modals
    se limitent à cette hauteur : le champ édité reste toujours visible. */
 body.tc-kb-open .notes-modal-overlay.active,
-body.tc-kb-open .help-modal-overlay.active {
+body.tc-kb-open .help-modal-overlay.active,
+body.tc-kb-open .flash-session-overlay.active,
+body.tc-kb-open .flash-drawer-overlay.active,
+body.tc-kb-open .flash-edit-overlay.active,
+body.tc-kb-open .pdd-overlay.active,
+body.tc-kb-open .tours-today-modal-overlay.active {
     top: var(--tc-vv-top, 0px) !important;
     bottom: auto !important;
     height: var(--tc-vv-h, 100vh) !important;
     align-items: flex-start !important;
     padding-top: 8px !important;
 }
+/* Les hauteurs fixes en vh (ex : .notes-modal à 88vh) ignorent le clavier :
+   on repasse en hauteur automatique, plafonnée au viewport visible. */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
-body.tc-kb-open .help-modal-overlay.active .help-modal {
+body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
+body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
+body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
+body.tc-kb-open .pdd-overlay.active .pdd-modal {
+    height: auto !important;
+}
+body.tc-kb-open .notes-modal-overlay.active .notes-modal,
+body.tc-kb-open .help-modal-overlay.active .help-modal,
+body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
+body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
+body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
+body.tc-kb-open .pdd-overlay.active .pdd-modal,
+body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     max-height: calc(var(--tc-vv-h, 100vh) - 16px) !important;
 }
 </style>
@@ -46600,9 +46622,26 @@ body.tc-kb-open .help-modal-overlay.active .help-modal {
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
     var raf = null;
 
+    /* Référence de hauteur « sans clavier » : sur iPadOS, window.innerHeight
+       peut LUI AUSSI rétrécir à l'ouverture du clavier (contrairement à l'iPhone),
+       ce qui faisait rater la détection. On mémorise donc la hauteur de base et
+       on ne la met à jour que lorsqu'elle AUGMENTE ou que la largeur change
+       (rotation / Split View) — un clavier ne fait jamais grandir la fenêtre. */
+    var _baseH = window.innerHeight;
+    var _baseW = window.innerWidth;
+    window.addEventListener('resize', function () {
+        if (window.innerHeight > _baseH || Math.abs(window.innerWidth - _baseW) > 2) {
+            _baseH = window.innerHeight;
+            _baseW = window.innerWidth;
+        }
+    });
+    window.addEventListener('orientationchange', function () {
+        setTimeout(function () { _baseH = window.innerHeight; _baseW = window.innerWidth; onChange(); }, 400);
+    });
     function apply() {
         var vv = window.visualViewport;
-        var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        var ref = Math.max(window.innerHeight, _baseH);
+        var kb = Math.max(0, ref - vv.height - vv.offsetTop);
         var open = kb > KB_MIN;
         root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
         root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
@@ -46625,9 +46664,53 @@ body.tc-kb-open .help-modal-overlay.active .help-modal {
                        (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
         if (!editable) return;
         setTimeout(function () {
-            try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+            var vv = window.visualViewport;
+            var margin = 14;
+            /* Pour un éditeur riche (contenteditable, ex : cahiers d'erreurs), viser
+               le CURSEUR et non l'élément entier : un grand éditeur « centré » peut
+               très bien laisser le point d'insertion caché sous le clavier. */
+            var rect = null;
+            if (el.isContentEditable) {
+                try {
+                    var sel = window.getSelection();
+                    if (sel && sel.rangeCount) {
+                        var r = sel.getRangeAt(0).cloneRange();
+                        r.collapse(false);
+                        rect = r.getClientRects()[0] || null;
+                        if (rect && !rect.height && !rect.width) rect = null;
+                    }
+                } catch (e) {}
+            }
+            if (!rect) { try { rect = el.getBoundingClientRect(); } catch (e) { return; } }
+            var visTop = vv ? vv.offsetTop : 0;
+            var visBottom = visTop + (vv ? vv.height : window.innerHeight);
+            if (rect.bottom <= visBottom - margin && rect.top >= visTop + margin) return; /* déjà visible */
+            try {
+                if (el.isContentEditable) {
+                    /* Faire défiler le premier conteneur interne défilant pour ramener le caret */
+                    var delta = rect.bottom > visBottom - margin
+                        ? rect.bottom - (visBottom - margin)
+                        : rect.top - (visTop + margin);
+                    var sc = el;
+                    while (sc && sc !== document.body) {
+                        if (sc.scrollHeight > sc.clientHeight + 2) { sc.scrollTop += delta; return; }
+                        sc = sc.parentElement;
+                    }
+                }
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            } catch (e) {}
         }, 120);
     }
+    /* Pendant la frappe dans un éditeur riche, garder le curseur visible
+       (le texte grandit et le caret finit par passer sous le clavier). */
+    var _lastCaretScroll = 0;
+    document.addEventListener('input', function () {
+        if (!document.body.classList.contains('tc-kb-open')) return;
+        var now = Date.now();
+        if (now - _lastCaretScroll < 600) return;
+        _lastCaretScroll = now;
+        scrollFocusedIntoView();
+    });
     /* À la prise de focus, le clavier arrive avec un léger délai sur iOS */
     document.addEventListener('focusin', function () { setTimeout(onChange, 300); });
     document.addEventListener('focusout', function () { setTimeout(onChange, 300); });
