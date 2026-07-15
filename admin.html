@@ -1212,7 +1212,7 @@ function renderUsersTable(users) {
             </td>
             <td><code style="font-size:0.7rem;color:var(--text-muted)">${u.uid.substring(0,12)}…</code></td>
             <td>${formatDate(u.createdAt)}</td>
-            <td>${formatDate(u.lastLogin || u.lastUpdated)}</td>
+            <td>${formatDate(u.lastLogin || u.lastUpdated || u.createdAt)}</td>
             <td><span class="badge ${plan.cls}">${plan.label}</span></td>
             <td>${getStatusBadge(u)}</td>
             <td>
@@ -1274,7 +1274,7 @@ function userSortValue(u, field) {
         case 'name':      return (u.displayName || u.email || '').toLowerCase();
         case 'uid':       return (u.uid || '').toLowerCase();
         case 'createdAt': return _toMsVal(u.createdAt);
-        case 'lastSeen':  return _toMsVal(u.lastLogin || u.lastUpdated);
+        case 'lastSeen':  return _toMsVal(u.lastLogin || u.lastUpdated || u.createdAt);
         case 'plan':      return planRank(u);
         case 'status':    return (u.subscriptionStatus || '').toLowerCase();
         default:          return 0;
@@ -1945,7 +1945,7 @@ function fallbackOnlineEstimate(reason) {
     const onlineEl = document.getElementById('stat-online');
     const subEl = document.getElementById('stat-online-sub');
     const toMs = v => v?.toDate ? v.toDate().getTime() : v?.seconds ? v.seconds*1000 : (new Date(v).getTime()||0);
-    const recent = allUsers.filter(u => toMs(u.lastLogin || u.lastUpdated) > Date.now() - 30*60*1000).length;
+    const recent = allUsers.filter(u => toMs(u.lastLogin || u.lastUpdated || u.createdAt) > Date.now() - 30*60*1000).length;
     onlineEl.textContent = recent || '0';
     subEl.innerHTML = `<span style="color:var(--amber)">estimation</span> · actifs &lt;30 min (${reason})`;
 }

@@ -18572,9 +18572,19 @@ function enableOfflineActions() {
     });
 }
 
+const TPX_PREMIUM_BLOCKED_ACTIONS = [
+    'tour', 'task', 'validate', 'checklist', 'config', 'save', 'notes',
+    'train-notes', 'train-edit', 'train-add', 'train-delete', 'train-statut',
+    'planning-status', 'planning-text', 'planning-specialty'
+];
 function canPerformAction(actionName) {
     if (isOfflineMode || window.offlineActionsBlocked) {
         showOfflineActionBlockedMessage(actionName);
+        return false;
+    }
+    /* Premium : lecture seule — blocage silencieux (pulsation de la couronne, aucun message) */
+    if (window.tpxPremiumLocked && TPX_PREMIUM_BLOCKED_ACTIONS.indexOf(actionName) !== -1) {
+        if (window.tpxPremiumNudge) window.tpxPremiumNudge();
         return false;
     }
     return true;
@@ -19427,6 +19437,13 @@ async function updateUserUI(user) {
                     }
                 }
             }
+            // ── Verrou Premium (lecture seule) : calculé depuis le doc utilisateur ──
+            if (window.tpxApplyPremiumState) {
+                window.tpxApplyPremiumState(userDoc.exists() ? userInfo : {
+                    isPremium: true, premiumType: 'grace_period',
+                    gracePeriodEnd: new Date('2026-10-26T22:59:59.000Z')
+                });
+            }
             // Démarrer le listener temps-réel des amis
             if (typeof window.startFriendsListener === 'function') {
                 window.startFriendsListener(user.uid);
@@ -19505,6 +19522,7 @@ async function updateUserUI(user) {
         currentUser = null;
         window.currentUser = null; // sync global
         window.userData = null;    // sync global
+        if (window.tpxResetPremiumState) window.tpxResetPremiumState();
 		_pendingSyncChecked = false;
         userAuth.classList.remove('logged-in');
         loginRequired.style.display = 'block';
@@ -45993,7 +46011,10 @@ window.pushBackupVersion = async function (uid, data, content) {
 let _presenceDone = false;
 if (auth) onAuthStateChanged(auth, async (user) => {
   if (!user) return;
-  updateDoc(doc(db, 'users', user.uid), { lastLogin: serverTimestamp() }).catch(() => {});
+  // lastLogin : sur un compte tout neuf, ce updateDoc peut partir AVANT la création
+  // du doc users/{uid} (course avec updateUserUI) → on réessaie une fois après 6 s.
+  const _writeLastLogin = () => updateDoc(doc(db, 'users', user.uid), { lastLogin: serverTimestamp() });
+  _writeLastLogin().catch(() => { setTimeout(() => { _writeLastLogin().catch(() => {}); }, 6000); });
   // Actif du jour (DAU) : 1 incrément par utilisateur / app / jour, dédupliqué via localStorage
   try {
     const _d = new Date();
@@ -46112,5 +46133,426 @@ if (auth) onAuthStateChanged(auth, async (user) => {
   start();
 })();
 </script>
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODE PREMIUM — LECTURE SEULE
+     Affiché uniquement quand l'utilisateur n'a ni période de grâce en
+     cours, ni abonnement actif, ni période payée restante.
+     ═══════════════════════════════════════════════════════════════════ -->
+<style>
+/* ── Bouton couronne (bas gauche) ── */
+.tpx-premium-fab {
+    position: fixed; bottom: 1.4rem; left: 1.4rem; z-index: 1300;
+    display: none; align-items: center; height: 58px; min-width: 58px;
+    padding: 0 17px; border-radius: 29px; cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6d28d9 100%);
+    color: #fff; font-family: var(--font-display, inherit);
+    box-shadow: 0 8px 26px rgba(109, 40, 217, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    overflow: hidden;
+    transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.5, 1), box-shadow 0.28s ease;
+    animation: tpxFabGlow 3.4s ease-in-out infinite;
+}
+body.tpx-premium-locked .tpx-premium-fab { display: flex; }
+@keyframes tpxFabGlow {
+    0%, 100% { box-shadow: 0 8px 26px rgba(109, 40, 217, 0.42), inset 0 1px 0 rgba(255,255,255,0.35); }
+    50%      { box-shadow: 0 8px 32px rgba(139, 92, 246, 0.62), inset 0 1px 0 rgba(255,255,255,0.35); }
+}
+/* Reflet qui balaie le bouton */
+.tpx-premium-fab::before {
+    content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: skewX(-22deg);
+    animation: tpxFabSheen 4.5s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes tpxFabSheen {
+    0%, 55%  { left: -80%; }
+    75%, 100% { left: 130%; }
+}
+.tpx-premium-fab i.fa-crown {
+    font-size: 1.3rem; line-height: 1; color: #fde68a;
+    filter: drop-shadow(0 1px 3px rgba(120, 53, 15, 0.45));
+    transition: transform 0.28s ease;
+}
+.tpx-premium-fab:hover i.fa-crown { transform: rotate(-12deg) scale(1.08); }
+.tpx-premium-fab .tpx-fab-label {
+    max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+    font-weight: 800; font-size: 0.93rem; letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(76, 29, 149, 0.4);
+    transition: max-width 0.38s ease, opacity 0.26s ease, margin-left 0.38s ease;
+}
+.tpx-premium-fab:hover { transform: translateY(-3px); }
+.tpx-premium-fab:hover .tpx-fab-label,
+.tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
+.tpx-premium-fab.tpx-nudge { transform: translateY(-3px); }
+.tpx-premium-fab:active { transform: translateY(-1px) scale(0.97); }
+.tpx-premium-fab:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+@keyframes tpxFabPulse {
+    0%   { box-shadow: 0 8px 26px rgba(109,40,217,0.45), 0 0 0 0 rgba(139,92,246,0.55); }
+    70%  { box-shadow: 0 8px 26px rgba(109,40,217,0.45), 0 0 0 18px rgba(139,92,246,0); }
+    100% { box-shadow: 0 8px 26px rgba(109,40,217,0.45), 0 0 0 0 rgba(139,92,246,0); }
+}
+.tpx-premium-fab.tpx-pulse { animation: tpxFabPulse 0.9s ease-out 2; }
+@media (max-width: 768px) {
+    .tpx-premium-fab { bottom: 1rem; left: 1rem; height: 52px; min-width: 52px; padding: 0 15px; }
+    .tpx-premium-fab .tpx-fab-label { font-size: 0.85rem; } /* replié via max-width:0, se déploie au nudge */
+    .tpx-premium-fab:hover .tpx-fab-label { max-width: 0; opacity: 0; margin-left: 0; } /* pas de survol sur mobile */
+    .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 220px; opacity: 1; margin-left: 9px; }
+}
+
+/* ── Atténuation douce des contrôles verrouillés (comme le mode hors ligne) ── */
+body.tpx-premium-locked .open-notes-btn,
+body.tpx-premium-locked .item-prio-btn,
+body.tpx-premium-locked .spe-err-btn,
+body.tpx-premium-locked #checklist-add-btn,
+body.tpx-premium-locked .checklist-checkbox,
+body.tpx-premium-locked .checklist-delete {
+    opacity: 0.55;
+}
+
+/* ── Modal Premium ── */
+.tpx-premium-modal { max-width: 560px !important; min-height: min(660px, 86vh); }
+.tpx-premium-body { padding: 1.4rem 1.5rem 1.5rem !important; flex: 1 1 auto; display: flex; flex-direction: column; }
+/* Aucun bloc ne doit être écrasé verticalement : si ça déborde, le corps défile */
+.tpx-premium-body > * { flex-shrink: 0; }
+.tpx-premium-body .tpx-benefit-grid { flex: 1 0 auto; align-content: center; }
+
+/* ── Mobile : mise en page compacte, héro non tronqué ── */
+@media (max-width: 520px) {
+    .tpx-premium-modal { min-height: 0; }
+    .tpx-premium-body { padding: 1.05rem 0.95rem 1.1rem !important; }
+    .tpx-hero { padding: 0.85rem 0.9rem; gap: 0.75rem; margin-bottom: 0.9rem; border-radius: 14px; }
+    .tpx-hero-crown { width: 42px; height: 42px; flex: 0 0 42px; font-size: 1.1rem; border-radius: 12px; }
+    .tpx-hero-badge { font-size: 0.62rem; padding: 0.18rem 0.55rem; margin-bottom: 0.3rem; }
+    .tpx-hero-text p { font-size: 0.8rem; line-height: 1.45; }
+    .tpx-benefit-grid { gap: 0.55rem; margin-bottom: 1rem; }
+    .tpx-benefit { padding: 0.65rem 0.7rem; border-radius: 12px; }
+    .tpx-benefit-icon { width: 32px; height: 32px; flex: 0 0 32px; font-size: 0.8rem; }
+    .tpx-benefit-text { font-size: 0.75rem; }
+    .tpx-benefit-text b { font-size: 0.82rem; }
+    .tpx-premium-cta { padding: 0.9rem 1rem; font-size: 0.95rem; border-radius: 13px; }
+    .tpx-premium-note { font-size: 0.7rem; line-height: 1.4; padding: 0 0.4rem; }
+}
+
+/* Bandeau héro */
+.tpx-hero {
+    position: relative; display: flex; align-items: center; gap: 1rem;
+    padding: 1.05rem 1.15rem; margin-bottom: 1.15rem; border-radius: 16px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 55%, #4c1d95 100%);
+    box-shadow: 0 8px 24px rgba(109, 40, 217, 0.35);
+    overflow: hidden;
+}
+.tpx-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+        radial-gradient(circle at 85% 15%, rgba(255,255,255,0.22), transparent 42%),
+        radial-gradient(circle at 15% 90%, rgba(167,139,250,0.35), transparent 45%);
+    pointer-events: none;
+}
+.tpx-hero-crown {
+    position: relative; width: 52px; height: 52px; flex: 0 0 52px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    box-shadow: 0 5px 14px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255,255,255,0.45);
+    color: #fff; font-size: 1.35rem;
+    animation: tpxCrownFloat 3s ease-in-out infinite;
+}
+@keyframes tpxCrownFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-3px) rotate(-4deg); }
+}
+.tpx-hero-text { position: relative; }
+.tpx-hero-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.22rem 0.65rem; margin-bottom: 0.4rem; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ede9fe; font-size: 0.7rem; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+}
+.tpx-hero-badge i { font-size: 0.65rem; }
+.tpx-hero-text p { margin: 0; color: #f5f3ff; font-size: 0.9rem; line-height: 1.5; }
+.tpx-hero-text p b { color: #fde68a; }
+
+/* Grille d'avantages */
+.tpx-benefit-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: 0 0 1.25rem;
+}
+@media (max-width: 520px) { .tpx-benefit-grid { grid-template-columns: 1fr; } }
+.tpx-benefit {
+    display: flex; align-items: flex-start; gap: 0.7rem;
+    padding: 0.75rem 0.8rem; border-radius: 14px;
+    background: var(--gray-50, #f9fafb);
+    border: 1px solid var(--gray-200, #e5e7eb);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.tpx-benefit:hover {
+    transform: translateY(-2px);
+    border-color: #c4b5fd;
+    box-shadow: 0 6px 16px rgba(109, 40, 217, 0.12);
+}
+[data-theme="dark"] .tpx-benefit { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .tpx-benefit:hover { border-color: #6d28d9; box-shadow: 0 6px 16px rgba(109, 40, 217, 0.3); }
+.tpx-benefit-icon {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.85rem;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    box-shadow: 0 3px 9px rgba(109, 40, 217, 0.32), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.tpx-benefit-text { font-size: 0.78rem; line-height: 1.4; color: var(--gray-500, #6b7280); }
+.tpx-benefit-text b { display: block; font-size: 0.85rem; margin-bottom: 1px; color: var(--gray-800, #1f2937); }
+[data-theme="dark"] .tpx-benefit-text { color: #94a3b8; }
+[data-theme="dark"] .tpx-benefit-text b { color: #e2e8f0; }
+
+/* Bouton d'action */
+.tpx-premium-cta {
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    width: 100%; padding: 1rem 1.2rem; border-radius: 15px; overflow: hidden;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fff !important; font-weight: 800; font-size: 1rem; text-decoration: none;
+    font-family: var(--font-display, inherit);
+    box-shadow: 0 6px 18px rgba(109, 40, 217, 0.42), inset 0 1px 0 rgba(255,255,255,0.28);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.tpx-premium-cta::after {
+    content: ''; position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+    transform: skewX(-22deg);
+    animation: tpxFabSheen 3.6s ease-in-out infinite;
+    pointer-events: none;
+}
+.tpx-premium-cta i.fa-crown { color: #fde68a; filter: drop-shadow(0 1px 2px rgba(120,53,15,0.4)); }
+.tpx-premium-cta .tpx-cta-arrow { font-size: 0.85rem; transition: transform 0.22s ease; }
+.tpx-premium-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(109, 40, 217, 0.55), inset 0 1px 0 rgba(255,255,255,0.28); color: #fff; }
+.tpx-premium-cta:hover .tpx-cta-arrow { transform: translateX(4px); }
+.tpx-premium-cta:active { transform: translateY(0); }
+.tpx-premium-note {
+    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+    margin-top: 0.9rem; text-align: center; font-size: 0.78rem;
+    color: var(--gray-500, #6b7280);
+}
+.tpx-premium-note i { color: #10b981; font-size: 0.8rem; }
+[data-theme="dark"] .tpx-premium-note { color: #64748b; }
+</style>
+
+<!-- Modal Premium (même structure et mêmes animations que les autres modals) -->
+<div class="help-modal-overlay" id="tpx-premium-overlay" onclick="if(event.target===this)closeTpxPremiumModal()">
+    <div class="help-modal tpx-premium-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 2px 8px rgba(109,40,217,0.35);"><i class="fas fa-crown"></i></div>
+                <h3>Passer Premium</h3>
+            </div>
+            <button class="help-modal-close" data-offline-allowed="close" onclick="closeTpxPremiumModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="help-modal-body tpx-premium-body">
+            <div class="tpx-hero">
+                <div class="tpx-hero-crown"><i class="fas fa-crown"></i></div>
+                <div class="tpx-hero-text">
+                    <span class="tpx-hero-badge"><i class="fas fa-eye"></i> Lecture seule</span>
+                    <p>Vos données restent visibles, mais les modifications sont réservées aux membres <b>Premium</b>.</p>
+                </div>
+            </div>
+            <div class="tpx-benefit-grid">
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-pen-to-square"></i></div><div class="tpx-benefit-text"><b>Modification illimitée</b>Ajoutez et validez vos ressources sur les 367 items.</div></div>
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-rotate"></i></div><div class="tpx-benefit-text"><b>Ajout de tours</b>Comptez vos tours et suivez ceux du jour et de la semaine.</div></div>
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-book-open"></i></div><div class="tpx-benefit-text"><b>Notes &amp; cahiers d'erreurs</b>Notes par item, entraînements et flashcards d'erreurs.</div></div>
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-calendar-days"></i></div><div class="tpx-benefit-text"><b>Planning &amp; To-Do</b>Planifiez vos révisions et gérez vos tâches.</div></div>
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-trophy"></i></div><div class="tpx-benefit-text"><b>Statistiques &amp; trophées</b>Graphiques de progression et trophées motivants.</div></div>
+                <div class="tpx-benefit"><div class="tpx-benefit-icon"><i class="fas fa-cloud"></i></div><div class="tpx-benefit-text"><b>Sauvegarde &amp; synchro</b>Vos données sécurisées sur tous vos appareils.</div></div>
+            </div>
+            <a class="tpx-premium-cta" href="comptepremium.html?from=edn"><i class="fas fa-crown"></i> Découvrir Premium <i class="fas fa-arrow-right tpx-cta-arrow"></i></a>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+/* ═══════ MODE PREMIUM (lecture seule) — logique partagée EDN/ECOS ═══════ */
+(function () {
+    'use strict';
+    window.tpxPremiumLocked = false;
+
+    function tpxToDate(v) {
+        if (!v) return null;
+        try {
+            if (typeof v.toDate === 'function') return v.toDate();          // Firestore Timestamp
+            if (typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+            var d = new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        } catch (e) { return null; }
+    }
+
+    /* Accès complet si : période de grâce en cours, OU abonnement actif,
+       OU abonnement annulé mais période payée pas encore terminée. */
+    window.tpxHasPremiumAccess = function (u) {
+        if (!u) return false;
+        var now = new Date();
+        var isGrace = (u.premiumType === 'grace_period') ||
+                      (!u.premiumType && u.isPremium && !u.subscriptionStatus); // ancien doc pas encore migré
+        if (isGrace) {
+            var g = tpxToDate(u.gracePeriodEnd) || new Date('2026-10-26T22:59:59.000Z');
+            if (g > now) return true;
+        }
+        if (u.isPremium && u.subscriptionStatus === 'active') return true;
+        var e = tpxToDate(u.subscriptionEndDate);
+        if (e && e > now) return true; // annulé mais payé jusqu'à cette date
+        return false;
+    };
+
+    window.tpxApplyPremiumState = function (userInfo) {
+        if (window.tpxHasPremiumAccess(userInfo)) tpxDisablePremiumLock();
+        else tpxEnablePremiumLock();
+    };
+    window.tpxResetPremiumState = function () { tpxDisablePremiumLock(); };
+
+    function tpxEnablePremiumLock() {
+        if (window.tpxPremiumLocked) return;
+        window.tpxPremiumLocked = true;
+        document.body.classList.add('tpx-premium-locked');
+        var inp = document.getElementById('checklist-new-item');
+        if (inp && !inp.readOnly) {
+            inp.dataset.tpxLocked = '1';
+            inp.dataset.tpxPrevPlaceholder = inp.getAttribute('placeholder') || '';
+            inp.readOnly = true;
+            inp.setAttribute('placeholder', 'Ajout de tâches réservé aux membres Premium');
+        }
+    }
+
+    function tpxDisablePremiumLock() {
+        if (!window.tpxPremiumLocked && !document.body.classList.contains('tpx-premium-locked')) return;
+        window.tpxPremiumLocked = false;
+        document.body.classList.remove('tpx-premium-locked');
+        var inp = document.getElementById('checklist-new-item');
+        if (inp && inp.dataset.tpxLocked === '1') {
+            inp.readOnly = false;
+            inp.setAttribute('placeholder', inp.dataset.tpxPrevPlaceholder || '');
+            delete inp.dataset.tpxLocked;
+            delete inp.dataset.tpxPrevPlaceholder;
+        }
+    }
+
+    /* Nudge : à chaque tentative bloquée, le bouton couronne se déploie
+       entièrement (« Débloquez tout le tableur ») pendant ~2,5 s + pulsation.
+       Aucun message : le bouton lui-même sert de signal. */
+    var _lastPulse = 0;
+    var _nudgeTimer = null;
+    window.tpxPremiumNudge = function () {
+        if (!window.tpxPremiumLocked) return;
+        var fab = document.getElementById('tpx-premium-fab');
+        if (!fab) return;
+        /* Déploiement complet du bouton, prolongé à chaque nouvelle tentative */
+        fab.classList.add('tpx-nudge');
+        if (_nudgeTimer) clearTimeout(_nudgeTimer);
+        _nudgeTimer = setTimeout(function () { fab.classList.remove('tpx-nudge'); }, 2500);
+        /* Pulsation (légèrement throttlée pour rester fluide) */
+        var now = Date.now();
+        if (now - _lastPulse < 600) return;
+        _lastPulse = now;
+        fab.classList.remove('tpx-pulse');
+        void fab.offsetWidth; /* relance l'animation */
+        fab.classList.add('tpx-pulse');
+    };
+
+    /* ── Modal : ouverture/fermeture animées + verrouillage du scroll de page
+          (mêmes animations .closing et même gestion que les autres modals) ── */
+    window.openTpxPremiumModal = function () {
+        var ov = document.getElementById('tpx-premium-overlay');
+        if (!ov || ov.classList.contains('active')) return;
+        ov.classList.remove('closing');
+        ov.classList.add('active');
+        /* masque la barre de défilement de la page (même méthode que les autres modals EDN) */
+        var _sw = window.innerWidth - document.documentElement.clientWidth;
+        document.body.style.overflow = 'hidden';
+        if (window._setScrollbarComp) window._setScrollbarComp(_sw);
+    };
+    window.closeTpxPremiumModal = function () {
+        var ov = document.getElementById('tpx-premium-overlay');
+        if (!ov || !ov.classList.contains('active') || ov.classList.contains('closing')) return;
+        ov.classList.add('closing');
+        setTimeout(function () {
+            ov.classList.remove('active', 'closing');
+            document.body.style.overflow = '';
+            if (window._setScrollbarComp) window._setScrollbarComp(0);
+        }, 200);
+    };
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var ov = document.getElementById('tpx-premium-overlay');
+        if (ov && ov.classList.contains('active')) window.closeTpxPremiumModal();
+    });
+
+    /* ── Bouton couronne (créé une seule fois, visible via body.tpx-premium-locked) ── */
+    function buildFab() {
+        if (document.getElementById('tpx-premium-fab')) return;
+        var fab = document.createElement('button');
+        fab.id = 'tpx-premium-fab';
+        fab.type = 'button';
+        fab.className = 'tpx-premium-fab';
+        fab.setAttribute('aria-label', 'Débloquer tout le tableur');
+        fab.innerHTML = '<i class="fas fa-crown"></i><span class="tpx-fab-label">Débloquer tout le tableur</span>';
+        fab.addEventListener('click', function () { window.openTpxPremiumModal(); });
+        document.body.appendChild(fab);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildFab);
+    else buildFab();
+
+    /* ── Enrobage des fonctions globales à bloquer (silencieux + pulse) ── */
+    var TPX_WRAP_FNS = ['openToursTodayModal', 'openToursWeekModal', 'openFlashDrawer', 'openSpeErrModal', 'openItemPriorityPopup'];
+    function tpxWrapFn(name) {
+        function tryWrap() {
+            var orig = window[name];
+            if (typeof orig !== 'function') return false;
+            if (orig._tpxWrapped) return true;
+            var wrapped = function () {
+                if (window.tpxPremiumLocked) { window.tpxPremiumNudge(); return; }
+                return orig.apply(this, arguments);
+            };
+            wrapped._tpxWrapped = true;
+            window[name] = wrapped;
+            return true;
+        }
+        if (tryWrap()) return;
+        var tries = 0;
+        var t = setInterval(function () { if (tryWrap() || ++tries > 60) clearInterval(t); }, 300);
+    }
+    TPX_WRAP_FNS.forEach(tpxWrapFn);
+
+    /* ── Intercepteur global (phase capture) : clics et saisies bloqués
+          en douceur sur les éléments listés, sans aucun message. ── */
+    var TPX_CLICK_BLOCK = '';
+    var TPX_EDIT_BLOCK  = '.day-notes-input, #checklist-new-item';
+    var HARMLESS_KEYS = ['Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown', 'F5'];
+    function tpxBlock(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        window.tpxPremiumNudge();
+    }
+    function tpxGuard(e) {
+        if (!window.tpxPremiumLocked) return;
+        var t = e.target;
+        if (!t || !t.closest) return;
+        if (e.type === 'click' || e.type === 'dblclick') {
+            var sel = [TPX_CLICK_BLOCK, TPX_EDIT_BLOCK].filter(Boolean).join(',');
+            if (sel && t.closest(sel)) tpxBlock(e);
+            return;
+        }
+        /* keydown / beforeinput / paste / drop : uniquement zones d'édition + contrôles bloqués */
+        var selEdit = [TPX_EDIT_BLOCK, TPX_CLICK_BLOCK].filter(Boolean).join(',');
+        if (!selEdit || !t.closest(selEdit)) return;
+        if (e.type === 'keydown' && HARMLESS_KEYS.indexOf(e.key) !== -1) return;
+        tpxBlock(e);
+    }
+    ['click', 'dblclick', 'keydown', 'beforeinput', 'paste', 'drop'].forEach(function (evt) {
+        document.addEventListener(evt, tpxGuard, true);
+    });
+
+
+})();
+</script>
+
 </body>
 </html>
