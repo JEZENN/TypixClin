@@ -88,6 +88,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     --z-max: 9999;
 }
 
+
+/* ===== SCROLLBAR PERSONNALISEE (identique aux tableurs EDN/ECOS) ===== */
+
+/* Tous les elements internes : barre ultra-discrete (Chrome 121+, Firefox) */
+* { scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
+
+/* Webkit fallback - reset global tres discret */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Barre principale de la page - coloree et plus large */
+html { scrollbar-width: thin; scrollbar-color: #3b82f6 #e5e7eb; }
+html::-webkit-scrollbar { width: 8px; }
+html::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 9999px; }
+html::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 9999px; border: 2px solid #e5e7eb; }
+html::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #1d4ed8 0%, #7c3aed 100%); border-width: 1px; }
+
+/* Mode sombre - barre principale violette */
+html[data-theme="dark"] { scrollbar-color: #a855f7 #1e293b; }
+html[data-theme="dark"]::-webkit-scrollbar-track { background: #1e293b; }
+html[data-theme="dark"]::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #a855f7 0%, #7c3aed 100%); border-color: #1e293b; }
+html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #c084fc 0%, #a855f7 100%); }
+
+/* Mode sombre - elements internes */
+[data-theme="dark"] * { scrollbar-color: #475569 transparent; }
+
 [data-theme="dark"] {
     --primary: #60a5fa;
     --primary-dark: #3b82f6;
@@ -1473,6 +1501,119 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     color: #f87171;
 }
 
+/* ===== Sélecteur des avantages Premium : Tableur EDN / Tableur ECOS ===== */
+.benefits-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto 2rem;
+    padding: 0.35rem;
+    max-width: 420px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-full, 999px);
+    position: relative;
+    z-index: 1;
+}
+
+.benefits-toggle-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.2rem;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: var(--border-radius-full, 999px);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: color 220ms ease;
+    white-space: nowrap;
+}
+
+.benefits-toggle-btn:hover {
+    color: var(--primary);
+}
+
+.benefits-toggle-btn.active {
+    color: #fff;
+}
+
+.benefits-toggle-btn.active:hover {
+    color: #fff;
+}
+
+/* Pill glissante sous l'onglet actif — même transition que la barre de
+   navigation des tableurs EDN et ECOS */
+.benefits-toggle-pill {
+    position: absolute;
+    top: 0.35rem;
+    left: 0;
+    height: calc(100% - 0.7rem);
+    background: var(--primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+    border-radius: var(--border-radius-full, 999px);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    pointer-events: none;
+    z-index: 0;
+    width: 0;
+    transform: translateX(0.35rem);
+    transition: transform 300ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                width    300ms cubic-bezier(0.34, 1.2, 0.64, 1);
+    will-change: transform, width;
+}
+
+[data-theme="dark"] .benefits-toggle {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .benefits-toggle-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .benefits-toggle-btn.active {
+    color: #fff;
+}
+
+.benefits-panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Disparition du panneau courant avant l'affichage du suivant */
+.benefits-panel.benefits-leaving {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+/* Apparition du nouveau panneau */
+.benefits-panel.benefits-entering {
+    animation: benefitsFadeIn 0.3s ease;
+}
+
+@keyframes benefitsFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+    .benefits-toggle {
+        max-width: 100%;
+    }
+    .benefits-toggle-btn {
+        font-size: 0.85rem;
+        padding: 0.55rem 0.8rem;
+    }
+}
+
 /* Bouton retour au tableur - Version compacte */
 .back-to-tableur-container {
     display: flex;
@@ -1656,9 +1797,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <i class="fas fa-chevron-down dropdown-chevron"></i>
                     </button>
                     <div class="nav-dropdown-content">
-                        <a href="FichierGsheet.html" class="dropdown-item"><i class="fas fa-table"></i> Tableur Gsheet Externat</a>
-                        <a href="TableurEnLigne.html" class="dropdown-item"><i class="fas fa-calculator"></i> Tableur en ligne Externat</a>
-                        <a href="carnet-de-stage.html" class="dropdown-item"><i class="fas fa-book"></i> Carnet de stage</a>
+                        <a href="TableurEnLigne.html" class="dropdown-item"><i class="fas fa-calculator"></i> Tableur révision EDN</a>
+                        <a href="TableurECOS.html" class="dropdown-item"><i class="fas fa-user-doctor"></i> Tableur révision ECOS</a>
+                        <a href="index.html" class="dropdown-item"><i class="fas fa-book"></i> Carnet de stage</a>
                     </div>
                 </li>
             </ul>
@@ -1675,10 +1816,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <div class="profile-email" id="profile-email">jean@exemple.com</div>
                         </div>
                         <div class="profile-menu">
-						   <a href="comptepremium.html" class="profile-menu-item">
-								<i class="fas fa-crown"></i>
-								Mon abonnement
-							</a>
 							<button class="profile-menu-item logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Se déconnecter</span></button>
                         </div>
                     </div>
@@ -1736,13 +1873,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <i class="fas fa-heartbeat"></i>
             Fiche ECG
         </a>
-        <a href="FichierGsheet.html" class="mobile-menu-link">
-            <i class="fas fa-table"></i>
-            Tableur Gsheet
-        </a>
         <a href="TableurEnLigne.html" class="mobile-menu-link">
-            <i class="fas fa-laptop-medical"></i>
-            Tableur en ligne
+            <i class="fas fa-calculator"></i>
+            Tableur révision EDN
+        </a>
+        <a href="TableurECOS.html" class="mobile-menu-link">
+            <i class="fas fa-user-doctor"></i>
+            Tableur révision ECOS
         </a>
         <a href="Carnet-de-stage.html" class="mobile-menu-link">
             <i class="fas fa-book-medical"></i>
@@ -1760,11 +1897,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="hero-icon">👑</div>
                 <h1>Mon Compte Premium</h1>
                 <p class="hero-subtitle">Gérez votre abonnement et profitez de toutes les fonctionnalités TypixClin</p>
-				<!-- Bouton retour au tableur -->
+				<!-- Bouton retour au tableur (cible EDN ou ECOS selon la page d'origine) -->
 				<div class="back-to-tableur-container">
-					<a href="TableurEnLigne.html" class="back-to-tableur-btn">
+					<a href="TableurEnLigne.html" class="back-to-tableur-btn" id="back-to-tableur-link">
 						<i class="fas fa-arrow-left"></i>
-						Retour au Tableur
+						<span id="back-to-tableur-label">Retour au Tableur</span>
 					</a>
 				</div>
             </div>
@@ -1799,55 +1936,126 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 			<!-- Features -->
         <section>
             <h2 class="section-title">Pourquoi passer Premium ?</h2>
-            <p class="section-subtitle">Accédez à l'ensemble des fonctionnalités pour optimiser vos révisions et réussir votre EDN</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-edit"></i>
+
+            <!-- Sélecteur Tableur EDN / Tableur ECOS -->
+            <div class="benefits-toggle" role="tablist" aria-label="Choisir le tableur">
+                <button type="button" class="benefits-toggle-btn active" id="benefits-tab-edn" data-target="edn" role="tab" aria-selected="true" onclick="showBenefits('edn')">
+                    <i class="fas fa-table"></i> Tableur EDN
+                </button>
+                <button type="button" class="benefits-toggle-btn" id="benefits-tab-ecos" data-target="ecos" role="tab" aria-selected="false" onclick="showBenefits('ecos')">
+                    <i class="fas fa-user-md"></i> Tableur ECOS
+                </button>
+            </div>
+
+            <!-- Avantages Premium — Tableur EDN -->
+            <div id="benefits-edn" class="benefits-panel" role="tabpanel">
+                <p class="section-subtitle">Toutes les fonctionnalités du tableur EDN pour organiser vos révisions et valider les 367 items en toute sérénité</p>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-list-check"></i>
+                        </div>
+                        <h3>Suivi complet des 367 items</h3>
+                        <p>Rangs A/B/C, ressources personnalisées et validation de vos connaissances, sans aucune restriction.</p>
                     </div>
-                    <h3>Modification illimitée</h3>
-                    <p>Modifiez votre planning à volonté et personnalisez vos items sans restriction.</p>
-                </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-rotate"></i>
+                        </div>
+                        <h3>Tours de révision</h3>
+                        <p>Comptez vos tours item par item et suivez d'un coup d'œil ceux du jour et de la semaine.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3>Notes &amp; cahiers d’erreurs</h3>
+                        <p>Notes par item, entraînements et flashcards pour transformer chaque erreur en point gagné.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-days"></i>
+                        </div>
+                        <h3>Planning &amp; To-Do</h3>
+                        <p>Planifiez vos révisions jour par jour, spécialité par spécialité, et gérez vos tâches au même endroit.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3>Statistiques &amp; trophées</h3>
+                        <p>Graphiques de progression détaillés et trophées à débloquer pour rester motivé jusqu'à l'EDN.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <h3>Sauvegarde &amp; synchro cloud</h3>
+                        <p>Vos données sauvegardées automatiquement et synchronisées en temps réel sur tous vos appareils.</p>
+                    </div>
                 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-calendar-plus"></i>
-                    </div>
-                    <h3>Ajout de tours</h3>
-                    <p>Créez autant de tours de révision que nécessaire pour optimiser votre apprentissage.</p>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-database"></i>
+            </div>
+
+            <!-- Avantages Premium — Tableur ECOS -->
+            <div id="benefits-ecos" class="benefits-panel" role="tabpanel" style="display: none;">
+                <p class="section-subtitle">Toutes les fonctionnalités du tableur ECOS pour vous entraîner aux stations et arriver prêt le jour J</p>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-list-check"></i>
+                        </div>
+                        <h3>Suivi complet des SDD</h3>
+                        <p>Passages Sans PS, PS/PSS et Fait passer avec indices de confiance, sur toutes les situations de départ.</p>
                     </div>
-                    <h3>Sauvegarde cloud</h3>
-                    <p>Toutes vos données automatiquement sauvegardées dans le cloud.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-group"></i>
+                        </div>
+                        <h3>Stations entre amis</h3>
+                        <p>Faites passer des stations à vos amis et entraînez-vous ensemble en conditions réelles.</p>
                     </div>
-                    <h3>Statistiques avancées</h3>
-                    <p>Suivez votre progression avec des statistiques détaillées.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-trophy"></i>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3>Notes &amp; cahiers d’erreurs</h3>
+                        <p>Notes par station, flashcards recto/verso et erreurs capitalisées spécialité par spécialité.</p>
                     </div>
-                    <h3>Système de trophées</h3>
-                    <p>Débloquez des trophées et restez motivé tout au long de vos révisions.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-sync"></i>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-days"></i>
+                        </div>
+                        <h3>Planning &amp; To-Do</h3>
+                        <p>Organisez vos révisions ECOS avec statuts, spécialités et notes enrichies jour par jour.</p>
                     </div>
-                    <h3>Synchronisation</h3>
-                    <p>Synchronisez vos données entre tous vos appareils en temps réel.</p>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3>Statistiques &amp; trophées</h3>
+                        <p>Stations du jour et de la semaine, progression détaillée et trophées à débloquer pour tenir le rythme.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <h3>Sauvegarde &amp; synchro cloud</h3>
+                        <p>Vos données sauvegardées automatiquement et synchronisées en temps réel sur tous vos appareils.</p>
+                    </div>
+                
                 </div>
             </div>
         </section>
@@ -1863,7 +2071,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="pricing-card recommended">
                             <div class="plan-header">
                                 <h3 class="plan-name">Mensuel</h3>
-                                <div class="plan-price">2,50€<span>/mois</span></div>
+                                <div class="plan-price">3€<span>/mois</span></div>
                             </div>
                             <ul class="plan-features">
                                 <li><i class="fas fa-check-circle"></i> Toutes les fonctionnalités</li>
@@ -1878,7 +2086,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="pricing-card recommended">
                             <div class="plan-header">
                                 <h3 class="plan-name">Annuel</h3>
-                                <div class="plan-price">25€<span>/an</span></div>
+                                <div class="plan-price">30€<span>/an</span></div>
                             </div>
                             <ul class="plan-features">
                                 <li><i class="fas fa-check-circle"></i> Toutes les fonctionnalités</li>
@@ -1980,8 +2188,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="footer-nav-links">
                     <a href="Fiche-examen-clinique.html" class="footer-nav-link">Fiche Examen Clinique</a>
                     <a href="Fiche-ECG.html" class="footer-nav-link">Fiche ECG</a>
-                    <a href="FichierGsheet.html" class="footer-nav-link">Tableur Gsheet Externat</a>
-                    <a href="TableurEnLigne.html" class="footer-nav-link">Tableur en ligne Externat</a>
+                    <a href="TableurEnLigne.html" class="footer-nav-link">Tableur révision EDN</a>
+                    <a href="TableurECOS.html" class="footer-nav-link">Tableur révision ECOS</a>
                     <a href="Carnet-de-stage.html" class="footer-nav-link">Carnet de stage</a>
                 </div>
             </div>
@@ -2023,6 +2231,143 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- ===== SCRIPTS ===== -->
 <script>
+/* ===== Tableur d'origine (EDN ou ECOS) =====
+   Déterminé via ?from=edn|ecos dans l'URL (posé par le menu profil des tableurs),
+   avec repli sur localStorage puis EDN par défaut. Pilote :
+   - la cible du bouton « Retour au Tableur »
+   - le panneau d'avantages affiché par défaut */
+function getOriginTableur() {
+    try {
+        const p = new URLSearchParams(window.location.search).get('from');
+        if (p === 'ecos' || p === 'edn') {
+            localStorage.setItem('premiumReturnTableur', p);
+            return p;
+        }
+        const saved = localStorage.getItem('premiumReturnTableur');
+        if (saved === 'ecos' || saved === 'edn') return saved;
+    } catch (e) {}
+    return 'edn';
+}
+
+let _benefitsSwitchTimer = null;
+function showBenefits(which, instant) {
+    const panels = { edn: document.getElementById('benefits-edn'), ecos: document.getElementById('benefits-ecos') };
+    const tabs = { edn: document.getElementById('benefits-tab-edn'), ecos: document.getElementById('benefits-tab-ecos') };
+    if (!panels.edn || !panels.ecos) return;
+    const target = which === 'ecos' ? 'ecos' : 'edn';
+    const other = target === 'ecos' ? 'edn' : 'ecos';
+
+    // Onglets mis à jour immédiatement, pill glissante synchronisée
+    if (tabs[target]) { tabs[target].classList.add('active'); tabs[target].setAttribute('aria-selected', 'true'); }
+    if (tabs[other]) { tabs[other].classList.remove('active'); tabs[other].setAttribute('aria-selected', 'false'); }
+    if (window._syncBenefitsPill) window._syncBenefitsPill(!!instant);
+
+    const next = panels[target];
+    const cur = panels[other];
+
+    // Toute bascule en cours est annulée (gère les clics rapides)
+    clearTimeout(_benefitsSwitchTimer);
+
+    // Le panneau cible est déjà (ou encore) affiché : annuler une éventuelle
+    // sortie en cours et s'assurer que l'autre panneau est masqué
+    if (next.style.display !== 'none') {
+        next.classList.remove('benefits-leaving');
+        cur.classList.remove('benefits-leaving');
+        cur.style.display = 'none';
+        return;
+    }
+
+    const reveal = () => {
+        cur.style.display = 'none';
+        cur.classList.remove('benefits-leaving');
+        next.classList.remove('benefits-leaving');
+        next.style.display = '';
+        // Relancer l'animation d'apparition
+        next.classList.remove('benefits-entering');
+        void next.offsetWidth;
+        next.classList.add('benefits-entering');
+        _benefitsSwitchTimer = setTimeout(() => next.classList.remove('benefits-entering'), 350);
+    };
+
+    if (instant || cur.style.display === 'none') {
+        // Premier affichage (chargement de la page) : pas de fondu sortant
+        reveal();
+        return;
+    }
+
+    // Fondu sortant du panneau courant, puis apparition du nouveau
+    cur.classList.add('benefits-leaving');
+    _benefitsSwitchTimer = setTimeout(reveal, 200);
+}
+
+(function initTableurOrigin() {
+    const origin = getOriginTableur();
+
+    // Bouton retour : cible + libellé
+    const backLink = document.getElementById('back-to-tableur-link');
+    const backLabel = document.getElementById('back-to-tableur-label');
+    if (backLink) backLink.href = origin === 'ecos' ? 'TableurECOS.html' : 'TableurEnLigne.html';
+    if (backLabel) backLabel.textContent = origin === 'ecos' ? 'Retour au Tableur ECOS' : 'Retour au Tableur EDN';
+
+    // Panneau d'avantages affiché par défaut (sans transition au chargement)
+    showBenefits(origin, true);
+})();
+
+/* ── Pill glissante du sélecteur EDN/ECOS (même mécanique que la barre de
+   navigation des tableurs) ── */
+(function initBenefitsPill() {
+    const toggle = document.querySelector('.benefits-toggle');
+    if (!toggle) return;
+    let pill = toggle.querySelector('.benefits-toggle-pill');
+    if (!pill) {
+        pill = document.createElement('div');
+        pill.className = 'benefits-toggle-pill';
+        pill.style.opacity = '0';
+        toggle.insertBefore(pill, toggle.firstChild);
+    }
+    function movePillTo(btn, instant) {
+        if (!btn) return;
+        const x = btn.offsetLeft;
+        const w = btn.offsetWidth;
+        if (instant) {
+            pill.style.transition = 'none';
+            pill.style.transform = 'translateX(' + x + 'px)';
+            pill.style.width = w + 'px';
+            requestAnimationFrame(() => { pill.style.transition = ''; });
+        } else {
+            pill.style.transform = 'translateX(' + x + 'px)';
+            pill.style.width = w + 'px';
+        }
+    }
+    window._syncBenefitsPill = function(instant) {
+        const ab = toggle.querySelector('.benefits-toggle-btn.active');
+        if (ab) movePillTo(ab, instant);
+    };
+    // Placement initial sans transition, puis apparition
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            pill.style.transition = 'none';
+            const ab = toggle.querySelector('.benefits-toggle-btn.active');
+            if (ab) {
+                pill.style.transform = 'translateX(' + ab.offsetLeft + 'px)';
+                pill.style.width = ab.offsetWidth + 'px';
+            }
+            pill.style.opacity = '1';
+            requestAnimationFrame(() => { pill.style.transition = ''; });
+        });
+    });
+    window.addEventListener('resize', () => {
+        if (window._syncBenefitsPill) window._syncBenefitsPill(true);
+    }, { passive: true });
+    // Le sélecteur est dans #main-content, masqué pendant le chargement :
+    // recaler la pill dès qu'il devient visible (taille 0 -> réelle)
+    if (window.ResizeObserver) {
+        new ResizeObserver(() => {
+            if (window._syncBenefitsPill) window._syncBenefitsPill(true);
+        }).observe(toggle);
+    }
+})();
+
 // Theme Toggle
 const themeToggle = document.getElementById('theme-toggle');
 const html = document.documentElement;
@@ -2346,10 +2691,12 @@ window.subscribe = async function(planType, event) {
         return;
     }
 
+    const button = event && event.target ? event.target : null;
     try {
-        const button = event.target;
-        button.disabled = true;
-        button.textContent = 'Chargement...';
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Chargement...';
+        }
 
         const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
         
@@ -2369,17 +2716,21 @@ window.subscribe = async function(planType, event) {
             type: 'error',
             icon: 'fa-exclamation-circle'
         });
-        button.disabled = false;
-        button.textContent = 'Souscrire';
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Souscrire';
+        }
     }
 };
 
 // Open Customer Portal
 window.openCustomerPortal = async function() {
+    const button = document.getElementById('portal-btn');
     try {
-        const button = document.getElementById('portal-btn');
-        button.disabled = true;
-        button.textContent = 'Chargement...';
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Chargement...';
+        }
 
         const createPortalSession = httpsCallable(functions, 'createCustomerPortalSession');
         
@@ -2397,8 +2748,10 @@ window.openCustomerPortal = async function() {
             type: 'error',
             icon: 'fa-exclamation-circle'
         });
-        button.disabled = false;
-        button.textContent = '📊 Gérer mon abonnement';
+        if (button) {
+            button.disabled = false;
+            button.textContent = '📊 Gérer mon abonnement';
+        }
     }
 };
 
@@ -2416,14 +2769,39 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('success') === 'true') {
     setTimeout(async () => {
         await showToast({
-            title: 'Succès',
-            message: 'Paiement réussi ! Votre abonnement est maintenant actif.',
+            title: 'Paiement réussi',
+            message: 'Merci ! Activation de votre abonnement en cours…',
             type: 'success',
             icon: 'fa-check-circle',
             duration: 3000
         });
         window.history.replaceState({}, '', 'comptepremium.html');
     }, 1000);
+
+    // Le statut premium est écrit par le webhook Stripe côté serveur : il peut
+    // arriver quelques secondes après le retour. On re-vérifie Firestore
+    // plusieurs fois jusqu'à voir l'abonnement actif.
+    let _activationTries = 0;
+    const _activationPoll = setInterval(async () => {
+        _activationTries++;
+        if (!currentUser) return;
+        try {
+            await loadUserData();
+        } catch (e) {}
+        const active = userData && userData.isPremium && userData.subscriptionStatus === 'active';
+        if (active || _activationTries >= 10) {
+            clearInterval(_activationPoll);
+            if (active) {
+                await showToast({
+                    title: 'Abonnement actif',
+                    message: 'Votre compte Premium est maintenant activé !',
+                    type: 'success',
+                    icon: 'fa-crown',
+                    duration: 3000
+                });
+            }
+        }
+    }, 3000);
 } else if (urlParams.get('canceled') === 'true') {
     setTimeout(async () => {
         await showToast({
