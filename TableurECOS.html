@@ -40256,7 +40256,7 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
     /* ── Intercepteur global (phase capture) : clics et saisies bloqués
           en douceur sur les éléments listés, sans aucun message. ── */
     var TPX_CLICK_BLOCK = '#checklist-add-btn, .checklist-delete, .checklist-checkbox, .priority-send-btn, .send-to-checklist-btn, .ct-zone, .todo-sdd-confidence-popover';
-    var TPX_EDIT_BLOCK  = '.day-notes-input, #checklist-new-item';
+    var TPX_EDIT_BLOCK  = '#checklist-new-item';
     var HARMLESS_KEYS = ['Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown', 'F5'];
     function tpxBlock(e) {
         e.preventDefault();
@@ -40298,9 +40298,10 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
 
 <!-- ═══════════ CORRECTIF CLAVIER VIRTUEL (iPad / iPhone) ═══════════ -->
 <style>
-/* Quand le clavier est ouvert, les overlays épousent le viewport VISIBLE
-   (au-dessus du clavier) au lieu du viewport de mise en page, et les modals
-   se limitent à cette hauteur : le champ édité reste toujours visible. */
+/* Clavier ouvert : l'overlay épouse le viewport VISIBLE (au-dessus du clavier)
+   et devient DÉFILANT. Le modal garde sa taille naturelle : on le fait glisser
+   librement au doigt pour amener la zone de texte où l'on veut, et les zones
+   de texte gardent leur propre défilement interne. */
 body.tc-kb-open .notes-modal-overlay.active,
 body.tc-kb-open .help-modal-overlay.active,
 body.tc-kb-open .planning-day-detail-overlay.active,
@@ -40312,17 +40313,13 @@ body.tc-kb-open .tours-today-modal-overlay.active {
     bottom: auto !important;
     height: var(--tc-vv-h, 100vh) !important;
     align-items: flex-start !important;
-    padding-top: 8px !important;
+    padding: 10px 0 140px !important; /* marge basse : permet de remonter le bas du modal bien au-dessus du clavier */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
-/* Les hauteurs fixes en vh (ex : .notes-modal à 88vh) ignorent le clavier :
-   on repasse en hauteur automatique, plafonnée au viewport visible. */
-body.tc-kb-open .notes-modal-overlay.active .notes-modal,
-body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-modal,
-body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
-body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
-body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal {
-    height: auto !important;
-}
+/* Taille naturelle : plus de rétrécissement écrasé. Les hauteurs fixes en vh
+   (calées sur le viewport de mise en page, clavier ignoré) passent en auto. */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
 body.tc-kb-open .help-modal-overlay.active .help-modal,
 body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-modal,
@@ -40330,7 +40327,9 @@ body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
 body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
 body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
 body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
-    max-height: calc(var(--tc-vv-h, 100vh) - 16px) !important;
+    height: auto !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
 }
 </style>
 <script>
