@@ -5678,9 +5678,16 @@ addDocFn(collectionFn(db, 'feedbacks'), { type: _type || '', note: _stars, messa
         if (!banner) return;
         var dismissed = false;
         try { dismissed = sessionStorage.getItem('tc_cookie_banner_dismissed') === '1'; } catch (e) {}
-        /* Accepté → plus jamais affichée. Refusé → masquée pour la session,
-           réaffichée à la prochaine consultation (le refus reste appliqué entre-temps). */
-        if (window.tcAnalyticsAllowed() || dismissed) return;
+        /* Un choix explicite (Accepter OU Refuser, via la bannière ou le modal de
+           préférences) est mémorisé : la bannière ne réapparaît plus. Seule la
+           fermeture par la croix — aucun choix enregistré — la fait revenir à la
+           prochaine consultation. */
+        var hasChoice = false;
+        try {
+            var c = JSON.parse(localStorage.getItem('tc_cookie_consent') || 'null');
+            hasChoice = !!(c && typeof c.analytics === 'boolean');
+        } catch (e) {}
+        if (hasChoice || dismissed) return;
         setTimeout(function () { banner.classList.add('show'); }, 600);
         document.getElementById('tc-cookie-accept').addEventListener('click', function () {
             saveConsent(true); hideBanner(); window.tcLoadAnalytics();
