@@ -46614,8 +46614,10 @@ body.tc-kb-open .tours-today-modal-overlay.active {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
 }
-/* Taille naturelle : plus de rétrécissement écrasé. Les hauteurs fixes en vh
-   (calées sur le viewport de mise en page, clavier ignoré) passent en auto. */
+/* Le modal et ses zones de texte gardent EXACTEMENT leur taille habituelle :
+   aucun rétrécissement, aucun reflow. flex-shrink:0 empêche l'overlay (devenu
+   plus petit que le modal à cause du clavier) de l'écraser — on le fait
+   simplement glisser pour révéler la partie masquée. */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
 body.tc-kb-open .help-modal-overlay.active .help-modal,
 body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
@@ -46623,8 +46625,6 @@ body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
 body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
 body.tc-kb-open .pdd-overlay.active .pdd-modal,
 body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
-    height: auto !important;
-    max-height: none !important;
     flex-shrink: 0 !important;
 }
 </style>
@@ -46679,10 +46679,9 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
         if (!editable) return;
         setTimeout(function () {
             var vv = window.visualViewport;
-            var margin = 14;
-            /* Pour un éditeur riche (contenteditable, ex : cahiers d'erreurs), viser
-               le CURSEUR et non l'élément entier : un grand éditeur « centré » peut
-               très bien laisser le point d'insertion caché sous le clavier. */
+            var margin = 16;
+            /* Viser le CURSEUR quand c'est possible (contenteditable) ; sinon
+               le bord bas de l'élément (textarea, input). */
             var rect = null;
             if (el.isContentEditable) {
                 try {
@@ -46699,29 +46698,34 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
             var visTop = vv ? vv.offsetTop : 0;
             var visBottom = visTop + (vv ? vv.height : window.innerHeight);
             if (rect.bottom <= visBottom - margin && rect.top >= visTop + margin) return; /* déjà visible */
+            var delta = rect.bottom > visBottom - margin
+                ? rect.bottom - (visBottom - margin)
+                : rect.top - (visTop + margin);
             try {
-                if (el.isContentEditable) {
-                    /* Faire défiler le premier conteneur interne défilant pour ramener le caret */
-                    var delta = rect.bottom > visBottom - margin
-                        ? rect.bottom - (visBottom - margin)
-                        : rect.top - (visTop + margin);
-                    var sc = el;
-                    while (sc && sc !== document.body) {
-                        if (sc.scrollHeight > sc.clientHeight + 2) { sc.scrollTop += delta; return; }
-                        sc = sc.parentElement;
+                /* Faire défiler EN DOUCEUR le premier conteneur défilant (zone de
+                   texte interne, corps du modal, ou l'overlay devenu défilant). */
+                var sc = el;
+                while (sc && sc !== document.body) {
+                    if (sc.scrollHeight > sc.clientHeight + 2) {
+                        if (typeof sc.scrollTo === 'function') sc.scrollTo({ top: sc.scrollTop + delta, behavior: 'smooth' });
+                        else sc.scrollTop += delta;
+                        return;
                     }
+                    sc = sc.parentElement;
                 }
                 el.scrollIntoView({ block: 'center', behavior: 'smooth' });
             } catch (e) {}
         }, 120);
     }
-    /* Pendant la frappe dans un éditeur riche, garder le curseur visible
-       (le texte grandit et le caret finit par passer sous le clavier). */
+    /* Pendant la frappe, garder le curseur visible. Un SAUT DE LIGNE déclenche
+       le recentrage immédiatement (fluide) ; le reste est légèrement throttlé. */
     var _lastCaretScroll = 0;
-    document.addEventListener('input', function () {
+    document.addEventListener('input', function (e) {
         if (!document.body.classList.contains('tc-kb-open')) return;
+        var it = (e && e.inputType) || '';
+        var newline = (it === 'insertParagraph' || it === 'insertLineBreak');
         var now = Date.now();
-        if (now - _lastCaretScroll < 600) return;
+        if (!newline && now - _lastCaretScroll < 250) return;
         _lastCaretScroll = now;
         scrollFocusedIntoView();
     });
