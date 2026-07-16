@@ -46652,14 +46652,50 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     window.addEventListener('orientationchange', function () {
         setTimeout(function () { _baseH = window.innerHeight; _baseW = window.innerWidth; onChange(); }, 400);
     });
+    /* GEL de la taille des modals : sur téléphone, beaucoup de modals ont une
+       hauteur en % (donc relative à l'overlay). Quand l'overlay se cale sur le
+       viewport visible, ils s'aplatissaient. On fige donc leur hauteur RENDUE
+       (en px, mesurée AVANT le recalage de l'overlay) : zéro changement visuel,
+       et l'overlay défilant fait le reste. Tout est restauré à la fermeture. */
+    var TC_KB_OVERLAYS = '.notes-modal-overlay.active, .help-modal-overlay.active, .flash-session-overlay.active, .flash-drawer-overlay.active, .flash-edit-overlay.active, .pdd-overlay.active, .tours-today-modal-overlay.active';
+    var _tcFrozen = [];
+    function tcFreezeModals() {
+        try {
+            document.querySelectorAll(TC_KB_OVERLAYS).forEach(function (ov) {
+                var m = ov.firstElementChild;
+                if (!m || m.dataset.tcKbFrozen === '1') return;
+                var h = m.offsetHeight;
+                if (!h) return;
+                m.dataset.tcKbFrozen = '1';
+                m.dataset.tcPrevH = m.style.height || '';
+                m.dataset.tcPrevMaxH = m.style.maxHeight || '';
+                m.style.height = h + 'px';
+                m.style.maxHeight = 'none';
+                _tcFrozen.push(m);
+            });
+        } catch (e) {}
+    }
+    function tcUnfreezeModals() {
+        _tcFrozen.forEach(function (m) {
+            m.style.height = m.dataset.tcPrevH || '';
+            m.style.maxHeight = m.dataset.tcPrevMaxH || '';
+            delete m.dataset.tcKbFrozen;
+            delete m.dataset.tcPrevH;
+            delete m.dataset.tcPrevMaxH;
+        });
+        _tcFrozen = [];
+    }
     function apply() {
         var vv = window.visualViewport;
         var ref = Math.max(window.innerHeight, _baseH);
         var kb = Math.max(0, ref - vv.height - vv.offsetTop);
         var open = kb > KB_MIN;
+        var wasOpen = document.body.classList.contains('tc-kb-open');
+        if (open && !wasOpen) tcFreezeModals(); /* mesurer AVANT le recalage de l'overlay */
         root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
         root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
         document.body.classList.toggle('tc-kb-open', open);
+        if (!open && wasOpen) tcUnfreezeModals();
         if (open) scrollFocusedIntoView();
     }
     function onChange() {
@@ -46691,6 +46727,23 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
                         r.collapse(false);
                         rect = r.getClientRects()[0] || null;
                         if (rect && !rect.height && !rect.width) rect = null;
+                        /* Ligne vide (saut de ligne) : le caret n'a pas de rect.
+                           On prend le rect du BLOC de la ligne courante, pas celui
+                           de l'éditeur entier (qui provoquait un plongeon en bas). */
+                        if (!rect) {
+                            var node = r.startContainer;
+                            var lineEl = null;
+                            if (node.nodeType === 1) {
+                                lineEl = node.childNodes[Math.min(r.startOffset, node.childNodes.length - 1)] || node;
+                            } else {
+                                lineEl = node.parentElement;
+                            }
+                            while (lineEl && lineEl.nodeType !== 1) lineEl = lineEl.parentElement;
+                            if (lineEl && lineEl !== el && el.contains(lineEl)) {
+                                var lr = lineEl.getBoundingClientRect();
+                                if (lr && lr.height && lr.height < 120) rect = lr; /* une ligne, pas un pavé */
+                            }
+                        }
                     }
                 } catch (e) {}
             }
@@ -46701,6 +46754,7 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
             var delta = rect.bottom > visBottom - margin
                 ? rect.bottom - (visBottom - margin)
                 : rect.top - (visTop + margin);
+            if (Math.abs(delta) < 4) return; /* micro-écart : ne pas saccader */
             try {
                 /* Faire défiler EN DOUCEUR le premier conteneur défilant (zone de
                    texte interne, corps du modal, ou l'overlay devenu défilant). */
