@@ -605,6 +605,62 @@ input[type="password"]::-webkit-caps-lock-indicator {
 }
 
 
+/* ── Modal style tableurs EDN/ECOS (help-modal) ── */
+@keyframes modalOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalContentIn  { from { opacity: 0; transform: scale(0.94) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes modalContentOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.94) translateY(14px); } }
+.help-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 10000; padding: 1rem;
+}
+.help-modal-overlay.active { display: flex; animation: modalOverlayIn 0.2s ease forwards; }
+.help-modal {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    max-width: 640px; width: 100%; max-height: 85vh; overflow: hidden;
+    transform: scale(0.94) translateY(14px);
+    display: flex; flex-direction: column;
+}
+[data-theme="dark"] .help-modal {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+.help-modal-overlay.active .help-modal { transform: scale(1) translateY(0); animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.help-modal-overlay.closing             { animation: modalOverlayOut 0.18s ease forwards; }
+.help-modal-overlay.closing .help-modal { animation: modalContentOut 0.18s ease forwards; }
+.help-modal-header {
+    background: var(--white); padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    flex-shrink: 0; border-bottom: 2px solid var(--gray-200);
+}
+[data-theme="dark"] .help-modal-header { background: #1e293b; border-bottom-color: #475569; }
+.help-modal-title { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.help-modal-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: white; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+.help-modal-title h3 {
+    font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;
+    color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.help-modal-close {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--danger-light, #fee2e2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: var(--danger, #ef4444);
+    transition: all 0.15s ease; flex-shrink: 0;
+}
+.help-modal-close:hover { background: var(--danger, #ef4444); color: white; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
+.help-modal-close:active { transform: scale(0.88); }
+[data-theme="dark"] .help-modal-close { background: rgba(239, 68, 68, 0.6); color: white; border: 1px solid rgba(239, 68, 68, 0.8); }
+[data-theme="dark"] .help-modal-close:hover { background: var(--danger, #ef4444); border-color: transparent; }
+.help-modal-body { padding: 24px; overflow-y: auto; flex: 1; overscroll-behavior: contain; }
+
 /* Modal Conditions d'utilisation */
 .modal-overlay {
     position: fixed;
@@ -1845,15 +1901,39 @@ const modalCancel = document.getElementById('modal-cancel');
 const modalAccept = document.getElementById('modal-accept');
 const termsCheckbox = document.getElementById('terms');
 
+/* Compensation de la barre de défilement (comme les modals des tableurs) :
+   padding équivalent appliqué au body ET au header fixe → les onglets ne bougent pas. */
+function _setScrollbarComp(px) {
+    const val = px > 0 ? px + 'px' : '';
+    document.body.style.paddingRight = val;
+    document.documentElement.style.setProperty('--scrollbar-w', px > 0 ? px + 'px' : '0px');
+    const h = document.querySelector('.header');
+    if (h) h.style.paddingRight = val;
+}
+let _prevOverflowHtml = '', _prevOverflowBody = '';
+
 termsLink.addEventListener('click', (e) => {
     e.preventDefault();
+    if (termsModal.classList.contains('active')) return;
+    termsModal.classList.remove('closing');
     termsModal.classList.add('active');
+    const sw = window.innerWidth - document.documentElement.clientWidth; /* mesurée AVANT masquage */
+    _prevOverflowHtml = document.documentElement.style.overflow;
+    _prevOverflowBody = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    _setScrollbarComp(sw);
 });
 
 function closeModal() {
-    termsModal.classList.remove('active');
-    document.body.style.overflow = '';
+    if (!termsModal.classList.contains('active') || termsModal.classList.contains('closing')) return;
+    termsModal.classList.add('closing');
+    setTimeout(() => {
+        termsModal.classList.remove('active', 'closing');
+        document.documentElement.style.overflow = _prevOverflowHtml || '';
+        document.body.style.overflow = _prevOverflowBody || '';
+        _setScrollbarComp(0);
+    }, 200);
 }
 
 modalClose.addEventListener('click', closeModal);
@@ -1891,22 +1971,25 @@ document.getElementById('register-password-confirm').addEventListener('keydown',
 </script>
 
 
-<!-- Modal Conditions d'utilisation -->
-<div class="modal-overlay" id="terms-modal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2 class="modal-title"><i class="fas fa-file-contract"></i> Conditions d'utilisation</h2>
-            <button class="modal-close" id="modal-close"><i class="fas fa-times"></i></button>
+<!-- Modal Conditions d'utilisation (style tableurs EDN/ECOS) -->
+<div class="help-modal-overlay" id="terms-modal">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-file-contract"></i></div>
+                <h3>Conditions d'utilisation</h3>
+            </div>
+            <button class="help-modal-close" id="modal-close" aria-label="Fermer"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body">
-            <p><strong>Dernière mise à jour :</strong> Janvier 2025</p>
-            
+        <div class="help-modal-body modal-body">
+            <p><strong>Dernière mise à jour :</strong> Juillet 2026</p>
+
             <h3>1. Présentation du service</h3>
-            <p>TypixClin est une plateforme gratuite d'aide à la rédaction médicale destinée aux étudiants en médecine. Elle propose des outils de génération de comptes-rendus d'examens cliniques, d'interprétation d'ECG, de gaz du sang et autres ressources pédagogiques.</p>
-            
+            <p>TypixClin est une plateforme pédagogique destinée aux étudiants en santé. Elle propose notamment : des outils d'aide à la rédaction et à la structuration d'examens cliniques (examen adulte, etc.), d'interprétation d'ECG et de gaz du sang ; le <strong>tableur EDN</strong> (suivi des 367 items de connaissances, tours de révision, planning, notes, cahiers d'erreurs, flashcards, statistiques) ; le <strong>tableur ECOS</strong> (suivi des situations de départ et procédures, stations d'entraînement seul ou entre amis, planning, flashcards, statistiques) ; ainsi qu'un carnet de stage numérique.</p>
+
             <h3>2. Avertissement médical</h3>
-            <p>TypixClin est un outil <strong>pédagogique uniquement</strong>. Les informations générées ne constituent en aucun cas un avis médical et ne doivent pas être utilisées pour prendre des décisions cliniques réelles. L'utilisateur reste seul responsable de la vérification des informations.</p>
-            
+            <p>TypixClin est un outil <strong>pédagogique uniquement</strong>. Les contenus et informations générés ne constituent en aucun cas un avis médical et ne doivent pas être utilisés pour prendre des décisions cliniques réelles. L'utilisateur reste seul responsable de la vérification des informations.</p>
+
             <h3>3. Compte utilisateur</h3>
             <p>En créant un compte, vous vous engagez à :</p>
             <ul>
@@ -1914,25 +1997,45 @@ document.getElementById('register-password-confirm').addEventListener('keydown',
                 <li>Maintenir la confidentialité de vos identifiants</li>
                 <li>Ne pas partager votre compte avec des tiers</li>
             </ul>
-            
-            <h3>4. Utilisation acceptable</h3>
-            <p>Vous vous engagez à utiliser TypixClin uniquement à des fins d'apprentissage et de formation médicale. Il est interdit de :</p>
+
+            <h3>4. Gratuité actuelle et abonnement Premium à venir</h3>
+            <p>L'accès aux fonctionnalités des tableurs EDN et ECOS est actuellement offert à tous les utilisateurs dans le cadre d'une <strong>période de gratuité</strong>. À l'issue de cette période, certaines fonctionnalités des tableurs deviendront accessibles uniquement via un <strong>abonnement Premium payant, mensuel ou annuel</strong> :</p>
             <ul>
-                <li>Tenter de contourner les mesures de sécurité</li>
-                <li>Utiliser le service de manière abusive ou frauduleuse</li>
+                <li>Les tarifs et le détail des fonctionnalités incluses seront affichés sur la page Premium avant toute souscription.</li>
+                <li>L'abonnement est <strong>reconduit automatiquement</strong> à chaque échéance (mensuelle ou annuelle). Vous pouvez l'annuler à tout moment depuis votre compte ; vous conservez alors l'accès Premium jusqu'à la fin de la période déjà payée, sans remboursement au prorata.</li>
+                <li>En souscrivant, vous demandez l'accès immédiat au service et renoncez expressément à votre droit de rétractation de 14 jours (art. L.221-28 du Code de la consommation).</li>
+                <li>Le paiement est traité de manière sécurisée par mon prestataire Stripe ; TypixClin ne stocke aucune donnée bancaire.</li>
+                <li>Sans abonnement, la consultation de vos données reste possible en lecture seule, et certaines ressources demeurent librement accessibles.</li>
             </ul>
-            
-            <h3>5. Propriété intellectuelle</h3>
-            <p>Le contenu, le design et le code de TypixClin sont la propriété de Jean ZENNARO. Toute reproduction non autorisée est interdite.</p>
-            
-            <h3>6. Données personnelles</h3>
-            <p>Nous collectons uniquement les données nécessaires au fonctionnement du service (email, nom). Vos données ne sont jamais vendues à des tiers. Vous pouvez demander la suppression de votre compte à tout moment.</p>
-            
-            <h3>7. Limitation de responsabilité</h3>
-            <p>TypixClin est fourni "tel quel". Nous ne garantissons pas l'exactitude des informations générées et déclinons toute responsabilité en cas d'utilisation inappropriée.</p>
-            
-            <h3>8. Contact</h3>
-            <p>Pour toute question, contactez-nous via le formulaire de feedback sur le site.</p>
+
+            <h3>5. Utilisation acceptable</h3>
+            <p>Vous vous engagez à utiliser TypixClin uniquement à des fins d'apprentissage et de formation. Il est interdit de :</p>
+            <ul>
+                <li>Tenter de contourner les mesures de sécurité ou les limitations d'accès (y compris celles liées à l'abonnement Premium)</li>
+                <li>Utiliser le service de manière abusive ou frauduleuse</li>
+                <li>Partager, revendre ou céder l'accès à votre compte</li>
+            </ul>
+
+            <h3>6. Propriété intellectuelle</h3>
+            <p>Le contenu, le design et le code de TypixClin sont la propriété de Jean ZENNARO. Toute reproduction non autorisée est interdite. Les données que vous saisissez (notes, suivis, flashcards…) restent les vôtres.</p>
+
+            <h3>7. Données personnelles et cookies</h3>
+            <p>Je collecte uniquement les données nécessaires au fonctionnement du service (email, nom, données d'utilisation de vos outils). Vos données ne sont jamais vendues à des tiers. La mesure d'audience (Google Analytics) n'est activée qu'avec votre consentement, modifiable à tout moment. Vous pouvez demander la suppression de votre compte et de vos données à tout moment.</p>
+
+            <h3>8. Limitation de responsabilité</h3>
+            <p>TypixClin est fourni « tel quel ». Je ne garantis pas l'exactitude des informations générées ni une disponibilité ininterrompue du service, et je décline toute responsabilité en cas d'utilisation inappropriée.</p>
+
+            <h3>9. Résiliation et suspension</h3>
+            <p>Je me réserve le droit de suspendre ou de supprimer un compte en cas de violation des présentes conditions, après notification lorsque cela est possible. Vous pouvez supprimer votre compte à tout moment.</p>
+
+            <h3>10. Modification des conditions</h3>
+            <p>Les présentes conditions peuvent évoluer, notamment lors du lancement de l'abonnement Premium. Les utilisateurs seront informés de toute modification substantielle (tarifs, fonctionnalités incluses) avant son entrée en vigueur.</p>
+
+            <h3>11. Droit applicable</h3>
+            <p>Les présentes conditions sont soumises au droit français.</p>
+
+            <h3>12. Contact</h3>
+            <p>Pour toute question, contactez-moi via le formulaire de feedback disponible sur le site.</p>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" id="modal-cancel">Fermer</button>
@@ -1940,7 +2043,6 @@ document.getElementById('register-password-confirm').addEventListener('keydown',
         </div>
     </div>
 </div>
-
 
 </body>
 </html>
