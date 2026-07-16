@@ -25477,6 +25477,7 @@ var tempSelectedResources = [];
 
 /* Validation/dévalidation d'un support pour une SDD donnée (boîtes affichées en table). */
 function toggleSDDResource(sddId, resId) {
+    if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     const s = ensureSDDState(sddId);
     s.resources[resId] = !s.resources[resId];
     window.ecosHadContent = true;
@@ -25527,6 +25528,7 @@ window.toggleResourceOption = function(resourceId) {
 
 /* Ouverture : on initialise la sélection temporaire depuis la sélection sauvegardée. */
 function openResourcesConfigModal() {
+    if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     const saved = (window.ecosData && Array.isArray(window.ecosData.selectedResources))
         ? window.ecosData.selectedResources : [];
     tempSelectedResources = saved.slice();
@@ -25638,6 +25640,7 @@ window.openSDDResourcesOverflow = function(event, sddId) {
 };
 
 window.toggleSDDResourceInOverflow = function(event, sddId, resourceId) {
+    if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     event.stopPropagation();
     const state = ensureSDDState(sddId);
     state.resources[resourceId] = !state.resources[resourceId];
@@ -29405,6 +29408,7 @@ function closePlanningStatusMenu() {
 }
 
 function openPlanningDayDetailModal(dateKey) {
+        if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     var api = _pAPI();
     if (!api || !dateKey) return;
     var overlay = document.getElementById('planning-day-detail-overlay');
@@ -30139,6 +30143,7 @@ window.ECOSPlanningModule = (function () {
     }
 
     function openStatusPopup(dateKey, targetEl) {
+        if (typeof _planningOffline === 'function' && _planningOffline()) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Hors ligne / Premium : lecture seule */
         currentEditingDate = dateKey;
         clearZoneHighlight(); activeStatusZone = targetEl; targetEl.classList.add('popup-open');
         const popup = document.getElementById('status-popup'); if (!popup) return;
@@ -30175,6 +30180,7 @@ window.ECOSPlanningModule = (function () {
     }
 
     function openSpecialtyPopup(dateKey, targetEl) {
+        if (typeof _planningOffline === 'function' && _planningOffline()) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Hors ligne / Premium : lecture seule */
         currentEditingDate = dateKey;
         clearZoneHighlight(); activeSpecialtyZone = targetEl; targetEl.classList.add('popup-open');
         const popup = document.getElementById('specialty-popup'); if (!popup) return;
@@ -39911,6 +39917,8 @@ body.tpx-premium-locked .send-to-checklist-btn {
     opacity: 0.55;
 }
 body.tpx-premium-locked .open-notes-btn.tpx-free { opacity: 1; }
+body.tpx-premium-locked .resource-box.ecos { opacity: 0.55; cursor: default !important; }
+body.tpx-premium-locked [onclick*="openResourcesConfigModal"] { opacity: 0.55; }
 body.tpx-premium-locked .daily-stat-card.clickable,
 body.tpx-premium-locked .weekly-chart-card.clickable {
     cursor: default !important;
@@ -40248,7 +40256,7 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
     /* ── Intercepteur global (phase capture) : clics et saisies bloqués
           en douceur sur les éléments listés, sans aucun message. ── */
     var TPX_CLICK_BLOCK = '#checklist-add-btn, .checklist-delete, .checklist-checkbox, .priority-send-btn, .send-to-checklist-btn, .ct-zone, .todo-sdd-confidence-popover';
-    var TPX_EDIT_BLOCK  = '#checklist-new-item';
+    var TPX_EDIT_BLOCK  = '.day-notes-input, #checklist-new-item';
     var HARMLESS_KEYS = ['Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown', 'F5'];
     function tpxBlock(e) {
         e.preventDefault();
