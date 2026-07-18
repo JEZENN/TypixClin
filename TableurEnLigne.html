@@ -46605,11 +46605,13 @@ body.tc-kb-open .flash-drawer-overlay.active,
 body.tc-kb-open .flash-edit-overlay.active,
 body.tc-kb-open .pdd-overlay.active,
 body.tc-kb-open .tours-today-modal-overlay.active {
-    top: var(--tc-vv-top, 0px) !important;
-    bottom: auto !important;
-    height: var(--tc-vv-h, 100vh) !important;
+    /* L'overlay conserve sa pleine hauteur : le fond sombre reste continu,
+       y compris derrière le clavier (plus de bande transparente en bas).
+       La zone occupée par le clavier est réservée via un padding-bas égal à
+       sa hauteur, + une marge pour faire glisser le bas du modal au-dessus. */
     align-items: flex-start !important;
-    padding: 10px 0 140px !important; /* marge basse : permet de remonter le bas du modal bien au-dessus du clavier */
+    padding-top: calc(var(--tc-vv-top, 0px) + 10px) !important;
+    padding-bottom: calc(var(--tc-kb-h, 0px) + 140px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -46694,6 +46696,7 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
         if (open && !wasOpen) tcFreezeModals(); /* mesurer AVANT le recalage de l'overlay */
         root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
         root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
+        root.style.setProperty('--tc-kb-h', Math.round(open ? kb : 0) + 'px');
         document.body.classList.toggle('tc-kb-open', open);
         if (!open && wasOpen) tcUnfreezeModals();
         if (open) scrollFocusedIntoView();
