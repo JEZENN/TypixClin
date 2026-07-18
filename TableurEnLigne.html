@@ -46504,8 +46504,10 @@ body.tpx-premium-locked .day-detail-open-btn {
         if (!ov || ov.classList.contains('active')) return;
         ov.classList.remove('closing');
         ov.classList.add('active');
-        /* masque la barre de défilement de la page (même méthode que les autres modals EDN) */
-        var _sw = window.innerWidth - document.documentElement.clientWidth;
+        /* masque la barre de défilement (STRICTEMENT la même séquence que les
+           autres modals EDN : mesure via le helper AVANT le masquage) */
+        var _sw = (window._getScrollbarWidth ? window._getScrollbarWidth()
+                   : window.innerWidth - document.documentElement.clientWidth);
         document.body.style.overflow = 'hidden';
         if (window._setScrollbarComp) window._setScrollbarComp(_sw);
     };
@@ -46600,10 +46602,11 @@ body.tpx-premium-locked .day-detail-open-btn {
 
 <!-- ═══════════ CORRECTIF CLAVIER VIRTUEL (iPad / iPhone) ═══════════ -->
 <style>
-/* Clavier ouvert : l'overlay épouse le viewport VISIBLE (au-dessus du clavier)
-   et devient DÉFILANT. Le modal garde sa taille naturelle : on le fait glisser
-   librement au doigt pour amener la zone de texte où l'on veut, et les zones
-   de texte gardent leur propre défilement interne. */
+/* Clavier ouvert : l'overlay CONSERVE sa pleine hauteur et son propre fond
+   (voile continu, y compris derrière le clavier — rien de transparent).
+   La zone du clavier est réservée par un padding-bas égal à sa hauteur,
+   plus une marge pour faire glisser le bas du modal au-dessus. Le modal,
+   lui, est figé en pixels par le script : aucun changement de taille. */
 body.tc-kb-open .notes-modal-overlay.active,
 body.tc-kb-open .help-modal-overlay.active,
 body.tc-kb-open .flash-session-overlay.active,
@@ -46611,42 +46614,15 @@ body.tc-kb-open .flash-drawer-overlay.active,
 body.tc-kb-open .flash-edit-overlay.active,
 body.tc-kb-open .pdd-overlay.active,
 body.tc-kb-open .tours-today-modal-overlay.active {
-    /* Géométrie calée sur le viewport VISIBLE (validée : le haut est parfait).
-       Le voile, lui, est porté par ::before ci-dessous — plein écran. */
-    top: var(--tc-vv-top, 0px) !important;
-    bottom: auto !important;
-    height: var(--tc-vv-h, 100vh) !important;
     align-items: flex-start !important;
-    padding: 10px 0 140px !important;
+    padding-top: calc(var(--tc-vv-top, 0px) + 10px) !important;
+    padding-bottom: calc(var(--tc-kb-h, 0px) + 140px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    background: transparent !important; /* le voile vient du ::before */
 }
-/* Voile PLEIN ÉCRAN porté par chaque overlay : rendu dans son propre contexte
-   d'empilement (z-index:-1 = derrière son modal mais devant tout le reste,
-   y compris le tiroir flashcards derrière le modal d'édition). Il déborde
-   largement (-30vh / -60vh) : aucune bande transparente possible, quel que
-   soit le décalage du viewport visuel iOS. */
-body.tc-kb-open .notes-modal-overlay.active::before,
-body.tc-kb-open .help-modal-overlay.active::before,
-body.tc-kb-open .flash-session-overlay.active::before,
-body.tc-kb-open .flash-drawer-overlay.active::before,
-body.tc-kb-open .flash-edit-overlay.active::before,
-body.tc-kb-open .pdd-overlay.active::before,
-body.tc-kb-open .tours-today-modal-overlay.active::before {
-    content: '';
-    position: fixed;
-    left: 0; right: 0;
-    top: -30vh; bottom: -60vh;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: -1;
-    pointer-events: none;
-}
-/* Le modal et ses zones de texte gardent EXACTEMENT leur taille habituelle :
-   aucun rétrécissement, aucun reflow. flex-shrink:0 empêche l'overlay (devenu
-   plus petit que le modal à cause du clavier) de l'écraser — on le fait
-   simplement glisser pour révéler la partie masquée. */
+/* Le modal garde EXACTEMENT sa taille (gel px côté script) : flex-shrink:0
+   empêche seulement l'overlay de l'écraser. */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
 body.tc-kb-open .help-modal-overlay.active .help-modal,
 body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
@@ -46656,13 +46632,17 @@ body.tc-kb-open .pdd-overlay.active .pdd-modal,
 body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     flex-shrink: 0 !important;
 }
-
+/* Le modal d'édition de flashcards est au-dessus du tiroir : son voile est
+   renforcé pendant la saisie pour que le tiroir derrière ne transparaisse pas. */
+body.tc-kb-open .flash-edit-overlay.active {
+    background: rgba(15, 23, 42, 0.72) !important;
+}
 
 /* ── Correctif Safari mobile/tablette : le switch Notes/Reçues (fiches vs
       fiches partagées) était rogné à droite — position:sticky horizontale
       dans un conteneur flex défilant est boguée sur Safari iOS. On l'épingle
-      désormais en absolu par rapport au panneau éditeur (non défilant) :
-      toujours entier, toujours visible, les outils défilent dessous. ── */
+      en absolu par rapport au panneau éditeur (non défilant) : toujours
+      entier, toujours visible, les outils défilent dessous. ── */
 @media (max-width: 1024px) {
     .notes-editor-panel { position: relative; }
     #notesModalOverlay .notes-toolbar,

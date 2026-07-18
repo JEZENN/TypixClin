@@ -24627,6 +24627,9 @@ window.tcStopAnalytics = function () {};
 window._setScrollbarComp = function(px) {
     var val = px > 0 ? px + 'px' : '';
     document.body.style.paddingRight = val;
+    /* Variable lue par .back-to-top (right: calc(2rem + var(--scrollbar-w))) :
+       sans elle, le bouton se décalait à chaque masquage de la scrollbar. */
+    document.documentElement.style.setProperty('--scrollbar-w', px > 0 ? px + 'px' : '0px');
     var h = document.querySelector('.header');
     if (h) h.style.paddingRight = val;
 };
@@ -26974,11 +26977,10 @@ async function closeEcosErrModal() {
         // 4. échec : la copie locale (pending) est sécurisée → fermeture autorisée, sans prétendre que le cloud est à jour
         if (!ok && window.showEcosToast) window.showEcosToast('Cahier conservé localement — synchronisation en attente.', 'info');
     }
-    // 3. fermeture normale
-    overlay.classList.remove('active');
+    // 3. fermeture normale — .active conservé pendant l'animation (cf. Notes)
     overlay.classList.add('closing');
     setTimeout(function() {
-        overlay.classList.remove('closing');
+        overlay.classList.remove('active', 'closing');
         overlay.style.paddingRight = '';
         if (window._bodyUnlock) window._bodyUnlock('ecosErr');
         _ecosErrCurrentId = null;
@@ -28857,12 +28859,12 @@ function closeSDDNotesModal() {
     const _ed = document.getElementById('sdd-notes-editor');
     if (currentSDDId && _ed) updateEcosNotesIndicator(currentSDDId, _ed.innerHTML);
     const _ov = document.getElementById('sdd-notes-overlay');
-    // Retirer active immédiatement + animer via closing
-    _ov.classList.remove('active');
+    // Garder .active PENDANT l'animation (comme l'EDN), sinon le modal
+    // retombe instantanément à son état de base et l'animation est invisible.
     _ov.classList.add('closing');
     // Verrou + compensation conservés pendant l'animation de disparition.
     setTimeout(function() {
-        _ov.classList.remove('closing');
+        _ov.classList.remove('active', 'closing');
         _ov.style.paddingRight = '';
         if (window._bodyUnlock) window._bodyUnlock('sddNotes');
     }, 200);
@@ -29333,12 +29335,14 @@ function updatePddCounter() {
 /* Hauteur auto d'un éditeur de note de case (équivalent contenteditable de autoResizeTextarea). */
 function autoResizePlanningNoteEditor(editor) {
     if (!editor || !editor.isConnected) return;
-    editor.style.height = 'auto';
-    var sh = editor.scrollHeight;
-    var maxH = 160; // cohérent avec le max-height CSS de la case
-    var h = Math.min(Math.max(sh, 82), maxH);
-    editor.style.height = h + 'px';
-    editor.style.overflowY = sh > maxH ? 'auto' : 'hidden';
+    /* Aligné sur l'EDN (qui n'a pas le bug) : la hauteur est pilotée par le
+       CSS (min/max-height de la case). Ne plus toucher à la hauteur en JS —
+       sur iOS, le passage height:auto → clamp à chaque frappe réinitialisait
+       le défilement interne de la case (écriture « à l'aveugle », contenu
+       remis en haut au saut de ligne). On garantit seulement le défilement
+       interne : le navigateur garde alors le curseur visible nativement. */
+    if (editor.style.height) editor.style.height = '';
+    editor.style.overflowY = 'auto';
     editor.style.webkitOverflowScrolling = 'touch';
 }
 
@@ -30096,17 +30100,11 @@ window.ECOSPlanningModule = (function () {
 
     function autoResizeTextarea(textarea) {
         if (!textarea || !textarea.isConnected) return;
-        // Toujours réinitialiser la hauteur avant de lire scrollHeight
-        // (indispensable pour que la case rétrécisse lors d'une suppression de ligne).
-        textarea.style.height = 'inherit';
-        const scrollHeight = textarea.scrollHeight;
-        const minHeight = 45;
-        const maxHeight = 200;
-        const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-        textarea.style.height = newHeight + 'px';
+        /* Hauteur pilotée par le CSS (cf. autoResizePlanningNoteEditor) :
+           on retire toute hauteur inline résiduelle et on garde le défilement. */
+        if (textarea.style.height) textarea.style.height = '';
         textarea.style.overflowY = 'auto';
         textarea.style.webkitOverflowScrolling = 'touch';
-        textarea.style.paddingRight = scrollHeight > maxHeight ? '10px' : '';
     }
 
     /* Section 7.2 : recalcul visuel SANS reconstruire le calendrier ni perdre la saisie. */
@@ -40304,10 +40302,11 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
 
 <!-- ═══════════ CORRECTIF CLAVIER VIRTUEL (iPad / iPhone) ═══════════ -->
 <style>
-/* Clavier ouvert : l'overlay épouse le viewport VISIBLE (au-dessus du clavier)
-   et devient DÉFILANT. Le modal garde sa taille naturelle : on le fait glisser
-   librement au doigt pour amener la zone de texte où l'on veut, et les zones
-   de texte gardent leur propre défilement interne. */
+/* Clavier ouvert : l'overlay CONSERVE sa pleine hauteur et son propre fond
+   (voile continu, y compris derrière le clavier — rien de transparent).
+   La zone du clavier est réservée par un padding-bas égal à sa hauteur,
+   plus une marge pour faire glisser le bas du modal au-dessus. Le modal,
+   lui, est figé en pixels par le script : aucun changement de taille. */
 body.tc-kb-open .notes-modal-overlay.active,
 body.tc-kb-open .help-modal-overlay.active,
 body.tc-kb-open .planning-day-detail-overlay.active,
@@ -40315,42 +40314,15 @@ body.tc-kb-open .flash-session-overlay.active,
 body.tc-kb-open .flash-drawer-overlay.active,
 body.tc-kb-open .flash-edit-overlay.active,
 body.tc-kb-open .tours-today-modal-overlay.active {
-    /* Géométrie calée sur le viewport VISIBLE (validée : le haut est parfait).
-       Le voile, lui, est porté par ::before ci-dessous — plein écran. */
-    top: var(--tc-vv-top, 0px) !important;
-    bottom: auto !important;
-    height: var(--tc-vv-h, 100vh) !important;
     align-items: flex-start !important;
-    padding: 10px 0 140px !important;
+    padding-top: calc(var(--tc-vv-top, 0px) + 10px) !important;
+    padding-bottom: calc(var(--tc-kb-h, 0px) + 140px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    background: transparent !important; /* le voile vient du ::before */
 }
-/* Voile PLEIN ÉCRAN porté par chaque overlay : rendu dans son propre contexte
-   d'empilement (z-index:-1 = derrière son modal mais devant tout le reste,
-   y compris le tiroir flashcards derrière le modal d'édition). Il déborde
-   largement (-30vh / -60vh) : aucune bande transparente possible, quel que
-   soit le décalage du viewport visuel iOS. */
-body.tc-kb-open .notes-modal-overlay.active::before,
-body.tc-kb-open .help-modal-overlay.active::before,
-body.tc-kb-open .planning-day-detail-overlay.active::before,
-body.tc-kb-open .flash-session-overlay.active::before,
-body.tc-kb-open .flash-drawer-overlay.active::before,
-body.tc-kb-open .flash-edit-overlay.active::before,
-body.tc-kb-open .tours-today-modal-overlay.active::before {
-    content: '';
-    position: fixed;
-    left: 0; right: 0;
-    top: -30vh; bottom: -60vh;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: -1;
-    pointer-events: none;
-}
-/* Le modal et ses zones de texte gardent EXACTEMENT leur taille habituelle :
-   aucun rétrécissement, aucun reflow. flex-shrink:0 empêche l'overlay (devenu
-   plus petit que le modal à cause du clavier) de l'écraser — on le fait
-   simplement glisser pour révéler la partie masquée. */
+/* Le modal garde EXACTEMENT sa taille (gel px côté script) : flex-shrink:0
+   empêche seulement l'overlay de l'écraser. */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
 body.tc-kb-open .help-modal-overlay.active .help-modal,
 body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-modal,
@@ -40359,6 +40331,11 @@ body.tc-kb-open .flash-drawer-overlay.active .flash-drawer,
 body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
 body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     flex-shrink: 0 !important;
+}
+/* Le modal d'édition de flashcards est au-dessus du tiroir : son voile est
+   renforcé pendant la saisie pour que le tiroir derrière ne transparaisse pas. */
+body.tc-kb-open .flash-edit-overlay.active {
+    background: rgba(15, 23, 42, 0.72) !important;
 }
 </style>
 <script>
