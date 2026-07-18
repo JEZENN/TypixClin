@@ -39854,7 +39854,7 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     box-shadow: 0 8px 26px rgba(109, 40, 217, 0.45),
                 inset 0 1px 0 rgba(255, 255, 255, 0.35);
     overflow: hidden;
-    transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.5, 1), box-shadow 0.28s ease;
+    transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.5, 1), box-shadow 0.28s ease, bottom 0.3s ease;
     animation: tpxFabGlow 3.4s ease-in-out infinite;
 }
 body.tpx-premium-locked .tpx-premium-fab { display: flex; }
@@ -39887,6 +39887,12 @@ body.tpx-premium-locked .tpx-premium-fab { display: flex; }
     transition: max-width 0.38s ease, opacity 0.26s ease, margin-left 0.38s ease;
 }
 .tpx-premium-fab:hover { transform: translateY(-3px); }
+/* ── Cohabitation avec la notification de déconnexion (même coin bas-gauche) :
+      quand elle est visible, la couronne remonte au-dessus d'elle. ── */
+body:has(.offline-notification.show) .tpx-premium-fab { bottom: calc(1.4rem + 58px); }
+@media (max-width: 768px) {
+    body:has(.offline-notification.show) .tpx-premium-fab { bottom: calc(1rem + 66px); }
+}
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
 .tpx-premium-fab.tpx-nudge { transform: translateY(-3px); }
@@ -40309,16 +40315,37 @@ body.tc-kb-open .flash-session-overlay.active,
 body.tc-kb-open .flash-drawer-overlay.active,
 body.tc-kb-open .flash-edit-overlay.active,
 body.tc-kb-open .tours-today-modal-overlay.active {
-    /* L'overlay conserve sa pleine hauteur : le fond sombre reste continu,
-       y compris derrière le clavier (plus de bande transparente en bas).
-       La zone occupée par le clavier est réservée via un padding-bas égal à
-       sa hauteur, + une marge pour faire glisser le bas du modal au-dessus. */
+    /* Géométrie calée sur le viewport VISIBLE (validée : le haut est parfait).
+       Le voile, lui, est porté par ::before ci-dessous — plein écran. */
+    top: var(--tc-vv-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--tc-vv-h, 100vh) !important;
     align-items: flex-start !important;
-    padding-top: calc(var(--tc-vv-top, 0px) + 10px) !important;
-    padding-bottom: calc(var(--tc-kb-h, 0px) + 140px) !important;
+    padding: 10px 0 140px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    background: transparent !important; /* le voile vient du ::before */
+}
+/* Voile PLEIN ÉCRAN porté par chaque overlay : rendu dans son propre contexte
+   d'empilement (z-index:-1 = derrière son modal mais devant tout le reste,
+   y compris le tiroir flashcards derrière le modal d'édition). Il déborde
+   largement (-30vh / -60vh) : aucune bande transparente possible, quel que
+   soit le décalage du viewport visuel iOS. */
+body.tc-kb-open .notes-modal-overlay.active::before,
+body.tc-kb-open .help-modal-overlay.active::before,
+body.tc-kb-open .planning-day-detail-overlay.active::before,
+body.tc-kb-open .flash-session-overlay.active::before,
+body.tc-kb-open .flash-drawer-overlay.active::before,
+body.tc-kb-open .flash-edit-overlay.active::before,
+body.tc-kb-open .tours-today-modal-overlay.active::before {
+    content: '';
+    position: fixed;
+    left: 0; right: 0;
+    top: -30vh; bottom: -60vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
+    pointer-events: none;
 }
 /* Le modal et ses zones de texte gardent EXACTEMENT leur taille habituelle :
    aucun rétrécissement, aucun reflow. flex-shrink:0 empêche l'overlay (devenu
