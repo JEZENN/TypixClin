@@ -32893,7 +32893,7 @@ if (refBadge) {
 		// Réinitialiser les modes agrandis à chaque ouverture
 		if (typeof window.resetNotesTextMax === 'function') window.resetNotesTextMax('#notesModalOverlay');
 		if (typeof window.resetOicPanelMax === 'function') window.resetOicPanelMax();
-        setTimeout(function(){ editor.focus(); }, 120);
+        setTimeout(function(){ if (!window._tcNoAutoFocus) editor.focus(); }, 120);
     }).catch(function() {
         if (_notesKey !== savedKey) return;
         editor.innerHTML = '';
@@ -36448,6 +36448,7 @@ window._openTrainNotes = function(id) {
     trainNotesSetAutosaveDot('idle');
 
     setTimeout(function(){
+      if (window._tcNoAutoFocus) { trainNotesUpdateToolbar(); return; }
       editor.focus();
       var range = document.createRange();
       var sel = window.getSelection();
@@ -37179,6 +37180,7 @@ var _trainUserWatcher = setInterval(function() {
       speErrUpdateCharCount();
       speErrSetAutosaveDot('idle');
       setTimeout(function() {
+        if (window._tcNoAutoFocus) { speErrUpdateToolbar(); return; }
         editor.focus();
         try {
           var range = document.createRange();
@@ -43312,7 +43314,7 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     // Reset toolbar active states
     ['flashBtnBold','flashBtnItalic','flashBtnUnderline','flashBtnStrike'].forEach(function(id){ var b=document.getElementById(id); if(b) b.classList.remove('active'); });
     var ov = document.getElementById('flashEditOverlay'); if (ov) ov.classList.add('active');
-    setTimeout(function(){ if (r) r.focus(); _flashUpdateToolbar(true); }, 60);
+    setTimeout(function(){ if (r && !window._tcNoAutoFocus) r.focus(); _flashUpdateToolbar(true); }, 60);
   }
   function _flashCloseEdit() {
     var ov = document.getElementById('flashEditOverlay'); if (ov) ov.classList.remove('active');
@@ -44750,7 +44752,7 @@ function openModal(dateKey) {
     }
 
     setTimeout(function () {
-        if (editor && !offline()) {
+        if (editor && !offline() && !window._tcNoAutoFocus) {
             try {
                 editor.focus();
             } catch (e) {}
@@ -46605,11 +46607,16 @@ body.tpx-premium-locked .day-detail-open-btn {
 /* ── GESTION DU CLAVIER VIRTUEL — iPad / tablettes UNIQUEMENT ──
    (sur téléphone, le script n'active jamais ces classes : comportement
    natif du navigateur, inchangé.)
-   Principe : quand le clavier s'ouvre, l'overlay ACTIF est épinglé
-   exactement sur la zone VISIBLE de l'écran (celle au-dessus du clavier)
-   et ne défile plus du tout. Le modal remplit cette zone : il « monte »
-   au-dessus du clavier, son header reste visible en permanence et il ne
-   peut plus bouger. Seules les zones internes (éditeur, listes) défilent. */
+   Principe : quand le clavier s'ouvre, l'overlay ACTIF est épinglé sur la
+   zone VISIBLE de l'écran (au-dessus du clavier). La géométrie de l'overlay
+   porte une TRANSITION permanente : l'épinglage à l'ouverture ET le retour
+   à la fermeture GLISSENT en douceur, le modal (figé à sa hauteur de repos
+   --tc-rest-h et écrêté par max-height:100%) suivant le mouvement image
+   par image. États initial et final identiques à l'état normal : l'ajout /
+   retrait des classes est invisible. IMPORTANT : on ne touche NI aux
+   animations NI aux transforms des modals — leurs animations d'apparition /
+   disparition (.closing) restent donc pleinement fonctionnelles, et rien
+   ne se rejoue à la fin (c'était la cause de la saccade finale). */
 body.tc-kb-open .notes-modal-overlay.active,
 body.tc-kb-open .help-modal-overlay.active,
 body.tc-kb-open .flash-session-overlay.active,
@@ -46625,64 +46632,30 @@ body.tc-kb-open .tours-today-modal-overlay.active {
     width: var(--tc-vv-w, 100vw) !important;
     height: var(--tc-vv-h, 100vh) !important;
     margin: 0 !important;
-    padding: 8px !important;
-    display: flex !important;
-    align-items: stretch !important;
-    justify-content: center !important;
     overflow: hidden !important;
-    transition: none !important;
-    animation: none !important;
+    transition: top 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                left 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                width 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                height 0.3s cubic-bezier(0.33, 0.8, 0.3, 1) !important;
     overscroll-behavior: contain;
 }
-/* Le modal remplit la hauteur visible : header en haut, toujours visible.
-   La hauteur « en dur » de certains modals (88vh, min(680px,90vh)…) est
-   neutralisée pendant la saisie pour qu'ils tiennent au-dessus du clavier. */
+/* Le modal est figé à sa hauteur de repos et écrêté à la zone visible :
+   header toujours visible, zones internes défilantes. Aucune autre
+   propriété n'est surchargée (animations et transforms intacts). */
 body.tc-kb-open .notes-modal-overlay.active .notes-modal,
 body.tc-kb-open .help-modal-overlay.active .help-modal,
 body.tc-kb-open .flash-session-overlay.active .flash-session-modal,
 body.tc-kb-open .flash-edit-overlay.active .flash-edit-modal,
 body.tc-kb-open .pdd-overlay.active .pdd-modal,
 body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
-    height: auto !important;
+    height: var(--tc-rest-h, auto) !important;
     max-height: 100% !important;
     min-height: 0 !important;
-    margin: 0 !important;
-    align-self: stretch !important;
     flex-shrink: 1 !important;
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-}
-/* ── FERMETURE DU CLAVIER : retour ANIMÉ en douceur. Le script fige les
-   modals à leur hauteur de repos (--tc-rest-h, mesurée avant l'ouverture
-   du clavier), recentre, puis fait glisser l'overlay vers le plein écran.
-   Le modal suit le mouvement image par image : aucun à-coup, et l'état
-   final est identique à l'état normal avant retrait des classes. ── */
-body.tc-kb-open.tc-kb-anim .notes-modal-overlay.active,
-body.tc-kb-open.tc-kb-anim .help-modal-overlay.active,
-body.tc-kb-open.tc-kb-anim .flash-session-overlay.active,
-body.tc-kb-open.tc-kb-anim .flash-drawer-overlay.active,
-body.tc-kb-open.tc-kb-anim .flash-edit-overlay.active,
-body.tc-kb-open.tc-kb-anim .pdd-overlay.active,
-body.tc-kb-open.tc-kb-anim .tours-today-modal-overlay.active {
-    transition: top 0.32s cubic-bezier(0.33, 0.8, 0.3, 1),
-                left 0.32s cubic-bezier(0.33, 0.8, 0.3, 1),
-                width 0.32s cubic-bezier(0.33, 0.8, 0.3, 1),
-                height 0.32s cubic-bezier(0.33, 0.8, 0.3, 1) !important;
-    align-items: center !important;
-}
-body.tc-kb-open.tc-kb-anim .notes-modal-overlay.active .notes-modal,
-body.tc-kb-open.tc-kb-anim .help-modal-overlay.active .help-modal,
-body.tc-kb-open.tc-kb-anim .flash-session-overlay.active .flash-session-modal,
-body.tc-kb-open.tc-kb-anim .flash-edit-overlay.active .flash-edit-modal,
-body.tc-kb-open.tc-kb-anim .pdd-overlay.active .pdd-modal,
-body.tc-kb-open.tc-kb-anim .tours-today-modal-overlay.active .tours-today-modal {
-    height: var(--tc-rest-h, auto) !important;
-    align-self: center !important;
 }
 /* Le cahier d'erreurs (tiroir) est positionné en absolu dans son overlay :
-   on l'ancre haut/bas pour qu'il épouse la zone visible — et il suit donc
-   aussi l'animation de fermeture, sans règle supplémentaire. */
+   on l'ancre haut/bas pour qu'il épouse la zone visible et suive les
+   glissements de l'overlay. */
 body.tc-kb-open .flash-drawer-overlay.active .flash-drawer {
     top: 0 !important;
     bottom: 0 !important;
@@ -46732,12 +46705,18 @@ body.tc-kb-open .flash-edit-overlay.active {
 <script>
 (function () {
     'use strict';
+
+    /* Écran tactile « principal » (téléphone / tablette) : les modals ne
+       doivent PAS auto-focuser leur éditeur à l'ouverture — le clavier
+       n'apparaît que lorsque l'utilisateur touche une zone de texte.
+       (Les fonctions d'ouverture des modals consultent ce drapeau.) */
+    window._tcNoAutoFocus = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
     if (!window.visualViewport) return; /* navigateurs sans l'API : comportement inchangé */
 
-    /* ── Téléphone : AUCUNE gestion spéciale, comportement natif du
-       navigateur. On ne gère le clavier que sur tablette (écran dont le
-       plus petit côté fait au moins 600 px — iPad mini inclus, iPhone
-       exclus même en paysage). ── */
+    /* ── Téléphone : AUCUNE gestion spéciale du clavier, comportement natif.
+       On ne gère le clavier que sur tablette (plus petit côté d'écran
+       ≥ 600 px — iPad mini inclus, iPhone exclus même en paysage). ── */
     var IS_TABLET = Math.min(window.screen.width || 0, window.screen.height || 0) >= 600;
     if (!IS_TABLET) return;
 
@@ -46769,8 +46748,10 @@ body.tc-kb-open .flash-edit-overlay.active {
     var _lastDrag = 0;
     window.addEventListener('touchmove', function () { _lastDrag = Date.now(); }, { passive: true, capture: true });
 
-    /* Hauteur « de repos » des modals : mesurée juste AVANT l'épinglage,
-       elle sert de cible à l'animation de fermeture du clavier. */
+    /* Hauteur « de repos » des modals : mesurée juste AVANT l'épinglage.
+       Le modal reste figé à cette hauteur (écrêtée par la zone visible)
+       pendant toute la séquence : états initial et final identiques à
+       l'état normal, donc ajout / retrait des classes invisibles. */
     var _restModals = [];
     function snapshotRestHeights() {
         try {
@@ -46789,7 +46770,14 @@ body.tc-kb-open .flash-edit-overlay.active {
         _restModals = [];
     }
 
-    var _animTimer = null;
+    function setVVVars(top, left, w, h) {
+        root.style.setProperty('--tc-vv-top', Math.round(top) + 'px');
+        root.style.setProperty('--tc-vv-left', Math.round(left) + 'px');
+        root.style.setProperty('--tc-vv-w', Math.round(w) + 'px');
+        root.style.setProperty('--tc-vv-h', Math.round(h) + 'px');
+    }
+
+    var _closeTimer = null;
     function apply() {
         var vv = window.visualViewport;
         var ref = Math.max(window.innerHeight, _baseH);
@@ -46799,35 +46787,39 @@ body.tc-kb-open .flash-edit-overlay.active {
         var wasOpen = body.classList.contains('tc-kb-open');
         root.style.setProperty('--tc-kb-h', Math.round(open ? kb : 0) + 'px');
         if (open) {
-            /* Clavier ouvert (ou réouvert pendant l'animation de fermeture) */
-            if (_animTimer) { clearTimeout(_animTimer); _animTimer = null; }
-            body.classList.remove('tc-kb-anim');
-            if (!wasOpen) snapshotRestHeights(); /* mesurer AVANT l'épinglage */
-            root.style.setProperty('--tc-vv-top', Math.round(vv.offsetTop) + 'px');
-            root.style.setProperty('--tc-vv-left', Math.round(vv.offsetLeft) + 'px');
-            root.style.setProperty('--tc-vv-w', Math.round(vv.width) + 'px');
-            root.style.setProperty('--tc-vv-h', Math.round(vv.height) + 'px');
-            body.classList.add('tc-kb-open');
-            /* Recentrage du caret UNIQUEMENT à l'OUVERTURE du clavier —
-               jamais sur les événements scroll/resize du viewport (c'était la
-               cause du retour automatique vers la case cliquée du planning). */
-            if (!wasOpen) caretFollow(180, true);
-        } else if (wasOpen && !_animTimer) {
-            /* FERMETURE : les modals sont figés à leur hauteur de repos et
-               recentrés (classe tc-kb-anim), puis l'overlay GLISSE en douceur
-               vers le plein écran. À la fin, l'état rendu est identique à
-               l'état normal : le retrait des classes est invisible. */
-            body.classList.add('tc-kb-anim');
-            root.style.setProperty('--tc-vv-top', '0px');
-            root.style.setProperty('--tc-vv-left', '0px');
-            root.style.setProperty('--tc-vv-w', Math.round(window.innerWidth) + 'px');
-            root.style.setProperty('--tc-vv-h', Math.round(ref) + 'px');
-            _animTimer = setTimeout(function () {
-                _animTimer = null;
-                body.classList.remove('tc-kb-open');
-                body.classList.remove('tc-kb-anim');
+            if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+            if (!wasOpen) {
+                /* OUVERTURE : état de départ = plein écran (identique au rendu
+                   normal, donc invisible), puis — à la frame suivante — cibles
+                   épinglées sur la zone visible : la transition CSS fait
+                   GLISSER l'overlay et le modal au-dessus du clavier. */
+                snapshotRestHeights(); /* mesurer AVANT l'épinglage */
+                setVVVars(0, 0, window.innerWidth, ref);
+                body.classList.add('tc-kb-open');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        var v = window.visualViewport;
+                        setVVVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+                    });
+                });
+                /* Recentrage du caret après le glissement — et UNIQUEMENT à
+                   l'ouverture, jamais sur les événements scroll/resize du
+                   viewport (c'était la cause du retour automatique vers la
+                   case cliquée du planning). */
+                caretFollow(400, true);
+            } else {
+                setVVVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
+            }
+        } else if (wasOpen && !_closeTimer) {
+            /* FERMETURE : cibles = plein écran → l'overlay GLISSE en douceur
+               vers son état normal, modal figé à sa hauteur de repos. À la
+               fin, rendu identique à l'état normal : retrait invisible. */
+            setVVVars(0, 0, window.innerWidth, ref);
+            _closeTimer = setTimeout(function () {
+                _closeTimer = null;
+                document.body.classList.remove('tc-kb-open');
                 clearRestHeights();
-            }, 360);
+            }, 340);
         }
     }
     function onChange() {
@@ -46839,9 +46831,7 @@ body.tc-kb-open .flash-edit-overlay.active {
 
     /* Rect du CARET dans un contenteditable. Point important : sur une ligne
        VIDE (juste après un saut de ligne), le caret n'a pas de rect natif.
-       L'ancienne heuristique prenait le nœud SUIVANT le caret — donc la
-       ligne d'en dessous — ce qui décalait le suivi d'une ligne. On vise
-       désormais le nœud PRÉCÉDENT : si c'est un <br>, la ligne du caret
+       On vise le nœud PRÉCÉDENT : si c'est un <br>, la ligne du caret
        commence exactement sous lui (bas du <br> + une hauteur de ligne). */
     function caretRect(el) {
         if (!el.isContentEditable) return null;
@@ -46870,8 +46860,8 @@ body.tc-kb-open .flash-edit-overlay.active {
                 /* Ligne structurée en <div><br></div> : le conteneur EST la
                    ligne courante — son rect est le bon. */
                 if (node !== el && el.contains(node)) {
-                    var cr = node.getBoundingClientRect();
-                    if (cr.height && cr.height < 160) return cr;
+                    var cr2 = node.getBoundingClientRect();
+                    if (cr2.height && cr2.height < 160) return cr2;
                 }
                 if (next && next.nodeType === 1 && next.nodeName === 'BR') {
                     var nr = next.getBoundingClientRect();
@@ -46891,9 +46881,9 @@ body.tc-kb-open .flash-edit-overlay.active {
     /* Garde le caret visible en faisant défiler le conteneur défilant le
        plus proche. smooth=true pour les GRANDS recentrages (ouverture du
        clavier, changement de champ) ; pendant la FRAPPE le défilement est
-       INSTANTANÉ (déplacement d'une ligne à peine) : c'est imperceptible et
-       ça évite la désynchronisation du dessin du curseur sur iOS, qui le
-       faisait apparaître une ligne trop bas pendant les scrolls animés. */
+       INSTANTANÉ (une ligne à peine) : imperceptible, et ça évite la
+       désynchronisation du dessin du curseur sur iOS pendant les scrolls
+       animés (curseur qui semblait une ligne trop bas). */
     function caretFollow(delay, smooth) {
         var el = document.activeElement;
         if (!el) return;
@@ -46908,7 +46898,6 @@ body.tc-kb-open .flash-edit-overlay.active {
             var marginBottom = 34; /* garder ~1 ligne d'air sous le caret */
             var rect = caretRect(el);
             if (!rect) { try { rect = el.getBoundingClientRect(); } catch (e) { return; } }
-            /* Conteneur défilant le plus proche */
             var sc = el;
             while (sc && sc !== document.body && !(sc.scrollHeight > sc.clientHeight + 2)) sc = sc.parentElement;
             var visTop = vv ? vv.offsetTop : 0;
@@ -46939,8 +46928,7 @@ body.tc-kb-open .flash-edit-overlay.active {
 
     /* Pendant la frappe : le caret reste visible automatiquement. Un SAUT DE
        LIGNE recale immédiatement ; le reste est légèrement throttlé. Toujours
-       en défilement instantané (une ligne à peine) : zéro saccade, zéro
-       décalage visuel du curseur. */
+       en défilement instantané : zéro saccade, zéro décalage du curseur. */
     var _lastCaretScroll = 0;
     document.addEventListener('input', function (e) {
         if (!document.body.classList.contains('tc-kb-open')) return;
