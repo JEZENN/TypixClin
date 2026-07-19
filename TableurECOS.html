@@ -589,6 +589,8 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     transition: opacity 0.15s, background 0.3s;
 }
 .profile-id-badge:hover { opacity: 0.85; }
+/* État "copié" : le badge passe momentanément en vert après un clic */
+.profile-id-badge.copied { background: linear-gradient(135deg, #22c55e, #16a34a) !important; }
 .profile-id-badge i { font-size: 0.65rem; }
 
 /* ===== FRIENDS BUTTON IN MENU ===== */
@@ -35977,7 +35979,7 @@ async function updateUserUI(user) {
             }
 
             const badge = document.getElementById('profile-shortid');
-            if (badge) badge.onclick = () => { navigator.clipboard.writeText(shortId); const ic = badge.querySelector('i'); if (ic) { ic.className = 'fas fa-check'; setTimeout(() => ic.className = 'fas fa-fingerprint', 1400); } };
+            if (badge) badge.onclick = () => { navigator.clipboard.writeText(shortId); badge.classList.add('copied'); const ic = badge.querySelector('i'); if (ic) ic.className = 'fas fa-check'; setTimeout(() => { badge.classList.remove('copied'); if (ic) ic.className = 'fas fa-fingerprint'; }, 1400); };
 
             // créer / compléter le document utilisateur (commun EDN/ECOS)
             if (!userDoc.exists()) {
@@ -40431,6 +40433,21 @@ body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-body {
     min-height: 0 !important;
     overflow-y: auto !important;
 }
+/* ── TÉLÉPHONE : modal Détail de la journée ──
+   1) Fond totalement OPAQUE autour du modal : aucune transparence, on ne
+      voit jamais la page derrière (y compris dans la zone du clavier).
+   2) Zone de texte focusée (clavier ouvert) : un grand espace défilant est
+      ajouté sous le texte pour pouvoir faire défiler AU-DELÀ des lignes
+      écrites et amener n'importe quelle partie du texte au-dessus du
+      clavier, même quand peu de lignes existent. */
+body.tc-phone .planning-day-detail-overlay {
+    background: rgb(11, 17, 30) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+body.tc-phone.tc-phone-kb .planning-day-detail-overlay.active .planning-day-detail-editor {
+    padding-bottom: 45vh !important;
+}
 </style>
 <script>
 (function () {
@@ -40448,7 +40465,23 @@ body.tc-kb-open .planning-day-detail-overlay.active .planning-day-detail-body {
        On ne gère le clavier que sur tablette (plus petit côté d'écran
        ≥ 600 px — iPad mini inclus, iPhone exclus même en paysage). ── */
     var IS_TABLET = Math.min(window.screen.width || 0, window.screen.height || 0) >= 600;
-    if (!IS_TABLET) return;
+    if (!IS_TABLET) {
+        /* Téléphone : pas de gestion du clavier (comportement natif), mais on
+           marque le body (tc-phone) pour quelques ajustements CSS, et on suit
+           le focus des zones de texte (tc-phone-kb) afin d'offrir, dans
+           certains modals, un défilement au-delà des lignes écrites pour
+           atteindre la zone masquée par le clavier. */
+        var _phUpd = function () {
+            var el = document.activeElement;
+            var editing = !!(el && (el.isContentEditable || el.tagName === 'TEXTAREA' ||
+                (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''))));
+            document.body.classList.toggle('tc-phone-kb', editing);
+        };
+        document.body.classList.add('tc-phone');
+        document.addEventListener('focusin', function () { setTimeout(_phUpd, 50); });
+        document.addEventListener('focusout', function () { setTimeout(_phUpd, 120); });
+        return;
+    }
 
     var root = document.documentElement;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */

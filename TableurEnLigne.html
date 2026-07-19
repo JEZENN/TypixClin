@@ -46722,6 +46722,23 @@ body.tc-kb-open .pdd-body {
 body.tc-kb-open .flash-edit-overlay.active {
     background: rgba(15, 23, 42, 0.72) !important;
 }
+/* ── TÉLÉPHONE : cahier d'erreurs entraînement + Détail de la journée ──
+   1) Fond totalement OPAQUE autour de ces modals : aucune transparence, on
+      ne voit jamais la page derrière (y compris dans la zone du clavier).
+   2) Zone de texte focusée (clavier ouvert) : un grand espace défilant est
+      ajouté sous le texte pour pouvoir faire défiler AU-DELÀ des lignes
+      écrites et amener n'importe quelle partie du texte au-dessus du
+      clavier, même quand peu de lignes existent. */
+body.tc-phone .pdd-overlay,
+body.tc-phone #trainNotesOverlay {
+    background: rgb(11, 17, 30) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+body.tc-phone.tc-phone-kb .pdd-overlay.active .pdd-editor,
+body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
+    padding-bottom: 45vh !important;
+}
 
 /* ── Correctif Safari mobile/tablette : le switch Notes/Reçues (fiches vs
       fiches partagées) était rogné à droite — position:sticky horizontale
@@ -46759,7 +46776,23 @@ body.tc-kb-open .flash-edit-overlay.active {
        On ne gère le clavier que sur tablette (plus petit côté d'écran
        ≥ 600 px — iPad mini inclus, iPhone exclus même en paysage). ── */
     var IS_TABLET = Math.min(window.screen.width || 0, window.screen.height || 0) >= 600;
-    if (!IS_TABLET) return;
+    if (!IS_TABLET) {
+        /* Téléphone : pas de gestion du clavier (comportement natif), mais on
+           marque le body (tc-phone) pour quelques ajustements CSS, et on suit
+           le focus des zones de texte (tc-phone-kb) afin d'offrir, dans
+           certains modals, un défilement au-delà des lignes écrites pour
+           atteindre la zone masquée par le clavier. */
+        var _phUpd = function () {
+            var el = document.activeElement;
+            var editing = !!(el && (el.isContentEditable || el.tagName === 'TEXTAREA' ||
+                (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''))));
+            document.body.classList.toggle('tc-phone-kb', editing);
+        };
+        document.body.classList.add('tc-phone');
+        document.addEventListener('focusin', function () { setTimeout(_phUpd, 50); });
+        document.addEventListener('focusout', function () { setTimeout(_phUpd, 120); });
+        return;
+    }
 
     var root = document.documentElement;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
