@@ -20961,6 +20961,15 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 }
 .notes-textmax-btn[aria-pressed="true"] i { color: #fff; }
 
+/* Clavier virtuel ouvert sur téléphone : boutons « Agrandir » désactivés
+   (visuellement grisés, non cliquables) pour éviter le sursaut de mise en
+   page pendant la saisie. */
+body.tc-kb-open-phone .notes-textmax-btn,
+body.tc-kb-open-phone .flash-expand-btn {
+    opacity: 0.35 !important;
+    pointer-events: none !important;
+}
+
 /* Modal SDD : empilé jusqu'à 860px */
 @media (max-width: 860px) {
     #sdd-notes-overlay .notes-textmax-sep { display: block; }
@@ -28339,6 +28348,9 @@ function sddPanelExpandBtnHTML() {
 }
 /* ── Agrandir le texte (toolbar) : masque la partie inférieure du modal ── */
 function toggleNotesTextMax(btn) {
+    // Sur téléphone, clavier virtuel ouvert : agrandissement désactivé
+    // (évite le sursaut de mise en page pendant la saisie).
+    if (document.body.classList.contains('tc-kb-open-phone')) return;
     var body = btn && btn.closest ? btn.closest('.notes-modal-body') : null;
     if (!body) return;
     var isMax = body.classList.toggle('notes-text-max');
@@ -28361,6 +28373,9 @@ function toggleNotesTextMax(btn) {
     }
 }
 function toggleErrFlashMax(btn) {
+    // Sur téléphone, clavier virtuel ouvert : agrandissement désactivé
+    // (évite le sursaut de mise en page pendant la saisie).
+    if (document.body.classList.contains('tc-kb-open-phone')) return;
     var body = btn && btn.closest ? btn.closest('.notes-modal-body') : null;
     if (!body) return;
     var isMax = body.classList.toggle('flash-right-max');
@@ -28421,6 +28436,32 @@ function toggleSDDPanelMax(btn) {
         if (lb) lb.textContent = isMax ? 'R\u00e9duire' : 'Agrandir';
     }
 }
+/* ── Détection clavier virtuel sur TÉLÉPHONE, indépendante de la gestion
+   tablette (qui ne s'active pas sur téléphone). Sert uniquement à
+   désactiver le bouton « Agrandir le texte » / « Agrandir le panneau »
+   (modals Notes SDD et Cahier d'erreurs de spécialité) pendant que le
+   clavier est ouvert, pour éviter le sursaut de mise en page provoqué par
+   le changement de hauteur du modal en cours de saisie. ── */
+(function () {
+    'use strict';
+    if (!window.visualViewport) return;
+    var IS_PHONE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches) &&
+                   Math.min(window.screen.width || 0, window.screen.height || 0) < 600;
+    if (!IS_PHONE) return;
+    var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
+    var raf = null;
+    function apply() {
+        var vv = window.visualViewport;
+        var kb = Math.max(0, window.innerHeight - vv.height);
+        document.body.classList.toggle('tc-kb-open-phone', kb > KB_MIN);
+    }
+    function onChange() {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; apply(); });
+    }
+    window.visualViewport.addEventListener('resize', onChange);
+    window.visualViewport.addEventListener('scroll', onChange);
+})();
 function renderSDDObjectives(meta) {
     if (meta && meta.contentType === "procedure") {
         renderProcedureContent(meta);
