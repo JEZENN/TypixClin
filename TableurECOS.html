@@ -35988,7 +35988,7 @@ async function updateUserUI(user) {
                     displayName: user.displayName || '', email: user.email || '',
                     firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '',
                     photoURL: user.photoURL || '', shortId, createdAt: new Date(),
-                    isPremium: true, premiumType: 'grace_period', gracePeriodEnd: new Date('2026-10-26T22:59:59.000Z')
+                    isPremium: true, premiumType: 'grace_period', gracePeriodEnd: (function () { var d = new Date(); if (d < new Date('2026-08-29T00:00:00')) return new Date('2026-10-26T22:59:59.000Z'); d.setMonth(d.getMonth() + 1); return d; })() /* avant la date pivot : grâce collective ; après : création + 1 mois */
                 }, { merge: true }).catch(e => console.warn('create users/', e));
             } else {
                 const patch = {};
@@ -35997,15 +35997,14 @@ async function updateUserUI(user) {
                 if (!userInfo.shortId) patch.shortId = shortId;
                 if (!userInfo.isPremium) patch.isPremium = true;
                 if (!userInfo.premiumType) patch.premiumType = 'grace_period';
-                if (!userInfo.gracePeriodEnd) patch.gracePeriodEnd = new Date('2026-10-26T22:59:59.000Z');
+                if (!userInfo.gracePeriodEnd) patch.gracePeriodEnd = new Date('2026-10-26T22:59:59.000Z') /* compte existant : grâce collective */;
                 if (Object.keys(patch).length) setDoc(doc(db, 'users', user.uid), patch, { merge: true }).catch(() => {});
             }
             /* ── Verrou Premium (lecture seule) : calculé depuis le doc utilisateur ── */
             if (window.tpxApplyPremiumState) {
-                window.tpxApplyPremiumState(userDoc.exists() ? userInfo : {
-                    isPremium: true, premiumType: 'grace_period',
-                    gracePeriodEnd: new Date('2026-10-26T22:59:59.000Z')
-                });
+                var _uinfo = userDoc.exists() ? userInfo : { isPremium: true, premiumType: 'grace_period', createdAt: new Date() };
+                try { if (user && user.metadata && user.metadata.creationTime) _uinfo._authCreatedAt = user.metadata.creationTime; } catch (e) {}
+                window.tpxApplyPremiumState(_uinfo);
             }
             startFriendsListener(user.uid);
         } catch (e) {
@@ -39899,6 +39898,48 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     animation: tpxFabGlow 3.4s ease-in-out infinite;
 }
 body.tpx-premium-locked .tpx-premium-fab { display: flex; }
+/* ── ESSAI GRATUIT : bouton « jeune pousse », même style violet que le
+      bouton Premium. Badge blanc avec le nombre de jours restants sur
+      l'icône ; au survol, le bandeau « Essai gratuit » se déroule
+      exactement comme pour la couronne. ── */
+.tpx-trial-fab {
+    position: fixed; bottom: 1.4rem; left: 1.4rem; z-index: 1300;
+    display: none; align-items: center; height: 58px; min-width: 58px;
+    padding: 0 17px; border-radius: 29px; cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6d28d9 100%);
+    color: #fff; font-family: var(--font-display, inherit);
+    box-shadow: 0 8px 26px rgba(109, 40, 217, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    overflow: hidden;
+    transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.5, 1), box-shadow 0.28s ease, bottom 0.3s ease;
+    animation: tpxFabGlow 3.4s ease-in-out infinite;
+}
+body.tpx-trial .tpx-trial-fab { display: flex; }
+/* Reflet lumineux qui balaye le bouton — même effet « flash » que le bouton Premium */
+.tpx-trial-fab::before {
+    content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: skewX(-22deg);
+    animation: tpxFabSheen 4.5s ease-in-out infinite;
+    pointer-events: none;
+}
+.tpx-trial-fab i.fa-gift {
+    font-size: 1.3rem; line-height: 1; color: #fde68a;
+    filter: drop-shadow(0 1px 3px rgba(120, 53, 15, 0.45));
+    transition: transform 0.28s ease;
+}
+.tpx-trial-fab:hover i.fa-gift { transform: rotate(-10deg) scale(1.1); }
+.tpx-trial-fab .tpx-fab-label {
+    max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+    font-weight: 800; font-size: 0.93rem; letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(76, 29, 149, 0.4);
+    transition: max-width 0.38s ease, opacity 0.26s ease, margin-left 0.38s ease;
+}
+.tpx-trial-fab:hover .tpx-fab-label { max-width: 320px; opacity: 1; margin-left: 11px; }
+.tpx-trial-fab:hover { transform: translateY(-3px); }
+.tpx-trial-fab:active { transform: translateY(-1px) scale(0.97); }
+.tpx-trial-fab:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 @keyframes tpxFabGlow {
     0%, 100% { box-shadow: 0 8px 26px rgba(109, 40, 217, 0.42), inset 0 1px 0 rgba(255,255,255,0.35); }
     50%      { box-shadow: 0 8px 32px rgba(139, 92, 246, 0.62), inset 0 1px 0 rgba(255,255,255,0.35); }
@@ -39930,15 +39971,22 @@ body.tpx-premium-locked .tpx-premium-fab { display: flex; }
 .tpx-premium-fab:hover { transform: translateY(-3px); }
 /* ── Cohabitation avec la notification de déconnexion (même coin bas-gauche) :
       quand elle est visible, la couronne remonte au-dessus d'elle. ── */
-body:has(.offline-notification.show) .tpx-premium-fab { bottom: calc(1.4rem + 58px); }
+body:has(.offline-notification.show) .tpx-premium-fab,
+body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
 @media (max-width: 768px) {
-    body:has(.offline-notification.show) .tpx-premium-fab { bottom: calc(1rem + 66px); }
+    body:has(.offline-notification.show) .tpx-premium-fab,
+    body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1rem + 66px); }
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
 .tpx-premium-fab.tpx-nudge { transform: translateY(-3px); }
 .tpx-premium-fab:active { transform: translateY(-1px) scale(0.97); }
 .tpx-premium-fab:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+/* Modal Premium : contenu du héro selon le mode (essai gratuit vs lecture seule) */
+.tpx-hero-trial { display: none; }
+body.tpx-trial .tpx-hero-locked { display: none !important; }
+body.tpx-trial span.tpx-hero-trial { display: inline-flex; }
+body.tpx-trial p.tpx-hero-trial { display: block; }
 @keyframes tpxFabPulse {
     0%   { box-shadow: 0 8px 26px rgba(109,40,217,0.45), 0 0 0 0 rgba(139,92,246,0.55); }
     70%  { box-shadow: 0 8px 26px rgba(109,40,217,0.45), 0 0 0 18px rgba(139,92,246,0); }
@@ -40111,8 +40159,10 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
             <div class="tpx-hero">
                 <div class="tpx-hero-crown"><i class="fas fa-crown"></i></div>
                 <div class="tpx-hero-text">
-                    <span class="tpx-hero-badge"><i class="fas fa-eye"></i> Lecture seule</span>
-                    <p>Vos données restent visibles, mais les modifications sont réservées aux membres <b>Premium</b>.</p>
+                    <span class="tpx-hero-badge tpx-hero-locked"><i class="fas fa-eye"></i> Lecture seule</span>
+                    <span class="tpx-hero-badge tpx-hero-trial"><i class="fas fa-gift"></i> Essai gratuit en cours</span>
+                    <p class="tpx-hero-locked">Les modifications sont réservées aux membres <b>Premium</b>.</p>
+                    <p class="tpx-hero-trial">Profitez de toutes les fonctionnalités pendant encore <b><span id="tpx-hero-trial-left">–</span></b>. Abonnez-vous pour continuer à utiliser le tableur sans interruption après l'essai.</p>
                 </div>
             </div>
             <div class="tpx-benefit-grid">
@@ -40145,28 +40195,61 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
         } catch (e) { return null; }
     }
 
-    /* Accès complet si : période de grâce en cours, OU abonnement actif,
-       OU abonnement annulé mais période payée pas encore terminée. */
-    window.tpxHasPremiumAccess = function (u) {
+    /* ── ESSAI GRATUIT : 1 mois à partir de la CRÉATION du compte, une seule
+       fois par compte — la date de création (createdAt du doc, sinon date de
+       création du compte Firebase Auth) est immuable, donc aucune seconde
+       période gratuite n'est possible. Accès complet si : essai en cours,
+       OU abonnement actif, OU abonnement annulé mais période payée pas
+       encore terminée. Sinon : compte bloqué (lecture seule Premium). ── */
+    /* ── DATE PIVOT (à ajuster si besoin) ──
+       • Comptes créés AVANT cette date : grâce collective jusqu'au
+         26 octobre 2026, puis paiement ou blocage.
+       • Comptes créés À PARTIR de cette date : essai gratuit d'un mois
+         à la création (une seule fois), puis paiement ou blocage. */
+    var TPX_TRIAL_CUTOFF = new Date('2026-08-29T00:00:00');
+    var TPX_LEGACY_GRACE_END = new Date('2026-10-26T22:59:59.000Z');
+    function tpxCreatedDate(u) {
+        if (!u) return null;
+        return tpxToDate(u.createdAt) || tpxToDate(u._authCreatedAt);
+    }
+    window.tpxIsLegacyAccount = function (u) {
+        var c = tpxCreatedDate(u);
+        return !!(c && c < TPX_TRIAL_CUTOFF);
+    };
+    window.tpxTrialEnd = function (u) {
+        var c = tpxCreatedDate(u);
+        if (!c) return null;
+        if (c < TPX_TRIAL_CUTOFF) return new Date(TPX_LEGACY_GRACE_END.getTime()); /* ancien compte */
+        var end = new Date(c.getTime());
+        end.setMonth(end.getMonth() + 1);
+        return end;
+    };
+    window.tpxIsSubscribed = function (u) {
         if (!u) return false;
         var now = new Date();
-        var isGrace = (u.premiumType === 'grace_period') ||
-                      (!u.premiumType && u.isPremium && !u.subscriptionStatus); // ancien doc pas encore migré
-        if (isGrace) {
-            var g = tpxToDate(u.gracePeriodEnd) || new Date('2026-10-26T22:59:59.000Z');
-            if (g > now) return true;
-        }
         if (u.isPremium && u.subscriptionStatus === 'active') return true;
         var e = tpxToDate(u.subscriptionEndDate);
         if (e && e > now) return true; // annulé mais payé jusqu'à cette date
         return false;
     };
-
-    window.tpxApplyPremiumState = function (userInfo) {
-        if (window.tpxHasPremiumAccess(userInfo)) tpxDisablePremiumLock();
-        else tpxEnablePremiumLock();
+    window.tpxHasPremiumAccess = function (u) {
+        if (window.tpxIsSubscribed(u)) return true;
+        var t = window.tpxTrialEnd(u);
+        return !!(t && t > new Date()); // essai gratuit en cours
     };
-    window.tpxResetPremiumState = function () { tpxDisablePremiumLock(); };
+
+    var _tpxLastUser = null;
+    window.tpxApplyPremiumState = function (userInfo) {
+        _tpxLastUser = userInfo || null;
+        if (window.tpxHasPremiumAccess(userInfo)) {
+            tpxDisablePremiumLock();
+            tpxUpdateTrialFab(userInfo); /* pastille compte à rebours pendant l'essai */
+        } else {
+            tpxHideTrialFab();
+            tpxEnablePremiumLock();
+        }
+    };
+    window.tpxResetPremiumState = function () { _tpxLastUser = null; tpxHideTrialFab(); tpxDisablePremiumLock(); };
 
     function tpxEnablePremiumLock() {
         if (window.tpxPremiumLocked) return;
@@ -40278,6 +40361,66 @@ body.tpx-premium-locked .weekly-chart-card.clickable {
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildFab);
     else buildFab();
+
+    /* ── ESSAI GRATUIT : pastille bas-gauche avec compte à rebours ──
+       Pendant l'essai, la couronne est remplacée par un rond affichant le
+       temps restant avant blocage (jours, puis heures, puis minutes). Au
+       survol/clic : libellé complet + ouverture du modal Premium pour
+       s'abonner. À l'expiration exacte : bascule automatique en lecture
+       seule (couronne classique) sans recharger la page. */
+    function buildTrialFab() {
+        if (document.getElementById('tpx-trial-fab')) return;
+        var fab = document.createElement('button');
+        fab.id = 'tpx-trial-fab';
+        fab.type = 'button';
+        fab.className = 'tpx-trial-fab';
+        fab.setAttribute('aria-label', 'Essai gratuit — temps restant avant blocage du compte');
+        fab.innerHTML = '<i class="fas fa-gift"></i><span class="tpx-fab-label">Essai gratuit</span>';
+        fab.addEventListener('click', function () { window.openTpxPremiumModal(); });
+        document.body.appendChild(fab);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildTrialFab);
+    else buildTrialFab();
+
+    var _tpxTrialTick = null;
+    var _tpxTrialFlip = null;
+    function tpxHideTrialFab() {
+        document.body.classList.remove('tpx-trial');
+        if (_tpxTrialTick) { clearInterval(_tpxTrialTick); _tpxTrialTick = null; }
+        if (_tpxTrialFlip) { clearTimeout(_tpxTrialFlip); _tpxTrialFlip = null; }
+    }
+    function tpxRenderTrialFab(end) {
+        var fab = document.getElementById('tpx-trial-fab');
+        if (!fab) return;
+        var ms = end.getTime() - Date.now();
+        if (ms <= 0) return;
+        var count, unit;
+        if (ms >= 86400000) { count = String(Math.ceil(ms / 86400000)); unit = 'j'; }
+        else if (ms >= 3600000) { count = String(Math.ceil(ms / 3600000)); unit = 'h'; }
+        else { count = String(Math.max(1, Math.ceil(ms / 60000))); unit = 'm'; }
+        var restant = unit === 'j' ? (count + (count === '1' ? ' jour restant' : ' jours restants'))
+            : unit === 'h' ? (count + ' h restantes') : (count + ' min restantes');
+        var lbl = fab.querySelector('.tpx-fab-label');
+        if (lbl) lbl.textContent = 'Essai gratuit — ' + restant; /* jours restants dans le bandeau déroulant */
+        var heroLeft = document.getElementById('tpx-hero-trial-left');
+        if (heroLeft) heroLeft.textContent = unit === 'j' ? (count + (count === '1' ? ' jour' : ' jours'))
+            : unit === 'h' ? (count + ' h') : (count + ' min');
+    }
+    function tpxUpdateTrialFab(u) {
+        tpxHideTrialFab();
+        if (window.tpxIsSubscribed(u)) return; /* abonné : pas de pastille */
+        if (window.tpxIsLegacyAccount(u)) return; /* compte d'avant la date pivot : grâce silencieuse (pas de compteur) */
+        var end = window.tpxTrialEnd(u);
+        if (!end || end.getTime() - Date.now() <= 0) return;
+        document.body.classList.add('tpx-trial');
+        tpxRenderTrialFab(end);
+        _tpxTrialTick = setInterval(function () { tpxRenderTrialFab(end); }, 60000);
+        /* Bascule automatique en lecture seule à l'expiration exacte */
+        var wait = Math.max(1000, Math.min(end.getTime() - Date.now() + 1500, 2147000000));
+        _tpxTrialFlip = setTimeout(function () {
+            if (_tpxLastUser) window.tpxApplyPremiumState(_tpxLastUser);
+        }, wait);
+    }
 
     /* ── Enrobage des fonctions globales à bloquer (silencieux + pulse) ── */
     var TPX_WRAP_FNS = ['openFlashDrawer'];
