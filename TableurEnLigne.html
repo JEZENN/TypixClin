@@ -55,6 +55,9 @@ window.tcLoadAnalytics();
 <meta name="description" content="Planning de Révision EDN - Organisez et suivez vos révisions pour l'examen national">
 <title>TypixClin - Tableur Révision EDN</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<!-- Interrupteur global de la facturation (doit être chargé en premier) -->
+<script src="tpx-billing.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -19348,6 +19351,7 @@ async function updateUserUI(user) {
 		
         currentUser = user;
         window.currentUser = user; // sync global
+        if (window.tpxBillingSetUser) window.tpxBillingSetUser(user);
         
         // ═══════════════════════════════════════════════════════════
         // 🔥 ÉTAPE 1 : CHARGER LES DONNÉES EN PREMIER (PRIORITÉ #1)
@@ -19425,9 +19429,13 @@ async function updateUserUI(user) {
                         photoURL:    user.photoURL || '',
                         shortId:     shortId,
                         createdAt:   new Date(),
+                        /* Champs exigés par la règle Firestore `create`. L'échéance
+                           vient de tpx-billing.js : une seule date pour tout le site. */
                         isPremium:   true,
                         premiumType: 'grace_period',
-                        gracePeriodEnd: (function () { var d = new Date(); if (d < new Date('2026-08-29T00:00:00')) return new Date('2026-10-26T22:59:59.000Z'); d.setMonth(d.getMonth() + 1); return d; })() /* avant la date pivot : grâce collective ; après : création + 1 mois */ /* fin d'essai gratuit : création + 1 mois */
+                        gracePeriodEnd: (typeof window.tpxComputeTrialEnd === 'function'
+                            ? window.tpxComputeTrialEnd(new Date())
+                            : new Date('2026-10-26T22:59:59.000Z'))
                     };
                     setDoc(doc(db, 'users', user.uid), _createPatch, { merge: true })
                         .catch((e) => console.warn('⚠️ Impossible de créer users/', user.uid, e));
@@ -19444,9 +19452,13 @@ async function updateUserUI(user) {
                     }
                     if (user.photoURL && !userInfo.photoURL)    _updatePatch.photoURL    = user.photoURL;
                     if (!userInfo.shortId)                      _updatePatch.shortId     = shortId;
+                    /* Migration des docs anciens : les règles n'autorisent l'écriture
+                       de ces trois champs que s'ils sont ABSENTS. */
                     if (!userInfo.isPremium)                    _updatePatch.isPremium   = true;
                     if (!userInfo.premiumType)                  _updatePatch.premiumType = 'grace_period';
-                    if (!userInfo.gracePeriodEnd)               _updatePatch.gracePeriodEnd = new Date('2026-10-26T22:59:59.000Z') /* compte existant : grâce collective */;
+                    if (!userInfo.gracePeriodEnd)               _updatePatch.gracePeriodEnd = (typeof window.tpxLegacyGraceEnd === 'function'
+                        ? window.tpxLegacyGraceEnd()
+                        : new Date('2026-10-26T22:59:59.000Z'));
                     if (Object.keys(_updatePatch).length > 0) {
                         setDoc(doc(db, 'users', user.uid), _updatePatch, { merge: true })
                             .catch((e) => console.warn('⚠️ Impossible de mettre à jour users/', user.uid, e));
@@ -19536,6 +19548,7 @@ async function updateUserUI(user) {
 	stopInactivityTimer();
         currentUser = null;
         window.currentUser = null; // sync global
+        if (window.tpxBillingSetUser) window.tpxBillingSetUser(null);
         window.userData = null;    // sync global
         if (window.tpxResetPremiumState) window.tpxResetPremiumState();
 		_pendingSyncChecked = false;
@@ -31174,6 +31187,53 @@ body.tc-kb-open-phone .flash-expand-btn {
         </div>
         <div class="whats-new-modal-body">
 
+            <!-- ══════════════ JUILLET 2026 ══════════════ -->
+            <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Juillet 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon purple">
+                    <i class="fas fa-mobile-screen-button"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Utilisation sur iPad et iPhone</h4>
+                    <p>
+                        La disposition a été entièrement revue sur écrans tactiles :
+                        tableaux <strong>plus lisibles</strong>, boutons
+                        <strong>plus faciles à atteindre</strong> et navigation fluide
+                        entre les pages. Réviser depuis une tablette ou un téléphone
+                        devient aussi confortable que sur ordinateur.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon amber">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Passage à un abonnement en octobre 2026</h4>
+                    <p>
+                        Vous êtes de plus en plus nombreux à utiliser TypixClin, et les
+                        frais d'hébergement et de stockage ont suivi. Pour que le site
+                        continue d'exister et d'évoluer, les tableurs EDN et ECOS
+                        deviendront payants.
+                    </p>
+                    <p>
+                        <strong>Si vous avez déjà un compte</strong>, ou si vous en créez
+                        un <strong>avant le 29 août 2026</strong> : rien ne change
+                        jusqu'au <strong>26 octobre 2026</strong>.
+                        <strong>À partir du 29 août</strong>, les nouveaux comptes
+                        bénéficient d'<strong>un mois gratuit</strong> à compter de leur
+                        inscription.
+                    </p>
+                    <p>
+                        Le tarif sera de <strong>3 € par mois maximum</strong>, avec une
+                        <strong>formule annuelle plus avantageuse</strong>. Vos données
+                        resteront accessibles en lecture dans tous les cas, et les fiches
+                        et outils cliniques du site demeurent entièrement gratuits.
+                    </p>
+                </div>
+            </div>
 
             <!-- ── Juin 2026 ── -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Juin 2026</span>
@@ -40972,8 +41032,8 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 <script>
 (function() {
     // Clé Firestore (champ dans doc users/{uid}) et localStorage (fallback hors-ligne)
-    var FS_FIELD      = 'whatsNewSeen_v2';
-    var LS_KEY        = 'whatsNew_seen_v2';
+    var FS_FIELD      = 'whatsNewSeen_v3';
+    var LS_KEY        = 'whatsNew_seen_v3';
     var _seenResolved = false; // évite de re-montrer la pastille après résolution
 
     /* ── Animations ── */
@@ -46530,8 +46590,16 @@ body.tpx-premium-locked .day-detail-open-btn {
          26 octobre 2026, puis paiement ou blocage.
        • Comptes créés À PARTIR de cette date : essai gratuit d'un mois
          à la création (une seule fois), puis paiement ou blocage. */
-    var TPX_TRIAL_CUTOFF = new Date('2026-08-29T00:00:00');
-    var TPX_LEGACY_GRACE_END = new Date('2026-10-26T22:59:59.000Z');
+    /* Dates lues depuis tpx-billing.js (source unique du site). Les valeurs
+       de repli ci-dessous ne servent que si le fichier n'a pas été chargé ;
+       elles doivent rester identiques à celles de tpx-billing.js. */
+    var TPX_TRIAL_CUTOFF = (window.TPX_BILLING && window.TPX_BILLING.TRIAL_CUTOFF)
+        ? new Date(window.TPX_BILLING.TRIAL_CUTOFF)
+        : new Date('2026-08-28T22:00:00.000Z');   /* 29/08/2026 00:00 Paris */
+    var TPX_LEGACY_GRACE_END = (window.TPX_BILLING && window.TPX_BILLING.LEGACY_GRACE_END)
+        ? new Date(window.TPX_BILLING.LEGACY_GRACE_END)
+        : new Date('2026-10-26T22:59:59.000Z');   /* 26/10/2026 23:59:59 Paris */
+    var TPX_TRIAL_MONTHS = (window.TPX_BILLING && window.TPX_BILLING.TRIAL_MONTHS) || 1;
     function tpxCreatedDate(u) {
         if (!u) return null;
         return tpxToDate(u.createdAt) || tpxToDate(u._authCreatedAt);
@@ -46543,9 +46611,12 @@ body.tpx-premium-locked .day-detail-open-btn {
     window.tpxTrialEnd = function (u) {
         var c = tpxCreatedDate(u);
         if (!c) return null;
+        /* Calcul délégué à tpx-billing.js : les trois pages du site annoncent
+           ainsi rigoureusement la même échéance. Repli local si absent. */
+        if (typeof window.tpxComputeTrialEnd === 'function') return window.tpxComputeTrialEnd(c);
         if (c < TPX_TRIAL_CUTOFF) return new Date(TPX_LEGACY_GRACE_END.getTime()); /* ancien compte */
         var end = new Date(c.getTime());
-        end.setMonth(end.getMonth() + 1);
+        end.setMonth(end.getMonth() + TPX_TRIAL_MONTHS);
         return end;
     };
     window.tpxIsSubscribed = function (u) {
@@ -46557,6 +46628,12 @@ body.tpx-premium-locked .day-detail-open-btn {
         return false;
     };
     window.tpxHasPremiumAccess = function (u) {
+        /* ── PHASE GRATUITE ──────────────────────────────────────────────
+           Tant que tpx-billing.js n'est pas activé, tout le monde a l'accès
+           complet, quelle que soit la date de création du compte. Court-circuite
+           le verrou, la couronne, la pastille d'essai et les nudges. ────── */
+        if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return true;
+
         if (window.tpxIsSubscribed(u)) return true;
         var t = window.tpxTrialEnd(u);
         return !!(t && t > new Date()); // essai gratuit en cours
@@ -46565,6 +46642,16 @@ body.tpx-premium-locked .day-detail-open-btn {
     var _tpxLastUser = null;
     window.tpxApplyPremiumState = function (userInfo) {
         _tpxLastUser = userInfo || null;
+
+        /* ── PHASE GRATUITE ──────────────────────────────────────────────
+           Ni verrou, ni pastille de compte à rebours. On sort avant même de
+           lancer le minuteur de l'essai : rien à masquer, rien ne tourne. */
+        if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) {
+            tpxHideTrialFab();
+            tpxDisablePremiumLock();
+            return;
+        }
+
         if (window.tpxHasPremiumAccess(userInfo)) {
             tpxDisablePremiumLock();
             tpxUpdateTrialFab(userInfo); /* pastille compte à rebours pendant l'essai */

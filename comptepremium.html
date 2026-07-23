@@ -30,6 +30,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="description" content="Gérez votre abonnement Premium sur TypixClin - Débloquez toutes les fonctionnalités pour optimiser vos révisions EDN">
 <title>Mon Compte Premium - TypixClin</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<!-- Interrupteur global de la facturation (doit être chargé en premier) -->
+<script src="tpx-billing.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -67,6 +70,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     --shadow-blue: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
     --shadow-blue-lg: 0 20px 30px -10px rgba(59, 130, 246, 0.6);
+    /* Largeur de la barre de défilement, mise à jour par _setScrollbarComp().
+       Lue par les éléments position:fixed pour qu'ils ne bougent pas
+       quand un modal masque la barre. */
+    --scrollbar-w: 0px;
     --header-height: 70px;
     --container-max-width: 1400px;
     --border-radius-sm: 0.375rem;
@@ -1214,7 +1221,8 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .back-to-top {
     position: fixed;
     bottom: 2rem;
-    right: 2rem;
+    /* Compense la disparition de la barre de défilement à l'ouverture d'un modal */
+    right: calc(2rem + var(--scrollbar-w, 0px));
     width: 50px;
     height: 50px;
     background: var(--primary-gradient);
@@ -1225,7 +1233,13 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     justify-content: center;
     font-size: 1.2rem;
     box-shadow: var(--shadow-blue);
-    transition: all var(--transition-normal);
+    /* Propriétés listées explicitement : « all » ferait glisser le bouton sur
+       300 ms à chaque variation de --scrollbar-w (ouverture/fermeture d'un
+       modal). Same approche que .back-to-top dans TableurECOS.html. */
+    transition: opacity var(--transition-normal),
+                visibility var(--transition-normal),
+                transform var(--transition-normal),
+                box-shadow var(--transition-normal);
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
@@ -1248,6 +1262,8 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     position: fixed;
     bottom: 2rem;
     left: 50%;
+    /* Élément centré : décalé de la moitié de la barre de défilement */
+    margin-left: calc(var(--scrollbar-w, 0px) / -2);
     transform: translateX(-50%) translateY(150%);
     background: var(--white);
     padding: 1rem 1.5rem;
@@ -1744,6 +1760,222 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
         font-size: 0.9rem;
     }
 }
+
+/* ═══════════════ INFORMATIONS LÉGALES + MODAL CGV ═══════════════ */
+.legal-section {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 0 4rem;
+}
+
+.legal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .legal-grid { grid-template-columns: 1fr; }
+}
+
+.legal-card {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    background: var(--white);
+    padding: 1.5rem 1.75rem;
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 2px solid transparent;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.legal-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--primary-gradient);
+    transition: width var(--transition-normal);
+}
+
+.legal-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateX(6px);
+    border-color: var(--primary);
+}
+
+.legal-card:hover::before { width: 5px; }
+
+.legal-card-icon {
+    width: 48px; height: 48px;
+    flex: 0 0 48px;
+    border-radius: var(--border-radius-lg);
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.15rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.legal-card-text { flex: 1; min-width: 0; }
+
+.legal-card-text b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 0.2rem;
+}
+
+.legal-card-text span {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+}
+
+.legal-card-arrow {
+    color: var(--gray-300);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: transform var(--transition-normal), color var(--transition-normal);
+}
+
+.legal-card:hover .legal-card-arrow {
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+[data-theme="dark"] .legal-card { background: #1e293b; }
+[data-theme="dark"] .legal-card-text b { color: #e2e8f0; }
+[data-theme="dark"] .legal-card-text span { color: #94a3b8; }
+[data-theme="dark"] .legal-card-arrow { color: #475569; }
+
+/* ── Modal (style identique au modal CGU de auth.html) ── */
+@keyframes modalOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalContentIn  { from { opacity: 0; transform: scale(0.94) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes modalContentOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.94) translateY(14px); } }
+
+.help-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 10000; padding: 1rem;
+}
+.help-modal-overlay.active { display: flex; animation: modalOverlayIn 0.2s ease forwards; }
+
+.help-modal {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    max-width: 680px; width: 100%; max-height: 85vh; overflow: hidden;
+    transform: scale(0.94) translateY(14px);
+    display: flex; flex-direction: column;
+}
+[data-theme="dark"] .help-modal {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+.help-modal-overlay.active .help-modal { transform: scale(1) translateY(0); animation: modalContentIn 0.22s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+.help-modal-overlay.closing             { animation: modalOverlayOut 0.18s ease forwards; }
+.help-modal-overlay.closing .help-modal { animation: modalContentOut 0.18s ease forwards; }
+
+.help-modal-header {
+    background: var(--white); padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    flex-shrink: 0; border-bottom: 2px solid var(--gray-200);
+}
+[data-theme="dark"] .help-modal-header { background: #1e293b; border-bottom-color: #475569; }
+.help-modal-title { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.help-modal-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--primary-gradient);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: white; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+.help-modal-title h3 {
+    font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;
+    color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.help-modal-close {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--danger-light); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: var(--danger);
+    transition: all 0.15s ease; flex-shrink: 0;
+}
+.help-modal-close:hover { background: var(--danger); color: white; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
+.help-modal-close:active { transform: scale(0.88); }
+[data-theme="dark"] .help-modal-close { background: rgba(239, 68, 68, 0.6); color: white; border: 1px solid rgba(239, 68, 68, 0.8); }
+[data-theme="dark"] .help-modal-close:hover { background: var(--danger); border-color: transparent; }
+
+.help-modal-body { padding: 24px; overflow-y: auto; flex: 1; overscroll-behavior: contain; }
+
+.modal-body h3 { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin: 1.5rem 0 0.5rem; font-family: var(--font-display); }
+.modal-body h3:first-child { margin-top: 0; }
+.modal-body p, .modal-body li { font-size: 0.9rem; color: var(--gray-600); line-height: 1.65; }
+.modal-body p { margin-bottom: 0.6rem; }
+.modal-body ul { margin: 0.5rem 0 0.75rem; padding-left: 1.25rem; }
+.modal-body li { margin-bottom: 0.35rem; }
+.modal-body a { color: var(--primary); }
+[data-theme="dark"] .modal-body h3 { color: #e2e8f0; }
+[data-theme="dark"] .modal-body p, [data-theme="dark"] .modal-body li { color: #94a3b8; }
+
+
+
+.modal-highlight {
+    background: rgba(59, 130, 246, 0.07);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--border-radius-md);
+    padding: 0.85rem 1rem;
+    margin: 0.75rem 0 1rem;
+}
+.modal-highlight p { margin: 0; }
+[data-theme="dark"] .modal-highlight { background: rgba(59, 130, 246, 0.12); }
+
+.modal-body h3 i {
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin-right: 0.45rem;
+}
+.modal-update {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--gray-200);
+    font-size: 0.82rem !important;
+    color: var(--gray-400) !important;
+    text-align: center;
+}
+[data-theme="dark"] .modal-update { border-top-color: #475569; }
+
+.modal-footer {
+    padding: 1.25rem 1.5rem; border-top: 1px solid var(--gray-200);
+    display: flex; gap: 1rem; justify-content: flex-end; flex-shrink: 0;
+}
+[data-theme="dark"] .modal-footer { border-top-color: #475569; }
+
+.modal-ok {
+    min-width: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    border-radius: var(--border-radius-lg);
+}
+.modal-ok i { margin: 0; }
+
+.modal-footer .btn { padding: 0.75rem 1.5rem; width: auto; }
+
 </style>
 </head>
 <body>
@@ -2151,6 +2383,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </div>
         </section>
+
+        <!-- ===== INFORMATIONS LÉGALES ===== -->
+        <section class="legal-section">
+            <h2 class="section-title">Informations légales</h2>
+            <p class="section-subtitle">Les règles qui encadrent votre abonnement, en toute transparence</p>
+
+            <div class="legal-grid">
+                <a href="#" class="legal-card" id="cgv-link">
+                    <div class="legal-card-icon"><i class="fas fa-file-signature"></i></div>
+                    <div class="legal-card-text">
+                        <b>Conditions générales de vente</b>
+                        <span>Prix, durée, reconduction, résiliation et rétractation</span>
+                    </div>
+                    <i class="fas fa-arrow-right legal-card-arrow"></i>
+                </a>
+
+                <a href="#" class="legal-card" id="ml-link">
+                    <div class="legal-card-icon"><i class="fas fa-gavel"></i></div>
+                    <div class="legal-card-text">
+                        <b>Mentions légales</b>
+                        <span>Éditeur, hébergement, données personnelles et cookies</span>
+                    </div>
+                    <i class="fas fa-arrow-right legal-card-arrow"></i>
+                </a>
+            </div>
+        </section>
+
 				
 		
         </div>
@@ -2202,7 +2461,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 					<a href="index.html#fiches" class="footer-nav-link">Fiches</a>
                     <a href="index.html#ai" class="footer-nav-link">Conception</a>
                     <a href="index.html#feedback" class="footer-nav-link">Feedback</a>
-					<a href="MentionsLégales.html" class="footer-nav-link">Mentions légales</a>
+					<a href="#" class="footer-nav-link" id="ml-link-footer">Mentions légales</a>
+					<a href="#" class="footer-nav-link" id="cgv-link-footer">Conditions générales de vente</a>
                 </div>
             </div>
         </div>
@@ -2506,6 +2766,7 @@ function getInitials(name) {
 async function updateUserUI(user) {
     if (user) {
         currentUser = user;
+        if (window.tpxBillingSetUser) window.tpxBillingSetUser(user);
         userAuth.classList.add('logged-in');
         localStorage.setItem('userEmail', user.email);
         
@@ -2586,9 +2847,63 @@ function displayUserStatus() {
     let infoHTML = '';
     let showPlans = false;
 
+    /* ── PHASE GRATUITE ──────────────────────────────────────────────────
+       Tant que la facturation n'est pas activée, aucun utilisateur ne doit
+       voir de statut d'abonnement, d'échéance ou de tarif. On affiche un
+       simple badge d'accès complet et on sort. ─────────────────────────── */
+    if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) {
+        statusBadge.innerHTML = '<span class="status-badge status-active">\u2728 Acc\u00e8s complet</span>';
+        statusInfo.innerHTML =
+            '<div class="info-row">' +
+                '<span class="info-label">Statut :</span>' +
+                '<span class="info-value">Toutes les fonctionnalit\u00e9s sont accessibles</span>' +
+            '</div>' +
+            '<div class="info-row">' +
+                '<span class="info-label">Co\u00fbt :</span>' +
+                '<span class="info-value">Gratuit</span>' +
+            '</div>';
+        graceAlert.style.display = 'none';
+        plansSection.style.display = 'none';
+        portalBtn.style.display = 'none';
+        return;
+    }
+
     // Grace Period
     if (userData.premiumType === 'grace_period') {
-        const graceEnd = userData.gracePeriodEnd?.toDate();
+        /* ── Échéance de fin d'accès gratuit ─────────────────────────────
+           Recalculée depuis la date de création via tpx-billing.js, afin
+           d'annoncer exactement la même date que les deux tableurs.
+           Quatre sources, par ordre de fiabilité décroissante :
+             1. users/{uid}.createdAt          (cas normal)
+             2. date de création Firebase Auth (doc créé sans createdAt)
+             3. gracePeriodEnd stocké en base  (valeur héritée)
+             4. fin de grâce collective        (comme la règle Firestore, qui
+                traite un doc sans createdAt comme un compte pré-pivot)
+           Sans le repli 4, un compte sans createdAt affichait « Période
+           expirée » alors que le serveur lui accordait l'accès. */
+        let graceEnd = null;
+
+        let _created = null;
+        if (userData.createdAt?.toDate)      _created = userData.createdAt.toDate();
+        else if (userData.createdAt)         _created = new Date(userData.createdAt);
+        if (!_created || isNaN(_created.getTime())) {
+            const _authCreated = currentUser?.metadata?.creationTime;
+            if (_authCreated) {
+                const d = new Date(_authCreated);
+                if (!isNaN(d.getTime())) _created = d;
+            }
+        }
+
+        if (_created && typeof window.tpxComputeTrialEnd === 'function') {
+            graceEnd = window.tpxComputeTrialEnd(_created);
+        }
+        if (!graceEnd && userData.gracePeriodEnd?.toDate) {
+            graceEnd = userData.gracePeriodEnd.toDate();
+        }
+        if (!graceEnd && typeof window.tpxLegacyGraceEnd === 'function') {
+            graceEnd = window.tpxLegacyGraceEnd();
+        }
+
         const now = new Date();
         const daysLeft = Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24));
 
@@ -2681,6 +2996,9 @@ function displayUserStatus() {
 
 // Subscribe
 window.subscribe = async function(planType, event) {
+    /* Phase gratuite : aucun appel à Stripe possible. */
+    if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return;
+
     if (!currentUser) {
         await showToast({
             title: 'Erreur',
@@ -2725,6 +3043,9 @@ window.subscribe = async function(planType, event) {
 
 // Open Customer Portal
 window.openCustomerPortal = async function() {
+    /* Phase gratuite : aucun appel à Stripe possible. */
+    if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return;
+
     const button = document.getElementById('portal-btn');
     try {
         if (button) {
@@ -2814,6 +3135,420 @@ if (urlParams.get('success') === 'true') {
         window.history.replaceState({}, '', 'comptepremium.html');
     }, 1000);
 }
+</script>
+
+
+<!-- ===== MODAL CONDITIONS GÉNÉRALES DE VENTE ===== -->
+<div class="help-modal-overlay" id="cgv-modal">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-file-signature"></i></div>
+                <h3>Conditions générales de vente</h3>
+            </div>
+            <button class="help-modal-close" data-close aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="help-modal-body modal-body">
+
+            <h3><i class="fas fa-user"></i> 1. Identité du vendeur</h3>
+            <p>
+                Le service TypixClin est édité et exploité par <strong>Jean ZENNARO</strong>,
+                entrepreneur individuel sous régime de la micro-entreprise.<br>
+                Siège : 35 rue Jean Le Coz, 92500 Rueil-Malmaison, France.<br>
+                SIRET : <strong>[À COMPLÉTER]</strong> — RCS : <strong>[À COMPLÉTER]</strong>.<br>
+                Courriel : <a href="mailto:typixclin@gmail.com">typixclin@gmail.com</a><br>
+                TVA non applicable, article 293 B du Code général des impôts.
+            </p>
+
+            <h3><i class="fas fa-file-lines"></i> 2. Objet</h3>
+            <p>
+                Les présentes conditions générales de vente régissent la souscription à l'abonnement
+                Premium de TypixClin. Elles complètent les conditions générales d'utilisation, qui
+                restent applicables à l'ensemble du service. En cas de contradiction sur un point
+                relatif à l'abonnement, les présentes conditions prévalent.
+            </p>
+            <p>
+                Le service s'adresse à des personnes physiques majeures agissant en qualité de
+                consommateur. Toute souscription vaut acceptation pleine et entière des présentes.
+            </p>
+
+            <h3><i class="fas fa-crown"></i> 3. Service vendu</h3>
+            <p>
+                L'abonnement Premium donne accès aux fonctionnalités de suivi personnel de progression
+                des tableurs EDN et ECOS : remplissage des tours de révision, planning, prise de notes,
+                cahiers d'erreurs, flashcards et statistiques avancées.
+            </p>
+            <p>
+                Les autres outils du site, ainsi que la consultation en lecture seule des données déjà
+                saisies, demeurent accessibles gratuitement. Le détail des fonctionnalités incluses est
+                présenté sur la présente page avant toute souscription.
+            </p>
+
+            <h3><i class="fas fa-euro-sign"></i> 4. Prix</h3>
+            <ul>
+                <li>Abonnement mensuel : <strong>3,00 € TTC par mois</strong></li>
+                <li>Abonnement annuel : <strong>30,00 € TTC par an</strong></li>
+            </ul>
+            <p>
+                Les prix sont indiqués en euros, toutes taxes comprises. L'éditeur relevant de la
+                franchise en base de TVA, aucune TVA n'est facturée.
+            </p>
+            <p>
+                Les tarifs applicables sont ceux affichés au jour de la souscription. Toute modification
+                tarifaire vous sera notifiée par courriel au moins trente jours avant son entrée en
+                vigueur. Vous pourrez alors résilier sans frais avant l'échéance suivante ; à défaut de
+                résiliation, le nouveau tarif s'appliquera.
+            </p>
+
+            <h3><i class="fas fa-cart-shopping"></i> 5. Souscription</h3>
+            <p>
+                La souscription s'effectue en ligne depuis la présente page, après création d'un compte.
+                Vous sélectionnez la formule souhaitée, vérifiez le récapitulatif de votre commande, puis
+                procédez au paiement. La validation du paiement forme le contrat.
+            </p>
+            <p>
+                Une confirmation vous est adressée par courriel. Vos factures sont accessibles à tout
+                moment depuis l'espace de gestion de votre abonnement.
+            </p>
+
+            <h3><i class="fas fa-rotate"></i> 6. Durée et reconduction tacite</h3>
+            <p>
+                L'abonnement est conclu pour la durée choisie (un mois ou un an) et se renouvelle
+                <strong>automatiquement</strong> à chaque échéance, pour une durée identique, tant qu'il
+                n'a pas été résilié.
+            </p>
+            <div class="modal-highlight">
+                <p>
+                    Conformément à l'article L.215-1 du Code de la consommation, vous serez informé par
+                    courriel, au plus tôt trois mois et au plus tard un mois avant l'échéance annuelle,
+                    de votre faculté de ne pas reconduire l'abonnement. Si cette information ne vous
+                    parvient pas, vous pourrez mettre fin gratuitement au contrat à tout moment à compter
+                    de la date de reconduction, et obtenir le remboursement des sommes versées après
+                    celle-ci.
+                </p>
+            </div>
+
+            <h3><i class="fas fa-circle-xmark"></i> 7. Résiliation</h3>
+            <p>
+                Vous pouvez résilier à tout moment, en ligne et en quelques clics, depuis le bouton
+                « Gérer mon abonnement » de votre espace Premium. Aucune justification n'est requise et
+                aucun frais n'est appliqué.
+            </p>
+            <p>
+                La résiliation prend effet à la fin de la période en cours. Vous conservez l'accès aux
+                fonctionnalités Premium jusqu'à cette date, sans remboursement au prorata de la période
+                déjà payée. Vos données restent conservées et consultables en lecture seule.
+            </p>
+
+            <h3><i class="fas fa-arrow-rotate-left"></i> 8. Droit de rétractation</h3>
+            <p>
+                Vous disposez en principe d'un délai de quatorze jours pour exercer votre droit de
+                rétractation, sans avoir à vous justifier.
+            </p>
+            <p>
+                Toutefois, l'accès au service étant fourni immédiatement après le paiement, il vous est
+                demandé, au moment de la souscription, de consentir expressément à cette exécution
+                immédiate et de renoncer à votre droit de rétractation, conformément aux articles
+                L.221-25 et L.221-28 du Code de la consommation. Ce consentement est recueilli par une
+                case à cocher distincte lors du paiement. À défaut, le droit de rétractation demeure
+                applicable.
+            </p>
+
+            <h3><i class="fas fa-credit-card"></i> 9. Paiement</h3>
+            <p>
+                Les paiements sont opérés par le prestataire <strong>Stripe Payments Europe, Ltd.</strong>,
+                établi en Irlande. TypixClin n'a jamais accès à vos données bancaires et n'en conserve
+                aucune.
+            </p>
+            <p>
+                En cas d'échec de prélèvement, plusieurs nouvelles tentatives sont effectuées. Si le
+                paiement demeure impossible, l'accès aux fonctionnalités Premium est suspendu jusqu'à
+                régularisation. Vos données ne sont ni supprimées ni altérées.
+            </p>
+
+            <h3><i class="fas fa-shield-halved"></i> 10. Garantie légale de conformité</h3>
+            <p>
+                Le service bénéficie de la garantie légale de conformité applicable aux contenus et
+                services numériques, prévue aux articles L.224-25-12 et suivants du Code de la
+                consommation. En cas de défaut de conformité, vous pouvez en exiger la mise en conformité
+                ou, à défaut, obtenir une réduction du prix ou la résolution du contrat, dans les
+                conditions prévues par la loi.
+            </p>
+
+            <h3><i class="fas fa-plug"></i> 11. Disponibilité du service</h3>
+            <p>
+                Le service est fourni avec les soins raisonnables d'un professionnel diligent. Des
+                interruptions peuvent survenir pour maintenance, mise à jour ou en raison de causes
+                extérieures. TypixClin est un outil pédagogique et ne saurait être utilisé pour prendre
+                des décisions cliniques réelles.
+            </p>
+
+            <h3><i class="fas fa-user-lock"></i> 12. Suspension du compte</h3>
+            <p>
+                En cas de manquement caractérisé aux conditions générales d'utilisation, notamment le
+                partage ou la revente d'un accès, ou la tentative de contourner les limitations liées à
+                l'abonnement, l'accès peut être suspendu après notification, sauf urgence. Le cas
+                échéant, la part de l'abonnement non consommée est remboursée.
+            </p>
+
+            <h3><i class="fas fa-database"></i> 13. Données personnelles</h3>
+            <p>
+                Les données nécessaires à la gestion de l'abonnement sont traitées pour l'exécution du
+                contrat. Les données de facturation sont conservées dix ans conformément aux obligations
+                comptables. Le détail des traitements figure dans les mentions légales. Vous disposez des
+                droits d'accès, de rectification, d'effacement, de portabilité et d'opposition,
+                exerçables à l'adresse de contact indiquée à l'article 1.
+            </p>
+
+            <h3><i class="fas fa-scale-balanced"></i> 14. Réclamation et médiation</h3>
+            <p>
+                Pour toute réclamation, écrivez à
+                <a href="mailto:typixclin@gmail.com">typixclin@gmail.com</a>. Une réponse vous sera
+                apportée dans les meilleurs délais.
+            </p>
+            <p>
+                À défaut de solution amiable, vous pouvez recourir gratuitement au médiateur de la
+                consommation dont relève TypixClin : <strong>[NOM DU MÉDIATEUR À COMPLÉTER]</strong>,
+                <strong>[ADRESSE]</strong>, <strong>[SITE WEB]</strong>. Le recours à la médiation
+                suppose d'avoir préalablement tenté de résoudre le litige directement auprès de
+                l'éditeur.
+            </p>
+
+            <h3><i class="fas fa-gavel"></i> 15. Droit applicable</h3>
+            <p>
+                Les présentes conditions sont soumises au droit français. En cas de litige, les tribunaux
+                français sont compétents, sans préjudice des règles protectrices applicables aux
+                consommateurs.
+            </p>
+
+            <p class="modal-update"><i class="fas fa-calendar-alt"></i> Mise à jour : Juillet 2026</p>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-primary modal-ok" data-close aria-label="Fermer"><i class="fas fa-check"></i></button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL MENTIONS LÉGALES ===== -->
+<div class="help-modal-overlay" id="ml-modal">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-gavel"></i></div>
+                <h3>Mentions légales</h3>
+            </div>
+            <button class="help-modal-close" data-close aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="help-modal-body modal-body">
+
+            <h3><i class="fas fa-user"></i> Éditeur du site</h3>
+            <p>
+                <strong>TypixClin</strong> est édité par Jean ZENNARO.<br>
+                Contact : <a href="mailto:typixclin@gmail.com">typixclin@gmail.com</a>
+            </p>
+            <div class="modal-highlight">
+                <p>
+                    Plateforme pédagogique destinée aux étudiants en santé. L'accès est actuellement
+                    gratuit ; certaines fonctionnalités des tableurs EDN et ECOS deviendront accessibles
+                    via un abonnement Premium (mensuel ou annuel). Les informations d'identification de
+                    l'entreprise (SIRET) seront complétées au lancement de l'offre payante.
+                </p>
+            </div>
+
+            <h3><i class="fas fa-toolbox"></i> Services proposés</h3>
+            <p>TypixClin propose notamment :</p>
+            <ul>
+                <li>Des outils d'aide à la rédaction et à la structuration d'examens cliniques (examen adulte, etc.), d'interprétation d'ECG et de gaz du sang ;</li>
+                <li>Le <strong>tableur EDN</strong> : suivi des 367 items de connaissances, tours de révision, planning, notes, cahiers d'erreurs, flashcards et statistiques ;</li>
+                <li>Le <strong>tableur ECOS</strong> : suivi des situations de départ et des procédures, stations d'entraînement seul ou entre amis, planning, flashcards et statistiques ;</li>
+                <li>Un carnet de stage numérique.</li>
+            </ul>
+
+            <h3><i class="fas fa-server"></i> Hébergement</h3>
+            <p>
+                <strong>Site :</strong> GitHub, Inc. — 88 Colin P. Kelly Jr Street, San Francisco,
+                CA 94107, États-Unis — <a href="https://github.com" target="_blank" rel="noopener">github.com</a><br>
+                <strong>Données des comptes et des tableurs :</strong> Google Firebase (Google Ireland
+                Limited) — Gordon House, Barrow Street, Dublin 4, Irlande —
+                <a href="https://firebase.google.com" target="_blank" rel="noopener">firebase.google.com</a>
+            </p>
+
+            <h3><i class="fas fa-shield-alt"></i> Données personnelles</h3>
+            <p>
+                La création d'un compte entraîne la collecte des données nécessaires au fonctionnement du
+                service : adresse e-mail, nom d'affichage, et les contenus que vous saisissez dans vos
+                outils (suivis EDN/ECOS, planning, notes, cahiers d'erreurs, flashcards, carnet de
+                stage). Ces données sont stockées de manière sécurisée sur Google Firebase et ne sont
+                <strong>jamais vendues ni transmises à des tiers à des fins commerciales</strong>.
+            </p>
+            <p>
+                La mesure d'audience (Google Analytics et compteur d'utilisateurs actifs) n'est activée
+                <strong>qu'avec votre consentement</strong>, recueilli via la bannière cookies de la page
+                d'accueil et modifiable à tout moment depuis votre profil.
+            </p>
+            <p>
+                Lors du lancement de l'abonnement Premium, les paiements seront traités par le
+                prestataire sécurisé <strong>Stripe</strong> ; TypixClin ne stockera aucune donnée
+                bancaire.
+            </p>
+            <div class="modal-highlight">
+                <p>
+                    Conformément au RGPD, vous disposez d'un droit d'accès, de rectification,
+                    d'effacement, de portabilité et d'opposition sur vos données. Vous pouvez exercer ces
+                    droits ou demander la suppression de votre compte à tout moment en écrivant à
+                    <a href="mailto:typixclin@gmail.com">typixclin@gmail.com</a>. Vous pouvez également
+                    introduire une réclamation auprès de la CNIL
+                    (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).
+                </p>
+            </div>
+
+            <h3><i class="fas fa-exclamation-triangle"></i> Avertissement</h3>
+            <div class="modal-highlight">
+                <p>
+                    <strong>TypixClin est un outil pédagogique.</strong> Il ne remplace en aucun cas un
+                    avis médical professionnel, un diagnostic ou une consultation.
+                </p>
+            </div>
+            <p>
+                Les informations sont fournies à titre indicatif. L'éditeur décline toute responsabilité
+                quant à leur utilisation.
+            </p>
+
+            <h3><i class="fas fa-copyright"></i> Propriété intellectuelle</h3>
+            <p>
+                Le contenu du site (textes, code, graphismes) appartient à Jean ZENNARO, sauf mention
+                contraire. Toute reproduction sans autorisation est interdite. Les données que vous
+                saisissez dans vos outils (notes, suivis, flashcards…) restent votre propriété.
+            </p>
+
+            <h3><i class="fas fa-gavel"></i> Droit applicable</h3>
+            <p>Droit français. En cas de litige, les tribunaux français sont compétents.</p>
+
+            <p class="modal-update"><i class="fas fa-calendar-alt"></i> Mise à jour : Juillet 2026</p>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-primary modal-ok" data-close aria-label="Fermer"><i class="fas fa-check"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   VERROU DE SCROLL PARTAGÉ — même mécanisme que TableurECOS.html
+   ───────────────────────────────────────────────────────────────────────
+   Masquer la barre de défilement élargit la fenêtre : sans compensation,
+   tous les éléments position:fixed sautent vers la droite (bouton retour
+   en haut, toasts, header). _setScrollbarComp() publie la largeur mesurée
+   dans --scrollbar-w, que le CSS applique là où c'est nécessaire.
+   ═══════════════════════════════════════════════════════════════════════ */
+window._getScrollbarWidth = function () {
+    return window.innerWidth - document.documentElement.clientWidth;
+};
+
+window._setScrollbarComp = function (px) {
+    var val = px > 0 ? px + 'px' : '';
+    document.body.style.paddingRight = val;
+    /* Variable lue par .back-to-top et .toast-logout */
+    document.documentElement.style.setProperty('--scrollbar-w', px > 0 ? px + 'px' : '0px');
+    var h = document.querySelector('.header');
+    if (h) h.style.paddingRight = val;
+};
+
+/* Compteur de références : plusieurs modals peuvent se superposer, la page
+   ne se déverrouille que lorsque le dernier est refermé. Idempotent — ouvrir
+   deux fois le même modal ne décale pas le compteur. */
+window._bodyLockCount = 0;
+window._scrollLockOwners = new Set();
+
+window._applyBodyLockState = function () {
+    var locked = window._bodyLockCount > 0 || window._scrollLockOwners.size > 0;
+    if (locked) {
+        if (document.body.style.overflow !== 'hidden') {
+            var sw = window._getScrollbarWidth();   /* mesurée AVANT masquage */
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            window._setScrollbarComp(sw);
+        }
+    } else {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.paddingRight = '';
+        window._setScrollbarComp(0);
+    }
+};
+
+window._bodyLock = function (owner) {
+    if (owner) window._scrollLockOwners.add(owner);
+    else window._bodyLockCount++;
+    window._applyBodyLockState();
+};
+
+window._bodyUnlock = function (owner) {
+    if (owner) window._scrollLockOwners.delete(owner);
+    else if (window._bodyLockCount > 0) window._bodyLockCount--;
+    window._applyBodyLockState();
+};
+
+
+/* ═══════════ Modals légaux (CGV + mentions légales) ═══════════ */
+(function () {
+    'use strict';
+
+    function openModal(id, e) {
+        if (e) e.preventDefault();
+        var ov = document.getElementById(id);
+        if (!ov || ov.classList.contains('active')) return;
+        ov.classList.remove('closing');
+        ov.classList.add('active');
+        var body = ov.querySelector('.help-modal-body');
+        if (body) body.scrollTop = 0;
+        window._bodyLock(id);
+    }
+
+    function closeModal(ov) {
+        if (!ov || !ov.classList.contains('active') || ov.classList.contains('closing')) return;
+        var id = ov.id;
+        ov.classList.add('closing');
+        setTimeout(function () {
+            ov.classList.remove('active', 'closing');
+            window._bodyUnlock(id);
+        }, 200);
+    }
+
+    function closeAny() {
+        var ov = document.querySelector('.help-modal-overlay.active:not(.closing)');
+        if (ov) closeModal(ov);
+    }
+
+    /* Déclencheurs */
+    [['cgv-link', 'cgv-modal'], ['cgv-link-footer', 'cgv-modal'],
+     ['ml-link', 'ml-modal'],  ['ml-link-footer', 'ml-modal']].forEach(function (p) {
+        var el = document.getElementById(p[0]);
+        if (el) el.addEventListener('click', function (e) { openModal(p[1], e); });
+    });
+
+    /* Fermeture : croix, bouton de validation, clic sur le fond, Échap */
+    document.querySelectorAll('.help-modal-overlay [data-close]').forEach(function (b) {
+        b.addEventListener('click', function () { closeModal(b.closest('.help-modal-overlay')); });
+    });
+    document.querySelectorAll('.help-modal-overlay').forEach(function (ov) {
+        ov.addEventListener('click', function (e) { if (e.target === ov) closeModal(ov); });
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeAny();
+    });
+
+    /* Ouverture directe : comptepremium.html#cgv ou #mentions-legales */
+    if (location.hash === '#cgv') openModal('cgv-modal');
+    if (location.hash === '#mentions-legales') openModal('ml-modal');
+
+    window.openCgvModal = function () { openModal('cgv-modal'); };
+    window.openMentionsLegalesModal = function () { openModal('ml-modal'); };
+})();
 </script>
 
 </body>

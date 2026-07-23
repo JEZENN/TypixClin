@@ -6,6 +6,9 @@
 <meta name="description" content="TypixClin - Connexion et inscription">
 <title>Connexion - TypixClin</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<!-- Interrupteur global de la facturation (doit être chargé en premier) -->
+<script src="tpx-billing.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -1602,15 +1605,29 @@ async function createUserProfile(user, additionalData = {}) {
     const snapshot = await getDoc(userRef);
     if (!snapshot.exists()) {
         const { displayName, email, photoURL } = user;
-        await setDoc(userRef, { 
-            displayName: displayName || additionalData.displayName || '', 
-            email, 
-            photoURL: photoURL || '', 
-            
-            createdAt: serverTimestamp(), 
-            checklists: {}, 
-            preferences: { theme: 'light' } 
-        });
+        await setDoc(userRef, {
+            displayName: displayName || additionalData.displayName || '',
+            email,
+            photoURL: photoURL || '',
+            /* Champs exigés par la règle Firestore `create` :
+               hasAll(['email','displayName','createdAt','isPremium']).
+               createdAt via serverTimestamp() : la règle le compare à
+               request.time (± 10 min), l'horloge du visiteur n'entre pas en jeu. */
+            createdAt: serverTimestamp(),
+            isPremium: true,
+            premiumType: 'grace_period',
+            gracePeriodEnd: Timestamp.fromDate(
+                (typeof window.tpxComputeTrialEnd === 'function'
+                    ? window.tpxComputeTrialEnd(new Date())
+                    : new Date('2026-10-26T22:59:59.000Z'))
+            ),
+            checklists: {},
+            preferences: { theme: 'light' }
+            /* Ne JAMAIS écrire ici stripeCustomerId, stripeSubscriptionId,
+               subscriptionStatus ni subscriptionEndDate : la règle `create` les
+               refuse via hasAny(), même avec une valeur nulle. Ces champs sont
+               écrits exclusivement par le webhook Stripe (Admin SDK). */
+        }, { merge: true });
     }
 }
 
@@ -1701,31 +1718,21 @@ registerForm.addEventListener('submit', async (e) => {
         await sendEmailVerification(user);
         console.log('✅ Email envoyé');
 
-        // Déterminer le type de premium selon la date de création
-        console.log('🔵 Calcul période de grâce...');
-        const now = new Date();
-        const cutoffDate = new Date('2026-09-01T00:00:00Z');
-        const gracePeriodEnd = new Date('2026-10-25T23:59:59Z');
+        /* ── Création du document utilisateur ────────────────────────────
+           Les champs sont dictés par les règles Firestore :
+             • hasAll(['email','displayName','createdAt','isPremium']) exigé ;
+             • createdAt validé à ± 10 min de l'heure serveur, puis immuable ;
+             • premiumType limité à 'grace_period' ;
+             • gracePeriodEnd plafonné (27/10/2026 ou createdAt + 32 jours) ;
+             • stripeCustomerId, stripeSubscriptionId, subscriptionStatus et
+               subscriptionEndDate INTERDITS ici, même à null : la règle les
+               refuse via hasAny() et l'inscription entière échouerait.
+               Ils sont écrits uniquement par le webhook Stripe (Admin SDK).
+           L'échéance vient de tpx-billing.js pour rester identique partout. */
+        const _graceEnd = (typeof window.tpxComputeTrialEnd === 'function')
+            ? window.tpxComputeTrialEnd(new Date())
+            : new Date('2026-10-26T22:59:59.000Z');
 
-        let premiumData = {};
-
-        if (now < cutoffDate) {
-            console.log('✅ Période de grâce activée');
-            premiumData = {
-                isPremium: true,
-                premiumType: 'grace_period',
-                gracePeriodEnd: Timestamp.fromDate(gracePeriodEnd)
-            };
-        } else {
-            console.log('⚠️ Pas de période de grâce (après cutoff)');
-            premiumData = {
-                isPremium: false,
-                premiumType: null,
-                gracePeriodEnd: null
-            };
-        }
-
-        console.log('🔵 Écriture dans Firestore...');
         await setDoc(doc(db, 'users', user.uid), {
             displayName: name,
             firstName: firstname,
@@ -1733,15 +1740,13 @@ registerForm.addEventListener('submit', async (e) => {
             email,
             photoURL: '',
             createdAt: serverTimestamp(),
-            ...premiumData,
-            stripeCustomerId: null,
-            stripeSubscriptionId: null,
-            subscriptionStatus: null,
-            subscriptionEndDate: null,
+            isPremium: true,
+            premiumType: 'grace_period',
+            gracePeriodEnd: Timestamp.fromDate(_graceEnd),
             lastUpdated: serverTimestamp(),
             checklists: {},
             preferences: { theme: 'light' }
-        });
+        }, { merge: true });
         console.log('✅ Document Firestore créé');
 
         console.log('🔵 Déconnexion...');
