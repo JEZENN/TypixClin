@@ -752,7 +752,7 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 }
 
 
-/* ═══════════════ CARTE DE STATUT (refonte) ═══════════════ */
+/* ═══════════════ CARTE DE STATUT (charte TypixClin) ═══════════════ */
 .status-card {
     position: relative;
     background: var(--white);
@@ -763,21 +763,17 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     overflow: hidden;
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
-/* Filet de couleur à gauche, qui change selon l'état de la carte */
 .status-card::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 5px;
+    width: 6px;
     background: var(--primary-gradient);
 }
-.status-card.is-active::before  { background: linear-gradient(180deg, #10b981, #059669); }
-.status-card.is-grace::before   { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.status-card.is-inactive::before{ background: linear-gradient(180deg, #ef4444, #dc2626); }
-.status-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
-}
+.status-card.is-active::before   { background: linear-gradient(180deg, #10b981, #059669); }
+.status-card.is-grace::before    { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.status-card.is-inactive::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.status-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
 [data-theme="dark"] .status-card { background: #1e293b; }
 
 .status-badge {
@@ -786,12 +782,11 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     gap: 0.5rem;
     padding: 0.5rem 1.15rem;
     border-radius: var(--border-radius-full);
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 800;
     font-size: 0.9rem;
     margin-bottom: 1.75rem;
-    letter-spacing: 0.01em;
 }
-.status-badge i { font-size: 0.9rem; }
 .status-active   { background: var(--success-light); color: var(--success-dark); }
 .status-grace    { background: var(--warning-light); color: #92400e; }
 .status-inactive { background: var(--danger-light);  color: #b91c1c; }
@@ -807,53 +802,61 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     border-bottom: 1px solid var(--gray-100);
 }
 .info-row:last-child { border-bottom: none; }
-.info-label {
-    font-weight: 500;
-    color: var(--gray-500);
-    font-size: 0.9rem;
-}
-.info-value {
-    color: var(--gray-900);
-    font-weight: 700;
-    text-align: right;
-}
+.info-label { font-weight: 500; color: var(--gray-500); font-size: 0.9rem; }
+.info-value { color: var(--gray-900); font-weight: 700; text-align: right; }
 [data-theme="dark"] .info-row { border-bottom-color: rgba(148,163,184,0.15); }
 [data-theme="dark"] .info-label { color: #94a3b8; }
 [data-theme="dark"] .info-value { color: #e2e8f0; }
 
-/* Petite puce colorée devant certaines valeurs (à jour / expiré) */
 .info-value .dot {
     display: inline-block;
     width: 8px; height: 8px;
     border-radius: 50%;
-    margin-right: 0.4rem;
+    margin-right: 0.45rem;
     vertical-align: middle;
 }
 .dot.dot-ok   { background: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
 .dot.dot-warn { background: #f59e0b; box-shadow: 0 0 0 3px var(--warning-light); }
-.dot.dot-bad  { background: #ef4444; box-shadow: 0 0 0 3px var(--danger-light); }
 
-/* Bouton « Gérer mon abonnement » plus soigné */
-#portal-btn {
+/* ── Bouton « Gérer mon abonnement » : dans la charte, plus gris ── */
+.btn-manage {
     width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.6rem;
-    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--primary);
+    border-radius: var(--border-radius-lg);
+    background: transparent;
+    color: var(--primary);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all var(--transition-normal);
 }
+.btn-manage:hover {
+    background: var(--primary-gradient);
+    color: #fff;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-blue);
+}
+[data-theme="dark"] .btn-manage { color: #93c5fd; border-color: #3b82f6; }
+[data-theme="dark"] .btn-manage:hover { color: #fff; }
 
 /* ═══════════════ SPINNER DE BOUTON ═══════════════ */
-/* S'affiche quand le bouton porte la classe .is-loading. Le texte est
-   remplacé par un cercle qui tourne, et le bouton garde sa largeur. */
-.btn.is-loading {
+.btn.is-loading, .btn-manage.is-loading {
     position: relative;
     color: transparent !important;
     pointer-events: none;
     cursor: wait;
 }
-.btn.is-loading > * { visibility: hidden; }
-.btn.is-loading::after {
+.btn.is-loading > *, .btn-manage.is-loading > * { visibility: hidden; }
+.btn.is-loading::after, .btn-manage.is-loading::after {
     content: '';
     position: absolute;
     top: 50%; left: 50%;
@@ -864,8 +867,8 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
-/* Sur un bouton clair (secondary), le spinner doit être foncé pour être visible */
-.btn-secondary.is-loading::after {
+/* Sur fond clair (bouton outline au repos), spinner bleu */
+.btn-manage.is-loading::after {
     border-color: rgba(37, 99, 235, 0.3);
     border-top-color: var(--primary);
 }
@@ -2219,7 +2222,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <!-- Portal Button -->
             <div style="text-align: center; margin-bottom: 2rem;">
-                <button id="portal-btn" class="btn btn-secondary" onclick="openCustomerPortal()" style="display: none;">
+                <button id="portal-btn" class="btn-manage" onclick="openCustomerPortal()" style="display: none;">
                     <span><i class="fas fa-gear"></i> Gérer mon abonnement</span>
                 </button>
             </div>
@@ -2787,7 +2790,7 @@ function showToast({ title, message, type = 'success', icon = 'fa-check-circle',
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 const firebaseConfig = {
@@ -2813,6 +2816,7 @@ const logoutBtn = document.getElementById('logout-btn');
 
 let currentUser = null;
 let userData = null;
+let _statusUnsub = null;   // désinscription de l'écoute temps réel Firestore
 
 // Get initials
 function getInitials(name) {
@@ -2823,6 +2827,7 @@ function getInitials(name) {
 
 // Update User UI
 async function updateUserUI(user) {
+    if (!user && _statusUnsub) { _statusUnsub(); _statusUnsub = null; }
     if (user) {
         currentUser = user;
         if (window.tpxBillingSetUser) window.tpxBillingSetUser(user);
@@ -2884,9 +2889,15 @@ async function loadUserData() {
 
         userData = userDoc.data();
         displayUserStatus();
-        
+
         document.getElementById('loading').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
+
+        /* ── Mise à jour EN TEMPS RÉEL ──────────────────────────────────
+           On écoute le document utilisateur : dès que le webhook Stripe
+           modifie l'abonnement (paiement, renouvellement, résiliation),
+           la carte se met à jour toute seule, sans rechargement. */
+        startRealtimeStatus();
 
     } catch (error) {
         console.error('Erreur chargement données:', error);
@@ -2895,10 +2906,26 @@ async function loadUserData() {
 }
 
 // Display User Status
+/* Écoute en direct users/{uid} et rafraîchit la carte à chaque changement. */
+function startRealtimeStatus() {
+    if (!currentUser) return;
+    if (_statusUnsub) { _statusUnsub(); _statusUnsub = null; }
+    try {
+        _statusUnsub = onSnapshot(doc(db, 'users', currentUser.uid), (snap) => {
+            if (!snap.exists()) return;
+            userData = snap.data();
+            displayUserStatus();
+        }, (err) => {
+            console.warn('Écoute temps réel interrompue :', err);
+        });
+    } catch (e) {
+        console.warn('onSnapshot indisponible :', e);
+    }
+}
+
 function displayUserStatus() {
     const statusBadge = document.getElementById('status-badge');
     const statusCard = statusBadge ? statusBadge.closest('.status-card') : null;
-    /* réinitialise l'état visuel de la carte à chaque rafraîchissement */
     if (statusCard) statusCard.classList.remove('is-active', 'is-grace', 'is-inactive');
     const statusInfo = document.getElementById('status-info');
     const graceAlert = document.getElementById('grace-alert');
@@ -3022,7 +3049,7 @@ function displayUserStatus() {
         infoHTML = `
             <div class="info-row">
                 <span class="info-label">Plan :</span>
-                <span class="info-value">${planName === 'Annuel' ? '<i class="fas fa-calendar-alt" style="margin-right:.4rem;opacity:.6"></i>' : '<i class="fas fa-calendar-day" style="margin-right:.4rem;opacity:.6"></i>'}${planName}</span>
+                <span class="info-value">${planName}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Prochain renouvellement :</span>
@@ -3062,9 +3089,7 @@ function displayUserStatus() {
 }
 
 // Subscribe
-/* ── Spinner de bouton : remplace le texte par un cercle qui tourne ──
-   btnLoading(btn, true)  → affiche le spinner et mémorise le libellé
-   btnLoading(btn, false) → restaure le libellé d'origine                */
+/* Spinner de bouton : remplace le texte par un cercle qui tourne. */
 function btnLoading(btn, on) {
     if (!btn) return;
     if (on) {
@@ -3076,10 +3101,7 @@ function btnLoading(btn, on) {
         btn.classList.remove('is-loading');
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
-        if (btn.dataset.label !== undefined) {
-            btn.innerHTML = btn.dataset.label;
-            delete btn.dataset.label;
-        }
+        if (btn.dataset.label !== undefined) { btn.innerHTML = btn.dataset.label; delete btn.dataset.label; }
     }
 }
 
@@ -3135,7 +3157,7 @@ window.openCustomerPortal = async function() {
         const createPortalSession = httpsCallable(functions, 'createCustomerPortalSession');
         
         const result = await createPortalSession({
-            returnUrl: window.location.origin + '/comptepremium.html'
+            returnUrl: window.location.origin + '/comptepremium.html?portal=return'
         });
 
         window.location.href = result.data.url;
@@ -3199,6 +3221,20 @@ if (urlParams.get('success') === 'true') {
             }
         }
     }, 3000);
+} else if (urlParams.get('portal') === 'return') {
+    /* Retour du portail Stripe (résiliation, changement de carte/formule).
+       L'écoute temps réel (onSnapshot) met déjà la carte à jour toute seule ;
+       on informe simplement l'utilisateur et on nettoie l'URL. */
+    setTimeout(async () => {
+        await showToast({
+            title: 'Abonnement mis à jour',
+            message: 'Vos modifications ont bien été prises en compte.',
+            type: 'success',
+            icon: 'fa-circle-check',
+            duration: 3000
+        });
+        window.history.replaceState({}, '', 'comptepremium.html');
+    }, 800);
 } else if (urlParams.get('canceled') === 'true') {
     setTimeout(async () => {
         await showToast({
