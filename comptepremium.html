@@ -751,69 +751,128 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     margin-bottom: 1rem;
 }
 
-/* ===== CONTENT SECTION ===== */
-.content-section {
-    padding: 3rem 0;
-}
 
+/* ═══════════════ CARTE DE STATUT (refonte) ═══════════════ */
 .status-card {
+    position: relative;
     background: var(--white);
     border-radius: var(--border-radius-xl);
     box-shadow: var(--shadow-lg);
-    padding: 2rem;
+    padding: 2rem 2.25rem;
     margin-bottom: 2rem;
-    border-left: 5px solid var(--primary);
-    transition: all var(--transition-normal);
+    overflow: hidden;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
-
+/* Filet de couleur à gauche, qui change selon l'état de la carte */
+.status-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: var(--primary-gradient);
+}
+.status-card.is-active::before  { background: linear-gradient(180deg, #10b981, #059669); }
+.status-card.is-grace::before   { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.status-card.is-inactive::before{ background: linear-gradient(180deg, #ef4444, #dc2626); }
 .status-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
 }
+[data-theme="dark"] .status-card { background: #1e293b; }
 
 .status-badge {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.15rem;
     border-radius: var(--border-radius-full);
     font-weight: 700;
     font-size: 0.9rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
+    letter-spacing: 0.01em;
 }
-
-.status-active {
-    background: var(--success-light);
-    color: var(--success-dark);
-}
-
-.status-grace {
-    background: var(--warning-light);
-    color: #856404;
-}
-
-.status-inactive {
-    background: var(--danger-light);
-    color: #721c24;
-}
+.status-badge i { font-size: 0.9rem; }
+.status-active   { background: var(--success-light); color: var(--success-dark); }
+.status-grace    { background: var(--warning-light); color: #92400e; }
+.status-inactive { background: var(--danger-light);  color: #b91c1c; }
+[data-theme="dark"] .status-grace { color: #fbbf24; }
+[data-theme="dark"] .status-inactive { color: #fca5a5; }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--gray-200);
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--gray-100);
 }
-
-.info-row:last-child {
-    border-bottom: none;
-}
-
+.info-row:last-child { border-bottom: none; }
 .info-label {
-    font-weight: 600;
-    color: var(--gray-700);
+    font-weight: 500;
+    color: var(--gray-500);
+    font-size: 0.9rem;
 }
-
 .info-value {
     color: var(--gray-900);
-    font-weight: 500;
+    font-weight: 700;
+    text-align: right;
+}
+[data-theme="dark"] .info-row { border-bottom-color: rgba(148,163,184,0.15); }
+[data-theme="dark"] .info-label { color: #94a3b8; }
+[data-theme="dark"] .info-value { color: #e2e8f0; }
+
+/* Petite puce colorée devant certaines valeurs (à jour / expiré) */
+.info-value .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+}
+.dot.dot-ok   { background: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
+.dot.dot-warn { background: #f59e0b; box-shadow: 0 0 0 3px var(--warning-light); }
+.dot.dot-bad  { background: #ef4444; box-shadow: 0 0 0 3px var(--danger-light); }
+
+/* Bouton « Gérer mon abonnement » plus soigné */
+#portal-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    font-weight: 700;
+}
+
+/* ═══════════════ SPINNER DE BOUTON ═══════════════ */
+/* S'affiche quand le bouton porte la classe .is-loading. Le texte est
+   remplacé par un cercle qui tourne, et le bouton garde sa largeur. */
+.btn.is-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    cursor: wait;
+}
+.btn.is-loading > * { visibility: hidden; }
+.btn.is-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 1.15em; height: 1.15em;
+    margin: -0.575em 0 0 -0.575em;
+    border: 2.5px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+/* Sur un bouton clair (secondary), le spinner doit être foncé pour être visible */
+.btn-secondary.is-loading::after {
+    border-color: rgba(37, 99, 235, 0.3);
+    border-top-color: var(--primary);
+}
+
+/* ===== CONTENT SECTION ===== */
+.content-section {
+    padding: 3rem 0;
 }
 
 .alert {
@@ -2161,7 +2220,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <!-- Portal Button -->
             <div style="text-align: center; margin-bottom: 2rem;">
                 <button id="portal-btn" class="btn btn-secondary" onclick="openCustomerPortal()" style="display: none;">
-                    📊 Gérer mon abonnement
+                    <span><i class="fas fa-gear"></i> Gérer mon abonnement</span>
                 </button>
             </div>
 			
@@ -2838,6 +2897,9 @@ async function loadUserData() {
 // Display User Status
 function displayUserStatus() {
     const statusBadge = document.getElementById('status-badge');
+    const statusCard = statusBadge ? statusBadge.closest('.status-card') : null;
+    /* réinitialise l'état visuel de la carte à chaque rafraîchissement */
+    if (statusCard) statusCard.classList.remove('is-active', 'is-grace', 'is-inactive');
     const statusInfo = document.getElementById('status-info');
     const graceAlert = document.getElementById('grace-alert');
     const plansSection = document.getElementById('plans-section');
@@ -2852,7 +2914,8 @@ function displayUserStatus() {
        voir de statut d'abonnement, d'échéance ou de tarif. On affiche un
        simple badge d'accès complet et on sort. ─────────────────────────── */
     if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) {
-        statusBadge.innerHTML = '<span class="status-badge status-active">\u2728 Acc\u00e8s complet</span>';
+        if (statusCard) statusCard.classList.add('is-active');
+        statusBadge.innerHTML = '<span class="status-badge status-active"><i class="fas fa-check-circle"></i> Acc\u00e8s complet</span>';
         statusInfo.innerHTML =
             '<div class="info-row">' +
                 '<span class="info-label">Statut :</span>' +
@@ -2908,7 +2971,8 @@ function displayUserStatus() {
         const daysLeft = Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24));
 
         if (graceEnd && graceEnd > now) {
-            badgeHTML = '<span class="status-badge status-grace">🎁 Période gratuite</span>';
+            if (statusCard) statusCard.classList.add('is-grace');
+            badgeHTML = '<span class="status-badge status-grace"><i class="fas fa-gift"></i> Période gratuite</span>';
             infoHTML = `
                 <div class="info-row">
                     <span class="info-label">Statut :</span>
@@ -2920,7 +2984,7 @@ function displayUserStatus() {
                 </div>
                 <div class="info-row">
                     <span class="info-label">Jours restants :</span>
-                    <span class="info-value">${daysLeft} jours</span>
+                    <span class="info-value"><span class="dot ${daysLeft <= 15 ? 'dot-warn' : 'dot-ok'}"></span>${daysLeft} jour${daysLeft > 1 ? 's' : ''}</span>
                 </div>
             `;
 
@@ -2937,7 +3001,8 @@ function displayUserStatus() {
             showPlans = true;
 
         } else {
-            badgeHTML = '<span class="status-badge status-inactive">❌ Période expirée</span>';
+            if (statusCard) statusCard.classList.add('is-inactive');
+            badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-clock"></i> Période expirée</span>';
             infoHTML = `
                 <div class="info-row">
                     <span class="info-label">Statut :</span>
@@ -2952,11 +3017,12 @@ function displayUserStatus() {
         const endDate = userData.subscriptionEndDate?.toDate();
         const planName = userData.premiumType === 'monthly' ? 'Mensuel' : 'Annuel';
 
-        badgeHTML = '<span class="status-badge status-active">✅ Abonnement actif</span>';
+        if (statusCard) statusCard.classList.add('is-active');
+        badgeHTML = '<span class="status-badge status-active"><i class="fas fa-circle-check"></i> Abonnement actif</span>';
         infoHTML = `
             <div class="info-row">
                 <span class="info-label">Plan :</span>
-                <span class="info-value">${planName}</span>
+                <span class="info-value">${planName === 'Annuel' ? '<i class="fas fa-calendar-alt" style="margin-right:.4rem;opacity:.6"></i>' : '<i class="fas fa-calendar-day" style="margin-right:.4rem;opacity:.6"></i>'}${planName}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Prochain renouvellement :</span>
@@ -2964,7 +3030,7 @@ function displayUserStatus() {
             </div>
             <div class="info-row">
                 <span class="info-label">Statut du paiement :</span>
-                <span class="info-value">✅ À jour</span>
+                <span class="info-value"><span class="dot dot-ok"></span>À jour</span>
             </div>
         `;
 
@@ -2972,7 +3038,8 @@ function displayUserStatus() {
     }
     // No Subscription
     else {
-        badgeHTML = '<span class="status-badge status-inactive">❌ Pas d\'abonnement</span>';
+        if (statusCard) statusCard.classList.add('is-inactive');
+        badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-circle-xmark"></i> Pas d\'abonnement</span>';
         infoHTML = `
             <div class="info-row">
                 <span class="info-label">Votre statut :</span>
@@ -2995,6 +3062,27 @@ function displayUserStatus() {
 }
 
 // Subscribe
+/* ── Spinner de bouton : remplace le texte par un cercle qui tourne ──
+   btnLoading(btn, true)  → affiche le spinner et mémorise le libellé
+   btnLoading(btn, false) → restaure le libellé d'origine                */
+function btnLoading(btn, on) {
+    if (!btn) return;
+    if (on) {
+        if (btn.dataset.label === undefined) btn.dataset.label = btn.innerHTML;
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+    } else {
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+        if (btn.dataset.label !== undefined) {
+            btn.innerHTML = btn.dataset.label;
+            delete btn.dataset.label;
+        }
+    }
+}
+
 window.subscribe = async function(planType, event) {
     /* Phase gratuite : aucun appel à Stripe possible. */
     if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return;
@@ -3009,12 +3097,9 @@ window.subscribe = async function(planType, event) {
         return;
     }
 
-    const button = event && event.target ? event.target : null;
+    const button = event && event.target ? event.target.closest('button') : null;
     try {
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'Chargement...';
-        }
+        btnLoading(button, true);
 
         const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
         
@@ -3034,10 +3119,7 @@ window.subscribe = async function(planType, event) {
             type: 'error',
             icon: 'fa-exclamation-circle'
         });
-        if (button) {
-            button.disabled = false;
-            button.textContent = 'Souscrire';
-        }
+        btnLoading(button, false);
     }
 };
 
@@ -3048,10 +3130,7 @@ window.openCustomerPortal = async function() {
 
     const button = document.getElementById('portal-btn');
     try {
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'Chargement...';
-        }
+        btnLoading(button, true);
 
         const createPortalSession = httpsCallable(functions, 'createCustomerPortalSession');
         
@@ -3069,10 +3148,7 @@ window.openCustomerPortal = async function() {
             type: 'error',
             icon: 'fa-exclamation-circle'
         });
-        if (button) {
-            button.disabled = false;
-            button.textContent = '📊 Gérer mon abonnement';
-        }
+        btnLoading(button, false);
     }
 };
 
