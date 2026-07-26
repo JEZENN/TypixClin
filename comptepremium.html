@@ -3446,10 +3446,10 @@ window.subscribe = async function(planType, event) {
     }
 
     /* On n'appelle pas Stripe directement : on ouvre d'abord la fenêtre de
-       consentement (acceptation des CGV + renonciation à la rétractation).
-       Le paiement ne part qu'une fois les deux cases cochées et la preuve
-       enregistrée — voir openConsentModal() / proceedToCheckout(). */
-    openConsentModal(planType);
+       consentement. On mémorise le bouton « Souscrire » cliqué pour pouvoir
+       y afficher le spinner pendant l'ouverture de Stripe, après validation. */
+    const srcButton = event && event.target ? event.target.closest('button') : null;
+    openConsentModal(planType, srcButton);
 };
 
 /* Version des CGV acceptée : à incrémenter si tu modifies les CGV, pour savoir
@@ -3458,9 +3458,12 @@ const CGV_VERSION = '2026-07';
 
 /* Ouvre la fenêtre de consentement avant paiement (via le système de modales
    commun : header, croix, verrouillage du scroll identiques aux autres). */
-window.openConsentModal = function (planType) {
+let _subscribeSrcBtn = null;   /* bouton « Souscrire » de la page, à animer pendant Stripe */
+
+window.openConsentModal = function (planType, srcButton) {
     const modal = document.getElementById('consent-modal');
-    if (!modal) { proceedToCheckout(planType); return; } /* repli de sécurité */
+    if (srcButton !== undefined && srcButton !== null) _subscribeSrcBtn = srcButton;
+    if (!modal) { proceedToCheckout(planType, _subscribeSrcBtn); return; } /* repli */
     modal.dataset.plan = planType;
     /* Réinitialise la case (jamais pré-cochée) et le bouton. */
     const c1 = document.getElementById('consent-cgv');
@@ -3507,10 +3510,12 @@ window.confirmConsentAndPay = async function () {
         /* On continue : le consentement a été donné à l'écran. */
     }
 
-    /* On ferme la fenêtre mais on garde le spinner : proceedToCheckout va
-       rediriger vers Stripe, le bouton disparaît avec la fenêtre. */
+    /* On ferme la fenêtre. Comme son bouton disparaît avec elle, on lance le
+       spinner sur le bouton « Souscrire » de la page, qui reste visible
+       jusqu'à la redirection vers Stripe. */
     if (window.closeHelpModal) window.closeHelpModal('consent-modal');
-    await proceedToCheckout(planType, btn);
+    if (_subscribeSrcBtn) btnLoading(_subscribeSrcBtn, true);
+    await proceedToCheckout(planType, _subscribeSrcBtn || btn);
 };
 
 /* Lance réellement le paiement Stripe. Le spinner du bouton reste actif : on
