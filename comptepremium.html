@@ -911,6 +911,9 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .dot.dot-warn { background: #f59e0b; box-shadow: 0 0 0 3px var(--warning-light); }
 
 /* Note explicative sous les infos (ex. abonnement résilié) : pleine largeur */
+#status-notes { display: flex; flex-direction: column; gap: 0.75rem; }
+#status-notes:empty { display: none; }
+
 .info-note {
     grid-column: 1 / -1;
     padding: 0.85rem 1rem;
@@ -2391,6 +2394,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <!-- Corps : détails + gestion -->
                     <div class="status-body">
                         <div id="status-info"></div>
+                        <div id="status-notes"></div>
                         <button id="portal-btn" class="btn-manage" onclick="openCustomerPortal()" style="display: none;">
                             <span><i class="fas fa-gear"></i> Gérer mon abonnement</span>
                         </button>
@@ -3307,6 +3311,16 @@ function displayUserStatus() {
 
     statusBadge.innerHTML = badgeHTML;
     statusInfo.innerHTML = infoHTML;
+
+    /* Les notes (changement planifié, résiliation) sont sorties de la grille
+       #status-info pour ne pas comprimer les cases Plan/Renouvellement/Statut.
+       On les déplace dans le conteneur dédié #status-notes, sous la grille. */
+    const notesBox = document.getElementById('status-notes');
+    if (notesBox) {
+        notesBox.innerHTML = '';
+        statusInfo.querySelectorAll('.info-note').forEach(n => notesBox.appendChild(n));
+    }
+
     plansSection.style.display = showPlans ? 'block' : 'none';
 
     applyPlansLock(plansLockedUntil);
