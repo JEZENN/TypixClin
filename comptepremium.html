@@ -914,6 +914,65 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 #status-notes { display: flex; flex-direction: column; gap: 0.75rem; }
 #status-notes:empty { display: none; }
 
+/* ═══════════════ FENÊTRE DE CONSENTEMENT ═══════════════ */
+.consent-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 1rem;
+}
+.consent-overlay.is-open { display: flex; }
+.consent-box {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+    animation: consentPop 0.2s ease;
+}
+@keyframes consentPop { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+[data-theme="dark"] .consent-box { background: #1e293b; }
+.consent-head {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-100);
+}
+.consent-head-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--primary-gradient); color: #fff;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.consent-head h3 { margin: 0; flex: 1; font-family: var(--font-display); font-size: 1.15rem; }
+.consent-close { background: none; border: none; cursor: pointer; color: var(--gray-400); font-size: 1.1rem; padding: 0.25rem; }
+.consent-close:hover { color: var(--gray-700); }
+[data-theme="dark"] .consent-head { border-bottom-color: rgba(148,163,184,0.15); }
+.consent-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.consent-plan {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.85rem 1rem; background: rgba(59, 130, 246, 0.08); border-radius: var(--border-radius-md);
+}
+.consent-plan-label-title { color: var(--gray-500); font-size: 0.9rem; }
+.consent-plan-value { font-weight: 800; color: var(--primary); }
+[data-theme="dark"] .consent-plan-value { color: #93c5fd; }
+.consent-check {
+    display: flex; gap: 0.7rem; align-items: flex-start;
+    cursor: pointer; font-size: 0.9rem; line-height: 1.5; color: var(--gray-700);
+}
+.consent-check input { margin-top: 0.2rem; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--primary); }
+.consent-check a { color: var(--primary); font-weight: 600; text-decoration: underline; }
+[data-theme="dark"] .consent-check { color: #cbd5e1; }
+.consent-note { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.82rem; color: var(--gray-500); margin: 0; }
+.consent-note i { margin-top: 0.15rem; color: var(--primary); flex-shrink: 0; }
+.consent-foot { display: flex; gap: 0.75rem; padding: 1.25rem 1.5rem; border-top: 1px solid var(--gray-100); }
+.consent-foot .btn { flex: 1; }
+.consent-foot .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+[data-theme="dark"] .consent-foot { border-top-color: rgba(148,163,184,0.15); }
+
 .info-note {
     grid-column: 1 / -1;
     padding: 0.85rem 1rem;
@@ -2968,7 +3027,7 @@ function showToast({ title, message, type = 'success', icon = 'fa-check-circle',
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 const firebaseConfig = {
@@ -3422,31 +3481,104 @@ window.subscribe = async function(planType, event) {
         return;
     }
 
-    const button = event && event.target ? event.target.closest('button') : null;
-    try {
-        btnLoading(button, true);
+    /* On n'appelle pas Stripe directement : on ouvre d'abord la fenêtre de
+       consentement (acceptation des CGV + renonciation à la rétractation).
+       Le paiement ne part qu'une fois les deux cases cochées et la preuve
+       enregistrée — voir openConsentModal() / proceedToCheckout(). */
+    openConsentModal(planType);
+};
 
+/* Version des CGV acceptée : à incrémenter si tu modifies les CGV, pour savoir
+   quelle version chaque abonné a acceptée. */
+const CGV_VERSION = '2026-07';
+
+/* Ouvre la fenêtre de consentement avant paiement. */
+function openConsentModal(planType) {
+    const modal = document.getElementById('consent-modal');
+    if (!modal) { proceedToCheckout(planType); return; } /* repli de sécurité */
+    modal.dataset.plan = planType;
+    /* Réinitialise les cases à chaque ouverture (jamais pré-cochées). */
+    const c1 = document.getElementById('consent-cgv');
+    const c2 = document.getElementById('consent-waiver');
+    const btn = document.getElementById('consent-confirm');
+    if (c1) c1.checked = false;
+    if (c2) c2.checked = false;
+    if (btn) btn.disabled = true;
+    /* Libellé du plan choisi dans le récapitulatif. */
+    const label = document.getElementById('consent-plan-label');
+    if (label) label.textContent = planType === 'annual' ? 'Annuel — 30 € / an' : 'Mensuel — 3 € / mois';
+    modal.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeConsentModal() {
+    const modal = document.getElementById('consent-modal');
+    if (modal) modal.classList.remove('is-open');
+    document.body.style.overflow = '';
+}
+window.closeConsentModal = closeConsentModal;
+
+/* Active le bouton de confirmation seulement si les DEUX cases sont cochées. */
+window.updateConsentButton = function () {
+    const c1 = document.getElementById('consent-cgv');
+    const c2 = document.getElementById('consent-waiver');
+    const btn = document.getElementById('consent-confirm');
+    if (btn) btn.disabled = !(c1 && c1.checked && c2 && c2.checked);
+};
+
+/* Appelée par le bouton « Confirmer et payer » de la fenêtre de consentement. */
+window.confirmConsentAndPay = async function () {
+    const modal = document.getElementById('consent-modal');
+    const planType = modal ? modal.dataset.plan : null;
+    const btn = document.getElementById('consent-confirm');
+    if (!planType) return;
+
+    btnLoading(btn, true);
+
+    /* Enregistre la PREUVE d'acceptation dans Firestore (horodatée par le
+       serveur). C'est ce qui transforme la case en preuve opposable. */
+    try {
+        if (currentUser) {
+            await setDoc(doc(db, 'users', currentUser.uid), {
+                cgvAccepted: {
+                    version: CGV_VERSION,
+                    acceptedAt: serverTimestamp(),
+                    retractationWaived: true,
+                    plan: planType
+                }
+            }, { merge: true });
+        }
+    } catch (e) {
+        console.warn('Enregistrement de la preuve CGV impossible :', e);
+        /* On continue quand même : le consentement a été donné à l'écran. */
+    }
+
+    closeConsentModal();
+    await proceedToCheckout(planType, btn);
+};
+
+/* Lance réellement le paiement Stripe. */
+async function proceedToCheckout(planType, btn) {
+    try {
+        if (btn) btnLoading(btn, true);
         const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-        
         const result = await createCheckoutSession({
             planType: planType,
             successUrl: window.location.origin + '/comptepremium.html?success=true',
             cancelUrl: window.location.origin + '/comptepremium.html?canceled=true'
         });
-
         window.location.href = result.data.url;
-
     } catch (error) {
         console.error('Erreur souscription:', error);
         await showToast({
             title: 'Erreur',
-            message: 'Erreur lors de la création de la session: ' + error.message,
+            message: 'Erreur lors de la création de la session : ' + error.message,
             type: 'error',
             icon: 'fa-exclamation-circle'
         });
-        btnLoading(button, false);
+        if (btn) btnLoading(btn, false);
     }
-};
+}
 
 // Open Customer Portal
 window.openCustomerPortal = async function() {
@@ -3554,6 +3686,48 @@ if (urlParams.get('success') === 'true') {
 
 
 <!-- ===== MODAL CONDITIONS GÉNÉRALES DE VENTE ===== -->
+<!-- ══════════════ FENÊTRE DE CONSENTEMENT AVANT PAIEMENT ══════════════ -->
+<div class="consent-overlay" id="consent-modal">
+    <div class="consent-box" onclick="event.stopPropagation()">
+        <div class="consent-head">
+            <div class="consent-head-icon"><i class="fas fa-file-signature"></i></div>
+            <h3>Avant de continuer</h3>
+            <button class="consent-close" onclick="closeConsentModal()" aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="consent-body">
+            <div class="consent-plan">
+                <span class="consent-plan-label-title">Formule choisie</span>
+                <span id="consent-plan-label" class="consent-plan-value">—</span>
+            </div>
+
+            <label class="consent-check">
+                <input type="checkbox" id="consent-cgv" onchange="updateConsentButton()">
+                <span>J'ai lu et j'accepte les
+                    <a href="#" onclick="closeConsentModal(); openCgvModal(); return false;">conditions générales de vente</a>.
+                </span>
+            </label>
+
+            <label class="consent-check">
+                <input type="checkbox" id="consent-waiver" onchange="updateConsentButton()">
+                <span>Je demande à accéder immédiatement au service et je renonce expressément à mon droit de rétractation de quatorze jours, que je perds une fois l'accès ouvert.</span>
+            </label>
+
+            <p class="consent-note">
+                <i class="fas fa-circle-info"></i>
+                Vous pourrez résilier à tout moment ; la résiliation prend effet à la fin de la période déjà payée.
+            </p>
+        </div>
+
+        <div class="consent-foot">
+            <button class="btn btn-secondary" onclick="closeConsentModal()">Annuler</button>
+            <button class="btn btn-primary" id="consent-confirm" onclick="confirmConsentAndPay()" disabled>
+                <span><i class="fas fa-lock"></i> Confirmer et payer</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="help-modal-overlay" id="cgv-modal">
     <div class="help-modal" onclick="event.stopPropagation()">
         <div class="help-modal-header">
