@@ -818,6 +818,23 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .dot.dot-ok   { background: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
 .dot.dot-warn { background: #f59e0b; box-shadow: 0 0 0 3px var(--warning-light); }
 
+/* Note explicative sous les infos (ex. abonnement résilié) */
+.info-note {
+    margin-top: 1.1rem;
+    padding: 0.85rem 1rem;
+    background: var(--warning-light);
+    border-left: 4px solid #f59e0b;
+    border-radius: var(--border-radius-md);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #92400e;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+.info-note i { margin-top: 0.15rem; flex-shrink: 0; }
+[data-theme="dark"] .info-note { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
 /* ── Bouton « Gérer mon abonnement » : dans la charte, plus gris ── */
 .btn-manage {
     width: 100%;
@@ -3043,23 +3060,51 @@ function displayUserStatus() {
     else if (userData.isPremium && userData.subscriptionStatus === 'active') {
         const endDate = userData.subscriptionEndDate?.toDate();
         const planName = userData.premiumType === 'monthly' ? 'Mensuel' : 'Annuel';
+        const endStr = endDate ? endDate.toLocaleDateString('fr-FR') : 'N/A';
 
-        if (statusCard) statusCard.classList.add('is-active');
-        badgeHTML = '<span class="status-badge status-active"><i class="fas fa-circle-check"></i> Abonnement actif</span>';
-        infoHTML = `
-            <div class="info-row">
-                <span class="info-label">Plan :</span>
-                <span class="info-value">${planName}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Prochain renouvellement :</span>
-                <span class="info-value">${endDate ? endDate.toLocaleDateString('fr-FR') : 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Statut du paiement :</span>
-                <span class="info-value"><span class="dot dot-ok"></span>À jour</span>
-            </div>
-        `;
+        /* Résilié mais encore actif : l'abonné a annulé, l'accès court jusqu'à
+           la fin de la période déjà payée, puis s'arrête (pas de renouvellement). */
+        const canceling = userData.cancelAtPeriodEnd === true;
+
+        if (canceling) {
+            if (statusCard) statusCard.classList.add('is-grace');
+            badgeHTML = '<span class="status-badge status-grace"><i class="fas fa-hourglass-half"></i> Abonnement résilié</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Plan :</span>
+                    <span class="info-value">${planName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Se termine le :</span>
+                    <span class="info-value"><span class="dot dot-warn"></span>${endStr}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Renouvellement :</span>
+                    <span class="info-value">Désactivé</span>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-circle-info"></i>
+                    Votre accès Premium reste actif jusqu'au ${endStr}. Aucun paiement ne sera prélevé ensuite. Vous pouvez réactiver le renouvellement à tout moment.
+                </div>
+            `;
+        } else {
+            if (statusCard) statusCard.classList.add('is-active');
+            badgeHTML = '<span class="status-badge status-active"><i class="fas fa-circle-check"></i> Abonnement actif</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Plan :</span>
+                    <span class="info-value">${planName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Prochain renouvellement :</span>
+                    <span class="info-value">${endStr}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Statut du paiement :</span>
+                    <span class="info-value"><span class="dot dot-ok"></span>À jour</span>
+                </div>
+            `;
+        }
 
         portalBtn.style.display = 'inline-block';
     }
