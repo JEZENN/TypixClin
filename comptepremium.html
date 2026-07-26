@@ -938,35 +938,52 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     .status-body { padding: 1.5rem; }
 }
 
-/* ── Bouton « Gérer mon abonnement » : dans la charte, plus gris ── */
+/* ── Bouton « Gérer mon abonnement » : CTA plein, dans la charte ── */
 .btn-manage {
+    position: relative;
     width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    padding: 1rem 1.5rem;
-    border: 2px solid var(--primary);
-    border-radius: var(--border-radius-lg);
-    background: transparent;
-    color: var(--primary);
+    gap: 0.65rem;
+    padding: 1rem 1.75rem;
+    border: none;
+    border-radius: var(--border-radius-full);
+    background: var(--primary-gradient);
+    color: #fff;
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.01em;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    overflow: hidden;
+    box-shadow: var(--shadow-blue);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal), filter var(--transition-normal);
+}
+.btn-manage i { transition: transform var(--transition-normal); }
+
+/* Reflet qui traverse le bouton au survol */
+.btn-manage::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -75%;
+    width: 50%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 600ms ease;
+    pointer-events: none;
 }
 .btn-manage:hover {
-    background: var(--primary-gradient);
-    color: #fff;
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-blue);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-blue-lg);
+    filter: brightness(1.06);
 }
-[data-theme="dark"] .btn-manage { color: #93c5fd; border-color: #3b82f6; }
-[data-theme="dark"] .btn-manage:hover { color: #fff; }
+.btn-manage:hover::before { left: 125%; }
+.btn-manage:hover i { transform: rotate(90deg); }
+.btn-manage:active { transform: translateY(-1px); }
+.btn-manage:focus-visible { outline: 3px solid var(--primary-light); outline-offset: 3px; }
+[data-theme="dark"] .btn-manage { box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.45); }
 
 /* ═══════════════ SPINNER DE BOUTON ═══════════════ */
 .btn.is-loading, .btn-manage.is-loading {
@@ -987,12 +1004,6 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
-/* Sur fond clair (bouton outline au repos), spinner bleu */
-.btn-manage.is-loading::after {
-    border-color: rgba(37, 99, 235, 0.3);
-    border-top-color: var(--primary);
-}
-
 /* ===== CONTENT SECTION ===== */
 .content-section {
     padding: 3rem 0;
