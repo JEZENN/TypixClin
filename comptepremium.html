@@ -752,29 +752,90 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 }
 
 
-/* ═══════════════ CARTE DE STATUT (charte TypixClin) ═══════════════ */
+/* ═══════════════ SECTION « MON ABONNEMENT » (charte TypixClin) ═══════════════ */
+.subscription-section { margin-bottom: 3.5rem; }
+.subscription-section .section-subtitle { margin-bottom: 2rem; }
+
+/* Carte principale : panneau latéral + corps en deux colonnes */
 .status-card {
     position: relative;
+    display: grid;
+    grid-template-columns: 290px 1fr;
     background: var(--white);
     border-radius: var(--border-radius-xl);
+    border: 2px solid transparent;
     box-shadow: var(--shadow-lg);
-    padding: 2rem 2.25rem;
-    margin-bottom: 2rem;
     overflow: hidden;
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
-.status-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 6px;
-    background: var(--primary-gradient);
-}
-.status-card.is-active::before   { background: linear-gradient(180deg, #10b981, #059669); }
-.status-card.is-grace::before    { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.status-card.is-inactive::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .status-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+.status-card:hover                { border-color: var(--primary); }
+.status-card.is-active:hover      { border-color: var(--success); }
+.status-card.is-grace:hover       { border-color: var(--warning); }
+.status-card.is-inactive:hover    { border-color: var(--danger); }
 [data-theme="dark"] .status-card { background: #1e293b; }
+
+/* ── Panneau latéral : teinté selon l'état, couronne en filigrane ── */
+.status-side {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1.15rem;
+    padding: 2.25rem 1.75rem;
+    background: linear-gradient(160deg, #eff6ff, #dbeafe);
+    overflow: hidden;
+}
+.status-card.is-active   .status-side { background: linear-gradient(160deg, #ecfdf5, #d1fae5); }
+.status-card.is-grace    .status-side { background: linear-gradient(160deg, #fffbeb, #fef3c7); }
+.status-card.is-inactive .status-side { background: linear-gradient(160deg, #fef2f2, #fee2e2); }
+[data-theme="dark"] .status-side                          { background: linear-gradient(160deg, rgba(59,130,246,0.20), rgba(59,130,246,0.06)); }
+[data-theme="dark"] .status-card.is-active   .status-side { background: linear-gradient(160deg, rgba(16,185,129,0.20), rgba(16,185,129,0.05)); }
+[data-theme="dark"] .status-card.is-grace    .status-side { background: linear-gradient(160deg, rgba(245,158,11,0.20), rgba(245,158,11,0.05)); }
+[data-theme="dark"] .status-card.is-inactive .status-side { background: linear-gradient(160deg, rgba(239,68,68,0.20), rgba(239,68,68,0.05)); }
+
+/* Couronne décorative en filigrane */
+.status-side::after {
+    content: '\f521';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: -20px;
+    bottom: -26px;
+    font-size: 8rem;
+    line-height: 1;
+    opacity: 0.08;
+    transform: rotate(-12deg);
+    pointer-events: none;
+}
+[data-theme="dark"] .status-side::after { opacity: 0.12; color: #fff; }
+
+/* Icône du panneau (même style que les feature-icons) */
+.status-side-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-lg);
+    font-size: 1.7rem;
+    color: #fff;
+    background: var(--primary-gradient);
+    box-shadow: var(--shadow-blue);
+}
+.status-card.is-active   .status-side-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5); }
+.status-card.is-grace    .status-side-icon { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.5); }
+.status-card.is-inactive .status-side-icon { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5); }
+
+.status-side-caption {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+}
+[data-theme="dark"] .status-side-caption { color: #94a3b8; }
 
 .status-badge {
     display: inline-flex;
@@ -785,26 +846,57 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     font-family: var(--font-display);
     font-weight: 800;
     font-size: 0.9rem;
-    margin-bottom: 1.75rem;
+    position: relative;
+    z-index: 1;
 }
 .status-active   { background: var(--success-light); color: var(--success-dark); }
 .status-grace    { background: var(--warning-light); color: #92400e; }
 .status-inactive { background: var(--danger-light);  color: #b91c1c; }
-[data-theme="dark"] .status-grace { color: #fbbf24; }
+[data-theme="dark"] .status-grace    { color: #fbbf24; }
 [data-theme="dark"] .status-inactive { color: #fca5a5; }
+
+/* ── Corps de la carte : infos en tuiles + bouton de gestion ── */
+.status-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.4rem;
+    padding: 2rem 2.25rem;
+}
+
+#status-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+    gap: 1rem;
+}
 
 .info-row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--gray-100);
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 1rem 1.15rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.info-row:last-child { border-bottom: none; }
-.info-label { font-weight: 500; color: var(--gray-500); font-size: 0.9rem; }
-.info-value { color: var(--gray-900); font-weight: 700; text-align: right; }
-[data-theme="dark"] .info-row { border-bottom-color: rgba(148,163,184,0.15); }
+.info-row:hover { border-color: var(--primary-light); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+.info-label {
+    font-weight: 700;
+    color: var(--gray-500);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+.info-value {
+    color: var(--gray-900);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+[data-theme="dark"] .info-row { background: rgba(15, 23, 42, 0.45); border-color: rgba(148, 163, 184, 0.15); }
 [data-theme="dark"] .info-label { color: #94a3b8; }
 [data-theme="dark"] .info-value { color: #e2e8f0; }
 
@@ -818,9 +910,9 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .dot.dot-ok   { background: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
 .dot.dot-warn { background: #f59e0b; box-shadow: 0 0 0 3px var(--warning-light); }
 
-/* Note explicative sous les infos (ex. abonnement résilié) */
+/* Note explicative sous les infos (ex. abonnement résilié) : pleine largeur */
 .info-note {
-    margin-top: 1.1rem;
+    grid-column: 1 / -1;
     padding: 0.85rem 1rem;
     background: var(--warning-light);
     border-left: 4px solid #f59e0b;
@@ -834,6 +926,17 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 }
 .info-note i { margin-top: 0.15rem; flex-shrink: 0; }
 [data-theme="dark"] .info-note { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+/* Alerte (période de grâce, info…) placée sous la carte */
+.subscription-section #grace-alert { margin-top: 1.5rem; }
+.subscription-section #grace-alert .alert { margin-bottom: 0; }
+
+/* Responsive : le panneau passe au-dessus du corps */
+@media (max-width: 820px) {
+    .status-card { grid-template-columns: 1fr; }
+    .status-side { padding: 1.75rem 1.5rem; }
+    .status-body { padding: 1.5rem; }
+}
 
 /* ── Bouton « Gérer mon abonnement » : dans la charte, plus gris ── */
 .btn-manage {
@@ -2228,22 +2331,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Main Content -->
     <div id="main-content" style="display: none;">
         <div class="container content-section">
-            <!-- Status Card -->
-            <div class="status-card">
-                <div id="status-badge"></div>
-                <div id="status-info"></div>
-            </div>
+            <!-- Mon abonnement -->
+            <section class="subscription-section">
+                <h2 class="section-title">Mon abonnement</h2>
+                <p class="section-subtitle">Retrouvez ici l'état de votre abonnement et gérez votre formule en quelques clics</p>
 
-            <!-- Grace Alert -->
-            <div id="grace-alert" style="display: none;"></div>
+                <div class="status-card">
+                    <!-- Panneau latéral : statut -->
+                    <div class="status-side">
+                        <div class="status-side-icon"><i class="fas fa-crown"></i></div>
+                        <div id="status-badge"></div>
+                        <p class="status-side-caption">Votre accès aux tableurs EDN &amp; ECOS</p>
+                    </div>
 
-            <!-- Portal Button -->
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <button id="portal-btn" class="btn-manage" onclick="openCustomerPortal()" style="display: none;">
-                    <span><i class="fas fa-gear"></i> Gérer mon abonnement</span>
-                </button>
-            </div>
-			
+                    <!-- Corps : détails + gestion -->
+                    <div class="status-body">
+                        <div id="status-info"></div>
+                        <button id="portal-btn" class="btn-manage" onclick="openCustomerPortal()" style="display: none;">
+                            <span><i class="fas fa-gear"></i> Gérer mon abonnement</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grace Alert -->
+                <div id="grace-alert" style="display: none;"></div>
+            </section>
+
 			<!-- Features -->
         <section>
             <h2 class="section-title">Pourquoi passer Premium ?</h2>
