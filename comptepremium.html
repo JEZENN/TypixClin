@@ -914,65 +914,6 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 #status-notes { display: flex; flex-direction: column; gap: 0.75rem; }
 #status-notes:empty { display: none; }
 
-/* ═══════════════ FENÊTRE DE CONSENTEMENT ═══════════════ */
-.consent-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(3px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 3000;
-    padding: 1rem;
-}
-.consent-overlay.is-open { display: flex; }
-.consent-box {
-    background: var(--white);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--shadow-xl);
-    width: 100%;
-    max-width: 480px;
-    overflow: hidden;
-    animation: consentPop 0.2s ease;
-}
-@keyframes consentPop { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
-[data-theme="dark"] .consent-box { background: #1e293b; }
-.consent-head {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-100);
-}
-.consent-head-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: var(--primary-gradient); color: #fff;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.consent-head h3 { margin: 0; flex: 1; font-family: var(--font-display); font-size: 1.15rem; }
-.consent-close { background: none; border: none; cursor: pointer; color: var(--gray-400); font-size: 1.1rem; padding: 0.25rem; }
-.consent-close:hover { color: var(--gray-700); }
-[data-theme="dark"] .consent-head { border-bottom-color: rgba(148,163,184,0.15); }
-.consent-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
-.consent-plan {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0.85rem 1rem; background: rgba(59, 130, 246, 0.08); border-radius: var(--border-radius-md);
-}
-.consent-plan-label-title { color: var(--gray-500); font-size: 0.9rem; }
-.consent-plan-value { font-weight: 800; color: var(--primary); }
-[data-theme="dark"] .consent-plan-value { color: #93c5fd; }
-.consent-check {
-    display: flex; gap: 0.7rem; align-items: flex-start;
-    cursor: pointer; font-size: 0.9rem; line-height: 1.5; color: var(--gray-700);
-}
-.consent-check input { margin-top: 0.2rem; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--primary); }
-.consent-check a { color: var(--primary); font-weight: 600; text-decoration: underline; }
-[data-theme="dark"] .consent-check { color: #cbd5e1; }
-.consent-note { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.82rem; color: var(--gray-500); margin: 0; }
-.consent-note i { margin-top: 0.15rem; color: var(--primary); flex-shrink: 0; }
-.consent-foot { display: flex; gap: 0.75rem; padding: 1.25rem 1.5rem; border-top: 1px solid var(--gray-100); }
-.consent-foot .btn { flex: 1; }
-.consent-foot .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-[data-theme="dark"] .consent-foot { border-top-color: rgba(148,163,184,0.15); }
-
 .info-note {
     grid-column: 1 / -1;
     padding: 0.85rem 1rem;
@@ -2264,6 +2205,29 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 
 .modal-footer .btn { padding: 0.75rem 1.5rem; width: auto; }
 
+/* Fenêtre de consentement : récap plan + case */
+.consent-plan {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+    background: rgba(59, 130, 246, 0.08); border-radius: var(--border-radius-md);
+}
+.consent-plan-label-title { color: var(--gray-500); font-size: 0.9rem; }
+.consent-plan-value { font-weight: 800; color: var(--primary); }
+[data-theme="dark"] .consent-plan-value { color: #93c5fd; }
+.consent-check {
+    display: flex; gap: 0.7rem; align-items: flex-start;
+    cursor: pointer; font-size: 0.9rem; line-height: 1.55; color: var(--gray-700);
+}
+.consent-check input { margin-top: 0.2rem; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--primary); }
+.consent-check a { color: var(--primary); font-weight: 600; text-decoration: underline; }
+[data-theme="dark"] .consent-check { color: #cbd5e1; }
+.consent-note {
+    display: flex; gap: 0.5rem; align-items: flex-start;
+    font-size: 0.82rem; color: var(--gray-500); margin: 1.1rem 0 0;
+}
+.consent-note i { margin-top: 0.15rem; color: var(--primary); flex-shrink: 0; }
+.modal-ok:disabled { opacity: 0.5; cursor: not-allowed; }
+
 </style>
 </head>
 <body>
@@ -3492,41 +3456,32 @@ window.subscribe = async function(planType, event) {
    quelle version chaque abonné a acceptée. */
 const CGV_VERSION = '2026-07';
 
-/* Ouvre la fenêtre de consentement avant paiement. */
-function openConsentModal(planType) {
+/* Ouvre la fenêtre de consentement avant paiement (via le système de modales
+   commun : header, croix, verrouillage du scroll identiques aux autres). */
+window.openConsentModal = function (planType) {
     const modal = document.getElementById('consent-modal');
     if (!modal) { proceedToCheckout(planType); return; } /* repli de sécurité */
     modal.dataset.plan = planType;
-    /* Réinitialise les cases à chaque ouverture (jamais pré-cochées). */
+    /* Réinitialise la case (jamais pré-cochée) et le bouton. */
     const c1 = document.getElementById('consent-cgv');
-    const c2 = document.getElementById('consent-waiver');
     const btn = document.getElementById('consent-confirm');
     if (c1) c1.checked = false;
-    if (c2) c2.checked = false;
-    if (btn) btn.disabled = true;
-    /* Libellé du plan choisi dans le récapitulatif. */
+    if (btn) { btnLoading(btn, false); btn.disabled = true; }
     const label = document.getElementById('consent-plan-label');
     if (label) label.textContent = planType === 'annual' ? 'Annuel — 30 € / an' : 'Mensuel — 3 € / mois';
-    modal.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeConsentModal() {
-    const modal = document.getElementById('consent-modal');
-    if (modal) modal.classList.remove('is-open');
-    document.body.style.overflow = '';
-}
-window.closeConsentModal = closeConsentModal;
-
-/* Active le bouton de confirmation seulement si les DEUX cases sont cochées. */
-window.updateConsentButton = function () {
-    const c1 = document.getElementById('consent-cgv');
-    const c2 = document.getElementById('consent-waiver');
-    const btn = document.getElementById('consent-confirm');
-    if (btn) btn.disabled = !(c1 && c1.checked && c2 && c2.checked);
+    if (window.openHelpModal) window.openHelpModal('consent-modal');
 };
 
-/* Appelée par le bouton « Confirmer et payer » de la fenêtre de consentement. */
+/* Active le bouton de confirmation seulement si la case est cochée. */
+window.updateConsentButton = function () {
+    const c1 = document.getElementById('consent-cgv');
+    const btn = document.getElementById('consent-confirm');
+    if (btn) btn.disabled = !(c1 && c1.checked);
+};
+
+/* Bouton « Confirmer et payer » : enregistre la preuve puis lance Stripe.
+   Le spinner reste actif jusqu'à la redirection (on ne le coupe jamais en
+   cas de succès, la page changeant). */
 window.confirmConsentAndPay = async function () {
     const modal = document.getElementById('consent-modal');
     const planType = modal ? modal.dataset.plan : null;
@@ -3535,8 +3490,7 @@ window.confirmConsentAndPay = async function () {
 
     btnLoading(btn, true);
 
-    /* Enregistre la PREUVE d'acceptation dans Firestore (horodatée par le
-       serveur). C'est ce qui transforme la case en preuve opposable. */
+    /* Preuve d'acceptation dans Firestore, horodatée par le serveur. */
     try {
         if (currentUser) {
             await setDoc(doc(db, 'users', currentUser.uid), {
@@ -3550,14 +3504,17 @@ window.confirmConsentAndPay = async function () {
         }
     } catch (e) {
         console.warn('Enregistrement de la preuve CGV impossible :', e);
-        /* On continue quand même : le consentement a été donné à l'écran. */
+        /* On continue : le consentement a été donné à l'écran. */
     }
 
-    closeConsentModal();
+    /* On ferme la fenêtre mais on garde le spinner : proceedToCheckout va
+       rediriger vers Stripe, le bouton disparaît avec la fenêtre. */
+    if (window.closeHelpModal) window.closeHelpModal('consent-modal');
     await proceedToCheckout(planType, btn);
 };
 
-/* Lance réellement le paiement Stripe. */
+/* Lance réellement le paiement Stripe. Le spinner du bouton reste actif : on
+   ne le coupe qu'en cas d'erreur (sinon la page part vers Stripe). */
 async function proceedToCheckout(planType, btn) {
     try {
         if (btn) btnLoading(btn, true);
@@ -3687,15 +3644,17 @@ if (urlParams.get('success') === 'true') {
 
 <!-- ===== MODAL CONDITIONS GÉNÉRALES DE VENTE ===== -->
 <!-- ══════════════ FENÊTRE DE CONSENTEMENT AVANT PAIEMENT ══════════════ -->
-<div class="consent-overlay" id="consent-modal">
-    <div class="consent-box" onclick="event.stopPropagation()">
-        <div class="consent-head">
-            <div class="consent-head-icon"><i class="fas fa-file-signature"></i></div>
-            <h3>Avant de continuer</h3>
-            <button class="consent-close" onclick="closeConsentModal()" aria-label="Fermer"><i class="fas fa-times"></i></button>
+<div class="help-modal-overlay" id="consent-modal">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-lock"></i></div>
+                <h3>Avant de continuer</h3>
+            </div>
+            <button class="help-modal-close" data-close aria-label="Fermer"><i class="fas fa-times"></i></button>
         </div>
 
-        <div class="consent-body">
+        <div class="help-modal-body modal-body">
             <div class="consent-plan">
                 <span class="consent-plan-label-title">Formule choisie</span>
                 <span id="consent-plan-label" class="consent-plan-value">—</span>
@@ -3704,13 +3663,10 @@ if (urlParams.get('success') === 'true') {
             <label class="consent-check">
                 <input type="checkbox" id="consent-cgv" onchange="updateConsentButton()">
                 <span>J'ai lu et j'accepte les
-                    <a href="#" onclick="closeConsentModal(); openCgvModal(); return false;">conditions générales de vente</a>.
+                    <a href="#" id="consent-cgv-link">conditions générales de vente</a>.
+                    Je demande à bénéficier de l'accès immédiat au service et j'ai noté qu'en contrepartie,
+                    mon droit de rétractation de quatorze jours ne s'applique plus une fois l'accès ouvert.
                 </span>
-            </label>
-
-            <label class="consent-check">
-                <input type="checkbox" id="consent-waiver" onchange="updateConsentButton()">
-                <span>Je demande à accéder immédiatement au service et je renonce expressément à mon droit de rétractation de quatorze jours, que je perds une fois l'accès ouvert.</span>
             </label>
 
             <p class="consent-note">
@@ -3719,9 +3675,8 @@ if (urlParams.get('success') === 'true') {
             </p>
         </div>
 
-        <div class="consent-foot">
-            <button class="btn btn-secondary" onclick="closeConsentModal()">Annuler</button>
-            <button class="btn btn-primary" id="consent-confirm" onclick="confirmConsentAndPay()" disabled>
+        <div class="modal-footer">
+            <button class="btn btn-primary modal-ok" id="consent-confirm" onclick="confirmConsentAndPay()" disabled>
                 <span><i class="fas fa-lock"></i> Confirmer et payer</span>
             </button>
         </div>
@@ -4113,6 +4068,7 @@ window._bodyUnlock = function (owner) {
         setTimeout(function () {
             ov.classList.remove('active', 'closing');
             window._bodyUnlock(id);
+            ov.dispatchEvent(new CustomEvent('_closed'));
         }, 200);
     }
 
@@ -4145,6 +4101,34 @@ window._bodyUnlock = function (owner) {
 
     window.openCgvModal = function () { openModal('cgv-modal'); };
     window.openMentionsLegalesModal = function () { openModal('ml-modal'); };
+
+    /* Exposés pour la fenêtre de consentement (ouverte au clic sur Souscrire). */
+    window.openHelpModal = function (id) { openModal(id); };
+    window.closeHelpModal = function (id) {
+        var ov = document.getElementById(id);
+        if (ov) closeModal(ov);
+    };
+
+    /* Depuis la fenêtre de consentement, le lien « conditions générales de vente »
+       ferme le consentement, ouvre les CGV, et rouvre le consentement à leur
+       fermeture — pour que l'utilisateur ne perde pas sa place. */
+    var cgvLinkInConsent = document.getElementById('consent-cgv-link');
+    if (cgvLinkInConsent) {
+        cgvLinkInConsent.addEventListener('click', function (e) {
+            e.preventDefault();
+            var consent = document.getElementById('consent-modal');
+            var reopenPlan = consent ? consent.dataset.plan : null;
+            closeModal(consent);
+            openModal('cgv-modal');
+            var cgv = document.getElementById('cgv-modal');
+            /* À la prochaine fermeture des CGV, rouvrir le consentement une seule fois. */
+            var reopen = function () {
+                cgv.removeEventListener('_closed', reopen);
+                if (reopenPlan && window.openConsentModal) window.openConsentModal(reopenPlan);
+            };
+            cgv.addEventListener('_closed', reopen);
+        });
+    }
 })();
 </script>
 
