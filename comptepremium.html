@@ -925,6 +925,13 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     align-items: flex-start;
 }
 .info-note i { margin-top: 0.15rem; flex-shrink: 0; }
+.info-note-blue {
+    background: rgba(59, 130, 246, 0.08);
+    border-left-color: var(--primary);
+    color: var(--gray-700);
+}
+.info-note-blue i { color: var(--primary); }
+[data-theme="dark"] .info-note-blue { background: rgba(59,130,246,0.15); color: #cbd5e1; }
 [data-theme="dark"] .info-note { background: rgba(245,158,11,0.15); color: #fbbf24; }
 
 /* Alerte (période de grâce, info…) placée sous la carte */
@@ -3264,6 +3271,21 @@ function displayUserStatus() {
                     <span class="info-label">Statut du paiement :</span>
                     <span class="info-value"><span class="dot dot-ok"></span>À jour</span>
                 </div>
+                ${(() => {
+                    /* Changement de forfait planifié (mensuel↔annuel en fin de période). */
+                    const pc = userData.pendingPlanChange;
+                    if (!pc || !pc.newPlan) return '';
+                    const newLabel = pc.newPlan === 'annual' ? 'Annuel' : 'Mensuel';
+                    let d = pc.effectiveDate?.toDate ? pc.effectiveDate.toDate()
+                          : (pc.effectiveDate ? new Date(pc.effectiveDate) : null);
+                    const dStr = d ? d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
+                    return `
+                        <div class="info-note info-note-blue">
+                            <i class="fas fa-arrows-rotate"></i>
+                            <span>Changement de formule prévu : votre abonnement passera à <strong>${newLabel}</strong>${dStr ? ' le <strong>' + dStr + '</strong>' : ''}. Aucune action de votre part n'est nécessaire.</span>
+                        </div>
+                    `;
+                })()}
             `;
         }
 
@@ -3640,7 +3662,7 @@ if (urlParams.get('success') === 'true') {
                 régularisation. Vos données ne sont ni supprimées ni altérées.
             </p>
 
-            <h3><i class="fas fa-shield-alt"></i> 10. Garantie légale de conformité</h3>
+            <h3><i class="fas fa-file-signature"></i> 10. Garantie légale de conformité</h3>
             <p>
                 Le service bénéficie de la garantie légale de conformité applicable aux contenus et
                 services numériques, prévue aux articles L.224-25-12 et suivants du Code de la
