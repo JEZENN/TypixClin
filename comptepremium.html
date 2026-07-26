@@ -938,6 +938,32 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     .status-body { padding: 1.5rem; }
 }
 
+/* ── Boutons de plan verrouillés (ancien compte, avant l'ouverture) ── */
+.pricing-locked-note {
+    margin-top: 1.5rem;
+    padding: 0.9rem 1.15rem;
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--border-radius-md);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--gray-700);
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+.pricing-locked-note i { margin-top: 0.15rem; color: var(--primary); flex-shrink: 0; }
+[data-theme="dark"] .pricing-locked-note { background: rgba(59,130,246,0.15); color: #cbd5e1; }
+.btn.btn-plan-locked {
+    background: var(--gray-200) !important;
+    color: var(--gray-500) !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none !important;
+}
+[data-theme="dark"] .btn.btn-plan-locked { background: #334155 !important; color: #64748b !important; }
+
 /* ── Bouton « Gérer mon abonnement » : CTA plein, dans la charte ── */
 .btn-manage {
     position: relative;
@@ -3076,6 +3102,10 @@ function displayUserStatus() {
     let badgeHTML = '';
     let infoHTML = '';
     let showPlans = false;
+    /* Paiement pas encore ouvert : ancien compte (créé avant la date pivot)
+       encore dans sa période de grâce. Les tarifs s'affichent mais les boutons
+       Souscrire sont verrouillés jusqu'à la fin de la grâce. */
+    let plansLockedUntil = null;
 
     /* ── PHASE GRATUITE ──────────────────────────────────────────────────
        Tant que la facturation n'est pas activée, aucun utilisateur ne doit
@@ -3168,6 +3198,13 @@ function displayUserStatus() {
 
             showPlans = true;
 
+            /* Ancien compte encore en grâce → paiement différé à la fin de la
+               grâce. Un nouveau compte en essai peut payer tout de suite. */
+            if (_created && typeof window.tpxIsLegacyCreated === 'function'
+                && window.tpxIsLegacyCreated(_created)) {
+                plansLockedUntil = graceEnd;
+            }
+
         } else {
             if (statusCard) statusCard.classList.add('is-inactive');
             badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-clock"></i> Période expirée</span>';
@@ -3249,6 +3286,43 @@ function displayUserStatus() {
     statusBadge.innerHTML = badgeHTML;
     statusInfo.innerHTML = infoHTML;
     plansSection.style.display = showPlans ? 'block' : 'none';
+
+    applyPlansLock(plansLockedUntil);
+}
+
+/* Verrouille/déverrouille les boutons « Souscrire » selon plansLockedUntil. */
+function applyPlansLock(lockedUntil) {
+    const plansSection = document.getElementById('plans-section');
+    if (!plansSection) return;
+
+    const buttons = plansSection.querySelectorAll('button[onclick^="subscribe"]');
+    let note = document.getElementById('plans-locked-note');
+
+    if (lockedUntil) {
+        const dateStr = lockedUntil.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        buttons.forEach(b => {
+            if (b.dataset.plabel === undefined) b.dataset.plabel = b.textContent;
+            b.classList.add('btn-plan-locked');
+            b.disabled = true;
+            b.textContent = 'Bientôt disponible';
+        });
+        if (!note) {
+            note = document.createElement('div');
+            note.id = 'plans-locked-note';
+            note.className = 'pricing-locked-note';
+            plansSection.appendChild(note);
+        }
+        note.innerHTML = '<i class="fas fa-circle-info"></i><span>Votre acc\u00e8s est gratuit jusqu\'au <strong>'
+            + dateStr + '</strong>. L\'abonnement sera disponible \u00e0 cette date : vous n\'avez rien \u00e0 faire d\'ici l\u00e0, et vous ne serez pas pr\u00e9lev\u00e9 avant.</span>';
+        note.style.display = 'flex';
+    } else {
+        buttons.forEach(b => {
+            b.classList.remove('btn-plan-locked');
+            b.disabled = false;
+            if (b.dataset.plabel !== undefined) { b.textContent = b.dataset.plabel; delete b.dataset.plabel; }
+        });
+        if (note) note.style.display = 'none';
+    }
 }
 
 // Subscribe
@@ -3271,6 +3345,30 @@ function btnLoading(btn, on) {
 window.subscribe = async function(planType, event) {
     /* Phase gratuite : aucun appel à Stripe possible. */
     if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return;
+
+    /* Garde serveur-indépendante : un ancien compte encore en grâce ne peut pas
+       encore payer, même en contournant le bouton désactivé via la console. */
+    if (userData && userData.premiumType === 'grace_period'
+        && userData.subscriptionStatus !== 'active'
+        && typeof window.tpxIsLegacyCreated === 'function') {
+        let _c = null;
+        if (userData.createdAt?.toDate) _c = userData.createdAt.toDate();
+        else if (userData.createdAt) _c = new Date(userData.createdAt);
+        else if (currentUser?.metadata?.creationTime) _c = new Date(currentUser.metadata.creationTime);
+        if (_c && !isNaN(_c.getTime()) && window.tpxIsLegacyCreated(_c)) {
+            const end = (typeof window.tpxLegacyGraceEnd === 'function')
+                ? window.tpxLegacyGraceEnd().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
+                : 'la fin de la période gratuite';
+            await showToast({
+                title: 'Bient\u00f4t disponible',
+                message: 'Votre acc\u00e8s est gratuit jusqu\'au ' + end + '. L\'abonnement sera disponible \u00e0 cette date.',
+                type: 'info',
+                icon: 'fa-circle-info',
+                duration: 4000
+            });
+            return;
+        }
+    }
 
     if (!currentUser) {
         await showToast({
