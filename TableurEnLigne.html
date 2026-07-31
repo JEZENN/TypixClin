@@ -30741,6 +30741,33 @@ body.tc-kb-open-phone .flash-expand-btn {
     pointer-events: none !important;
 }
 
+/* ── TÉLÉPHONE, clavier virtuel ouvert : les modals Notes et Cahier
+   d'erreurs sont épinglés sur la zone VISIBLE de l'écran (au-dessus du
+   clavier), quel que soit le décalage de page imposé par iOS — p. ex.
+   ouverture depuis la page Statistiques (Matières préférées / à revoir
+   en priorité) : la toolbar n'est plus rognée en haut. La zone de texte
+   s'arrête désormais AU-DESSUS du clavier : tout le texte est accessible
+   par défilement (y compris en mode « Agrandir le texte »), avec une
+   marge sous la dernière ligne pour défiler au-delà. ── */
+body.tc-kb-open-phone .notes-modal-overlay.active {
+    top: var(--tc-ph-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--tc-ph-h, 100%) !important;
+    overflow: hidden !important;
+    transition: top 0.2s ease, height 0.2s ease;
+}
+body.tc-kb-open-phone .notes-modal-overlay.active .notes-modal {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+}
+body.tc-kb-open-phone .notes-modal-overlay.active .notes-editor-area {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+    padding-bottom: 35vh !important;
+}
+
 /* Modal notes : empilé jusqu'à 640px */
 @media (max-width: 640px) {
     #notesModalOverlay .notes-textmax-sep { display: block; }
@@ -40289,7 +40316,21 @@ window.resetNotesTextMax = function(rootSel) {
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
-        document.body.classList.toggle('tc-kb-open-phone', kb > KB_MIN);
+        var open = kb > KB_MIN;
+        document.body.classList.toggle('tc-kb-open-phone', open);
+        /* Épinglage des modals Notes / Cahier d'erreurs sur la zone VISIBLE :
+           on publie la géométrie du viewport visuel (haut + hauteur). Corrige
+           la toolbar rognée en haut quand iOS décale la page à l'ouverture du
+           clavier (p. ex. modal ouvert depuis la page Statistiques), et rend
+           accessible par défilement le texte autrement masqué par le clavier. */
+        var rs = document.documentElement.style;
+        if (open) {
+            rs.setProperty('--tc-ph-top', Math.round(vv.offsetTop) + 'px');
+            rs.setProperty('--tc-ph-h', Math.round(vv.height) + 'px');
+        } else {
+            rs.removeProperty('--tc-ph-top');
+            rs.removeProperty('--tc-ph-h');
+        }
     }
     function onChange() {
         if (raf) return;
@@ -46907,12 +46948,6 @@ body.tc-kb-open .tours-today-modal-overlay.active {
     height: var(--tc-vv-h, 100vh) !important;
     margin: 0 !important;
     overflow: hidden !important;
-    /* Clavier ouvert : on cale le modal en HAUT de la zone visible au lieu de
-       le centrer. Avec le centrage (align-items:center), un modal plus haut
-       que la zone visible débordait symétriquement et sa toolbar sortait par
-       le haut → rognée. En flex-start, le haut du modal (donc la toolbar) est
-       toujours collé au sommet visible et reste entièrement accessible. */
-    align-items: flex-start !important;
     transition: top 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
                 left 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
                 width 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
@@ -47066,21 +47101,13 @@ body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
        pendant toute la séquence : états initial et final identiques à
        l'état normal, donc ajout / retrait des classes invisibles. */
     var _restModals = [];
-    function snapshotRestHeights(visHOverride) {
+    function snapshotRestHeights() {
         try {
-            /* Hauteur réellement visible (au-dessus du clavier) : sert de
-               plafond. Sans ce plafond, un modal en hauteur « vh » (ex. 88vh)
-               mesuré sur l'écran plein dépasse la zone visible une fois le
-               clavier ouvert, et son haut (la toolbar) est rogné — bug
-               observé à l'ouverture depuis la page statistiques. */
-            var vv = window.visualViewport;
-            var visH = visHOverride || (vv ? vv.height : window.innerHeight);
             document.querySelectorAll(OVERLAY_SELECTOR).forEach(function (ov) {
                 var m = ov.firstElementChild;
                 if (!m) return;
                 var h = m.offsetHeight;
                 if (!h) return;
-                if (visH && h > visH) h = visH;   /* jamais plus haut que la zone visible */
                 m.style.setProperty('--tc-rest-h', h + 'px');
                 if (_restModals.indexOf(m) === -1) _restModals.push(m);
             });
@@ -47114,7 +47141,7 @@ body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
                    normal, donc invisible), puis — à la frame suivante — cibles
                    épinglées sur la zone visible : la transition CSS fait
                    GLISSER l'overlay et le modal au-dessus du clavier. */
-                snapshotRestHeights(vv.height); /* mesurer AVANT l'épinglage, plafonné à la zone visible */
+                snapshotRestHeights(); /* mesurer AVANT l'épinglage */
                 setVVVars(0, 0, window.innerWidth, ref);
                 body.classList.add('tc-kb-open');
                 requestAnimationFrame(function () {

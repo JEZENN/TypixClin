@@ -20975,6 +20975,33 @@ body.tc-kb-open-phone .flash-expand-btn {
     pointer-events: none !important;
 }
 
+/* ── TÉLÉPHONE, clavier virtuel ouvert : les modals Notes et Cahier
+   d'erreurs sont épinglés sur la zone VISIBLE de l'écran (au-dessus du
+   clavier), quel que soit le décalage de page imposé par iOS — p. ex.
+   ouverture depuis la page Statistiques (Matières préférées / à revoir
+   en priorité) : la toolbar n'est plus rognée en haut. La zone de texte
+   s'arrête désormais AU-DESSUS du clavier : tout le texte est accessible
+   par défilement (y compris en mode « Agrandir le texte »), avec une
+   marge sous la dernière ligne pour défiler au-delà. ── */
+body.tc-kb-open-phone .notes-modal-overlay.active {
+    top: var(--tc-ph-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--tc-ph-h, 100%) !important;
+    overflow: hidden !important;
+    transition: top 0.2s ease, height 0.2s ease;
+}
+body.tc-kb-open-phone .notes-modal-overlay.active .notes-modal {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+}
+body.tc-kb-open-phone .notes-modal-overlay.active .notes-editor-area {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+    padding-bottom: 35vh !important;
+}
+
 /* Modal SDD : empilé jusqu'à 860px */
 @media (max-width: 860px) {
     #sdd-notes-overlay .notes-textmax-sep { display: block; }
@@ -28523,7 +28550,21 @@ function toggleSDDPanelMax(btn) {
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
-        document.body.classList.toggle('tc-kb-open-phone', kb > KB_MIN);
+        var open = kb > KB_MIN;
+        document.body.classList.toggle('tc-kb-open-phone', open);
+        /* Épinglage des modals Notes / Cahier d'erreurs sur la zone VISIBLE :
+           on publie la géométrie du viewport visuel (haut + hauteur). Corrige
+           la toolbar rognée en haut quand iOS décale la page à l'ouverture du
+           clavier (p. ex. modal ouvert depuis la page Statistiques), et rend
+           accessible par défilement le texte autrement masqué par le clavier. */
+        var rs = document.documentElement.style;
+        if (open) {
+            rs.setProperty('--tc-ph-top', Math.round(vv.offsetTop) + 'px');
+            rs.setProperty('--tc-ph-h', Math.round(vv.height) + 'px');
+        } else {
+            rs.removeProperty('--tc-ph-top');
+            rs.removeProperty('--tc-ph-h');
+        }
     }
     function onChange() {
         if (raf) return;
