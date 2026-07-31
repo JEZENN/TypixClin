@@ -20975,34 +20975,6 @@ body.tc-kb-open-phone .flash-expand-btn {
     pointer-events: none !important;
 }
 
-/* ── TÉLÉPHONE, clavier virtuel ouvert : les modals Notes et Cahier
-   d'erreurs sont épinglés sur la zone VISIBLE de l'écran (au-dessus du
-   clavier), quel que soit le décalage de page imposé par iOS — p. ex.
-   ouverture depuis la page Statistiques (Matières préférées / à revoir
-   en priorité) : la toolbar n'est plus rognée en haut. La zone de texte
-   s'arrête désormais AU-DESSUS du clavier : tout le texte est accessible
-   par défilement (y compris en mode « Agrandir le texte »), avec une
-   marge sous la dernière ligne pour défiler au-delà. ── */
-body.tc-kb-open-phone .notes-modal-overlay.active {
-    top: 0 !important;
-    bottom: auto !important;
-    height: var(--tc-ph-h, 100%) !important;
-    overflow: hidden !important;
-    transform: translateY(var(--tc-ph-shift, 0px)) !important;
-    transition: none !important;
-}
-body.tc-kb-open-phone .notes-modal-overlay.active .notes-modal {
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 0 !important;
-}
-body.tc-kb-open-phone .notes-modal-overlay.active .notes-editor-area {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    scroll-behavior: auto;
-    padding-bottom: 35vh !important;
-}
-
 /* Modal SDD : empilé jusqu'à 860px */
 @media (max-width: 860px) {
     #sdd-notes-overlay .notes-textmax-sep { display: block; }
@@ -24476,8 +24448,6 @@ window.tcStopAnalytics = function () {};
           </div>
 		  <div class="notes-toolbar-sep"></div>
 
-<div class="notes-toolbar-sep"></div>
-
 <div class="notes-toolbar-group">
   <button class="notes-tool-btn" onmousedown="ecosErrSetColor(event,'#ef4444')" ontouchstart="ecosErrSetColor(event,'#ef4444')" data-tooltip="Texte rouge">
     <span style="color:#ef4444;font-weight:800;">A</span>
@@ -26891,6 +26861,17 @@ function ecosResetSpecialtyFilters() {
 var _ecosErrCurrentId  = null;
 var _ecosErrDirty      = false;
 var _ecosErrSaveTimer  = null;
+/* Correctif sauvegarde : l'éditeur (oninput) et le module images écrivaient
+   window.ecosErrDirty, alors que closeEcosErrModal() ne lit que _ecosErrDirty.
+   Le drapeau restait donc à false et le texte n'était pas poussé vers Firestore
+   à la fermeture. On mappe la propriété publique sur le drapeau interne. */
+try {
+    Object.defineProperty(window, 'ecosErrDirty', {
+        get: function() { return _ecosErrDirty; },
+        set: function(v) { _ecosErrDirty = !!v; },
+        configurable: true
+    });
+} catch (e) { window.ecosErrDirty = false; }
 var _ecosErrHasContent = {};
 window._ecosErrHasContent = _ecosErrHasContent;
 var _ecosErrLoading    = false;   // verrou de chargement de la bonne version
@@ -27076,10 +27057,12 @@ function openEcosErrModal(speId) {
 async function closeEcosErrModal() {
     var overlay = document.getElementById('ecosErrOverlay');
     if (!overlay) return;
-    // 1. annuler le debounce
+    // 1. annuler le debounce (en retenant qu'une sauvegarde était programmée)
+    var _hadPendingSave = !!_ecosErrSaveTimer;
     if (_ecosErrSaveTimer) { clearTimeout(_ecosErrSaveTimer); _ecosErrSaveTimer = null; }
-    // 2. sauvegarder si modifié et attendre le résultat
-    if (_ecosErrDirty) {
+    // 2. sauvegarder si modifié (ou si le debounce n'avait pas encore eu lieu)
+    //    et attendre le résultat avant de fermer
+    if (_ecosErrDirty || _hadPendingSave) {
         var ok = await ecosErrSaveNow();
         // 4. échec : la copie locale (pending) est sécurisée → fermeture autorisée, sans prétendre que le cloud est à jour
         if (!ok && window.showEcosToast) window.showEcosToast('Cahier conservé localement — synchronisation en attente.', 'info');
@@ -28548,50 +28531,10 @@ function toggleSDDPanelMax(btn) {
     if (!IS_PHONE) return;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
     var raf = null;
-    /* Épinglage des modals Notes / Cahier d'erreurs sur la zone VISIBLE.
-       Méthode par MESURE : plutôt que de deviner de combien iOS a décalé
-       l'overlay (pan du viewport visuel OU défilement de la page derrière
-       — le fameux position:fixed « cassé » quand le clavier est ouvert,
-       typiquement à l'ouverture depuis la page Statistiques), on mesure la
-       position réellement PEINTE de l'overlay (getBoundingClientRect) et on
-       corrige l'écart par une translation, itérativement, jusqu'à ce que le
-       haut de l'overlay coïncide avec le haut visible de l'écran. La hauteur
-       est calée sur la zone visible : la toolbar reste entière en haut et la
-       zone de texte s'arrête au-dessus du clavier (texte défilable). */
-    var PIN_OVERLAYS = ['sdd-notes-overlay', 'ecosErrOverlay'];
-    var _pinned = null;
-    function activePinOverlay() {
-        for (var i = 0; i < PIN_OVERLAYS.length; i++) {
-            var el = document.getElementById(PIN_OVERLAYS[i]);
-            if (el && el.classList.contains('active') && !el.classList.contains('closing')) return el;
-        }
-        return null;
-    }
-    function unpin() {
-        if (!_pinned) return;
-        try {
-            _pinned.style.removeProperty('--tc-ph-shift');
-            _pinned.style.removeProperty('--tc-ph-h');
-        } catch (e) {}
-        _pinned = null;
-    }
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
-        var open = kb > KB_MIN;
-        document.body.classList.toggle('tc-kb-open-phone', open);
-        var ov = open ? activePinOverlay() : null;
-        if (!ov) { unpin(); return; }
-        if (_pinned && _pinned !== ov) unpin();
-        _pinned = ov;
-        ov.style.setProperty('--tc-ph-h', Math.round(vv.height) + 'px');
-        /* Écart entre le haut peint de l'overlay et le haut visible de
-           l'écran — corrigé par translation cumulative (auto-convergent :
-           dès que l'overlay est aligné, l'écart mesuré devient nul). */
-        var cur = parseFloat(ov.style.getPropertyValue('--tc-ph-shift')) || 0;
-        var rect = ov.getBoundingClientRect();
-        var err = vv.offsetTop - rect.top;
-        if (Math.abs(err) > 1) ov.style.setProperty('--tc-ph-shift', Math.round(cur + err) + 'px');
+        document.body.classList.toggle('tc-kb-open-phone', kb > KB_MIN);
     }
     function onChange() {
         if (raf) return;
@@ -28599,16 +28542,6 @@ function toggleSDDPanelMax(btn) {
     }
     window.visualViewport.addEventListener('resize', onChange);
     window.visualViewport.addEventListener('scroll', onChange);
-    /* iOS peut décaler la page (scroll document) APRÈS l'ouverture du
-       clavier, sans événement du visualViewport : on écoute aussi tous les
-       défilements (phase capture) et on re-vérifie à quelques instants
-       après chaque prise / perte de focus (les animations du clavier iOS
-       s'étalent sur ~600 ms). */
-    window.addEventListener('scroll', onChange, { passive: true, capture: true });
-    document.addEventListener('focusin', function () {
-        [120, 320, 650, 1000].forEach(function (d) { setTimeout(onChange, d); });
-    });
-    document.addEventListener('focusout', function () { setTimeout(onChange, 250); });
 })();
 function renderSDDObjectives(meta) {
     if (meta && meta.contentType === "procedure") {
@@ -41050,6 +40983,56 @@ body.tc-phone.tc-phone-kb .planning-day-detail-overlay.active .planning-day-deta
             if (t.classList.contains(OVERLAY_CLASSES[i])) { if (e.cancelable) e.preventDefault(); return; }
         }
     }, { passive: false });
+})();
+</script>
+
+<!-- ===================== ADAPTATIONS MOBILE (<= 768px) =====================
+     1. Liste de priorité : le clic sur une carte item / SDD n'ouvre plus le
+        modal notes sur téléphone (les boutons internes restent actifs).
+     2. Statistiques > Matières préférées : le bouton d'accès direct au
+        cahier d'erreurs est retiré sur téléphone.
+     ======================================================================== -->
+<style>
+@media (max-width: 768px) {
+    /* 2. Podium "Matières préférées" : plus de raccourci cahier d'erreurs */
+    .ranking-podium-item .spe-err-btn { display: none !important; }
+
+    /* 1. Cartes de la liste de priorité : plus d'affordance de clic */
+    .priority-item-card,
+    .priority-item-card.clickable-priority { cursor: default !important; }
+}
+</style>
+<script>
+(function () {
+    'use strict';
+    var MOBILE_MAX_WIDTH = 768;
+
+    function isMobileViewport() {
+        try { return window.matchMedia('(max-width: ' + MOBILE_MAX_WIDTH + 'px)').matches; }
+        catch (e) { return (window.innerWidth || document.documentElement.clientWidth || 0) <= MOBILE_MAX_WIDTH; }
+    }
+
+    /* Sélecteurs des contrôles internes qui doivent rester cliquables
+       (bouton "envoyer vers la to-do", pastille épinglée, liens...). */
+    var INTERACTIVE = 'button, a, input, select, textarea, label, .priority-send-btn, .added-to-checklist-badge';
+
+    /* Interception en phase de capture, sur document : l'événement est stoppé
+       avant d'atteindre la carte, donc son onclick inline (openNotesModal /
+       openSDDNotesModal) ne s'exécute jamais sur téléphone. */
+    function blockPriorityCardOpen(e) {
+        if (!isMobileViewport()) return;
+        var target = e.target;
+        if (!target || typeof target.closest !== 'function') return;
+
+        var card = target.closest('.priority-item-card');
+        if (!card) return;
+        if (target.closest(INTERACTIVE)) return;   // contrôle interne : on laisse passer
+
+        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
+    }
+
+    document.addEventListener('click', blockPriorityCardOpen, true);
 })();
 </script>
 </body>
