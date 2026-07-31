@@ -12719,6 +12719,9 @@ color: #7c3aed;
 }
 .priority-item-card:last-child { border-bottom: none; }
 .priority-item-card:hover { background: var(--gray-50); }
+.priority-item-card.clickable-priority { cursor: pointer; }
+.priority-item-card.clickable-priority:hover { background: var(--gray-100); }
+.priority-item-card.clickable-priority:active { background: var(--gray-200); }
 
 
 .priority-item-spec-bar {
@@ -22392,10 +22395,10 @@ const top10 = allItems.slice(0, 6);
                                && window.PlanningModule.isItemInChecklist(item.specialtyId, item.fc);
         const checklistBtn   = inChecklist
             ? `<span class="table-btn-wrap"><span class="added-to-checklist-badge" data-specialty="${item.specialtyId}" data-fc="${item.fc}"><i class="fas fa-thumbtack"></i></span></span>`
-: `<span class="table-btn-wrap"><button class="priority-send-btn" onclick="sendToChecklist(this,'${item.specialtyId}','${item.fc}','${item.num}','${escapedName}')"><i class="fas fa-arrow-right"></i></button></span>`;
+: `<span class="table-btn-wrap"><button class="priority-send-btn" onclick="event.stopPropagation();sendToChecklist(this,'${item.specialtyId}','${item.fc}','${item.num}','${escapedName}')"><i class="fas fa-arrow-right"></i></button></span>`;
         
 		return `
-        <div class="priority-item-card">
+        <div class="priority-item-card clickable-priority" onclick="openNotesModal('${item.num}','${item.specialtyId}','${item.fc}','${escapedName}')">
             
             <span class="priority-spec-pill" style="background:${item.cfg.color};">${shortSpec}</span>
             <div class="priority-item-body">
@@ -47057,13 +47060,21 @@ body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
        pendant toute la séquence : états initial et final identiques à
        l'état normal, donc ajout / retrait des classes invisibles. */
     var _restModals = [];
-    function snapshotRestHeights() {
+    function snapshotRestHeights(visHOverride) {
         try {
+            /* Hauteur réellement visible (au-dessus du clavier) : sert de
+               plafond. Sans ce plafond, un modal en hauteur « vh » (ex. 88vh)
+               mesuré sur l'écran plein dépasse la zone visible une fois le
+               clavier ouvert, et son haut (la toolbar) est rogné — bug
+               observé à l'ouverture depuis la page statistiques. */
+            var vv = window.visualViewport;
+            var visH = visHOverride || (vv ? vv.height : window.innerHeight);
             document.querySelectorAll(OVERLAY_SELECTOR).forEach(function (ov) {
                 var m = ov.firstElementChild;
                 if (!m) return;
                 var h = m.offsetHeight;
                 if (!h) return;
+                if (visH && h > visH) h = visH;   /* jamais plus haut que la zone visible */
                 m.style.setProperty('--tc-rest-h', h + 'px');
                 if (_restModals.indexOf(m) === -1) _restModals.push(m);
             });
@@ -47097,7 +47108,7 @@ body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
                    normal, donc invisible), puis — à la frame suivante — cibles
                    épinglées sur la zone visible : la transition CSS fait
                    GLISSER l'overlay et le modal au-dessus du clavier. */
-                snapshotRestHeights(); /* mesurer AVANT l'épinglage */
+                snapshotRestHeights(vv.height); /* mesurer AVANT l'épinglage, plafonné à la zone visible */
                 setVVVars(0, 0, window.innerWidth, ref);
                 body.classList.add('tc-kb-open');
                 requestAnimationFrame(function () {
