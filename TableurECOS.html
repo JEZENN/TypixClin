@@ -20984,11 +20984,12 @@ body.tc-kb-open-phone .flash-expand-btn {
    par défilement (y compris en mode « Agrandir le texte »), avec une
    marge sous la dernière ligne pour défiler au-delà. ── */
 body.tc-kb-open-phone .notes-modal-overlay.active {
-    top: var(--tc-ph-top, 0px) !important;
+    top: 0 !important;
     bottom: auto !important;
     height: var(--tc-ph-h, 100%) !important;
     overflow: hidden !important;
-    transition: top 0.2s ease, height 0.2s ease;
+    transform: translateY(var(--tc-ph-shift, 0px)) !important;
+    transition: none !important;
 }
 body.tc-kb-open-phone .notes-modal-overlay.active .notes-modal {
     height: 100% !important;
@@ -28547,24 +28548,50 @@ function toggleSDDPanelMax(btn) {
     if (!IS_PHONE) return;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
     var raf = null;
+    /* Épinglage des modals Notes / Cahier d'erreurs sur la zone VISIBLE.
+       Méthode par MESURE : plutôt que de deviner de combien iOS a décalé
+       l'overlay (pan du viewport visuel OU défilement de la page derrière
+       — le fameux position:fixed « cassé » quand le clavier est ouvert,
+       typiquement à l'ouverture depuis la page Statistiques), on mesure la
+       position réellement PEINTE de l'overlay (getBoundingClientRect) et on
+       corrige l'écart par une translation, itérativement, jusqu'à ce que le
+       haut de l'overlay coïncide avec le haut visible de l'écran. La hauteur
+       est calée sur la zone visible : la toolbar reste entière en haut et la
+       zone de texte s'arrête au-dessus du clavier (texte défilable). */
+    var PIN_OVERLAYS = ['sdd-notes-overlay', 'ecosErrOverlay'];
+    var _pinned = null;
+    function activePinOverlay() {
+        for (var i = 0; i < PIN_OVERLAYS.length; i++) {
+            var el = document.getElementById(PIN_OVERLAYS[i]);
+            if (el && el.classList.contains('active') && !el.classList.contains('closing')) return el;
+        }
+        return null;
+    }
+    function unpin() {
+        if (!_pinned) return;
+        try {
+            _pinned.style.removeProperty('--tc-ph-shift');
+            _pinned.style.removeProperty('--tc-ph-h');
+        } catch (e) {}
+        _pinned = null;
+    }
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
         var open = kb > KB_MIN;
         document.body.classList.toggle('tc-kb-open-phone', open);
-        /* Épinglage des modals Notes / Cahier d'erreurs sur la zone VISIBLE :
-           on publie la géométrie du viewport visuel (haut + hauteur). Corrige
-           la toolbar rognée en haut quand iOS décale la page à l'ouverture du
-           clavier (p. ex. modal ouvert depuis la page Statistiques), et rend
-           accessible par défilement le texte autrement masqué par le clavier. */
-        var rs = document.documentElement.style;
-        if (open) {
-            rs.setProperty('--tc-ph-top', Math.round(vv.offsetTop) + 'px');
-            rs.setProperty('--tc-ph-h', Math.round(vv.height) + 'px');
-        } else {
-            rs.removeProperty('--tc-ph-top');
-            rs.removeProperty('--tc-ph-h');
-        }
+        var ov = open ? activePinOverlay() : null;
+        if (!ov) { unpin(); return; }
+        if (_pinned && _pinned !== ov) unpin();
+        _pinned = ov;
+        ov.style.setProperty('--tc-ph-h', Math.round(vv.height) + 'px');
+        /* Écart entre le haut peint de l'overlay et le haut visible de
+           l'écran — corrigé par translation cumulative (auto-convergent :
+           dès que l'overlay est aligné, l'écart mesuré devient nul). */
+        var cur = parseFloat(ov.style.getPropertyValue('--tc-ph-shift')) || 0;
+        var rect = ov.getBoundingClientRect();
+        var err = vv.offsetTop - rect.top;
+        if (Math.abs(err) > 1) ov.style.setProperty('--tc-ph-shift', Math.round(cur + err) + 'px');
     }
     function onChange() {
         if (raf) return;
@@ -28572,6 +28599,16 @@ function toggleSDDPanelMax(btn) {
     }
     window.visualViewport.addEventListener('resize', onChange);
     window.visualViewport.addEventListener('scroll', onChange);
+    /* iOS peut décaler la page (scroll document) APRÈS l'ouverture du
+       clavier, sans événement du visualViewport : on écoute aussi tous les
+       défilements (phase capture) et on re-vérifie à quelques instants
+       après chaque prise / perte de focus (les animations du clavier iOS
+       s'étalent sur ~600 ms). */
+    window.addEventListener('scroll', onChange, { passive: true, capture: true });
+    document.addEventListener('focusin', function () {
+        [120, 320, 650, 1000].forEach(function (d) { setTimeout(onChange, d); });
+    });
+    document.addEventListener('focusout', function () { setTimeout(onChange, 250); });
 })();
 function renderSDDObjectives(meta) {
     if (meta && meta.contentType === "procedure") {
