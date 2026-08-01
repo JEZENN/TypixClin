@@ -2,6 +2,63 @@
 <html lang="fr">
 <head>
 
+
+<script id="pastel-chart-palette">
+/* ═══════════════ COULEURS DES GRAPHIQUES EN MODE PASTEL ═══════════════
+   Chart.js reçoit ses couleurs en JavaScript : le CSS ne peut rien pour lui.
+   On applique ici la même conversion que la feuille de style pastel, afin que
+   les courbes soient assorties aux pastilles et aux boutons.
+   ══════════════════════════════════════════════════════════════════════ */
+window._pastelChart = (function () {
+    function hexToRgb(h) {
+        h = String(h).trim().replace('#', '');
+        if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+        if (h.length < 6) return null;
+        return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    function toHex(n) { var s = Math.round(Math.max(0, Math.min(255, n))).toString(16); return s.length < 2 ? '0'+s : s; }
+    function hslToHex(H, S, L) {
+        H = ((H % 360) + 360) % 360; S /= 100; L /= 100;
+        var C = (1 - Math.abs(2*L - 1)) * S, X = C * (1 - Math.abs((H/60) % 2 - 1)), m = L - C/2, r, g, b;
+        if (H < 60)       { r=C; g=X; b=0; }
+        else if (H < 120) { r=X; g=C; b=0; }
+        else if (H < 180) { r=0; g=C; b=X; }
+        else if (H < 240) { r=0; g=X; b=C; }
+        else if (H < 300) { r=X; g=0; b=C; }
+        else              { r=C; g=0; b=X; }
+        return '#' + toHex((r+m)*255) + toHex((g+m)*255) + toHex((b+m)*255);
+    }
+    function soften(hex) {
+        var rgb = hexToRgb(hex);
+        if (!rgb) return hex;
+        var r = rgb[0]/255, g = rgb[1]/255, b = rgb[2]/255;
+        var mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn;
+        var L = (mx + mn) / 2, S = d === 0 ? 0 : d / (1 - Math.abs(2*L - 1)), H = 0;
+        if (d !== 0) {
+            if (mx === r)      H = 60 * (((g - b) / d) % 6);
+            else if (mx === g) H = 60 * ((b - r) / d + 2);
+            else               H = 60 * ((r - g) / d + 4);
+        }
+        L *= 100; S *= 100;
+        if (Math.max(rgb[0],rgb[1],rgb[2]) - Math.min(rgb[0],rgb[1],rgb[2]) < 45) return hex; /* neutre */
+        var Lp = Math.max(48, Math.min(72, L * 0.30 + 40));
+        return hslToHex(H, S * 0.50, Lp);
+    }
+    return {
+        on: function () {
+            try { return document.documentElement.getAttribute('data-theme') === 'pastel'; }
+            catch (e) { return false; }
+        },
+        color: soften,
+        grid: 'rgba(96, 88, 74, 0.10)',
+        text: '#857f72',
+        tipBg: '#fbf9f4',
+        tipTitle: '#403c36',
+        tipBody: '#6a6459',
+        tipBorder: '#ddd8cd'
+    };
+})();
+</script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 
@@ -139,6 +196,41 @@ window.tcLoadAnalytics();
     --success-light: rgba(16, 185, 129, 0.2);
     --warning-light: rgba(245, 158, 11, 0.2);
     --danger-light: rgba(239, 68, 68, 0.2);
+}
+
+/* ═══════════════ MODE PASTEL (rose + pêche + crème) ═══════════════
+   Palette chaleureuse et douce. On redéfinit les mêmes variables que les
+   autres thèmes : tout élément qui utilise les variables devient pastel. */
+[data-theme="pastel"] {
+    /* Mode pastel doux : mêmes teintes que le mode clair mais désaturées,
+       sur un fond crème très léger. Objectif : reposer les yeux, sans rose. */
+    --primary: #6b8cc7;            /* bleu doux désaturé (au lieu du bleu vif) */
+    --primary-dark: #5877b0;       /* bleu un peu plus soutenu (hover) */
+    --primary-light: #9db3d9;      /* bleu clair */
+    --primary-gradient: linear-gradient(135deg, #7d9bd0, #9db3d9);
+    --secondary: #7a8494;          /* gris-bleu doux */
+    --accent: #8fa6d0;             /* bleu-lavande discret */
+    --background: #f4f1ea;         /* crème très léger (fond de page) */
+    --white: #fbf9f4;             /* blanc cassé chaud (cartes, modals) */
+    --black: #3a3a42;             /* gris ardoise doux (texte principal) */
+    --gray-50: #f1eee7;
+    --gray-100: #e9e5dc;           /* séparateurs / fonds très clairs */
+    --gray-200: #ddd8cd;           /* bordures claires */
+    --gray-300: #cbc5b8;           /* bordures */
+    --gray-400: #a8a293;           /* texte discret / icônes désactivées */
+    --gray-500: #857f72;           /* texte secondaire */
+    --gray-600: #6a6459;           /* texte */
+    --gray-700: #524d45;           /* texte fort */
+    --gray-800: #403c36;           /* titres */
+    --gray-900: #302d28;           /* titres forts */
+    --success: #6fae86;            /* vert doux désaturé */
+    --success-light: #dcebe0;
+    --success-dark: #57946e;
+    --warning: #d1a05e;            /* ambre doux */
+    --warning-light: #f0e6d3;
+    --danger: #cf7b7b;             /* rouge doux désaturé */
+    --danger-light: #f0dcdc;
+    --shadow-blue: 0 10px 25px -5px rgba(107, 140, 199, 0.28); /* ombre bleu doux */
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -3373,6 +3465,15 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .specialty-card:has(.spe-err-btn:active) {
     transform: none !important;
 }
+/* La poignée de glisser-déposer est en position absolue avec z-index:2, juste
+   à l'endroit où s'ouvre l'infobulle. Le bouton étant en position:relative, lui
+   donner un z-index crée un contexte d'empilement qui emporte son ::after :
+   l'infobulle passe alors devant la poignée, comme dans le tableur ECOS. */
+.specialty-card .spe-err-btn { z-index: 3; }
+.specialty-card .spe-err-btn:hover,
+.specialty-card .spe-err-btn:focus-visible,
+.specialty-card .spe-err-btn:focus-within { z-index: 70; }
+.spe-err-btn::after { z-index: 80; }
 /* Icone du header modal coloree selon la matiere */
 .notes-header-icon.spe-err-header-icon { box-shadow: 0 2px 8px rgba(0,0,0,0.30); }
 
@@ -13422,6 +13523,9 @@ color: #7c3aed;
     }
 }
 
+
+
+/* ═══ (ancien bloc pastel supprimé — voir la feuille « pastel-theme » en fin de page) ═══ */
 </style>
 <script>
 /* ── Utilitaire global : compensation scrollbar pour modals ──
@@ -19000,15 +19104,15 @@ function applyUserSettings(data) {
     // 🌙 Thème
     // Bug fix : themeIcon est la variable const déclarée plus haut (themeToggle.querySelector('i'))
     // Il n'existe pas d'élément avec id="theme-icon", on utilise directement la variable.
-    if (data.theme && ['dark', 'light'].includes(data.theme)) {
+    if (data.theme && ['dark', 'light', 'pastel'].includes(data.theme)) {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         if (currentTheme !== data.theme) {
             document.documentElement.setAttribute('data-theme', data.theme);
             localStorage.setItem('theme', data.theme);
             // themeIcon = variable const déclarée ligne ~13892 : themeToggle.querySelector('i')
             if (themeIcon) {
-                themeIcon.classList.remove('fa-sun', 'fa-moon');
-                themeIcon.classList.add(data.theme === 'dark' ? 'fa-moon' : 'fa-sun');
+                themeIcon.classList.remove('fa-sun', 'fa-moon', 'fa-cloud-sun');
+                themeIcon.classList.add(data.theme === 'dark' ? 'fa-moon' : (data.theme === 'pastel' ? 'fa-cloud-sun' : 'fa-sun'));
             }
         }
     }
@@ -19121,8 +19225,9 @@ mobileMenuBtn?.addEventListener('click', () => {
 function setTheme(theme, saveToFirebase = false) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    themeIcon.classList.remove('fa-sun', 'fa-moon');
-    themeIcon.classList.add(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+    /* 3 thèmes : clair (soleil) → sombre (lune) → pastel (cœur) → clair… */
+    themeIcon.classList.remove('fa-sun', 'fa-moon', 'fa-cloud-sun');
+    themeIcon.classList.add(theme === 'dark' ? 'fa-moon' : (theme === 'pastel' ? 'fa-cloud-sun' : 'fa-sun'));
     // Sauvegarder dans Firebase si demandé (action utilisateur) et si connecté
     if (saveToFirebase && currentUser) {
         saveUserSettings({ theme });
@@ -19134,10 +19239,19 @@ function setTheme(theme, saveToFirebase = false) {
     if (typeof renderItemsTable === 'function' && document.getElementById('items-table-body')) {
         try { renderItemsTable(); } catch (e) {}
     }
+    /* Les couleurs des graphiques sont figées à la construction : on les
+       reconstruit pour qu'elles suivent le thème. */
+    if (typeof initWeeklyCharts === 'function' && document.getElementById('chart-tours-weekly')) {
+        try { initWeeklyCharts(); } catch (e) {}
+    }
 }
 setTheme(localStorage.getItem('theme') || 'light');
-// Quand l'utilisateur clique : basculer le thème ET sauvegarder dans Firebase
-themeToggle?.addEventListener('click', () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true));
+// Clic : cycle clair → sombre → pastel → clair, et sauvegarde dans Firebase
+themeToggle?.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'pastel' : (cur === 'pastel' ? 'light' : 'dark');
+    setTheme(next, true);
+});
 
 window.addEventListener('scroll', () => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -23919,6 +24033,12 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     d.lastRevision = selectedDate;
     
 const _pendingTourSnap = pendingTour;
+    /* Validation venue de la To-do : la tâche joue déjà son animation (verte,
+       barrée, cochée) dans la liste. Le grand check plein écran ferait doublon,
+       on le réserve donc aux validations lancées depuis le tableau.
+       Le drapeau est relevé MAINTENANT : pendingChecklistItemId est remis à
+       null plus bas, avant que le setTimeout ne se déclenche. */
+    const _tourValideDepuisTodo = (pendingChecklistItemId !== null);
     pendingTour = null;
     selectedConfidence = null;
     selectedSupport = null;
@@ -23928,7 +24048,7 @@ confidenceModal.classList.add('closing');
 setTimeout(() => {
     confidenceModal.classList.remove('active', 'closing');
     if (window._ednScrollUnlock) window._ednScrollUnlock('tourModal');
-	showTourSuccessAnimation();
+	if (!_tourValideDepuisTodo) showTourSuccessAnimation();
 }, 180);
     
     // Si on vient de la checklist, valider la tâche
@@ -24361,8 +24481,11 @@ function getWeeklyData() {
 
 function createChartConfig(label, data, color, yAxisConfig = {}) {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)';
-    const textColor = isDark ? '#9ca3af' : '#6b7280';
+    /* Mode pastel : couleur de courbe, grille et axes adoucis (cf. _pastelChart). */
+    const _p = !!(window._pastelChart && window._pastelChart.on());
+    if (_p) color = window._pastelChart.color(color);
+    const gridColor = _p ? window._pastelChart.grid : (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)');
+    const textColor = _p ? window._pastelChart.text : (isDark ? '#9ca3af' : '#6b7280');
     
     return {
         type: 'line',
@@ -24399,10 +24522,10 @@ function createChartConfig(label, data, color, yAxisConfig = {}) {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: isDark ? '#1e293b' : '#fff',
-                    titleColor: isDark ? '#f9fafb' : '#111827',
-                    bodyColor: isDark ? '#d1d5db' : '#4b5563',
-                    borderColor: isDark ? '#374151' : '#e5e7eb',
+                    backgroundColor: _p ? window._pastelChart.tipBg    : (isDark ? '#1e293b' : '#fff'),
+                    titleColor:      _p ? window._pastelChart.tipTitle : (isDark ? '#f9fafb' : '#111827'),
+                    bodyColor:       _p ? window._pastelChart.tipBody  : (isDark ? '#d1d5db' : '#4b5563'),
+                    borderColor:     _p ? window._pastelChart.tipBorder: (isDark ? '#374151' : '#e5e7eb'),
                     borderWidth: 1,
                     padding: 12,
                     cornerRadius: 8,
@@ -26140,9 +26263,11 @@ function toggleChecklistItem(id, event) {
         showChecklistChoicePopup(id, event);
     } else {
         // Item manuel, valider directement
-        item.completed = true;
-        saveData();
-        renderChecklist();
+        (window._todoValidateAnim || function (_i, _f) { _f(); })(item.id, function () {
+            item.completed = true;
+            saveData();
+            renderChecklist();
+        });
     }
 }
 
@@ -26249,9 +26374,11 @@ function handleChecklistChoice(withTour) {
         window._tourFromChecklist = true;
         window.openTourModalFromChecklist(itemId, item.itemKey);
     } else {
-        item.completed = true;
-        saveData();
-        renderChecklist();
+        (window._todoValidateAnim || function (_i, _f) { _f(); })(item.id, function () {
+            item.completed = true;
+            saveData();
+            renderChecklist();
+        });
     }
 }
 
@@ -26326,9 +26453,11 @@ function _applyTrainCLValidate(statut) {
         }
     }
 
-    item.completed = true;
-    saveData();
-    renderChecklist();
+    (window._todoValidateAnim || function (_i, _f) { _f(); })(item.id, function () {
+        item.completed = true;
+        saveData();
+        renderChecklist();
+    });
     _trainCLPendingId = null;
 }
 
@@ -26390,7 +26519,7 @@ function renderChecklist() {
             }
         }
         return `
-            <div class="checklist-item ${item.completed ? 'completed' : ''}">
+            <div class="checklist-item ${item.completed ? 'completed' : ''}" data-todo-id="${item.id}">
                 <div class="checklist-checkbox ${item.completed ? 'checked' : ''}" onclick="PlanningModule.toggleChecklistItem(${item.id}, event)">
                     ${item.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
@@ -26435,9 +26564,11 @@ function addItemFromTable(specialtyId, fc, itemNum, itemName, specialtyColor, sp
 function completeChecklistItem(id) {
     const item = checklistData.find(i => i.id === id);
     if (item && !item.completed) {
-        item.completed = true;
-        saveData();
-        renderChecklist();
+        (window._todoValidateAnim || function (_i, _f) { _f(); })(id, function () {
+            item.completed = true;
+            saveData();
+            renderChecklist();
+        });
     }
 }
 
@@ -31209,6 +31340,22 @@ body.tc-kb-open-phone .flash-expand-btn {
             </div>
 
             <div class="whats-new-section">
+                <div class="whats-new-section-icon blue">
+                    <i class="fas fa-cloud-sun"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Un troisième thème : le mode pastel</h4>
+                    <p>
+                        À côté des modes clair et sombre, un <strong>mode pastel</strong>
+                        fait son apparition.
+                        Le bouton en haut à droite fait désormais défiler les
+                        <strong>trois thèmes</strong>, et votre choix est conservé d'une
+                        session à l'autre.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
                 <div class="whats-new-section-icon amber">
                     <i class="fas fa-crown"></i>
                 </div>
@@ -32019,9 +32166,21 @@ function openHelpModal(contentId) {
     
 		const overlay = document.getElementById('helpModalOverlay');
 		overlay.classList.add('active');
-		const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-		document.body.style.overflow = 'hidden';
-  window._setScrollbarComp(scrollbarWidth);
+    /* Verrou de défilement PARTAGÉ (compteur par propriétaire).
+       Le modal d'aide peut s'ouvrir par-dessus un panneau qui a déjà verrouillé
+       le défilement — la To-do globale, par exemple. En posant son propre verrou
+       à la main, il remesurait une largeur de scrollbar nulle (elle est déjà
+       masquée) et remettait la compensation à zéro : la page sautait sur le
+       côté. Et à la fermeture il rendait le défilement alors que la To-do était
+       toujours ouverte. Avec le verrou partagé, l'ouverture par-dessus un verrou
+       existant ne change rien, et la fermeture ne libère que sa propre part. */
+    if (window._ednScrollLock) {
+        window._ednScrollLock('helpModal');
+    } else {
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        document.body.style.overflow = 'hidden';
+        if (typeof window._setScrollbarComp === 'function') window._setScrollbarComp(scrollbarWidth);
+    }
 }
 
 function closeHelpModal(event) {
@@ -32031,8 +32190,12 @@ function closeHelpModal(event) {
     overlay.classList.add('closing');
 setTimeout(() => {
     overlay.classList.remove('active', 'closing');
-    document.body.style.overflow = '';
-    window._setScrollbarComp(0);
+    if (window._ednScrollUnlock) {
+        window._ednScrollUnlock('helpModal');
+    } else {
+        document.body.style.overflow = '';
+        if (typeof window._setScrollbarComp === 'function') window._setScrollbarComp(0);
+    }
 }, 180);
 }
 
@@ -41536,12 +41699,31 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     { pastel:'#0f3a36', border:'#5eead4', text:'#99f6e4' }, // 7 turquoise
     { pastel:'#3a1530', border:'#f472b6', text:'#fbcfe8' }  // 8 rose
   ];
+  /* Mode pastel : palette dédiée. Le filtre CSS utilisé ailleurs délavait ces
+     tuiles (l'état 0 devenait presque invisible et les paliers se confondaient),
+     parce qu'elles sont déjà très claires. On leur donne donc de vraies valeurs,
+     avec un écart de teinte ET de luminosité entre paliers voisins. */
+  var PAL_PASTEL = [
+    { pastel:'#e4e1dc', border:'#aea698', text:'#766e60' }, // 0 neutre (état par défaut)
+    { pastel:'#f0c6c2', border:'#993d33', text:'#74362f' }, // 1 rouge
+    { pastel:'#ecc7a2', border:'#8d5c2a', text:'#684727' }, // 2 orange
+    { pastel:'#e4d58b', border:'#736626', text:'#544c21' }, // 3 jaune
+    { pastel:'#bde5c5', border:'#2f793e', text:'#285d32' }, // 4 vert
+    { pastel:'#c6daf1', border:'#3065a1', text:'#2a4f79' }, // 5 bleu
+    { pastel:'#e2d4f2', border:'#6d3aa6', text:'#54327b' }, // 6 violet
+    { pastel:'#9ddddd', border:'#267373', text:'#225858' }, // 7 turquoise
+    { pastel:'#e9b4d9', border:'#99337a', text:'#722c5d' }  // 8 rose
+  ];
   function isDarkTheme() {
     try { return document.documentElement.getAttribute('data-theme') === 'dark'; }
     catch (e) { return false; }
   }
+  function isPastelTheme() {
+    try { return document.documentElement.getAttribute('data-theme') === 'pastel'; }
+    catch (e) { return false; }
+  }
   function palAt(n) {
-    var arr = isDarkTheme() ? PAL_DARK : PAL;
+    var arr = isDarkTheme() ? PAL_DARK : (isPastelTheme() ? PAL_PASTEL : PAL);
     return arr[Math.min(n, arr.length - 1)];
   }
 
@@ -47370,6 +47552,3046 @@ body.tc-phone.tc-phone-kb #trainNotesOverlay.active .notes-editor-area {
 
     document.addEventListener('click', blockPriorityCardOpen, true);
 })();
+</script>
+
+<!-- ═══════════════════ THÈME PASTEL (refonte complète) ═══════════════════
+     1. Couche générée : chaque couleur vive écrite en dur dans le CSS de
+        base reçoit ici sa version adoucie.
+     2. Ajustements manuels : header, navigation, boutons, planning,
+        pastilles de matière…
+     Placée en fin de document : elle prime sur tout le reste.
+     ══════════════════════════════════════════════════════════════════ -->
+<style id="pastel-theme">
+/* couche pastel générée : 662 règles, 1040 déclarations */
+html[data-theme="pastel"] {
+    --confidence-1:#ad5555;
+    --confidence-2:#b66363;
+    --confidence-3:#c19a58;
+    --confidence-4:#5fb27e;
+    --confidence-5:#50a971;
+}
+html[data-theme="pastel"] {
+    scrollbar-color:#6388c5 #e5e7eb;
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb {
+    background:linear-gradient(180deg, #6388c5 0%, #876bc6 100%);
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
+    background:linear-gradient(180deg, #5e76b7 0%, #8665c0 100%);
+}
+:where(html[data-theme="pastel"]) .avatar-whatsnew-dot {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .user-avatar:hover {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.124);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.logout {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.logout:hover {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.premium-btn-menu:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.whats-new-btn-menu:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .whats-new-badge {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .whats-new-modal-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .whats-new-modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .whats-new-version-tag {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-version-tag.older {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-section-icon.amber {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+    box-shadow:0 2px 6px rgba(195, 164, 111, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-section-icon.blue {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 6px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-section-icon.purple {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+    box-shadow:0 2px 6px rgba(151, 129, 202, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-section-icon.green {
+    background:linear-gradient(135deg, #51b896, #43b893);
+    box-shadow:0 2px 6px rgba(103, 187, 159, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-bugfix i {
+    color:#359072;
+}
+:where(html[data-theme="pastel"]) .whats-new-modal-btn {
+    background:linear-gradient(135deg, #6388c5 0%, #607dbd 100%);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .whats-new-modal-btn:hover {
+    box-shadow:0 6px 18px rgba(122, 151, 199, 0.31);
+    background:linear-gradient(135deg, #607dbd 0%, #5e76b7 100%);
+}
+:where(html[data-theme="pastel"]) .whats-new-modal-btn:active {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.217);
+    background:linear-gradient(135deg, #5e76b7 0%, #5a6eb0 100%);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.friends-btn-menu:hover {
+    background:rgba(135, 107, 198, 0.08);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.feedback-btn-menu:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .friends-modal-icon {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+    box-shadow:0 2px 8px rgba(151, 129, 202, 0.198);
+}
+:where(html[data-theme="pastel"]) .friends-modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .friends-add-input:focus {
+    box-shadow:0 0 0 3px rgba(151, 129, 202, 0.074);
+}
+:where(html[data-theme="pastel"]) .friends-add-btn {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+    box-shadow:0 2px 8px rgba(151, 129, 202, 0.186);
+}
+:where(html[data-theme="pastel"]) .friends-add-btn:hover {
+    box-shadow:0 4px 14px rgba(151, 129, 202, 0.248);
+}
+:where(html[data-theme="pastel"]) .friends-add-error {
+    border:1px solid rgba(201, 136, 136, 0.2);
+}
+:where(html[data-theme="pastel"]) .friends-add-success {
+    border:1px solid rgba(110, 190, 163, 0.2);
+}
+:where(html[data-theme="pastel"]) .friends-result-zone {
+    border:1.5px solid rgba(161, 141, 207, 0.25);
+    background:linear-gradient(135deg, rgba(135, 107, 198, 0.05) 0%, rgba(99, 136, 197, 0.04) 100%);
+}
+:where(html[data-theme="pastel"]) .friends-result-arrow {
+    background:linear-gradient(90deg, #876bc6, #6388c5);
+}
+:where(html[data-theme="pastel"]) .friends-myid-box {
+    background:rgba(135, 107, 198, 0.06);
+    border:1.5px dashed rgba(161, 141, 207, 0.25);
+}
+:where(html[data-theme="pastel"]) .friends-modal-footer {
+    border-top:2px solid rgba(161, 141, 207, 0.15);
+    background:linear-gradient(135deg, rgba(135, 107, 198, 0.06) 0%, rgba(99, 136, 197, 0.04) 100%);
+}
+:where(html[data-theme="pastel"]) .friends-footer-icon {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+    box-shadow:0 2px 8px rgba(151, 129, 202, 0.186);
+}
+:where(html[data-theme="pastel"]) .friend-avatar.purple {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+}
+:where(html[data-theme="pastel"]) .friend-avatar.green {
+    background:linear-gradient(135deg, #51b896, #43b893);
+}
+:where(html[data-theme="pastel"]) .friend-avatar.pink {
+    background:linear-gradient(135deg, #c06994, #b66488);
+}
+:where(html[data-theme="pastel"]) .friend-avatar.orange {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+}
+:where(html[data-theme="pastel"]) .friend-btn-accept:hover {
+    box-shadow:0 3px 10px rgba(103, 187, 159, 0.217);
+}
+:where(html[data-theme="pastel"]) .friend-btn-decline:hover {
+    box-shadow:0 3px 10px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .friend-btn-cancel:hover {
+    box-shadow:0 3px 10px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .friend-btn-remove:hover {
+    box-shadow:0 3px 10px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .friends-compartment-icon.green {
+    background:linear-gradient(135deg,#51b896,#43b893);
+}
+:where(html[data-theme="pastel"]) .friends-compartment-icon.blue {
+    background:linear-gradient(135deg,#6388c5,#607dbd);
+}
+:where(html[data-theme="pastel"]) .friends-compartment-icon.purple {
+    background:linear-gradient(135deg,#876bc6,#8665c0);
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="bug"]:hover {
+    background:rgba(193, 103, 103, 0.08);
+    border-color:rgba(201, 136, 136, 0.25);
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="suggestion"]:hover {
+    background:rgba(99, 136, 197, 0.08);
+    border-color:rgba(132, 160, 204, 0.25);
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="amelioration"]:hover {
+    background:rgba(81, 184, 150, 0.08);
+    border-color:rgba(110, 190, 163, 0.25);
+    color:#2a8267;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="autre"]:hover {
+    background:rgba(135, 107, 198, 0.08);
+    border-color:rgba(161, 141, 207, 0.25);
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="bug"].selected {
+    background:#b66363;
+    border-color:#bf8181;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="suggestion"].selected {
+    background:#607dbd;
+    border-color:#8095c5;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="amelioration"].selected {
+    background:#43b893;
+    border-color:#5ebda0;
+}
+:where(html[data-theme="pastel"]) .feedback-type-btn[data-type="autre"].selected {
+    background:#8665c0;
+    border-color:#9e85c8;
+}
+:where(html[data-theme="pastel"]) .feedback-mood-btn.fill .feedback-star-svg {
+    fill:#c19a58;
+    stroke:#9f6d32;
+    filter:drop-shadow(0 2px 6px rgba(195, 164, 111, 0.279));
+}
+:where(html[data-theme="pastel"]) .feedback-mood-btn.hover-fill .feedback-star-svg {
+    fill:#c6a85c;
+    stroke:#ab8138;
+}
+:where(html[data-theme="pastel"]) .feedback-textarea:focus {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .feedback-page-btn:hover {
+    border-color:rgba(132, 160, 204, 0.3);
+    background:rgba(99, 136, 197, 0.06);
+}
+:where(html[data-theme="pastel"]) .feedback-page-btn.selected {
+    background:#607dbd;
+    border-color:#8095c5;
+    box-shadow:0 2px 8px rgba(118, 142, 193, 0.217);
+}
+:where(html[data-theme="pastel"]) .feedback-page-btn.selected:hover {
+    box-shadow:0 4px 12px rgba(118, 142, 193, 0.248);
+}
+:where(html[data-theme="pastel"]) .feedback-error-hint {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .settings-card-icon.scope {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .settings-card-icon.tours {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .settings-explain-row.is-active {
+    border-color:rgba(132, 160, 204, 0.4);
+    background:rgba(99, 136, 197, 0.06);
+    box-shadow:0 1px 4px rgba(122, 151, 199, 0.05);
+}
+:where(html[data-theme="pastel"]) .settings-explain-row.is-active .settings-explain-ico {
+    background:rgba(99, 136, 197, 0.12);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.settings-btn-menu:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .fb-main-tab-slider {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .fb-msg-badge {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .fb-main-tab.active .fb-msg-badge {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .fb-reply-msg {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.07), rgba(96, 125, 189, 0.04));
+    border:1.5px solid rgba(132, 160, 204, 0.15);
+}
+:where(html[data-theme="pastel"]) .fb-reply-from {
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .page-header {
+    background:linear-gradient(135deg, rgba(244, 247, 251, 0.8) 0%, rgba(232, 238, 246, 0.8) 100%);
+}
+:where(html[data-theme="pastel"]) .app-nav-pill {
+    box-shadow:0 4px 14px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .stat-icon.blue {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .stat-icon.green {
+    background:rgba(81, 184, 150, 0.1);
+}
+:where(html[data-theme="pastel"]) .stat-icon.orange {
+    background:rgba(193, 154, 88, 0.1);
+}
+:where(html[data-theme="pastel"]) .progress-fill.green {
+    background:linear-gradient(135deg, #51b896, #43b893);
+}
+:where(html[data-theme="pastel"]) .progress-fill.orange {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+}
+:where(html[data-theme="pastel"]) .progress-fill.purple {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+}
+:where(html[data-theme="pastel"]) .stat-icon.purple {
+    background:rgba(135, 107, 198, 0.1);
+}
+:where(html[data-theme="pastel"]) .stats-section-title.daily i {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.items-today::before {
+    background:linear-gradient(90deg, #6388c5, #6a95c9);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.delay-caught::before {
+    background:linear-gradient(90deg, #51b896, #69b297);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.time-today::before {
+    background:linear-gradient(90deg, #c19a58, #c6a85c);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.feeling-today::before {
+    background:linear-gradient(90deg, #c06994, #c6719e);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.items-today .daily-stat-icon {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.15), rgba(106, 149, 201, 0.15));
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.delay-caught .daily-stat-icon {
+    background:linear-gradient(135deg, rgba(81, 184, 150, 0.15), rgba(105, 178, 151, 0.15));
+    color:#359072;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.time-today .daily-stat-icon {
+    background:linear-gradient(135deg, rgba(193, 154, 88, 0.15), rgba(198, 168, 92, 0.15));
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.feeling-today .daily-stat-icon {
+    background:linear-gradient(135deg, rgba(192, 105, 148, 0.15), rgba(198, 113, 158, 0.15));
+    color:#b9477f;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.items-today .daily-stat-value {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.delay-caught .daily-stat-value {
+    background:linear-gradient(135deg, #51b896, #69b297);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.time-today .daily-stat-value {
+    background:linear-gradient(135deg, #c19a58, #c6a85c);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.feeling-today .daily-stat-value {
+    background:linear-gradient(135deg, #c06994, #c6719e);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.clickable:hover {
+    border-color:rgba(132, 160, 204, 0.55);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card .daily-stat-click-hint {
+    color:#3f70bf;
+    background:rgba(99, 136, 197, 0.12);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.clickable:hover .daily-stat-click-hint,
+:where(html[data-theme="pastel"]) .daily-stat-card.clickable:focus-visible .daily-stat-click-hint {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .daily-stat-cta {
+    color:#4062ac;
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.12), rgba(106, 149, 201, 0.12));
+    border:1px solid rgba(132, 160, 204, 0.25);
+}
+:where(html[data-theme="pastel"]) .daily-stat-card.clickable:hover .daily-stat-cta {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .tours-today-modal-icon {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .tours-today-modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .tours-today-modal-btn {
+    background:linear-gradient(135deg, #6388c5 0%, #607dbd 100%);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .tours-today-modal-btn:hover {
+    box-shadow:0 6px 18px rgba(122, 151, 199, 0.31);
+    background:linear-gradient(135deg, #607dbd 0%, #5e76b7 100%);
+}
+:where(html[data-theme="pastel"]) .tours-today-modal-btn:active {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.217);
+    background:linear-gradient(135deg, #5e76b7 0%, #5a6eb0 100%);
+}
+:where(html[data-theme="pastel"]) .tours-today-group-count {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.12), rgba(106, 149, 201, 0.12));
+}
+:where(html[data-theme="pastel"]) .tours-today-total {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.12), rgba(106, 149, 201, 0.12));
+}
+:where(html[data-theme="pastel"]) .specialty-drag-ghost {
+    box-shadow:0 12px 32px rgba(122, 151, 199, 0.279);
+    outline:3px solid #84a0cc;
+}
+:where(html[data-theme="pastel"]) .resource-box.qi-edni {
+    background:#f8eded;
+    color:#813939;
+    border-color:#dda8a8;
+}
+:where(html[data-theme="pastel"]) .resource-box.dp-edni {
+    background:#f8eded;
+    color:#813939;
+    border-color:#dda8a8;
+}
+:where(html[data-theme="pastel"]) .resource-box.qi-hypo {
+    background:#e8eef6;
+    color:#3d4f8b;
+    border-color:#a5bedc;
+}
+:where(html[data-theme="pastel"]) .resource-box.dp-hypo {
+    background:#e8eef6;
+    color:#3d4f8b;
+    border-color:#a5bedc;
+}
+:where(html[data-theme="pastel"]) .resource-box.qi-annales {
+    background:#f5eee4;
+    color:#955033;
+    border-color:#dabfa0;
+}
+:where(html[data-theme="pastel"]) .resource-box.dp-annales {
+    background:#f5eee4;
+    color:#955033;
+    border-color:#dabfa0;
+}
+:where(html[data-theme="pastel"]) .resource-box.qi-uness {
+    background:#f4f2fa;
+    color:#5e3f8e;
+    border-color:#b4acde;
+}
+:where(html[data-theme="pastel"]) .resource-box.dp-uness {
+    background:#f4f2fa;
+    color:#5e3f8e;
+    border-color:#b4acde;
+}
+:where(html[data-theme="pastel"]) .resource-box.fiche-perso {
+    background:#f0ecda;
+    color:#7f4e30;
+    border-color:#d6ca98;
+}
+:where(html[data-theme="pastel"]) .resource-box.overflow-validated {
+    background:#e0f0e8;
+    color:#27725d;
+    border-color:#94c8b4;
+}
+:where(html[data-theme="pastel"]) .resource-box.overflow-validated:hover {
+    background:#bfe0d1;
+    color:#28715e;
+    border-color:#85bca8;
+}
+:where(html[data-theme="pastel"]) .resource-box.validated {
+    background:linear-gradient(135deg, #51b896, #69b297) !important;
+    border-color:#5ebda0 !important;
+    box-shadow:0 2px 6px rgba(103, 187, 159, 0.248);
+}
+:where(html[data-theme="pastel"]) .resource-option:hover {
+    background:rgba(99, 136, 197, 0.05);
+}
+:where(html[data-theme="pastel"]) .resource-option.selected {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .resources-cancel-btn:hover {
+    background:#efe7e7;
+}
+:where(html[data-theme="pastel"]) .resources-cancel-btn:active {
+    background:#efe7e7;
+}
+:where(html[data-theme="pastel"]) .resources-cancel-btn:hover i {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .modal-close:active {
+    box-shadow:0 2px 6px rgba(197, 125, 125, 0.186);
+}
+:where(html[data-theme="pastel"]) .tour-context-num {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .modal-input:focus {
+    box-shadow:0 0 0 4px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .duration-input-wrapper:focus-within {
+    box-shadow:0 0 0 4px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="qcm"] {
+    --support-color:#6388c5;
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="college"] {
+    --support-color:#876bc6;
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="anki"] {
+    --support-color:#c16767;
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="perso"] {
+    --support-color:#c19a58;
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="codex"] {
+    --support-color:#51b896;
+}
+:where(html[data-theme="pastel"]) .support-btn[data-support="conf"] {
+    --support-color:#c06994;
+}
+:where(html[data-theme="pastel"]) .tour-support.qcm {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .tour-support.college {
+    background:#876bc6;
+}
+:where(html[data-theme="pastel"]) .tour-support.anki {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .tour-support.perso {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .tour-support.codex {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .tour-support.conf {
+    background:#c06994;
+}
+:where(html[data-theme="pastel"]) .legend-item2.qcm {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .legend-item2.college {
+    background:#876bc6;
+}
+:where(html[data-theme="pastel"]) .legend-item2.anki {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .legend-item2.perso {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .legend-item2.codex {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .legend-item2.conf {
+    background:#c06994;
+}
+:where(html[data-theme="pastel"]) .item-badge.neurochir {
+    background:#6e70c4;
+}
+:where(html[data-theme="pastel"]) .item-badge.nutrition {
+    background:#92b858;
+}
+:where(html[data-theme="pastel"]) .item-badge.chir-dig {
+    background:#c48559;
+}
+:where(html[data-theme="pastel"]) .item-badge.cmf {
+    background:#4eafc0;
+}
+:where(html[data-theme="pastel"]) .item-badge.anapath {
+    background:#ad5555;
+}
+:where(html[data-theme="pastel"]) .item-badge.immuno {
+    background:#589fbe;
+}
+:where(html[data-theme="pastel"]) .item-badge.anesthesie {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .item-badge.mpr {
+    background:#53b6ab;
+}
+:where(html[data-theme="pastel"]) .item-badge.chir-vasc {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .item-badge.ortho {
+    background:#53b6ab;
+}
+:where(html[data-theme="pastel"]) .item-badge.genet {
+    background:#589fbe;
+}
+:where(html[data-theme="pastel"]) .item-badge.parasito {
+    background:#52b175;
+}
+:where(html[data-theme="pastel"]) .search-box input:focus {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.093);
+}
+:where(html[data-theme="pastel"]) .search-clear-btn {
+    background:rgba(193, 103, 103, 0.15);
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .search-clear-btn:hover {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .search-clear-btn:active {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .custom-warning-icon {
+    background:linear-gradient(135deg, #c19a58, #c16767);
+}
+:where(html[data-theme="pastel"]) .custom-warning-progress-bar {
+    background:linear-gradient(90deg, #c19a58, #c16767);
+}
+:where(html[data-theme="pastel"]) .custom-warning-btn.btn-wait {
+    box-shadow:0 4px 15px rgba(122, 151, 199, 0.248);
+}
+:where(html[data-theme="pastel"]) .custom-warning-btn.btn-wait:hover {
+    box-shadow:0 8px 25px rgba(122, 151, 199, 0.31);
+}
+:where(html[data-theme="pastel"]) #page-dashboard .section-header.is-stuck,
+:where(html[data-theme="pastel"]) #page-items .section-header.is-stuck {
+    box-shadow:0 3px 12px rgba(122, 151, 199, 0.074), 0 1px 4px rgba(0,0,0,0.08);
+}
+:where(html[data-theme="pastel"]) .custom-select.open .custom-select-btn {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.093);
+}
+:where(html[data-theme="pastel"]) .custom-select-option:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .specialty-multi-select.open .specialty-multi-btn {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.093);
+}
+:where(html[data-theme="pastel"]) #tx-chip-tooltip {
+    box-shadow:0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px rgba(122, 151, 199, 0.074);
+}
+:where(html[data-theme="pastel"]) .specialty-multi-option:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .specialty-multi-option.selected {
+    background:rgba(99, 136, 197, 0.12);
+}
+:where(html[data-theme="pastel"]) .specialty-multi-close {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .specialty-multi-close:hover {
+    background:#607dbd;
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.279);
+}
+:where(html[data-theme="pastel"]) .specialty-multi-close:active {
+    background:#5e76b7;
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .stats-section-title.weekly i {
+    color:#9b86cc;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.tours-weekly::before {
+    background:linear-gradient(90deg, #6388c5, #6a95c9);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.time-weekly::before {
+    background:linear-gradient(90deg, #c19a58, #c6a85c);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.feeling-weekly::before {
+    background:linear-gradient(90deg, #c06994, #c6719e);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.tours-weekly .weekly-chart-icon {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.15), rgba(106, 149, 201, 0.15));
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.time-weekly .weekly-chart-icon {
+    background:linear-gradient(135deg, rgba(193, 154, 88, 0.15), rgba(198, 168, 92, 0.15));
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.feeling-weekly .weekly-chart-icon {
+    background:linear-gradient(135deg, rgba(192, 105, 148, 0.15), rgba(198, 113, 158, 0.15));
+    color:#b9477f;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.tours-weekly .summary-value {
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.time-weekly .summary-value {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.feeling-weekly .summary-value {
+    color:#b9477f;
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.clickable:hover {
+    border-color:rgba(132, 160, 204, 0.55);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card .weekly-chart-click-hint {
+    color:#3f70bf;
+    background:rgba(99, 136, 197, 0.12);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.clickable:hover .weekly-chart-click-hint,
+:where(html[data-theme="pastel"]) .weekly-chart-card.clickable:focus-visible .weekly-chart-click-hint {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-cta {
+    color:#4062ac;
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.12), rgba(106, 149, 201, 0.12));
+    border:1px solid rgba(132, 160, 204, 0.25);
+}
+:where(html[data-theme="pastel"]) .weekly-chart-card.clickable:hover .weekly-chart-cta {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .dropdown-item.active {
+    background-color:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .mobile-menu-link.active {
+    background-color:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-card {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.05) 0%, rgba(135, 107, 198, 0.05) 100%);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.stats {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.tracking {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.specialties {
+    background:linear-gradient(135deg, #876bc6, #8665c0);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.items {
+    background:linear-gradient(135deg, #51b896, #43b893);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.save {
+    background:linear-gradient(135deg, #c06994, #b66488);
+}
+:where(html[data-theme="pastel"]) .presentation-feature-icon.daily {
+    background:linear-gradient(135deg, #4eafc0, #49a5bb);
+}
+:where(html[data-theme="pastel"]) .presentation-info-highlight {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.1) 0%, rgba(135, 107, 198, 0.1) 100%);
+}
+:where(html[data-theme="pastel"]) .presentation-benefit-icon {
+    background:linear-gradient(135deg, rgba(81, 184, 150, 0.15), rgba(81, 184, 150, 0.05));
+}
+:where(html[data-theme="pastel"]) .presentation-cta-btn:hover {
+    box-shadow:0 15px 35px -5px rgba(122, 151, 199, 0.31);
+}
+:where(html[data-theme="pastel"]) .scroll-indicator-arrow {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.1), rgba(135, 107, 198, 0.1));
+}
+:where(html[data-theme="pastel"]) .reference-badge {
+    background:linear-gradient(135deg, #c6a85c, #c19a58);
+    color:#73472e;
+    box-shadow:0 1px 2px rgba(195, 164, 111, 0.186);
+}
+:where(html[data-theme="pastel"]) .scope-ref-badge {
+    background:linear-gradient(180deg, #c39d5d 0%, #c38d4c 100%);
+    color:#774c22;
+    box-shadow:0 2px 6px rgba(193, 142, 91, 0.217);
+}
+:where(html[data-theme="pastel"]) .scope-ref-badge i {
+    color:#774c22 !important;
+}
+:where(html[data-theme="pastel"]) .help-ref-notice {
+    background:linear-gradient(135deg, #fbf9f4, #f0ecda);
+    border:1px solid #d0bf88;
+    border-left:4px solid #c7aa78;
+}
+:where(html[data-theme="pastel"]) .help-ref-notice-badge {
+    background:linear-gradient(180deg, #c39d5d 0%, #c38d4c 100%);
+    color:#774c22;
+}
+:where(html[data-theme="pastel"]) .help-ref-notice-badge i {
+    color:#774c22;
+}
+:where(html[data-theme="pastel"]) .help-ref-notice p {
+    color:#73472e;
+}
+:where(html[data-theme="pastel"]) .notes-header-reference {
+    background:linear-gradient(135deg, #c6a85c, #c19a58);
+    color:#73472e;
+    box-shadow:0 1px 2px rgba(195, 164, 111, 0.186);
+}
+:where(html[data-theme="pastel"]) .specialty-extra-stat.time-stat {
+    background:linear-gradient(135deg, rgba(193, 154, 88, 0.15), rgba(198, 168, 92, 0.1));
+    color:#8f5930;
+}
+:where(html[data-theme="pastel"]) .feeling-c1 {
+    background:linear-gradient(135deg, #ad5555, #b35959);
+}
+:where(html[data-theme="pastel"]) .feeling-c2 {
+    background:linear-gradient(135deg, #b66363, #c16767);
+}
+:where(html[data-theme="pastel"]) .feeling-c3 {
+    background:linear-gradient(135deg, #c08b4f, #c19a58);
+}
+:where(html[data-theme="pastel"]) .feeling-c4 {
+    background:linear-gradient(135deg, #52b175, #5fb27e);
+}
+:where(html[data-theme="pastel"]) .feeling-c5 {
+    background:linear-gradient(135deg, #50a971, #52b175);
+}
+:where(html[data-theme="pastel"]) .stat-percent-badge {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 4px 12px rgba(151, 129, 202, 0.248);
+}
+:where(html[data-theme="pastel"]) .stat-percent-badge.orange-badge {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+    box-shadow:0 4px 12px rgba(195, 164, 111, 0.248);
+}
+:where(html[data-theme="pastel"]) .checklist-header {
+    background:linear-gradient(135deg, #876bc6, #8b75cc);
+}
+:where(html[data-theme="pastel"]) .checklist-input:focus {
+    box-shadow:0 0 0 3px rgba(151, 129, 202, 0.062);
+}
+:where(html[data-theme="pastel"]) .checklist-add-btn {
+    background:linear-gradient(135deg, #876bc6, #8b75cc);
+}
+:where(html[data-theme="pastel"]) .checklist-add-btn:hover {
+    box-shadow:0 4px 15px rgba(151, 129, 202, 0.248);
+}
+:where(html[data-theme="pastel"]) .checklist-add-btn:active {
+    box-shadow:0 2px 6px rgba(151, 129, 202, 0.186);
+}
+:where(html[data-theme="pastel"]) .checklist-item.completed {
+    background:linear-gradient(135deg, rgba(81, 184, 150, 0.1), rgba(81, 184, 150, 0.05));
+    border-color:rgba(110, 190, 163, 0.3);
+}
+:where(html[data-theme="pastel"]) .checklist-checkbox:hover {
+    background:rgba(135, 107, 198, 0.1);
+}
+:where(html[data-theme="pastel"]) .checklist-checkbox.checked {
+    background:linear-gradient(135deg, #51b896, #69b297);
+    border-color:#6ebea3;
+}
+:where(html[data-theme="pastel"]) .legend-dot.stage {
+    background:linear-gradient(135deg, #c48559, #c89062);
+}
+:where(html[data-theme="pastel"]) .legend-dot.revision {
+    background:linear-gradient(135deg, #51b896, #69b297);
+}
+:where(html[data-theme="pastel"]) .legend-dot.garde {
+    background:linear-gradient(135deg, #c16767, #c96f6f);
+}
+:where(html[data-theme="pastel"]) .legend-dot.repos {
+    background:linear-gradient(135deg, #876bc6, #8b75cc);
+}
+:where(html[data-theme="pastel"]) .legend-dot.autre {
+    background:linear-gradient(135deg, #c06994, #c6719e);
+}
+:where(html[data-theme="pastel"]) .calendar-day.status-stage {
+    background:linear-gradient(135deg, #fbf8f4, #f5eee4) !important;
+    border-left:4px solid #ca9b7b;
+}
+:where(html[data-theme="pastel"]) .calendar-day.status-revision {
+    background:linear-gradient(135deg, #f0fdf4, #e8f5ed) !important;
+    border-left:4px solid #6ebea3;
+}
+:where(html[data-theme="pastel"]) .calendar-day.status-garde {
+    background:linear-gradient(135deg, #fef2f2, #f8eded) !important;
+    border-left:4px solid #c98888;
+}
+:where(html[data-theme="pastel"]) .calendar-day.status-repos {
+    background:linear-gradient(135deg, #faf5ff, #f6f2fa) !important;
+    border-left:4px solid #a18dcf;
+}
+:where(html[data-theme="pastel"]) .calendar-day.status-autre {
+    background:linear-gradient(135deg, #fdf2f8, #f8f0f5) !important;
+    border-left:4px solid #c889a8;
+}
+:where(html[data-theme="pastel"]) .day-status-badge.stage {
+    background:#e8d8c5;
+    color:#824733;
+}
+:where(html[data-theme="pastel"]) .day-status-badge.revision {
+    background:#cfe8d8;
+    color:#326847;
+}
+:where(html[data-theme="pastel"]) .day-status-badge.garde {
+    background:#f1dcdc;
+    color:#813939;
+}
+:where(html[data-theme="pastel"]) .day-status-badge.repos {
+    background:#e7e5f4;
+    color:#5e3f8e;
+}
+:where(html[data-theme="pastel"]) .day-status-badge.autre {
+    background:#f0dfe9;
+    color:#833755;
+}
+:where(html[data-theme="pastel"]) .day-notes-zone .planning-note-red {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .day-notes-zone .planning-note-blue {
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .day-notes-zone .planning-note-green {
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .day-header-zone.popup-open {
+    background:rgba(99, 136, 197, 0.22) !important;
+    border-bottom-color:rgba(132, 160, 204, 0.4) !important;
+}
+:where(html[data-theme="pastel"]) .day-specialty-zone.popup-open {
+    background:rgba(99, 136, 197, 0.22) !important;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.stage {
+    background:#f5eee4;
+    border-color:#ca9b7b;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.stage.active {
+    background:#e8d8c5;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.revision {
+    background:#e8f5ed;
+    border-color:#6ebea3;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.revision.active {
+    background:#cfe8d8;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.garde {
+    background:#f8eded;
+    border-color:#c98888;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.garde.active {
+    background:#f1dcdc;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.repos {
+    background:#f6f2fa;
+    border-color:#a18dcf;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.repos.active {
+    background:#e7e5f4;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.autre {
+    background:#f8f0f5;
+    border-color:#c889a8;
+}
+:where(html[data-theme="pastel"]) .status-mini-btn.autre.active {
+    background:#f0dfe9;
+}
+:where(html[data-theme="pastel"]) .specialty-clear-btn:hover {
+    background:#f8eded;
+    color:#a04545;
+    border-color:#dda8a8;
+}
+:where(html[data-theme="pastel"]) .specialty-search-input:focus {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .spe-hge,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-hge,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-hge {
+    background:rgba(196, 133, 89, 0.15);
+    color:#b36b38;
+}
+:where(html[data-theme="pastel"]) .spe-gyneco,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-gyneco,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-gyneco {
+    background:rgba(192, 105, 148, 0.15);
+    color:#b9477f;
+}
+:where(html[data-theme="pastel"]) .spe-cardio,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-cardio,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-cardio {
+    background:rgba(193, 103, 103, 0.15);
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .spe-pneumo,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-pneumo,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-pneumo {
+    background:rgba(99, 136, 197, 0.15);
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) .spe-neuro,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-neuro,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-neuro {
+    background:rgba(110, 112, 196, 0.15);
+    color:#8a8bca;
+}
+:where(html[data-theme="pastel"]) .spe-psy,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-psy,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-psy {
+    background:rgba(153, 105, 199, 0.15);
+    color:#8647c2;
+}
+:where(html[data-theme="pastel"]) .spe-pediatrie,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-pediatrie,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-pediatrie {
+    background:rgba(198, 113, 158, 0.15);
+    color:#d096b4;
+}
+:where(html[data-theme="pastel"]) .spe-hemato,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-hemato,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-hemato {
+    background:rgba(182, 99, 99, 0.15);
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .spe-orl,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-orl,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-orl {
+    background:rgba(135, 107, 198, 0.15);
+    color:#9b86cc;
+}
+:where(html[data-theme="pastel"]) .spe-endoc,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-endoc,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-endoc {
+    background:rgba(193, 166, 84, 0.15);
+    color:#a68b35;
+}
+:where(html[data-theme="pastel"]) .spe-osteo,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-osteo,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-osteo {
+    background:rgba(83, 182, 171, 0.15);
+    color:#378f86;
+}
+:where(html[data-theme="pastel"]) .spe-onco,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-onco,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-onco {
+    background:rgba(184, 83, 107, 0.15);
+    color:#92374d;
+}
+:where(html[data-theme="pastel"]) .spe-mir,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-mir,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-mir {
+    background:rgba(193, 103, 103, 0.15);
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .spe-nephro,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-nephro,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-nephro {
+    background:rgba(88, 159, 190, 0.15);
+    color:#3984a6;
+}
+:where(html[data-theme="pastel"]) .spe-infectio,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-infectio,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-infectio {
+    background:rgba(95, 178, 126, 0.15);
+    color:#419460;
+}
+:where(html[data-theme="pastel"]) .spe-ophta,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-ophta,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-ophta {
+    background:rgba(72, 151, 192, 0.15);
+    color:#2d7498;
+}
+:where(html[data-theme="pastel"]) .spe-therapeut,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-therapeut,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-therapeut {
+    background:rgba(110, 112, 196, 0.15);
+    color:#8a8bca;
+}
+:where(html[data-theme="pastel"]) .spe-dermato,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-dermato,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-dermato {
+    background:rgba(193, 154, 88, 0.15);
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .spe-mi,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-mi,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-mi {
+    background:rgba(73, 179, 170, 0.15);
+    color:#2f8079;
+}
+:where(html[data-theme="pastel"]) .spe-uro,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-uro,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-uro {
+    background:rgba(192, 154, 74, 0.15);
+    color:#99772f;
+}
+:where(html[data-theme="pastel"]) .spe-douleur,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-douleur,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-douleur {
+    background:rgba(153, 105, 199, 0.15);
+    color:#8647c2;
+}
+:where(html[data-theme="pastel"]) .spe-sante-pub,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-sante-pub,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-sante-pub {
+    background:rgba(67, 184, 147, 0.15);
+    color:#2a8267;
+}
+:where(html[data-theme="pastel"]) .custom-dropdown-btn.active {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.093);
+}
+:where(html[data-theme="pastel"]) .custom-dropdown-option.selected {
+    background:rgba(99, 136, 197, 0.1);
+}
+@media (max-width: 768px) {
+  :where(html[data-theme="pastel"]) .calendar-scroll-hint {
+      background:linear-gradient(135deg, rgba(99, 136, 197, 0.1), rgba(135, 107, 198, 0.1));
+  }
+}
+:where(html[data-theme="pastel"]) .priority-send-btn {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .priority-send-btn:hover {
+    background:linear-gradient(135deg,#9969c7,#876bc6);
+    box-shadow:0 4px 12px rgba(150, 123, 195, 0.248);
+}
+:where(html[data-theme="pastel"]) .send-to-checklist-btn {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .toast-notification {
+    background:linear-gradient(135deg, #43b893, #51b896);
+}
+:where(html[data-theme="pastel"]) .toast-notification.toast-warning {
+    background:linear-gradient(135deg, #c08b4f, #c19a58);
+}
+:where(html[data-theme="pastel"]) .checklist-error-notification {
+    background:#c16767;
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.248);
+}
+:where(html[data-theme="pastel"]) .checklist-error-notification::after {
+    border-top:6px solid #c98888;
+}
+:where(html[data-theme="pastel"]) .checklist-input.error {
+    border-color:#c98888 !important;
+    box-shadow:0 0 0 3px rgba(197, 125, 125, 0.124) !important;
+}
+:where(html[data-theme="pastel"]) .login-sidebar-header {
+    background:linear-gradient(135deg, #6388c5, #6a95c9);
+}
+:where(html[data-theme="pastel"]) .items-scroll-hint {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.1), rgba(135, 107, 198, 0.1));
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.tour-and-task {
+    background:linear-gradient(135deg, #876bc6, #8b75cc);
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.tour-and-task:hover {
+    background:linear-gradient(135deg, #8665c0, #876bc6);
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.tour-and-task:active {
+    background:linear-gradient(135deg, #8665c0, #876bc6);
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.task-only {
+    background:linear-gradient(135deg, #51b896, #69b297);
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.task-only:hover {
+    background:linear-gradient(135deg, #43b893, #51b896);
+}
+:where(html[data-theme="pastel"]) .checklist-choice-btn.task-only:active {
+    background:linear-gradient(135deg, #43b893, #51b896);
+}
+:where(html[data-theme="pastel"]) .train-cl-status-option {
+    background:linear-gradient(135deg, #8665c0, #926bc6);
+}
+:where(html[data-theme="pastel"]) .train-cl-status-option:hover {
+    background:linear-gradient(135deg, #8465b5, #876bc6);
+}
+:where(html[data-theme="pastel"]) .train-cl-statut-pill.a-faire {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .train-cl-statut-pill.a-refaire {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .train-cl-statut-pill.fait {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .train-cl-statut-pill.relu {
+    background:#be71ca;
+}
+:where(html[data-theme="pastel"]) .added-to-checklist-badge {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .trophies-title i {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .trophy-item.unlocked {
+    background:linear-gradient(135deg, rgba(198, 168, 92, 0.1), rgba(193, 154, 88, 0.1));
+    border-color:#ccb67e;
+}
+:where(html[data-theme="pastel"]) .trophy-item.unlocked:hover {
+    box-shadow:0 8px 20px rgba(200, 176, 116, 0.186);
+}
+:where(html[data-theme="pastel"]) .trophy-item.unlocked .trophy-icon {
+    background:linear-gradient(135deg, #c6a85c, #c19a58);
+    box-shadow:0 4px 12px rgba(200, 176, 116, 0.248);
+}
+:where(html[data-theme="pastel"]) .trophy-date {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .trophy-notification {
+    background:linear-gradient(135deg, #c6a85c, #c19a58);
+    box-shadow:0 10px 40px rgba(200, 176, 116, 0.31);
+}
+:where(html[data-theme="pastel"]) .custom-modal-icon.info {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .custom-modal-btn.danger:hover {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .custom-modal-icon.cloud {
+    background:rgba(196, 133, 89, 0.15);
+    color:#b36b38;
+}
+:where(html[data-theme="pastel"]) .offline-notification {
+    background:linear-gradient(135deg, #b66363, #b35959);
+    box-shadow:0 4px 12px rgba(186, 120, 120, 0.248);
+}
+@media (max-width: 768px) {
+  :where(html[data-theme="pastel"]) .offline-notification {
+      box-shadow:0 -4px 12px rgba(186, 120, 120, 0.248);
+  }
+}
+:where(html[data-theme="pastel"]) .check-circle {
+    background:linear-gradient(135deg, #51b896, #69b297, #75bea1);
+    box-shadow:0 20px 60px rgba(103, 187, 159, 0.31),
+        0 0 0 0 rgba(103, 187, 159, 0.248);
+    background-size: 200% 200%;
+}
+:where(html[data-theme="pastel"]) .check-ripple {
+    border:3px solid rgba(110, 190, 163, 0.6);
+}
+:where(html[data-theme="pastel"]) .check-ripple:nth-child(2) {
+    border-color:rgba(133, 188, 168, 0.4);
+}
+:where(html[data-theme="pastel"]) .check-ripple:nth-child(3) {
+    border-color:rgba(148, 200, 180, 0.3);
+}
+:where(html[data-theme="pastel"]) .success-particle {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .stats-section-title.priority-section i {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .priority-pill.tours-pill {
+    background:rgba(110, 112, 196, 0.1);
+    color:#4f4ab2;
+}
+:where(html[data-theme="pastel"]) .priority-pill.delay-pill.delay-ok {
+    background:rgba(81, 184, 150, 0.12);
+    color:#27725d;
+}
+:where(html[data-theme="pastel"]) .priority-pill.delay-pill.delay-mid {
+    background:rgba(193, 154, 88, 0.15);
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .priority-pill.delay-pill.delay-high {
+    background:rgba(193, 103, 103, 0.12);
+    color:#813939;
+}
+:where(html[data-theme="pastel"]) .priority-pill.delay-pill.delay-critical {
+    background:linear-gradient(135deg, #b66363, #c16767);
+}
+:where(html[data-theme="pastel"]) .stats-section-title.ranking i {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .ranking-podium-item.rank-1 .ranking-rank-label {
+    background:linear-gradient(135deg, #c08b4f, #c6a85c);
+}
+:where(html[data-theme="pastel"]) .ranking-podium-item.rank-3 .ranking-rank-label {
+    background:linear-gradient(135deg, #b2714a, #bb7b4a);
+}
+:where(html[data-theme="pastel"]) .ranking-card.rank-1 {
+    border:2px solid #c7aa78;
+}
+:where(html[data-theme="pastel"]) .ranking-card.rank-3 {
+    border:2px solid #bf8e68;
+}
+:where(html[data-theme="pastel"]) .ranking-extra-stat.time-stat {
+    background:linear-gradient(135deg, rgba(193, 154, 88, 0.15), rgba(198, 168, 92, 0.1));
+    color:#8f5930;
+}
+@media (pointer: coarse) {
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa:hover {
+      background:#e8eef6 !important;
+      color:#40599d !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-tour:hover {
+      background:#e0f0e8 !important;
+      color:#27725d !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-todo:hover {
+      background:#f4f2fa !important;
+      color:#68469e !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-share.share-active {
+      background:#c06994 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-share:not(.share-active):hover {
+      background:#f8f0f5 !important;
+      color:#923b5f !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-share:focus,
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-share:focus-visible {
+      background:#f8f0f5 !important;
+      color:#923b5f !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa:focus,
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa:focus-visible {
+      background:#e8eef6 !important;
+      color:#40599d !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-tour:focus,
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-tour:focus-visible {
+      background:#e0f0e8 !important;
+      color:#27725d !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-todo:focus,
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-todo:focus-visible {
+      background:#f4f2fa !important;
+      color:#68469e !important;
+  }
+}
+:where(html[data-theme="pastel"]) .seg-switch .seg-thumb {
+    box-shadow:0 1px 3px rgba(118, 142, 193, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-session-edit-btn {
+    background:rgba(96, 125, 189, 0.12);
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .flash-session-edit-btn:hover {
+    background:#607dbd;
+}
+:where(html[data-theme="pastel"]) .flash-session-edit-btn.saved {
+    background:#52b175;
+}
+:where(html[data-theme="pastel"]) .flash-end-stat.fail {
+    background:rgba(173, 85, 85, 0.12);
+}
+:where(html[data-theme="pastel"]) .flash-end-stat.hesitant {
+    background:rgba(193, 154, 88, 0.12);
+}
+:where(html[data-theme="pastel"]) .flash-end-stat.know {
+    background:rgba(80, 169, 113, 0.12);
+}
+:where(html[data-theme="pastel"]) .flash-global-btn {
+    background:linear-gradient(135deg, var(--accent), #8665c0);
+}
+:where(html[data-theme="pastel"]) .flash-global-due-count:not(:empty) {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .flash-drawer-header button:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .flash-drawer-actions button:hover {
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .flash-drawer-item:hover:not(.disabled) {
+    background:rgba(99, 136, 197, 0.04);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.074);
+}
+:where(html[data-theme="pastel"]) .flash-drawer-item:has(input:checked):not(.disabled) {
+    background:rgba(99, 136, 197, 0.06);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .flash-due-banner {
+    background:linear-gradient(135deg, rgba(135, 107, 198, 0.1), rgba(99, 136, 197, 0.08));
+    border:1px solid rgba(161, 141, 207, 0.25);
+}
+:where(html[data-theme="pastel"]) .flash-launch-session-btn:hover:not(:disabled) {
+    box-shadow:0 6px 18px rgba(151, 129, 202, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-char-count.near-limit {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .flash-char-count.at-limit {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .flash-edit-header-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-edit-error {
+    background:rgba(193, 103, 103, 0.1);
+    border:1px solid rgba(201, 136, 136, 0.3);
+}
+:where(html[data-theme="pastel"]) .flash-launch-session-btn:hover:not(:disabled) {
+    box-shadow:0 6px 18px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-due-banner {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.1), rgba(99, 136, 197, 0.05));
+    border-color:rgba(132, 160, 204, 0.25);
+}
+:where(html[data-theme="pastel"]) .spe-flash-panel-header {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.07) 0%, rgba(135, 107, 198, 0.07) 100%);
+    border-bottom:1px solid rgba(132, 160, 204, 0.15) !important;
+}
+:where(html[data-theme="pastel"]) .spe-flash-panel-icon {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-card-face.back {
+    background:#faf8f4;
+}
+:where(html[data-theme="pastel"]) .flash-reveal-btn:hover {
+    box-shadow:0 6px 16px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-reveal-btn:active {
+    box-shadow:0 2px 6px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .flash-launch-btn:hover:not(:disabled) {
+    box-shadow:0 6px 16px rgba(103, 187, 159, 0.248);
+}
+:where(html[data-theme="pastel"]) .flash-launch-btn:active:not(:disabled) {
+    box-shadow:0 2px 6px rgba(103, 187, 159, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-launch-session-btn:active:not(:disabled) {
+    box-shadow:0 2px 6px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .flash-create-btn:hover {
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.174);
+}
+:where(html[data-theme="pastel"]) .flash-form-save:hover {
+    box-shadow:0 6px 16px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-form-save:active {
+    box-shadow:0 2px 6px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .flash-form-del:hover {
+    box-shadow:0 6px 16px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .flash-form-del:active {
+    box-shadow:0 2px 6px rgba(197, 125, 125, 0.186);
+}
+@media (max-width: 768px) {
+  :where(html[data-theme="pastel"]) .flash-global-due-count {
+      background:#c16767 !important;
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  :where(html[data-theme="pastel"]) .flash-global-due-count:not(:empty) {
+      background:#c16767;
+  }
+}
+:where(html[data-theme="pastel"]) .spe-flash-info-panel .flash-list-row:hover {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .flash-review-drop-item.due:hover {
+    background:rgba(173, 85, 85, 0.04);
+}
+:where(html[data-theme="pastel"]) .flash-review-drop-item:hover .flash-review-drop-count {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .flash-review-drop-item.due:hover .flash-review-drop-count {
+    background:rgba(173, 85, 85, 0.1);
+}
+:where(html[data-theme="pastel"]) .flash-drawer-header > span > i.fa-bolt {
+    background:linear-gradient(135deg, #6388c5, #607dbd) !important;
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.198) !important;
+}
+:where(html[data-theme="pastel"]) .help-tip-blue .help-tip-icon {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .help-tip-blue .help-tip-content strong {
+    color:#3a4a79;
+}
+:where(html[data-theme="pastel"]) .help-tip-blue .help-tip-content p {
+    color:#3d4f8b;
+}
+:where(html[data-theme="pastel"]) .help-icon {
+    box-shadow:0 0 0 rgba(122, 151, 199, 0.03);
+}
+:where(html[data-theme="pastel"]) .help-icon:hover {
+    background:#6388c5;
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .help-modal-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .help-modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .help-key-points {
+    background:linear-gradient(135deg, #f4f7fb 0%, #e8eef6 100%);
+    border-left:4px solid #84a0cc;
+}
+:where(html[data-theme="pastel"]) .help-key-points-title {
+    color:#3d4f8b;
+}
+:where(html[data-theme="pastel"]) .help-key-points li::before {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .help-tip {
+    background:linear-gradient(135deg, #f0ecda 0%, #cebc73 100%);
+    border-left:4px solid #c7aa78;
+}
+:where(html[data-theme="pastel"]) .help-tip-icon {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .help-tip-content strong {
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .help-tip-content p {
+    color:#73472e;
+}
+:where(html[data-theme="pastel"]) .help-modal-btn {
+    background:linear-gradient(135deg, #6388c5 0%, #607dbd 100%);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .help-modal-btn:hover {
+    box-shadow:0 6px 18px rgba(122, 151, 199, 0.31);
+    background:linear-gradient(135deg, #607dbd 0%, #5e76b7 100%);
+}
+:where(html[data-theme="pastel"]) .help-modal-btn:active {
+    box-shadow:0 0 0 3px rgba(122, 151, 199, 0.217);
+    background:linear-gradient(135deg, #5e76b7 0%, #5a6eb0 100%);
+}
+:where(html[data-theme="pastel"]) .timer-button.active.paused:active {
+    background:#c08b4f;
+}
+:where(html[data-theme="pastel"]) .timer-button.active.paused:hover {
+    background:#c08b4f;
+}
+:where(html[data-theme="pastel"]) .timer-btn-pause:hover {
+    background:#c08b4f;
+}
+:where(html[data-theme="pastel"]) .timer-btn-stop:hover {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .timer-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .timer-close:active {
+    box-shadow:0 2px 6px rgba(197, 125, 125, 0.186);
+}
+:where(html[data-theme="pastel"]) .legend-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .legend-close:active {
+    box-shadow:0 2px 6px rgba(197, 125, 125, 0.186);
+}
+:where(html[data-theme="pastel"]) .open-notes-btn {
+    background:#e8eef6;
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .table-btn-wrap .open-notes-btn.notes-active {
+    box-shadow:0 3px 10px rgba(122, 151, 199, 0.31);
+}
+@media (hover: hover) {
+  :where(html[data-theme="pastel"]) .table-btn-wrap .open-notes-btn:hover {
+      background:#5e76b7 !important;
+      box-shadow:0 4px 12px rgba(118, 142, 193, 0.279);
+  }
+  :where(html[data-theme="pastel"]) .table-btn-wrap .send-to-checklist-btn:hover {
+      background:linear-gradient(135deg,#9969c7,#876bc6) !important;
+      box-shadow:0 4px 12px rgba(151, 129, 202, 0.279);
+  }
+}
+:where(html[data-theme="pastel"]) .notes-header-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .notes-save-btn {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .notes-save-btn:hover {
+    box-shadow:0 4px 14px rgba(122, 151, 199, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-close-btn:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa {
+    background:#e8eef6;
+    color:#40599d;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa:hover {
+    background:#5e76b7;
+    box-shadow:0 4px 12px rgba(116, 135, 187, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-lisa:active {
+    background:#5a6eb0;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-tour {
+    background:#e0f0e8;
+    color:#27725d;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-tour:hover {
+    background:#51b896;
+    box-shadow:0 4px 12px rgba(103, 187, 159, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-tour:active {
+    background:#43b893;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-todo {
+    background:#e7e5f4;
+    color:#5e3f8e;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-todo:hover {
+    background:#8665c0;
+    box-shadow:0 4px 12px rgba(150, 123, 195, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-todo:active {
+    background:#7d5cb0;
+}
+:where(html[data-theme="pastel"]) .notes-todo-badge {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-share {
+    background:#f8f0f5;
+    color:#923b5f;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-share:hover,
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-share.share-active {
+    background:#c06994;
+    box-shadow:0 4px 12px rgba(195, 127, 161, 0.279);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-share:active {
+    background:#b5577e;
+}
+:where(html[data-theme="pastel"]) .notes-share-send-btn {
+    background:#f8f0f5;
+    color:#923b5f;
+}
+:where(html[data-theme="pastel"]) .notes-share-send-btn:hover {
+    background:#c06994;
+}
+:where(html[data-theme="pastel"]) .shared-note-card:hover {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.062);
+}
+:where(html[data-theme="pastel"]) .shared-note-btn.edit {
+    background:#e8eef6;
+    color:#40599d;
+}
+:where(html[data-theme="pastel"]) .shared-note-btn.edit:hover {
+    background:#5e76b7;
+    box-shadow:0 2px 8px rgba(116, 135, 187, 0.174);
+}
+:where(html[data-theme="pastel"]) .shared-note-btn.delete:hover {
+    box-shadow:0 2px 8px rgba(197, 125, 125, 0.174);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-faire:hover {
+    background:#c19a58;
+    box-shadow:0 4px 12px rgba(195, 164, 111, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-refaire:hover {
+    background:#6388c5;
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-fait:hover {
+    background:#5fb27e;
+    box-shadow:0 4px 12px rgba(116, 183, 141, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-relu:hover {
+    background:#9969c7;
+    box-shadow:0 4px 12px rgba(165, 128, 202, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-faire.popup-open {
+    background:#c19a58 !important;
+    box-shadow:0 4px 12px rgba(195, 164, 111, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-refaire.popup-open {
+    background:#6388c5 !important;
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-fait.popup-open {
+    background:#5fb27e !important;
+    box-shadow:0 4px 12px rgba(116, 183, 141, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-relu.popup-open {
+    background:#9969c7 !important;
+    box-shadow:0 4px 12px rgba(165, 128, 202, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-faire {
+    background:#e8d8c5;
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-refaire {
+    background:#d4e0ee;
+    color:#3d4f8b;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-fait {
+    background:#cfe8d8;
+    color:#28715e;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-relu {
+    background:#e7e5f4;
+    color:#553a7f;
+}
+@media (pointer: coarse) {
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-faire:hover {
+      background:#e8d8c5 !important;
+      color:#7f4e30 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-refaire:hover {
+      background:#d4e0ee !important;
+      color:#3d4f8b !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-fait:hover {
+      background:#cfe8d8 !important;
+      color:#28715e !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-relu:hover {
+      background:#e7e5f4 !important;
+      color:#553a7f !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-faire.popup-open {
+      background:#e8d8c5 !important;
+      color:#7f4e30 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-a-refaire.popup-open {
+      background:#d4e0ee !important;
+      color:#3d4f8b !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-fait.popup-open {
+      background:#cfe8d8 !important;
+      color:#28715e !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-train-statut.statut-relu.popup-open {
+      background:#e7e5f4 !important;
+      color:#553a7f !important;
+  }
+}
+:where(html[data-theme="pastel"]) .notes-confirm-delete {
+    box-shadow:0 2px 8px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .notes-confirm-delete:hover {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .notes-tool-btn.active {
+    box-shadow:0 0 0 2px rgba(122, 151, 199, 0.155), 0 2px 8px rgba(122, 151, 199, 0.217) !important;
+}
+:where(html[data-theme="pastel"]) .notes-tool-btn.format-cleared {
+    background:#51b896 !important;
+    box-shadow:0 1px 4px rgba(103, 187, 159, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn {
+    box-shadow:0 1px 4px rgba(122, 151, 199, 0.217) !important;
+}
+:where(html[data-theme="pastel"]) .notes-img-wrapper:hover img {
+    outline:2px solid var(--primary, #84a0cc);
+    box-shadow:0 0 0 4px rgba(122, 151, 199, 0.112);
+}
+:where(html[data-theme="pastel"]) .notes-img-wrapper[data-active="1"] img {
+    outline:2px solid var(--primary, #84a0cc);
+    box-shadow:0 0 0 4px rgba(122, 151, 199, 0.112);
+}
+:where(html[data-theme="pastel"]) .notes-img-ctrl-panel .img-popup-btn.danger {
+    background:#f8eded;
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .notes-img-ctrl-panel .img-popup-btn.danger:hover {
+    background:#c16767;
+}
+:where(html[data-theme="pastel"]) .notes-img-ctrl-panel .img-popup-btn.danger:active {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .notes-img-ctrl-panel input[type="range"] {
+    accent-color:var(--primary, #3f70bf);
+}
+:where(html[data-theme="pastel"]) #notesImageBtn,
+:where(html[data-theme="pastel"]) #speErrImageBtn,
+:where(html[data-theme="pastel"]) #trainNotesImageBtn,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Insérer une image"],
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Inserer une image"] {
+    background:#e8eef6 !important;
+    color:#4062ac !important;
+}
+:where(html[data-theme="pastel"]) #notesImageBtn:hover,
+:where(html[data-theme="pastel"]) #speErrImageBtn:hover,
+:where(html[data-theme="pastel"]) #trainNotesImageBtn:hover,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Insérer une image"]:hover,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Inserer une image"]:hover {
+    background:#607dbd !important;
+    box-shadow:0 2px 8px rgba(118, 142, 193, 0.217) !important;
+}
+:where(html[data-theme="pastel"]) #notesImageBtn:active,
+:where(html[data-theme="pastel"]) #speErrImageBtn:active,
+:where(html[data-theme="pastel"]) #trainNotesImageBtn:active,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Insérer une image"]:active,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[data-tooltip="Inserer une image"]:active {
+    background:#5e76b7 !important;
+}
+:where(html[data-theme="pastel"]) #notesEraseBtn,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="notesAskClear"],
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="trainNotesAskClear"],
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="speErrAskClear"] {
+    background:#f8eded !important;
+    color:#a04545 !important;
+}
+:where(html[data-theme="pastel"]) #notesEraseBtn:hover,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="notesAskClear"]:hover,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="trainNotesAskClear"]:hover,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="speErrAskClear"]:hover {
+    background:#c16767 !important;
+    box-shadow:0 2px 8px rgba(197, 125, 125, 0.217) !important;
+}
+:where(html[data-theme="pastel"]) #notesEraseBtn:active,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="notesAskClear"]:active,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="trainNotesAskClear"]:active,
+:where(html[data-theme="pastel"]) button.notes-clear-btn[onclick*="speErrAskClear"]:active {
+    background:#b66363 !important;
+}
+:where(html[data-theme="pastel"]) .oic-card.rang-b {
+    border-left-color:#84a0cc;
+}
+:where(html[data-theme="pastel"]) .oic-rang-badge.rang-b {
+    background:#e8eef6;
+    color:#40599d;
+}
+:where(html[data-theme="pastel"]) .notes-textmax-btn[aria-pressed="true"] {
+    box-shadow:0 1px 4px rgba(122, 151, 199, 0.248) !important;
+}
+:where(html[data-theme="pastel"]) .notes-modal-body.flash-right-max .flash-expand-btn {
+    background:rgba(99, 136, 197, 0.12);
+    border-color:rgba(132, 160, 204, 0.35);
+}
+:where(html[data-theme="pastel"]) #notesModalOverlay .notes-modal-body.oic-right-max .oic-expand-btn {
+    background:rgba(99, 136, 197, 0.12);
+    border-color:rgba(132, 160, 204, 0.35);
+}
+:where(html[data-theme="pastel"]) .notes-import-toast-icon {
+    background:linear-gradient(135deg, #5fb27e 0%, #52b175 100%);
+    box-shadow:0 4px 14px rgba(116, 183, 141, 0.248);
+}
+:where(html[data-theme="pastel"]) .spe-flash-panel-header {
+    background:linear-gradient(135deg, #f5f4fb 0%, #f4f6fb 100%) !important;
+    border-bottom:1px solid #acabdf !important;
+}
+:where(html[data-theme="pastel"]) .spe-flash-panel-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd) !important;
+    box-shadow:0 8px 18px rgba(122, 151, 199, 0.217) !important;
+}
+:where(html[data-theme="pastel"]) #speFlashPanel .spe-flash-panel-subtitle {
+    color:#3f70bf !important;
+}
+:where(html[data-theme="pastel"]) .spe-genetique,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-genetique,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-genetique {
+    background:rgba(182, 104, 193, 0.15);
+    color:#ac46bb;
+}
+:where(html[data-theme="pastel"]) .spe-medgen,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-medgen,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-medgen {
+    background:rgba(83, 182, 171, 0.15);
+    color:#378f86;
+}
+:where(html[data-theme="pastel"]) .spe-genetique,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-genetique,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-genetique {
+    background:rgba(182, 104, 193, 0.15);
+    color:#ac46bb;
+}
+:where(html[data-theme="pastel"]) .spe-medgen,
+:where(html[data-theme="pastel"]) .day-specialty-badge.spe-medgen,
+:where(html[data-theme="pastel"]) .specialty-mini-btn.spe-medgen {
+    background:rgba(83, 182, 171, 0.15);
+    color:#378f86;
+}
+:where(html[data-theme="pastel"]) .unified-modal-icon {
+    background:linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.198);
+}
+:where(html[data-theme="pastel"]) #train-type-btns .train-modal-type-btn[data-value="masterclass"] {
+    background:rgba(135, 107, 198, 0.1);
+    color:#6e43b5;
+    border-color:rgba(161, 141, 207, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-type-btns .train-modal-type-btn[data-value="spe360"] {
+    background:rgba(99, 136, 197, 0.1);
+    color:#4062ac;
+    border-color:rgba(132, 160, 204, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-type-btns .train-modal-type-btn[data-value="annale"] {
+    background:rgba(193, 154, 88, 0.1);
+    color:#8f5930;
+    border-color:rgba(199, 170, 120, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-type-btns .train-modal-type-btn[data-value="ccb"] {
+    background:rgba(81, 184, 150, 0.1);
+    color:#2a8267;
+    border-color:rgba(110, 190, 163, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-type-btns .train-modal-type-btn[data-value="r2c"] {
+    background:rgba(193, 103, 103, 0.1);
+    color:#a04545;
+    border-color:rgba(201, 136, 136, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-plateforme-btns .train-modal-type-btn[data-value="edni"] {
+    background:rgba(78, 175, 192, 0.1);
+    color:#306d7e;
+    border-color:rgba(109, 184, 196, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-plateforme-btns .train-modal-type-btn[data-value="asclepia"] {
+    background:rgba(192, 105, 148, 0.1);
+    color:#923b5f;
+    border-color:rgba(200, 137, 168, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-plateforme-btns .train-modal-type-btn[data-value="hypocampus"] {
+    background:rgba(110, 112, 196, 0.1);
+    color:#534e97;
+    border-color:rgba(144, 145, 205, 0.3);
+}
+:where(html[data-theme="pastel"]) #train-plateforme-btns .train-modal-type-btn[data-value="uness"] {
+    background:rgba(196, 133, 89, 0.1);
+    color:#955033;
+    border-color:rgba(202, 155, 123, 0.3);
+}
+:where(html[data-theme="pastel"]) .train-modal-matiere-counter.max {
+    color:#a04545;
+    background:#f8eded;
+}
+:where(html[data-theme="pastel"]) .train-modal-matiere-item.selected {
+    background:rgba(99, 136, 197, 0.06);
+}
+:where(html[data-theme="pastel"]) .train-statut-dot.statut-a-faire {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .train-statut-dot.statut-a-refaire {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .train-statut-dot.statut-fait {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .train-statut-dot.statut-relu {
+    background:#876bc6;
+}
+:where(html[data-theme="pastel"]) .train-sort-statut-btn.active {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .train-type-btn.selected,
+:where(html[data-theme="pastel"]) .train-type-btn:hover {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.a-faire {
+    background:#fbf8f4;
+    color:#ab8138;
+    border-color:#d0bf88;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.a-refaire {
+    background:#f4f7fb;
+    color:#3f70bf;
+    border-color:#9ab7d7;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.fait {
+    color:#359072;
+    border-color:#94c8b4;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.relu {
+    color:#9b86cc;
+    border-color:#afa3da;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.a-faire:not(.selected):hover {
+    background:#c19a58;
+    border-color:#c7aa78;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.a-refaire:not(.selected):hover {
+    background:#6388c5;
+    border-color:#84a0cc;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.fait:not(.selected):hover {
+    background:#51b896;
+    border-color:#6ebea3;
+}
+:where(html[data-theme="pastel"]) .train-statut-btn.relu:not(.selected):hover {
+    background:#876bc6;
+    border-color:#a18dcf;
+}
+:where(html[data-theme="pastel"]) .train-statut-badge.a-faire {
+    background:#e8d8c5;
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .train-statut-badge.a-refaire {
+    background:#d4e0ee;
+    color:#3d4f8b;
+}
+:where(html[data-theme="pastel"]) .train-statut-badge.fait {
+    background:#cfe8d8;
+    color:#28715e;
+}
+:where(html[data-theme="pastel"]) .train-statut-badge.relu {
+    background:#e7e5f4;
+    color:#553a7f;
+}
+:where(html[data-theme="pastel"]) .train-type-badge.type-masterclass {
+    background:rgba(135, 107, 198, 0.13);
+    color:#6e43b5;
+    border:1px solid rgba(161, 141, 207, 0.25);
+}
+:where(html[data-theme="pastel"]) .train-type-badge.type-spe360 {
+    background:rgba(99, 136, 197, 0.13);
+    color:#4062ac;
+    border:1px solid rgba(132, 160, 204, 0.25);
+}
+:where(html[data-theme="pastel"]) .train-type-badge.type-annale {
+    background:rgba(193, 154, 88, 0.13);
+    color:#8f5930;
+    border:1px solid rgba(199, 170, 120, 0.25);
+}
+:where(html[data-theme="pastel"]) .train-type-badge.type-ccb {
+    background:rgba(81, 184, 150, 0.13);
+    color:#2a8267;
+    border:1px solid rgba(110, 190, 163, 0.25);
+}
+:where(html[data-theme="pastel"]) .train-type-badge.type-r2c {
+    background:rgba(193, 103, 103, 0.13);
+    color:#a04545;
+    border:1px solid rgba(201, 136, 136, 0.25);
+}
+:where(html[data-theme="pastel"]) .train-type-dot.type-masterclass {
+    background:#8665c0;
+}
+:where(html[data-theme="pastel"]) .train-type-dot.type-spe360 {
+    background:#607dbd;
+}
+:where(html[data-theme="pastel"]) .train-type-dot.type-annale {
+    background:#bb7b4a;
+}
+:where(html[data-theme="pastel"]) .train-type-dot.type-ccb {
+    background:#43b893;
+}
+:where(html[data-theme="pastel"]) .train-type-dot.type-r2c {
+    background:#b66363;
+}
+:where(html[data-theme="pastel"]) .train-section-header-sticky.is-stuck {
+    box-shadow:0 3px 12px rgba(122, 151, 199, 0.074), 0 1px 4px rgba(0,0,0,0.08);
+}
+:where(html[data-theme="pastel"]) .train-plateforme-badge.plat-edni {
+    background:rgba(78, 175, 192, 0.13);
+    color:#306d7e;
+    border:1px solid rgba(109, 184, 196, 0.3);
+}
+:where(html[data-theme="pastel"]) .train-plateforme-badge.plat-asclepia {
+    background:rgba(192, 105, 148, 0.13);
+    color:#923b5f;
+    border:1px solid rgba(200, 137, 168, 0.3);
+}
+:where(html[data-theme="pastel"]) .train-plateforme-badge.plat-hypocampus {
+    background:rgba(110, 112, 196, 0.13);
+    color:#534e97;
+    border:1px solid rgba(144, 145, 205, 0.3);
+}
+:where(html[data-theme="pastel"]) .train-plateforme-badge.plat-uness {
+    background:rgba(196, 133, 89, 0.13);
+    color:#955033;
+    border:1px solid rgba(202, 155, 123, 0.3);
+}
+:where(html[data-theme="pastel"]) .train-plat-dot.plat-edni {
+    background:#4a9bb1;
+}
+:where(html[data-theme="pastel"]) .train-plat-dot.plat-asclepia {
+    background:#b5577e;
+}
+:where(html[data-theme="pastel"]) .train-plat-dot.plat-hypocampus {
+    background:#716cae;
+}
+:where(html[data-theme="pastel"]) .train-plat-dot.plat-uness {
+    background:#bb6e4f;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.notes-btn {
+    background:#e8eef6;
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.notes-btn:hover {
+    background:#5e76b7;
+    box-shadow:0 4px 12px rgba(118, 142, 193, 0.279);
+}
+:where(html[data-theme="pastel"]) .train-action-btn.notes-btn.has-notes,
+:where(html[data-theme="pastel"]) .open-notes-btn.has-notes {
+    outline:1.5px solid #8095c5 !important;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.edit-btn {
+    background:#e8eef6;
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.edit-btn:hover {
+    background:#5e76b7;
+    box-shadow:0 4px 12px rgba(118, 142, 193, 0.279);
+}
+:where(html[data-theme="pastel"]) .train-action-btn.todo-btn {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.todo-btn:hover {
+    background:linear-gradient(135deg,#9969c7,#876bc6);
+    box-shadow:0 4px 12px rgba(150, 123, 195, 0.279);
+}
+:where(html[data-theme="pastel"]) .train-action-btn.delete-btn {
+    background:#f8eded;
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .train-action-btn.delete-btn:hover {
+    background:#c16767;
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .train-checklist-badge {
+    background:#f4f2fa;
+    color:#6e43b5;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-faire {
+    color:#8f5930;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-faire::before {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-refaire {
+    color:#40599d;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-refaire::before {
+    background:#6388c5;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.fait {
+    color:#27725d;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.fait::before {
+    background:#51b896;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.relu {
+    color:#5e3f8e;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.relu::before {
+    background:#876bc6;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-faire:hover {
+    background:#fbf8f4;
+    border-color:#d0bf88;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.a-refaire:hover {
+    background:#f4f7fb;
+    border-color:#9ab7d7;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.fait:hover {
+    border-color:#94c8b4;
+}
+:where(html[data-theme="pastel"]) .train-statut-popup-item.relu:hover {
+    border-color:#afa3da;
+}
+:where(html[data-theme="pastel"]) .train-sort-option.selected {
+    background:rgba(99, 136, 197, 0.06);
+}
+:where(html[data-theme="pastel"]) #feedback-nudge {
+    box-shadow:0 8px 32px -4px rgba(122, 151, 199, 0.112), 0 2px 12px -2px rgba(0,0,0,0.10);
+    border:1.5px solid rgba(132, 160, 204, 0.13);
+}
+:where(html[data-theme="pastel"]) .fn-icon {
+    background:linear-gradient(135deg, #e8eef6, #f4f2fa);
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) #feedback-nudge .fn-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .fn-tag.blue {
+    background:#f4f7fb;
+    color:#4062ac;
+    border-color:#a5bedc;
+}
+:where(html[data-theme="pastel"]) .fn-tag.purple {
+    color:#6e43b5;
+    border-color:#b4acde;
+}
+:where(html[data-theme="pastel"]) .fn-tag.pink {
+    color:#923b5f;
+    border-color:#daacc6;
+}
+:where(html[data-theme="pastel"]) .fn-btn-primary {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.186);
+}
+:where(html[data-theme="pastel"]) .fn-btn-primary:hover {
+    box-shadow:0 4px 14px rgba(122, 151, 199, 0.248);
+}
+:where(html[data-theme="pastel"]) #feedback-nudge .fn-btn-later:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-urgent {
+    background:#f8eded;
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-relative {
+    background:#e8d8c5;
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-pas-urgent {
+    background:#e8f5ed;
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-urgent:hover {
+    background:#c16767;
+    color:#743838;
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-relative:hover {
+    background:#c19a58;
+    box-shadow:0 4px 12px rgba(195, 164, 111, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-pas-urgent:hover {
+    background:#5fb27e;
+    box-shadow:0 4px 12px rgba(116, 183, 141, 0.248);
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-urgent.popup-open {
+    background:#c16767 !important;
+    color:#743838 !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-relative.popup-open {
+    background:#c19a58 !important;
+}
+:where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-pas-urgent.popup-open {
+    background:#5fb27e !important;
+}
+@media (pointer: coarse) {
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-urgent:hover {
+      background:#f8eded !important;
+      color:#a04545 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-relative:hover {
+      background:#e8d8c5 !important;
+      color:#7f4e30 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-pas-urgent:hover {
+      background:#e8f5ed !important;
+      color:#378654 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-urgent.popup-open {
+      background:#e6c1c1 !important;
+      color:#813939 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-relative.popup-open {
+      background:#c9b265 !important;
+      color:#7f4e30 !important;
+  }
+  :where(html[data-theme="pastel"]) .notes-action-btn.btn-priority.prio-pas-urgent.popup-open {
+      background:#79c394 !important;
+      color:#336647 !important;
+  }
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-urgent {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-relative {
+    color:#9f6d32;
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-pas-urgent {
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-urgent:hover {
+    background:#f8eded;
+    border-color:#d89f9f;
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-relative:hover {
+    background:#fbf8f4;
+    border-color:#d0bf88;
+}
+:where(html[data-theme="pastel"]) .notes-priority-popup-item.prio-pas-urgent:hover {
+    background:#e8f5ed;
+    border-color:#9acead;
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-urgent {
+    background:#f8eded;
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-urgent:hover {
+    background:#e6c1c1;
+    color:#813939;
+    box-shadow:0 3px 8px rgba(186, 120, 120, 0.186);
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-relative {
+    background:#e8d8c5;
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-relative:hover {
+    background:#c89062;
+    color:#744231;
+    box-shadow:0 3px 8px rgba(195, 164, 111, 0.186);
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-pas-urgent {
+    background:#e8f5ed;
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .item-prio-btn.prio-pas-urgent:hover {
+    background:#79c394;
+    color:#336647;
+    box-shadow:0 3px 8px rgba(104, 181, 132, 0.186);
+}
+:where(html[data-theme="pastel"]) .todo-add-success-anim {
+    background:linear-gradient(
+        135deg,
+        #51b896,
+        #43b893
+    ) !important;
+    box-shadow:0 4px 12px rgba(103, 187, 159, 0.236) !important;
+}
+:where(html[data-theme="pastel"]) .tpx-premium-fab {
+    background:linear-gradient(135deg, #8b75cc 0%, #876bc6 40%, #8465b5 100%);
+    box-shadow:0 8px 26px rgba(146, 121, 185, 0.279),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+:where(html[data-theme="pastel"]) .tpx-trial-fab {
+    background:linear-gradient(135deg, #8b75cc 0%, #876bc6 40%, #8465b5 100%);
+    box-shadow:0 8px 26px rgba(146, 121, 185, 0.279),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+:where(html[data-theme="pastel"]) .tpx-trial-fab i.fa-gift {
+    color:#ddd3aa;
+    filter:drop-shadow(0 1px 3px rgba(177, 123, 93, 0.279));
+}
+:where(html[data-theme="pastel"]) .tpx-trial-fab .tpx-fab-label {
+    text-shadow:0 1px 2px rgba(134, 107, 176, 0.248);
+}
+:where(html[data-theme="pastel"]) .tpx-trial-fab:focus-visible {
+    outline:2px solid #afa3da;
+}
+:where(html[data-theme="pastel"]) .tpx-premium-fab i.fa-crown {
+    color:#ddd3aa;
+    filter:drop-shadow(0 1px 3px rgba(177, 123, 93, 0.279));
+}
+:where(html[data-theme="pastel"]) .tpx-premium-fab .tpx-fab-label {
+    text-shadow:0 1px 2px rgba(134, 107, 176, 0.248);
+}
+:where(html[data-theme="pastel"]) .tpx-premium-fab:focus-visible {
+    outline:2px solid #afa3da;
+}
+:where(html[data-theme="pastel"]) .tpx-hero {
+    background:linear-gradient(135deg, #8665c0 0%, #8465b5 55%, #7756ab 100%);
+    box-shadow:0 8px 24px rgba(146, 121, 185, 0.217);
+}
+:where(html[data-theme="pastel"]) .tpx-hero::before {
+    background:radial-gradient(circle at 85% 15%, rgba(255,255,255,0.22), transparent 42%),
+        radial-gradient(circle at 15% 90%, rgba(139, 117, 204, 0.35), transparent 45%);
+}
+:where(html[data-theme="pastel"]) .tpx-hero-crown {
+    background:linear-gradient(135deg, #c6a85c, #c19a58);
+    box-shadow:0 5px 14px rgba(195, 164, 111, 0.279), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+:where(html[data-theme="pastel"]) .tpx-hero-badge {
+    color:#f1eff8;
+}
+:where(html[data-theme="pastel"]) .tpx-hero-text p b {
+    color:#ddd3aa;
+}
+:where(html[data-theme="pastel"]) .tpx-benefit:hover {
+    border-color:#afa3da;
+    box-shadow:0 6px 16px rgba(146, 121, 185, 0.074);
+}
+:where(html[data-theme="pastel"]) .tpx-benefit-icon {
+    background:linear-gradient(135deg, #876bc6, #8465b5);
+    box-shadow:0 3px 9px rgba(146, 121, 185, 0.198), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+:where(html[data-theme="pastel"]) .tpx-premium-cta {
+    background:linear-gradient(135deg, #876bc6, #8465b5);
+    box-shadow:0 6px 18px rgba(146, 121, 185, 0.26), inset 0 1px 0 rgba(255,255,255,0.28);
+}
+:where(html[data-theme="pastel"]) .tpx-premium-cta i.fa-crown {
+    color:#ddd3aa;
+    filter:drop-shadow(0 1px 2px rgba(177, 123, 93, 0.248));
+}
+:where(html[data-theme="pastel"]) .tpx-premium-cta:hover {
+    box-shadow:0 10px 26px rgba(146, 121, 185, 0.341), inset 0 1px 0 rgba(255,255,255,0.28);
+}
+:where(html[data-theme="pastel"]) .tpx-premium-note i {
+    color:#359072;
+}
+:where(html[data-theme="pastel"]) .pdd-modal {
+    border-top:4px solid var(--pdd-accent, #8095c5);
+}
+:where(html[data-theme="pastel"]) .pdd-icon {
+    background:var(--pdd-accent, linear-gradient(135deg,#6388c5,#607dbd));
+}
+:where(html[data-theme="pastel"]) .pdd-pen {
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .pdd-close {
+    background:var(--danger-light, #f8eded);
+    color:var(--danger, #bb4545);
+}
+:where(html[data-theme="pastel"]) .pdd-close:hover {
+    background:var(--danger, #c16767);
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .pdd-close:focus,
+:where(html[data-theme="pastel"]) .pdd-close:focus-visible {
+    background:var(--danger-light, #f8eded);
+    color:var(--danger, #bb4545);
+}
+:where(html[data-theme="pastel"]) .pdt-btn.active {
+    background:#607dbd !important;
+    box-shadow:0 0 0 2px rgba(122, 151, 199, 0.155) !important;
+}
+:where(html[data-theme="pastel"]) .pdt-btn[data-color="red"] {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .pdt-btn[data-color="blue"] {
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .pdt-btn[data-color="green"] {
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .pdd-editor:focus {
+    border-color:#8095c5;
+    box-shadow:0 0 0 3px rgba(118, 142, 193, 0.074);
+}
+:where(html[data-theme="pastel"]) .pdd-char-count.near-limit {
+    color:#ab8138;
+}
+:where(html[data-theme="pastel"]) .pdd-char-count.at-limit {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .pdd-editor .planning-note-red {
+    color:#a04545;
+}
+:where(html[data-theme="pastel"]) .pdd-editor .planning-note-blue {
+    color:#4062ac;
+}
+:where(html[data-theme="pastel"]) .pdd-editor .planning-note-green {
+    color:#378654;
+}
+:where(html[data-theme="pastel"]) .day-detail-open-btn {
+    border:1px solid #a5bedc;
+    background:#e8eef6;
+    color:#40599d;
+}
+:where(html[data-theme="pastel"]) .day-detail-open-btn:hover {
+    background:#607dbd;
+    box-shadow:0 3px 9px rgba(118, 142, 193, 0.217);
+}
+:where(html[data-theme="pastel"]) .day-detail-open-btn:focus-visible {
+    outline:2px solid var(--primary, #8095c5);
+}
+:where(html[data-theme="pastel"]) .day-detail-open-btn:hover {
+    background:#607dbd;
+}
+:where(html[data-theme="pastel"]) .pdd-spec-counter.full {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .pdd-spec-clear:hover {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .pdd-spec-ok {
+    background:#607dbd;
+}
+:where(html[data-theme="pastel"]) .edn-todo-btn {
+    background:linear-gradient(135deg,#876bc6,#8665c0);
+    box-shadow:var(--shadow-md,0 4px 14px rgba(150, 123, 195, 0.217));
+}
+:where(html[data-theme="pastel"]) .edn-todo-btn:hover {
+    box-shadow:0 8px 22px rgba(150, 123, 195, 0.248);
+}
+:where(html[data-theme="pastel"]) .edn-todo-btn:focus-visible {
+    outline:2px solid #9e85c8;
+}
+:where(html[data-theme="pastel"]) .edn-todo-count {
+    background:var(--danger, #c16767);
+    box-shadow:0 3px 8px rgba(197, 125, 125, 0.217);
+}
+:where(html[data-theme="pastel"]) .global-todo-head .gt-icon {
+    background:var(--primary-gradient,linear-gradient(135deg,#6388c5,#607dbd));
+}
+:where(html[data-theme="pastel"]) .global-todo-close {
+    background:var(--danger-light,#f8eded);
+    color:var(--danger,#bb4545);
+}
+:where(html[data-theme="pastel"]) .global-todo-close:hover {
+    background:var(--danger,#c16767);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-input:not(.error):hover {
+    border-color:var(--accent, #a18dcf);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-input:not(.error):focus {
+    border-color:var(--accent, #a18dcf);
+    box-shadow:0 0 0 3px rgba(151, 129, 202, 0.093);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-checkbox:hover {
+    border-color:#9e85c8;
+    box-shadow:0 0 0 3px rgba(150, 123, 195, 0.074);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-checkbox.checked,
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-checkbox.is-checked,
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-checkbox[aria-checked="true"] {
+    background:linear-gradient(135deg, #51b896, #5fb27e);
+    border-color:#6ebea3;
+    box-shadow:0 3px 8px rgba(103, 187, 159, 0.174);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-item.completed .checklist-checkbox {
+    background:linear-gradient(135deg, #51b896, #5fb27e);
+    border-color:#6ebea3;
+    box-shadow:0 3px 8px rgba(103, 187, 159, 0.174);
+}
+:where(html[data-theme="pastel"]) .global-todo-head .gt-icon {
+    background:linear-gradient(135deg, #876bc6, #8665c0) !important;
+    box-shadow:0 4px 12px rgba(150, 123, 195, 0.217);
+}
+:where(html[data-theme="pastel"]) .global-todo-help:hover {
+    background:#876bc6;
+    box-shadow:0 3px 9px rgba(150, 123, 195, 0.186);
+}
+:where(html[data-theme="pastel"]) .global-todo-help:focus-visible {
+    outline:3px solid rgba(161, 141, 207, 0.25);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-item,
+:where(html[data-theme="pastel"]) .global-todo-body .ecos-todo-item {
+    border-left:6px solid #a18dcf;
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-item:hover,
+:where(html[data-theme="pastel"]) .global-todo-body .ecos-todo-item:hover {
+    border-color:#a899d5;
+    border-left-color:#9e85c8;
+    box-shadow:0 4px 10px rgba(15, 23, 42, 0.1),
+        0 10px 20px rgba(150, 123, 195, 0.056);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .ecos-todo-title strong,
+:where(html[data-theme="pastel"]) .global-todo-body .ecos-todo-number {
+    color:#3f70bf;
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-item.completed,
+:where(html[data-theme="pastel"]) .global-todo-body .ecos-todo-item.completed {
+    background:#f4faf7;
+    border-color:#94c8b4;
+    border-left-color:#6ebea3;
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-error-notification {
+    background:#c16767;
+    box-shadow:0 6px 18px rgba(197, 125, 125, 0.186),
+        0 2px 6px rgba(15, 23, 42, 0.1);
+}
+:where(html[data-theme="pastel"]) .global-todo-body .checklist-error-notification::after {
+    border-bottom:7px solid #c98888;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTEMENTS PASTEL — écrits à la main
+   Corrections ciblées, appliquées APRÈS la couche générée.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Jetons propres au mode pastel ──────────────────────────────────────── */
+[data-theme="pastel"] {
+    --pastel-surface:        #fbf9f4;   /* cartes, modals, header */
+    --pastel-surface-alt:    #f2efe6;   /* zones creuses, en-têtes de tableau */
+    --pastel-blue-50:        #eef2fa;
+    --pastel-blue-100:       #e2eaf7;
+    --pastel-blue-200:       #cbd9ef;
+    --pastel-blue-400:       #8ea9d6;
+    --pastel-blue-500:       #6b8cc7;
+    --pastel-blue-600:       #5877b0;
+    --pastel-border:         #e2ddd2;
+    --pastel-border-strong:  #cfc8ba;
+    --pastel-ink:            #443f38;   /* texte principal */
+    --pastel-ink-soft:       #6a6459;   /* texte secondaire */
+}
+
+/* ═══ 1. HEADER & NAVIGATION ════════════════════════════════════════════════
+   Fond crème translucide (et non plus gris-bleu), séparation nette, menus
+   écrits en encre sombre : ils redeviennent lisibles. */
+[data-theme="pastel"] .header {
+    background-color: rgba(251, 249, 244, 0.93) !important;
+    border-bottom: 1px solid var(--pastel-border);
+    box-shadow: 0 1px 10px rgba(107, 140, 199, 0.07);
+}
+[data-theme="pastel"] .header.scrolled {
+    box-shadow: 0 3px 18px rgba(107, 140, 199, 0.14);
+}
+[data-theme="pastel"] .logo { color: var(--pastel-blue-600) !important; }
+[data-theme="pastel"] .logo-icon {
+    background: linear-gradient(135deg, #7d9bd0, #9db3d9) !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(107, 140, 199, 0.30);
+}
+
+[data-theme="pastel"] .nav-link,
+[data-theme="pastel"] .nav-dropdown-trigger,
+[data-theme="pastel"] .mobile-menu-link,
+[data-theme="pastel"] .mobile-menu-btn,
+[data-theme="pastel"] .dropdown-item {
+    color: var(--pastel-ink) !important;
+}
+[data-theme="pastel"] .nav-link:hover,
+[data-theme="pastel"] .nav-dropdown-trigger:hover,
+[data-theme="pastel"] .mobile-menu-link:hover,
+[data-theme="pastel"] .mobile-menu-btn:hover {
+    color: var(--pastel-blue-600) !important;
+}
+[data-theme="pastel"] .nav-dropdown-content {
+    background: var(--pastel-surface) !important;
+    border: 1px solid var(--pastel-border) !important;
+    box-shadow: 0 12px 28px rgba(107, 140, 199, 0.16) !important;
+}
+[data-theme="pastel"] .dropdown-item:hover {
+    background-color: var(--pastel-blue-50) !important;
+    color: var(--pastel-blue-600) !important;
+}
+[data-theme="pastel"] .dropdown-item.active {
+    background-color: var(--pastel-blue-100) !important;
+    color: var(--pastel-blue-600) !important;
+}
+[data-theme="pastel"] .dropdown-item i { color: var(--pastel-blue-400); }
+[data-theme="pastel"] .mobile-menu {
+    background-color: var(--pastel-surface) !important;
+    border-bottom: 1px solid var(--pastel-border);
+}
+[data-theme="pastel"] .mobile-menu .nav-link { border-bottom-color: var(--pastel-border) !important; }
+
+/* ═══ 2. BOUTON « CHANGER DE THÈME » ═══════════════════════════════════════
+   État normal discret mais dessiné, survol franchement bleu : on le voit. */
+[data-theme="pastel"] .theme-toggle,
+[data-theme="pastel"] .auth-btn {
+    background: var(--pastel-blue-50) !important;
+    color: var(--pastel-blue-600) !important;
+    border: 1px solid var(--pastel-blue-200) !important;
+}
+[data-theme="pastel"] .theme-toggle:hover {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border-color: var(--pastel-blue-600) !important;
+    box-shadow: 0 4px 14px rgba(107, 140, 199, 0.42) !important;
+    transform: rotate(15deg) scale(1.06);
+}
+[data-theme="pastel"] .auth-btn:hover {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border-color: var(--pastel-blue-600) !important;
+    box-shadow: 0 4px 14px rgba(107, 140, 199, 0.42) !important;
+}
+[data-theme="pastel"] .user-avatar {
+    box-shadow: 0 0 0 2px rgba(107, 140, 199, 0.18);
+}
+
+/* ═══ 3. BOUTONS UTILITAIRES (légendes, filtres, « ··· », etc.) ════════════
+   Ils tiraient sur le beige boueux : on les repose sur un bleu très pâle
+   avec un contour fin et lisible. */
+[data-theme="pastel"] .quick-action-btn,
+[data-theme="pastel"] .legend-button,
+[data-theme="pastel"] .planning-legend-btn,
+[data-theme="pastel"] .timer-button,
+[data-theme="pastel"] .resource-box.overflow-btn,
+[data-theme="pastel"] .btn-secondary,
+[data-theme="pastel"] .pagination-btn,
+[data-theme="pastel"] .header-pagination .pagination-btn {
+    background: var(--pastel-blue-50) !important;
+    color: var(--pastel-blue-600) !important;
+    border: 1px solid var(--pastel-blue-200) !important;
+    box-shadow: none;
+}
+[data-theme="pastel"] .quick-action-btn:hover,
+[data-theme="pastel"] .legend-button:hover,
+[data-theme="pastel"] .planning-legend-btn:hover,
+[data-theme="pastel"] .timer-button:hover,
+[data-theme="pastel"] .resource-box.overflow-btn:hover,
+[data-theme="pastel"] .btn-secondary:hover,
+[data-theme="pastel"] .pagination-btn:hover:not(:disabled),
+[data-theme="pastel"] .header-pagination .pagination-btn:hover:not(:disabled) {
+    background: var(--pastel-blue-100) !important;
+    color: var(--pastel-blue-600) !important;
+    border-color: var(--pastel-blue-400) !important;
+    box-shadow: 0 2px 10px rgba(107, 140, 199, 0.18) !important;
+}
+[data-theme="pastel"] .quick-action-btn:active,
+[data-theme="pastel"] .legend-button:active,
+[data-theme="pastel"] .planning-legend-btn:active,
+[data-theme="pastel"] .timer-button:active {
+    background: var(--pastel-blue-200) !important;
+    box-shadow: none !important;
+}
+[data-theme="pastel"] .pagination-btn:disabled,
+[data-theme="pastel"] .header-pagination .pagination-btn:disabled {
+    background: var(--pastel-surface-alt) !important;
+    color: #b0a99c !important;
+    border-color: var(--pastel-border) !important;
+}
+[data-theme="pastel"] .btn-primary,
+[data-theme="pastel"] .specialty-confirm-btn,
+[data-theme="pastel"] .modal-ok,
+[data-theme="pastel"] .checklist-add-btn {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--pastel-blue-600) !important;
+    box-shadow: 0 2px 10px rgba(107, 140, 199, 0.28) !important;
+}
+[data-theme="pastel"] .btn-primary:hover,
+[data-theme="pastel"] .specialty-confirm-btn:hover,
+[data-theme="pastel"] .modal-ok:hover,
+[data-theme="pastel"] .checklist-add-btn:hover {
+    background: var(--pastel-blue-600) !important;
+    box-shadow: 0 4px 16px rgba(107, 140, 199, 0.38) !important;
+}
+
+/* ═══ 4. COLONNE « N° » : notes + envoi vers la to-do ══════════════════════
+   Assez de matière pour ne plus paraître brumeux, sans devenir criard. */
+[data-theme="pastel"] .open-notes-btn {
+    background: #dfe8f6 !important;
+    color: #46679f !important;
+    border: 1px solid #c5d5ee !important;
+}
+[data-theme="pastel"] .open-notes-btn:hover,
+[data-theme="pastel"] .table-btn-wrap .open-notes-btn:hover {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border-color: var(--pastel-blue-600) !important;
+}
+[data-theme="pastel"] .open-notes-btn.has-notes,
+[data-theme="pastel"] .table-btn-wrap .open-notes-btn.notes-active {
+    box-shadow: 0 3px 10px rgba(107, 140, 199, 0.32) !important;
+}
+[data-theme="pastel"] .send-to-checklist-btn,
+[data-theme="pastel"] .priority-send-btn,
+[data-theme="pastel"] .train-action-btn.todo-btn,
+[data-theme="pastel"] .added-to-checklist-badge {
+    background: #e6e4f4 !important;
+    color: #6a63a6 !important;
+    border: 1px solid #d4d0ea !important;
+}
+[data-theme="pastel"] .send-to-checklist-btn:hover,
+[data-theme="pastel"] .table-btn-wrap .send-to-checklist-btn:hover,
+[data-theme="pastel"] .priority-send-btn:hover,
+[data-theme="pastel"] .train-action-btn.todo-btn:hover {
+    background: linear-gradient(135deg, #8f88c9, #7d76bd) !important;
+    color: #ffffff !important;
+    border-color: #7d76bd !important;
+}
+/* L'épingle « déjà dans la to-do » garde le violet du thème d'origine,
+   simplement adouci — c'est le même code couleur que le bouton d'envoi. */
+[data-theme="pastel"] .added-to-checklist-badge {
+    background: #e6e4f4 !important;
+    color: #6a63a6 !important;
+    border-color: #d4d0ea !important;
+}
+
+/* ═══ 5. RESSOURCES (pastilles QI / DP / fiches) ═══════════════════════════ */
+[data-theme="pastel"] .resource-box.qi-edni,
+[data-theme="pastel"] .resource-box.dp-edni   { background:#f6e4e4 !important; color:#96565a !important; border-color:#ecd0d0 !important; }
+[data-theme="pastel"] .resource-box.qi-hypo,
+[data-theme="pastel"] .resource-box.dp-hypo   { background:#e2eaf7 !important; color:#4d6ba3 !important; border-color:#ccdaf0 !important; }
+[data-theme="pastel"] .resource-box.qi-annales,
+[data-theme="pastel"] .resource-box.dp-annales{ background:#f7ead9 !important; color:#966741 !important; border-color:#eeD9be !important; }
+[data-theme="pastel"] .resource-box.qi-uness,
+[data-theme="pastel"] .resource-box.dp-uness  { background:#e8e6f5 !important; color:#655d9c !important; border-color:#d8d4ec !important; }
+[data-theme="pastel"] .resource-box.fiche-perso { background:#f7f0d9 !important; color:#8a6b34 !important; border-color:#ecdfb8 !important; }
+/* Ressources validées : le vert doit rester un aplat franc, comme dans les
+   modes clair et sombre. En version délavée il passait inaperçu à côté des
+   autres cases. */
+[data-theme="pastel"] .resource-box.validated,
+[data-theme="pastel"] .resource-box.overflow-validated {
+    background: linear-gradient(135deg, #4f9d7b, #6cb795) !important;
+    color: #ffffff !important;
+    border-color: #3f8968 !important;
+    box-shadow: 0 2px 8px rgba(79, 157, 123, 0.38) !important;
+}
+[data-theme="pastel"] .resource-box.validated i,
+[data-theme="pastel"] .resource-box.overflow-validated i { color: #ffffff !important; }
+
+/* ═══ 6. PLANNING : couleurs de fond selon le statut ═══════════════════════
+   Teintes franches mais douces, qui se lisent sur le fond crème. */
+[data-theme="pastel"] .calendar-day.status-stage {
+    background: linear-gradient(135deg, #fbf0e3, #f6e5d2) !important;
+    border-left: 4px solid #dda774 !important;
+}
+[data-theme="pastel"] .calendar-day.status-revision {
+    background: linear-gradient(135deg, #e9f4ec, #daecdf) !important;
+    border-left: 4px solid #7ebd97 !important;
+}
+[data-theme="pastel"] .calendar-day.status-garde {
+    background: linear-gradient(135deg, #fbeaea, #f5dada) !important;
+    border-left: 4px solid #d98f8f !important;
+}
+[data-theme="pastel"] .calendar-day.status-repos {
+    background: linear-gradient(135deg, #eceaf7, #ddd9ee) !important;
+    border-left: 4px solid #9a91cf !important;
+}
+[data-theme="pastel"] .calendar-day.status-autre {
+    background: linear-gradient(135deg, #f9e9f1, #f2dbe7) !important;
+    border-left: 4px solid #d18db0 !important;
+}
+[data-theme="pastel"] .calendar-day.status-stage .day-header-zone,
+[data-theme="pastel"] .calendar-day.status-revision .day-header-zone,
+[data-theme="pastel"] .calendar-day.status-garde .day-header-zone,
+[data-theme="pastel"] .calendar-day.status-repos .day-header-zone,
+[data-theme="pastel"] .calendar-day.status-autre .day-header-zone {
+    background: rgba(255, 255, 255, 0.45) !important;
+}
+[data-theme="pastel"] .calendar-day.status-stage .day-specialty-zone,
+[data-theme="pastel"] .calendar-day.status-revision .day-specialty-zone,
+[data-theme="pastel"] .calendar-day.status-garde .day-specialty-zone,
+[data-theme="pastel"] .calendar-day.status-repos .day-specialty-zone,
+[data-theme="pastel"] .calendar-day.status-autre .day-specialty-zone {
+    background: rgba(255, 255, 255, 0.30) !important;
+}
+[data-theme="pastel"] .legend-dot.stage    { background: linear-gradient(135deg,#dda774,#e6bb92) !important; }
+[data-theme="pastel"] .legend-dot.revision { background: linear-gradient(135deg,#7ebd97,#9bcfae) !important; }
+[data-theme="pastel"] .legend-dot.garde    { background: linear-gradient(135deg,#d98f8f,#e5a9a9) !important; }
+[data-theme="pastel"] .legend-dot.repos    { background: linear-gradient(135deg,#9a91cf,#b1a9dd) !important; }
+[data-theme="pastel"] .legend-dot.autre    { background: linear-gradient(135deg,#d18db0,#dfa8c4) !important; }
+
+/* ═══ 7. PASTILLES & ICÔNES DE MATIÈRE ═════════════════════════════════════
+   Leurs couleurs viennent du JS (styles en ligne) : impossible de les
+   réécrire une par une. On les adoucit donc par filtre — la teinte reste
+   reconnaissable, l'intensité redescend au niveau du reste du thème. */
+[data-theme="pastel"] .specialty-icon,
+[data-theme="pastel"] .specialty-badge,
+[data-theme="pastel"] .specialty-chip,
+[data-theme="pastel"] .specialty-legend-badge,
+[data-theme="pastel"] .day-specialty-badge,
+[data-theme="pastel"] .checklist-specialty-badge,
+[data-theme="pastel"] .priority-spec-pill,
+[data-theme="pastel"] .item-specialty-pill,
+[data-theme="pastel"] .item-specialty,
+[data-theme="pastel"] .day-spec-pill,
+[data-theme="pastel"] .pdd-spec-pills .day-specialty-badge,
+[data-theme="pastel"] .ranking-specialty-icon,
+[data-theme="pastel"] .flash-spe-chip,
+[data-theme="pastel"] .flash-drawer-ico,
+[data-theme="pastel"] .train-modal-matiere-badge,
+[data-theme="pastel"] .train-modal-type-btn,
+[data-theme="pastel"] .legend-badge,
+[data-theme="pastel"] .notes-color-dot,
+[data-theme="pastel"] .notes-color-bar,
+[data-theme="pastel"] .notes-confirm-icon,
+[data-theme="pastel"] .help-modal-icon,
+[data-theme="pastel"] .tours-today-group-badge,
+[data-theme="pastel"] .tours-today-row-accent,
+[data-theme="pastel"] .tours-today-num,
+[data-theme="pastel"] .progress-fill,
+[data-theme="pastel"] .spe-color-dot,
+[data-theme="pastel"] .train-matiere-pill,
+[data-theme="pastel"] .spe-err-btn,
+[data-theme="pastel"] .ranking-err-btn {
+    filter: saturate(0.55) brightness(1.09);
+}
+
+/* Les pastilles des listes déroulantes de filtres (« Toutes les spécialités »,
+   matières des entraînements…) sont des <span> sans classe, colorés en ligne
+   depuis SPECIALTY_CONFIG : seul un sélecteur d'attribut peut les atteindre. */
+[data-theme="pastel"] span[style*="background:#"],
+[data-theme="pastel"] span[style*="background: #"],
+[data-theme="pastel"] span[style*="background-color:#"],
+[data-theme="pastel"] span[style*="background-color: #"],
+[data-theme="pastel"] .specialty-multi-option > span[style*="background"],
+[data-theme="pastel"] .train-matiere-select-option > span[style*="background"] {
+    filter: saturate(0.55) brightness(1.09);
+}
+/* Le podium des statistiques : mêmes pastilles, mêmes règles */
+[data-theme="pastel"] .ranking-podium-item .specialty-icon,
+[data-theme="pastel"] .ranking-podium-item .specialty-badge,
+[data-theme="pastel"] .ranking-card .specialty-icon,
+[data-theme="pastel"] .ranking-card .specialty-badge {
+    filter: saturate(0.55) brightness(1.09);
+}
+
+/* ═══ 8. BORDURES : plus aucun contour sombre et épais ═════════════════════ */
+[data-theme="pastel"] .section-card,
+[data-theme="pastel"] .legend-modal,
+[data-theme="pastel"] .custom-dropdown,
+[data-theme="pastel"] .custom-dropdown-menu,
+[data-theme="pastel"] .resource-overflow-popup,
+[data-theme="pastel"] .planning-header-card,
+[data-theme="pastel"] .calendar-day,
+[data-theme="pastel"] .friend-item,
+[data-theme="pastel"] .whats-new-section,
+[data-theme="pastel"] .whats-new-bugfix {
+    border-color: var(--pastel-border) !important;
+}
+[data-theme="pastel"] input,
+[data-theme="pastel"] select,
+[data-theme="pastel"] textarea {
+    background: var(--pastel-surface) !important;
+    color: var(--pastel-ink) !important;
+    border-color: var(--pastel-border-strong) !important;
+}
+[data-theme="pastel"] input:focus,
+[data-theme="pastel"] select:focus,
+[data-theme="pastel"] textarea:focus {
+    border-color: var(--pastel-blue-400) !important;
+    box-shadow: 0 0 0 3px rgba(107, 140, 199, 0.14) !important;
+}
+[data-theme="pastel"] ::placeholder { color: #a8a293 !important; }
+
+/* ═══ 9. ASCENSEURS ════════════════════════════════════════════════════════ */
+html[data-theme="pastel"] { scrollbar-color: #9db3d9 #ece8df; }
+html[data-theme="pastel"]::-webkit-scrollbar-track { background: #ece8df; }
+html[data-theme="pastel"]::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9db3d9 0%, #7d9bd0 100%);
+    border: 2px solid #ece8df;
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #7d9bd0 0%, #6b8cc7 100%);
+}
+[data-theme="pastel"] * { scrollbar-color: #cbc5b8 transparent; }
+[data-theme="pastel"] ::-webkit-scrollbar-thumb { background: #cbc5b8; }
+[data-theme="pastel"] ::-webkit-scrollbar-thumb:hover { background: #a8a293; }
+
+/* ═══ 10. TABLEAU & SURFACES ═══════════════════════════════════════════════ */
+[data-theme="pastel"] .section-card,
+[data-theme="pastel"] .modal-content,
+[data-theme="pastel"] .notes-modal,
+[data-theme="pastel"] .unified-modal {
+    background: var(--pastel-surface) !important;
+    box-shadow: 0 10px 30px rgba(107, 140, 199, 0.10) !important;
+}
+[data-theme="pastel"] thead th,
+[data-theme="pastel"] .table-header,
+[data-theme="pastel"] .section-header {
+    background: var(--pastel-surface-alt) !important;
+    color: var(--pastel-ink) !important;
+}
+[data-theme="pastel"] tbody tr:hover {
+    background: var(--pastel-blue-50) !important;
+}
+
+/* ═══ 11. BOUTONS D'ACTION COLORÉS (succès / alerte / danger) ══════════════ */
+[data-theme="pastel"] .btn-success,
+[data-theme="pastel"] .toast-success {
+    background: #7cb894 !important; color: #ffffff !important; border-color: #6aa984 !important;
+}
+[data-theme="pastel"] .btn-danger,
+[data-theme="pastel"] .toast-error {
+    background: #d18e8e !important; color: #ffffff !important; border-color: #c47c7c !important;
+}
+[data-theme="pastel"] .btn-warning,
+[data-theme="pastel"] .toast-warning {
+    background: #d9b478 !important; color: #4a3d26 !important; border-color: #cba767 !important;
+}
+
+/* ═══ 12. SÉLECTION DE TEXTE ═══════════════════════════════════════════════
+   `currentColor` est indispensable : sans lui, le texte sélectionné perd sa
+   propre couleur (rouge, bleu, vert des notes) au profit d'une encre unique,
+   alors que les modes clair et sombre la laissent visible. */
+[data-theme="pastel"] ::selection {
+    background: rgba(107, 140, 199, 0.26);
+    color: currentColor;
+    text-shadow: none;
+}
+[data-theme="pastel"] ::-moz-selection {
+    background: rgba(107, 140, 199, 0.26);
+    color: currentColor;
+    text-shadow: none;
+}
+[data-theme="pastel"] {
+    --editable-selection-bg: rgba(107, 140, 199, 0.30);
+}
+
+/* Le chronomètre lancé garde ses couleurs d'état (vert / ambre) : seule la
+   pastille au repos rejoint la famille bleue des boutons voisins. */
+[data-theme="pastel"] .timer-button.active {
+    background: var(--success) !important; color: #ffffff !important;
+    border-color: var(--success-dark) !important;
+}
+[data-theme="pastel"] .timer-button.active.paused {
+    background: var(--warning) !important; color: #453a26 !important;
+    border-color: #c39a54 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENVOI VERS LA TO-DO — séquence identique dans les trois listes
+   (items à revoir en priorité, liste des items, liste des entraînements)
+
+   Le scénario « check vert puis punaise violette » existait déjà côté JS
+   (_animateTodoCheckThenPin), mais la punaise finale ne faisait pas la même
+   taille partout : 34 px dans les entraînements, 22 × 18 px ailleurs au-delà
+   de 1100 px de large. D'où l'impression que le bouton rétrécissait dans deux
+   listes sur trois. On aligne tout sur la taille du bouton qu'il remplace.
+
+   Ces règles ne sont PAS réservées au pastel : la géométrie doit être la même
+   dans les trois thèmes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+    .table-btn-wrap .added-to-checklist-badge,
+    .priority-item-card .added-to-checklist-badge,
+    .added-to-checklist-badge.train-checklist-badge {
+        height: 34px !important;
+        width: 34px !important;
+        min-width: 34px !important;
+        max-width: 34px !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+    }
+    .table-btn-wrap .added-to-checklist-badge i,
+    .priority-item-card .added-to-checklist-badge i,
+    .added-to-checklist-badge.train-checklist-badge i {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* Le check vert intermédiaire : même vert doux et même géométrie partout. */
+[data-theme="pastel"] .todo-add-success-anim.todo-add-success-anim.todo-add-success-anim {
+    background: linear-gradient(135deg, #7cc4a2, #5aa886) !important;
+    color: #ffffff !important;
+    border: 1px solid #5aa886 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(90, 168, 134, 0.34) !important;
+}
+[data-theme="pastel"] .todo-add-success-anim.todo-add-success-anim i { color: #ffffff !important; }
+
+/* Puis la punaise violette, identique dans les trois listes. */
+[data-theme="pastel"] .added-to-checklist-badge,
+[data-theme="pastel"] .added-to-checklist-badge.train-checklist-badge {
+    background: #e6e4f4 !important;
+    color: #6a63a6 !important;
+    border: 1px solid #d4d0ea !important;
+}
+
+</style>
+
+<!-- ═══════════ TO-DO : ANIMATION DE VALIDATION D'UNE TÂCHE ═══════════
+     La tâche se coche, verdit et se barre sur place, puis s'efface avant que
+     la liste ne soit réordonnée. Sans ce délai, elle saute directement en bas
+     de la liste et l'utilisateur ne voit jamais sa validation.
+     ═════════════════════════════════════════════════════════════════ -->
+<style id="todo-validate-anim">
+.checklist-item.just-completed {
+    animation: todoValidatePulse 0.62s cubic-bezier(0.34, 1.2, 0.64, 1);
+    border-color: rgba(90, 168, 134, 0.55) !important;
+}
+@keyframes todoValidatePulse {
+    0%   { transform: scale(1);     box-shadow: none; }
+    30%  { transform: scale(1.022); box-shadow: 0 4px 16px rgba(90, 168, 134, 0.30); }
+    100% { transform: scale(1);     box-shadow: 0 2px 8px rgba(90, 168, 134, 0.16); }
+}
+.checklist-item.just-completed .checklist-checkbox {
+    animation: todoValidateCheck 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes todoValidateCheck {
+    0%   { transform: scale(0.55); }
+    60%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+/* Le texte se barre progressivement plutôt que d'un coup. */
+.checklist-item.just-completed .checklist-item-text {
+    animation: todoValidateStrike 0.45s ease both;
+}
+@keyframes todoValidateStrike {
+    from { opacity: 0.85; }
+    to   { opacity: 1; }
+}
+/* Dernière étape : la tâche s'efface juste avant de rejoindre le bas. */
+.checklist-item.just-completed.leaving {
+    opacity: 0.3;
+    transform: translateY(5px);
+    transition: opacity 0.19s ease, transform 0.19s ease;
+    animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .checklist-item.just-completed,
+    .checklist-item.just-completed .checklist-checkbox,
+    .checklist-item.just-completed .checklist-item-text { animation: none; }
+}
+</style>
+<script id="todo-validate-anim-js">
+/* Joue l'animation sur la tâche <itemId>, PUIS exécute `apply` (qui enregistre
+   l'état et redessine la liste). Si la tâche n'est pas visible — panneau fermé,
+   liste non rendue — on applique immédiatement, sans délai inutile. */
+window._todoValidateAnim = function (itemId, apply) {
+    if (typeof apply !== 'function') return;
+    var nodes;
+    try {
+        nodes = document.querySelectorAll(
+            '.checklist-item[data-todo-id="' + String(itemId).replace(/["\\]/g, '') + '"]');
+    } catch (e) { nodes = []; }
+    var visible = [];
+    for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].offsetParent !== null) visible.push(nodes[i]);
+    }
+    if (!visible.length) { apply(); return; }
+    visible.forEach(function (el) {
+        el.classList.add('completed', 'just-completed');
+        var box = el.querySelector('.checklist-checkbox');
+        if (box) {
+            box.classList.add('checked');
+            if (!box.querySelector('i')) box.innerHTML = '<i class="fas fa-check"></i>';
+            box.style.pointerEvents = 'none';
+        }
+        var del = el.querySelector('.checklist-delete');
+        if (del) del.style.pointerEvents = 'none';
+    });
+    setTimeout(function () {
+        visible.forEach(function (el) { el.classList.add('leaving'); });
+        setTimeout(apply, 190);
+    }, 620);
+};
 </script>
 </body>
 </html>
