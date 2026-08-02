@@ -123,6 +123,41 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 /* Mode sombre - elements internes */
 [data-theme="dark"] * { scrollbar-color: #475569 transparent; }
 
+/* ═══════════════ MODE PASTEL (bleu doux + crème) ═══════════════
+   Mêmes teintes que le mode clair mais désaturées, sur un fond crème très
+   léger. Le pastel est un thème CLAIR : il hérite de toutes les règles de
+   base, seules les couleurs vives sont adoucies. */
+[data-theme="pastel"] {
+    --primary: #6b8cc7;
+    --primary-dark: #5877b0;
+    --primary-light: #9db3d9;
+    --primary-gradient: linear-gradient(135deg, #7d9bd0, #9db3d9);
+    --secondary: #7a8494;
+    --accent: #8fa6d0;
+    --success: #6fae86;
+    --success-light: #dcebe0;
+    --success-dark: #57946e;
+    --warning: #d1a05e;
+    --warning-light: #f0e6d3;
+    --danger: #cf7b7b;
+    --danger-light: #f0dcdc;
+    --background: #f4f1ea;
+    --white: #fbf9f4;
+    --black: #3a3a42;
+    --gray-50: #f1eee7;
+    --gray-100: #e9e5dc;
+    --gray-200: #ddd8cd;
+    --gray-300: #cbc5b8;
+    --gray-400: #a8a293;
+    --gray-500: #857f72;
+    --gray-600: #6a6459;
+    --gray-700: #524d45;
+    --gray-800: #403c36;
+    --gray-900: #302d28;
+    --shadow-blue: 0 10px 25px -5px rgba(107, 140, 199, 0.28);
+    --shadow-blue-lg: 0 20px 30px -10px rgba(107, 140, 199, 0.34);
+}
+
 [data-theme="dark"] {
     --primary: #60a5fa;
     --primary-dark: #3b82f6;
@@ -2283,7 +2318,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="nav-dropdown-content">
                         <a href="TableurEnLigne.html" class="dropdown-item"><i class="fas fa-calculator"></i> Tableur révision EDN</a>
                         <a href="TableurECOS.html" class="dropdown-item"><i class="fas fa-user-doctor"></i> Tableur révision ECOS</a>
-                        <a href="index.html" class="dropdown-item"><i class="fas fa-book"></i> Carnet de stage</a>
+                        <a href="carnet-de-stage.html" class="dropdown-item"><i class="fas fa-book"></i> Carnet de stage</a>
                     </div>
                 </li>
             </ul>
@@ -2919,20 +2954,26 @@ const themeToggle = document.getElementById('theme-toggle');
 const html = document.documentElement;
 const themeIcon = themeToggle.querySelector('i');
 
-const savedTheme = localStorage.getItem('theme') || 'light';
+let savedTheme = localStorage.getItem('theme') || 'light';
+/* Le thème est partagé avec les autres pages du site : on refuse toute valeur
+   inattendue plutôt que de poser un attribut sans feuille de style associée. */
+if (['light', 'dark', 'pastel'].indexOf(savedTheme) === -1) savedTheme = 'light';
 html.setAttribute('data-theme', savedTheme);
 updateThemeIcon(savedTheme);
 
+/* Cycle : clair (soleil) → sombre (lune) → pastel (soleil voilé) → clair… */
 themeToggle.addEventListener('click', () => {
     const currentTheme = html.getAttribute('data-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    const newTheme = currentTheme === 'dark' ? 'pastel'
+                   : (currentTheme === 'pastel' ? 'light' : 'dark');
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
 });
 
 function updateThemeIcon(theme) {
-    themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+    themeIcon.className = theme === 'dark' ? 'fas fa-moon'
+                        : (theme === 'pastel' ? 'fas fa-cloud-sun' : 'fas fa-sun');
 }
 
 // Mobile Menu
@@ -4174,5 +4215,343 @@ window._bodyUnlock = function (owner) {
 })();
 </script>
 
+
+<!-- ═══════════════════ THÈME PASTEL (compte premium) ═══════════════════
+     1. Couche générée : chaque couleur vive écrite en dur dans le CSS de
+        base reçoit sa version adoucie. Le préfixe :where() n'ajoute aucune
+        spécificité : la cascade d'origine est préservée, la jumelle ne
+        l'emporte que par sa position en fin de page.
+     2. Ajustements manuels : header, navigation, boutons, surfaces.
+     ══════════════════════════════════════════════════════════════════ -->
+<style id="pastel-theme">
+/* couche pastel générée : 36 règles, 45 déclarations */
+html[data-theme="pastel"] {
+    --shadow-blue-lg:0 20px 30px -10px rgba(99, 136, 197, 0.6);
+}
+html[data-theme="pastel"] {
+    scrollbar-color:#6388c5 #e5e7eb;
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb {
+    background:linear-gradient(180deg, #6388c5 0%, #876bc6 100%);
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
+    background:linear-gradient(180deg, #5e76b7 0%, #8665c0 100%);
+}
+:where(html[data-theme="pastel"]) .dropdown-item.active {
+    background-color:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .profile-menu-item.logout {
+    color:#bb4545;
+}
+:where(html[data-theme="pastel"]) .mobile-menu-link.active {
+    background-color:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .hero {
+    background:linear-gradient(135deg, #7180bf 0%, #89749f 100%);
+}
+:where(html[data-theme="pastel"]) .hero::after {
+    background:radial-gradient(circle, rgba(135, 107, 198, 0.3) 0%, transparent 70%);
+}
+:where(html[data-theme="pastel"]) .status-side {
+    background:linear-gradient(160deg, #f4f7fb, #e8eef6);
+}
+:where(html[data-theme="pastel"]) .status-card.is-active .status-side {
+    background:linear-gradient(160deg, #f4faf7, #e0f0e8);
+}
+:where(html[data-theme="pastel"]) .status-card.is-grace .status-side {
+    background:linear-gradient(160deg, #fbf9f4, #f0ecda);
+}
+:where(html[data-theme="pastel"]) .status-card.is-inactive .status-side {
+    background:linear-gradient(160deg, #fef2f2, #f8eded);
+}
+:where(html[data-theme="pastel"]) .status-card.is-active .status-side-icon {
+    background:linear-gradient(135deg, #51b896, #43b893);
+    box-shadow:0 10px 25px -5px rgba(103, 187, 159, 0.31);
+}
+:where(html[data-theme="pastel"]) .status-card.is-grace .status-side-icon {
+    background:linear-gradient(135deg, #c19a58, #c08b4f);
+    box-shadow:0 10px 25px -5px rgba(195, 164, 111, 0.31);
+}
+:where(html[data-theme="pastel"]) .status-card.is-inactive .status-side-icon {
+    background:linear-gradient(135deg, #c16767, #b66363);
+    box-shadow:0 10px 25px -5px rgba(197, 125, 125, 0.31);
+}
+:where(html[data-theme="pastel"]) .status-grace {
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .status-inactive {
+    color:#8f3d3d;
+}
+:where(html[data-theme="pastel"]) .dot.dot-warn {
+    background:#c19a58;
+}
+:where(html[data-theme="pastel"]) .info-note {
+    border-left:4px solid #c7aa78;
+    color:#7f4e30;
+}
+:where(html[data-theme="pastel"]) .info-note-blue {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .pricing-locked-note {
+    background:rgba(99, 136, 197, 0.08);
+}
+:where(html[data-theme="pastel"]) .alert-warning {
+    color:#7b6627;
+}
+:where(html[data-theme="pastel"]) .alert-info {
+    background:#dde8ea;
+    color:#2c646d;
+    border-left:4px solid #73b1bb;
+}
+:where(html[data-theme="pastel"]) .pricing-section::before {
+    background:radial-gradient(circle, rgba(99, 136, 197, 0.1) 0%, transparent 70%);
+}
+:where(html[data-theme="pastel"]) .pricing-card::before {
+    background:linear-gradient(135deg, rgba(99, 136, 197, 0.05), rgba(135, 107, 198, 0.05));
+}
+:where(html[data-theme="pastel"]) .pricing-card.recommended {
+    box-shadow:0 0 0 4px rgba(122, 151, 199, 0.062), var(--shadow-lg);
+}
+:where(html[data-theme="pastel"]) .toast-logout.info .toast-logout-icon {
+    background:rgba(99, 136, 197, 0.1);
+}
+:where(html[data-theme="pastel"]) .benefits-toggle-pill {
+    background:var(--primary-gradient, linear-gradient(135deg, #6388c5, #607dbd));
+    box-shadow:0 4px 14px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .back-to-tableur-btn {
+    background:linear-gradient(135deg, #51b896, #43b893);
+    box-shadow:0 4px 12px rgba(103, 187, 159, 0.186);
+}
+:where(html[data-theme="pastel"]) .back-to-tableur-btn:hover {
+    background:linear-gradient(135deg, #43b893, #41b493);
+    box-shadow:0 6px 20px rgba(103, 187, 159, 0.248);
+}
+:where(html[data-theme="pastel"]) .legal-card-icon {
+    box-shadow:0 4px 12px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .help-modal-icon {
+    box-shadow:0 2px 8px rgba(122, 151, 199, 0.217);
+}
+:where(html[data-theme="pastel"]) .help-modal-close:hover {
+    box-shadow:0 4px 12px rgba(197, 125, 125, 0.279);
+}
+:where(html[data-theme="pastel"]) .modal-highlight {
+    background:rgba(99, 136, 197, 0.07);
+}
+:where(html[data-theme="pastel"]) .consent-plan {
+    background:rgba(99, 136, 197, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTEMENTS PASTEL — page Compte premium
+   Écrits à la main, appliqués après la couche générée.
+   Cette page s'appuie presque entièrement sur les variables de thème : la
+   palette pastel suffit à l'essentiel. Ne restent ici que les surfaces écrites
+   en dur et quelques harmonisations.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="pastel"] {
+    --pastel-surface:        #fbf9f4;
+    --pastel-surface-alt:    #f2efe6;
+    --pastel-blue-50:        #eef2fa;
+    --pastel-blue-100:       #e2eaf7;
+    --pastel-blue-200:       #cbd9ef;
+    --pastel-blue-400:       #8ea9d6;
+    --pastel-blue-500:       #6b8cc7;
+    --pastel-blue-600:       #5877b0;
+    --pastel-border:         #e2ddd2;
+    --pastel-border-strong:  #cfc8ba;
+    --pastel-ink:            #443f38;
+    --pastel-ink-soft:       #6a6459;
+}
+
+/* ═══ 1. HEADER & NAVIGATION ═══════════════════════════════════════════════
+   Le fond du header est écrit en dur (blanc translucide) : sans cette règle il
+   trancherait avec le crème du reste de la page. */
+[data-theme="pastel"] .header {
+    background-color: rgba(251, 249, 244, 0.93) !important;
+    border-bottom: 1px solid var(--pastel-border);
+    box-shadow: 0 1px 10px rgba(107, 140, 199, 0.07);
+}
+[data-theme="pastel"] .header.scrolled {
+    box-shadow: 0 3px 18px rgba(107, 140, 199, 0.14);
+}
+[data-theme="pastel"] .logo { color: var(--pastel-blue-600); }
+[data-theme="pastel"] .logo-icon {
+    background: linear-gradient(135deg, #7d9bd0, #9db3d9) !important;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(107, 140, 199, 0.30);
+}
+[data-theme="pastel"] .nav-dropdown-trigger,
+[data-theme="pastel"] .dropdown-item,
+[data-theme="pastel"] .mobile-menu-link,
+[data-theme="pastel"] .profile-menu-item {
+    color: var(--pastel-ink);
+}
+[data-theme="pastel"] .nav-dropdown-trigger:hover,
+[data-theme="pastel"] .dropdown-item:hover,
+[data-theme="pastel"] .mobile-menu-link:hover {
+    color: var(--pastel-blue-600);
+}
+[data-theme="pastel"] .dropdown-item:hover,
+[data-theme="pastel"] .profile-menu-item:hover {
+    background-color: var(--pastel-blue-50);
+}
+[data-theme="pastel"] .nav-dropdown-content,
+[data-theme="pastel"] .profile-dropdown {
+    border: 1px solid var(--pastel-border);
+    box-shadow: 0 12px 28px rgba(107, 140, 199, 0.16);
+}
+[data-theme="pastel"] .dropdown-item i { color: var(--pastel-blue-400); }
+[data-theme="pastel"] .mobile-menu { border-bottom: 1px solid var(--pastel-border); }
+
+/* ═══ 2. BOUTON DE THÈME ═══════════════════════════════════════════════════
+   Au repos il doit être dessiné, au survol franchement bleu : sur fond crème,
+   un simple changement de gris passerait inaperçu. */
+[data-theme="pastel"] .theme-toggle,
+[data-theme="pastel"] .auth-btn,
+[data-theme="pastel"] .mobile-menu-btn {
+    background: var(--pastel-blue-50) !important;
+    color: var(--pastel-blue-600) !important;
+    border: 1px solid var(--pastel-blue-200) !important;
+}
+[data-theme="pastel"] .theme-toggle:hover {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border-color: var(--pastel-blue-600) !important;
+    box-shadow: 0 4px 14px rgba(107, 140, 199, 0.42) !important;
+    transform: rotate(15deg) scale(1.06);
+}
+[data-theme="pastel"] .auth-btn:hover,
+[data-theme="pastel"] .mobile-menu-btn:hover {
+    background: var(--pastel-blue-500) !important;
+    color: #ffffff !important;
+    border-color: var(--pastel-blue-600) !important;
+    box-shadow: 0 4px 14px rgba(107, 140, 199, 0.42) !important;
+}
+[data-theme="pastel"] .user-avatar {
+    box-shadow: 0 0 0 2px rgba(107, 140, 199, 0.18);
+}
+
+/* ═══ 3. SURFACES ══════════════════════════════════════════════════════════ */
+[data-theme="pastel"] .status-card,
+[data-theme="pastel"] .pricing-card,
+[data-theme="pastel"] .feature-card,
+[data-theme="pastel"] .legal-card,
+[data-theme="pastel"] .faq-item,
+[data-theme="pastel"] .toast-logout,
+[data-theme="pastel"] .benefits-panel,
+[data-theme="pastel"] .help-modal {
+    border-color: var(--pastel-border);
+    box-shadow: 0 8px 24px rgba(107, 140, 199, 0.09);
+}
+/* La carte recommandée avait un dégradé blanc écrit en dur : il ressortait en
+   pastille froide au milieu du crème. */
+[data-theme="pastel"] .pricing-card.recommended {
+    background: linear-gradient(135deg, #fbf9f4, #f3f0e8) !important;
+    border-color: var(--pastel-blue-200);
+    box-shadow: 0 12px 30px rgba(107, 140, 199, 0.16);
+}
+[data-theme="pastel"] .modal-body,
+[data-theme="pastel"] .help-modal-body {
+    background: var(--pastel-surface);
+}
+
+/* ═══ 4. BOUTONS ═══════════════════════════════════════════════════════════ */
+[data-theme="pastel"] .btn-primary,
+[data-theme="pastel"] .btn-manage,
+[data-theme="pastel"] .modal-ok {
+    box-shadow: 0 2px 10px rgba(107, 140, 199, 0.28);
+}
+[data-theme="pastel"] .btn-primary:hover,
+[data-theme="pastel"] .btn-manage:hover,
+[data-theme="pastel"] .modal-ok:hover {
+    box-shadow: 0 6px 18px rgba(107, 140, 199, 0.38);
+}
+[data-theme="pastel"] .help-modal-close {
+    background: var(--pastel-blue-50);
+    color: var(--pastel-blue-600);
+    border: 1px solid var(--pastel-blue-200);
+}
+[data-theme="pastel"] .help-modal-close:hover {
+    background: var(--pastel-blue-100);
+    border-color: var(--pastel-blue-400);
+    color: var(--pastel-blue-600);
+}
+
+/* Sélecteur EDN / ECOS : c'est un rail avec une pastille qui COULISSE dessous.
+   Les deux boutons doivent rester transparents et sans bordure — leur donner
+   un fond en ferait deux pastilles concurrentes, et la bordure fausserait les
+   largeurs mesurées en JS pour positionner la pastille. On habille donc le
+   rail et la pastille, jamais les boutons. */
+[data-theme="pastel"] .benefits-toggle {
+    background: var(--pastel-surface-alt);
+    border-color: var(--pastel-border);
+}
+[data-theme="pastel"] .benefits-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--pastel-ink-soft);
+}
+[data-theme="pastel"] .benefits-toggle-btn:hover {
+    background: transparent;
+    color: var(--pastel-blue-600);
+}
+[data-theme="pastel"] .benefits-toggle-btn.active,
+[data-theme="pastel"] .benefits-toggle-btn.active:hover {
+    background: transparent;
+    color: #ffffff;
+}
+[data-theme="pastel"] .benefits-toggle-pill {
+    background: linear-gradient(135deg, #7d9bd0, #6b8cc7);
+    box-shadow: 0 4px 14px rgba(107, 140, 199, 0.35);
+}
+
+/* ═══ 5. CHAMPS DE SAISIE ══════════════════════════════════════════════════ */
+[data-theme="pastel"] input,
+[data-theme="pastel"] select,
+[data-theme="pastel"] textarea {
+    background: var(--pastel-surface);
+    color: var(--pastel-ink);
+    border-color: var(--pastel-border-strong);
+}
+[data-theme="pastel"] input:focus,
+[data-theme="pastel"] select:focus,
+[data-theme="pastel"] textarea:focus {
+    border-color: var(--pastel-blue-400);
+    box-shadow: 0 0 0 3px rgba(107, 140, 199, 0.14);
+}
+[data-theme="pastel"] ::placeholder { color: #a8a293; }
+
+/* ═══ 6. ASCENSEURS ════════════════════════════════════════════════════════
+   Le rail de la barre principale est écrit en dur (#e5e7eb, gris froid) :
+   la couche générée le laisse tel quel puisque c'est un neutre. */
+html[data-theme="pastel"] { scrollbar-color: #9db3d9 #ece8df; }
+html[data-theme="pastel"]::-webkit-scrollbar-track { background: #ece8df; }
+html[data-theme="pastel"]::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9db3d9 0%, #7d9bd0 100%);
+    border-color: #ece8df;
+}
+html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #7d9bd0 0%, #6b8cc7 100%);
+}
+[data-theme="pastel"] * { scrollbar-color: #cbc5b8 transparent; }
+[data-theme="pastel"] ::-webkit-scrollbar-thumb { background: #cbc5b8; }
+[data-theme="pastel"] ::-webkit-scrollbar-thumb:hover { background: #a8a293; }
+
+/* ═══ 7. SÉLECTION DE TEXTE ════════════════════════════════════════════════ */
+[data-theme="pastel"] ::selection {
+    background: rgba(107, 140, 199, 0.26);
+    color: currentColor;
+    text-shadow: none;
+}
+[data-theme="pastel"] ::-moz-selection {
+    background: rgba(107, 140, 199, 0.26);
+    color: currentColor;
+    text-shadow: none;
+}
+
+</style>
 </body>
 </html>
