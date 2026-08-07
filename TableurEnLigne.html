@@ -18033,7 +18033,6 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, getBlob } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -18058,7 +18057,6 @@ const OFFLINE_CHECK_INTERVAL = 10000; // Vérifier toutes les 5 secondes
 let pendingChecklistItemId = null;
 
 const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app, 'europe-west1');
 const auth = getAuth(app);
 const db = getFirestore(app);
 window._db = db;
@@ -19425,9 +19423,8 @@ function getInitials(name) {
 }
 
 // Cache pour la vérification premium (évite les appels répétés)
-let premiumStatusCache = null;
-let premiumStatusCacheTime = null;
-const PREMIUM_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// Statut premium : évalué localement par window.tpxHasPremiumAccess()
+// (cf. tpx-billing.js + bloc TPX en bas de page). Aucun cache ni appel réseau.
 
 // ════════════════════════════════════
 // GESTION DE SESSION : Inactivité (5h) 
@@ -19616,47 +19613,21 @@ async function updateUserUI(user) {
         }
         
         // ═══════════════════════════════════════════════════════════
-        // ÉTAPE 3 : Vérification premium EN ARRIÈRE-PLAN (non bloquant)
+        // ÉTAPE 3 : Statut premium — calcul local, aligné sur ECOS
         // ═══════════════════════════════════════════════════════════
-        // ✅ Cette vérification ne bloque plus l'accès aux données
-        (async () => {
-            const now = Date.now();
-            let isPremium = false;
-            
-            // Vérifier si le cache est valide (moins de 5 minutes)
-            if (premiumStatusCache !== null && premiumStatusCacheTime && (now - premiumStatusCacheTime) < PREMIUM_CACHE_DURATION) {
-                isPremium = premiumStatusCache;
-                
-			
-            } else {
-                try {
-                    const checkPremiumStatus = httpsCallable(functions, 'checkPremiumStatus');
-                    const result = await checkPremiumStatus();
-                    isPremium = result.data.isPremium;
-                    
-                    premiumStatusCache = isPremium;
-                    premiumStatusCacheTime = now;
-                    
-                } catch (error) {
-                    console.error('Erreur vérification premium:', error);
-                    
-                    // Si on a un cache même expiré, l'utiliser
-                    if (premiumStatusCache !== null) {
-                        console.warn('⚠️ Utilisation du cache expiré suite à une erreur');
-                        isPremium = premiumStatusCache;
-                    } else {
-                        // ✅ NOUVEAU : Au lieu de rediriger, afficher un message
-                        // mais PERMETTRE l'accès en lecture aux données déjà chargées
-                        console.warn('⚠️ Impossible de vérifier le statut premium - Accès limité');
-                        // showPremiumVerificationError(); // désactivé pendant la période de grâce
-                        return; // Sortir sans rediriger
-                    }
-                }
-            }
-            
-            // ✅ Vérification premium désactivée pendant la période de grâce
-            // if (!isPremium) { showPremiumRequiredMessage(); }
-        })();
+        // L'ancien appel à la Cloud Function 'checkPremiumStatus' a été retiré :
+        // la fonction n'est pas déployée (seules stripeWebhook, createCheckoutSession
+        // et createCustomerPortalSession le sont), et son résultat n'était plus utilisé.
+        // Le statut est désormais évalué par window.tpxHasPremiumAccess(), exactement
+        // comme dans TableurECOS.html, à partir du doc utilisateur déjà chargé :
+        //   isPremium + subscriptionStatus === 'active'  → abonné
+        //   subscriptionEndDate encore valide            → annulé mais payé
+        //   sinon window.tpxTrialEnd()                   → essai / grâce en cours
+        // Les champs Stripe étant écrits par stripeWebhook via l'Admin SDK et
+        // interdits en écriture à l'utilisateur par les règles Firestore, cette
+        // lecture côté client est fiable ; la sécurité réelle reste dans les règles.
+        // tpxApplyPremiumState() a déjà été appelé plus haut (étape 2) : verrou,
+        // couronne et pastille d'essai sont donc à jour, sans aucun appel réseau.
         
         setTimeout(hideLoader, 500);
         
@@ -19675,6 +19646,8 @@ async function updateUserUI(user) {
         if (unsubscribe) { unsubscribe(); unsubscribe = null; }
         stopUserSettingsListener(); // 🎨 Arrêter le listener de préférences
         if (window.stopSharedNotesListener) window.stopSharedNotesListener(); // 🔴 Arrêter les pastilles
+        if (window.stopFriendsListener) window.stopFriendsListener();         // 👥 Arrêter le listener amis
+        if (window.stopFeedbackMsgListener) window.stopFeedbackMsgListener(); // 💬 Arrêter le listener feedbacks
         window._itemNotesExistSet = null; // 🔑 Réinitialiser le set notes (clés UID-spécifiques)
 		// 🚫 Cacher le bouton de sauvegarde
 			const backupBtn = document.getElementById('backup-settings-btn');
@@ -38156,12 +38129,28 @@ function _startListener(uid) {
 }
 
 // ── Attendre currentUser ─────────────────────────────────────────────────────
-(function _waitForUser() {
+let _fbMsgWaitIv = null;
+function _waitForUser() {
+    if (_fbMsgWaitIv) { clearInterval(_fbMsgWaitIv); _fbMsgWaitIv = null; }
     if (window.currentUser) { _startListener(window.currentUser.uid); return; }
-    const _iv = setInterval(() => {
-        if (window.currentUser) { clearInterval(_iv); _startListener(window.currentUser.uid); }
+    _fbMsgWaitIv = setInterval(() => {
+        if (window.currentUser) {
+            clearInterval(_fbMsgWaitIv); _fbMsgWaitIv = null;
+            _startListener(window.currentUser.uid);
+        }
     }, 400);
-})();
+}
+_waitForUser();
+
+// Ferme le listener à la déconnexion (sinon : permission-denied sur /feedbacks)
+// et se remet en attente pour une reconnexion sans rechargement de page.
+window.stopFeedbackMsgListener = function () {
+    if (_fbMsgUnsub) { _fbMsgUnsub(); _fbMsgUnsub = null; }
+    _fbMsgAllData = [];
+    _currentUid = null;
+    _updateDots(0);
+    _waitForUser();
+};
 
 </script>
 
@@ -38314,12 +38303,15 @@ window.switchFriendsTab = function (tab) {
 
 // ── Listener temps-réel sur le doc utilisateur ───────────────────────────────
 let _friendsUnsub = null;
+let _friendsWanted = false;   // évite qu'un import résolu après la déconnexion rouvre le listener
 window.startFriendsListener = function (uid) {
-    if (_friendsUnsub) _friendsUnsub();
+    _friendsWanted = true;
+    if (_friendsUnsub) { _friendsUnsub(); _friendsUnsub = null; }
     // Fix : l'ancien bloc destructurait { onSnapshot: null, doc: null } depuis window._fsGetDoc
     // (logique ternaire inversée), ce qui était du code mort et pouvait masquer des erreurs.
     // On utilise directement l'import dynamique.
     import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ onSnapshot, doc }) => {
+        if (!_friendsWanted) return;   // déconnexion survenue pendant le chargement du module
         _friendsUnsub = onSnapshot(doc(db, 'users', uid), snap => {
             if (!snap.exists()) return;
             const data = snap.data();
@@ -38331,6 +38323,15 @@ window.startFriendsListener = function (uid) {
             _localReceived = data.friendRequestsReceived || [];
         });
     });
+};
+
+// Ferme le listener à la déconnexion : sans cela, onSnapshot continue d'écouter
+// users/{uid} sans droits et déclenche « Missing or insufficient permissions ».
+window.stopFriendsListener = function () {
+    _friendsWanted = false;
+    if (_friendsUnsub) { _friendsUnsub(); _friendsUnsub = null; }
+    window._friendsData = null;
+    _localFriends = []; _localSent = []; _localReceived = [];
 };
 
 function updateFriendsNotifDot(data) {
