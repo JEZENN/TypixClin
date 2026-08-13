@@ -47582,71 +47582,83 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
 })();
 </script>
 
-<!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT (v2) ═══════════
-     PROBLÈME
-     À l'ouverture du clavier, iOS décale la zone visible à l'intérieur de la
-     fenêtre de mise en page. Les overlays en position:fixed suivaient ce
-     décalage : en-tête et haut de la barre d'outils sortaient de l'écran.
+<!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT (v3) ═══════════
+     PROBLÈMES CORRIGÉS PAR RAPPORT À LA v2
+     a) L'épinglage ne s'activait pas au PREMIER modal ouvert après le
+        chargement : la hauteur de référence « sans clavier » était mesurée
+        trop tôt et pouvait être fausse, la détection du clavier échouait donc
+        silencieusement. C'est ce qui laissait le modal Notes SDD rogné en
+        haut alors que le cahier d'erreurs, ouvert ensuite, fonctionnait.
+        → Plus AUCUNE détection par différence de hauteur : on épingle dès
+          qu'une zone de saisie du modal a le focus. Sans clavier, l'épinglage
+          revient à occuper l'écran entier : effet nul, donc inoffensif.
+     b) La page restait visible sous le modal (bande entre le bas du modal et
+        le clavier) : sur iPhone, la fenêtre de mise en page rétrécit à
+        l'ouverture du clavier, et tout ce qui se trouve dessous continue
+        d'être dessiné.
+        → L'overlay déborde volontairement de 420 px de chaque côté et son
+          fond devient opaque : plus rien ne peut transparaître.
+     c) La hauteur du modal dépendait d'un `height: 100%` résolu par le flux
+        flex de l'overlay — fragile selon les modals.
+        → Le modal est désormais positionné en ABSOLU aux coordonnées exactes
+          de la zone visible. Son haut ne peut plus sortir de l'écran.
 
-     PRINCIPE DU CORRECTIF (volontairement « increvable »)
-     1. L'overlay garde `inset: 0` : il couvre TOUJOURS tout l'écran. Même si
-        la mesure de la zone visible est imprécise d'un instant, la page ne
-        peut JAMAIS réapparaître derrière (c'était le défaut de la v1).
-     2. La zone visible est reportée en PADDING sur l'overlay : la boîte de
-        contenu correspond exactement à l'espace au-dessus du clavier.
-     3. `align-items: flex-start` : le modal est calé en HAUT de cette boîte,
-        jamais centré. Conséquence : le haut du modal (en-tête + barre
-        d'outils) ne peut plus être rogné, quelle que soit l'erreur de mesure.
-        Au pire, c'est le bas qui se comprime — et il défile.
-     4. Aucun défilement programmatique de la PAGE (plus de scrollIntoView) :
-        seul un conteneur réellement défilant du modal est ajusté, pour éviter
-        toute bagarre avec le repositionnement natif d'iOS.
-
-     PÉRIMÈTRE
-     TÉLÉPHONE uniquement (plus petit côté d'écran < 600 px). iPad, tablette
-     et ordinateur : le script s'arrête immédiatement, `tcp-kb-pin` n'est
-     jamais posée, rien ne change.
+     PÉRIMÈTRE : téléphone uniquement (plus petit côté d'écran < 600 px).
+     iPad, tablette et ordinateur : le script s'arrête immédiatement.
      ══════════════════════════════════════════════════════════════════ -->
 <style>
-/* ── 1. Overlay : couvre tout l'écran, contenu limité à la zone visible ── */
+/* ── 1. Overlay : déborde largement de l'écran + fond opaque.
+       Aucune bande de page ne peut réapparaître, ni sous le modal, ni sur
+       les côtés, même si la fenêtre de mise en page rétrécit. ── */
 body.tcp-kb-pin .notes-modal-overlay.active,
 body.tcp-kb-pin .planning-day-detail-overlay.active,
 body.tcp-kb-pin .pdd-overlay.active {
     position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
+    top: -420px !important;
+    left: -420px !important;
+    right: -420px !important;
+    bottom: -420px !important;
     width: auto !important;
     height: auto !important;
     margin: 0 !important;
-    padding: var(--tcp-vv-top, 0px) var(--tcp-vv-right, 0px) var(--tcp-vv-bottom, 0px) var(--tcp-vv-left, 0px) !important;
-    align-items: flex-start !important;
+    padding: 0 !important;
+    display: block !important;
     overflow: hidden !important;
     overscroll-behavior: contain;
+    background: rgb(11, 17, 30) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
 }
-/* ── 2. Modal : cale en haut, occupe la zone visible, jamais plus ── */
+/* ── 2. Modal : posé en absolu sur la zone visible exacte. Plus de calcul
+       en pourcentage, plus de centrage : le haut est garanti à l'écran. ── */
 body.tcp-kb-pin .notes-modal-overlay.active .notes-modal,
 body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-modal,
 body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
-    height: 100% !important;
-    max-height: 100% !important;
+    position: absolute !important;
+    top: calc(var(--tcp-vv-top, 0px) + 420px) !important;
+    left: calc(var(--tcp-vv-left, 0px) + 420px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: var(--tcp-vv-w, 100vw) !important;
+    height: var(--tcp-vv-h, 100vh) !important;
     min-height: 0 !important;
+    max-height: none !important;
+    max-width: none !important;
     margin: 0 !important;
-    flex-shrink: 1 !important;
+    border-radius: 0 !important;
 }
-/* ── 3. Notes / cahiers d'erreurs : la barre d'outils reste entière, la zone
-       de saisie garde la priorité, le panneau du bas est plafonné ── */
+/* ── 3. Notes / cahiers d'erreurs : barre d'outils entière, saisie
+       prioritaire, panneau du bas plafonné.
+       NB : on ne touche PAS au `position` de la barre d'outils — le switch
+       Notes/Reçues est positionné en absolu par rapport au PANNEAU éditeur ;
+       rendre la barre « relative » le ferait glisser avec le défilement
+       horizontal des outils. ── */
 body.tcp-kb-pin .notes-modal-overlay.active .notes-modal-body { min-height: 0 !important; }
+body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar { flex-shrink: 0 !important; }
 body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-panel,
 body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-left {
     flex: 1 1 auto !important;
     min-height: 0 !important;
-}
-body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar {
-    flex-shrink: 0 !important;
-    position: relative !important;
-    z-index: 3;
 }
 body.tcp-kb-pin .notes-modal-overlay.active .notes-info-panel:not(.oic-collapsed),
 body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-right {
@@ -47704,59 +47716,43 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
 
     var root = document.documentElement;
     var body = document.body;
-    var KB_MIN = 120;
-    var SEL = '.notes-modal-overlay.active, .planning-day-detail-overlay.active, .pdd-overlay.active';
+    var OVERLAYS = '.notes-modal-overlay, .planning-day-detail-overlay, .pdd-overlay';
     var VEIL = ['notes-modal-overlay', 'planning-day-detail-overlay', 'pdd-overlay'];
 
     var raf = null, pinned = false, watchdog = null;
-
-    /* Hauteur du bloc conteneur des éléments position:fixed. clientHeight est
-       la mesure fiable ici (innerHeight peut inclure la barre d'outils du
-       navigateur). On garde la plus grande valeur observée comme référence
-       « sans clavier », car certains navigateurs rétrécissent aussi cette
-       hauteur à l'ouverture du clavier. */
-    function layoutH() { return root.clientHeight || window.innerHeight || 0; }
-    var _baseH = layoutH();
-    var _baseW = window.innerWidth;
-    window.addEventListener('resize', function () {
-        var h = layoutH();
-        if (h > _baseH || Math.abs(window.innerWidth - _baseW) > 2) { _baseH = h; _baseW = window.innerWidth; }
-    });
-    window.addEventListener('orientationchange', function () {
-        setTimeout(function () { _baseH = layoutH(); _baseW = window.innerWidth; onChange(); }, 400);
-    });
 
     var _lastDrag = 0;
     window.addEventListener('touchmove', function () { _lastDrag = Date.now(); },
         { passive: true, capture: true });
 
+    /* Condition d'épinglage : une zone de saisie d'un des modals concernés a
+       le focus. Aucune mesure de hauteur, donc rien qui puisse échouer au
+       premier modal ouvert. Sans clavier, l'épinglage revient à occuper tout
+       l'écran : le rendu est identique au comportement normal. */
+    function shouldPin() {
+        var el = document.activeElement;
+        if (!el || typeof el.closest !== 'function') return false;
+        var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
+            (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
+        if (!editable) return false;
+        var ov = el.closest(OVERLAYS);
+        return !!(ov && ov.classList.contains('active'));
+    }
+
     function apply() {
         var vv = window.visualViewport;
-        var lh = layoutH();
-        var ref = Math.max(lh, _baseH);
-        var kb = Math.max(0, ref - vv.height);
-        /* Un décalage vertical de la zone visible est, à lui seul, le signe
-           que le navigateur a poussé la page pour dégager le champ saisi. */
-        var open = (kb > KB_MIN || vv.offsetTop > 30) && !!document.querySelector(SEL);
+        var want = shouldPin();
 
-        if (open) {
-            var top = Math.max(0, Math.round(vv.offsetTop));
-            var left = Math.max(0, Math.round(vv.offsetLeft));
-            var bottom = Math.max(0, Math.round(lh - vv.offsetTop - vv.height));
-            var right = Math.max(0, Math.round((root.clientWidth || window.innerWidth) - vv.offsetLeft - vv.width));
-            /* Filet de sécurité : on ne laisse jamais les marges dévorer la
-               quasi-totalité de la hauteur (mesure aberrante = modal
-               inutilisable). */
-            if (top + bottom > lh - 160) { bottom = Math.max(0, lh - 160 - top); }
-            root.style.setProperty('--tcp-vv-top', top + 'px');
-            root.style.setProperty('--tcp-vv-bottom', bottom + 'px');
-            root.style.setProperty('--tcp-vv-left', left + 'px');
-            root.style.setProperty('--tcp-vv-right', right + 'px');
+        if (want) {
+            root.style.setProperty('--tcp-vv-top', Math.round(vv.offsetTop) + 'px');
+            root.style.setProperty('--tcp-vv-left', Math.round(vv.offsetLeft) + 'px');
+            root.style.setProperty('--tcp-vv-w', Math.round(vv.width) + 'px');
+            root.style.setProperty('--tcp-vv-h', Math.round(vv.height) + 'px');
             if (!pinned) {
                 pinned = true;
                 body.classList.add('tcp-kb-pin');
                 caretFollow(280);
-                if (!watchdog) watchdog = setInterval(apply, 400);
+                if (!watchdog) watchdog = setInterval(apply, 350);
             }
         } else if (pinned) {
             pinned = false;
@@ -47772,13 +47768,14 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
 
     window.visualViewport.addEventListener('resize', onChange);
     window.visualViewport.addEventListener('scroll', onChange);
+    window.addEventListener('orientationchange', function () { setTimeout(onChange, 400); });
 
-    /* Le clavier arrive par étapes sur iOS : on repasse plusieurs fois. */
+    /* Le clavier arrive par étapes sur iOS : plusieurs passes après le focus. */
     document.addEventListener('focusin', function () {
-        [0, 120, 320, 650].forEach(function (d) { setTimeout(onChange, d); });
+        [0, 60, 160, 340, 650].forEach(function (d) { setTimeout(onChange, d); });
     });
     document.addEventListener('focusout', function () {
-        [120, 400].forEach(function (d) { setTimeout(onChange, d); });
+        [80, 260, 500].forEach(function (d) { setTimeout(onChange, d); });
     });
 
     /* ── Rect du curseur dans un contenteditable (une ligne vide n'a pas de
@@ -47821,10 +47818,9 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         } catch (e) { return null; }
     }
 
-    /* Garde le curseur visible — UNIQUEMENT en faisant défiler un conteneur
-       interne réellement défilant. Jamais la page : aucun scrollIntoView, donc
-       aucune bagarre avec le repositionnement natif d'iOS (c'est ce qui
-       décalait le modal en v1). */
+    /* Garde le curseur visible — UNIQUEMENT via un conteneur interne
+       réellement défilant. Jamais la page : aucun scrollIntoView, donc aucune
+       bagarre avec le repositionnement natif d'iOS. */
     function caretFollow(delay) {
         var el = document.activeElement;
         if (!el) return;
@@ -47836,7 +47832,7 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
             if (Date.now() - _lastDrag < 500) return;
             var sc = el;
             while (sc && sc !== document.body && !(sc.scrollHeight > sc.clientHeight + 2)) sc = sc.parentElement;
-            if (!sc || sc === document.body || sc === document.documentElement) return; /* rien à faire */
+            if (!sc || sc === document.body || sc === document.documentElement) return;
             var rect = caretRect(el);
             if (!rect) return;
             var cr = sc.getBoundingClientRect();

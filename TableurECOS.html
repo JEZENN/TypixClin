@@ -41192,68 +41192,89 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .
 })();
 </script>
 
-<!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT ═══════════
-     PROBLÈME CORRIGÉ
-     À l'ouverture du clavier, iOS/Android décale la fenêtre visible vers le
-     haut à l'intérieur de la fenêtre de mise en page. Les overlays en
-     position:fixed suivent ce décalage : l'en-tête et le HAUT DE LA BARRE
-     D'OUTILS des modals Notes / Cahiers d'erreurs sortaient de l'écran
-     (barre « rognée »), et le modal Détail de la journée devenait pénible
-     à faire défiler.
+<!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT (v3) ═══════════
+     PROBLÈMES CORRIGÉS PAR RAPPORT À LA v2
+     a) L'épinglage ne s'activait pas au PREMIER modal ouvert après le
+        chargement : la hauteur de référence « sans clavier » était mesurée
+        trop tôt et pouvait être fausse, la détection du clavier échouait donc
+        silencieusement. C'est ce qui laissait le modal Notes SDD rogné en
+        haut alors que le cahier d'erreurs, ouvert ensuite, fonctionnait.
+        → Plus AUCUNE détection par différence de hauteur : on épingle dès
+          qu'une zone de saisie du modal a le focus. Sans clavier, l'épinglage
+          revient à occuper l'écran entier : effet nul, donc inoffensif.
+     b) La page restait visible sous le modal (bande entre le bas du modal et
+        le clavier) : sur iPhone, la fenêtre de mise en page rétrécit à
+        l'ouverture du clavier, et tout ce qui se trouve dessous continue
+        d'être dessiné.
+        → L'overlay déborde volontairement de 420 px de chaque côté et son
+          fond devient opaque : plus rien ne peut transparaître.
+     c) La hauteur du modal dépendait d'un `height: 100%` résolu par le flux
+        flex de l'overlay — fragile selon les modals.
+        → Le modal est désormais positionné en ABSOLU aux coordonnées exactes
+          de la zone visible. Son haut ne peut plus sortir de l'écran.
 
-     CORRECTIF
-     Tant que le clavier est ouvert, l'overlay actif est ÉPINGLÉ exactement
-     sur la zone réellement visible (API visualViewport) : en-tête et barre
-     d'outils entiers en haut, pied du modal juste au-dessus du clavier.
-     Un seul conteneur défilant à l'intérieur (l'éditeur) → défilement au
-     doigt franc, et le curseur reste toujours visible pendant la frappe.
-
-     PÉRIMÈTRE
-     N'AGIT QUE SUR TÉLÉPHONE (plus petit côté d'écran < 600 px). iPad,
-     tablettes et ordinateur ne sont touchés en RIEN : le script s'arrête
-     immédiatement et la classe `tcp-kb-pin` n'est jamais posée.
-     ════════════════════════════════════════════════════════════════ -->
+     PÉRIMÈTRE : téléphone uniquement (plus petit côté d'écran < 600 px).
+     iPad, tablette et ordinateur : le script s'arrête immédiatement.
+     ══════════════════════════════════════════════════════════════════ -->
 <style>
-/* ── 1. Overlay épinglé sur la zone visible ── */
+/* ── 1. Overlay : déborde largement de l'écran + fond opaque.
+       Aucune bande de page ne peut réapparaître, ni sous le modal, ni sur
+       les côtés, même si la fenêtre de mise en page rétrécit. ── */
 body.tcp-kb-pin .notes-modal-overlay.active,
 body.tcp-kb-pin .planning-day-detail-overlay.active,
 body.tcp-kb-pin .pdd-overlay.active {
     position: fixed !important;
-    top: var(--tcp-vv-top, 0px) !important;
-    left: var(--tcp-vv-left, 0px) !important;
+    top: -420px !important;
+    left: -420px !important;
+    right: -420px !important;
+    bottom: -420px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain;
+    background: rgb(11, 17, 30) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+/* ── 2. Modal : posé en absolu sur la zone visible exacte. Plus de calcul
+       en pourcentage, plus de centrage : le haut est garanti à l'écran. ── */
+body.tcp-kb-pin .notes-modal-overlay.active .notes-modal,
+body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-modal,
+body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
+    position: absolute !important;
+    top: calc(var(--tcp-vv-top, 0px) + 420px) !important;
+    left: calc(var(--tcp-vv-left, 0px) + 420px) !important;
     right: auto !important;
     bottom: auto !important;
     width: var(--tcp-vv-w, 100vw) !important;
     height: var(--tcp-vv-h, 100vh) !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    max-width: none !important;
     margin: 0 !important;
-    overflow: hidden !important;
-    overscroll-behavior: contain;
+    border-radius: 0 !important;
 }
-/* ── 2. Le modal épouse la zone visible : plus rien ne déborde en haut
-       (barre d'outils entière) ni en bas (pied au-dessus du clavier) ── */
-body.tcp-kb-pin .notes-modal-overlay.active .notes-modal,
-body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-modal,
-body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 0 !important;
-    flex-shrink: 1 !important;
-}
-/* ── 3. Notes / cahiers d'erreurs : la barre d'outils reste intouchable,
-       l'éditeur absorbe la place restante, le panneau latéral (OIC /
-       objectifs) est plafonné pour ne pas écraser la zone de saisie ── */
+/* ── 3. Notes / cahiers d'erreurs : barre d'outils entière, saisie
+       prioritaire, panneau du bas plafonné.
+       NB : on ne touche PAS au `position` de la barre d'outils — le switch
+       Notes/Reçues est positionné en absolu par rapport au PANNEAU éditeur ;
+       rendre la barre « relative » le ferait glisser avec le défilement
+       horizontal des outils. ── */
 body.tcp-kb-pin .notes-modal-overlay.active .notes-modal-body { min-height: 0 !important; }
-body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-panel {
-    min-height: 0 !important;
+body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar { flex-shrink: 0 !important; }
+body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-panel,
+body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-left {
     flex: 1 1 auto !important;
+    min-height: 0 !important;
 }
-body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar {
-    flex-shrink: 0 !important;
-    position: relative !important;
-    z-index: 3;
-}
-body.tcp-kb-pin .notes-modal-overlay.active .notes-info-panel:not(.oic-collapsed) {
+body.tcp-kb-pin .notes-modal-overlay.active .notes-info-panel:not(.oic-collapsed),
+body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-right {
+    flex: 0 1 auto !important;
     max-height: 30% !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
 }
 body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-area {
@@ -41263,13 +41284,10 @@ body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-area {
     overscroll-behavior: contain;
     scroll-behavior: auto;
     touch-action: pan-y;
-    /* petit matelas sous la dernière ligne (plus les 45vh d'antan) */
     padding-bottom: 2.2rem !important;
     scroll-padding-bottom: 2.4rem;
 }
-/* ── 4. Détail de la journée : UN SEUL conteneur défilant (l'éditeur).
-       Le corps ne défile plus, la barre d'outils reste figée en haut, et
-       le glissé haut/bas au doigt agit directement sur le texte. ── */
+/* ── 4. Détail de la journée : UN SEUL conteneur défilant (l'éditeur) ── */
 body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-body,
 body.tcp-kb-pin .pdd-overlay.active .pdd-body {
     overflow: hidden !important;
@@ -41300,69 +41318,51 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
 (function () {
     'use strict';
 
-    /* API indisponible → comportement inchangé */
-    if (!window.visualViewport || !window.matchMedia) return;
+    if (!window.visualViewport) return;
 
-    /* TÉLÉPHONE UNIQUEMENT : plus petit côté d'écran < 600 px.
-       (iPad mini = 768 px → exclu ; iPhone en paysage → inclus.)
-       Même critère que la détection existante, en miroir exact de
-       `IS_TABLET` : aucun recouvrement possible avec la gestion tablette. */
+    /* TÉLÉPHONE UNIQUEMENT — miroir exact du test `IS_TABLET` existant. */
     var IS_PHONE = Math.min(window.screen.width || 0, window.screen.height || 0) < 600;
     if (!IS_PHONE) return;
 
     var root = document.documentElement;
     var body = document.body;
-    var KB_MIN = 120;   /* px : en dessous, pas de clavier */
-    var SEL = '.notes-modal-overlay.active, .planning-day-detail-overlay.active, .pdd-overlay.active';
+    var OVERLAYS = '.notes-modal-overlay, .planning-day-detail-overlay, .pdd-overlay';
     var VEIL = ['notes-modal-overlay', 'planning-day-detail-overlay', 'pdd-overlay'];
 
     var raf = null, pinned = false, watchdog = null;
 
-    /* Hauteur de référence « sans clavier » : certains navigateurs
-       rétrécissent aussi window.innerHeight à l'ouverture du clavier. On ne
-       met la référence à jour que lorsqu'elle AUGMENTE (ou en cas de
-       rotation / changement de largeur). */
-    var _baseH = window.innerHeight;
-    var _baseW = window.innerWidth;
-    window.addEventListener('resize', function () {
-        if (window.innerHeight > _baseH || Math.abs(window.innerWidth - _baseW) > 2) {
-            _baseH = window.innerHeight;
-            _baseW = window.innerWidth;
-        }
-    });
-    window.addEventListener('orientationchange', function () {
-        setTimeout(function () {
-            _baseH = window.innerHeight; _baseW = window.innerWidth; onChange();
-        }, 400);
-    });
-
-    /* Défilement au doigt en cours : on ne force jamais le recentrage. */
     var _lastDrag = 0;
     window.addEventListener('touchmove', function () { _lastDrag = Date.now(); },
         { passive: true, capture: true });
 
-    function setVars(vv) {
-        root.style.setProperty('--tcp-vv-top', Math.round(vv.offsetTop) + 'px');
-        root.style.setProperty('--tcp-vv-left', Math.round(vv.offsetLeft) + 'px');
-        root.style.setProperty('--tcp-vv-w', Math.round(vv.width) + 'px');
-        root.style.setProperty('--tcp-vv-h', Math.round(vv.height) + 'px');
+    /* Condition d'épinglage : une zone de saisie d'un des modals concernés a
+       le focus. Aucune mesure de hauteur, donc rien qui puisse échouer au
+       premier modal ouvert. Sans clavier, l'épinglage revient à occuper tout
+       l'écran : le rendu est identique au comportement normal. */
+    function shouldPin() {
+        var el = document.activeElement;
+        if (!el || typeof el.closest !== 'function') return false;
+        var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
+            (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
+        if (!editable) return false;
+        var ov = el.closest(OVERLAYS);
+        return !!(ov && ov.classList.contains('active'));
     }
 
     function apply() {
         var vv = window.visualViewport;
-        var ref = Math.max(window.innerHeight, _baseH);
-        var kb = Math.max(0, ref - vv.height);
-        var open = kb > KB_MIN && !!document.querySelector(SEL);
+        var want = shouldPin();
 
-        if (open) {
-            setVars(vv);
+        if (want) {
+            root.style.setProperty('--tcp-vv-top', Math.round(vv.offsetTop) + 'px');
+            root.style.setProperty('--tcp-vv-left', Math.round(vv.offsetLeft) + 'px');
+            root.style.setProperty('--tcp-vv-w', Math.round(vv.width) + 'px');
+            root.style.setProperty('--tcp-vv-h', Math.round(vv.height) + 'px');
             if (!pinned) {
                 pinned = true;
                 body.classList.add('tcp-kb-pin');
-                /* Le clavier vient d'apparaître : on ramène le curseur dans
-                   la zone visible une fois l'épinglage rendu. */
-                caretFollow(260, true);
-                if (!watchdog) watchdog = setInterval(apply, 500);
+                caretFollow(280);
+                if (!watchdog) watchdog = setInterval(apply, 350);
             }
         } else if (pinned) {
             pinned = false;
@@ -41378,18 +41378,17 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
 
     window.visualViewport.addEventListener('resize', onChange);
     window.visualViewport.addEventListener('scroll', onChange);
+    window.addEventListener('orientationchange', function () { setTimeout(onChange, 400); });
 
-    /* Le clavier arrive avec un léger délai sur iOS ; gère aussi le passage
-       d'un champ à l'autre clavier déjà ouvert. */
+    /* Le clavier arrive par étapes sur iOS : plusieurs passes après le focus. */
     document.addEventListener('focusin', function () {
-        setTimeout(function () {
-            onChange();
-            setTimeout(function () { if (pinned) caretFollow(0, true); }, 120);
-        }, 300);
+        [0, 60, 160, 340, 650].forEach(function (d) { setTimeout(onChange, d); });
     });
-    document.addEventListener('focusout', function () { setTimeout(onChange, 260); });
+    document.addEventListener('focusout', function () {
+        [80, 260, 500].forEach(function (d) { setTimeout(onChange, d); });
+    });
 
-    /* ── Rect du CARET dans un contenteditable (une ligne vide n'a pas de
+    /* ── Rect du curseur dans un contenteditable (une ligne vide n'a pas de
        rect natif : on vise alors le nœud précédent). ── */
     function caretRect(el) {
         if (!el.isContentEditable) return null;
@@ -41406,7 +41405,6 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
             var node = r.startContainer;
             if (node.nodeType === 1) {
                 var prev = node.childNodes[r.startOffset - 1] || null;
-                var next = node.childNodes[r.startOffset] || null;
                 if (prev && prev.nodeName === 'BR') {
                     var pr = prev.getBoundingClientRect();
                     return { top: pr.bottom, bottom: pr.bottom + lh };
@@ -41419,10 +41417,6 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
                     var cr2 = node.getBoundingClientRect();
                     if (cr2.height && cr2.height < 160) return cr2;
                 }
-                if (next && next.nodeType === 1 && next.nodeName === 'BR') {
-                    var nr = next.getBoundingClientRect();
-                    if (nr.height < 160) return nr;
-                }
                 return null;
             }
             var lineEl = node.parentElement;
@@ -41434,10 +41428,10 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         } catch (e) { return null; }
     }
 
-    /* Garde le curseur visible en faisant défiler le conteneur défilant le
-       plus proche. Pendant la FRAPPE le défilement est instantané (évite le
-       curseur « fantôme » d'iOS pendant un scroll animé). */
-    function caretFollow(delay, smooth) {
+    /* Garde le curseur visible — UNIQUEMENT via un conteneur interne
+       réellement défilant. Jamais la page : aucun scrollIntoView, donc aucune
+       bagarre avec le repositionnement natif d'iOS. */
+    function caretFollow(delay) {
         var el = document.activeElement;
         if (!el) return;
         var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
@@ -41445,41 +41439,22 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         if (!editable) return;
         setTimeout(function () {
             if (!pinned || document.activeElement !== el) return;
-            if (Date.now() - _lastDrag < 500) return;  /* glissé au doigt : ne rien forcer */
-            var vv = window.visualViewport;
-            var marginTop = 14, marginBottom = 30;
-            var rect = caretRect(el);
-            if (!rect) { try { rect = el.getBoundingClientRect(); } catch (e) { return; } }
+            if (Date.now() - _lastDrag < 500) return;
             var sc = el;
             while (sc && sc !== document.body && !(sc.scrollHeight > sc.clientHeight + 2)) sc = sc.parentElement;
-            var visTop = vv ? vv.offsetTop : 0;
-            var visBottom = visTop + (vv ? vv.height : window.innerHeight);
-            if (sc && sc !== document.body) {
-                var cr = sc.getBoundingClientRect();
-                if (cr.top > visTop) visTop = cr.top;
-                if (cr.bottom < visBottom) visBottom = cr.bottom;
-            }
-            if (rect.bottom <= visBottom - marginBottom && rect.top >= visTop + marginTop) return;
-            var delta = rect.bottom > visBottom - marginBottom
-                ? rect.bottom - (visBottom - marginBottom)
-                : rect.top - (visTop + marginTop);
+            if (!sc || sc === document.body || sc === document.documentElement) return;
+            var rect = caretRect(el);
+            if (!rect) return;
+            var cr = sc.getBoundingClientRect();
+            var visTop = cr.top + 10;
+            var visBottom = cr.bottom - 26;
+            if (rect.bottom <= visBottom && rect.top >= visTop) return;
+            var delta = rect.bottom > visBottom ? rect.bottom - visBottom : rect.top - visTop;
             if (Math.abs(delta) < 4) return;
-            try {
-                if (sc && sc !== document.body) {
-                    if (smooth && typeof sc.scrollTo === 'function') {
-                        sc.scrollTo({ top: sc.scrollTop + delta, behavior: 'smooth' });
-                    } else {
-                        sc.scrollTop += delta;
-                    }
-                } else {
-                    el.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
-                }
-            } catch (e) {}
+            try { sc.scrollTop += delta; } catch (e) {}
         }, Math.max(0, delay || 0));
     }
 
-    /* Pendant la frappe : le curseur reste visible. Un saut de ligne recale
-       immédiatement, le reste est légèrement throttlé. */
     var _lastCaretScroll = 0;
     document.addEventListener('input', function (e) {
         if (!pinned) return;
@@ -41488,11 +41463,10 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         var now = Date.now();
         if (!newline && now - _lastCaretScroll < 220) return;
         _lastCaretScroll = now;
-        caretFollow(newline ? 0 : 36, false);
+        caretFollow(newline ? 0 : 36);
     });
 
-    /* Doigt posé sur le VOILE (hors modal) : ne pas faire défiler la page
-       derrière pendant que le clavier est ouvert. */
+    /* Doigt posé sur le voile (hors modal) : la page derrière ne bouge pas. */
     document.addEventListener('touchmove', function (e) {
         if (!pinned) return;
         var t = e.target;
