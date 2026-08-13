@@ -40911,7 +40911,7 @@ body.tc-phone .planning-day-detail-overlay {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
-body.tc-phone.tc-phone-kb .planning-day-detail-overlay.active .planning-day-detail-editor {
+body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .planning-day-detail-editor {
     padding-bottom: 45vh !important;
 }
 </style>
@@ -41192,53 +41192,396 @@ body.tc-phone.tc-phone-kb .planning-day-detail-overlay.active .planning-day-deta
 })();
 </script>
 
-<!-- ===================== ADAPTATIONS MOBILE (<= 768px) =====================
-     1. Liste de priorité : le clic sur une carte item / SDD n'ouvre plus le
-        modal notes sur téléphone (les boutons internes restent actifs).
-     2. Statistiques > Matières préférées : le bouton d'accès direct au
-        cahier d'erreurs est retiré sur téléphone.
-     ======================================================================== -->
-<style>
-@media (max-width: 768px) {
-    /* 2. Podium "Matières préférées" : plus de raccourci cahier d'erreurs */
-    .ranking-podium-item .spe-err-btn { display: none !important; }
+<!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT ═══════════
+     PROBLÈME CORRIGÉ
+     À l'ouverture du clavier, iOS/Android décale la fenêtre visible vers le
+     haut à l'intérieur de la fenêtre de mise en page. Les overlays en
+     position:fixed suivent ce décalage : l'en-tête et le HAUT DE LA BARRE
+     D'OUTILS des modals Notes / Cahiers d'erreurs sortaient de l'écran
+     (barre « rognée »), et le modal Détail de la journée devenait pénible
+     à faire défiler.
 
-    /* 1. Cartes de la liste de priorité : plus d'affordance de clic */
-    .priority-item-card,
-    .priority-item-card.clickable-priority { cursor: default !important; }
+     CORRECTIF
+     Tant que le clavier est ouvert, l'overlay actif est ÉPINGLÉ exactement
+     sur la zone réellement visible (API visualViewport) : en-tête et barre
+     d'outils entiers en haut, pied du modal juste au-dessus du clavier.
+     Un seul conteneur défilant à l'intérieur (l'éditeur) → défilement au
+     doigt franc, et le curseur reste toujours visible pendant la frappe.
+
+     PÉRIMÈTRE
+     N'AGIT QUE SUR TÉLÉPHONE (plus petit côté d'écran < 600 px). iPad,
+     tablettes et ordinateur ne sont touchés en RIEN : le script s'arrête
+     immédiatement et la classe `tcp-kb-pin` n'est jamais posée.
+     ════════════════════════════════════════════════════════════════ -->
+<style>
+/* ── 1. Overlay épinglé sur la zone visible ── */
+body.tcp-kb-pin .notes-modal-overlay.active,
+body.tcp-kb-pin .planning-day-detail-overlay.active,
+body.tcp-kb-pin .pdd-overlay.active {
+    position: fixed !important;
+    top: var(--tcp-vv-top, 0px) !important;
+    left: var(--tcp-vv-left, 0px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: var(--tcp-vv-w, 100vw) !important;
+    height: var(--tcp-vv-h, 100vh) !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain;
+}
+/* ── 2. Le modal épouse la zone visible : plus rien ne déborde en haut
+       (barre d'outils entière) ni en bas (pied au-dessus du clavier) ── */
+body.tcp-kb-pin .notes-modal-overlay.active .notes-modal,
+body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-modal,
+body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    flex-shrink: 1 !important;
+}
+/* ── 3. Notes / cahiers d'erreurs : la barre d'outils reste intouchable,
+       l'éditeur absorbe la place restante, le panneau latéral (OIC /
+       objectifs) est plafonné pour ne pas écraser la zone de saisie ── */
+body.tcp-kb-pin .notes-modal-overlay.active .notes-modal-body { min-height: 0 !important; }
+body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-panel {
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+}
+body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 3;
+}
+body.tcp-kb-pin .notes-modal-overlay.active .notes-info-panel:not(.oic-collapsed) {
+    max-height: 30% !important;
+    overflow-y: auto !important;
+}
+body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-area {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+    touch-action: pan-y;
+    /* petit matelas sous la dernière ligne (plus les 45vh d'antan) */
+    padding-bottom: 2.2rem !important;
+    scroll-padding-bottom: 2.4rem;
+}
+/* ── 4. Détail de la journée : UN SEUL conteneur défilant (l'éditeur).
+       Le corps ne défile plus, la barre d'outils reste figée en haut, et
+       le glissé haut/bas au doigt agit directement sur le texte. ── */
+body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-body,
+body.tcp-kb-pin .pdd-overlay.active .pdd-body {
+    overflow: hidden !important;
+    min-height: 0 !important;
+    padding-bottom: 0.55rem !important;
+}
+body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-toolbar,
+body.tcp-kb-pin .pdd-overlay.active .pdd-toolbar {
+    position: relative !important;
+    flex-shrink: 0 !important;
+    padding-bottom: 0.5rem !important;
+}
+body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-editor,
+body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+    touch-action: pan-y;
+    padding-bottom: 2.2rem !important;
+    scroll-padding-bottom: 2.4rem;
 }
 </style>
 <script>
 (function () {
     'use strict';
-    var MOBILE_MAX_WIDTH = 768;
 
-    function isMobileViewport() {
-        try { return window.matchMedia('(max-width: ' + MOBILE_MAX_WIDTH + 'px)').matches; }
-        catch (e) { return (window.innerWidth || document.documentElement.clientWidth || 0) <= MOBILE_MAX_WIDTH; }
+    /* API indisponible → comportement inchangé */
+    if (!window.visualViewport || !window.matchMedia) return;
+
+    /* TÉLÉPHONE UNIQUEMENT : plus petit côté d'écran < 600 px.
+       (iPad mini = 768 px → exclu ; iPhone en paysage → inclus.)
+       Même critère que la détection existante, en miroir exact de
+       `IS_TABLET` : aucun recouvrement possible avec la gestion tablette. */
+    var IS_PHONE = Math.min(window.screen.width || 0, window.screen.height || 0) < 600;
+    if (!IS_PHONE) return;
+
+    var root = document.documentElement;
+    var body = document.body;
+    var KB_MIN = 120;   /* px : en dessous, pas de clavier */
+    var SEL = '.notes-modal-overlay.active, .planning-day-detail-overlay.active, .pdd-overlay.active';
+    var VEIL = ['notes-modal-overlay', 'planning-day-detail-overlay', 'pdd-overlay'];
+
+    var raf = null, pinned = false, watchdog = null;
+
+    /* Hauteur de référence « sans clavier » : certains navigateurs
+       rétrécissent aussi window.innerHeight à l'ouverture du clavier. On ne
+       met la référence à jour que lorsqu'elle AUGMENTE (ou en cas de
+       rotation / changement de largeur). */
+    var _baseH = window.innerHeight;
+    var _baseW = window.innerWidth;
+    window.addEventListener('resize', function () {
+        if (window.innerHeight > _baseH || Math.abs(window.innerWidth - _baseW) > 2) {
+            _baseH = window.innerHeight;
+            _baseW = window.innerWidth;
+        }
+    });
+    window.addEventListener('orientationchange', function () {
+        setTimeout(function () {
+            _baseH = window.innerHeight; _baseW = window.innerWidth; onChange();
+        }, 400);
+    });
+
+    /* Défilement au doigt en cours : on ne force jamais le recentrage. */
+    var _lastDrag = 0;
+    window.addEventListener('touchmove', function () { _lastDrag = Date.now(); },
+        { passive: true, capture: true });
+
+    function setVars(vv) {
+        root.style.setProperty('--tcp-vv-top', Math.round(vv.offsetTop) + 'px');
+        root.style.setProperty('--tcp-vv-left', Math.round(vv.offsetLeft) + 'px');
+        root.style.setProperty('--tcp-vv-w', Math.round(vv.width) + 'px');
+        root.style.setProperty('--tcp-vv-h', Math.round(vv.height) + 'px');
     }
 
-    /* Sélecteurs des contrôles internes qui doivent rester cliquables
-       (bouton "envoyer vers la to-do", pastille épinglée, liens...). */
-    var INTERACTIVE = 'button, a, input, select, textarea, label, .priority-send-btn, .added-to-checklist-badge';
+    function apply() {
+        var vv = window.visualViewport;
+        var ref = Math.max(window.innerHeight, _baseH);
+        var kb = Math.max(0, ref - vv.height);
+        var open = kb > KB_MIN && !!document.querySelector(SEL);
 
-    /* Interception en phase de capture, sur document : l'événement est stoppé
-       avant d'atteindre la carte, donc son onclick inline (openNotesModal /
-       openSDDNotesModal) ne s'exécute jamais sur téléphone. */
-    function blockPriorityCardOpen(e) {
-        if (!isMobileViewport()) return;
-        var target = e.target;
-        if (!target || typeof target.closest !== 'function') return;
-
-        var card = target.closest('.priority-item-card');
-        if (!card) return;
-        if (target.closest(INTERACTIVE)) return;   // contrôle interne : on laisse passer
-
-        e.stopPropagation();
-        if (e.cancelable) e.preventDefault();
+        if (open) {
+            setVars(vv);
+            if (!pinned) {
+                pinned = true;
+                body.classList.add('tcp-kb-pin');
+                /* Le clavier vient d'apparaître : on ramène le curseur dans
+                   la zone visible une fois l'épinglage rendu. */
+                caretFollow(260, true);
+                if (!watchdog) watchdog = setInterval(apply, 500);
+            }
+        } else if (pinned) {
+            pinned = false;
+            body.classList.remove('tcp-kb-pin');
+            if (watchdog) { clearInterval(watchdog); watchdog = null; }
+        }
     }
 
-    document.addEventListener('click', blockPriorityCardOpen, true);
+    function onChange() {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; apply(); });
+    }
+
+    window.visualViewport.addEventListener('resize', onChange);
+    window.visualViewport.addEventListener('scroll', onChange);
+
+    /* Le clavier arrive avec un léger délai sur iOS ; gère aussi le passage
+       d'un champ à l'autre clavier déjà ouvert. */
+    document.addEventListener('focusin', function () {
+        setTimeout(function () {
+            onChange();
+            setTimeout(function () { if (pinned) caretFollow(0, true); }, 120);
+        }, 300);
+    });
+    document.addEventListener('focusout', function () { setTimeout(onChange, 260); });
+
+    /* ── Rect du CARET dans un contenteditable (une ligne vide n'a pas de
+       rect natif : on vise alors le nœud précédent). ── */
+    function caretRect(el) {
+        if (!el.isContentEditable) return null;
+        try {
+            var sel = window.getSelection();
+            if (!sel || !sel.rangeCount) return null;
+            var r = sel.getRangeAt(0).cloneRange();
+            r.collapse(false);
+            var rect = r.getClientRects()[0] || null;
+            if (rect && !rect.height && !rect.width) rect = null;
+            if (rect) return rect;
+            var lh = 24;
+            try { lh = parseFloat(getComputedStyle(el).lineHeight) || 24; } catch (e) {}
+            var node = r.startContainer;
+            if (node.nodeType === 1) {
+                var prev = node.childNodes[r.startOffset - 1] || null;
+                var next = node.childNodes[r.startOffset] || null;
+                if (prev && prev.nodeName === 'BR') {
+                    var pr = prev.getBoundingClientRect();
+                    return { top: pr.bottom, bottom: pr.bottom + lh };
+                }
+                if (prev && prev.nodeType === 1) {
+                    var pr2 = prev.getBoundingClientRect();
+                    if (pr2.height && pr2.height < 160) return pr2;
+                }
+                if (node !== el && el.contains(node)) {
+                    var cr2 = node.getBoundingClientRect();
+                    if (cr2.height && cr2.height < 160) return cr2;
+                }
+                if (next && next.nodeType === 1 && next.nodeName === 'BR') {
+                    var nr = next.getBoundingClientRect();
+                    if (nr.height < 160) return nr;
+                }
+                return null;
+            }
+            var lineEl = node.parentElement;
+            if (lineEl && lineEl !== el && el.contains(lineEl)) {
+                var lr = lineEl.getBoundingClientRect();
+                if (lr.height && lr.height < 160) return lr;
+            }
+            return null;
+        } catch (e) { return null; }
+    }
+
+    /* Garde le curseur visible en faisant défiler le conteneur défilant le
+       plus proche. Pendant la FRAPPE le défilement est instantané (évite le
+       curseur « fantôme » d'iOS pendant un scroll animé). */
+    function caretFollow(delay, smooth) {
+        var el = document.activeElement;
+        if (!el) return;
+        var editable = el.isContentEditable || el.tagName === 'TEXTAREA' ||
+            (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/i.test(el.type || ''));
+        if (!editable) return;
+        setTimeout(function () {
+            if (!pinned || document.activeElement !== el) return;
+            if (Date.now() - _lastDrag < 500) return;  /* glissé au doigt : ne rien forcer */
+            var vv = window.visualViewport;
+            var marginTop = 14, marginBottom = 30;
+            var rect = caretRect(el);
+            if (!rect) { try { rect = el.getBoundingClientRect(); } catch (e) { return; } }
+            var sc = el;
+            while (sc && sc !== document.body && !(sc.scrollHeight > sc.clientHeight + 2)) sc = sc.parentElement;
+            var visTop = vv ? vv.offsetTop : 0;
+            var visBottom = visTop + (vv ? vv.height : window.innerHeight);
+            if (sc && sc !== document.body) {
+                var cr = sc.getBoundingClientRect();
+                if (cr.top > visTop) visTop = cr.top;
+                if (cr.bottom < visBottom) visBottom = cr.bottom;
+            }
+            if (rect.bottom <= visBottom - marginBottom && rect.top >= visTop + marginTop) return;
+            var delta = rect.bottom > visBottom - marginBottom
+                ? rect.bottom - (visBottom - marginBottom)
+                : rect.top - (visTop + marginTop);
+            if (Math.abs(delta) < 4) return;
+            try {
+                if (sc && sc !== document.body) {
+                    if (smooth && typeof sc.scrollTo === 'function') {
+                        sc.scrollTo({ top: sc.scrollTop + delta, behavior: 'smooth' });
+                    } else {
+                        sc.scrollTop += delta;
+                    }
+                } else {
+                    el.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+                }
+            } catch (e) {}
+        }, Math.max(0, delay || 0));
+    }
+
+    /* Pendant la frappe : le curseur reste visible. Un saut de ligne recale
+       immédiatement, le reste est légèrement throttlé. */
+    var _lastCaretScroll = 0;
+    document.addEventListener('input', function (e) {
+        if (!pinned) return;
+        var it = (e && e.inputType) || '';
+        var newline = (it === 'insertParagraph' || it === 'insertLineBreak');
+        var now = Date.now();
+        if (!newline && now - _lastCaretScroll < 220) return;
+        _lastCaretScroll = now;
+        caretFollow(newline ? 0 : 36, false);
+    });
+
+    /* Doigt posé sur le VOILE (hors modal) : ne pas faire défiler la page
+       derrière pendant que le clavier est ouvert. */
+    document.addEventListener('touchmove', function (e) {
+        if (!pinned) return;
+        var t = e.target;
+        if (!t || !t.classList) return;
+        for (var i = 0; i < VEIL.length; i++) {
+            if (t.classList.contains(VEIL[i])) { if (e.cancelable) e.preventDefault(); return; }
+        }
+    }, { passive: false });
+})();
+</script>
+
+
+<!-- ===================== LISTE DE PRIORITÉ & MATIÈRES PRÉFÉRÉES =====================
+     Ce bloc remplace les deux restrictions mobiles précédentes, qui sont
+     LEVÉES :
+       1. Liste de priorité (« items / SDD à revoir en priorité ») : le clic
+          sur une carte rouvre la note, exactement comme dans la liste des
+          items. Les contrôles internes (bouton « to-do », pastille épinglée)
+          gardent la priorité : ils ne déclenchent PAS l'ouverture de la note.
+       2. Statistiques > Matières préférées : la petite icône « cahier
+          d'erreurs » est de nouveau affichée sur le podium, avec le même
+          comportement que sur les cases de spécialité (ouverture directe du
+          cahier, contour « contient des notes »).
+     ================================================================================ -->
+<style>
+/* 1. Cartes de la liste de priorité : affordance de clic + retour tactile. */
+.priority-item-card,
+.priority-item-card.clickable-priority { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+@media (max-width: 768px) {
+    .priority-item-card:active,
+    .priority-item-card.clickable-priority:active { background: var(--gray-100); }
+}
+/* 2. Podium « Matières préférées » : l'icône du cahier d'erreurs reste au
+      format « petit bouton », y compris sur téléphone. */
+.ranking-podium-item .spe-err-btn { display: inline-flex; }
+</style>
+<script>
+(function () {
+    'use strict';
+
+    /* ── 1. Contrôles internes des cartes de priorité ──
+       Certains boutons internes (« envoyer vers la to-do ») n'arrêtent pas la
+       propagation : sans précaution, leur clic remonterait jusqu'à la carte et
+       ouvrirait la note par-dessus. On neutralise donc l'onclick de la CARTE
+       le temps de ce clic-là, puis on le restaure — le bouton fait son travail,
+       la note ne s'ouvre pas. */
+    var INTERACTIVE = 'button, a, input, select, textarea, label, ' +
+                      '.priority-send-btn, .send-to-checklist-btn, .added-to-checklist-badge';
+
+    document.addEventListener('click', function (e) {
+        var t = e.target;
+        if (!t || typeof t.closest !== 'function') return;
+        var card = t.closest('.priority-item-card');
+        if (!card || !card.onclick) return;
+        if (!t.closest(INTERACTIVE)) return;           /* clic sur la carte : on laisse ouvrir la note */
+        var handler = card.onclick;
+        card.onclick = null;
+        setTimeout(function () { try { card.onclick = handler; } catch (err) {} }, 0);
+    }, true);
+
+    /* ── 2. Podium « Matières préférées » ──
+       Le podium peut être rendu APRÈS le dernier marquage des cahiers
+       d'erreurs : ses icônes n'auraient alors pas le contour « contient des
+       notes ». On redemande un marquage à chaque (re)dessin du podium, en
+       limitant la fréquence des appels. */
+    function podium() {
+        return document.getElementById('ecos-preferred-subjects') ||
+               document.getElementById('specialty-ranking');
+    }
+    var _last = 0, _timer = null;
+    function refreshMarks() {
+        if (_timer) clearTimeout(_timer);
+        _timer = setTimeout(function () {
+            _timer = null;
+            var now = Date.now();
+            if (now - _last < 4000) return;            /* pas plus d'un rafraîchissement / 4 s */
+            _last = now;
+            try { if (window._flashRefreshSpeMarks) window._flashRefreshSpeMarks(); } catch (e) {}
+        }, 400);
+    }
+    function initPodiumWatch() {
+        var c = podium();
+        if (!c) { setTimeout(initPodiumWatch, 800); return; }
+        try { new MutationObserver(refreshMarks).observe(c, { childList: true, subtree: true }); }
+        catch (e) {}
+        refreshMarks();
+    }
+    if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initPodiumWatch);
+    else initPodiumWatch();
 })();
 </script>
 
