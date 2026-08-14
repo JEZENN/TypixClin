@@ -41422,12 +41422,23 @@ html[data-theme="pastel"] .settings-card-icon.account {
     .tpx-acc-row { flex-direction: column; }
     .tpx-acc-btn { width: 100%; }
 }
-/* iOS zoome automatiquement la page dès qu'on met le focus sur un champ dont
-   la police fait moins de 16 px — d'où l'impression que le texte grossit à
-   l'ouverture du clavier. 16 px pile supprime ce zoom, sans le désactiver
-   globalement (ce qui empêcherait l'utilisateur de zoomer lui-même). */
+/* ── iOS : deux mécanismes distincts font « grossir le texte » ──
+   1) L'AUTO-ZOOM à la prise de focus, dès qu'un champ a une police < 16 px.
+      16 px pile le supprime, sans désactiver le zoom manuel de l'utilisateur.
+   2) L'AJUSTEMENT AUTOMATIQUE DE LA TAILLE DU TEXTE (text autosizing) : Safari
+      regonfle les polices d'un bloc quand sa mise en page change. C'est ce qui
+      se produisait à l'ouverture du panneau mot de passe, qui ajoute trois
+      champs et modifie la structure de la carte. `text-size-adjust: 100%` le
+      neutralise. Volontairement limité au modal Paramètres : appliqué au
+      document entier, il modifierait le rendu de tout le site sur iPhone. */
+.settings-modal-overlay,
+.settings-modal-overlay * {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
 @media (pointer: coarse) {
-    .tpx-acc-input { font-size: 16px; }
+    .settings-modal-overlay input:not([readonly]),
+    .tpx-acc-input:not([readonly]) { font-size: 16px !important; }
 }
 </style>
 <script type="module">
@@ -41537,13 +41548,15 @@ const CARD_HTML = `
             </div>
             <div class="tpx-acc-pwdwrap">
                 <input class="tpx-acc-input" id="tpx-acc-pwd-new" type="password"
-                       autocomplete="new-password" placeholder="Nouveau mot de passe">
+                       autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                       placeholder="Nouveau mot de passe">
                 <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd-new"
                         aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
             </div>
             <div class="tpx-acc-pwdwrap">
                 <input class="tpx-acc-input" id="tpx-acc-pwd-new2" type="password"
-                       autocomplete="new-password" placeholder="Confirmez le nouveau mot de passe">
+                       autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                       placeholder="Confirmez le nouveau mot de passe">
                 <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd-new2"
                         aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
             </div>
