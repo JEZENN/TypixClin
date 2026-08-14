@@ -22765,6 +22765,9 @@ window.tcStopAnalytics = function () {};
                             <button type="button" class="profile-menu-item" id="admin-menu-link" style="display:none;color:var(--primary)" onclick="location.href='admin.html'">
                                 <i class="fas fa-shield-alt"></i><span>Administration</span>
                             </button>
+                            <button class="profile-menu-item settings-btn-menu" id="open-settings-btn" onclick="window.openSettingsModal && window.openSettingsModal()">
+                                <i class="fas fa-sliders-h"></i><span>Paramètres</span>
+                            </button>
                             <button class="profile-menu-item premium-btn-menu" id="open-premium-btn" onclick="localStorage.setItem('premiumReturnTableur','ecos'); location.href='comptepremium.html?from=ecos';">
                                 <i class="fas fa-crown"></i><span>Compte premium</span>
                             </button>
@@ -41192,6 +41195,811 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .
 })();
 </script>
 
+<!-- ═══════════ MODAL PARAMÈTRES (ECOS) ═══════════
+     ECOS n'avait pas de modal Paramètres. On reprend ici exactement la
+     structure, les classes et le comportement de celui du tableur EDN
+     (`settings-modal-overlay` / `settings-modal-inner` / `settings-modal-body`),
+     afin que la carte « Mon compte » — commune aux deux tableurs — s'y injecte
+     sans adaptation et que l'aspect soit identique d'un fichier à l'autre.
+
+     NB : les styles `.settings-modal-*` / `.settings-card*` et l'entrée de
+     menu `.settings-btn-menu` étaient DÉJÀ présents dans la feuille de
+     styles d'ECOS (héritage du tronc commun) : rien à dupliquer ici, seuls
+     le balisage et le script manquaient.
+     ════════════════════════════════════════════════════════════════ -->
+<div class="settings-modal-overlay" id="settings-modal-overlay">
+    <div class="settings-modal-inner" id="settings-modal-inner">
+
+        <div class="unified-modal-header">
+            <div class="unified-modal-title">
+                <div class="unified-modal-icon"><i class="fas fa-sliders-h"></i></div>
+                <h3 class="unified-modal-heading">Paramètres</h3>
+            </div>
+            <button class="notes-close-btn" onclick="closeSettingsModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="settings-modal-body">
+            <p class="settings-intro">Gérez les informations de votre compte TypixClin. Elles sont communes à l'ensemble du site.</p>
+        </div>
+
+        <div class="help-modal-footer settings-modal-footer">
+            <button class="help-modal-btn" onclick="closeSettingsModal()">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+
+    window.openSettingsModal = function () {
+        var dd = $('profile-dropdown');
+        if (dd) dd.classList.remove('active');
+
+        var overlay = $('settings-modal-overlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('closing');
+        overlay.classList.add('active');
+
+        if (typeof window._getScrollbarWidth === 'function' && typeof window._setScrollbarComp === 'function') {
+            var sw = window._getScrollbarWidth();
+            if (sw > 0) window._setScrollbarComp(sw);
+        }
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeSettingsModal = function () {
+        var overlay = $('settings-modal-overlay');
+        if (!overlay || !overlay.classList.contains('active')) return;
+        overlay.classList.add('closing');
+        setTimeout(function () {
+            overlay.classList.remove('active', 'closing');
+            document.body.style.overflow = '';
+            if (typeof window._setScrollbarComp === 'function') window._setScrollbarComp(0);
+        }, 180);
+    };
+
+    /* Clic sur le fond → fermeture. On mémorise où le bouton a été ENFONCÉ :
+       sans cela, une sélection de texte démarrée dans le modal et relâchée
+       sur le voile fermerait le modal. */
+    var _downInside = false;
+    document.addEventListener('mousedown', function (e) {
+        var overlay = $('settings-modal-overlay');
+        if (!overlay || !overlay.classList.contains('active')) return;
+        _downInside = !!(e.target.closest && e.target.closest('#settings-modal-inner'));
+    });
+    document.addEventListener('click', function (e) {
+        var overlay = $('settings-modal-overlay');
+        if (!overlay || !overlay.classList.contains('active')) return;
+        if (e.target === overlay && !_downInside) window.closeSettingsModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var overlay = $('settings-modal-overlay');
+        if (overlay && overlay.classList.contains('active')) window.closeSettingsModal();
+    });
+})();
+</script>
+
+<!-- ═══════════ PARAMÈTRES › MON COMPTE (commun EDN / ECOS) ═══════════
+     Carte ajoutée EN BAS du modal Paramètres :
+       • nom affiché    → Firebase Auth (profil) + users/{uid}.displayName
+       • adresse e-mail → nouvelle adresse saisie dans un champ DÉDIÉ, puis
+         ré-authentification par mot de passe et envoi d'un lien de
+         vérification à cette nouvelle adresse (verifyBeforeUpdateEmail) :
+         la bascule n'a lieu qu'une fois le lien ouvert, ce qui évite de se
+         retrouver enfermé dehors sur une faute de frappe.
+
+     La carte est injectée par script dans `#settings-modal-overlay
+     .settings-modal-body` : le même bloc sert donc aux deux tableurs, sans
+     dupliquer de balisage.
+
+     NOTE SUR LES RÈGLES FIRESTORE : `users/{uid}.email` n'est pas modifiable
+     par l'utilisateur (la règle ne l'autorise que s'il est absent). La
+     synchronisation du miroir est tentée puis ignorée silencieusement —
+     l'adresse de connexion, elle, est bien changée côté Auth.
+     ══════════════════════════════════════════════════════════════════ -->
+<style>
+.tpx-acc-card { display: flex; flex-direction: column; gap: 0.9rem; }
+.tpx-acc-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.tpx-acc-label {
+    font-size: 0.76rem; font-weight: 650; letter-spacing: 0.02em;
+    text-transform: uppercase; color: var(--gray-500);
+}
+.tpx-acc-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.tpx-acc-input {
+    flex: 1 1 auto; min-width: 0;
+    padding: 0.6rem 0.75rem;
+    font-family: inherit; font-size: 0.88rem;
+    color: var(--gray-900); background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-md);
+    transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+.tpx-acc-input:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.14);
+}
+.tpx-acc-input[readonly] { background: var(--gray-100); color: var(--gray-500); cursor: default; }
+.tpx-acc-input[readonly]:focus { border-color: var(--gray-300); box-shadow: none; }
+[data-theme="dark"] .tpx-acc-input { background: var(--gray-50); }
+.tpx-acc-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.6rem 0.9rem;
+    font-family: inherit; font-size: 0.82rem; font-weight: 650;
+    color: #fff; background: var(--primary);
+    border: none; border-radius: var(--border-radius-md);
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+.tpx-acc-btn:hover:not(:disabled):not(.done) { background: var(--primary-dark); }
+.tpx-acc-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.tpx-acc-btn.ghost { background: var(--gray-200); color: var(--gray-700); }
+.tpx-acc-btn.ghost:hover:not(:disabled):not(.done) { background: var(--gray-300); }
+/* Confirmation : le bouton passe au vert avec une coche. La largeur et la
+   hauteur sont figées en JS avant la bascule pour que rien ne saute. */
+.tpx-acc-btn.done {
+    background: var(--success) !important;
+    color: #fff !important;
+    cursor: default;
+    animation: tpxAccPop 0.34s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+@keyframes tpxAccPop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.045); }
+    100% { transform: scale(1); }
+}
+.tpx-acc-hint { font-size: 0.76rem; color: var(--gray-500); line-height: 1.45; }
+/* Lien discret « Mot de passe oublié ? » : seule porte de sortie pour qui ne
+   connaît plus son mot de passe actuel, que le formulaire exige. */
+.tpx-acc-link {
+    align-self: flex-start;
+    background: none; border: none; padding: 0.1rem 0;
+    font-family: inherit; font-size: 0.76rem; font-weight: 600;
+    color: var(--primary); cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+}
+.tpx-acc-link:hover:not(:disabled) { color: var(--primary-dark); }
+.tpx-acc-link:disabled { color: var(--gray-400); cursor: not-allowed; text-decoration: none; }
+/* Champ « mot de passe » en lecture seule : mention honnête plutôt que de faux
+   points, qui laissaient croire que le mot de passe était consultable. */
+.tpx-acc-input.tpx-acc-static { font-style: italic; font-size: 0.82rem; }
+.tpx-acc-msg { font-size: 0.78rem; line-height: 1.45; margin-top: 0.1rem; display: none; }
+.tpx-acc-msg.show { display: block; }
+.tpx-acc-msg.ok { color: #15803d; }
+.tpx-acc-msg.err { color: #b91c1c; }
+[data-theme="dark"] .tpx-acc-msg.ok { color: #4ade80; }
+[data-theme="dark"] .tpx-acc-msg.err { color: #f87171; }
+.tpx-acc-sub { display: none; flex-direction: column; gap: 0.5rem; padding-top: 0.15rem; }
+.tpx-acc-sub.open { display: flex; }
+/* Après validation : on masque les champs mais on garde la rangée de boutons
+   visible, sinon la coche verte disparaîtrait avec le panneau. */
+.tpx-acc-sub.validated .tpx-acc-pwdwrap,
+.tpx-acc-sub.validated .tpx-acc-hint,
+.tpx-acc-sub.validated .tpx-acc-btn.ghost { display: none; }
+
+/* Champ mot de passe + bouton œil TOUJOURS visible (le révélateur natif du
+   navigateur n'apparaît que de façon erratique, on ne s'y fie pas). */
+.tpx-acc-pwdwrap { position: relative; display: flex; }
+.tpx-acc-pwdwrap .tpx-acc-input { width: 100%; padding-right: 2.7rem; }
+/* On neutralise les révélateurs natifs pour ne pas avoir deux icônes. */
+.tpx-acc-pwdwrap .tpx-acc-input::-ms-reveal,
+.tpx-acc-pwdwrap .tpx-acc-input::-ms-clear { display: none; }
+.tpx-acc-eye {
+    position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
+    width: 2.05rem; height: 2.05rem;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: var(--gray-500); font-size: 0.9rem;
+    border-radius: var(--border-radius-sm);
+    transition: color 0.15s ease, background 0.15s ease;
+}
+.tpx-acc-eye:hover { color: var(--gray-700); background: var(--gray-200); }
+.tpx-acc-eye.on { color: var(--primary); }
+.tpx-acc-warn {
+    font-size: 0.76rem; line-height: 1.45;
+    color: #92400e; background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--border-radius-md);
+    padding: 0.5rem 0.65rem;
+}
+[data-theme="dark"] .tpx-acc-warn { color: #fbbf24; background: rgba(245,158,11,0.09); }
+/* Même bleu que les autres cartes de réglage (`scope`, `tours`) */
+.settings-card-icon.account { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 3px 10px rgba(59,130,246,0.35); }
+/* Thème pastel : même bleu adouci que `scope` / `tours`. Sélecteur volontairement
+   plus spécifique que le `:where(...)` du thème (qui compte pour zéro), afin que
+   la règle s'applique quel que soit l'ordre des feuilles de styles. */
+html[data-theme="pastel"] .settings-card-icon.account {
+    background: linear-gradient(135deg, #6388c5, #607dbd);
+    box-shadow: 0 3px 10px rgba(122, 151, 199, 0.217);
+}
+@media (max-width: 560px) {
+    .tpx-acc-row { flex-direction: column; }
+    .tpx-acc-btn { width: 100%; }
+}
+</style>
+<script type="module">
+import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, EmailAuthProvider, reauthenticateWithCredential,
+         verifyBeforeUpdateEmail, updatePassword,
+         sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBSJPwPWOAGnWwQN3j2qwu8pxf2iCdO-Gc",
+    authDomain: "typixclin-b5fa9.firebaseapp.com",
+    projectId: "typixclin-b5fa9",
+    storageBucket: "typixclin-b5fa9.firebasestorage.app",
+    messagingSenderId: "726560091078",
+    appId: "1:726560091078:web:5ce8b31da0bfbbc1f720c7",
+    measurementId: "G-9CZ2QB6TNK"
+};
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const CARD_HTML = `
+<div class="settings-card tpx-acc-card" data-setting="account">
+    <div class="settings-card-head">
+        <div class="settings-card-icon account"><i class="fas fa-user-gear"></i></div>
+        <div class="settings-card-titles">
+            <div class="settings-card-title">Mon compte</div>
+            <div class="settings-card-sub">Nom affiché sur le site, adresse e-mail et mot de passe.</div>
+        </div>
+    </div>
+
+    <div class="tpx-acc-field">
+        <label class="tpx-acc-label" for="tpx-acc-name">Nom affiché</label>
+        <div class="tpx-acc-row">
+            <input class="tpx-acc-input" id="tpx-acc-name" type="text" maxlength="60"
+                   autocomplete="name" placeholder="Votre nom">
+            <button class="tpx-acc-btn" id="tpx-acc-name-save" type="button">
+                <i class="fas fa-check"></i> Enregistrer
+            </button>
+        </div>
+        <div class="tpx-acc-msg" id="tpx-acc-name-msg"></div>
+    </div>
+
+    <div class="tpx-acc-field">
+        <label class="tpx-acc-label" for="tpx-acc-mail">Adresse e-mail</label>
+        <div class="tpx-acc-row">
+            <input class="tpx-acc-input" id="tpx-acc-mail" type="email" readonly tabindex="-1">
+            <button class="tpx-acc-btn ghost" id="tpx-acc-mail-start" type="button">
+                <i class="fas fa-pen"></i> Modifier
+            </button>
+        </div>
+        <div class="tpx-acc-sub" id="tpx-acc-mail-sub">
+            <div class="tpx-acc-warn">
+                <i class="fas fa-triangle-exclamation"></i>
+                La nouvelle adresse ne doit <strong>jamais</strong> avoir servi à créer un compte
+                TypixClin, même supprimé depuis. Une adresse déjà rattachée à un compte est
+                refusée : le lien de vérification n'est pas envoyé et le changement échoue
+                silencieusement.
+            </div>
+            <div class="tpx-acc-hint">
+                Saisissez la nouvelle adresse et confirmez votre mot de passe actuel.
+                Un lien de vérification sera envoyé à la nouvelle adresse : elle ne
+                deviendra active qu'une fois ce lien ouvert.
+            </div>
+            <input class="tpx-acc-input" id="tpx-acc-newmail" type="email"
+                   autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false"
+                   placeholder="Nouvelle adresse e-mail">
+            <div class="tpx-acc-pwdwrap">
+                <input class="tpx-acc-input" id="tpx-acc-pwd" type="password"
+                       autocomplete="current-password" placeholder="Mot de passe actuel">
+                <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd"
+                        aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="tpx-acc-row">
+                <button class="tpx-acc-btn" id="tpx-acc-mail-save" type="button">
+                    <i class="fas fa-paper-plane"></i> Envoyer le lien
+                </button>
+                <button class="tpx-acc-btn ghost" id="tpx-acc-mail-cancel" type="button">Annuler</button>
+            </div>
+        </div>
+        <div class="tpx-acc-msg" id="tpx-acc-mail-msg"></div>
+    </div>
+
+    <div class="tpx-acc-field">
+        <label class="tpx-acc-label">Mot de passe</label>
+        <div class="tpx-acc-row">
+            <input class="tpx-acc-input tpx-acc-static" type="text"
+                   value="Masqu\u00e9 pour des raisons de s\u00e9curit\u00e9" readonly tabindex="-1">
+            <button class="tpx-acc-btn ghost" id="tpx-acc-pwd-start" type="button">
+                <i class="fas fa-pen"></i> Modifier
+            </button>
+        </div>
+        <button class="tpx-acc-link" id="tpx-acc-pwd-forgot" type="button">Mot de passe oubli\u00e9 ?</button>
+        <div class="tpx-acc-sub" id="tpx-acc-pwd-sub">
+            <div class="tpx-acc-hint">
+                Confirmez votre mot de passe actuel, puis saisissez le nouveau
+                (6 caractères minimum). Le changement est immédiat : vos autres
+                appareils resteront connectés, mais devront utiliser le nouveau
+                mot de passe à la prochaine connexion.
+            </div>
+            <div class="tpx-acc-pwdwrap">
+                <input class="tpx-acc-input" id="tpx-acc-pwd-cur" type="password"
+                       autocomplete="current-password" placeholder="Mot de passe actuel">
+                <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd-cur"
+                        aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="tpx-acc-pwdwrap">
+                <input class="tpx-acc-input" id="tpx-acc-pwd-new" type="password"
+                       autocomplete="new-password" placeholder="Nouveau mot de passe">
+                <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd-new"
+                        aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="tpx-acc-pwdwrap">
+                <input class="tpx-acc-input" id="tpx-acc-pwd-new2" type="password"
+                       autocomplete="new-password" placeholder="Confirmez le nouveau mot de passe">
+                <button class="tpx-acc-eye" type="button" data-eye="tpx-acc-pwd-new2"
+                        aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="tpx-acc-row">
+                <button class="tpx-acc-btn" id="tpx-acc-pwd-save" type="button">
+                    <i class="fas fa-lock"></i> Enregistrer
+                </button>
+                <button class="tpx-acc-btn ghost" id="tpx-acc-pwd-cancel" type="button">Annuler</button>
+            </div>
+        </div>
+        <div class="tpx-acc-msg" id="tpx-acc-pwd-msg"></div>
+    </div>
+</div>`;
+
+const $ = (id) => document.getElementById(id);
+
+function say(el, text, kind) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'tpx-acc-msg' + (text ? ' show ' + (kind || 'ok') : '');
+}
+
+/* Confirmation visuelle sur le bouton lui-même : vert + coche, dimensions
+   figées d'abord pour qu'aucun élément ne se décale (même principe que les
+   boutons « Réinitialiser les filtres »). */
+function flashDone(btn) {
+    if (!btn || btn._tpxBusy) return;
+    btn._tpxBusy = true;
+    const html = btn.innerHTML;
+    btn.style.width = btn.offsetWidth + 'px';
+    btn.style.height = btn.offsetHeight + 'px';
+    btn.classList.add('done');
+    btn.innerHTML = '<i class="fas fa-check"></i>';
+    setTimeout(() => {
+        btn.classList.remove('done');
+        btn.innerHTML = html;
+        btn.style.width = '';
+        btn.style.height = '';
+        btn._tpxBusy = false;
+    }, 1500);
+}
+
+/* `updatePassword` provoque un rafraîchissement du jeton, ce qui re-notifie
+   les observateurs d'authentification du SDK Firebase : le tableur EDN rejoue
+   alors sa séquence de connexion, dont la vérification de la pastille
+   « Nouveautés ». On mémorise l'état de la pastille et on le réimpose pendant
+   quelques secondes. (Le changement de NOM, lui, n'appelle plus updateProfile
+   et ne déclenche donc plus rien de tout cela.) */
+function freezeWhatsNewBadge() {
+    const ids = ['whats-new-badge', 'avatar-whatsnew-dot'];
+    const snap = ids.map((id) => {
+        const el = $(id);
+        return { el, show: !!(el && el.classList.contains('show')) };
+    });
+    const until = Date.now() + 3500;
+    const timer = setInterval(() => {
+        snap.forEach((s) => { if (s.el) s.el.classList.toggle('show', s.show); });
+        if (Date.now() > until) clearInterval(timer);
+    }, 160);
+}
+
+function humanError(e) {
+    const c = (e && e.code) || '';
+    if (c === 'auth/wrong-password' || c === 'auth/invalid-credential')
+        return "Mot de passe incorrect.";
+    if (c === 'auth/invalid-email')      return "Adresse e-mail invalide.";
+    if (c === 'auth/email-already-in-use') return "Cette adresse est déjà utilisée par un autre compte.";
+    if (c === 'auth/requires-recent-login')
+        return "Par sécurité, reconnectez-vous puis réessayez.";
+    if (c === 'auth/weak-password')      return "Mot de passe trop faible : 6 caractères minimum.";
+    if (c === 'auth/too-many-requests')  return "Trop de tentatives. Réessayez dans quelques minutes.";
+    if (c === 'auth/network-request-failed') return "Connexion impossible. Vérifiez votre réseau.";
+    if (c === 'auth/operation-not-allowed') return "Opération refusée par le serveur d'authentification.";
+    return "Une erreur est survenue. Réessayez plus tard.";
+}
+
+function hasPasswordProvider(user) {
+    try { return (user.providerData || []).some(p => p && p.providerId === 'password'); }
+    catch (e) { return false; }
+}
+
+function refreshNameInUI(name) {
+    const pn = $('profile-name'); if (pn) pn.textContent = name;
+    const ai = $('avatar-initials');
+    if (ai) {
+        const parts = name.trim().split(/\s+/).filter(Boolean);
+        ai.textContent = (parts.length >= 2
+            ? parts[0][0] + parts[1][0]
+            : (parts[0] || '?').slice(0, 2)).toUpperCase();
+    }
+    const welcome = $('welcome-message');
+    const un = welcome && welcome.querySelector('.user-name');
+    if (un) {
+        const parts = name.trim().split(' ');
+        un.textContent = parts.length >= 2
+            ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase() + ' ' + parts.slice(1).join(' ').toUpperCase()
+            : name;
+    }
+}
+
+function fillFromUser() {
+    const u = auth.currentUser;
+    const nameInput = $('tpx-acc-name');
+    const mailInput = $('tpx-acc-mail');
+    if (!u || !nameInput || !mailInput) return;
+    const pn = $('profile-name');
+    if (document.activeElement !== nameInput) {
+        nameInput.value = (pn && pn.textContent && pn.textContent !== 'Jean Dupont')
+            ? pn.textContent.trim()
+            : (u.displayName || '');
+    }
+    mailInput.value = u.email || '';
+
+    /* Comptes Google : ni l'adresse ni le mot de passe ne dépendent de nous. */
+    const canChangeCreds = hasPasswordProvider(u);
+    window._tpxCredsAllowed = canChangeCreds;
+    const mailStart = $('tpx-acc-mail-start');
+    const pwdStart  = $('tpx-acc-pwd-start');
+    const mailOpen  = $('tpx-acc-mail-sub') && $('tpx-acc-mail-sub').classList.contains('open');
+    const pwdOpen   = $('tpx-acc-pwd-sub')  && $('tpx-acc-pwd-sub').classList.contains('open');
+    /* On ne réactive pas un bouton dont le panneau opposé est ouvert. */
+    if (mailStart) mailStart.disabled = !canChangeCreds || pwdOpen;
+    if (pwdStart)  pwdStart.disabled  = !canChangeCreds || mailOpen;
+    /* Compte Google : aucun mot de passe Firebase à réinitialiser. */
+    const pwdForgotBtn = $('tpx-acc-pwd-forgot');
+    if (pwdForgotBtn) pwdForgotBtn.disabled = !canChangeCreds;
+    if (!canChangeCreds) {
+        say($('tpx-acc-mail-msg'),
+            "Votre compte utilise une connexion Google : l'adresse se modifie depuis votre compte Google.",
+            'err');
+        say($('tpx-acc-pwd-msg'),
+            "Votre compte utilise une connexion Google : le mot de passe se gère depuis votre compte Google.",
+            'err');
+    }
+}
+
+function wire() {
+    const nameBtn = $('tpx-acc-name-save');
+    const nameMsg = $('tpx-acc-name-msg');
+
+    nameBtn.addEventListener('click', async () => {
+        const u = auth.currentUser;
+        const val = ($('tpx-acc-name').value || '').trim().replace(/\s+/g, ' ');
+        if (!u) { say(nameMsg, "Vous n'êtes pas connecté.", 'err'); return; }
+        if (val.length < 2)  { say(nameMsg, "Le nom doit contenir au moins 2 caractères.", 'err'); return; }
+        if (val.length > 60) { say(nameMsg, "Le nom ne peut pas dépasser 60 caractères.", 'err'); return; }
+        nameBtn.disabled = true;
+        say(nameMsg, '');
+        try {
+            /* On n'appelle DÉLIBÉRÉMENT PAS updateProfile() ici.
+               Dans le SDK Firebase, updateProfile re-notifie les observateurs
+               d'authentification : les deux tableurs rejouent alors toute leur
+               séquence de connexion (updateUserUI), ce qui rebranche un second
+               onSnapshot sur planningRevision côté EDN — l'ancien n'étant jamais
+               résilié — et repositionne `_ecosFirstSnapshot` côté ECOS, donc
+               relance la résolution « cache local vs Firestore » en pleine
+               session de travail. Un simple changement de nom ne doit pas
+               déclencher ça.
+               Les deux tableurs affichent `userInfo.displayName` (Firestore) en
+               priorité sur `user.displayName` (Auth) : écrire dans Firestore
+               suffit donc partout. */
+            const parts = val.split(' ').filter(Boolean);
+            const payload = { displayName: val };
+            /* firstName / lastName : mis à jour uniquement si un nom complet est
+               fourni. Sur un prénom seul, on n'écrase pas le nom de famille
+               enregistré à l'inscription. */
+            if (parts.length >= 2) {
+                payload.firstName = parts[0];
+                payload.lastName  = parts.slice(1).join(' ');
+            }
+            await setDoc(doc(db, 'users', u.uid), payload, { merge: true });
+            refreshNameInUI(val);
+            nameBtn.disabled = false;
+            flashDone(nameBtn);          /* succès : pas de texte, le bouton suffit */
+        } catch (e) {
+            console.warn('[compte] nom', e);
+            say(nameMsg, humanError(e), 'err');
+            nameBtn.disabled = false;
+        }
+    });
+
+    /* ── Bouton œil : toujours présent, sur tous les champs mot de passe.
+       Délégué sur la carte, donc valable aussi pour les champs créés plus tard.
+       On repasse en `password` dès que le champ perd le focus : un mot de passe
+       ne doit pas rester lisible à l'écran une fois la saisie terminée. ── */
+    const card = $('tpx-acc-name').closest('.tpx-acc-card');
+    card.addEventListener('click', (e) => {
+        const eye = e.target.closest && e.target.closest('.tpx-acc-eye');
+        if (!eye) return;
+        e.preventDefault();
+        const input = $(eye.getAttribute('data-eye'));
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        eye.classList.toggle('on', show);
+        eye.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        const ico = eye.querySelector('i');
+        if (ico) ico.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+        try { input.focus(); } catch (err) {}
+    });
+    function hideAllPasswords() {
+        card.querySelectorAll('.tpx-acc-eye').forEach((eye) => {
+            const input = $(eye.getAttribute('data-eye'));
+            if (input) input.type = 'password';
+            eye.classList.remove('on');
+            eye.setAttribute('aria-label', 'Afficher le mot de passe');
+            const ico = eye.querySelector('i');
+            if (ico) ico.className = 'fas fa-eye';
+        });
+    }
+
+    const mailInput  = $('tpx-acc-mail');
+    const newMail    = $('tpx-acc-newmail');
+    const mailSub    = $('tpx-acc-mail-sub');
+    const mailMsg    = $('tpx-acc-mail-msg');
+    const startBtn   = $('tpx-acc-mail-start');
+    const saveBtn    = $('tpx-acc-mail-save');
+    const cancelBtn  = $('tpx-acc-mail-cancel');
+    const pwdInput   = $('tpx-acc-pwd');
+
+    /* ── Exclusion mutuelle : un seul panneau ouvert à la fois. Deux
+       ré-authentifications simultanées n'auraient aucun sens, et deux champs
+       « mot de passe actuel » à l'écran prêtent à confusion. ── */
+    function closeMailPanel() {
+        mailSub.classList.remove('open');
+        newMail.value = ''; pwdInput.value = '';
+        say(mailMsg, '');
+    }
+    function closePwdPanel() {
+        const sub = $('tpx-acc-pwd-sub');
+        sub.classList.remove('open', 'validated');
+        $('tpx-acc-pwd-cur').value = '';
+        $('tpx-acc-pwd-new').value = '';
+        $('tpx-acc-pwd-new2').value = '';
+        say($('tpx-acc-pwd-msg'), '');
+    }
+    /* `credsAllowed` retient si le compte peut changer identifiants et mot de
+       passe (faux pour une connexion Google) : on ne réactive jamais un bouton
+       qui doit rester grisé. */
+    function setPanelLock(which) {
+        const pwdStartBtn = $('tpx-acc-pwd-start');
+        if (which === 'mail') { pwdStartBtn.disabled = true; }
+        else if (which === 'pwd') { startBtn.disabled = true; }
+        else if (window._tpxCredsAllowed !== false) {
+            startBtn.disabled = false;
+            pwdStartBtn.disabled = false;
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        closePwdPanel();
+        hideAllPasswords();
+        setPanelLock('mail');
+        mailSub.classList.add('open');
+        newMail.value = '';
+        pwdInput.value = '';
+        say(mailMsg, '');
+        setTimeout(() => newMail.focus(), 30);
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        closeMailPanel();
+        hideAllPasswords();
+        setPanelLock(null);
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const u = auth.currentUser;
+        const next = (newMail.value || '').trim();
+        const pwd  = pwdInput.value || '';
+        if (!u) { say(mailMsg, "Vous n'êtes pas connecté.", 'err'); return; }
+        if (!next) { say(mailMsg, "Saisissez la nouvelle adresse e-mail.", 'err'); newMail.focus(); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(next)) {
+            say(mailMsg, "Adresse e-mail invalide.", 'err'); newMail.focus(); return;
+        }
+        if (next.toLowerCase() === (u.email || '').toLowerCase()) {
+            say(mailMsg, "Cette adresse est déjà la vôtre : saisissez la nouvelle.", 'err');
+            newMail.focus(); return;
+        }
+        if (!pwd) { say(mailMsg, "Saisissez votre mot de passe actuel.", 'err'); pwdInput.focus(); return; }
+
+        saveBtn.disabled = true;
+        say(mailMsg, "Vérification en cours…", 'ok');
+        try {
+            const cred = EmailAuthProvider.credential(u.email, pwd);
+            await reauthenticateWithCredential(u, cred);
+            await verifyBeforeUpdateEmail(u, next);
+            newMail.value = '';
+            pwdInput.value = '';
+            mailSub.classList.remove('open');
+            hideAllPasswords();
+            setPanelLock(null);
+            say(mailMsg,
+                "Un lien de vérification a été envoyé à " + next +
+                ". Votre adresse changera dès que vous l'aurez ouvert (pensez aux indésirables).",
+                'ok');
+        } catch (e) {
+            console.warn('[compte] e-mail', e);
+            say(mailMsg, humanError(e), 'err');
+        } finally {
+            saveBtn.disabled = false;
+        }
+    });
+
+    /* ── Mot de passe ── */
+    const pwdSub    = $('tpx-acc-pwd-sub');
+    const pwdMsg    = $('tpx-acc-pwd-msg');
+    const pwdStart  = $('tpx-acc-pwd-start');
+    const pwdSave   = $('tpx-acc-pwd-save');
+    const pwdCancel = $('tpx-acc-pwd-cancel');
+    const pwdCur    = $('tpx-acc-pwd-cur');
+    const pwdNew    = $('tpx-acc-pwd-new');
+    const pwdNew2   = $('tpx-acc-pwd-new2');
+
+    function resetPwdFields() {
+        pwdCur.value = ''; pwdNew.value = ''; pwdNew2.value = '';
+    }
+
+    pwdStart.addEventListener('click', () => {
+        closeMailPanel();
+        hideAllPasswords();
+        setPanelLock('pwd');
+        pwdSub.classList.remove('validated');
+        pwdSub.classList.add('open');
+        resetPwdFields();
+        say(pwdMsg, '');
+        setTimeout(() => pwdCur.focus(), 30);
+    });
+
+    pwdCancel.addEventListener('click', () => {
+        closePwdPanel();
+        hideAllPasswords();
+        setPanelLock(null);
+    });
+
+    /* « Mot de passe oublié ? » — envoie le lien de réinitialisation à l'adresse
+       du compte. Ne demande PAS le mot de passe actuel : c'est justement le
+       recours de celui qui ne l'a plus, et le formulaire ci-dessus l'exige.
+       Firebase limite lui-même la cadence des envois (auth/too-many-requests) ;
+       on ajoute un verrou de 4 s pour éviter les clics répétés. */
+    const pwdForgot = $('tpx-acc-pwd-forgot');
+    pwdForgot.addEventListener('click', async () => {
+        const u = auth.currentUser;
+        if (!u || !u.email) { say(pwdMsg, "Vous n'êtes pas connecté.", 'err'); return; }
+        pwdForgot.disabled = true;
+        say(pwdMsg, "Envoi en cours…", 'ok');
+        try {
+            await sendPasswordResetEmail(auth, u.email);
+            closePwdPanel();
+            hideAllPasswords();
+            setPanelLock(null);
+            say(pwdMsg,
+                "Un lien de réinitialisation a été envoyé à " + u.email +
+                " (pensez aux indésirables). Vous pourrez y choisir un nouveau mot de passe sans connaître l'ancien.",
+                'ok');
+        } catch (e) {
+            console.warn('[compte] réinitialisation', e);
+            say(pwdMsg, humanError(e), 'err');
+        } finally {
+            setTimeout(() => { pwdForgot.disabled = (window._tpxCredsAllowed === false); }, 4000);
+        }
+    });
+
+    pwdSave.addEventListener('click', async () => {
+        const u = auth.currentUser;
+        const cur = pwdCur.value || '', next = pwdNew.value || '', again = pwdNew2.value || '';
+        if (!u) { say(pwdMsg, "Vous n'êtes pas connecté.", 'err'); return; }
+        if (!cur)  { say(pwdMsg, "Saisissez votre mot de passe actuel.", 'err'); pwdCur.focus(); return; }
+        if (!next) { say(pwdMsg, "Saisissez le nouveau mot de passe.", 'err'); pwdNew.focus(); return; }
+        if (next.length < 6) {
+            say(pwdMsg, "Le nouveau mot de passe doit faire au moins 6 caractères.", 'err');
+            pwdNew.focus(); return;
+        }
+        if (next !== again) {
+            say(pwdMsg, "Les deux nouveaux mots de passe ne correspondent pas.", 'err');
+            pwdNew2.focus(); return;
+        }
+        if (next === cur) {
+            say(pwdMsg, "Le nouveau mot de passe est identique à l'actuel.", 'err');
+            pwdNew.focus(); return;
+        }
+
+        pwdSave.disabled = true;
+        say(pwdMsg, '');
+        try {
+            /* Ré-authentification obligatoire : Firebase refuse un changement
+               de mot de passe sur une session trop ancienne. */
+            await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, cur));
+            freezeWhatsNewBadge();
+            await updatePassword(u, next);
+            resetPwdFields();
+            hideAllPasswords();
+            /* Les champs disparaîssent immédiatement ; seule la rangée de
+               boutons reste pour porter la coche verte, puis tout se replie. */
+            pwdSub.classList.add('validated');
+            pwdSave.disabled = false;
+            flashDone(pwdSave);
+            setTimeout(() => {
+                pwdSub.classList.remove('open', 'validated');
+                setPanelLock(null);
+            }, 1700);
+        } catch (e) {
+            console.warn('[compte] mot de passe', e);
+            say(pwdMsg, humanError(e), 'err');
+            pwdSave.disabled = false;
+        }
+    });
+}
+
+/* Miroir Firestore de l'adresse (`users/{uid}.email`), recalé après la
+   bascule côté Auth. On compare au document Firestore lui-même, et non à ce
+   qui est affiché à l'écran : l'en-tête du profil montre déjà l'adresse Auth,
+   la comparer à elle-même ne détectait jamais rien.
+   Tant que la règle Firestore fige le champ `email`, l'écriture est refusée :
+   l'échec est normal et volontairement silencieux. Dès que la règle autorise
+   `request.resource.data.email == request.auth.token.email`, le rattrapage se
+   fait tout seul à la connexion suivante. */
+async function syncMailMirror(u) {
+    if (!u || !u.email) return;
+    try {
+        const ref  = doc(db, 'users', u.uid);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        const stored = (snap.data() || {}).email || '';
+        if (stored.toLowerCase() === u.email.toLowerCase()) return;   /* déjà à jour */
+        await setDoc(ref, { email: u.email }, { merge: true });
+        console.info('[compte] miroir Firestore de l\'e-mail synchronis\u00e9.');
+    } catch (e) {
+        /* Règle Firestore : champ `email` figé — sans conséquence sur la
+           connexion, qui s'appuie sur Firebase Auth. */
+    }
+}
+
+function inject() {
+    const body = document.querySelector('#settings-modal-overlay .settings-modal-body');
+    if (!body || document.getElementById('tpx-acc-name')) return false;
+    const holder = document.createElement('div');
+    holder.innerHTML = CARD_HTML.trim();
+    body.appendChild(holder.firstElementChild);   /* toujours en dernière carte */
+    wire();
+    fillFromUser();
+    return true;
+}
+
+function boot() {
+    if (!inject()) return;
+    const overlay = document.getElementById('settings-modal-overlay');
+    if (overlay) {
+        new MutationObserver(() => {
+            if (overlay.classList.contains('active')) fillFromUser();
+        }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    }
+    auth.onAuthStateChanged((u) => {
+        if (!u) return;
+        fillFromUser();
+        syncMailMirror(u);
+    });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+</script>
+
 <!-- ═══════════ CORRECTIF CLAVIER — TÉLÉPHONE UNIQUEMENT (v3) ═══════════
      PROBLÈMES CORRIGÉS PAR RAPPORT À LA v2
      a) L'épinglage ne s'activait pas au PREMIER modal ouvert après le
@@ -41263,12 +42071,27 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
        Notes/Reçues est positionné en absolu par rapport au PANNEAU éditeur ;
        rendre la barre « relative » le ferait glisser avec le défilement
        horizontal des outils. ── */
-body.tcp-kb-pin .notes-modal-overlay.active .notes-modal-body { min-height: 0 !important; }
+/* Chaîne flex du modal forcée de bout en bout : corps → panneau → zone de
+   texte. Sans cela, un panneau sans `min-height: 0` laisse la zone de saisie
+   déborder sous le clavier au lieu de défiler. */
+body.tcp-kb-pin .notes-modal-overlay.active .notes-modal-body,
+body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+}
 body.tcp-kb-pin .notes-modal-overlay.active .notes-toolbar { flex-shrink: 0 !important; }
 body.tcp-kb-pin .notes-modal-overlay.active .notes-editor-panel,
 body.tcp-kb-pin .notes-modal-overlay.active .sdd-notes-left {
+    display: flex !important;
+    flex-direction: column !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
 }
 /* Panneau du bas (Objectifs & Compétences, Flashcards, items OIC) :
    il s'efface COMPLÈTEMENT pendant la saisie, toute la hauteur revient
@@ -41350,24 +42173,71 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         return !!(ov && ov.classList.contains('active'));
     }
 
+    /* ── Filet de sécurité : mise en géométrie EN LIGNE du modal ──
+       Les règles CSS ci-dessus suffisent en théorie, mais certains modals
+       (notamment les notes SDD d'ECOS) portent des règles de hauteur plus
+       spécifiques : le modal débordait alors sous le clavier. Un style EN
+       LIGNE marqué !important l'emporte sur TOUTE feuille de styles, quelle
+       que soit la spécificité : la hauteur visible est donc garantie. */
+    var OV_SEL = '.notes-modal-overlay.active, .planning-day-detail-overlay.active, .pdd-overlay.active';
+    var MODAL_SEL = '.notes-modal, .sdd-notes-modal, .planning-day-detail-modal, .pdd-modal';
+    var GEOM = ['position', 'top', 'left', 'right', 'bottom', 'width', 'height',
+                'max-height', 'max-width', 'min-height', 'margin'];
+    var _styled = [];
+
+    function clearModal(m) {
+        for (var i = 0; i < GEOM.length; i++) { try { m.style.removeProperty(GEOM[i]); } catch (e) {} }
+    }
+    function clearAllModals() {
+        for (var i = 0; i < _styled.length; i++) clearModal(_styled[i]);
+        _styled = [];
+    }
+    function styleModals(top, left, w, h) {
+        var ovs = document.querySelectorAll(OV_SEL), seen = [];
+        for (var i = 0; i < ovs.length; i++) {
+            var m = ovs[i].querySelector(MODAL_SEL);
+            if (!m) continue;
+            seen.push(m);
+            m.style.setProperty('position', 'absolute', 'important');
+            m.style.setProperty('top', (top + 420) + 'px', 'important');
+            m.style.setProperty('left', (left + 420) + 'px', 'important');
+            m.style.setProperty('right', 'auto', 'important');
+            m.style.setProperty('bottom', 'auto', 'important');
+            m.style.setProperty('width', w + 'px', 'important');
+            m.style.setProperty('height', h + 'px', 'important');
+            m.style.setProperty('max-height', 'none', 'important');
+            m.style.setProperty('max-width', 'none', 'important');
+            m.style.setProperty('min-height', '0', 'important');
+            m.style.setProperty('margin', '0', 'important');
+        }
+        for (var j = 0; j < _styled.length; j++) {
+            if (seen.indexOf(_styled[j]) === -1) clearModal(_styled[j]);
+        }
+        _styled = seen;
+    }
+
     function apply() {
         var vv = window.visualViewport;
         var want = shouldPin();
 
         if (want) {
-            root.style.setProperty('--tcp-vv-top', Math.round(vv.offsetTop) + 'px');
-            root.style.setProperty('--tcp-vv-left', Math.round(vv.offsetLeft) + 'px');
-            root.style.setProperty('--tcp-vv-w', Math.round(vv.width) + 'px');
-            root.style.setProperty('--tcp-vv-h', Math.round(vv.height) + 'px');
+            var top = Math.round(vv.offsetTop), left = Math.round(vv.offsetLeft);
+            var w = Math.round(vv.width), h = Math.round(vv.height);
+            root.style.setProperty('--tcp-vv-top', top + 'px');
+            root.style.setProperty('--tcp-vv-left', left + 'px');
+            root.style.setProperty('--tcp-vv-w', w + 'px');
+            root.style.setProperty('--tcp-vv-h', h + 'px');
             if (!pinned) {
                 pinned = true;
                 body.classList.add('tcp-kb-pin');
                 caretFollow(280);
                 if (!watchdog) watchdog = setInterval(apply, 350);
             }
+            styleModals(top, left, w, h);
         } else if (pinned) {
             pinned = false;
             body.classList.remove('tcp-kb-pin');
+            clearAllModals();
             if (watchdog) { clearInterval(watchdog); watchdog = null; }
         }
     }
