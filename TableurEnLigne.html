@@ -48344,11 +48344,53 @@ body.tcp-kb-pin .pdd-overlay.active {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
+/* ── 1 bis. Overlay « carte centrée » (Paramètres) ──
+       Ce modal n'occupe pas tout l'écran : on ne le colle donc pas à la zone
+       visible comme les autres. On étend le voile bien au-delà de l'écran (sinon
+       la page réapparaît sous le clavier, la fenêtre de mise en page rétrécissant
+       à son ouverture) et on reporte la zone visible en PADDING : la carte reste
+       centrée dans l'espace libre au-dessus du clavier. */
+body.tcp-kb-pin .settings-modal-overlay.active {
+    position: fixed !important;
+    top: -420px !important;
+    left: -420px !important;
+    right: -420px !important;
+    bottom: -420px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: calc(var(--tcp-vv-top, 0px) + 420px)
+             calc(var(--tcp-vv-right, 0px) + 420px)
+             calc(var(--tcp-vv-bottom, 0px) + 420px)
+             calc(var(--tcp-vv-left, 0px) + 420px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain;
+    background: rgb(11, 17, 30) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    transition: padding 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+body.tcp-kb-pin .settings-modal-overlay.active .settings-modal-inner {
+    max-height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+}
+
 /* ── 2. Modal : posé en absolu sur la zone visible exacte. Plus de calcul
        en pourcentage, plus de centrage : le haut est garanti à l'écran. ── */
 body.tcp-kb-pin .notes-modal-overlay.active .notes-modal,
 body.tcp-kb-pin .planning-day-detail-overlay.active .planning-day-detail-modal,
 body.tcp-kb-pin .pdd-overlay.active .pdd-modal {
+    /* Transition douce : à la prise de focus le modal est épinglé sur l'écran
+       entier (le clavier n'est pas encore là), puis la zone visible rétrécit —
+       le modal accompagne la montée du clavier au lieu de sauter. */
+    transition: top 0.24s cubic-bezier(0.22, 0.61, 0.36, 1),
+                left 0.24s cubic-bezier(0.22, 0.61, 0.36, 1),
+                width 0.24s cubic-bezier(0.22, 0.61, 0.36, 1),
+                height 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
     position: absolute !important;
     top: calc(var(--tcp-vv-top, 0px) + 420px) !important;
     left: calc(var(--tcp-vv-left, 0px) + 420px) !important;
@@ -48447,8 +48489,8 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
 
     var root = document.documentElement;
     var body = document.body;
-    var OVERLAYS = '.notes-modal-overlay, .planning-day-detail-overlay, .pdd-overlay';
-    var VEIL = ['notes-modal-overlay', 'planning-day-detail-overlay', 'pdd-overlay'];
+    var OVERLAYS = '.notes-modal-overlay, .planning-day-detail-overlay, .pdd-overlay, .settings-modal-overlay';
+    var VEIL = ['notes-modal-overlay', 'planning-day-detail-overlay', 'pdd-overlay', 'settings-modal-overlay'];
 
     var raf = null, pinned = false, watchdog = null;
 
@@ -48520,8 +48562,17 @@ body.tcp-kb-pin .pdd-overlay.active .pdd-editor {
         if (want) {
             var top = Math.round(vv.offsetTop), left = Math.round(vv.offsetLeft);
             var w = Math.round(vv.width), h = Math.round(vv.height);
+            /* Marges basse et droite : nécessaires à l'overlay « carte centrée »,
+               qui délimite la zone visible par du padding et non par sa taille. */
+            var lh = root.clientHeight || window.innerHeight || 0;
+            var lw = root.clientWidth || window.innerWidth || 0;
+            var bottom = Math.max(0, Math.round(lh - vv.offsetTop - vv.height));
+            var right  = Math.max(0, Math.round(lw - vv.offsetLeft - vv.width));
+            if (top + bottom > lh - 160) bottom = Math.max(0, lh - 160 - top);
             root.style.setProperty('--tcp-vv-top', top + 'px');
             root.style.setProperty('--tcp-vv-left', left + 'px');
+            root.style.setProperty('--tcp-vv-bottom', bottom + 'px');
+            root.style.setProperty('--tcp-vv-right', right + 'px');
             root.style.setProperty('--tcp-vv-w', w + 'px');
             root.style.setProperty('--tcp-vv-h', h + 'px');
             if (!pinned) {
