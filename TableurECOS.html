@@ -36230,7 +36230,16 @@ async function updateUserUI(user) {
             } else {
                 const patch = {};
                 if (user.displayName && !userInfo.displayName) patch.displayName = user.displayName;
-                if (user.email && !userInfo.email) patch.email = user.email;
+                /* Adresse e-mail : resynchronisée à CHAQUE connexion (et plus
+                   seulement si le champ manque). Un changement validé côté
+                   Firebase Auth ne touche que le compte Auth ; sans cela,
+                   users/{uid}.email — la source de la page admin — restait
+                   figé sur l'ancienne adresse. Écriture séparée pour qu'un
+                   refus de la règle Firestore n'entraîne pas le reste. */
+                if (user.email && userInfo.email !== user.email) {
+                    setDoc(doc(db, 'users', user.uid), { email: user.email }, { merge: true })
+                        .catch(e => console.warn('⚠️ Miroir email non synchronisé (règle Firestore ?)', e));
+                }
                 if (!userInfo.shortId) patch.shortId = shortId;
                 /* Migration des docs anciens : les règles n'autorisent l'écriture
                    de ces trois champs que s'ils sont ABSENTS. */
@@ -41369,14 +41378,82 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .
 /* Champ « mot de passe » en lecture seule : mention honnête plutôt que de faux
    points, qui laissaient croire que le mot de passe était consultable. */
 .tpx-acc-input.tpx-acc-static { font-style: italic; font-size: 0.82rem; }
-.tpx-acc-msg { font-size: 0.78rem; line-height: 1.45; margin-top: 0.1rem; display: none; }
-.tpx-acc-msg.show { display: block; }
+/* ── Messages de confirmation / d'erreur ──────────────────────────────
+   `display:none` ne s'anime pas : le message surgissait d'un coup et
+   poussait brutalement la carte vers le bas. On garde donc l'élément dans
+   le flux en permanence, replié (`max-height:0`, `opacity:0`), et on
+   l'ouvre en transition. `overflow:hidden` évite que le texte déborde
+   pendant que la hauteur grandit. */
+.tpx-acc-msg {
+    font-size: 0.78rem; line-height: 1.45;
+    display: block; overflow: hidden;
+    max-height: 0; opacity: 0;
+    /* `.tpx-acc-field` est un flex en colonne avec `gap: 0.35rem`. L'élément
+       restant maintenant en permanence dans le flux, ce gap s'appliquerait
+       même replié et creuserait un blanc sous chaque champ : la marge
+       négative l'annule exactement, puis repasse en positif à l'ouverture. */
+    margin-top: -0.35rem;
+    transform: translateY(-4px);
+    transition: max-height 0.3s ease,
+                margin-top 0.3s ease,
+                opacity 0.24s ease,
+                transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.tpx-acc-msg.show {
+    /* Plafond volontairement large : les messages font 1 à 4 lignes, la
+       valeur ne sert qu'à rendre la transition possible. */
+    max-height: 12rem; margin-top: 0.1rem;
+    opacity: 1; transform: translateY(0);
+}
 .tpx-acc-msg.ok { color: #15803d; }
 .tpx-acc-msg.err { color: #b91c1c; }
 [data-theme="dark"] .tpx-acc-msg.ok { color: #4ade80; }
 [data-theme="dark"] .tpx-acc-msg.err { color: #f87171; }
-.tpx-acc-sub { display: none; flex-direction: column; gap: 0.5rem; padding-top: 0.15rem; }
-.tpx-acc-sub.open { display: flex; }
+/* Message remplacé alors que le précédent est déjà affiché (erreur qui en
+   suit une autre) : la hauteur ne bouge pas, donc rien ne signalerait le
+   changement. Un bref battement s'en charge. */
+@keyframes tpxAccMsgNudge {
+    0%   { opacity: 1;    transform: translateY(0); }
+    28%  { opacity: 0.35; transform: translateY(-3px); }
+    100% { opacity: 1;    transform: translateY(0); }
+}
+.tpx-acc-msg.nudge { animation: tpxAccMsgNudge 0.32s ease; }
+@media (prefers-reduced-motion: reduce) {
+    .tpx-acc-msg { transition: none; }
+    .tpx-acc-msg.nudge { animation: none; }
+}
+/* ── Panneaux dépliants (nouvelle adresse / nouveau mot de passe) ─────
+   `display: none` → `flex` ne s'anime pas : le bloc surgissait d'un coup et
+   décalait brutalement tout ce qui le suit. Le panneau reste donc en flex en
+   permanence, replié par `max-height: 0`, et s'ouvre en transition.
+   La hauteur cible dépend du contenu : impossible à écrire ici, elle est
+   mesurée en JS (cf. `openSub`). */
+.tpx-acc-sub {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    overflow: hidden;
+    max-height: 0; opacity: 0; padding-top: 0;
+    /* `.tpx-acc-field` est un flex en colonne avec `gap: 0.35rem` : replié, le
+       panneau laisserait quand même cet espace vide sous le champ. La marge
+       négative l'annule exactement, puis revient à zéro à l'ouverture. */
+    margin-top: -0.35rem;
+    transform: translateY(-6px);
+    transition: max-height 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-top 0.34s ease,
+                margin-top 0.34s ease,
+                opacity 0.26s ease,
+                transform 0.34s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.tpx-acc-sub.open {
+    opacity: 1; transform: translateY(0);
+    padding-top: 0.15rem; margin-top: 0;
+}
+/* Ouverture terminée : la hauteur est libérée (le contenu peut encore
+   grandir — champ qui passe à la ligne, clavier mobile) et le débordement
+   rétabli, sinon les halos de focus des champs seraient rognés. */
+.tpx-acc-sub.expanded { max-height: none; overflow: visible; }
+@media (prefers-reduced-motion: reduce) {
+    .tpx-acc-sub { transition: none; }
+}
 /* Après validation : on masque les champs mais on garde la rangée de boutons
    visible, sinon la coche verte disparaîtrait avec le panneau. */
 .tpx-acc-sub.validated .tpx-acc-pwdwrap,
@@ -41573,10 +41650,39 @@ const CARD_HTML = `
 
 const $ = (id) => document.getElementById(id);
 
+/* Affiche / masque un message en laissant la transition CSS se jouer.
+   À la fermeture, le texte n'est vidé qu'une fois le repli terminé : sinon
+   le bloc se referme sur du vide, ce qui se voit. */
 function say(el, text, kind) {
     if (!el) return;
-    el.textContent = text || '';
-    el.className = 'tpx-acc-msg' + (text ? ' show ' + (kind || 'ok') : '');
+    if (el._tpxHideTimer) { clearTimeout(el._tpxHideTimer); el._tpxHideTimer = null; }
+
+    if (!text) {
+        el.classList.remove('show', 'nudge');
+        el._tpxHideTimer = setTimeout(() => {
+            el.textContent = '';
+            el.classList.remove('ok', 'err');
+            el._tpxHideTimer = null;
+        }, 320);
+        return;
+    }
+
+    const wasVisible = el.classList.contains('show');
+    el.textContent = text;
+    el.classList.remove('ok', 'err', 'nudge');
+    el.classList.add(kind || 'ok');
+
+    if (wasVisible) {
+        /* reflow forcé : sans lui, retirer puis remettre la classe dans le
+           même cycle ne relance pas l'animation. */
+        void el.offsetWidth;
+        el.classList.add('nudge');
+    } else {
+        /* Une frame d'écart pour que le navigateur enregistre l'état replié
+           avant de passer à l'état ouvert — sans quoi il n'y a pas de
+           transition, juste un saut. */
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    }
 }
 
 /* Confirmation visuelle sur le bouton lui-même : vert + coche, dimensions
@@ -41597,6 +41703,41 @@ function flashDone(btn) {
         btn.style.height = '';
         btn._tpxBusy = false;
     }, 1500);
+}
+
+/* ── Ouverture / fermeture animées des panneaux dépliants ─────────────
+   La hauteur d'arrivée dépend du contenu, donc elle se mesure ici. Une fois
+   l'ouverture jouée, on repasse en `max-height: none` (classe `expanded`) :
+   autrement le panneau resterait rogné à la hauteur mesurée à l'ouverture. */
+const TPX_SUB_ANIM_MS = 340;
+
+function openSub(sub) {
+    if (!sub) return;
+    clearTimeout(sub._tpxSubTimer);
+    sub.classList.remove('expanded');
+    sub.classList.add('open');
+    sub.style.maxHeight = sub.scrollHeight + 'px';
+    sub._tpxSubTimer = setTimeout(() => {
+        if (!sub.classList.contains('open')) return;
+        sub.classList.add('expanded');
+        sub.style.maxHeight = '';
+    }, TPX_SUB_ANIM_MS);
+}
+
+function closeSub(sub) {
+    if (!sub) return;
+    clearTimeout(sub._tpxSubTimer);
+    if (sub.classList.contains('expanded')) {
+        /* On repart d'une hauteur chiffrée : `none` → 0 ne s'anime pas. */
+        sub.style.maxHeight = sub.scrollHeight + 'px';
+        sub.classList.remove('expanded');
+        void sub.offsetHeight;              /* reflow forcé */
+    }
+    sub.classList.remove('open');
+    sub.style.maxHeight = '';               /* retombe sur `max-height: 0` */
+    /* `validated` masque des champs : on ne le retire qu'une fois le panneau
+       replié, sinon ces champs réapparaîtraient pendant la fermeture. */
+    sub._tpxSubTimer = setTimeout(() => sub.classList.remove('validated'), TPX_SUB_ANIM_MS + 20);
 }
 
 /* `updatePassword` provoque un rafraîchissement du jeton, ce qui re-notifie
@@ -41677,9 +41818,12 @@ function fillFromUser() {
     const pwdStart  = $('tpx-acc-pwd-start');
     const mailOpen  = $('tpx-acc-mail-sub') && $('tpx-acc-mail-sub').classList.contains('open');
     const pwdOpen   = $('tpx-acc-pwd-sub')  && $('tpx-acc-pwd-sub').classList.contains('open');
-    /* On ne réactive pas un bouton dont le panneau opposé est ouvert. */
-    if (mailStart) mailStart.disabled = !canChangeCreds || pwdOpen;
-    if (pwdStart)  pwdStart.disabled  = !canChangeCreds || mailOpen;
+    /* Un panneau ouvert grise LES DEUX boutons « Modifier », celui de la
+       section concernée compris : son panneau est déjà déplié sous lui,
+       recliquer dessus n'aurait aucun effet utile. */
+    const anySubOpen = mailOpen || pwdOpen;
+    if (mailStart) mailStart.disabled = !canChangeCreds || anySubOpen;
+    if (pwdStart)  pwdStart.disabled  = !canChangeCreds || anySubOpen;
     /* Compte Google : aucun mot de passe Firebase à réinitialiser. */
     const pwdForgotBtn = $('tpx-acc-pwd-forgot');
     if (pwdForgotBtn) pwdForgotBtn.disabled = !canChangeCreds;
@@ -41781,13 +41925,13 @@ function wire() {
        ré-authentifications simultanées n'auraient aucun sens, et deux champs
        « mot de passe actuel » à l'écran prêtent à confusion. ── */
     function closeMailPanel() {
-        mailSub.classList.remove('open');
+        closeSub(mailSub);
         newMail.value = ''; pwdInput.value = '';
         say(mailMsg, '');
     }
     function closePwdPanel() {
         const sub = $('tpx-acc-pwd-sub');
-        sub.classList.remove('open', 'validated');
+        closeSub(sub);
         $('tpx-acc-pwd-cur').value = '';
         $('tpx-acc-pwd-new').value = '';
         $('tpx-acc-pwd-new2').value = '';
@@ -41798,8 +41942,13 @@ function wire() {
        qui doit rester grisé. */
     function setPanelLock(which) {
         const pwdStartBtn = $('tpx-acc-pwd-start');
-        if (which === 'mail') { pwdStartBtn.disabled = true; }
-        else if (which === 'pwd') { startBtn.disabled = true; }
+        if (which === 'mail' || which === 'pwd') {
+            /* Les deux boutons se grisent, y compris celui de la section
+               ouverte : « Annuler » est la sortie prévue, pas un second clic
+               sur « Modifier ». */
+            startBtn.disabled = true;
+            pwdStartBtn.disabled = true;
+        }
         else if (window._tpxCredsAllowed !== false) {
             startBtn.disabled = false;
             pwdStartBtn.disabled = false;
@@ -41810,7 +41959,7 @@ function wire() {
         closePwdPanel();
         hideAllPasswords();
         setPanelLock('mail');
-        mailSub.classList.add('open');
+        openSub(mailSub);
         newMail.value = '';
         pwdInput.value = '';
         say(mailMsg, '');
@@ -41846,7 +41995,7 @@ function wire() {
             await verifyBeforeUpdateEmail(u, next);
             newMail.value = '';
             pwdInput.value = '';
-            mailSub.classList.remove('open');
+            closeSub(mailSub);
             hideAllPasswords();
             setPanelLock(null);
             say(mailMsg,
@@ -41880,7 +42029,7 @@ function wire() {
         hideAllPasswords();
         setPanelLock('pwd');
         pwdSub.classList.remove('validated');
-        pwdSub.classList.add('open');
+        openSub(pwdSub);
         resetPwdFields();
         say(pwdMsg, '');
         setTimeout(() => pwdCur.focus(), 30);
@@ -41955,7 +42104,7 @@ function wire() {
             pwdSave.disabled = false;
             flashDone(pwdSave);
             setTimeout(() => {
-                pwdSub.classList.remove('open', 'validated');
+                closeSub(pwdSub);
                 setPanelLock(null);
             }, 1700);
         } catch (e) {

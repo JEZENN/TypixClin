@@ -917,6 +917,11 @@ let currentAdmin = null;
 let onlineUnsubscribe = null;
 const USERS_CACHE_KEY = 'tc_admin_users_cache';
 const USERS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+/* Au-delà de ce délai, le cache sert quand même à peindre l'écran tout de
+   suite, mais une relecture Firestore part en arrière-plan et corrige
+   l'affichage. Sans elle, un nom ou une adresse modifiés par un utilisateur
+   restaient invisibles ici jusqu'à expiration complète du cache. */
+const USERS_REVALIDATE_AFTER = 60 * 1000; // 1 minute
 
 // ─── AUTH GATE ───
 onAuthStateChanged(auth, async (user) => {
@@ -1026,7 +1031,34 @@ window.doLogout = function() {
 };
 
 // ─── LOAD USERS ───
-window.loadUsers = async function(forceRefresh = false) {
+/* Écrit `allUsers` dans le cache. À appeler après TOUTE modification de la
+   liste, sinon un rechargement de page ressort les anciennes valeurs. */
+function saveUsersCache() {
+    try {
+        localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({ data: allUsers, timestamp: Date.now() }));
+    } catch(e) { /* quota localStorage plein */ }
+}
+
+/* Redessine les deux tableaux en respectant les recherches et filtres en
+   cours : un rafraîchissement de fond ne doit pas effacer ce que
+   l'administrateur est en train de taper. */
+function renderAllUserViews() {
+    const uSearch = document.getElementById('users-search');
+    const sSearch = document.getElementById('subs-search');
+    const uPlan   = document.getElementById('users-plan-filter');
+    const uStatus = document.getElementById('users-status-filter');
+    const sPlan   = document.getElementById('subs-filter');
+
+    updateUserStats();
+    if ((uSearch && uSearch.value) || (uPlan && uPlan.value) || (uStatus && uStatus.value)) filterUsers();
+    else renderUsersTable(allUsers);
+    if ((sSearch && sSearch.value) || (sPlan && sPlan.value)) filterSubs();
+    else renderSubsTable(allUsers);
+    renderRecentUsers(allUsers.slice(0, 5));
+    renderSubsSummary(allUsers);
+}
+
+window.loadUsers = async function(forceRefresh = false, silent = false) {
     try {
         // ── Cache localStorage : évite 91 lectures à chaque ouverture ──
         if (!forceRefresh) {
@@ -1036,14 +1068,16 @@ window.loadUsers = async function(forceRefresh = false) {
                     const { data, timestamp } = JSON.parse(cached);
                     if (Date.now() - timestamp < USERS_CACHE_TTL && data.length > 0) {
                         allUsers = data;
-                        updateUserStats();
-                        renderUsersTable(allUsers);
-                        renderSubsTable(allUsers);
-                        renderRecentUsers(allUsers.slice(0, 5));
-                        renderSubsSummary(allUsers);
+                        renderAllUserViews();
                         if(!rtdb) fallbackOnlineEstimate('Realtime Database non activée');
                         document.getElementById('users-subtitle').textContent =
                             `${allUsers.length} utilisateurs (cache — ${Math.round((Date.now() - timestamp) / 60000)} min)`;
+                        /* Revalidation silencieuse : l'écran est déjà peint, on
+                           va chercher les éventuels changements de nom ou
+                           d'adresse sans faire attendre l'administrateur. */
+                        if (Date.now() - timestamp > USERS_REVALIDATE_AFTER) {
+                            setTimeout(() => loadUsers(true, true), 500);
+                        }
                         return;
                     }
                 }
@@ -1053,22 +1087,19 @@ window.loadUsers = async function(forceRefresh = false) {
         const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')));
         allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 
-        // Sauvegarder dans le cache
-        try {
-            localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({ data: allUsers, timestamp: Date.now() }));
-        } catch(e) { /* quota localStorage plein */ }
+        saveUsersCache();
 
-        updateUserStats();
-        renderUsersTable(allUsers);
-        renderSubsTable(allUsers);
-        renderRecentUsers(allUsers.slice(0, 5));
-        renderSubsSummary(allUsers);
+        renderAllUserViews();
         if(!rtdb) fallbackOnlineEstimate('Realtime Database non activée');
         document.getElementById('users-subtitle').textContent = `${allUsers.length} utilisateurs trouvés`;
 
-        if (forceRefresh) toast('Liste actualisée depuis Firestore', 'success');
+        if (forceRefresh && !silent) toast('Liste actualisée depuis Firestore', 'success');
     } catch (e) {
-        toast('Erreur chargement utilisateurs : ' + e.message, 'error');
+        /* En revalidation de fond, on garde le cache affiché plutôt que
+           d'alarmer avec une erreur pour une lecture que personne n'a
+           demandée. */
+        if (silent) console.warn('Revalidation utilisateurs échouée :', e);
+        else toast('Erreur chargement utilisateurs : ' + e.message, 'error');
     }
 };
 
@@ -1564,6 +1595,9 @@ window.saveSubscription = async function() {
         // Update local cache
         const idx = allUsers.findIndex(u => u.uid === uid);
         if (idx !== -1) allUsers[idx] = { ...allUsers[idx], ...updateData };
+        /* …et le cache localStorage : sans cela, un simple F5 réaffichait
+           l'ancien abonnement jusqu'à expiration du cache. */
+        saveUsersCache();
 
         renderUsersTable(allUsers);
         renderSubsTable(allUsers);
