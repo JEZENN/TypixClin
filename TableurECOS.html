@@ -46628,10 +46628,11 @@ window._todoValidateAnim = function (itemId, apply) {
        est fermé avant les 10 s, la notif ne réapparaîtra pas. */
     function showNudge(opts) {
         if (_nudgeShown) return;
-        /* Garde-fou : personne de connecté → on n'affiche rien. Cette notif
-           s'adresse à un utilisateur identifié (elle écrit dans son document
-           et ses boutons ouvrent le formulaire d'avis) ; l'afficher au moment
-           de la déconnexion n'a aucun sens. */
+        /* Garde-fous : cette notif s'adresse à un utilisateur identifié (elle
+           écrit dans son document, ses boutons ouvrent le formulaire d'avis).
+           `_sessionOver` prime sur `window.currentUser`, qui reste renseigné
+           pendant tout le temps de la déconnexion. */
+        if (_sessionOver) return;
         var _who = window.currentUser || window._currentUser;
         if (!_who || !_who.uid) return;
         _nudgeShown = true;
@@ -46662,10 +46663,28 @@ window._todoValidateAnim = function (itemId, apply) {
         }, 180);
     };
 
+    /* ── Fin de session ──────────────────────────────────────────────────
+       Elle est détectée AU CLIC sur « Se déconnecter », et non en surveillant
+       `window.currentUser`. La raison : entre `signOut()` et la mise à jour de
+       l'interface, `window.currentUser` pointe encore sur l'ancien compte,
+       alors que les lectures Firestore, elles, échouent déjà (les règles
+       exigent `request.auth != null`). C'est dans cette fenêtre de quelques
+       millisecondes que la notif s'affichait. Le clic, lui, arrive largement
+       avant : plus de course. */
+    var _sessionOver = false;
+
+    document.addEventListener('click', function(e) {
+        if (!e.target || !e.target.closest) return;
+        if (!e.target.closest('#logout-btn')) return;
+        _sessionOver = true;
+        onLoggedOut();
+    }, true);   /* phase de capture : on passe avant le gestionnaire du bouton */
+
     /* Toujours la même session ? La décision est prise 2,5 s après la
        connexion, puis attend deux lectures Firestore : entre-temps
        l'utilisateur a pu se déconnecter. On abandonne alors sans bruit. */
     function sameSession(uid) {
+        if (_sessionOver) return false;
         var u = window.currentUser || window._currentUser;
         return !!(u && u.uid === uid);
     }
@@ -46685,11 +46704,13 @@ window._todoValidateAnim = function (itemId, apply) {
             var uSnap = await f.get(f.doc(f.db, 'users', uid));
             udata = uSnap.exists() ? (uSnap.data() || {}) : {};
         } catch (e) {
-            /* Lecture en échec. Ce n'est un incident réseau que si la session
-               tient toujours : après une déconnexion, l'échec est ATTENDU (la
-               règle Firestore exige `request.auth != null`) et ce repli
-               faisait justement surgir la notif au pire moment. */
-            if (sameSession(uid)) showNudge({ patch: welcomePatch });
+            /* Lecture en échec → on n'affiche RIEN. Le repli d'origine montrait
+               la notif « au cas où », ce qui était doublement mauvais : si
+               Firestore est inaccessible en lecture, on ne peut pas non plus
+               écrire `feedbackNudgeSeen`, donc la notif reviendrait à chaque
+               lancement ; et surtout, la déconnexion fait échouer cette lecture
+               par construction — c'est de là que venait l'apparition intempestive. */
+            console.warn('[Nudge] lecture users impossible, notif ignorée :', e);
             return;
         }
 
@@ -46741,6 +46762,7 @@ window._todoValidateAnim = function (itemId, apply) {
 
     function onLoggedIn() {
         var tries = 0;
+        _sessionOver = false;   /* nouvelle session : le verrou est levé */
         if (_pollTimer) clearInterval(_pollTimer);
         _pollTimer = setInterval(function() {
             var user = window.currentUser || window._currentUser;
