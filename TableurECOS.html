@@ -36271,6 +36271,16 @@ async function updateUserUI(user) {
         const loginReq = document.getElementById('login-required'); if (loginReq) loginReq.style.display = 'block';
         const pres = document.getElementById('presentation-section'); if (pres) pres.style.display = 'block';
         document.getElementById('main-content').classList.remove('active');
+
+        /* 👋 Message de bienvenue : il vit dans l'en-tête, EN DEHORS de
+           `#main-content`, donc retirer la classe `active` ne le masque pas.
+           Sans ce nettoyage, « Bonjour, PRÉNOM NOM ! » restait affiché après
+           la déconnexion, avec le nom de l'utilisateur précédent. On vide
+           aussi le contenu pour ne pas laisser ce nom dans le DOM.
+           (Même traitement que dans le tableur EDN.) */
+        const welcomeEl = document.getElementById('welcome-message');
+        if (welcomeEl) { welcomeEl.classList.remove('visible'); welcomeEl.innerHTML = ''; }
+
         if (ecosUnsub) { ecosUnsub(); ecosUnsub = null; }
         if (userSettingsUnsub) { userSettingsUnsub(); userSettingsUnsub = null; }
         if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
