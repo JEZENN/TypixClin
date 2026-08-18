@@ -46628,6 +46628,12 @@ window._todoValidateAnim = function (itemId, apply) {
        est fermé avant les 10 s, la notif ne réapparaîtra pas. */
     function showNudge(opts) {
         if (_nudgeShown) return;
+        /* Garde-fou : personne de connecté → on n'affiche rien. Cette notif
+           s'adresse à un utilisateur identifié (elle écrit dans son document
+           et ses boutons ouvrent le formulaire d'avis) ; l'afficher au moment
+           de la déconnexion n'a aucun sens. */
+        var _who = window.currentUser || window._currentUser;
+        if (!_who || !_who.uid) return;
         _nudgeShown = true;
         opts = opts || {};
 
@@ -46656,8 +46662,17 @@ window._todoValidateAnim = function (itemId, apply) {
         }, 180);
     };
 
+    /* Toujours la même session ? La décision est prise 2,5 s après la
+       connexion, puis attend deux lectures Firestore : entre-temps
+       l'utilisateur a pu se déconnecter. On abandonne alors sans bruit. */
+    function sameSession(uid) {
+        var u = window.currentUser || window._currentUser;
+        return !!(u && u.uid === uid);
+    }
+
     /* ── Décision : bienvenue / campagne / rien ─────────────────────────── */
     async function checkAndShow(uid) {
+        if (!sameSession(uid)) return;
         var f = _fs();
         var nowISO = new Date().toISOString();
         var welcomePatch = { feedbackNudgeSeen: true, feedbackNudgeSeenAt: nowISO };
@@ -46670,7 +46685,11 @@ window._todoValidateAnim = function (itemId, apply) {
             var uSnap = await f.get(f.doc(f.db, 'users', uid));
             udata = uSnap.exists() ? (uSnap.data() || {}) : {};
         } catch (e) {
-            showNudge({ patch: welcomePatch });   // erreur réseau → fallback
+            /* Lecture en échec. Ce n'est un incident réseau que si la session
+               tient toujours : après une déconnexion, l'échec est ATTENDU (la
+               règle Firestore exige `request.auth != null`) et ce repli
+               faisait justement surgir la notif au pire moment. */
+            if (sameSession(uid)) showNudge({ patch: welcomePatch });
             return;
         }
 
@@ -46690,6 +46709,7 @@ window._todoValidateAnim = function (itemId, apply) {
         }
 
         /* --- 2) Utilisateur existant : campagne one-shot ? ------------------ */
+        if (!sameSession(uid)) return;
         if (!camp.campaignId || camp.active === false) return;
         if (udata.feedbackCampaignSeen === camp.campaignId) return;   // déjà reçue
 
@@ -46714,31 +46734,46 @@ window._todoValidateAnim = function (itemId, apply) {
     var userAuth = document.querySelector('.user-auth');
     if (!userAuth) return;
 
+    /* Minuteries en cours, retenues pour pouvoir tout annuler d'un coup. */
+    var _pollTimer  = null;
+    var _delayTimer = null;
+    var _isLogged   = false;
+
     function onLoggedIn() {
         var tries = 0;
-        var interval = setInterval(function() {
+        if (_pollTimer) clearInterval(_pollTimer);
+        _pollTimer = setInterval(function() {
             var user = window.currentUser || window._currentUser;
             if (user && user.uid) {
-                clearInterval(interval);
-                setTimeout(function() { checkAndShow(user.uid); }, 2500);
+                clearInterval(_pollTimer); _pollTimer = null;
+                if (_delayTimer) clearTimeout(_delayTimer);
+                _delayTimer = setTimeout(function() { checkAndShow(user.uid); }, 2500);
             }
-            if (++tries > 20) clearInterval(interval);
+            if (++tries > 20 && _pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
         }, 100);
     }
 
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-            if (m.type === 'attributes' && m.attributeName === 'class') {
-                if (userAuth.classList.contains('logged-in')) {
-                    observer.disconnect();
-                    onLoggedIn();
-                }
-            }
-        });
-    });
-    observer.observe(userAuth, { attributes: true });
+    /* Déconnexion : on annule la décision encore en attente et on referme la
+       notif si elle est à l'écran. */
+    function onLoggedOut() {
+        if (_pollTimer)  { clearInterval(_pollTimer);  _pollTimer  = null; }
+        if (_delayTimer) { clearTimeout(_delayTimer);  _delayTimer = null; }
+        if (nudge.classList.contains('show')) window.feedbackNudgeDismiss();
+    }
 
-    if (userAuth.classList.contains('logged-in')) onLoggedIn();
+    /* L'observateur n'est PLUS débranché après la première connexion : il doit
+       rester en place pour voir passer la déconnexion. `_isLogged` retient
+       l'état précédent, de sorte qu'une mutation de classe sans rapport
+       (thème, menu ouvert…) ne rejoue pas la séquence. */
+    var observer = new MutationObserver(function() {
+        var logged = userAuth.classList.contains('logged-in');
+        if (logged === _isLogged) return;
+        _isLogged = logged;
+        if (logged) onLoggedIn(); else onLoggedOut();
+    });
+    observer.observe(userAuth, { attributes: true, attributeFilter: ['class'] });
+
+    if (userAuth.classList.contains('logged-in')) { _isLogged = true; onLoggedIn(); }
 
 })();
 </script>
