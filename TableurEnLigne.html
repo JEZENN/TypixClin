@@ -56597,7 +56597,7 @@ function setTrainingsPageVisible(visible) {
         var body =
             '<div class="tpx-field">' +
                 '<label class="tpx-label" for="tpx-mat-name">Nom de la matière</label>' +
-                '<input class="tpx-input" id="tpx-mat-name" type="text" maxlength="60" placeholder="Cardiologie, Anglais médical…" value="' + esc(s ? s.name : '') + '">' +
+                '<input class="tpx-input" id="tpx-mat-name" type="text" maxlength="30" placeholder="Cardiologie, Anglais médical…" value="' + esc(s ? s.name : '') + '">' +
                 '<div class="tpx-error" id="tpx-mat-err" style="display:none;"></div>' +
             '</div>' +
             '<div class="tpx-field">' +
@@ -56624,6 +56624,13 @@ function setTrainingsPageVisible(visible) {
             nameEl.addEventListener('input', function () {
                 shortEl.placeholder = shortOf({ name: nameEl.value || 'Nouvelle matière' });
             });
+            // 2. Abréviation : lettres A-Z uniquement, mise en majuscules et
+            // limitée à 3 caractères en temps réel (saisie ET collage — 'input'
+            // se déclenche aussi après un collage).
+            shortEl.addEventListener('input', function () {
+                var filtered = shortEl.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+                if (filtered !== shortEl.value) shortEl.value = filtered;
+            });
         }
         setTimeout(function () { nameEl.focus(); }, 60);
 
@@ -56635,9 +56642,20 @@ function setTrainingsPageVisible(visible) {
                 err.textContent = 'Donnez un nom à la matière pour continuer.';
                 err.style.display = ''; nameEl.focus(); return;
             }
+            // 3. Nom : 30 caractères max, même si le HTML (maxlength) est contourné.
+            if (name.length > 30) {
+                nameEl.classList.add('tpx-invalid');
+                err.textContent = 'Le nom de la matière ne peut pas dépasser 30 caractères.';
+                err.style.display = ''; nameEl.focus(); return;
+            }
+            // 2. Abréviation : soit vide (déduction automatique conservée telle
+            // quelle), soit strictement ^[A-Z]{1,3}$ — même si le DOM a été
+            // manipulé pour contourner le filtrage en temps réel ci-dessus.
+            var shortVal = shortEl ? shortEl.value.trim().toUpperCase() : '';
+            if (shortVal && !/^[A-Z]{1,3}$/.test(shortVal)) shortVal = '';
             upsertSpecialty({
                 id: id || null, name: name, color: pick.color, icon: pick.icon,
-                short: shortEl ? shortEl.value.trim() : ''
+                short: shortVal
             });
             m.close();
         });
@@ -56814,14 +56832,14 @@ function setTrainingsPageVisible(visible) {
             '</div>' +
             '<div class="tpx-field">' +
                 '<label class="tpx-label" for="tpx-it-num">Numéro</label>' +
-                '<input class="tpx-input" id="tpx-it-num" type="text" maxlength="8" value="' + esc(it ? it.num : nextItemNumber(firstSpec)) + '"' + (isExisting ? ' readonly aria-readonly="true"' : '') + '>' +
+                '<input class="tpx-input" id="tpx-it-num" type="text" inputmode="numeric" maxlength="8" value="' + esc(it ? it.num : nextItemNumber(firstSpec)) + '"' + (isExisting ? ' readonly aria-readonly="true"' : '') + '>' +
                 (isExisting
                     ? '<div class="tpx-hint tpx-hint-locked"><i class="fas fa-lock"></i> Matière et numéro sont fixés à la création et ne peuvent plus être modifiés, afin de préserver les tours, notes et le cahier d\'erreurs déjà associés à cet item.</div>'
                     : '<div class="tpx-hint">Identifiant de l\'item dans sa matière. Un numéro unique, sans tiret.</div>') +
             '</div>' +
             '<div class="tpx-field">' +
                 '<label class="tpx-label" for="tpx-it-name">Intitulé</label>' +
-                '<input class="tpx-input" id="tpx-it-name" type="text" maxlength="160" placeholder="Insuffisance cardiaque de l\'adulte" value="' + esc(it ? it.name : '') + '">' +
+                '<input class="tpx-input" id="tpx-it-name" type="text" maxlength="100" placeholder="Insuffisance cardiaque de l\'adulte" value="' + esc(it ? it.name : '') + '">' +
                 '<div class="tpx-error" id="tpx-it-err" style="display:none;"></div>' +
             '</div>' +
             '<div class="tpx-field">' +
@@ -56838,6 +56856,16 @@ function setTrainingsPageVisible(visible) {
         var refBtn = root.querySelector('#tpx-it-ref');
         refBtn.addEventListener('click', function () { refBtn.classList.toggle('selected'); });
         var numEl = root.querySelector('#tpx-it-num');
+        // 1. Numéro d'item : chiffres uniquement, filtré en temps réel (saisie
+        // ET collage — 'input' se déclenche aussi après un collage). Seulement
+        // pour un nouvel item : le champ est readonly pour un item existant,
+        // dont le numéro reste immuable.
+        if (!isExisting) {
+            numEl.addEventListener('input', function () {
+                var filtered = numEl.value.replace(/[^0-9]/g, '').slice(0, 8);
+                if (filtered !== numEl.value) numEl.value = filtered;
+            });
+        }
         var picker = bindSpecialtyPicker(root, 'tpx-it-spec', function (v) {
             /* À la création, le numéro proposé suit la matière choisie. */
             if (!it) numEl.value = nextItemNumber(v);
@@ -56851,9 +56879,20 @@ function setTrainingsPageVisible(visible) {
             // numéro viennent TOUJOURS de l'item d'origine, jamais des champs
             // (verrouillés côté UI, mais on ne fait pas confiance uniquement
             // à ce verrouillage visuel).
-            var num = isExisting ? it.num : numEl.value.trim().replace(/-/g, '');
+            var num = isExisting ? it.num : numEl.value.trim().replace(/[^0-9]/g, '').slice(0, 8);
             var err = root.querySelector('#tpx-it-err');
             if (!name || !num) { err.textContent = 'Un numéro et un intitulé sont nécessaires.'; err.style.display = ''; return; }
+            // 4. Intitulé : 160 caractères max, même si le HTML (maxlength) est contourné.
+            if (name.length > 100) {
+                err.textContent = 'L\u2019intitulé de l\u2019item ne peut pas dépasser 100 caractères.';
+                err.style.display = ''; return;
+            }
+            // 1. Numéro : chiffres uniquement, jamais autre chose enregistré — même si
+            // le DOM a été manipulé pour contourner le filtrage en temps réel ci-dessus.
+            if (!/^[0-9]{1,8}$/.test(num)) {
+                err.textContent = 'Le numéro de l\u2019item ne doit contenir que des chiffres (8 maximum).';
+                err.style.display = ''; return;
+            }
             var specValue = isExisting ? it.specialtyId : (picker ? picker.get() : state.specialties[0].id);
             var clash = state.items.some(function (i) {
                 return i.specialtyId === specValue && String(i.num) === num &&
