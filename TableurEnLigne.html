@@ -16814,7 +16814,7 @@ window.TPXNotesPending = {
 <div class="filter-bar">
 	<div class="search-box">
 		<i class="fas fa-search"></i>
-		<input type="search"
+<input type="search"
        id="search-specialty"
        name="specialty-search"
        placeholder="Rechercher une spécialité..."
@@ -16822,7 +16822,8 @@ window.TPXNotesPending = {
        autocapitalize="off"
        autocorrect="off"
        spellcheck="false"
-       role="searchbox">
+       role="searchbox"
+       readonly>
 			<button class="search-clear-btn" id="clear-specialty" onclick="clearSearch('search-specialty')" style="display:none;" tabindex="-1" aria-label="Effacer">
 				<i class="fas fa-times"></i>
 			</button>
@@ -26666,6 +26667,46 @@ document.getElementById('search-specialty')?.addEventListener('input', renderDas
         btn.style.display = input.value.length > 0 ? 'flex' : 'none';
     });
 });
+
+// Empêcher l'autofill email du navigateur dans la recherche spécialité
+(function () {
+    const input = document.getElementById('search-specialty');
+    if (!input) return;
+
+    function clearBadAutofill() {
+        if (input.readOnly) {
+            input.value = '';
+        }
+    }
+
+    clearBadAutofill();
+    setTimeout(clearBadAutofill, 50);
+    setTimeout(clearBadAutofill, 250);
+    setTimeout(clearBadAutofill, 800);
+
+    window.addEventListener('pageshow', function () {
+        input.readOnly = true;
+        input.value = '';
+
+        setTimeout(clearBadAutofill, 50);
+        setTimeout(clearBadAutofill, 250);
+        setTimeout(clearBadAutofill, 800);
+    });
+
+    function unlockSearch() {
+        input.readOnly = false;
+        input.value = '';
+    }
+
+    input.addEventListener('pointerdown', unlockSearch, { once: true });
+
+    input.addEventListener('keydown', function () {
+        if (input.readOnly) {
+            input.readOnly = false;
+            input.value = '';
+        }
+    }, { once: true });
+})();
 
 
 document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
