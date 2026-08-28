@@ -21523,14 +21523,10 @@ async function updateUserUI(user) {
                         lastName:    _parts.slice(1).join(' ') || '',
                         photoURL:    user.photoURL || '',
                         shortId:     shortId,
-                        createdAt:   serverTimestamp(),
-                        /* Champs exigés par la règle Firestore `create`. L'échéance
-                           vient de tpx-billing.js : une seule date pour tout le site. */
-                        isPremium:   true,
-                        premiumType: 'grace_period',
-                        gracePeriodEnd: (typeof window.tpxComputeTrialEnd === 'function'
-                            ? window.tpxComputeTrialEnd(new Date())
-                            : new Date('2026-10-26T22:59:59.000Z'))
+						createdAt:   serverTimestamp(),
+						/* Champs exigés par la règle Firestore `create`. */
+						isPremium:   true,
+						premiumType: 'grace_period'
                     };
                     setDoc(doc(db, 'users', user.uid), _createPatch, { merge: true })
                         .catch((e) => console.warn('⚠️ Impossible de créer users/', user.uid, e));
