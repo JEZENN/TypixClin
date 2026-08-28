@@ -26861,7 +26861,45 @@ function ensureSDDState(id) {
     return s;
 }
 
-function getSDDMeta(id) { return (typeof ECOS_SDD_BY_ID !== 'undefined') ? ECOS_SDD_BY_ID[id] : null; }
+function getSDDMeta(id) {
+    if (id == null) return null;
+    var fromIndex = (typeof ECOS_SDD_BY_ID !== 'undefined') ? ECOS_SDD_BY_ID[id] : null;
+    if (fromIndex) return fromIndex;
+    // 🔒 Repli sur la liste vivante : ECOS_SDD_BY_ID est un index figé au
+    // chargement, construit uniquement à partir du programme officiel
+    // (data.js). Il ne contient jamais les SDD créées en mode sur-mesure —
+    // sans ce repli, toute action sur une SDD custom (notes, to-do,
+    // priorité, ressources...) échouait silencieusement (retour null non
+    // signalé à l'utilisateur).
+    var arr = (typeof ECOS_SDD_DATA !== 'undefined') ? ECOS_SDD_DATA : (window.ECOS_SDD_DATA || []);
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] && arr[i].id === id) return arr[i];
+    }
+    return null;
+}
+
+// Index numéro → entrée officielle complète, construit une seule fois à
+// partir de ECOS_SDD_BY_ID (qui reste toujours le programme officiel,
+// jamais remplacé par le mode custom). Permet de retrouver les objectifs de
+// connaissance / compétences officiels d'une SDD à partir de son seul
+// numéro — même mécanisme que OIC_DATA côté EDN (lookup par numéro,
+// indépendant de l'identité officielle/custom de l'entrée consultée).
+var _ecosOfficialSddByNumber = null;
+function getOfficialSddMetaByNumber(number) {
+    if (number == null || number === '') return null;
+    if (!_ecosOfficialSddByNumber) {
+        _ecosOfficialSddByNumber = {};
+        var src = (typeof ECOS_SDD_BY_ID !== 'undefined') ? ECOS_SDD_BY_ID : null;
+        if (src) {
+            Object.keys(src).forEach(function (k) {
+                var m = src[k];
+                if (m && m.number != null) _ecosOfficialSddByNumber[String(m.number)] = m;
+            });
+        }
+    }
+    return _ecosOfficialSddByNumber[String(number)] || null;
+}
+
 
 /* Date utils */
 function ecosTodayKey() {
@@ -30739,6 +30777,28 @@ function renderSDDObjectives(meta) {
     if (meta && meta.contentType === "procedure") {
         renderProcedureContent(meta);
         return;
+    }
+    // 🔗 Si cette SDD (typiquement une SDD custom) n'a pas ses propres
+    // objectifs/compétences mais que son NUMÉRO correspond à une vraie SDD
+    // officielle, emprunter ces objectifs — même mécanisme que les objectifs
+    // de connaissance LiSA côté EDN (lookup par numéro, indépendant de
+    // l'identité officielle/custom). Le titre, l'id et les spécialités de la
+    // SDD affichée ne sont jamais modifiés : seuls les champs d'objectifs
+    // sont empruntés.
+    var _hasOwnObjectives = meta && (
+        (meta.knowledgeItems && meta.knowledgeItems.length) ||
+        (meta.expectedSituation && meta.expectedSituation.length) ||
+        (meta.expectedStage && meta.expectedStage.length)
+    );
+    if (meta && !_hasOwnObjectives && meta.number != null && typeof getOfficialSddMetaByNumber === 'function') {
+        var _official = getOfficialSddMetaByNumber(meta.number);
+        if (_official) {
+            meta = Object.assign({}, meta, {
+                knowledgeItems:    _official.knowledgeItems,
+                expectedSituation: _official.expectedSituation,
+                expectedStage:     _official.expectedStage
+            });
+        }
     }
     const right = document.getElementById('sdd-notes-objectives');
     let bodyHtml = '';
@@ -49418,7 +49478,13 @@ var LS_DATA  = 'tpx_' + APP + '_content';
         catch (e) { return fb; }
     }
     function lsSet(k, v) {
-        try { window.localStorage.setItem(k, v); } catch (e) {}
+        try {
+            if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
+                window.TPXSafeStore.set(k, v);
+            } else {
+                window.localStorage.setItem(k, v);
+            }
+        } catch (e) {}
     }
 
     function isNonEmptyArray(a) { return Array.isArray(a) && a.length > 0; }

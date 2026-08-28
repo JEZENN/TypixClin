@@ -56972,6 +56972,18 @@ function setTrainingsPageVisible(visible) {
                 err.textContent = 'Le nom de la matière ne peut pas dépasser 30 caractères.';
                 err.style.display = ''; nameEl.focus(); return;
             }
+            // Nom déjà utilisé par une autre matière custom : deux matières
+            // au même nom seraient deux entités totalement indépendantes
+            // (progression, items, notes séparés) mais indiscernables dans
+            // les listes — la progression finirait fragmentée en silence.
+            var nameClash = state.specialties.some(function (s) {
+                return s.id !== id && s.name.trim().toLowerCase() === name.toLowerCase();
+            });
+            if (nameClash) {
+                nameEl.classList.add('tpx-invalid');
+                err.textContent = 'Une matière porte déjà ce nom.';
+                err.style.display = ''; nameEl.focus(); return;
+            }
             // 2. Abréviation : soit vide (déduction automatique conservée telle
             // quelle), soit strictement ^[A-Z]{1,3}$ — même si le DOM a été
             // manipulé pour contourner le filtrage en temps réel ci-dessus.
@@ -57224,6 +57236,15 @@ function setTrainingsPageVisible(visible) {
                        (!it || (i.specialtyId + '|' + i.num) !== key);
             });
             if (clash) { err.textContent = 'Le numéro ' + num + ' est déjà utilisé dans cette matière.'; err.style.display = ''; return; }
+            // Intitulé déjà utilisé dans la même matière : deux items au même
+            // nom mais numéros différents seraient indiscernables dans les
+            // listes, avec des tours/notes/priorités séparés — la
+            // progression finirait fragmentée en silence.
+            var nameClash = state.items.some(function (i) {
+                return i.specialtyId === specValue && i.name.trim().toLowerCase() === name.toLowerCase() &&
+                       (!it || (i.specialtyId + '|' + i.num) !== key);
+            });
+            if (nameClash) { err.textContent = 'Un item de cette matière porte déjà cet intitulé.'; err.style.display = ''; return; }
             upsertItem({ key: key || null, specialtyId: specValue, num: num, name: name, reference: refBtn.classList.contains('selected') });
             m.close();
         });
