@@ -14454,6 +14454,10 @@ window.TPXNotesPending = {
     border-radius: 16px;
     background: var(--gray-50);
 }
+/* Espace entre la ligne d'en-têtes de colonnes (Numéro/Intitulé/... ou
+   Type/Plateforme/...) et le cadre : sans lui, le cadre en pointillés
+   touchait directement les en-têtes du tableau. */
+#items-empty.tpx-empty, #train-empty.tpx-empty { margin-top: 1rem; }
 [data-theme="dark"] .tpx-empty { background: var(--gray-100); border-color: var(--gray-200); }
 .tpx-empty-icon {
     width: 56px; height: 56px;
@@ -17411,7 +17415,7 @@ window.TPXNotesPending = {
         </table>
       </div>
       <div class="empty-state" id="train-empty" style="display:none;">
-        <i class="fas fa-search"></i><p>Aucun entrainement — cliquez sur Ajouter</p>
+        <i class="fas fa-search"></i><p>Aucun entrainement ne correspond</p>
       </div>
       <div class="items-pagination" id="train-pagination-bottom" style="margin-top:1rem;">
         <button class="pagination-btn" id="train-pagination-first" title="Première page"><i class="fas fa-angles-left"></i></button>
@@ -20005,7 +20009,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, getBlob } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -25105,9 +25109,28 @@ function renderDashboardSpecialties() {
         specialtiesWithStats.sort((a, b) => a.prog.percentage - b.prog.percentage);
     }
     
-    // Afficher message si aucun résultat
+    // Afficher un message adapté si aucun résultat
     if (specialtiesWithStats.length === 0) {
-        container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><i class="fas fa-search"></i><p>Aucune spécialité ne correspond</p></div>';
+        var _noneAtAll = SPECIALTIES_DATA.length === 0;
+        var _isCustomMode = (typeof window.isCustom === 'function') && window.isCustom();
+        if (_noneAtAll && _isCustomMode) {
+            // Mode sur-mesure sans aucune matière créée : état d'accueil engageant,
+            // pas un message de recherche infructueuse. Reprend le pattern .tpx-empty
+            // déjà utilisé ailleurs dans le tableur (structure et CSS éprouvés).
+            container.innerHTML =
+                '<div class="tpx-empty" style="grid-column: 1 / -1;">' +
+                    '<div class="tpx-empty-icon"><i class="fas fa-folder-plus"></i></div>' +
+                    '<div class="tpx-empty-title">Aucune matière créée</div>' +
+                    '<div class="tpx-empty-text">Créez votre première matière pour commencer à construire votre tableur sur-mesure.</div>' +
+                    '<button class="tpx-add-btn" id="empty-create-spec-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle matière</span></button>' +
+                '</div>';
+            var _ecsBtn = document.getElementById('empty-create-spec-btn');
+            if (_ecsBtn) _ecsBtn.addEventListener('click', function () {
+                if (typeof window.openSpecialtyModal === 'function') window.openSpecialtyModal(null);
+            });
+        } else {
+            container.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><i class="fas fa-search"></i><p>Aucune spécialité ne correspond</p></div>';
+        }
         return;
     }
     
@@ -25556,7 +25579,27 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
     
     if (filtered.length === 0) { 
         tbody.innerHTML = ''; 
-        emptyState.style.display = 'block'; 
+        var _noItemsAtAll = allItems.length === 0;
+        var _isCustomModeItems = (typeof window.isCustom === 'function') && window.isCustom();
+        if (_noItemsAtAll && _isCustomModeItems) {
+            // Mode sur-mesure sans aucun item créé : état d'accueil engageant,
+            // pas un message de recherche infructueuse. Reprend le pattern
+            // .tpx-empty déjà utilisé ailleurs dans le tableur.
+            emptyState.className = 'tpx-empty';
+            emptyState.innerHTML =
+                '<div class="tpx-empty-icon"><i class="fas fa-list-check"></i></div>' +
+                '<div class="tpx-empty-title">Aucun item créé</div>' +
+                '<div class="tpx-empty-text">Ajoutez votre premier item pour commencer à construire votre tableur sur-mesure.</div>' +
+                '<button class="tpx-add-btn" id="empty-create-item-btn" type="button"><i class="fas fa-plus"></i><span>Nouvel item</span></button>';
+            var _eciBtn = document.getElementById('empty-create-item-btn');
+            if (_eciBtn) _eciBtn.addEventListener('click', function () {
+                if (typeof window.openItemModal === 'function') window.openItemModal(null);
+            });
+        } else {
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = '<i class="fas fa-search"></i><p>Aucun item ne correspond</p>';
+        }
+        emptyState.style.display = ''; 
         return; 
     }
     emptyState.style.display = 'none';
@@ -30038,6 +30081,7 @@ async function loadTrainNoteFromFirestore(trainId) {
 
     let firestoreHtml = null;
     let firestoreTime = 0;
+    let firestoreError = false;
     try {
         const ref  = doc(db, 'users', currentUser.uid, 'notesEntrainements', String(trainId));
         const snap = await getDoc(ref);
@@ -30048,6 +30092,7 @@ async function loadTrainNoteFromFirestore(trainId) {
         }
     } catch (err) {
         console.warn('[TrainNotes] Firestore lecture échouée :', err);
+        firestoreError = true;
     }
 
     // ── Comparer avec le cache local ──
@@ -30067,6 +30112,11 @@ async function loadTrainNoteFromFirestore(trainId) {
         return { html: lsObj.html, source: 'localStorage' };
     }
 
+    // ⚠️ Ne jamais confondre "lecture impossible" avec "note vide" : sans
+    // pending local à proposer, une erreur réseau doit rester une erreur,
+    // pas devenir un éditeur vide et modifiable qui risquerait d'écraser
+    // une note existante à la sauvegarde suivante.
+    if (firestoreError) return { html: '', source: 'error' };
     if (firestoreHtml !== null) return { html: firestoreHtml, source: 'firestore' };
     return { html: '', source: 'empty' };
 }
@@ -30103,7 +30153,7 @@ async function loadSpeNoteFromFirestore(speId) {
             return (obj && typeof obj.html === 'string') ? obj : null;
         } catch (e) { return null; }
     }
-    let firestoreHtml = null, firestoreTime = 0;
+    let firestoreHtml = null, firestoreTime = 0, firestoreError = false;
     try {
         const ref  = doc(db, 'users', currentUser.uid, TPXC('ErreurSpe'), String(speId));
         const snap = await getDoc(ref);
@@ -30114,6 +30164,7 @@ async function loadSpeNoteFromFirestore(speId) {
         }
     } catch (err) {
         console.warn('[SpeErr] Firestore lecture echouee :', err);
+        firestoreError = true;
     }
     const lsObj = _lsRead();
     if (lsObj && lsObj.savedAt > firestoreTime) {
@@ -30124,6 +30175,11 @@ async function loadSpeNoteFromFirestore(speId) {
         }
         return { html: lsObj.html, source: 'localStorage' };
     }
+    // ⚠️ Ne jamais confondre "lecture impossible" avec "note vide" : sans
+    // pending local à proposer, une erreur réseau doit rester une erreur,
+    // pas se transformer silencieusement en éditeur vide et modifiable qui
+    // risquerait d'écraser une note existante à la sauvegarde suivante.
+    if (firestoreError) return { html: '', source: 'error' };
     if (firestoreHtml !== null) return { html: firestoreHtml, source: 'firestore' };
     return { html: '', source: 'empty' };
 }
@@ -30177,7 +30233,7 @@ window._flashFirestore = {
     getCurrentUser: function() { return currentUser; },
     doc: doc, collection: collection, getDoc: getDoc, getDocs: getDocs,
     setDoc: setDoc, addDoc: addDoc, updateDoc: updateDoc, deleteDoc: deleteDoc,
-    query: query, where: where
+    query: query, where: where, serverTimestamp: serverTimestamp
 };
 
 // ===== SYSTEME IMAGES NOTES (dans le module Firebase) =====
@@ -38279,6 +38335,16 @@ function trainBuildMatiereFilter() {
   var _TSH = window.TRAIN_SPECIALTY_SHORT || window.SPECIALTY_SHORT;
   var _TSC = window.TRAIN_SPECIALTY_CONFIG || window.SPECIALTY_CONFIG;
   if (!list || !_TSH) return;
+  // Purger de la sélection active toute matière qui n'existe plus (supprimée
+  // entre-temps) : sans ça, un filtre pouvait rester bloqué sur un
+  // identifiant fantôme et continuer à masquer des entraînements en silence.
+  if (Array.isArray(window.trainFilterMatieres) && window.trainFilterMatieres.length) {
+    var _before = window.trainFilterMatieres.length;
+    window.trainFilterMatieres = window.trainFilterMatieres.filter(function (id) { return !!_TSH[id]; });
+    if (window.trainFilterMatieres.length !== _before && typeof window.renderTrainTable === 'function') {
+      window.renderTrainTable();
+    }
+  }
   var dataArr = window.SPECIALTIES_DATA || [];
   var isAllSelected = trainFilterMatieres.length === 0;
   var allOption = '<div class="specialty-multi-option specialty-multi-all '+(isAllSelected?'selected':'')+'" data-value="all" onclick="window._trainToggleMatiereFilter(\'all\',this)">' +
@@ -38289,13 +38355,14 @@ function trainBuildMatiereFilter() {
     var short = _TSH[id];
     var cfg = (_TSC && _TSC[id]) || { color:'#6b7280' };
     var spec = dataArr.find(function(s){ return s.id === id; });
-    var name = spec ? spec.name : ((window.TRAIN_SPECIALTY_NAMES && window.TRAIN_SPECIALTY_NAMES[id]) || id);
+    var name = spec ? spec.name : ((window.TRAIN_SPECIALTY_NAMES && window.TRAIN_SPECIALTY_NAMES[id]) || (typeof window.getOfficialSpecialtyName === 'function' && window.getOfficialSpecialtyName(id)) || id);
     return '<div class="specialty-multi-option" data-value="'+id+'" onclick="window._trainToggleMatiereFilter(\''+id+'\',this)">' +
       '<div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>' +
       '<span style="background:'+cfg.color+';color:white;width:36px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;margin-right:0.5rem;flex-shrink:0;">'+short+'</span>' +
       '<span class="specialty-multi-option-text">'+name+'</span></div>';
   }).join('');
 }
+window.trainBuildMatiereFilter = trainBuildMatiereFilter;
 
 // ---- BUILD SELECT MATIÈRE (modal) ----
 function trainBuildMatiereSelectModal() {
@@ -38326,12 +38393,13 @@ function trainBuildLegend() {
     var short = shortMap[id];
     var cfg   = cfgMap[id] || { color: '#6b7280' };
     var spec  = dataArr.find(function(s){ return s.id === id; });
-    var name  = spec ? spec.name : ((window.TRAIN_SPECIALTY_NAMES && window.TRAIN_SPECIALTY_NAMES[id]) || id);
+    var name  = spec ? spec.name : ((window.TRAIN_SPECIALTY_NAMES && window.TRAIN_SPECIALTY_NAMES[id]) || (typeof window.getOfficialSpecialtyName === 'function' && window.getOfficialSpecialtyName(id)) || id);
     return '<div class="legend-item">' +
       '<span class="legend-badge" style="background:' + cfg.color + ';">' + short + '</span>' +
       '<span class="legend-description">' + name + '</span></div>';
   }).join('');
 }
+window.trainBuildLegend = trainBuildLegend;
 
 window.toggleTrainLegendModal = function(e) {
   e.stopPropagation();
@@ -38687,7 +38755,29 @@ window.renderTrainTable = function() {
 
   if (list.length === 0) {
     tbody.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = '';
+    if (emptyEl) {
+      var _noTrainFiltersActive = !trainFilterSearch && trainFilterTypes.length === 0 &&
+        trainFilterMatieres.length === 0 && trainFilterPlateformes.length === 0 && trainFilterStatuts.length === 0;
+      if (_noTrainFiltersActive) {
+        // Aucun entraînement entré du tout : état d'accueil engageant avec CTA,
+        // pas un message de recherche infructueuse. Reprend le pattern .tpx-empty
+        // déjà utilisé ailleurs dans le tableur.
+        emptyEl.className = 'tpx-empty';
+        emptyEl.innerHTML =
+          '<div class="tpx-empty-icon"><i class="fas fa-dumbbell"></i></div>' +
+          '<div class="tpx-empty-title">Aucun entraînement</div>' +
+          '<div class="tpx-empty-text">Ajoutez votre premier entraînement pour commencer à suivre votre progression.</div>' +
+          '<button class="tpx-add-btn" id="empty-create-train-btn" type="button"><i class="fas fa-plus"></i><span>Ajouter</span></button>';
+        var _ectBtn = document.getElementById('empty-create-train-btn');
+        if (_ectBtn) _ectBtn.addEventListener('click', function () {
+          if (typeof window.openAddTrainModal === 'function') window.openAddTrainModal();
+        });
+      } else {
+        emptyEl.className = 'empty-state';
+        emptyEl.innerHTML = '<i class="fas fa-search"></i><p>Aucun entrainement ne correspond</p>';
+      }
+      emptyEl.style.display = '';
+    }
     trainUpdatePaginationUI();
     return;
   }
@@ -38917,6 +39007,15 @@ function _trainModalUpdateMatiereCounter() {
   el.classList.toggle('max', _trainModalMatieres.length >= MAX_MODAL_MATIERES);
 }
 
+function _trainModalResolveSpecName(id, spec, TSN) {
+  if (spec) return spec.name;
+  if (TSN[id]) return TSN[id];
+  if (typeof window.getOfficialSpecialtyName === 'function') {
+    var n = window.getOfficialSpecialtyName(id);
+    if (n) return n;
+  }
+  return id;
+}
 function _trainModalBuildMatiereList(query) {
   var list = document.getElementById('train-modal-matiere-list');
   var chips = document.getElementById('train-modal-matiere-chips');
@@ -38928,13 +39027,13 @@ function _trainModalBuildMatiereList(query) {
   var q = (query || '').toLowerCase();
   var html = Object.keys(SH).filter(function(id) {
     var spec = DA.find(function(s){ return s.id === id; });
-    var name = spec ? spec.name : (TSN[id] || id);
+    var name = _trainModalResolveSpecName(id, spec, TSN);
     return !q || name.toLowerCase().indexOf(q) > -1 || SH[id].toLowerCase().indexOf(q) > -1;
   }).map(function(id) {
     var short = SH[id];
     var cfg = SC[id] || { color: '#6b7280' };
     var spec = DA.find(function(s){ return s.id === id; });
-    var name = spec ? spec.name : (TSN[id] || id);
+    var name = _trainModalResolveSpecName(id, spec, TSN);
     var isSel = _trainModalMatieres.indexOf(id) > -1;
     var isDisabled = !isSel && _trainModalMatieres.length >= MAX_MODAL_MATIERES;
     return '<div class="train-modal-matiere-item'+(isSel?' selected':'')+(isDisabled?' disabled':'')+'" '+
@@ -38950,7 +39049,7 @@ function _trainModalBuildMatiereList(query) {
       var short = SH[id] || id.substring(0,3).toUpperCase();
       var color = (SC[id] || {}).color || '#6b7280';
       var spec = DA.find(function(s){ return s.id === id; });
-      var name = spec ? spec.name : (TSN[id] || id);
+      var name = _trainModalResolveSpecName(id, spec, TSN);
       return '<div class="specialty-chip" style="background:'+color+'" data-tooltip="'+name+'" onclick="trainModalRemoveMatiere(\''+id+'\')">'+
         '<span>'+short+'</span><span class="specialty-chip-remove"><i class="fas fa-times"></i></span></div>';
     }).join('');
@@ -39352,14 +39451,41 @@ window._openTrainNotes = function(id) {
     tnStatutBtn.className = 'notes-action-btn btn-train-statut statut-' + (t.statut || 'non-fait');
   }
 
+  // 🔒 Verrouiller l'édition tant que la version à afficher n'est pas
+  // déterminée : une saisie démarrée pendant le chargement ne doit jamais
+  // pouvoir être écrasée par la réponse qui arrive ensuite.
+  editor.setAttribute('contenteditable', 'false');
+  window._trainNotesOpenToken = (window._trainNotesOpenToken || 0) + 1;
+  var _myTrainNotesToken = window._trainNotesOpenToken;
+  var _trainNotesOpenedFor = id;
+
   // ── Lecture depuis users/{uid}/notesEntrainements/{id} ──
   (typeof window.loadTrainNoteFromFirestore === 'function'
     ? window.loadTrainNoteFromFirestore(id)
     : Promise.resolve({ html: '', source: 'empty' })
   ).then(function(result) {
+    if (_myTrainNotesToken !== window._trainNotesOpenToken) return;
+    if (trainNotesCurrentId !== _trainNotesOpenedFor) return;
+
+    if (result.source === 'error') {
+      // 🔒 Lecture Firestore impossible et aucun brouillon local à proposer :
+      // ne pas transformer ça en note vide éditable (ni migrer legacy →
+      // moderne à l'aveugle, un vrai risque d'écraser une note existante
+      // mais temporairement illisible).
+      editor.innerHTML = '<div style="opacity:.75;padding:10px;color:var(--gray-500);">' +
+        '<i class="fas fa-cloud-arrow-down" style="margin-right:6px;"></i>' +
+        'Cette note n\'a pas pu être chargée. Vérifiez votre connexion et rouvrez la fiche.</div>';
+      trainNotesUpdateCharCount();
+      trainNotesSetAutosaveDot('idle');
+      return;
+    }
+
     var html = result.html || '';
 
     // ── Migration automatique depuis l'ancien notesErreurs (une seule fois) ──
+    // ⚠️ result.source vaut ici 'firestore' ou 'empty' (jamais 'error', géré
+    // ci-dessus) : on sait donc que Firestore a été lu avec succès et ne
+    // contient réellement rien, avant de migrer quoi que ce soit.
     if (!html && window.userData && window.userData.notesErreurs && window.userData.notesErreurs[id]) {
       html = window.userData.notesErreurs[id];
       if (html && typeof window.saveTrainNoteFromFirestore === 'function') {
@@ -39374,6 +39500,8 @@ window._openTrainNotes = function(id) {
     if (!html) html = t.notes || '';
 
     editor.innerHTML = notesSanitize(html);
+    // 🔓 Déverrouiller : la version à afficher est maintenant déterminée.
+    editor.setAttribute('contenteditable', 'true');
     if (typeof window._notesRewrapImages === 'function') window._notesRewrapImages(editor);
     trainNotesUpdateCharCount();
     trainNotesSetAutosaveDot('idle');
@@ -39390,7 +39518,14 @@ window._openTrainNotes = function(id) {
       trainNotesUpdateToolbar();
     }, 150);
   }).catch(function() {
-    editor.innerHTML = notesSanitize(t.notes || '');
+    if (_myTrainNotesToken !== window._trainNotesOpenToken) return;
+    if (trainNotesCurrentId !== _trainNotesOpenedFor) return;
+    // Défensif (chemin normalement mort, loadTrainNoteFromFirestore résout
+    // toujours) : ne pas se rabattre sur t.notes ici non plus, on ne sait
+    // pas si une version plus récente existe côté Firestore.
+    editor.innerHTML = '<div style="opacity:.75;padding:10px;color:var(--gray-500);">' +
+      '<i class="fas fa-cloud-arrow-down" style="margin-right:6px;"></i>' +
+      'Cette note n\'a pas pu être chargée. Vérifiez votre connexion et rouvrez la fiche.</div>';
     trainNotesUpdateCharCount();
     trainNotesSetAutosaveDot('idle');
   });
@@ -40107,14 +40242,38 @@ var _trainUserWatcher = setInterval(function() {
     document.getElementById('speErrOverlay').classList.add('active');
     if (typeof window._flashResetOnOpen === 'function') window._flashResetOnOpen(speId);
 
+    // 🔒 Verrouiller l'édition tant que la version à afficher n'est pas
+    // déterminée : une saisie démarrée pendant le chargement ne doit jamais
+    // pouvoir être écrasée par la réponse qui arrive ensuite (même principe
+    // que pour les notes d'items/SDD).
+    editor.setAttribute('contenteditable', 'false');
+    window._speErrOpenToken = (window._speErrOpenToken || 0) + 1;
+    var _mySpeErrToken = window._speErrOpenToken;
+    var _speErrOpenedFor = speId;
+
     // Lecture depuis users/{uid}/ErreurSpe/{speId}
     (typeof window.loadSpeNoteFromFirestore === 'function'
       ? window.loadSpeNoteFromFirestore(speId)
       : Promise.resolve({ html: '', source: 'empty' })
     ).then(function(result) {
+      if (_mySpeErrToken !== window._speErrOpenToken) return;
+      if (window.speErrCurrentId !== _speErrOpenedFor) return;
+      if (result.source === 'error') {
+        // 🔒 Lecture Firestore impossible et aucun brouillon local à
+        // proposer : ne pas transformer ça en note vide éditable, ce qui
+        // risquerait d'écraser une note existante à la sauvegarde suivante.
+        editor.innerHTML = '<div style="opacity:.75;padding:10px;color:var(--gray-500);">' +
+          '<i class="fas fa-cloud-arrow-down" style="margin-right:6px;"></i>' +
+          'Cette note n\'a pas pu être chargée. Vérifiez votre connexion et rouvrez le cahier.</div>';
+        speErrUpdateCharCount();
+        speErrSetAutosaveDot('idle');
+        return;
+      }
       var html = result.html || '';
       var safe = (typeof notesSanitize === 'function') ? notesSanitize(html) : html;
       editor.innerHTML = safe;
+      // 🔓 Déverrouiller : la version à afficher est maintenant déterminée.
+      editor.setAttribute('contenteditable', 'true');
       if (typeof window._notesRewrapImages === 'function') window._notesRewrapImages(editor);
       speErrUpdateCharCount();
       speErrSetAutosaveDot('idle');
@@ -40132,7 +40291,11 @@ var _trainUserWatcher = setInterval(function() {
         speErrUpdateToolbar();
       }, 150);
     }).catch(function() {
-      editor.innerHTML = '';
+      if (_mySpeErrToken !== window._speErrOpenToken) return;
+      if (window.speErrCurrentId !== _speErrOpenedFor) return;
+      editor.innerHTML = '<div style="opacity:.75;padding:10px;color:var(--gray-500);">' +
+        '<i class="fas fa-cloud-arrow-down" style="margin-right:6px;"></i>' +
+        'Cette note n\'a pas pu être chargée. Vérifiez votre connexion et rouvrez le cahier.</div>';
       speErrUpdateCharCount();
       speErrSetAutosaveDot('idle');
     });
@@ -46289,8 +46452,28 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 
   function fb() { var b = window._flashFirestore; if (!b || !b.getCurrentUser() || !b.getDb()) return null; return b; }
   function isOnline() { return !!fb(); }
-  function sanit(h) { return (typeof window.notesSanitize === 'function') ? window.notesSanitize(h || '') : (h || ''); }
-  function plain(h) { var d = document.createElement('div'); d.innerHTML = sanit(h); return (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim(); }
+  function sanit(h) {
+    if (typeof window.notesSanitize === 'function') return window.notesSanitize(h || '');
+    if (typeof window.DOMPurify !== 'undefined') return window.DOMPurify.sanitize(h || '');
+    // Fail-closed : aucune lib de sanitisation disponible, échapper plutôt que
+    // retourner le HTML brut.
+    var _d = document.createElement('div');
+    _d.textContent = String(h == null ? '' : h);
+    return _d.innerHTML;
+  }
+  function plain(h) {
+    var d = document.createElement('div'); d.innerHTML = sanit(h);
+    var txt = (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim();
+    // ⚠️ XSS : txt vient de .textContent, qui DÉCODE les entités HTML. Un
+    // recto/nom de matière contenant littéralement "<img onerror=...>" comme
+    // texte visible (stocké en toute sécurité sous forme échappée) redevient
+    // une balise active si on le réinjecte brut dans un nouveau template HTML.
+    // On échappe donc systématiquement ici : tous les appelants (qui
+    // concatènent le résultat dans du HTML) sont protégés sans y penser.
+    var escDiv = document.createElement('div');
+    escDiv.textContent = txt;
+    return escDiv.innerHTML;
+  }
   function nowISO() { return new Date().toISOString(); }
   function todayMidnight() { var d = new Date(); d.setHours(0,0,0,0); return d; }
   function isDue(c) { return !c.nextReview || new Date(c.nextReview).getTime() <= Date.now(); }
@@ -46325,8 +46508,9 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   function loadAllFlashCards() { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(_col(b)).then(_all).catch(function(e){console.warn(e);return[];}); }
   function saveFlashCard(card) {
     var b=fb(); if(!b) return Promise.reject(new Error('offline'));
-    if (card.id) return b.setDoc(_ref(b,card.id), { speId:card.speId, recto:card.recto, verso:card.verso }, {merge:true}).then(function(){return card.id;});
-    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), source:'manuel' };
+    var _ts = (typeof b.serverTimestamp === 'function') ? b.serverTimestamp() : new Date().toISOString();
+    if (card.id) return b.setDoc(_ref(b,card.id), { speId:card.speId, recto:card.recto, verso:card.verso, updatedAt:_ts }, {merge:true}).then(function(){return card.id;});
+    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), updatedAt:_ts, source:'manuel' };
     return b.addDoc(_col(b), doc).then(function(r){return r.id;});
   }
   function deleteFlashCard(id) { var b=fb(); if(!b) return Promise.reject(new Error('offline')); return b.deleteDoc(_ref(b,id)); }
@@ -46487,6 +46671,68 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (msg) { e.textContent = msg; e.setAttribute('data-field', field || ''); e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
     else { e.textContent=''; e.classList.remove('show'); e.removeAttribute('data-field'); }
   }
+  // Filet de sécurité local pour les flashcards : si la sauvegarde Firestore
+  // échoue (réseau, permission), le contenu tapé ne doit pas n'exister que
+  // dans le formulaire — même principe que trainnotes_pending_/speerrnotes_pending_.
+  // 🔒 Pour une NOUVELLE carte (pas de cardId), la clé est scopée par
+  // spécialité : sans ça, un brouillon créé en cardiologie pouvait être
+  // restauré par erreur dans le formulaire "Nouvelle carte" d'une autre
+  // spécialité. speId DOIT être déterminé avant l'appel. Une carte EXISTANTE
+  // garde sa clé par cardId, inchangée (les brouillons déjà en place restent
+  // valides).
+  // Convertit card.updatedAt (Timestamp Firestore, nombre, ou chaîne ISO) en
+  // millisecondes. Retourne 0 si absent/non interprétable — 0 signifie
+  // "non comparable" (ex. carte ancienne créée avant l'ajout de ce champ),
+  // jamais une date valide légitime.
+  function _flashCardUpdatedAtMs(card) {
+    if (!card || card.updatedAt == null) return 0;
+    var u = card.updatedAt;
+    if (typeof u.toDate === 'function') { try { return u.toDate().getTime(); } catch (e) { return 0; } }
+    if (typeof u === 'number') return u;
+    if (typeof u.seconds === 'number') return u.seconds * 1000;
+    var t = new Date(u).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+  function _flashDraftKey(cardId, speId) {
+    var uid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : '';
+    if (cardId) return 'flashcard_pending_' + uid + '_' + cardId;
+    return 'flashcard_pending_' + uid + '_new_' + (speId || 'unknown');
+  }
+  function _flashReadDraft(cardId, speId) {
+    try {
+      var raw = localStorage.getItem(_flashDraftKey(cardId, speId));
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (!obj || (typeof obj.recto !== 'string' && typeof obj.verso !== 'string')) return null;
+      // 🔒 Ne jamais restaurer un draft de nouvelle carte dont le speId ne
+      // correspond pas exactement à la spécialité actuellement ouverte —
+      // défense en profondeur même si la clé est déjà scopée par speId.
+      if (!cardId && speId && obj.speId && obj.speId !== speId) return null;
+      return obj;
+    } catch (e) { return null; }
+  }
+  // 💾 SAUVEGARDE FLASHCARD À LA FERMETURE BRUTALE DE L'ONGLET — pagehide
+  // Comble le cas non couvert par _flashSaveForm() : du contenu tapé mais
+  // jamais soumis (l'utilisateur ferme l'onglet sans cliquer "Enregistrer").
+  window.addEventListener('pagehide', function () {
+    var overlay = document.getElementById('flashEditOverlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    var r = document.getElementById('flashFormRecto');
+    var v = document.getElementById('flashFormVerso');
+    if (!r || !v) return;
+    var recto = r.innerHTML || '', verso = v.innerHTML || '';
+    if (!recto.trim() && !verso.trim()) return; // rien à protéger
+    try {
+      var _speId = _flashFormSpeId || window.speErrCurrentId;
+      var _draftKey = _flashDraftKey(_flashFormCardId, _speId);
+      var _payload = JSON.stringify({
+        recto: recto, verso: verso,
+        speId: _speId,
+        savedAt: Date.now()
+      });
+      localStorage.setItem(_draftKey, _payload);
+    } catch (e) {}
+  });
   function openFlashEdit(card, speIdOverride) {
     _flashFormCardId = card ? card.id : null;
     _flashFormSpeId = speIdOverride || (card && card.speId) || window.speErrCurrentId || null;
@@ -46495,8 +46741,47 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     var sv = document.getElementById('flashEditSaveBtn'); if (sv) sv.innerHTML = '<i class="fas fa-check"></i> ' + (card ? 'Enregistrer' : 'Créer');
     var del = document.getElementById('flashEditDelBtn'); if (del) del.style.display = card ? 'inline-flex' : 'none';
     var r = document.getElementById('flashFormRecto'), v = document.getElementById('flashFormVerso');
-    if (r) r.innerHTML = card ? sanit(card.recto) : '';
-    if (v) v.innerHTML = card ? sanit(card.verso) : '';
+    // Un brouillon local existant (sauvegarde précédente échouée) peut primer
+    // sur la version Firestore/vierge — mais jamais à l'aveugle :
+    // - nouvelle carte (pas de card) → toujours proposer le brouillon (rien
+    //   d'autre à comparer, et il est déjà scopé par spécialité) ;
+    // - carte existante → ne restaurer que si le brouillon est PROUVÉ plus
+    //   récent que la version Firestore (savedAt > updatedAt). Si Firestore
+    //   n'a pas encore de updatedAt (ancienne carte) ou si la comparaison
+    //   est impossible, décision conservatrice : on affiche Firestore et on
+    //   NE DÉTRUIT PAS le brouillon, pour ne jamais écraser silencieusement
+    //   une version plus récente avec un vieux brouillon.
+    var _draft = _flashReadDraft(_flashFormCardId, _flashFormSpeId);
+    var _restoreDraft = false;
+    if (_draft) {
+      if (!card) {
+        _restoreDraft = true; // nouvelle carte : rien à comparer côté Firestore
+      } else {
+        var _cardMs = _flashCardUpdatedAtMs(card);
+        var _draftMs = _draft.savedAt || 0;
+        if (_cardMs > 0 && _draftMs > _cardMs) {
+          _restoreDraft = true; // brouillon prouvé plus récent
+        } else if (_cardMs === 0) {
+          // Pas de updatedAt côté Firestore (carte ancienne, point 6 : elle
+          // doit continuer à fonctionner normalement) : décision
+          // conservatrice, ne pas restaurer automatiquement.
+          console.warn('[Flashcards] Brouillon local présent pour la carte ' + card.id + ' mais non comparable (carte sans updatedAt) — Firestore affiché par prudence, brouillon conservé.');
+        }
+      }
+    }
+    if (_restoreDraft) {
+      if (r) r.innerHTML = sanit(_draft.recto || '');
+      if (v) v.innerHTML = sanit(_draft.verso || '');
+      if (typeof window.showToastNotification === 'function') {
+        window.showToastNotification('Une modification non sauvegardée a été restaurée.', 'warning');
+      }
+    } else {
+      if (r) r.innerHTML = card ? sanit(card.recto) : '';
+      if (v) v.innerHTML = card ? sanit(card.verso) : '';
+      if (_draft && card && typeof window.showToastNotification === 'function') {
+        window.showToastNotification('Un brouillon local plus ancien existe pour cette carte et a été conservé sans être affiché.', 'info');
+      }
+    }
     // Limites effectives par côté : anciennes cartes longues préservées (jamais tronquées)
     _flashRectoEffLimit = Math.max(FLASHCARD_SIDE_LIMIT, _flashVisibleLen(r));
     _flashVersoEffLimit = Math.max(FLASHCARD_SIDE_LIMIT, _flashVisibleLen(v));
@@ -46557,7 +46842,20 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     var speId = _flashFormSpeId || window.speErrCurrentId;
     var card = { id:_flashFormCardId, speId:speId, recto:sanit(r.innerHTML), verso:sanit(v.innerHTML) };
     var sessionEditId = _flashSessionEditCardId;
+    // 🔒 Brouillon local écrit AVANT la tentative Firestore : ne bloque
+    // jamais l'envoi, et reste en place si la sauvegarde échoue.
+    var _draftKey = _flashDraftKey(_flashFormCardId, speId);
+    try {
+      var _draftPayload = JSON.stringify({ recto: card.recto, verso: card.verso, speId: card.speId, savedAt: Date.now() });
+      if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
+        window.TPXSafeStore.set(_draftKey, _draftPayload);
+      } else {
+        localStorage.setItem(_draftKey, _draftPayload);
+      }
+    } catch (e) {}
     saveFlashCard(card).then(function(savedId) {
+      // ✅ Succès confirmé par Firestore : le brouillon n'a plus lieu d'être.
+      try { localStorage.removeItem(_draftKey); } catch (e) {}
       _flashAllCache = null;
       // Mise à jour de la carte affichée en session (sans relancer la session)
       if (sessionEditId && _flashSession) {
@@ -46580,8 +46878,10 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
       if (typeof updateSpeFlashBadge === 'function') updateSpeFlashBadge(speId);
       if (typeof updateFlashGlobalCount === 'function') updateFlashGlobalCount();
     }).catch(function(){
+      // Échec : le brouillon local reste en place (voir _draftKey ci-dessus),
+      // récupérable à la prochaine ouverture de cette carte.
       if (btn) { btn.disabled = false; btn.innerHTML = prevHtml; }
-      _editErr('Erreur : carte non sauvegardée. Réessayez.');
+      _editErr('Erreur : non sauvegardé en ligne, mais conservé localement. Réessayez.');
     });
   }
   /* PORTAGE: édition de la carte en cours de session (le bouton crayon n'apparaît qu'après le flip) */
@@ -51783,8 +52083,8 @@ html[data-theme="pastel"] {
     --confidence-1:#ad5555;
     --confidence-2:#b66363;
     --confidence-3:#c19a58;
-    --confidence-4:#5fb27e;
-    --confidence-5:#50a971;
+    --confidence-4:#70c090;
+    --confidence-5:#256b46;
 }
 html[data-theme="pastel"] {
     scrollbar-color:#6388c5 #e5e7eb;
@@ -55106,6 +55406,23 @@ function resetState() {
         if (!snapshotOk) official = null;   // on retentera au prochain appel
         return official;
     }
+    // 🔒 Accès stable aux données officielles figées, y compris quand
+    // SPECIALTIES_DATA a été remplacé par les matières custom de
+    // l'utilisateur. Utilisé notamment pour résoudre le vrai nom d'une
+    // matière officielle dans le modal d'ajout d'entraînement, qui doit
+    // rester lisible indépendamment du mode d'affichage courant des items.
+    window.getOfficialSpecialtyName = function (id) {
+        if (!id) return null;
+        var src = (official && official.specialties && official.specialties.length)
+            ? official.specialties
+            : null;
+        if (!src) { try { snapshotOfficial(); } catch (e) {} src = official && official.specialties; }
+        if (!src) return null;
+        for (var i = 0; i < src.length; i++) {
+            if (src[i] && src[i].id === id) return src[i].name || null;
+        }
+        return null;
+    };
 
     /* Le mode sur-mesure n'est proposé que si l'instantané officiel est fiable :
        sinon on ne saurait pas revenir en arrière. */
@@ -55115,6 +55432,7 @@ function resetState() {
     }
 
     function isCustom() { return state.contentMode === CUSTOM && supported(); }
+    window.isCustom = isCustom;
     function isCustomTrainings() { return state.trainingsMode === CUSTOM; }
     window.isCustomTrainings = isCustomTrainings;
     function hasTrainings() { return Array.isArray(window.DEFAULT_TRAININGS); }
@@ -55313,6 +55631,12 @@ function setTrainingsPageVisible(visible) {
         if (window.TRAIN_SPECIALTY_SHORT && short) {
             window.TRAIN_SPECIALTY_SHORT = Object.assign({}, short, TRAIN_EXTRA_SHORT);
         }
+        // 🔒 Le filtre matière et la légende de la page Entraînements ne sont
+        // construits qu'UNE SEULE FOIS au chargement (_initTrainPage) : sans
+        // ce rafraîchissement, ils restaient périmés après toute suppression
+        // ou création de matière en mode sur-mesure.
+        if (typeof window.trainBuildMatiereFilter === 'function') { try { window.trainBuildMatiereFilter(); } catch (e) {} }
+        if (typeof window.trainBuildLegend === 'function') { try { window.trainBuildLegend(); } catch (e) {} }
     }
 
     function injectBadgeCss() {
@@ -56663,6 +56987,7 @@ function setTrainingsPageVisible(visible) {
         var del = root.querySelector('#tpx-mat-del');
         if (del) del.addEventListener('click', function () { confirmDeleteSpecialty(id, m.close); });
     }
+    window.openSpecialtyModal = openSpecialtyModal;
 
     /* Avertissement avant suppression d'une matière : la boîte annonce
        précisément ce qui va disparaître, y compris les notes, flashcards et
@@ -56910,6 +57235,7 @@ function setTrainingsPageVisible(visible) {
                 function () { deleteItem(key); m.close(); });
         });
     }
+    window.openItemModal = openItemModal;
 
     function openSddModal(id) {
         if (!requireCustom()) return;
