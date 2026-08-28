@@ -21523,7 +21523,7 @@ async function updateUserUI(user) {
                         lastName:    _parts.slice(1).join(' ') || '',
                         photoURL:    user.photoURL || '',
                         shortId:     shortId,
-                        createdAt:   new Date(),
+                        createdAt:   serverTimestamp(),
                         /* Champs exigés par la règle Firestore `create`. L'échéance
                            vient de tpx-billing.js : une seule date pour tout le site. */
                         isPremium:   true,
@@ -21561,12 +21561,16 @@ async function updateUserUI(user) {
                     if (user.photoURL && !userInfo.photoURL)    _updatePatch.photoURL    = user.photoURL;
                     if (!userInfo.shortId)                      _updatePatch.shortId     = shortId;
                     /* Migration des docs anciens : les règles n'autorisent l'écriture
-                       de ces trois champs que s'ils sont ABSENTS. */
-                    if (!userInfo.isPremium)                    _updatePatch.isPremium   = true;
-                    if (!userInfo.premiumType)                  _updatePatch.premiumType = 'grace_period';
-                    if (!userInfo.gracePeriodEnd)               _updatePatch.gracePeriodEnd = (typeof window.tpxLegacyGraceEnd === 'function'
-                        ? window.tpxLegacyGraceEnd()
-                        : new Date('2026-10-26T22:59:59.000Z'));
+                       de ces trois champs que s'ils sont ABSENTS. Test de présence RÉEL
+                       (`in`), pas un test de vérité : `isPremium === false` ne doit pas
+                       être confondu avec « champ absent », sinon on retente indéfiniment
+                       une écriture que la règle Firestore refusera. */
+                    if (!('isPremium' in userInfo))             _updatePatch.isPremium   = true;
+                    if (!('premiumType' in userInfo))           _updatePatch.premiumType = 'grace_period';
+                    /* gracePeriodEnd recalculé via tpxTrialEnd() : legacy -> 26/10,
+                       post-pivot -> createdAt + 30 jours (et non systématiquement la
+                       date legacy, qui serait fausse pour un doc post-pivot migré ici). */
+                    if (!('gracePeriodEnd' in userInfo))        _updatePatch.gracePeriodEnd = window.tpxTrialEnd(userInfo);
                     if (Object.keys(_updatePatch).length > 0) {
                         setDoc(doc(db, 'users', user.uid), _updatePatch, { merge: true })
                             .catch((e) => console.warn('⚠️ Impossible de mettre à jour users/', user.uid, e));
@@ -21575,7 +21579,9 @@ async function updateUserUI(user) {
             }
             // ── Verrou Premium (lecture seule) : calculé depuis le doc utilisateur ──
             if (window.tpxApplyPremiumState) {
-                var _uinfo = userDoc.exists() ? userInfo : { isPremium: true, premiumType: 'grace_period', createdAt: new Date() };
+                /* Doc pas encore créé : PAS de createdAt ici (il masquerait _authCreatedAt,
+                   posé juste après, qui reflète la vraie date de création Auth). */
+                var _uinfo = userDoc.exists() ? userInfo : { isPremium: true, premiumType: 'grace_period' };
                 try { if (user && user.metadata && user.metadata.creationTime) _uinfo._authCreatedAt = user.metadata.creationTime; } catch (e) {}
                 window.tpxApplyPremiumState(_uinfo);
             }
@@ -21605,6 +21611,15 @@ async function updateUserUI(user) {
             profileName.textContent = user.displayName || 'Utilisateur';
             profileEmail.textContent = user.email || '';
             updateWelcomeMessage(user.displayName || 'Utilisateur');
+            /* Statut Premium indéterminé (getDoc a échoué) : verrouillage
+               explicite en écriture plutôt qu'un fail-open silencieux qui
+               laisserait window.tpxPremiumLocked à sa valeur par défaut
+               (false = accès complet). La lecture reste possible. */
+            if (typeof window.tpxBillingActive === 'function' && window.tpxBillingActive()
+                && typeof window.tpxSetUnknownState === 'function') {
+                window.tpxSetUnknownState();
+            }
+            console.warn('⚠️ Statut Premium indisponible (getDoc a échoué) :', e);
         }
         
         // ═══════════════════════════════════════════════════════════
@@ -21615,7 +21630,7 @@ async function updateUserUI(user) {
         // et createCustomerPortalSession le sont), et son résultat n'était plus utilisé.
         // Le statut est désormais évalué par window.tpxHasPremiumAccess(), exactement
         // comme dans TableurECOS.html, à partir du doc utilisateur déjà chargé :
-        //   isPremium + subscriptionStatus === 'active'  → abonné
+        //   subscriptionStatus === 'active'               → abonné
         //   subscriptionEndDate encore valide            → annulé mais payé
         //   sinon window.tpxTrialEnd()                   → essai / grâce en cours
         // Les champs Stripe étant écrits par stripeWebhook via l'Admin SDK et
@@ -33953,7 +33968,7 @@ body.tc-kb-open-phone .flash-expand-btn {
                         un <strong>avant le 29 août 2026</strong> : rien ne change
                         jusqu'au <strong>26 octobre 2026</strong>.
                         <strong>À partir du 29 août</strong>, les nouveaux comptes
-                        bénéficient d'<strong>un mois gratuit</strong> à compter de leur
+                        bénéficient de <strong>30 jours gratuits</strong> à compter de leur
                         inscription.
                     </p>
                     <p>
@@ -49702,12 +49717,12 @@ body.tpx-trial .tpx-trial-fab { display: flex; }
     animation: tpxFabSheen 4.5s ease-in-out infinite;
     pointer-events: none;
 }
-.tpx-trial-fab i.fa-gift {
+.tpx-trial-fab i.fa-gift, .tpx-trial-fab i.fa-bell {
     font-size: 1.3rem; line-height: 1; color: #fde68a;
     filter: drop-shadow(0 1px 3px rgba(120, 53, 15, 0.45));
     transition: transform 0.28s ease;
 }
-.tpx-trial-fab:hover i.fa-gift { transform: rotate(-10deg) scale(1.1); }
+.tpx-trial-fab:hover i.fa-gift, .tpx-trial-fab:hover i.fa-bell { transform: rotate(-10deg) scale(1.1); }
 .tpx-trial-fab .tpx-fab-label {
     max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
     font-weight: 800; font-size: 0.93rem; letter-spacing: 0.01em;
@@ -50016,79 +50031,19 @@ body.tpx-premium-locked .day-detail-open-btn {
     'use strict';
     window.tpxPremiumLocked = false;
 
-    function tpxToDate(v) {
-        if (!v) return null;
-        try {
-            if (typeof v.toDate === 'function') return v.toDate();          // Firestore Timestamp
-            if (typeof v.seconds === 'number') return new Date(v.seconds * 1000);
-            var d = new Date(v);
-            return isNaN(d.getTime()) ? null : d;
-        } catch (e) { return null; }
-    }
-
-    /* ── ESSAI GRATUIT : 1 mois à partir de la CRÉATION du compte, une seule
-       fois par compte — la date de création (createdAt du doc, sinon date de
-       création du compte Firebase Auth) est immuable, donc aucune seconde
-       période gratuite n'est possible. Accès complet si : essai en cours,
-       OU abonnement actif, OU abonnement annulé mais période payée pas
-       encore terminée. Sinon : compte bloqué (lecture seule Premium). ── */
-    /* ── DATE PIVOT (à ajuster si besoin) ──
-       • Comptes créés AVANT cette date : grâce collective jusqu'au
-         26 octobre 2026, puis paiement ou blocage.
-       • Comptes créés À PARTIR de cette date : essai gratuit d'un mois
-         à la création (une seule fois), puis paiement ou blocage. */
-    /* Dates lues depuis tpx-billing.js (source unique du site). Les valeurs
-       de repli ci-dessous ne servent que si le fichier n'a pas été chargé ;
-       elles doivent rester identiques à celles de tpx-billing.js. */
-    var TPX_TRIAL_CUTOFF = (window.TPX_BILLING && window.TPX_BILLING.TRIAL_CUTOFF)
-        ? new Date(window.TPX_BILLING.TRIAL_CUTOFF)
-        : new Date('2026-08-28T22:00:00.000Z');   /* 29/08/2026 00:00 Paris */
-    var TPX_LEGACY_GRACE_END = (window.TPX_BILLING && window.TPX_BILLING.LEGACY_GRACE_END)
-        ? new Date(window.TPX_BILLING.LEGACY_GRACE_END)
-        : new Date('2026-10-26T22:59:59.000Z');   /* 26/10/2026 23:59:59 Paris */
-    var TPX_TRIAL_MONTHS = (window.TPX_BILLING && window.TPX_BILLING.TRIAL_MONTHS) || 1;
-    function tpxCreatedDate(u) {
-        if (!u) return null;
-        return tpxToDate(u.createdAt) || tpxToDate(u._authCreatedAt);
-    }
-    window.tpxIsLegacyAccount = function (u) {
-        var c = tpxCreatedDate(u);
-        return !!(c && c < TPX_TRIAL_CUTOFF);
-    };
-    window.tpxTrialEnd = function (u) {
-        var c = tpxCreatedDate(u);
-        if (!c) return null;
-        /* Calcul délégué à tpx-billing.js : les trois pages du site annoncent
-           ainsi rigoureusement la même échéance. Repli local si absent. */
-        if (typeof window.tpxComputeTrialEnd === 'function') return window.tpxComputeTrialEnd(c);
-        if (c < TPX_TRIAL_CUTOFF) return new Date(TPX_LEGACY_GRACE_END.getTime()); /* ancien compte */
-        var end = new Date(c.getTime());
-        end.setMonth(end.getMonth() + TPX_TRIAL_MONTHS);
-        return end;
-    };
-    window.tpxIsSubscribed = function (u) {
-        if (!u) return false;
-        var now = new Date();
-        if (u.isPremium && u.subscriptionStatus === 'active') return true;
-        var e = tpxToDate(u.subscriptionEndDate);
-        if (e && e > now) return true; // annulé mais payé jusqu'à cette date
-        return false;
-    };
-    window.tpxHasPremiumAccess = function (u) {
-        /* ── PHASE GRATUITE ──────────────────────────────────────────────
-           Tant que tpx-billing.js n'est pas activé, tout le monde a l'accès
-           complet, quelle que soit la date de création du compte. Court-circuite
-           le verrou, la couronne, la pastille d'essai et les nudges. ────── */
-        if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return true;
-
-        if (window.tpxIsSubscribed(u)) return true;
-        var t = window.tpxTrialEnd(u);
-        return !!(t && t > new Date()); // essai gratuit en cours
-    };
+    /* tpxToDate / tpxCreatedDate / tpxIsLegacyAccount / tpxTrialEnd /
+       tpxIsSubscribed / tpxHasPremiumAccess / tpxComputeAccessState sont
+       désormais centralisées dans tpx-billing.js (source unique, partagée
+       avec ECOS et comptepremium.html) : ne pas les redéfinir ici. */
 
     var _tpxLastUser = null;
+    var _tpxSubEndTimer = null;
+    function tpxClearSubEndTimer() {
+        if (_tpxSubEndTimer) { clearTimeout(_tpxSubEndTimer); _tpxSubEndTimer = null; }
+    }
     window.tpxApplyPremiumState = function (userInfo) {
         _tpxLastUser = userInfo || null;
+        tpxClearSubEndTimer();
 
         /* ── PHASE GRATUITE ──────────────────────────────────────────────
            Ni verrou, ni pastille de compte à rebours. On sort avant même de
@@ -50101,13 +50056,48 @@ body.tpx-premium-locked .day-detail-open-btn {
 
         if (window.tpxHasPremiumAccess(userInfo)) {
             tpxDisablePremiumLock();
-            tpxUpdateTrialFab(userInfo); /* pastille compte à rebours pendant l'essai */
+            tpxUpdateTrialFab(userInfo); /* pastille compte à rebours pendant l'essai/grâce */
+            /* Réévaluation automatique à subscriptionEndDate, sans F5, dans deux cas :
+                 • abonnement résilié (ou en cours d'annulation) mais encore payé —
+                   tpxUpdateTrialFab n'affiche aucune pastille pour un abonné, donc
+                   sans ce minuteur l'accès resterait actif indéfiniment dans un
+                   onglet resté ouvert après cette date ;
+                 • formule FIXE (paiement unique : ecos2027, edn2027, ...) — pour ces
+                   formules, `subscriptionStatus === 'active'` ne signifie PAS un
+                   renouvellement automatique (cf. tpx-billing.js), donc l'échéance
+                   doit TOUJOURS être surveillée, contrairement à un abonné mensuel
+                   qui se renouvelle normalement et n'a besoin d'aucun minuteur. */
+            if (window.tpxIsSubscribed(userInfo)) {
+                var _notRenewing = userInfo && (userInfo.subscriptionStatus !== 'active'
+                    || userInfo.cancelAtPeriodEnd === true
+                    || (typeof window.tpxIsFixedPlan === 'function' && window.tpxIsFixedPlan(userInfo)));
+                if (_notRenewing) {
+                    var _endDate = window.tpxToDate(userInfo && userInfo.subscriptionEndDate);
+                    if (_endDate && _endDate > new Date()) {
+                        _tpxSubEndTimer = window.tpxScheduleRecheck(_endDate, function () {
+                            if (_tpxLastUser) window.tpxApplyPremiumState(_tpxLastUser);
+                        });
+                    }
+                }
+            }
         } else {
             tpxHideTrialFab();
             tpxEnablePremiumLock();
         }
     };
-    window.tpxResetPremiumState = function () { _tpxLastUser = null; tpxHideTrialFab(); tpxDisablePremiumLock(); };
+    window.tpxResetPremiumState = function () { _tpxLastUser = null; tpxClearSubEndTimer(); tpxHideTrialFab(); tpxDisablePremiumLock(); };
+    /* Statut Premium IMPOSSIBLE À DÉTERMINER (échec de getDoc(users/{uid}) :
+       hors ligne, erreur réseau, etc.). Comportement fail-CLOSED explicite :
+       jamais fail-open. On ne devine ni n'invente un abonnement, on ne perd
+       aucune donnée déjà affichée (la lecture reste possible), mais les
+       écritures Premium sont désactivées jusqu'à la prochaine tentative
+       réussie — Firestore reste de toute façon le filet de sécurité réel. */
+    window.tpxSetUnknownState = function () {
+        _tpxLastUser = null;
+        tpxClearSubEndTimer();
+        tpxHideTrialFab();
+        tpxEnablePremiumLock();
+    };
 
     function tpxEnablePremiumLock() {
         if (window.tpxPremiumLocked) return;
@@ -50229,33 +50219,47 @@ body.tpx-premium-locked .day-detail-open-btn {
         if (_tpxTrialTick) { clearInterval(_tpxTrialTick); _tpxTrialTick = null; }
         if (_tpxTrialFlip) { clearTimeout(_tpxTrialFlip); _tpxTrialFlip = null; }
     }
-    function tpxRenderTrialFab(end) {
+    function tpxRenderTrialFab(end, legacy) {
         var fab = document.getElementById('tpx-trial-fab');
         if (!fab) return;
         var ms = end.getTime() - Date.now();
         if (ms <= 0) return;
+        var lbl = fab.querySelector('.tpx-fab-label');
+        var icon = fab.querySelector('i');
+        var heroLeft = document.getElementById('tpx-hero-trial-left');
+        if (legacy) {
+            /* Compte legacy : gratuité historique, PAS un « essai de 30 jours ».
+               Libellé fixe et clair plutôt qu'un compte à rebours en jours. */
+            if (lbl) lbl.textContent = 'Gratuit jusqu\'au 26 octobre';
+            if (icon) icon.className = 'fas fa-gift';
+            if (heroLeft) heroLeft.textContent = '26 octobre';
+            return;
+        }
         var count, unit;
         if (ms >= 86400000) { count = String(Math.ceil(ms / 86400000)); unit = 'j'; }
         else if (ms >= 3600000) { count = String(Math.ceil(ms / 3600000)); unit = 'h'; }
         else { count = String(Math.max(1, Math.ceil(ms / 60000))); unit = 'm'; }
         var restant = unit === 'j' ? (count + (count === '1' ? ' jour restant' : ' jours restants'))
             : unit === 'h' ? (count + ' h restantes') : (count + ' min restantes');
-        var lbl = fab.querySelector('.tpx-fab-label');
-        if (lbl) lbl.textContent = 'Essai gratuit — ' + restant; /* jours restants dans le bandeau déroulant */
-        var heroLeft = document.getElementById('tpx-hero-trial-left');
+        if (lbl) lbl.textContent = 'Essai gratuit — ' + restant;
+        if (icon) icon.className = 'fas fa-gift';
         if (heroLeft) heroLeft.textContent = unit === 'j' ? (count + (count === '1' ? ' jour' : ' jours'))
             : unit === 'h' ? (count + ' h') : (count + ' min');
     }
     function tpxUpdateTrialFab(u) {
         tpxHideTrialFab();
         if (window.tpxIsSubscribed(u)) return; /* abonné : pas de pastille */
-        if (window.tpxIsLegacyAccount(u)) return; /* compte d'avant la date pivot : grâce silencieuse (pas de compteur) */
         var end = window.tpxTrialEnd(u);
         if (!end || end.getTime() - Date.now() <= 0) return;
+        /* Comptes legacy (créés avant le 29/08) : pastille « Gratuit jusqu'au
+           26 octobre » (pas un essai). Nouveaux comptes : compte à rebours
+           « Essai gratuit — X jours restants » (cf. tpxRenderTrialFab). */
+        var legacy = window.tpxIsLegacyAccount(u);
         document.body.classList.add('tpx-trial');
-        tpxRenderTrialFab(end);
-        _tpxTrialTick = setInterval(function () { tpxRenderTrialFab(end); }, 60000);
-        /* Bascule automatique en lecture seule à l'expiration exacte */
+        tpxRenderTrialFab(end, legacy);
+        _tpxTrialTick = setInterval(function () { tpxRenderTrialFab(end, legacy); }, 60000);
+        /* Bascule automatique en lecture seule à l'expiration exacte, pour les
+           comptes legacy comme pour les comptes en essai. */
         var wait = Math.max(1000, Math.min(end.getTime() - Date.now() + 1500, 2147000000));
         _tpxTrialFlip = setTimeout(function () {
             if (_tpxLastUser) window.tpxApplyPremiumState(_tpxLastUser);
@@ -54334,7 +54338,8 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
     box-shadow:0 8px 26px rgba(146, 121, 185, 0.279),
                 inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
-:where(html[data-theme="pastel"]) .tpx-trial-fab i.fa-gift {
+:where(html[data-theme="pastel"]) .tpx-trial-fab i.fa-gift,
+:where(html[data-theme="pastel"]) .tpx-trial-fab i.fa-bell {
     color:#ddd3aa;
     filter:drop-shadow(0 1px 3px rgba(177, 123, 93, 0.279));
 }

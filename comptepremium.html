@@ -1281,6 +1281,38 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
     flex-shrink: 0;
 }
 
+.plan-note {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.plan-note i { color: var(--primary); margin-right: 0.4rem; }
+
+.pricing-shared-features {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem 1.5rem;
+    margin: 0 auto 2rem;
+    padding: 0;
+    max-width: 760px;
+}
+.pricing-shared-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+.pricing-shared-features i {
+    color: var(--success);
+    font-size: 1.05rem;
+}
+
 .btn {
     width: 100%;
     padding: 1rem 1.5rem;
@@ -2615,8 +2647,18 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
             <div id="plans-section" style="display: none;">
                 <div class="pricing-section">
                     <h2 class="section-title">Choisissez votre formule Premium</h2>
+
+                    <!-- Fonctionnalités communes à TOUTES les formules (mensuel + formules
+                         longue durée) : affichées une seule fois ici plutôt que répétées
+                         dans chaque carte, pour que chaque carte ne montre que ce qui la
+                         distingue vraiment (prix, échéance, mode de paiement). -->
+                    <ul class="pricing-shared-features">
+                        <li><i class="fas fa-check-circle"></i> Accès complet aux tableurs EDN & ECOS</li>
+                        <li><i class="fas fa-check-circle"></i> Suivi de vos révisions</li>
+                        <li><i class="fas fa-check-circle"></i> Flashcards, statistiques, cahiers d’erreurs et notes</li>
+                    </ul>
                                         
-                    <div class="pricing-grid">
+                    <div class="pricing-grid" id="pricing-grid">
                         <!-- Monthly Plan -->
                         <div class="pricing-card recommended">
                             <div class="plan-header">
@@ -2624,29 +2666,20 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
                                 <div class="plan-price">3€<span>/mois</span></div>
                             </div>
                             <ul class="plan-features">
-                                <li><i class="fas fa-check-circle"></i> Accès complet aux tableurs EDN & ECOS</li>
-                                <li><i class="fas fa-check-circle"></i> Suivi de vos révisions</li>
-                                <li><i class="fas fa-check-circle"></i> Flashcards, statistiques et cahiers d’erreurs</li>
+                                <li><i class="fas fa-check-circle"></i> Prélèvement mensuel automatique</li>
                                 <li><i class="fas fa-check-circle"></i> Formule flexible, résiliable à tout moment</li>
                             </ul>
                             <button class="btn btn-primary" onclick="subscribe('monthly', event)">Souscrire</button>
                         </div>
-                        
-                        <!-- Annual Plan -->
-                        <div class="pricing-card recommended">
-                            <div class="plan-header">
-                                <h3 class="plan-name">Annuel</h3>
-                                <div class="plan-price">30€<span>/an</span></div>
-                            </div>
-                            <ul class="plan-features">
-                                <li><i class="fas fa-check-circle"></i> Accès complet aux tableurs EDN & ECOS</li>
-                                <li><i class="fas fa-check-circle"></i> Suivi de vos révisions</li>
-                                <li><i class="fas fa-check-circle"></i> Flashcards, statistiques et cahiers d’erreurs</li>
-                                <li><i class="fas fa-check-circle"></i> 2 mois offerts, formule résiliable à tout moment</li>
-                            </ul>
-                            <button class="btn btn-primary" onclick="subscribe('annual', event)">Souscrire</button>
-                        </div>
+
+                        <!-- Formules longue durée EDN / ECOS : générées par JS depuis window.TPX_PLAN_UI
+                             (source unique, cf. tpx-billing.js) pour ne jamais désynchroniser prix,
+                             libellés et dates entre ce fichier et les tableurs. -->
                     </div>
+                    <p class="plan-note" style="text-align:center; margin-top:1.25rem;">
+                        <i class="fas fa-circle-info"></i>
+                        Le prix des formules longue durée baisse selon le nombre de mois restants jusqu'à l'échéance : plus vous vous inscrivez tôt, moins c'est cher au mois. Paiement unique, sans renouvellement automatique.
+                    </p>
                 </div>
             </div>
 			
@@ -3104,6 +3137,53 @@ let currentUser = null;
 let userData = null;
 let _statusUnsub = null;   // désinscription de l'écoute temps réel Firestore
 
+/* ── Cartes des formules longue durée (point 15 : labels centralisés) ──
+   Générées depuis window.TPX_PLAN_UI / TPX_FIXED_PLAN_ORDER (tpx-billing.js,
+   source unique) plutôt qu'écrites en dur ici : impossible que le prix ou la
+   date affichés divergent de ceux réellement utilisés par le backend.
+   isAvailable: false (formule retirée de la vente, cf. point 22) masque
+   simplement la carte sans jamais toucher aux comptes qui la possèdent déjà. */
+function renderFixedPlanCards() {
+    const grid = document.getElementById('pricing-grid');
+    if (!grid || !window.TPX_PLAN_UI || !window.TPX_FIXED_PLAN_ORDER) return;
+
+    const fmt = (iso) => {
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? '' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
+    window.TPX_FIXED_PLAN_ORDER.forEach((planType) => {
+        const plan = window.TPX_PLAN_UI[planType];
+        if (!plan || !plan.isAvailable) return;
+
+        /* Prix recalculé à l'instant présent : baisse au fil du temps à
+           mesure que les mois restants jusqu'à accessEnd diminuent (cf.
+           tpxComputeFixedPlanPrice / RATE_TIERS dans tpx-billing.js). Une
+           formule dont la deadline est déjà passée n'est plus proposée. */
+        const pricing = (typeof window.tpxComputeFixedPlanPrice === 'function')
+            ? window.tpxComputeFixedPlanPrice(planType)
+            : null;
+        if (!pricing) return;
+
+        const card = document.createElement('div');
+        card.className = 'pricing-card';
+        card.innerHTML = `
+            <div class="plan-header">
+                <h3 class="plan-name">${plan.label}</h3>
+                <div class="plan-price">${pricing.priceEuros}€<span> — paiement unique</span></div>
+            </div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check-circle"></i> Accès EDN & ECOS jusqu'au ${fmt(plan.accessEnd)}</li>
+                <li><i class="fas fa-check-circle"></i> Soit ${pricing.months} mois restants, ${pricing.ratePerMonth.toFixed(2)} €/mois</li>
+                <li><i class="fas fa-check-circle"></i> Paiement unique, aucun renouvellement automatique</li>
+            </ul>
+            <button class="btn btn-primary" onclick="subscribe('${planType}', event)">Souscrire</button>
+        `;
+        grid.appendChild(card);
+    });
+}
+renderFixedPlanCards();
+
 // Get initials
 function getInitials(name) {
     if (!name) return 'U';
@@ -3248,103 +3328,36 @@ function displayUserStatus() {
         return;
     }
 
-    // Grace Period
-    if (userData.premiumType === 'grace_period') {
-        /* ── Échéance de fin d'accès gratuit ─────────────────────────────
-           Recalculée depuis la date de création via tpx-billing.js, afin
-           d'annoncer exactement la même date que les deux tableurs.
-           Quatre sources, par ordre de fiabilité décroissante :
-             1. users/{uid}.createdAt          (cas normal)
-             2. date de création Firebase Auth (doc créé sans createdAt)
-             3. gracePeriodEnd stocké en base  (valeur héritée)
-             4. fin de grâce collective        (comme la règle Firestore, qui
-                traite un doc sans createdAt comme un compte pré-pivot)
-           Sans le repli 4, un compte sans createdAt affichait « Période
-           expirée » alors que le serveur lui accordait l'accès. */
-        let graceEnd = null;
+    // Abonnement (actif OU résilié mais encore payé) — TOUJOURS vérifié en
+    // premier, avant le statut grâce/essai, exactement comme
+    // window.tpxComputeAccessState() le fait côté tableurs. Utilise la
+    // fonction centrale tpxIsSubscribed() plutôt que de reconstruire la
+    // condition ici : `subscriptionStatus === 'active'` seul ratait le cas
+    // d'un abonnement annulé (`subscriptionStatus` déjà différent de
+    // 'active') mais dont subscriptionEndDate est encore dans le futur.
+    const subscribed = (typeof window.tpxIsSubscribed === 'function')
+        ? window.tpxIsSubscribed(userData)
+        : (userData.subscriptionStatus === 'active');
 
-        let _created = null;
-        if (userData.createdAt?.toDate)      _created = userData.createdAt.toDate();
-        else if (userData.createdAt)         _created = new Date(userData.createdAt);
-        if (!_created || isNaN(_created.getTime())) {
-            const _authCreated = currentUser?.metadata?.creationTime;
-            if (_authCreated) {
-                const d = new Date(_authCreated);
-                if (!isNaN(d.getTime())) _created = d;
-            }
-        }
-
-        if (_created && typeof window.tpxComputeTrialEnd === 'function') {
-            graceEnd = window.tpxComputeTrialEnd(_created);
-        }
-        if (!graceEnd && userData.gracePeriodEnd?.toDate) {
-            graceEnd = userData.gracePeriodEnd.toDate();
-        }
-        if (!graceEnd && typeof window.tpxLegacyGraceEnd === 'function') {
-            graceEnd = window.tpxLegacyGraceEnd();
-        }
-
-        const now = new Date();
-        const daysLeft = Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24));
-
-        if (graceEnd && graceEnd > now) {
-            if (statusCard) statusCard.classList.add('is-grace');
-            badgeHTML = '<span class="status-badge status-grace"><i class="fas fa-gift"></i> Période gratuite</span>';
-            infoHTML = `
-                <div class="info-row">
-                    <span class="info-label">Statut :</span>
-                    <span class="info-value">Accès gratuit temporaire</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Fin de la période :</span>
-                    <span class="info-value">${graceEnd.toLocaleDateString('fr-FR')}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Jours restants :</span>
-                    <span class="info-value"><span class="dot ${daysLeft <= 15 ? 'dot-warn' : 'dot-ok'}"></span>${daysLeft} jour${daysLeft > 1 ? 's' : ''}</span>
-                </div>
-            `;
-
-            if (daysLeft <= 15) {
-                graceAlert.innerHTML = `
-                    <div class="alert alert-warning">
-                        <strong>⚠️ Attention !</strong> Votre période gratuite se termine dans ${daysLeft} jours. 
-                        Souscrivez à un abonnement pour continuer à utiliser TypixClin.
-                    </div>
-                `;
-                graceAlert.style.display = 'block';
-            }
-
-            showPlans = true;
-
-            /* Ancien compte encore en grâce → paiement différé à la fin de la
-               grâce. Un nouveau compte en essai peut payer tout de suite. */
-            if (_created && typeof window.tpxIsLegacyCreated === 'function'
-                && window.tpxIsLegacyCreated(_created)) {
-                plansLockedUntil = graceEnd;
-            }
-
-        } else {
-            if (statusCard) statusCard.classList.add('is-inactive');
-            badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-clock"></i> Période expirée</span>';
-            infoHTML = `
-                <div class="info-row">
-                    <span class="info-label">Statut :</span>
-                    <span class="info-value">Accès expiré</span>
-                </div>
-            `;
-            showPlans = true;
-        }
-    }
-    // Active Subscription
-    else if (userData.isPremium && userData.subscriptionStatus === 'active') {
+    if (subscribed) {
         const endDate = userData.subscriptionEndDate?.toDate();
-        const planName = userData.premiumType === 'monthly' ? 'Mensuel' : 'Annuel';
+        const planName = (typeof window.getPlanLabel === 'function')
+            ? window.getPlanLabel(userData.premiumType)
+            : (userData.premiumType === 'monthly' ? 'Mensuel' : 'Annuel');
         const endStr = endDate ? endDate.toLocaleDateString('fr-FR') : 'N/A';
+        const isFixed = (typeof window.tpxIsFixedPlan === 'function') && window.tpxIsFixedPlan(userData);
 
-        /* Résilié mais encore actif : l'abonné a annulé, l'accès court jusqu'à
-           la fin de la période déjà payée, puis s'arrête (pas de renouvellement). */
-        const canceling = userData.cancelAtPeriodEnd === true;
+        /* Résilié (ou en cours d'annulation) mais encore payé : l'accès
+           complet court jusqu'à la fin de la période déjà payée, puis
+           s'arrête (pas de renouvellement). Couvre aussi bien le cas
+           `cancelAtPeriodEnd === true` (statut encore 'active' jusqu'au
+           webhook de fin de période) que le cas où subscriptionStatus a déjà
+           été mis à jour à autre chose que 'active' par Stripe : dans les
+           deux cas, c'est uniquement subscriptionEndDate qui maintient
+           encore l'accès. Une formule FIXE n'est jamais « en résiliation » :
+           c'est un paiement unique, elle reste dans la branche ci-dessous
+           tant que subscriptionEndDate n'est pas dépassée. */
+        const canceling = !isFixed && (userData.cancelAtPeriodEnd === true || userData.subscriptionStatus !== 'active');
 
         if (canceling) {
             if (statusCard) statusCard.classList.add('is-grace');
@@ -3355,7 +3368,7 @@ function displayUserStatus() {
                     <span class="info-value">${planName}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Se termine le :</span>
+                    <span class="info-label">Accès Premium jusqu'au :</span>
                     <span class="info-value"><span class="dot dot-warn"></span>${endStr}</span>
                 </div>
                 <div class="info-row">
@@ -3365,6 +3378,25 @@ function displayUserStatus() {
                 <div class="info-note">
                     <i class="fas fa-circle-info"></i>
                     Votre accès Premium reste actif jusqu'au ${endStr}. Aucun paiement ne sera prélevé ensuite. Vous pouvez réactiver le renouvellement à tout moment en cliquant sur « Gérer mon abonnement ».
+                </div>
+            `;
+        } else if (isFixed) {
+            /* Formule longue durée : paiement unique, pas de renouvellement,
+               pas de portail Stripe (aucun abonnement récurrent à gérer). */
+            if (statusCard) statusCard.classList.add('is-active');
+            badgeHTML = '<span class="status-badge status-active"><i class="fas fa-circle-check"></i> Formule active</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Formule :</span>
+                    <span class="info-value">${planName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Accès Premium jusqu'au :</span>
+                    <span class="info-value"><span class="dot dot-ok"></span>${endStr}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Type :</span>
+                    <span class="info-value">Paiement unique</span>
                 </div>
             `;
         } else {
@@ -3407,19 +3439,145 @@ function displayUserStatus() {
             `;
         }
 
-        portalBtn.style.display = 'inline-block';
+        /* Portail Stripe (résiliation, moyen de paiement...) : uniquement
+           pertinent pour un abonnement récurrent réel (mensuel/annuel).
+           Une formule fixe n'a aucun abonnement Stripe à y gérer. */
+        portalBtn.style.display = isFixed ? 'none' : 'inline-block';
     }
-    // No Subscription
+    // Grace Period / Essai — uniquement si NON abonné (cf. ci-dessus).
+    else if (userData.premiumType === 'grace_period') {
+        /* ── Échéance de fin d'accès gratuit ─────────────────────────────
+           Recalculée depuis la date de création via tpx-billing.js, afin
+           d'annoncer exactement la même date que les deux tableurs.
+           Ordre de fiabilité décroissante pour la date de création :
+             1. users/{uid}.accountCreatedAt   (backend Admin SDK, fiable)
+             2. users/{uid}.createdAt          (date du document, cas normal)
+             3. date de création Firebase Auth (repli, doc créé sans createdAt)
+             4. gracePeriodEnd stocké en base  (valeur héritée)
+             5. fin de grâce collective        (comme la règle Firestore, qui
+                traite un doc sans date de création exploitable comme un
+                compte pré-pivot)
+           Sans le repli 5, un compte sans date de création affichait
+           « Période expirée » alors que le serveur lui accordait l'accès. */
+        let graceEnd = null;
+
+        let _created = null;
+        if (userData.accountCreatedAt?.toDate) _created = userData.accountCreatedAt.toDate();
+        else if (userData.createdAt?.toDate)   _created = userData.createdAt.toDate();
+        else if (userData.createdAt)           _created = new Date(userData.createdAt);
+        if (!_created || isNaN(_created.getTime())) {
+            const _authCreated = currentUser?.metadata?.creationTime;
+            if (_authCreated) {
+                const d = new Date(_authCreated);
+                if (!isNaN(d.getTime())) _created = d;
+            }
+        }
+
+        if (_created && typeof window.tpxComputeTrialEnd === 'function') {
+            graceEnd = window.tpxComputeTrialEnd(_created);
+        }
+        if (!graceEnd && userData.gracePeriodEnd?.toDate) {
+            graceEnd = userData.gracePeriodEnd.toDate();
+        }
+        if (!graceEnd && typeof window.tpxLegacyGraceEnd === 'function') {
+            graceEnd = window.tpxLegacyGraceEnd();
+        }
+
+        const now = new Date();
+        const daysLeft = Math.ceil((graceEnd - now) / (1000 * 60 * 60 * 24));
+        const isLegacy = _created && typeof window.tpxIsLegacyCreated === 'function'
+            && window.tpxIsLegacyCreated(_created);
+
+        if (graceEnd && graceEnd > now) {
+            if (statusCard) statusCard.classList.add('is-grace');
+            /* Legacy : « Gratuit jusqu'au 26 octobre » (pas un essai).
+               Nouveau compte : « Période gratuite » + jours restants,
+               cohérent avec la pastille « Essai gratuit » des tableurs. */
+            badgeHTML = isLegacy
+                ? '<span class="status-badge status-grace"><i class="fas fa-gift"></i> Gratuit jusqu\u2019au 26 octobre</span>'
+                : '<span class="status-badge status-grace"><i class="fas fa-gift"></i> Essai gratuit</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Statut :</span>
+                    <span class="info-value">${isLegacy ? 'Accès gratuit historique' : 'Accès gratuit temporaire'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fin de la période :</span>
+                    <span class="info-value">${graceEnd.toLocaleDateString('fr-FR')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Jours restants :</span>
+                    <span class="info-value"><span class="dot ${daysLeft <= 15 ? 'dot-warn' : 'dot-ok'}"></span>${daysLeft} jour${daysLeft > 1 ? 's' : ''}</span>
+                </div>
+            `;
+
+            if (daysLeft <= 15) {
+                graceAlert.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Attention !</strong> Votre période gratuite se termine dans ${daysLeft} jours. 
+                        Souscrivez à un abonnement pour continuer à utiliser TypixClin.
+                    </div>
+                `;
+                graceAlert.style.display = 'block';
+            }
+
+            showPlans = true;
+
+            /* Ancien compte encore en grâce → paiement différé à la fin de la
+               grâce. Un nouveau compte en essai peut payer tout de suite. */
+            if (isLegacy) {
+                plansLockedUntil = graceEnd;
+            }
+
+        } else {
+            if (statusCard) statusCard.classList.add('is-inactive');
+            badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-clock"></i> Période expirée</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Statut :</span>
+                    <span class="info-value">Accès expiré</span>
+                </div>
+            `;
+            showPlans = true;
+        }
+    }
+    // No Subscription (ou formule fixe expirée)
     else {
-        if (statusCard) statusCard.classList.add('is-inactive');
-        badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-circle-xmark"></i> Pas d\'abonnement</span>';
-        infoHTML = `
-            <div class="info-row">
-                <span class="info-label">Votre statut :</span>
-                <span class="info-value">Aucun abonnement actif</span>
-            </div>
-        `;
-        
+        const wasFixed = (typeof window.tpxIsFixedPlan === 'function') && window.tpxIsFixedPlan(userData);
+
+        if (wasFixed) {
+            /* Formule longue durée dont subscriptionEndDate est dépassée :
+               message spécifique nommant la formule, plutôt que le
+               générique « Pas d'abonnement » (point 18 du cahier des
+               charges). Les données restent lisibles (cf. hasActiveAccess
+               côté règles : la lecture n'a jamais été conditionnée à
+               l'accès Premium), seules les écritures sont refusées. */
+            const expiredLabel = (typeof window.getPlanLabel === 'function')
+                ? window.getPlanLabel(userData.premiumType)
+                : 'votre formule';
+            if (statusCard) statusCard.classList.add('is-inactive');
+            badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-clock"></i> Formule expirée</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Formule :</span>
+                    <span class="info-value">${expiredLabel}</span>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-circle-info"></i>
+                    Votre formule ${expiredLabel} est terminée. Votre accès en lecture est conservé. Choisissez une nouvelle formule pour reprendre les modifications.
+                </div>
+            `;
+        } else {
+            if (statusCard) statusCard.classList.add('is-inactive');
+            badgeHTML = '<span class="status-badge status-inactive"><i class="fas fa-circle-xmark"></i> Pas d\'abonnement</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Votre statut :</span>
+                    <span class="info-value">Aucun abonnement actif</span>
+                </div>
+            `;
+        }
+
         showPlans = true;
     }
 
@@ -3437,10 +3595,21 @@ function displayUserStatus() {
 
     plansSection.style.display = showPlans ? 'block' : 'none';
 
-    applyPlansLock(plansLockedUntil);
+    /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : prioritaire sur tout —
+       s'applique même à un nouveau compte en essai qui, normalement,
+       pouvait payer tout de suite. Tant que ce switch est à false, PERSONNE
+       ne peut payer, quel que soit son statut. */
+    const paymentsOpen = (typeof window.tpxPaymentsEnabled === 'function') ? window.tpxPaymentsEnabled() : true;
+    applyPlansLock(paymentsOpen ? plansLockedUntil : true);
 }
 
-/* Verrouille/déverrouille les boutons « Souscrire » selon plansLockedUntil. */
+/* Verrouille/déverrouille les boutons « Souscrire ».
+   lockedUntil peut être :
+     • une Date  -> verrou legacy classique, message avec échéance précise ;
+     • true      -> verrou GLOBAL (PAYMENTS_ENABLED = false), message
+       générique sans date, s'applique à TOUT LE MONDE (legacy, essai,
+       peu importe) ;
+     • null/false -> déverrouillé. */
 function applyPlansLock(lockedUntil) {
     const plansSection = document.getElementById('plans-section');
     if (!plansSection) return;
@@ -3449,7 +3618,6 @@ function applyPlansLock(lockedUntil) {
     let note = document.getElementById('plans-locked-note');
 
     if (lockedUntil) {
-        const dateStr = lockedUntil.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         buttons.forEach(b => {
             if (b.dataset.plabel === undefined) b.dataset.plabel = b.textContent;
             b.classList.add('btn-plan-locked');
@@ -3462,8 +3630,13 @@ function applyPlansLock(lockedUntil) {
             note.className = 'pricing-locked-note';
             plansSection.appendChild(note);
         }
-        note.innerHTML = '<i class="fas fa-circle-info"></i><span>Votre acc\u00e8s est gratuit jusqu\'au <strong>'
-            + dateStr + '</strong>. L\'abonnement sera disponible \u00e0 cette date : vous n\'avez rien \u00e0 faire d\'ici l\u00e0, et vous ne serez pas pr\u00e9lev\u00e9 avant.</span>';
+        if (lockedUntil instanceof Date) {
+            const dateStr = lockedUntil.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            note.innerHTML = '<i class="fas fa-circle-info"></i><span>Votre acc\u00e8s est gratuit jusqu\'au <strong>'
+                + dateStr + '</strong>. L\'abonnement sera disponible \u00e0 cette date : vous n\'avez rien \u00e0 faire d\'ici l\u00e0, et vous ne serez pas pr\u00e9lev\u00e9 avant.</span>';
+        } else {
+            note.innerHTML = '<i class="fas fa-circle-info"></i><span>Les abonnements ne sont pas encore ouverts. Revenez bient\u00f4t !</span>';
+        }
         note.style.display = 'flex';
     } else {
         buttons.forEach(b => {
@@ -3496,15 +3669,31 @@ window.subscribe = async function(planType, event) {
     /* Phase gratuite : aucun appel à Stripe possible. */
     if (typeof window.tpxBillingActive === 'function' && !window.tpxBillingActive()) return;
 
+    /* Verrou GLOBAL : tant que PAYMENTS_ENABLED = false, personne ne peut
+       payer, même en contournant le bouton désactivé via la console —
+       cette garde ne dépend d'aucun statut utilisateur (legacy ou pas). */
+    if (typeof window.tpxPaymentsEnabled === 'function' && !window.tpxPaymentsEnabled()) {
+        await showToast({
+            title: 'Bient\u00f4t disponible',
+            message: 'Les abonnements ne sont pas encore ouverts. Revenez bient\u00f4t !',
+            type: 'info',
+            icon: 'fa-circle-info',
+            duration: 4000
+        });
+        return;
+    }
+
     /* Garde serveur-indépendante : un ancien compte encore en grâce ne peut pas
-       encore payer, même en contournant le bouton désactivé via la console. */
+       encore payer, même en contournant le bouton désactivé via la console.
+       tpxCreatedDate() (centralisé dans tpx-billing.js) préfère
+       accountCreatedAt (backend, fiable) à createdAt (date du document). */
     if (userData && userData.premiumType === 'grace_period'
         && userData.subscriptionStatus !== 'active'
         && typeof window.tpxIsLegacyCreated === 'function') {
-        let _c = null;
-        if (userData.createdAt?.toDate) _c = userData.createdAt.toDate();
-        else if (userData.createdAt) _c = new Date(userData.createdAt);
-        else if (currentUser?.metadata?.creationTime) _c = new Date(currentUser.metadata.creationTime);
+        let _c = (typeof window.tpxCreatedDate === 'function')
+            ? window.tpxCreatedDate(userData)
+            : null;
+        if (!_c && currentUser?.metadata?.creationTime) _c = new Date(currentUser.metadata.creationTime);
         if (_c && !isNaN(_c.getTime()) && window.tpxIsLegacyCreated(_c)) {
             const end = (typeof window.tpxLegacyGraceEnd === 'function')
                 ? window.tpxLegacyGraceEnd().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
@@ -3556,7 +3745,19 @@ window.openConsentModal = function (planType, srcButton) {
     if (c1) c1.checked = false;
     if (btn) { btnLoading(btn, false); btn.disabled = true; }
     const label = document.getElementById('consent-plan-label');
-    if (label) label.textContent = planType === 'annual' ? 'Annuel — 30 € / an' : 'Mensuel — 3 € / mois';
+    if (label) {
+        const planUi = window.TPX_PLAN_UI && window.TPX_PLAN_UI[planType];
+        if (planUi && planUi.type === 'fixed' && typeof window.tpxComputeFixedPlanPrice === 'function') {
+            const pricing = window.tpxComputeFixedPlanPrice(planType);
+            label.textContent = pricing
+                ? (planUi.label + ' — ' + pricing.priceEuros + ' € — paiement unique')
+                : (planUi.label + ' — indisponible');
+        } else if (planUi) {
+            label.textContent = planUi.label + ' — ' + planUi.priceLabel;
+        } else {
+            label.textContent = 'Mensuel — 3 € / mois';
+        }
+    }
     if (window.openHelpModal) window.openHelpModal('consent-modal');
 };
 
@@ -3689,7 +3890,9 @@ if (urlParams.get('success') === 'true') {
         try {
             await loadUserData();
         } catch (e) {}
-        const active = userData && userData.isPremium && userData.subscriptionStatus === 'active';
+        const active = userData && (typeof window.tpxIsSubscribed === 'function'
+            ? window.tpxIsSubscribed(userData)
+            : userData.subscriptionStatus === 'active');
         if (active || _activationTries >= 10) {
             clearInterval(_activationPoll);
             if (active) {
