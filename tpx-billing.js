@@ -329,6 +329,19 @@
            fixe) : comportement inchangé — abonnement actif OU résilié mais
            période déjà payée pas encore terminée.
        Aligné EXACTEMENT sur hasActiveAccess() côté règles Firestore. */
+    /* Abonné : dépend du TYPE de formule.
+         • Formule FIXE (paiement unique, ecos2027/edn2027/...) : la seule
+           chose qui compte est subscriptionEndDate > maintenant. Un
+           `subscriptionStatus === 'active'` stocké ne suffit JAMAIS seul —
+           sinon l'accès deviendrait permanent après l'échéance payée.
+         • Mensuel / Annuel / historique : 'active' seul, OU 'canceled'/
+           'trialing' avec subscriptionEndDate encore future. 'past_due'/
+           'unpaid'/'incomplete' sont VOLONTAIREMENT exclus de ce second cas :
+           Stripe peut avancer subscriptionEndDate (= current_period_end)
+           même quand le prélèvement de la période a ÉCHOUÉ — leur faire
+           confiance reviendrait à accorder un mois non payé le temps que
+           Stripe tente le recouvrement (cf. audit sécurité).
+       Aligné EXACTEMENT sur hasActiveAccess() côté règles Firestore. */
     window.tpxIsSubscribed = function (u) {
         if (!u) return false;
         var e = window.tpxToDate(u.subscriptionEndDate);
@@ -336,7 +349,8 @@
             return !!(e && e > new Date());
         }
         if (u.subscriptionStatus === 'active') return true;
-        return !!(e && e > new Date()); // annulé mais payé jusqu'à cette date
+        if (u.subscriptionStatus !== 'canceled' && u.subscriptionStatus !== 'trialing') return false;
+        return !!(e && e > new Date()); // annulé (déjà payé) ou en essai Stripe, jusqu'à cette date
     };
 
     window.tpxHasPremiumAccess = function (u) {
