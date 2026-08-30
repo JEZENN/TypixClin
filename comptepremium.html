@@ -2934,12 +2934,14 @@ textarea:focus-visible,
                 Puis-je changer de formule plus tard ?
             </div>
             <div class="faq-answer">
-                Oui. Vous pouvez passer de la formule mensuelle à la formule annuelle
-                directement depuis votre compte. Pour passer de la formule annuelle à la
-                formule mensuelle, contactez-nous à
+                Oui. Depuis le Mensuel, vous pouvez basculer vers une formule longue durée
+                (EDN/ECOS) directement depuis votre compte : résiliez d'abord votre abonnement
+                Mensuel via « Gérer mon abonnement », puis choisissez votre nouvelle formule —
+                le changement est immédiat (le reste de votre mois déjà payé n'est pas
+                remboursé ni reporté). Pour tout autre changement de formule (d'une formule
+                longue durée vers une autre, ou vers le Mensuel), contactez-nous à
                 <a href="mailto:typixclin@gmail.com">typixclin@gmail.com</a> :
-                cette modification doit être effectuée manuellement en raison d’une
-                contrainte technique liée à Stripe.
+                cette modification doit être effectuée manuellement.
             </div>
         </div>
 
@@ -3504,10 +3506,6 @@ function displayUserStatus() {
     let showPlans = false;
     let planSwitchNote = '';
     let hideMonthlyCard = false;
-    /* Paiement pas encore ouvert : ancien compte (créé avant la date pivot)
-       encore dans sa période de grâce. Les tarifs s'affichent mais les boutons
-       Souscrire sont verrouillés jusqu'à la fin de la grâce. */
-    let plansLockedUntil = null;
 
     /* ── PHASE GRATUITE ──────────────────────────────────────────────────
        Tant que la facturation n'est pas activée, aucun utilisateur ne doit
@@ -3775,11 +3773,17 @@ function displayUserStatus() {
 
             showPlans = true;
 
-            /* Ancien compte encore en grâce → paiement différé à la fin de la
-               grâce. Un nouveau compte en essai peut payer tout de suite. */
-            if (isLegacy) {
-                plansLockedUntil = graceEnd;
-            }
+            /* Ancien compte encore en grâce : plus de verrou ici depuis
+               l'introduction de trial_end côté Cloud Function
+               (createCheckoutSession) — celui-ci reporte déjà réellement le
+               premier prélèvement du Mensuel à la fin de la gratuité de
+               l'utilisateur (legacy → 26/10, essai → createdAt+30j), quel
+               que soit le moment où il souscrit. Un compte legacy peut donc
+               désormais souscrire dès maintenant, exactement comme un
+               compte en essai : le Mensuel ne sera pas prélevé avant le
+               26/10, et une formule fixe se paie immédiatement (normal,
+               aucune notion de "trial" pour un paiement unique — sa date de
+               fin est absolue, acheter tôt ne fait perdre aucun jour). */
 
         } else {
             if (statusCard) statusCard.classList.add('is-inactive');
@@ -3873,24 +3877,18 @@ function displayUserStatus() {
     const monthlyCardEl = document.getElementById('monthly-plan-card');
     if (monthlyCardEl) monthlyCardEl.style.display = hideMonthlyCard ? 'none' : '';
 
-    /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : prioritaire sur tout —
-       s'applique même à un nouveau compte en essai qui, normalement,
-       pouvait payer tout de suite. Tant que ce switch est à false, PERSONNE
-       ne peut payer, quel que soit son statut.
-
-       Un compte listé dans TESTER_UIDS doit pouvoir tester le parcours
-       COMPLET avant l'ouverture générale — y compris le cas d'un compte
-       legacy encore en grâce, normalement bloqué par plansLockedUntil
-       jusqu'au 26/10. On distingue donc explicitement "je suis testeur"
-       (tpxIsPaymentsTester, contourne TOUT, y compris plansLockedUntil) de
-       "les paiements sont ouverts" (tpxPaymentsEnabled) : sans cette
-       distinction, ignorer plansLockedUntil dès que tpxPaymentsEnabled()
-       est vrai supprimerait le verrou legacy pour TOUT LE MONDE le jour où
-       PAYMENTS_ENABLED passera réellement à true — pas seulement pour les
-       testeurs. */
+    /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : le seul qui reste. Le
+       verrou spécifique aux comptes legacy (plansLockedUntil) a été retiré
+       — trial_end (Cloud Function createCheckoutSession) reporte déjà
+       réellement le premier prélèvement du Mensuel à la fin de la
+       gratuité de CHAQUE utilisateur, legacy ou en essai, quel que soit le
+       moment où il souscrit. Le "verrou UI" ne servait donc plus qu'à
+       empêcher un legacy de voir les offres avant l'heure — sans plus
+       aucune protection réelle à apporter en plus de trial_end. isTester
+       reste utile pour contourner PAYMENTS_ENABLED avant l'ouverture
+       générale (tests). */
     const paymentsOpen = (typeof window.tpxPaymentsEnabled === 'function') ? window.tpxPaymentsEnabled() : true;
-    const isTester = (typeof window.tpxIsPaymentsTester === 'function') && window.tpxIsPaymentsTester();
-    applyPlansLock(paymentsOpen ? (isTester ? null : plansLockedUntil) : true);
+    applyPlansLock(paymentsOpen ? null : true);
 }
 
 /* Verrouille/déverrouille les boutons « Souscrire ».
@@ -3973,31 +3971,15 @@ window.subscribe = async function(planType, event) {
         return;
     }
 
-    /* Garde serveur-indépendante : un ancien compte encore en grâce ne peut pas
-       encore payer, même en contournant le bouton désactivé via la console.
-       tpxCreatedDate() (centralisé dans tpx-billing.js) préfère
-       accountCreatedAt (backend, fiable) à createdAt (date du document). */
-    if (userData && userData.premiumType === 'grace_period'
-        && userData.subscriptionStatus !== 'active'
-        && typeof window.tpxIsLegacyCreated === 'function') {
-        let _c = (typeof window.tpxCreatedDate === 'function')
-            ? window.tpxCreatedDate(userData)
-            : null;
-        if (!_c && currentUser?.metadata?.creationTime) _c = new Date(currentUser.metadata.creationTime);
-        if (_c && !isNaN(_c.getTime()) && window.tpxIsLegacyCreated(_c)) {
-            const end = (typeof window.tpxLegacyGraceEnd === 'function')
-                ? window.tpxLegacyGraceEnd().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
-                : 'la fin de la période gratuite';
-            await showToast({
-                title: 'Bient\u00f4t disponible',
-                message: 'Votre acc\u00e8s est gratuit jusqu\'au ' + end + '. L\'abonnement sera disponible \u00e0 cette date.',
-                type: 'info',
-                icon: 'fa-circle-info',
-                duration: 4000
-            });
-            return;
-        }
-    }
+    /* Ancien second garde-fou legacy (bloquait tout achat, y compris une
+       formule fixe, pour un compte encore en grâce) — RETIRÉ : trial_end,
+       calculé côté Cloud Function (createCheckoutSession), reporte déjà
+       réellement le premier prélèvement du Mensuel à la fin de la
+       gratuité de l'utilisateur, quel que soit le moment où il souscrit.
+       Le garder ici aurait empêché à tort un compte legacy de souscrire
+       dès maintenant, alors que c'est désormais le comportement voulu
+       (même liberté qu'un compte en essai). Le verrou GLOBAL ci-dessus
+       (PAYMENTS_ENABLED) reste la seule garde nécessaire. */
 
     if (!currentUser) {
         await showToast({

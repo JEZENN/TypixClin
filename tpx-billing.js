@@ -40,8 +40,13 @@
            Souscrire (Mensuel + les 5 formules) affichent « Bientôt
            disponible » et sont désactivés, pour TOUT LE MONDE — legacy,
            essai, peu importe. Utile pour lancer l'essai/la classification
-           gratuite sans encore ouvrir les paiements réels. */
-        PAYMENTS_ENABLED: false,
+           gratuite sans encore ouvrir les paiements réels.
+
+           OUVERT — DÉPLOYER CE FICHIER SEULEMENT APRÈS avoir confirmé que
+           premiumPlans.js (PAYMENTS_ENABLED=true côté backend) est bien en
+           production. C'est ce fichier-ci, une fois déployé, qui rend les
+           boutons visibles/cliquables pour tout le monde. */
+        PAYMENTS_ENABLED: true,
 
         /* Test en avance : ajouter ?billing=1 à l'URL (mémorisé le temps de la
            session du navigateur). DÉSACTIVÉ en production : aucun visiteur ne
@@ -280,7 +285,11 @@
         var end = new Date(plan.accessEnd);
         var months = window.tpxMonthsRemaining(end, now);
         if (months <= 0) return null; // deadline déjà passée : plus achetable
-        var rate = window.tpxRatePerMonth(months);
+        // Même exception PROPRE qu'en backend : edn2028/edn2028_ecos2029 ont
+        // un tarif fixe dédié, les autres formules gardent RATE_TIERS.
+        var rate = (typeof plan.fixedRatePerMonth === 'number')
+            ? plan.fixedRatePerMonth
+            : window.tpxRatePerMonth(months);
         return { months: months, ratePerMonth: rate, priceEuros: Math.round(months * rate) };
     };
 
@@ -312,11 +321,17 @@
         },
         edn2028: {
             label: 'EDN 2028', type: 'fixed',
-            accessEnd: '2028-10-31T22:59:59.000Z', isAvailable: true
+            accessEnd: '2028-10-31T22:59:59.000Z', isAvailable: true,
+            // Tarif fixe dédié (n'utilise PAS RATE_TIERS) — DOIT rester
+            // identique à FIXED_PLANS.edn2028.fixedRatePerMonth dans
+            // premiumPlans.js.
+            fixedRatePerMonth: 2.25
         },
         edn2028_ecos2029: {
             label: 'EDN 2028 + ECOS 2029', type: 'fixed',
-            accessEnd: '2029-06-15T21:59:59.000Z', isAvailable: true
+            accessEnd: '2029-06-15T21:59:59.000Z', isAvailable: true,
+            // Idem : DOIT rester identique à FIXED_PLANS.edn2028_ecos2029.fixedRatePerMonth.
+            fixedRatePerMonth: 2.25
         }
     };
 
