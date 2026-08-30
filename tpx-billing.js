@@ -53,7 +53,7 @@
            Sans effet sur la sécurité réelle : les règles Firestore ne
            connaissent pas cette liste, elle ne pilote que l'UI cliente. */
         TESTER_UIDS: [
-            // 'votreUidFirebase',
+            'qa96i2bjyDaj22vqiBylshTsR243',
         ],
 
         /* ═══════════ DATES ET DURÉES — SOURCE UNIQUE ═══════════
