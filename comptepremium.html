@@ -1435,6 +1435,30 @@ textarea:focus-visible,
 }
 .plan-note i { color: var(--primary); margin-right: 0.4rem; }
 
+/* Avertissement "bascule immédiate" affiché au-dessus de la grille de tarifs
+   pour un abonné en résiliation (cf. #plan-switch-note) — encadré autonome,
+   contrairement à .info-note qui suppose une grille parente (grid-column:
+   1/-1) absente ici, ce qui le faisait s'afficher sans largeur ni marges
+   cohérentes. */
+.plan-switch-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    padding: 0.9rem 1.1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid #f59e0b;
+    border-radius: var(--border-radius-md);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: #92400e;
+    text-align: left;
+}
+.plan-switch-warning i { margin-top: 0.15rem; flex-shrink: 0; color: #f59e0b; }
+[data-theme="dark"] .plan-switch-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+[data-theme="dark"] .plan-switch-warning i { color: #fbbf24; }
+
 .pricing-shared-features {
     list-style: none;
     display: flex;
@@ -2834,7 +2858,7 @@ textarea:focus-visible,
                                         
                     <div class="pricing-grid" id="pricing-grid">
                         <!-- Monthly Plan -->
-                        <div class="pricing-card">
+                        <div class="pricing-card" id="monthly-plan-card">
                             <div class="plan-header">
                                 <h3 class="plan-name">Mensuel</h3>
                                 <div class="plan-price">3€<span>/mois</span></div>
@@ -3479,6 +3503,7 @@ function displayUserStatus() {
     let infoHTML = '';
     let showPlans = false;
     let planSwitchNote = '';
+    let hideMonthlyCard = false;
     /* Paiement pas encore ouvert : ancien compte (créé avant la date pivot)
        encore dans sa période de grâce. Les tarifs s'affichent mais les boutons
        Souscrire sont verrouillés jusqu'à la fin de la grâce. */
@@ -3575,10 +3600,17 @@ function displayUserStatus() {
                le reliquat du mensuel déjà payé est perdu au profit de la
                nouvelle formule, d'où l'avertissement explicite ci-dessous. */
             showPlans = true;
+            // Racheter le Mensuel pendant une résiliation en cours reste
+            // TOUJOURS refusé côté serveur (hasBlockingStripeSubscription
+            // sans ignoreCanceling, volontairement — cf. commentaires
+            // backend) : pas de raison de le montrer comme une option
+            // cliquable qui échouerait systématiquement. Seules les 5
+            // formules fixes restent proposées ici.
+            hideMonthlyCard = true;
             planSwitchNote = `
-                <div class="info-note info-note-blue">
+                <div class="plan-switch-warning">
                     <i class="fas fa-triangle-exclamation"></i>
-                    Choisir une formule ci-dessous l'appliquera <strong>immédiatement</strong> à la place de votre abonnement en cours de résiliation — le reste de votre mois déjà payé (jusqu'au ${endStr}) ne sera pas remboursé ni reporté.
+                    <span>Choisir une formule ci-dessous l'appliquera <strong>immédiatement</strong> à la place de votre abonnement en cours de résiliation — le reste de votre mois déjà payé (jusqu'au ${endStr}) ne sera pas remboursé ni reporté.</span>
                 </div>
             `;
         } else if (isTrialingNotYetBilled) {
@@ -3838,6 +3870,8 @@ function displayUserStatus() {
     plansSection.style.display = showPlans ? 'block' : 'none';
     const planSwitchNoteEl = document.getElementById('plan-switch-note');
     if (planSwitchNoteEl) planSwitchNoteEl.innerHTML = planSwitchNote;
+    const monthlyCardEl = document.getElementById('monthly-plan-card');
+    if (monthlyCardEl) monthlyCardEl.style.display = hideMonthlyCard ? 'none' : '';
 
     /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : prioritaire sur tout —
        s'applique même à un nouveau compte en essai qui, normalement,
