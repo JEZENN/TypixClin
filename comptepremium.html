@@ -2820,6 +2820,7 @@ textarea:focus-visible,
             <div id="plans-section" style="display: none;">
                 <div class="pricing-section">
                     <h2 class="section-title">Choisissez votre formule Premium</h2>
+                    <div id="plan-switch-note"></div>
 
                     <!-- Fonctionnalités communes à TOUTES les formules (mensuel + formules
                          longue durée) : affichées une seule fois ici plutôt que répétées
@@ -3477,6 +3478,7 @@ function displayUserStatus() {
     let badgeHTML = '';
     let infoHTML = '';
     let showPlans = false;
+    let planSwitchNote = '';
     /* Paiement pas encore ouvert : ancien compte (créé avant la date pivot)
        encore dans sa période de grâce. Les tarifs s'affichent mais les boutons
        Souscrire sont verrouillés jusqu'à la fin de la grâce. */
@@ -3564,6 +3566,19 @@ function displayUserStatus() {
                 <div class="info-note">
                     <i class="fas fa-circle-info"></i>
                     Votre accès Premium reste actif jusqu'au ${endStr}. Aucun paiement ne sera prélevé ensuite. Vous pouvez réactiver le renouvellement à tout moment en cliquant sur « Gérer mon abonnement ».
+                </div>
+            `;
+            /* Un abonné qui a résilié peut vouloir basculer vers une autre
+               formule plutôt que d'attendre la fin de son mois déjà payé —
+               les offres restent donc visibles et achetables (contrairement
+               aux autres abonnés actifs). Bascule IMMÉDIATE et volontaire :
+               le reliquat du mensuel déjà payé est perdu au profit de la
+               nouvelle formule, d'où l'avertissement explicite ci-dessous. */
+            showPlans = true;
+            planSwitchNote = `
+                <div class="info-note info-note-blue">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    Choisir une formule ci-dessous l'appliquera <strong>immédiatement</strong> à la place de votre abonnement en cours de résiliation — le reste de votre mois déjà payé (jusqu'au ${endStr}) ne sera pas remboursé ni reporté.
                 </div>
             `;
         } else if (isTrialingNotYetBilled) {
@@ -3821,6 +3836,8 @@ function displayUserStatus() {
     }
 
     plansSection.style.display = showPlans ? 'block' : 'none';
+    const planSwitchNoteEl = document.getElementById('plan-switch-note');
+    if (planSwitchNoteEl) planSwitchNoteEl.innerHTML = planSwitchNote;
 
     /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : prioritaire sur tout —
        s'applique même à un nouveau compte en essai qui, normalement,
