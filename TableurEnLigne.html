@@ -20030,6 +20030,25 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
         <div class="toast-logout-message">À bientôt sur TypixClin !</div>
     </div>
 </div>
+<script>
+/* Ce toast (id="toast-logout") passe en bas-gauche pleine largeur sous
+   480px (cf. CSS), au même endroit que la pastille essai/Premium — sans ça,
+   "Déconnexion en cours..." se retrouvait derrière la pastille sur mobile.
+   Plutôt que de modifier chacun des ~10 endroits du code qui font
+   toast.classList.add/remove('show'), un seul observateur ici reflète
+   fidèlement son état sur une classe body — utilisée par la même règle CSS
+   que pour la notification hors ligne (masquer la pastille pendant que ce
+   toast est visible). */
+(function () {
+    var el = document.getElementById('toast-logout');
+    if (!el || typeof MutationObserver === 'undefined') return;
+    var sync = function () {
+        document.body.classList.toggle('tpx-logout-toast-showing', el.classList.contains('show'));
+    };
+    new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] });
+    sync();
+})();
+</script>
 
 
 <script defer src="data.js?v=3"></script>
@@ -49799,15 +49818,18 @@ body.tpx-trial .tpx-trial-fab { display: flex; }
       la notification pouvant occuper plus ou moins de hauteur qu'estimé) —
       la pastille continuait à chevaucher la notification sur certains
       appareils malgré le calcul. Solution plus radicale et fiable : la
-      couronne/pastille disparaît complètement tant que la notification
-      hors ligne est affichée, remise en second plan par rapport à un
-      message système plus important. Plus aucun chevauchement possible,
-      quel que soit l'appareil. !important nécessaire pour l'emporter sur
-      `display:flex` (body.tpx-premium-locked/tpx-trial). */
+      couronne/pastille disparaît complètement tant que l'une de ces deux
+      notifications système (hors ligne, OU le toast de déconnexion — lui
+      aussi repositionné en bas-gauche pleine largeur sous 480px) est
+      affichée. Plus aucun chevauchement possible, quel que soit l'appareil.
+      !important nécessaire pour l'emporter sur `display:flex`
+      (body.tpx-premium-locked/tpx-trial). */
 body:has(.offline-notification.show) .tpx-premium-fab,
 body:has(.offline-notification.show) .tpx-trial-fab,
 body.tpx-offline-notif-showing .tpx-premium-fab,
-body.tpx-offline-notif-showing .tpx-trial-fab {
+body.tpx-offline-notif-showing .tpx-trial-fab,
+body.tpx-logout-toast-showing .tpx-premium-fab,
+body.tpx-logout-toast-showing .tpx-trial-fab {
     display: none !important;
 }
 .tpx-premium-fab:hover .tpx-fab-label,

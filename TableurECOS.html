@@ -14529,6 +14529,48 @@ body.ecos-offline-locked .send-to-checklist-btn {
   position: relative; transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 .flash-global-btn:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+/* ── Mobile : bouton Session Flash en icône seule ──────────────────────
+   Absent jusqu'ici dans ce fichier (présent côté TableurEnLigne.html) :
+   sans ça, le texte "Session Flash" restait affiché en entier sur mobile
+   et poussait le reste des boutons d'action (+ / filtre / palette...) à la
+   ligne suivante, faute de place sur une seule ligne d'en-tête. */
+@media (max-width: 768px) {
+  .flash-global-btn {
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    flex-shrink: 0;
+  }
+  .flash-global-btn .label-full { display: none; }
+  .flash-global-btn > i.fa-bolt {
+    margin: 0;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .flash-global-due-count {
+    position: absolute !important;
+    top: -6px;
+    right: -6px;
+    background: #ef4444 !important;
+    color: #fff !important;
+    font-size: 0.62rem !important;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .flash-global-due-count:empty { display: none !important; }
+}
+
 .flash-global-due-count {
   display: none;
   align-items: center;
@@ -25231,6 +25273,15 @@ window.TPXNotesPending = {
                         <tbody id="sdd-table-body"></tbody>
                     </table>
                 </div>
+                <!-- État vide (aucune SDD créée, mode sur-mesure) : placé HORS de
+                     .sdd-table-scroll, à dessein — un état vide inséré DANS une
+                     cellule <td colspan> du tableau se centre par rapport à la
+                     largeur totale du tableau (souvent bien plus large que
+                     l'écran sur mobile, d'où un défilement horizontal), pas par
+                     rapport à l'écran visible. Même structure que #items-empty
+                     dans TableurEnLigne.html, qui n'a jamais ce problème
+                     puisqu'il est lui aussi un sibling du tableau, pas dedans. -->
+                <div class="tpx-empty" id="sdd-empty" style="display: none;"></div>
                 <!-- 3.2 — Pagination complète en bas -->
                 <div class="sdd-bottom-pagination">
                     <button class="pagination-btn" id="sdd-first-btn" onclick="sddGoToPage('first')" title="Première page"><i class="fas fa-angles-left"></i></button>
@@ -26755,6 +26806,20 @@ window.TPXNotesPending = {
     <div class="toast-logout-icon"><i class="fas fa-sign-out-alt"></i></div>
     <div class="toast-logout-content"><div class="toast-logout-title">Déconnexion réussie</div><div class="toast-logout-message">À bientôt sur TypixClin !</div></div>
 </div>
+<script>
+/* Cf. commentaire équivalent dans TableurEnLigne.html : un seul observateur
+   ici évite de modifier chacun des endroits qui font
+   toast.classList.add/remove('show'). */
+(function () {
+    var el = document.getElementById('toast-logout');
+    if (!el || typeof MutationObserver === 'undefined') return;
+    var sync = function () {
+        document.body.classList.toggle('tpx-logout-toast-showing', el.classList.contains('show'));
+    };
+    new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] });
+    sync();
+})();
+</script>
 
 <script src="dataECOS.js"></script>
 <!-- Application ECOS (script classique) -->
@@ -28061,22 +28126,31 @@ function renderSDDTable() {
     if (!slice.length) {
         var _noneAtAllSdd = (typeof ECOS_SDD_DATA !== 'undefined' ? ECOS_SDD_DATA.length : 0) === 0;
         var _isCustomModeSdd = (typeof window.isCustom === 'function') && window.isCustom();
+        var _sddEmptyEl = document.getElementById('sdd-empty');
         if (_noneAtAllSdd && _isCustomModeSdd) {
-            tbody.innerHTML = '<tr><td colspan="8">' +
-                '<div class="tpx-empty tpx-empty-in-table">' +
+            // Vidé (pas de <tr><td colspan>) : l'état vide vit dans #sdd-empty,
+            // HORS du tableau, pour se centrer par rapport à l'écran et pas à la
+            // largeur totale du tableau (cf. commentaire sur la balise HTML).
+            tbody.innerHTML = '';
+            if (_sddEmptyEl) {
+                _sddEmptyEl.innerHTML =
                     '<div class="tpx-empty-icon"><i class="fas fa-list-check"></i></div>' +
                     '<div class="tpx-empty-title">Aucune SDD créée</div>' +
                     '<div class="tpx-empty-text">Ajoutez votre première situation de départ pour commencer à construire votre tableur sur-mesure.</div>' +
-                    '<button class="tpx-empty-cta-btn" id="empty-create-sdd-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle SDD</span></button>' +
-                '</div>' +
-            '</td></tr>';
-            var _ecsBtnSdd = document.getElementById('empty-create-sdd-btn');
-            if (_ecsBtnSdd) _ecsBtnSdd.addEventListener('click', function () {
-                if (typeof window.openSddModal === 'function') window.openSddModal(null);
-            });
+                    '<button class="tpx-empty-cta-btn" id="empty-create-sdd-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle SDD</span></button>';
+                _sddEmptyEl.style.display = '';
+                var _ecsBtnSdd = document.getElementById('empty-create-sdd-btn');
+                if (_ecsBtnSdd) _ecsBtnSdd.addEventListener('click', function () {
+                    if (typeof window.openSddModal === 'function') window.openSddModal(null);
+                });
+            }
         } else {
+            if (_sddEmptyEl) _sddEmptyEl.style.display = 'none';
             tbody.innerHTML = '<tr><td colspan="8"><div class="priority-empty" style="grid-column:1/-1;"><i class="fas fa-search"></i><p>Aucune SDD ne correspond</p></div></td></tr>';
         }
+    } else {
+        var _sddEmptyElFilled = document.getElementById('sdd-empty');
+        if (_sddEmptyElFilled) _sddEmptyElFilled.style.display = 'none';
     }
 
     // Pagination (haut + bas)
@@ -42841,11 +42915,15 @@ body.tpx-trial .tpx-trial-fab { display: flex; }
 /* ── Cohabitation avec la notification de déconnexion (même coin bas-gauche) :
       masquage complet plutôt qu'un repositionnement calculé (fragile sur
       mobile, hauteur de la notification variable selon l'appareil) — cf.
-      commentaire équivalent dans TableurEnLigne.html. */
+      commentaire équivalent dans TableurEnLigne.html. Couvre aussi le toast
+      de déconnexion (id="toast-logout"), lui aussi repositionné en
+      bas-gauche pleine largeur sous 480px. */
 body:has(.offline-notification.show) .tpx-premium-fab,
 body:has(.offline-notification.show) .tpx-trial-fab,
 body.tpx-offline-notif-showing .tpx-premium-fab,
-body.tpx-offline-notif-showing .tpx-trial-fab {
+body.tpx-offline-notif-showing .tpx-trial-fab,
+body.tpx-logout-toast-showing .tpx-premium-fab,
+body.tpx-logout-toast-showing .tpx-trial-fab {
     display: none !important;
 }
 .tpx-premium-fab:hover .tpx-fab-label,
