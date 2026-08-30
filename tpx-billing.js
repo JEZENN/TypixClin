@@ -116,6 +116,18 @@
         return false;
     };
 
+    /* Différent de tpxPaymentsEnabled() : celle-ci répond UNIQUEMENT "suis-je
+       dans TESTER_UIDS", sans se soucier de PAYMENTS_ENABLED. Sert à faire la
+       différence entre "les paiements sont ouverts pour de vrai" et "je
+       contourne le verrou en tant que testeur" — nécessaire par exemple pour
+       qu'un testeur puisse aussi contourner le verrou legacy propre à
+       comptepremium.html (plansLockedUntil) SANS que ce contournement ne
+       s'applique par erreur à tout le monde une fois PAYMENTS_ENABLED réellement
+       passé à true. */
+    window.tpxIsPaymentsTester = function () {
+        return !!(_uid && window.TPX_BILLING.TESTER_UIDS.indexOf(_uid) !== -1);
+    };
+
     /* ── À appeler depuis onAuthStateChanged ──────────────────────────── */
     window.tpxBillingSetUser = function (user) {
         _uid = user ? user.uid : null;

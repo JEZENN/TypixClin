@@ -3746,11 +3746,33 @@ function displayUserStatus() {
             showPlans = true;
         }
     }
-    // No Subscription (ou formule fixe expirée)
+    // No Subscription (ou formule fixe expirée, ou problème de paiement)
     else {
         const wasFixed = (typeof window.tpxIsFixedPlan === 'function') && window.tpxIsFixedPlan(userData);
+        // ── PROBLÈME 6 : ces statuts signifient "abonnement existant mais
+        //    prélèvement en échec" — pas "jamais abonné". Message dédié
+        //    plutôt que le générique "Pas d'abonnement", qui laisserait
+        //    croire à tort qu'il faut resouscrire depuis zéro. Le
+        //    portail Stripe ("Gérer mon abonnement") permet de mettre à
+        //    jour le moyen de paiement sans perdre l'abonnement en cours. ──
+        const hasPaymentIssue = !wasFixed
+            && ['past_due', 'unpaid', 'incomplete'].includes(userData.subscriptionStatus);
 
-        if (wasFixed) {
+        if (hasPaymentIssue) {
+            if (statusCard) statusCard.classList.add('is-grace');
+            badgeHTML = '<span class="status-badge status-grace"><i class="fas fa-triangle-exclamation"></i> Problème de paiement</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Votre statut :</span>
+                    <span class="info-value">Prélèvement en échec</span>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-circle-info"></i>
+                    Le dernier prélèvement de votre abonnement a échoué. Mettez à jour votre moyen de paiement via « Gérer mon abonnement » pour conserver votre accès — vos données restent conservées en lecture en attendant.
+                </div>
+            `;
+            portalBtn.style.display = 'inline-block';
+        } else if (wasFixed) {
             /* Formule longue durée dont subscriptionEndDate est dépassée :
                message spécifique nommant la formule, plutôt que le
                générique « Pas d'abonnement » (point 18 du cahier des
@@ -3803,9 +3825,21 @@ function displayUserStatus() {
     /* Verrou GLOBAL (PAYMENTS_ENABLED = false) : prioritaire sur tout —
        s'applique même à un nouveau compte en essai qui, normalement,
        pouvait payer tout de suite. Tant que ce switch est à false, PERSONNE
-       ne peut payer, quel que soit son statut. */
+       ne peut payer, quel que soit son statut.
+
+       Un compte listé dans TESTER_UIDS doit pouvoir tester le parcours
+       COMPLET avant l'ouverture générale — y compris le cas d'un compte
+       legacy encore en grâce, normalement bloqué par plansLockedUntil
+       jusqu'au 26/10. On distingue donc explicitement "je suis testeur"
+       (tpxIsPaymentsTester, contourne TOUT, y compris plansLockedUntil) de
+       "les paiements sont ouverts" (tpxPaymentsEnabled) : sans cette
+       distinction, ignorer plansLockedUntil dès que tpxPaymentsEnabled()
+       est vrai supprimerait le verrou legacy pour TOUT LE MONDE le jour où
+       PAYMENTS_ENABLED passera réellement à true — pas seulement pour les
+       testeurs. */
     const paymentsOpen = (typeof window.tpxPaymentsEnabled === 'function') ? window.tpxPaymentsEnabled() : true;
-    applyPlansLock(paymentsOpen ? plansLockedUntil : true);
+    const isTester = (typeof window.tpxIsPaymentsTester === 'function') && window.tpxIsPaymentsTester();
+    applyPlansLock(paymentsOpen ? (isTester ? null : plansLockedUntil) : true);
 }
 
 /* Verrouille/déverrouille les boutons « Souscrire ».
@@ -4075,11 +4109,17 @@ function showError(message) {
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('success') === 'true') {
     setTimeout(async () => {
+        // ── PROBLÈME 7 : ne JAMAIS annoncer "Paiement réussi" simplement
+        //    parce que l'URL contient ?success=true — cette URL est fournie
+        //    par le navigateur, pas par une confirmation serveur. Seul le
+        //    webhook Stripe accorde Premium (écrit dans Firestore) ; tant
+        //    qu'il n'a pas été observé, on ne fait qu'annoncer que le
+        //    paiement a été TRANSMIS, en cours de vérification. ──
         await showToast({
-            title: 'Paiement réussi',
-            message: 'Merci ! Activation de votre abonnement en cours…',
+            title: 'Paiement transmis',
+            message: 'Vérification de votre paiement en cours…',
             type: 'success',
-            icon: 'fa-check-circle',
+            icon: 'fa-hourglass-half',
             duration: 3000
         });
         window.history.replaceState({}, '', 'comptepremium.html');
@@ -4102,11 +4142,23 @@ if (urlParams.get('success') === 'true') {
             clearInterval(_activationPoll);
             if (active) {
                 await showToast({
-                    title: 'Abonnement actif',
-                    message: 'Votre compte Premium est maintenant activé !',
+                    title: 'Paiement confirmé',
+                    message: 'Votre accès Premium est maintenant actif.',
                     type: 'success',
                     icon: 'fa-crown',
                     duration: 3000
+                });
+            } else {
+                // ── PROBLÈME 7 : au bout du polling, ne JAMAIS dire que le
+                //    paiement a échoué — on ne le sait pas. Le webhook peut
+                //    simplement mettre plus de temps (charge Stripe, retry
+                //    réseau...). Message neutre, jamais alarmant. ──
+                await showToast({
+                    title: 'Vérification en cours',
+                    message: 'Votre paiement est en cours de vérification. Si votre accès ne s\'active pas dans quelques instants, rechargez cette page ou contactez le support.',
+                    type: 'info',
+                    icon: 'fa-circle-info',
+                    duration: 6000
                 });
             }
         }
