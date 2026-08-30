@@ -14372,6 +14372,36 @@ window.TPXNotesPending = {
 .tpx-add-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .tpx-add-btn i { font-size: 0.8rem; }
 
+/* ── Bouton d'état vide (\"Créer une matière\", \"Nouvel item\"...) ──────────
+   Classe SÉPARÉE de .tpx-add-btn : ce dernier devient un carré icône-seule
+   sous 1024px (pensé pour l'en-tête), ce qui faisait déborder le texte hors
+   du bouton quand il était réutilisé tel quel dans un état vide (aucune
+   matière/item/spé/SDD créée) — le texte n'avait pas la classe attendue
+   pour disparaître, mais le bouton rétrécissait quand même. Même habillage
+   visuel que .tpx-add-btn, mais sans AUCUNE règle de rétrécissement
+   mobile : toujours icône + texte complet, comme un bouton d'action normal. */
+.tpx-empty-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--tpx-accent), var(--tpx-accent-2));
+    color: var(--tpx-on-accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    box-shadow: 0 2px 8px var(--tpx-accent-28);
+}
+.tpx-empty-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--tpx-accent-38); }
+.tpx-empty-cta-btn:active { transform: translateY(0); }
+.tpx-empty-cta-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tpx-empty-cta-btn i { font-size: 0.8rem; }
+
 /* Le libellé disparaît sous 1024px (iPad compris) : l'en-tête reste sur une
    seule ligne, et le bouton devient un carré compact de même taille que les
    autres boutons icône-seule du header (Gérer, Session Flash, Filtres). */
@@ -25138,7 +25168,7 @@ function renderDashboardSpecialties() {
                     '<div class="tpx-empty-icon"><i class="fas fa-folder-plus"></i></div>' +
                     '<div class="tpx-empty-title">Aucune matière créée</div>' +
                     '<div class="tpx-empty-text">Créez votre première matière pour commencer à construire votre tableur sur-mesure.</div>' +
-                    '<button class="tpx-add-btn" id="empty-create-spec-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle matière</span></button>' +
+                    '<button class="tpx-empty-cta-btn" id="empty-create-spec-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle matière</span></button>' +
                 '</div>';
             var _ecsBtn = document.getElementById('empty-create-spec-btn');
             if (_ecsBtn) _ecsBtn.addEventListener('click', function () {
@@ -25606,7 +25636,7 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
                 '<div class="tpx-empty-icon"><i class="fas fa-list-check"></i></div>' +
                 '<div class="tpx-empty-title">Aucun item créé</div>' +
                 '<div class="tpx-empty-text">Ajoutez votre premier item pour commencer à construire votre tableur sur-mesure.</div>' +
-                '<button class="tpx-add-btn" id="empty-create-item-btn" type="button"><i class="fas fa-plus"></i><span>Nouvel item</span></button>';
+                '<button class="tpx-empty-cta-btn" id="empty-create-item-btn" type="button"><i class="fas fa-plus"></i><span>Nouvel item</span></button>';
             var _eciBtn = document.getElementById('empty-create-item-btn');
             if (_eciBtn) _eciBtn.addEventListener('click', function () {
                 if (typeof window.openItemModal === 'function') window.openItemModal(null);
@@ -38783,7 +38813,7 @@ window.renderTrainTable = function() {
           '<div class="tpx-empty-icon"><i class="fas fa-dumbbell"></i></div>' +
           '<div class="tpx-empty-title">Aucun entraînement</div>' +
           '<div class="tpx-empty-text">Ajoutez votre premier entraînement pour commencer à suivre votre progression.</div>' +
-          '<button class="tpx-add-btn" id="empty-create-train-btn" type="button"><i class="fas fa-plus"></i><span>Ajouter</span></button>';
+          '<button class="tpx-empty-cta-btn" id="empty-create-train-btn" type="button"><i class="fas fa-plus"></i><span>Ajouter</span></button>';
         var _ectBtn = document.getElementById('empty-create-train-btn');
         if (_ectBtn) _ectBtn.addEventListener('click', function () {
           if (typeof window.openAddTrainModal === 'function') window.openAddTrainModal();
@@ -49764,24 +49794,21 @@ body.tpx-trial .tpx-trial-fab { display: flex; }
 }
 .tpx-premium-fab:hover { transform: translateY(-3px); }
 /* ── Cohabitation avec la notification de déconnexion (même coin bas-gauche) :
-      quand elle est visible, la couronne remonte au-dessus d'elle. ── */
+      calculer un décalage précis (bottom: calc(...)) s'est révélé fragile
+      sur mobile (hauteur de la barre d'adresse variable selon iOS/Android,
+      la notification pouvant occuper plus ou moins de hauteur qu'estimé) —
+      la pastille continuait à chevaucher la notification sur certains
+      appareils malgré le calcul. Solution plus radicale et fiable : la
+      couronne/pastille disparaît complètement tant que la notification
+      hors ligne est affichée, remise en second plan par rapport à un
+      message système plus important. Plus aucun chevauchement possible,
+      quel que soit l'appareil. !important nécessaire pour l'emporter sur
+      `display:flex` (body.tpx-premium-locked/tpx-trial). */
 body:has(.offline-notification.show) .tpx-premium-fab,
-body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
-@media (max-width: 768px) {
-    body:has(.offline-notification.show) .tpx-premium-fab,
-    body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1rem + 66px); }
-}
-/* Repli FIABLE (classe posée par showOfflineNotification()/hideOfflineNotification()
-   en JS) : :has() n'est pas supporté sur tous les navigateurs mobiles — sans
-   ce repli, la pastille restait à sa position par défaut et recouvrait
-   partiellement la notification hors ligne sur ces appareils. Mêmes valeurs
-   que les règles :has() ci-dessus (l'une des deux suffit, les deux ensemble
-   ne changent rien de plus qu'appliquer la même valeur). */
+body:has(.offline-notification.show) .tpx-trial-fab,
 body.tpx-offline-notif-showing .tpx-premium-fab,
-body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
-@media (max-width: 768px) {
-    body.tpx-offline-notif-showing .tpx-premium-fab,
-    body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1rem + 66px); }
+body.tpx-offline-notif-showing .tpx-trial-fab {
+    display: none !important;
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
@@ -55846,7 +55873,7 @@ function setTrainingsPageVisible(visible) {
             '<div class="tpx-empty-title">Aucune matière pour le moment</div>' +
             '<div class="tpx-empty-text">Vous suivez un programme sur-mesure. Créez votre première matière ' +
             'pour y ajouter ' + (APP === 'edn' ? 'vos items' : 'vos SDD') + ' et enregistrer vos tours.</div>' +
-            '<button class="tpx-add-btn" type="button"><i class="fas fa-plus"></i><span>Créer une matière</span></button>';
+            '<button class="tpx-empty-cta-btn" type="button"><i class="fas fa-plus"></i><span>Créer une matière</span></button>';
         div.querySelector('button').addEventListener('click', function () { openSpecialtyModal(null); });
         grid.appendChild(div);
     }

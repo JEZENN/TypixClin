@@ -23244,6 +23244,32 @@ window.TPXNotesPending = {
 .tpx-add-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .tpx-add-btn i { font-size: 0.8rem; }
 
+/* ── Bouton d'état vide — cf. commentaire équivalent dans TableurEnLigne.html.
+   Classe séparée de .tpx-add-btn (qui rétrécit en carré icône-seule sous
+   1024px dans PLUSIEURS media queries ici) : plus simple et plus fiable de
+   ne jamais partager cette classe que d'empiler des surcharges. */
+.tpx-empty-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--tpx-accent), var(--tpx-accent-2));
+    color: var(--tpx-on-accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    box-shadow: 0 2px 8px var(--tpx-accent-28);
+}
+.tpx-empty-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--tpx-accent-38); }
+.tpx-empty-cta-btn:active { transform: translateY(0); }
+.tpx-empty-cta-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tpx-empty-cta-btn i { font-size: 0.8rem; }
+
 /* Le libellé disparaît sous 1024px (iPad compris) : l'en-tête reste sur une
    seule ligne, et le bouton devient un carré compact de même taille que les
    autres boutons icône-seule du header (Gérer, Filtres, Palette, Minuteur). */
@@ -28041,7 +28067,7 @@ function renderSDDTable() {
                     '<div class="tpx-empty-icon"><i class="fas fa-list-check"></i></div>' +
                     '<div class="tpx-empty-title">Aucune SDD créée</div>' +
                     '<div class="tpx-empty-text">Ajoutez votre première situation de départ pour commencer à construire votre tableur sur-mesure.</div>' +
-                    '<button class="tpx-add-btn" id="empty-create-sdd-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle SDD</span></button>' +
+                    '<button class="tpx-empty-cta-btn" id="empty-create-sdd-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle SDD</span></button>' +
                 '</div>' +
             '</td></tr>';
             var _ecsBtnSdd = document.getElementById('empty-create-sdd-btn');
@@ -29457,7 +29483,7 @@ function renderDashboardSpecialties() {
                     '<div class="tpx-empty-icon"><i class="fas fa-folder-plus"></i></div>' +
                     '<div class="tpx-empty-title">Aucune matière créée</div>' +
                     '<div class="tpx-empty-text">Créez votre première matière pour commencer à construire votre tableur sur-mesure.</div>' +
-                    '<button class="tpx-add-btn" id="empty-create-spec-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle matière</span></button>' +
+                    '<button class="tpx-empty-cta-btn" id="empty-create-spec-btn" type="button"><i class="fas fa-plus"></i><span>Nouvelle matière</span></button>' +
                 '</div>';
             var _ecsBtnEcos = document.getElementById('empty-create-spec-btn');
             if (_ecsBtnEcos) _ecsBtnEcos.addEventListener('click', function () {
@@ -42813,23 +42839,14 @@ body.tpx-trial .tpx-trial-fab { display: flex; }
 }
 .tpx-premium-fab:hover { transform: translateY(-3px); }
 /* ── Cohabitation avec la notification de déconnexion (même coin bas-gauche) :
-      quand elle est visible, la couronne remonte au-dessus d'elle. ── */
+      masquage complet plutôt qu'un repositionnement calculé (fragile sur
+      mobile, hauteur de la notification variable selon l'appareil) — cf.
+      commentaire équivalent dans TableurEnLigne.html. */
 body:has(.offline-notification.show) .tpx-premium-fab,
-body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
-@media (max-width: 768px) {
-    body:has(.offline-notification.show) .tpx-premium-fab,
-    body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1rem + 66px); }
-}
-/* Repli FIABLE (classe posée par showEcosOfflineNotification()/
-   hideEcosOfflineNotification() en JS) : :has() n'est pas supporté sur tous
-   les navigateurs mobiles — sans ce repli, la pastille restait à sa
-   position par défaut et recouvrait partiellement la notification hors
-   ligne sur ces appareils. */
+body:has(.offline-notification.show) .tpx-trial-fab,
 body.tpx-offline-notif-showing .tpx-premium-fab,
-body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
-@media (max-width: 768px) {
-    body.tpx-offline-notif-showing .tpx-premium-fab,
-    body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1rem + 66px); }
+body.tpx-offline-notif-showing .tpx-trial-fab {
+    display: none !important;
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
@@ -49956,7 +49973,7 @@ var LS_DATA  = 'tpx_' + APP + '_content';
             '<div class="tpx-empty-title">Aucune matière pour le moment</div>' +
             '<div class="tpx-empty-text">Vous suivez un programme sur-mesure. Créez votre première matière ' +
             'pour y ajouter ' + (APP === 'edn' ? 'vos items' : 'vos SDD') + ' et enregistrer vos tours.</div>' +
-            '<button class="tpx-add-btn" type="button"><i class="fas fa-plus"></i><span>Créer une matière</span></button>';
+            '<button class="tpx-empty-cta-btn" type="button"><i class="fas fa-plus"></i><span>Créer une matière</span></button>';
         div.querySelector('button').addEventListener('click', function () { openSpecialtyModal(null); });
         grid.appendChild(div);
     }
