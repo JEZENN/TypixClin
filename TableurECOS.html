@@ -25052,7 +25052,7 @@ window.TPXNotesPending = {
                 <div class="trophies-grid" id="ecos-trophies-general"></div>
             </div>
 
-            <div class="trophies-category">
+            <div class="trophies-category" id="ecos-trophies-matieres-category">
                 <div class="trophies-category-title"><i class="fas fa-graduation-cap"></i> Badges de spécialité</div>
                 <div class="trophies-grid" id="ecos-trophies-matieres"></div>
             </div>
@@ -30476,33 +30476,45 @@ function renderTrophies() {
     );
 
     // Badges de spécialité
-    const matiereBadges = computeEcosSubjectBadges();
-    totalTrophies += matiereBadges.length;
+    // ── Mode sur-mesure : catégorie entière masquée, et aucun badge validé.
+    //    Ces badges portent sur les SDD du programme officiel — en
+    //    programme sur-mesure, l'utilisateur ne suit plus forcément ce
+    //    référentiel, valider un badge dans ce contexte n'aurait pas de sens. ──
+    const matieresCategoryEl = document.getElementById('ecos-trophies-matieres-category');
+    const inCustomModeEcos = (typeof window.isCustom === 'function') && window.isCustom();
+    if (matieresCategoryEl) matieresCategoryEl.style.display = inCustomModeEcos ? 'none' : '';
 
-    matieresWrap.innerHTML = matiereBadges.map(b => {
-const color = getSpecColor(b.spId);
-const icon = ECOS_SPEC_ICONS[b.spId] || 'fa-book-medical';
+    if (inCustomModeEcos) {
+        matieresWrap.innerHTML = '';
+    } else {
+        const matiereBadges = computeEcosSubjectBadges();
+        totalTrophies += matiereBadges.length;
 
-        if (b.unlocked) {
-            totalUnlocked++;
-            if (!trophiesStore['badge_' + b.spId]) {
-                trophiesToSave['badge_' + b.spId] = { date: todayKey };
+        matieresWrap.innerHTML = matiereBadges.map(b => {
+    const color = getSpecColor(b.spId);
+    const icon = ECOS_SPEC_ICONS[b.spId] || 'fa-book-medical';
+
+            if (b.unlocked) {
+                totalUnlocked++;
+                if (!trophiesStore['badge_' + b.spId]) {
+                    trophiesToSave['badge_' + b.spId] = { date: todayKey };
+                }
             }
-        }
 
-        const stored = trophiesStore['badge_' + b.spId] || trophiesToSave['badge_' + b.spId];
-        const badgeDateLabel = b.unlocked && stored && stored.date ? ecosTrophyDateToLabel(stored.date) : '';
+            const stored = trophiesStore['badge_' + b.spId] || trophiesToSave['badge_' + b.spId];
+            const badgeDateLabel = b.unlocked && stored && stored.date ? ecosTrophyDateToLabel(stored.date) : '';
 
-        return `
-            <div class="matiere-badge-item ${b.unlocked ? 'unlocked' : 'locked'}">
-                <div class="matiere-badge-icon" ${b.unlocked ? `style="background:${color};"` : ''}>
-                    <i class="fas ${icon}"></i>
+            return `
+                <div class="matiere-badge-item ${b.unlocked ? 'unlocked' : 'locked'}">
+                    <div class="matiere-badge-icon" ${b.unlocked ? `style="background:${color};"` : ''}>
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="matiere-badge-name">${escapeHtml(b.name)}</div>
+                    ${b.unlocked && badgeDateLabel ? `<div class="matiere-badge-date" style="color:${color};">${badgeDateLabel}</div>` : ''}
                 </div>
-                <div class="matiere-badge-name">${escapeHtml(b.name)}</div>
-                ${b.unlocked && badgeDateLabel ? `<div class="matiere-badge-date" style="color:${color};">${badgeDateLabel}</div>` : ''}
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }
 
     const unlockedEl = document.getElementById('ecos-trophies-unlocked');
     const totalEl = document.getElementById('ecos-trophies-total');
@@ -50036,6 +50048,12 @@ var LS_DATA  = 'tpx_' + APP + '_content';
             if (typeof f === 'function') { try { f(); } catch (e) { console.warn('[TPXPerso] ' + name + ' :', e); } }
         });
         renderEmptyState();
+        // Rebasculer l'affichage des badges de spécialité (masqués en mode
+        // sur-mesure) même si l'utilisateur est déjà sur la page Trophées
+        // au moment où il change de mode, sans devoir y revenir.
+        if (typeof window.renderTrophies === 'function') {
+            try { window.renderTrophies(); } catch (e) {}
+        }
     }
 
     function renderEmptyState() {

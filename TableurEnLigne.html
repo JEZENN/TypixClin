@@ -16593,7 +16593,7 @@ window.TPXNotesPending = {
             </div>
 
             <!-- Catégorie: Badges matières -->
-            <div class="trophies-category">
+            <div class="trophies-category" id="trophies-matieres-category">
                 <div class="trophies-category-title">
                     <i class="fas fa-graduation-cap"></i> Badges matières
                 </div>
@@ -29527,6 +29527,12 @@ window.MatiereBadgesSystem = (function () {
     // Vérifie et débloque les badges nouvellement obtenus
     function check() {
         if (typeof currentUser === 'undefined' || !currentUser) return;
+        // ── Mode sur-mesure : aucune validation de badge. Ces badges
+        //    récompensent l'achèvement des items de RÉFÉRENCE DU COLLÈGE
+        //    (programme officiel) — en programme sur-mesure, l'utilisateur
+        //    ne suit plus forcément ce référentiel, valider un badge dans
+        //    ce contexte n'aurait pas de sens. ──
+        if (typeof window.isCustom === 'function' && window.isCustom()) { render(); return; }
         var eligible = computeEligible();
         var changed = false;
         var newlyUnlocked = [];
@@ -29546,6 +29552,15 @@ window.MatiereBadgesSystem = (function () {
     function render(newlyUnlocked) {
         var container = document.getElementById('trophies-matieres');
         if (!container) return;
+
+        // ── Mode sur-mesure : catégorie entière masquée (titre + grille),
+        //    pas seulement vidée — ces badges portent sur le programme
+        //    officiel, ils n'ont pas leur place dans ce contexte. ──
+        var categoryEl = document.getElementById('trophies-matieres-category');
+        var inCustomMode = (typeof window.isCustom === 'function') && window.isCustom();
+        if (categoryEl) categoryEl.style.display = inCustomMode ? 'none' : '';
+        if (inCustomMode) { container.innerHTML = ''; return; }
+
         if (typeof SPECIALTIES_DATA === 'undefined' || !SPECIALTIES_DATA) { container.innerHTML = ''; return; }
 
         var eligible = computeEligible();
@@ -55880,6 +55895,12 @@ function setTrainingsPageVisible(visible) {
             if (typeof f === 'function') { try { f(); } catch (e) { console.warn('[TPXPerso] ' + name + ' :', e); } }
         });
         renderEmptyState();
+        // Rebasculer l'affichage des badges de matière (masqués en mode
+        // sur-mesure) même si l'utilisateur est déjà sur la page Trophées
+        // au moment où il change de mode, sans devoir y revenir.
+        if (window.MatiereBadgesSystem && typeof window.MatiereBadgesSystem.render === 'function') {
+            try { window.MatiereBadgesSystem.render(); } catch (e) {}
+        }
     }
 
     function renderEmptyState() {
