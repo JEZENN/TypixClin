@@ -37216,6 +37216,10 @@ function showEcosOfflineNotification() {
         '</div>' +
         '<button class="offline-refresh-btn" data-offline-allowed="close" onclick="forceEcosConnectionCheck()"><i class="fas fa-sync-alt"></i> Réessayer</button>';
     document.body.appendChild(ecosOfflineNotification);
+    // Classe sur body, en plus de :has() (non supporté sur tous les
+    // navigateurs mobiles) — pousse la pastille essai/Premium au-dessus de
+    // la notification hors ligne de façon fiable, quel que soit le navigateur.
+    document.body.classList.add('tpx-offline-notif-showing');
     requestAnimationFrame(() => ecosOfflineNotification.classList.add('show'));
 }
 
@@ -37231,6 +37235,7 @@ function showEcosOfflineSyncing() {
 function hideEcosOfflineNotification() {
     if (!ecosOfflineNotification) return;
     ecosOfflineNotification.classList.remove('show');
+    document.body.classList.remove('tpx-offline-notif-showing');
     const n = ecosOfflineNotification;
     ecosOfflineNotification = null;
     setTimeout(() => { if (n) n.remove(); }, 400);
@@ -42814,6 +42819,17 @@ body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1.4rem + 58px
 @media (max-width: 768px) {
     body:has(.offline-notification.show) .tpx-premium-fab,
     body:has(.offline-notification.show) .tpx-trial-fab { bottom: calc(1rem + 66px); }
+}
+/* Repli FIABLE (classe posée par showEcosOfflineNotification()/
+   hideEcosOfflineNotification() en JS) : :has() n'est pas supporté sur tous
+   les navigateurs mobiles — sans ce repli, la pastille restait à sa
+   position par défaut et recouvrait partiellement la notification hors
+   ligne sur ces appareils. */
+body.tpx-offline-notif-showing .tpx-premium-fab,
+body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1.4rem + 58px); }
+@media (max-width: 768px) {
+    body.tpx-offline-notif-showing .tpx-premium-fab,
+    body.tpx-offline-notif-showing .tpx-trial-fab { bottom: calc(1rem + 66px); }
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
