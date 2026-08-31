@@ -20358,31 +20358,80 @@ let tempSelectedResources = [];
 window.openResourcesConfigModal = function() {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('config')) return;
-    
+
     tempSelectedResources = [...selectedResources];
     renderResourcesOptions();
     updateResourcesCount();
-    document.getElementById('resources-config-modal').classList.add('active');
+
+    const modal = document.getElementById('resources-config-modal');
+    if (!modal) return;
+
+    modal.classList.remove('closing');
+
+    // Verrou de scroll partagé EDN
+    if (window._ednScrollLock) {
+        window._ednScrollLock('resourcesConfig');
+    } else {
+        const scrollbarWidth =
+            typeof window._getScrollbarWidth === 'function'
+                ? window._getScrollbarWidth()
+                : window.innerWidth - document.documentElement.clientWidth;
+
+        if (typeof window._setScrollbarComp === 'function') {
+            window._setScrollbarComp(scrollbarWidth);
+        }
+
+        document.body.style.overflow = 'hidden';
+    }
+
+    modal.classList.add('active');
 };
+
 
 // Fermer le modal
 window.closeResourcesConfigModal = function() {
     const modal = document.getElementById('resources-config-modal');
+
+    if (
+        !modal ||
+        !modal.classList.contains('active') ||
+        modal.classList.contains('closing')
+    ) {
+        return;
+    }
+
     modal.classList.add('closing');
-    setTimeout(() => modal.classList.remove('active', 'closing'), 180);
+
+    setTimeout(function() {
+        modal.classList.remove('active', 'closing');
+
+        if (window._ednScrollUnlock) {
+            window._ednScrollUnlock('resourcesConfig');
+        } else {
+            document.body.style.overflow = '';
+
+            if (typeof window._setScrollbarComp === 'function') {
+                window._setScrollbarComp(0);
+            }
+        }
+    }, 180);
 };
 
+
+// Réinitialiser la sélection temporaire
 window.resetResourcesConfig = function() {
     tempSelectedResources = [];
     renderResourcesOptions();
     updateResourcesCount();
 };
 
-// Fermer le modal de configuration des ressources en cliquant en dehors
-const resourcesConfigModal = document.getElementById('resources-config-modal');
-const resourcesModalContent = resourcesConfigModal?.querySelector('.modal-content');
 
-// Empêcher la fermeture quand on clique DANS le contenu du modal
+// Fermer le modal en cliquant sur le fond sombre
+const resourcesConfigModal = document.getElementById('resources-config-modal');
+const resourcesModalContent =
+    resourcesConfigModal?.querySelector('.modal-content');
+
+// Empêcher la fermeture quand on clique DANS le contenu
 resourcesModalContent?.addEventListener('click', function(e) {
     e.stopPropagation();
 });
