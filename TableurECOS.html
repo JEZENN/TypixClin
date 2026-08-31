@@ -14444,6 +14444,18 @@ body.ecos-offline-locked .send-to-checklist-btn {
 @media (max-width: 768px) {
   .flash-sess-spe-label i, .flash-spe-chip i { display: none !important; }
 }
+/* ── Pastille item, à droite de la pastille matière (section 17) ── */
+.flash-item-chip {
+  display: inline-flex; align-items: center;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--gray-700); background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  padding: 0.25rem 0.65rem; border-radius: var(--border-radius-full);
+  max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: middle;
+}
+[data-theme="dark"] .flash-item-chip { color: #cbd5e1; background: rgba(148,163,184,0.15); border-color: #334155; }
+@media (max-width: 480px) { .flash-item-chip { max-width: 90px; font-size: 0.68rem; } }
 
 .flash-card-container { perspective: 1000px; width: 100%; }
 .flash-card {
@@ -14594,7 +14606,9 @@ body.ecos-offline-locked .send-to-checklist-btn {
 /* ---- Drawer multi-matieres ---- */
 .flash-drawer-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  z-index: var(--z-modal); opacity: 0; visibility: hidden;
+  /* z-index dédié (pas --z-modal, à 300 — bien en dessous de la pastille
+     premium/essai à 1300, ce qui la laissait passer devant sur mobile). */
+  z-index: 10200; opacity: 0; visibility: hidden;
   transition: opacity var(--transition-normal), visibility var(--transition-normal);
 }
 .flash-drawer-overlay.active { opacity: 1; visibility: visible; }
@@ -14645,6 +14659,11 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .flash-drawer-actions button:active { transform: translateY(0); box-shadow: none; }
 [data-theme="dark"] .flash-drawer-actions button { background:#0f172a; border-color:#334155; color:#cbd5e1; }
 [data-theme="dark"] .flash-drawer-actions button:hover { background: var(--primary); border-color: var(--primary); color:#fff; }
+/* État "tout sélectionné" du bouton bascule — rempli, pour indiquer l'état
+   actuel sans dépendre uniquement du changement de texte. */
+.flash-drawer-actions button.flash-drawer-action-active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
 .flash-drawer-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem; }
 .flash-drawer-item {
   display: flex; align-items: center; gap: 0.65rem;
@@ -14657,31 +14676,134 @@ body.ecos-offline-locked .send-to-checklist-btn {
   border-color: var(--primary); background: rgba(59,130,246,0.04);
   box-shadow: 0 2px 8px rgba(59,130,246,0.12); transform: translateY(-1px);
 }
-.flash-drawer-item:has(input:checked):not(.disabled) {
+.flash-drawer-item:has(input:checked):not(.disabled),
+.flash-drawer-item.is-checked:not(.disabled) {
   border-color: var(--primary); background: rgba(59,130,246,0.06);
   box-shadow: 0 2px 8px rgba(59,130,246,0.1);
 }
 [data-theme="dark"] .flash-drawer-item { background:#0f172a; border-color:#334155; }
 [data-theme="dark"] .flash-drawer-item:hover:not(.disabled) { background:rgba(96,165,250,0.08); border-color:#3b82f6; }
-[data-theme="dark"] .flash-drawer-item:has(input:checked):not(.disabled) { background:rgba(96,165,250,0.1); border-color:#3b82f6; }
+[data-theme="dark"] .flash-drawer-item:has(input:checked):not(.disabled),
+[data-theme="dark"] .flash-drawer-item.is-checked:not(.disabled) { background:rgba(96,165,250,0.1); border-color:#3b82f6; }
 .flash-drawer-item.disabled { opacity: 0.45; cursor: not-allowed; }
-/* Custom checkbox */
-.flash-drawer-item input[type=checkbox] {
-  appearance: none; -webkit-appearance: none;
-  width: 18px; height: 18px; min-width: 18px; border-radius: 5px;
-  border: 2px solid var(--gray-300); background: var(--white);
-  cursor: pointer; position: relative; transition: all 0.18s ease;
+/* Custom checkbox — !important volontaire : une règle non identifiée
+   quelque part écrasait le rendu personnalisé (coche invisible signalée sur
+   EDN puis ECOS), sélecteur ciblé et non un reset global, sans risque de fuite. */
+.flash-drawer-item input[type=checkbox],
+.flash-drawer-item input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important; height: 18px !important; min-width: 18px !important;
+  border-radius: 5px !important;
+  border: 2px solid var(--gray-300) !important;
+  background-color: var(--white) !important;
+  background-image: none !important;
+  margin: 0 !important; padding: 0 !important;
+  cursor: pointer; position: relative; flex-shrink: 0;
+  transition: all 0.18s ease;
 }
-.flash-drawer-item input[type=checkbox]:checked {
-  background: var(--primary); border-color: var(--primary);
+.flash-drawer-item input[type=checkbox]:checked,
+.flash-drawer-item input[type="checkbox"]:checked {
+  background-color: var(--primary) !important; border-color: var(--primary) !important;
 }
-.flash-drawer-item input[type=checkbox]:checked::after {
-  content: ''; position: absolute; left: 4px; top: 1px;
-  width: 6px; height: 10px; border: 2px solid #fff; border-top: none; border-left: none;
+.flash-drawer-item input[type=checkbox]:checked::after,
+.flash-drawer-item input[type="checkbox"]:checked::after {
+  content: '' !important; display: block !important; position: absolute !important;
+  left: 5px; top: 1px; width: 5px; height: 10px;
+  border: solid #fff !important; border-width: 0 2px 2px 0 !important;
   transform: rotate(45deg);
 }
-[data-theme="dark"] .flash-drawer-item input[type=checkbox] { background:#1e293b; border-color:#475569; }
-[data-theme="dark"] .flash-drawer-item input[type=checkbox]:checked { background: var(--primary); border-color: var(--primary); }
+[data-theme="dark"] .flash-drawer-item input[type=checkbox],
+[data-theme="dark"] .flash-drawer-item input[type="checkbox"] { background-color:#1e293b !important; border-color:#475569 !important; }
+[data-theme="dark"] .flash-drawer-item input[type=checkbox]:checked,
+[data-theme="dark"] .flash-drawer-item input[type="checkbox"]:checked { background-color: var(--primary) !important; border-color: var(--primary) !important; }
+
+/* ── Sous-panneau par matière (filtre par SDD) — porté depuis TableurEnLigne.html.
+   PAS de gap sur .flash-drawer-row-wrap : s'appliquerait TOUJOURS entre les
+   deux enfants, même quand .flash-drawer-sub est réduit à 0. L'espacement,
+   quand le sous-panneau EST ouvert, vient de sa propre margin-top (.open). */
+.flash-drawer-row-wrap { display: flex; flex-direction: column; }
+.flash-drawer-sub {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-top: 0;
+  transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease, margin-top 0.28s cubic-bezier(0.4,0,0.2,1);
+  margin-left: 1.6rem;
+}
+.flash-drawer-sub.open { max-height: 600px; opacity: 1; margin-top: 0.35rem; }
+.flash-drawer-sub-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0.55rem 0.65rem;
+  border-left: 2px solid var(--gray-200);
+  display: flex; flex-direction: column; gap: 0.45rem;
+}
+[data-theme="dark"] .flash-drawer-sub-inner { border-color: #334155; }
+.flash-drawer-mode-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.flash-drawer-mode-btn {
+  border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600);
+  padding: 0.3rem 0.65rem; border-radius: var(--border-radius-full);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: all 0.15s ease;
+}
+.flash-drawer-mode-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+[data-theme="dark"] .flash-drawer-mode-btn { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+[data-theme="dark"] .flash-drawer-mode-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.flash-drawer-item-list {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 0.24s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease;
+}
+.flash-drawer-item-list.open { max-height: 180px; overflow-y: auto; opacity: 1; }
+.flash-drawer-sub-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.5rem; border-radius: 8px; cursor: pointer; user-select: none;
+  font-size: 0.78rem; color: var(--gray-700);
+  transition: background 0.15s ease;
+}
+.flash-drawer-sub-item:hover { background: rgba(59,130,246,0.06); }
+[data-theme="dark"] .flash-drawer-sub-item { color: #cbd5e1; }
+[data-theme="dark"] .flash-drawer-sub-item:hover { background: rgba(96,165,250,0.08); }
+.flash-drawer-sub-item input[type=checkbox],
+.flash-drawer-sub-item input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important; height: 16px !important; min-width: 16px !important;
+  border-radius: 4px !important;
+  border: 2px solid var(--gray-300) !important;
+  background-color: var(--white) !important;
+  background-image: none !important;
+  margin: 0 !important; padding: 0 !important;
+  cursor: pointer; position: relative; transition: all 0.15s ease;
+}
+.flash-drawer-sub-item input[type=checkbox]:checked,
+.flash-drawer-sub-item input[type="checkbox"]:checked {
+  background-color: var(--primary) !important; border-color: var(--primary) !important;
+}
+.flash-drawer-sub-item input[type=checkbox]:checked::after,
+.flash-drawer-sub-item input[type="checkbox"]:checked::after {
+  content: '' !important; display: block !important; position: absolute !important;
+  left: 4px; top: 0px; width: 4px; height: 9px;
+  border: solid #fff !important; border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg);
+}
+[data-theme="dark"] .flash-drawer-sub-item input[type=checkbox],
+[data-theme="dark"] .flash-drawer-sub-item input[type="checkbox"] { background-color:#1e293b !important; border-color:#475569 !important; }
+[data-theme="dark"] .flash-drawer-sub-item input[type=checkbox]:checked,
+[data-theme="dark"] .flash-drawer-sub-item input[type="checkbox"]:checked { background-color: var(--primary) !important; border-color: var(--primary) !important; }
+.flash-drawer-sub-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flash-drawer-sub-item-count { font-size: 0.68rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; }
+.flash-drawer-sub-item-due {
+  font-size: 0.66rem; font-weight: 800; color: var(--danger);
+  background: rgba(220,38,38,0.1); padding: 0.1rem 0.4rem; border-radius: 9999px;
+  flex-shrink: 0; white-space: nowrap;
+}
+[data-theme="dark"] .flash-drawer-sub-item-due { background: rgba(248,113,113,0.16); }
+.flash-drawer-sub-empty { font-size: 0.76rem; color: var(--gray-400); padding: 0.3rem 0.5rem; }
+
 .flash-drawer-ico { width: 26px; height: 26px; border-radius: 7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; flex-shrink:0; }
 .flash-drawer-name { flex:1; min-width:0; font-size:0.84rem; font-weight:600; color: var(--gray-800); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .flash-drawer-count-badge { font-size:0.72rem; font-weight:700; }
@@ -14853,6 +14975,41 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 .flash-create-btn:hover { background: var(--accent); color:#fff; }
 [data-theme="dark"] .flash-create-btn { background: transparent; }
+
+/* ── Groupes matière→SDD (section 7/13/14) — en-tête compact sur UNE seule
+   ligne (titre tronqué + compteur + bouton session). ── */
+.flash-item-group { margin-bottom: 1.1rem; }
+.flash-item-group:last-child { margin-bottom: 0; }
+.flash-item-group-head {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+.flash-item-group-title {
+  font-size: 0.85rem; font-weight: 800; color: var(--gray-700);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="dark"] .flash-item-group-title { color: #e2e8f0; }
+.flash-item-group-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  font-size: 0.72rem; font-weight: 800; white-space: nowrap; flex-shrink: 0;
+  color: var(--primary); background: rgba(59,130,246,0.12);
+  border-radius: 9999px;
+}
+[data-theme="dark"] .flash-item-group-count { background: rgba(96,165,250,0.2); color: #93c5fd; }
+.flash-item-group-session-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(59,130,246,0.08); color: var(--primary); border: none;
+  padding: 0.35rem 0.65rem; border-radius: var(--border-radius-md);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  flex-shrink: 0; white-space: nowrap; transition: background var(--transition-fast);
+}
+.flash-item-group-session-btn:hover { background: rgba(59,130,246,0.16); }
+[data-theme="dark"] .flash-item-group-session-btn { background: rgba(59,130,246,0.16); }
+@media (max-width: 420px) {
+  .flash-item-group-session-btn .flash-item-group-session-btn-label { display: none; }
+  .flash-item-group-session-btn { padding: 0.4rem 0.55rem; }
+}
 
 .flash-card-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .flash-list-row {
@@ -15095,6 +15252,39 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .flash-edit-body .flash-rt-field { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; }
 .flash-edit-body .flash-rt-editor { flex: 1; min-height: 0; max-height: none; overflow-y: auto; scrollbar-gutter: stable; }
 .flash-edit-error { flex-shrink: 0; }
+
+/* ── Contexte item (lecture seule) — visible uniquement quand la flashcard
+   est créée depuis les Notes d'une SDD (item verrouillé, non modifiable). ── */
+.flash-form-item-context {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+.flash-form-item-context i { color: var(--primary); flex-shrink: 0; }
+[data-theme="dark"] .flash-form-item-context { background: rgba(59,130,246,0.14); color: #cbd5e1; }
+
+/* ── Sélecteur d'item (édition/création normale) — SDD facultative,
+   "Non classé" toujours proposé en premier. Réutilise .tpx-picker (déjà
+   utilisé ailleurs sur le site pour le choix de spécialité en mode custom)
+   pour un rendu cohérent, plutôt qu'un <select> natif. ── */
+.flash-form-item-select-wrap { flex-shrink: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.flash-item-picker-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 22px; padding: 0 5px;
+    border-radius: 7px; background: var(--tpx-accent-14, rgba(139,92,246,0.14));
+    color: var(--tpx-accent, #8b5cf6);
+    font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+}
+.flash-item-picker-badge-none { background: var(--gray-100); color: var(--gray-500); }
+[data-theme="dark"] .flash-item-picker-badge-none { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
 /* Boutons du modal edit : alignes sur le site, bleu (Annuler gris / Enregistrer bleu / Supprimer rouge) */
 .flash-form-save, .flash-form-cancel, .flash-form-del {
@@ -16838,6 +17028,18 @@ body.ecos-offline-locked .send-to-checklist-btn {
     transition: opacity 0.25s ease, max-width 0.42s cubic-bezier(0.4,0,0.2,1), margin-left 0.42s cubic-bezier(0.4,0,0.2,1);
     font-family: var(--font-body);
     margin-left: 0;
+}
+/* Bouton Flashcard (header Notes SDD) — même identité visuelle qu'EDN. */
+.notes-action-btn.btn-flashcard {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+}
+.notes-action-btn.btn-flashcard i { color: #fff; }
+.notes-action-btn.btn-flashcard:hover { box-shadow: 0 4px 12px rgba(59,130,246,0.45); transform: translateY(-1px); }
+.notes-action-btn.btn-flashcard.just-saved {
+    background: #10b981 !important;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.4) !important;
 }
 /* Expansion au survol uniquement sur devices avec hover réel (pas tactile) */
 @media (hover: hover) {
@@ -25707,6 +25909,10 @@ window.TPXNotesPending = {
             </div>
             <div class="notes-header-right">
                 <span class="notes-autosave-dot" id="sdd-notes-autosave"><i class="fas fa-cloud"></i></span>
+                <button class="notes-action-btn btn-flashcard" id="sddNotesFlashcardBtn" onclick="sddNotesOpenFlashcard()" title="Créer une flashcard pour cette SDD">
+                  <i class="fas fa-bolt"></i>
+                  <span class="notes-btn-label">Flashcard</span>
+                </button>
                 <button class="notes-action-btn sdd-quick-pass" onclick="sddNotesQuickPassage('faire_passer', event)" data-tooltip="Fait passer"><i class="fas fa-handshake"></i><span class="notes-btn-label">Fait passer</span></button>
                 <button class="notes-action-btn sdd-quick-ps" onclick="sddNotesQuickPassage('ps_pss', event)" data-tooltip="PS/PSS"><i class="fas fa-user-doctor"></i><span class="notes-btn-label">PS/PSS</span></button>
                 <button class="notes-action-btn sdd-quick-sans" onclick="sddNotesQuickPassage('sans_ps', event)" data-tooltip="Sans PS"><i class="fas fa-flag"></i><span class="notes-btn-label">Sans PS</span></button>
@@ -26219,6 +26425,23 @@ window.TPXNotesPending = {
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
 
             <div class="whats-new-section">
+                <div class="whats-new-section-icon amber">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Flashcards améliorées 🃏</h4>
+                    <p>
+                        Les flashcards peuvent désormais être associées à une <strong>SDD</strong>
+                        et sont automatiquement regroupées par SDD dans le
+                        <strong>Cahier d'erreurs</strong>. Créez-en une directement depuis les
+                        <strong>notes d'une SDD</strong> (nouveau bouton dans l'en-tête), reclassez
+                        progressivement vos anciennes flashcards, et lancez une session ciblée sur
+                        une seule SDD d'un simple clic.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
                 <div class="whats-new-section-icon purple">
                     <i class="fas fa-sliders"></i>
                 </div>
@@ -26678,8 +26901,8 @@ window.TPXNotesPending = {
       <button onclick="closeFlashDrawer()" aria-label="Fermer"><i class="fas fa-times"></i></button>
     </div>
     <div class="flash-drawer-actions">
-      <button onclick="selectAllFlashMatieres()">Tout sélectionner</button>
-      <button onclick="selectDueFlashMatieres()"><i class="fas fa-bolt"></i> Uniquement les dues</button>
+      <button id="flashSelectAllBtn" onclick="toggleSelectAllFlashMatieres()">Tout sélectionner</button>
+      <button id="flashSelectDueBtn" onclick="selectDueFlashMatieres()"><i class="fas fa-bolt"></i> Uniquement les dues</button>
     </div>
     <div class="flash-drawer-list" id="flashDrawerList"></div>
     <div class="flash-drawer-footer">
@@ -26708,6 +26931,7 @@ window.TPXNotesPending = {
         </button>
 		
 		<span class="flash-spe-chip flash-sess-spe-label" id="flashSessSpeLabel" style="display:none;"></span>
+		<span class="flash-item-chip" id="flashSessItemLabel" style="display:none;"></span>
 
 
         <button type="button" id="flashSessShuffle" class="seg-switch flash-shuffle-seg" style="display:none;" role="switch" aria-checked="true" onclick="window._flashToggleShuffle()">
@@ -26775,6 +26999,11 @@ window.TPXNotesPending = {
       </div>
     </div>
     <div class="flash-edit-body">
+      <div class="flash-form-item-context" id="flashFormItemContext" style="display:none;"></div>
+      <div class="flash-form-item-select-wrap" id="flashFormItemSelectWrap" style="display:none;">
+        <label class="flash-rt-label" id="flashFormItemPickerLabel"><i class="fas fa-tag"></i> Classement</label>
+        <div id="flashFormItemPicker"></div>
+      </div>
       <div class="flash-rt-field">
         <div class="flash-rt-label-row"><div class="flash-rt-label"><i class="fas fa-circle-question"></i> Recto (question)</div><span class="flash-char-count" id="flashRectoCharCount" aria-live="polite">0 / 500</span></div>
         <div class="flash-rt-editor" id="flashFormRecto" contenteditable="true" data-ph="Ex : Quel diagnostic évoquer devant… ?"
@@ -31611,6 +31840,43 @@ function notesAddToTodo() {
     }
 }
 
+// ── Bouton Flashcard du header Notes SDD (section 2/3/4) ────────────────
+// Ouvre le modal de création EXISTANT (openFlashEdit, système partagé —
+// section 5), avec la SDD courante verrouillée (non modifiable). speId =
+// première spécialité associée à la SDD (une SDD peut en avoir plusieurs).
+function sddNotesOpenFlashcard() {
+    if (!currentSDDId) return;
+    var meta = (typeof getSDDMeta === 'function') ? getSDDMeta(currentSDDId) : null;
+    if (!meta) return;
+    var speId = (meta.specialties || [])[0];
+    if (!speId) return; // aucune spécialité associée : rien à rattacher
+    if (typeof window.openFlashEdit !== 'function') return;
+    window.openFlashEdit(null, {
+        speIdOverride: speId,
+        itemCtx: {
+            itemFc: currentSDDId,
+            itemNum: meta.number,
+            itemName: meta.title,
+            onSaved: sddNotesFlashcardSavedFeedback
+        }
+    });
+}
+
+// Feedback de réussite (section 6) : même logique que notesAddToTodo — un
+// check bref, affiché SEULEMENT après confirmation réelle de sauvegarde.
+function sddNotesFlashcardSavedFeedback() {
+    var btn = document.getElementById('sddNotesFlashcardBtn');
+    if (!btn) return;
+    var prevHtml = btn.innerHTML;
+    btn.classList.add('just-saved');
+    btn.innerHTML = '<i class="fas fa-check"></i><span class="notes-btn-label">Ajoutée</span>';
+    setTimeout(function () {
+        btn.classList.remove('just-saved');
+        btn.innerHTML = prevHtml;
+    }, 1400);
+}
+window.sddNotesOpenFlashcard = sddNotesOpenFlashcard;
+
 /* Boutons rapides du header du modal notes (style Tableur en ligne) :
    "Fait passer" applique directement le passage ; "PS/PSS" et "Sans PS"
    ouvrent le petit popover de confiance existant, ancré sous le bouton. */
@@ -35583,6 +35849,8 @@ window.showEcosToast = showEcosToast;
   var _flashUnlockTimer = null;
   var _flashFormCardId = null;
   var _flashFormSpeId = null;
+  var _flashFormItemFc = null;           /* item verrouillé (création depuis Notes SDD) — null = "Non classé" */
+  var _flashFormOnSaved = null;          /* callback optionnel après sauvegarde réussie (feedback bouton Notes) */
   var _flashAllCache = null;
   var _activeRT = null;
   /* ===== Limite de caractères des flashcards (recto/verso indépendants) ===== */
@@ -35709,13 +35977,60 @@ function speCfg(id) {
   function _ref(b, id) { return b.doc(b.getDb(), 'users', b.getCurrentUser().uid, TPXC('FlashCardsECOS'), id); }
   function _all(snap) { var o=[]; snap.forEach(function(d){ var x=d.data(); x.id=d.id; o.push(x); }); return o; }
   function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
+  // ── Suppression d'une SDD ≠ suppression de ses flashcards. Les ID de SDD
+  //    custom utilisent newId('sdd') (aléatoire, jamais réutilisé après
+  //    suppression) — pas de risque de collision comme sur les numéros
+  //    d'item côté EDN — mais on délie quand même par cohérence et pour que
+  //    le champ Firestore reflète immédiatement "Non classé" plutôt que de
+  //    compter sur le filet de sécurité "item introuvable" à l'affichage. ──
+  //    MISSION CORRECTIVE, points 2/3 : cette fonction doit désormais
+  //    RÉELLEMENT ÉCHOUER (promesse rejetée) si la lecture des flashcards ou
+  //    l'ÉCRITURE D'AU MOINS UNE carte échoue — jamais avaler l'erreur en
+  //    silence. C'est ce qui permet à deleteSdd() (plus bas) d'attendre
+  //    cette confirmation avant de supprimer la SDD : fail-closed, pas de
+  //    suppression tant que la déliaison n'est pas prouvée réussie. ──
+  function unlinkFlashcardsFromItem(speId, itemFc) {
+    var b = fb(); if (!b || speId == null || itemFc == null) return Promise.resolve();
+    // ⚠️ Ne PAS réutiliser loadFlashCards() ici : elle avale ses propres
+    // erreurs de lecture en interne (retourne [] en cas d'échec réseau),
+    // ce qui ferait croire à tort qu'il n'y a "rien à délier" alors que la
+    // lecture a réellement échoué — exactement le contraire du fail-closed
+    // recherché. Requête directe, sans filet de sécurité.
+    return b.getDocs(b.query(_col(b), b.where('speId', '==', speId))).then(_all).then(function (cards) {
+      var toUnlink = cards.filter(function (c) { return String(c.itemId) === String(itemFc); });
+      if (!toUnlink.length) return;
+      var _ts = (typeof b.serverTimestamp === 'function') ? b.serverTimestamp() : new Date().toISOString();
+      return Promise.all(toUnlink.map(function (c) {
+        return b.setDoc(_ref(b, c.id), { itemId: null, updatedAt: _ts }, { merge: true });
+        // Pas de .catch() ici : une écriture individuelle en échec doit faire
+        // rejeter tout Promise.all, remontant l'échec à l'appelant.
+      }));
+    });
+    // Pas de .catch() global non plus : on veut que l'appelant sache qu'on
+    // n'a PAS pu vérifier/délier, donc on laisse le rejet remonter.
+  }
   function loadAllDueFlashCards() { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('nextReview','<=',nowISO()))).then(_all).catch(function(e){console.warn(e);return[];}); }
   function loadAllFlashCards() { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(_col(b)).then(_all).catch(function(e){console.warn(e);return[];}); }
   function saveFlashCard(card) {
     var b=fb(); if(!b) return Promise.reject(new Error('offline'));
     var _ts = (typeof b.serverTimestamp === 'function') ? b.serverTimestamp() : new Date().toISOString();
-    if (card.id) return b.setDoc(_ref(b,card.id), { speId:card.speId, recto:card.recto, verso:card.verso, updatedAt:_ts }, {merge:true}).then(function(){return card.id;});
-    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), updatedAt:_ts, source:'manuel' };
+    if (card.id) {
+      // ── Édition : itemId n'est INCLUS dans l'écriture que si l'appelant l'a
+      //    explicitement fourni (reclassement volontaire) — absent de `card`
+      //    → absent de l'objet envoyé à Firestore → merge:true ne touche PAS
+      //    le champ existant. Une simple correction de texte ne peut donc
+      //    JAMAIS effacer silencieusement un classement déjà en place, ni
+      //    celui d'une ancienne carte sans itemId. ──
+      var _upd = { speId:card.speId, recto:card.recto, verso:card.verso, updatedAt:_ts };
+      if (Object.prototype.hasOwnProperty.call(card, 'itemId')) _upd.itemId = card.itemId;
+      return b.setDoc(_ref(b,card.id), _upd, {merge:true}).then(function(){return card.id;});
+    }
+    // ── Création : itemId toujours écrit explicitement (null si aucun
+    //    contexte fourni) — "Non classé" par défaut, jamais absent ni
+    //    undefined. Les cartes déjà existantes restent, elles, sans ce
+    //    champ — traitées de façon identique ("Non classé") à l'affichage. ──
+    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, itemId:(card.itemId != null ? card.itemId : null),
+              interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), updatedAt:_ts, source:'manuel' };
     return b.addDoc(_col(b), doc).then(function(r){return r.id;});
   }
   function deleteFlashCard(id) { var b=fb(); if(!b) return Promise.reject(new Error('offline')); return b.deleteDoc(_ref(b,id)); }
@@ -35821,14 +36136,56 @@ function speCfg(id) {
   // ---------- Vue Gestion ----------
   function _buildFlashManageHTML(cards) {
     var due = cards.filter(isDue);
-    var rows = cards.map(function(c){
-      var st = statusInfo(c);
-      return '<div class="flash-list-row ' + st.cls + '" onclick="window._flashEditCard(\'' + c.id + '\')">' +
-        '<span class="flash-list-recto">' + plain(c.recto) + '</span>' +
-        '<span class="flash-list-status ' + st.cls + '"><i class="fas ' + st.icon + '"></i>' + st.txt + '</span>' +
-      '</div>';
+
+    // ── Groupement par SDD (section 7/13/14) — même logique que EDN, la
+    // résolution passe par getSDDMeta() (déjà transparente officiel/custom). ──
+    var groups = {};
+    var noneKey = '__none__';
+    cards.forEach(function (c) {
+      var raw = (c.itemId == null || c.itemId === '') ? null : String(c.itemId);
+      var info = raw != null ? ((typeof getSDDMeta === 'function') ? getSDDMeta(raw) : null) : null;
+      var key = (raw != null && info) ? raw : noneKey;
+      if (!groups[key]) groups[key] = { info: (key === noneKey ? null : info), cards: [] };
+      groups[key].cards.push(c);
+    });
+
+    var orderedKeys = Object.keys(groups).filter(function (k) { return k !== noneKey; }).sort(function (a, b2) {
+      var na = parseInt(groups[a].info && groups[a].info.number, 10);
+      var nb = parseInt(groups[b2].info && groups[b2].info.number, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1;
+      if (!isNaN(nb)) return 1;
+      return String(a).localeCompare(String(b2));
+    });
+    if (groups[noneKey]) orderedKeys.unshift(noneKey);
+
+    function _rowsHtml(groupCards) {
+      return groupCards.map(function (c) {
+        var st = statusInfo(c);
+        return '<div class="flash-list-row ' + st.cls + '" onclick="window._flashEditCard(\'' + c.id + '\')">' +
+          '<span class="flash-list-recto">' + plain(c.recto) + '</span>' +
+          '<span class="flash-list-status ' + st.cls + '"><i class="fas ' + st.icon + '"></i>' + st.txt + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    var groupsHtml = orderedKeys.map(function (key) {
+      var g = groups[key];
+      var label = key === noneKey ? 'Non classé' : (_flashItemGroupLabel(g.info) || 'Non classé');
+      var count = g.cards.length;
+      return '<div class="flash-item-group">' +
+          '<div class="flash-item-group-head">' +
+            '<span class="flash-item-group-title" title="' + label.replace(/<[^>]*>/g, '') + '">' + (key === noneKey ? '<i class="fas fa-inbox"></i> ' : '') + label + '</span>' +
+            '<span class="flash-item-group-count" title="' + count + ' carte' + (count > 1 ? 's' : '') + '">' + count + '</span>' +
+            '<button class="flash-item-group-session-btn" onclick="window._flashStartItemGroup(\'' + String(key).replace(/'/g, "\\'") + '\')">' +
+              '<i class="fas fa-bolt"></i><span class="flash-item-group-session-btn-label">Réviser</span>' +
+            '</button>' +
+          '</div>' +
+          '<div class="flash-card-list">' + _rowsHtml(g.cards) + '</div>' +
+        '</div>';
     }).join('');
-    if (!cards.length) rows = '<div class="flash-empty"><i class="fas fa-layer-group"></i>Aucune carte pour cette spécialité.<br>Créez-en une pour commencer.</div>';
+
+    if (!cards.length) groupsHtml = '<div class="flash-empty"><i class="fas fa-layer-group"></i>Aucune carte pour cette spécialité.<br>Créez-en une pour commencer.</div>';
 
     var revBtn, reviewDropId = 'flashReviewDropMenu';
     if (due.length) {
@@ -35855,7 +36212,7 @@ function speCfg(id) {
       '</div>' +
       '<div class="flash-manage-head"><span class="flash-manage-title">Toutes mes cartes (' + cards.length + ')</span>' +
         '<button class="flash-create-btn" onclick="window._flashNewCard()"><i class="fas fa-plus"></i> Créer</button></div>' +
-      '<div class="flash-card-list">' + rows + '</div>';
+      groupsHtml;
   }
 
   function renderFlashManageView(speId) {
@@ -35912,6 +36269,21 @@ function speCfg(id) {
       return obj;
     } catch (e) { return null; }
   }
+  // ── MISSION CORRECTIVE, point 6 : le brouillon local doit aussi protéger
+  //    le classement (itemId), pas seulement recto/verso/speId. Réplique
+  //    EXACTEMENT la même logique que _flashSaveForm. ──
+  function _flashComputeItemIdForDraft() {
+    if (!_flashFormCardId && _flashFormItemFc != null) {
+      return { has: true, value: _flashFormItemFc };
+    }
+    var _selWrap = document.getElementById('flashFormItemSelectWrap');
+    if (_selWrap && _selWrap.style.display !== 'none') {
+      if (!_flashFormCardId || _flashItemPickerDirty) {
+        return { has: true, value: _flashItemPickerValue ? _flashItemPickerValue : null };
+      }
+    }
+    return { has: false, value: undefined };
+  }
   // 💾 SAUVEGARDE FLASHCARD À LA FERMETURE BRUTALE DE L'ONGLET — pagehide
   // Comble le cas non couvert par _flashSaveForm() : du contenu tapé mais
   // jamais soumis (l'utilisateur ferme l'onglet sans cliquer "Enregistrer").
@@ -35926,18 +36298,157 @@ function speCfg(id) {
     try {
       var _speId = _flashFormSpeId || window.speErrCurrentId;
       var _draftKey = _flashDraftKey(_flashFormCardId, _speId);
+      var _itemForDraft = _flashComputeItemIdForDraft();
       var _payload = JSON.stringify({
         recto: recto, verso: verso,
         speId: _speId,
-        savedAt: Date.now()
+        savedAt: Date.now(),
+        hasItemId: _itemForDraft.has,
+        itemId: _itemForDraft.has ? _itemForDraft.value : null
       });
       localStorage.setItem(_draftKey, _payload);
     } catch (e) {}
   });
+  // ── Résolution d'une SDD (numéro + titre) à partir de son id. Réutilise
+  // getSDDMeta(), qui gère déjà officiel ET custom de façon transparente
+  // (ECOS_SDD_DATA basculé par applyToGlobals) — aucune logique séparée
+  // nécessaire ici, contrairement à EDN où cette fonction a dû être écrite.
+  function _flashItemGroupLabel(meta) {
+    if (!meta) return null;
+    var isProc = meta.contentType === 'procedure';
+    var code = isProc && typeof getSDDDisplayCode === 'function' ? getSDDDisplayCode(meta) : ('SDD-' + String(meta.number).padStart(3, '0'));
+    return code + (meta.title ? ' — ' + _escItemLabel(meta.title) : '');
+  }
+  function _escItemLabel(s) {
+    var d = document.createElement('div');
+    d.textContent = String(s == null ? '' : s);
+    return d.innerHTML;
+  }
+
+  var _flashItemPickerValue = '';
+  var _flashItemPickerDocBound = false;
+  // ── MISSION CORRECTIVE, point 7 : protection multi-onglets. Voir le
+  //    commentaire détaillé équivalent dans TableurEnLigne.html. ──
+  var _flashOriginalItemId = null;
+  var _flashItemPickerDirty = false;
+  function _flashEnsureItemPickerDocListener() {
+    if (_flashItemPickerDocBound) return;
+    _flashItemPickerDocBound = true;
+    document.addEventListener('click', function (e) {
+      var box = document.getElementById('flashItemPickerBox');
+      if (!box || !box.classList.contains('open')) return;
+      if (!e.target.closest || !e.target.closest('#flashItemPickerBox')) {
+        box.classList.remove('open');
+        var btn = box.querySelector('.tpx-picker-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  // Sélecteur d'item (section 10-12) : propose les SDD dont CETTE spécialité
+  // fait partie (meta.specialties peut en contenir plusieurs — filtrage par
+  // appartenance, pas par égalité stricte, contrairement à EDN où un item
+  // n'appartient qu'à une seule matière).
+  function _flashBuildItemPicker(speId, selectedItemId) {
+    var host = document.getElementById('flashFormItemPicker');
+    if (!host) return;
+    var all = (typeof ECOS_SDD_DATA !== 'undefined') ? ECOS_SDD_DATA : (window.ECOS_SDD_DATA || []);
+    var items = all.filter(function (d) { return (d.specialties || []).indexOf(speId) !== -1; });
+    _flashItemPickerValue = (selectedItemId != null && selectedItemId !== '') ? String(selectedItemId) : '';
+
+    var noneSel = !_flashItemPickerValue;
+    var currentFound = !noneSel && items.filter(function (d) { return String(d.id) === _flashItemPickerValue; })[0];
+    // ── MISSION CORRECTIVE, point 5 : un itemId qui ne résout plus vers
+    //    aucune SDD réelle doit être traité comme RÉELLEMENT "Non classé",
+    //    pas seulement à l'affichage. Sans ce correctif, _flashItemPickerValue
+    //    conservait l'ID orphelin même quand "Non classé" était affiché — un
+    //    enregistrement sans toucher au picker aurait réécrit ce même ID. ──
+    if (!noneSel && !currentFound) {
+      _flashItemPickerValue = '';
+      noneSel = true;
+    }
+    // Point 7 : "original" = la valeur RÉELLEMENT résolue (post-correctif
+    // orphelin ci-dessus), jamais l'ID brut potentiellement orphelin.
+    _flashOriginalItemId = _flashItemPickerValue;
+    _flashItemPickerDirty = false;
+    // ── Bouton fermé : toujours pastille numéro + titre seul, JAMAIS le
+    //    texte "SDD-XXX — Titre" concaténé (répétitif avec la pastille déjà
+    //    visible). Une valeur sélectionnée mais introuvable retombe
+    //    visuellement sur "Non classé". ──
+    var currentBadgeHtml, currentName;
+    if (currentFound) {
+      var isProc = currentFound.contentType === 'procedure';
+      var curBadge = isProc ? '<i class="fas fa-star"></i>' : _escItemLabel(String(currentFound.number));
+      currentBadgeHtml = '<span class="flash-item-picker-badge">' + curBadge + '</span>';
+      currentName = _escItemLabel(currentFound.title || 'SDD');
+    } else {
+      currentBadgeHtml = '<span class="flash-item-picker-badge flash-item-picker-badge-none"><i class="fas fa-inbox"></i></span>';
+      currentName = 'Non classé';
+    }
+
+    var optionsHtml =
+      '<div class="tpx-picker-opt' + (noneSel ? ' selected' : '') + '" role="option" data-value="">' +
+        '<span class="flash-item-picker-badge flash-item-picker-badge-none"><i class="fas fa-inbox"></i></span>' +
+        '<span class="tpx-picker-name">Non classé</span>' +
+        '<i class="fas fa-check tpx-picker-tick"></i>' +
+      '</div>' +
+      items.map(function (d) {
+        var isSel = _flashItemPickerValue === String(d.id);
+        var isProc = d.contentType === 'procedure';
+        var badge = isProc ? '<i class="fas fa-star"></i>' : _escItemLabel(String(d.number));
+        return '<div class="tpx-picker-opt' + (isSel ? ' selected' : '') + '" role="option" data-value="' + _escItemLabel(String(d.id)) + '">' +
+            '<span class="flash-item-picker-badge">' + badge + '</span>' +
+            '<span class="tpx-picker-name">' + _escItemLabel(d.title || 'SDD') + '</span>' +
+            '<i class="fas fa-check tpx-picker-tick"></i>' +
+          '</div>';
+      }).join('');
+
+    host.innerHTML =
+      '<div class="tpx-picker" id="flashItemPickerBox">' +
+        '<button type="button" class="tpx-picker-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="flashFormItemPickerLabel">' +
+          '<span class="tpx-picker-current">' + currentBadgeHtml + '<span class="tpx-picker-name">' + currentName + '</span></span>' +
+          '<i class="fas fa-chevron-down tpx-picker-caret"></i>' +
+        '</button>' +
+        '<div class="tpx-picker-list" role="listbox">' + optionsHtml + '</div>' +
+      '</div>';
+
+    var box = host.querySelector('#flashItemPickerBox');
+    var btn = box.querySelector('.tpx-picker-btn');
+    var list = box.querySelector('.tpx-picker-list');
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var opening = !box.classList.contains('open');
+      box.classList.toggle('open', opening);
+      btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) {
+        var cur = list.querySelector('.tpx-picker-opt.selected');
+        if (cur) list.scrollTop = Math.max(0, cur.offsetTop - list.clientHeight / 2);
+      }
+    });
+    list.querySelectorAll('.tpx-picker-opt').forEach(function (opt) {
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _flashItemPickerValue = opt.getAttribute('data-value') || '';
+        _flashItemPickerDirty = true; // l'utilisateur a réellement touché le picker (point 7)
+        list.querySelectorAll('.tpx-picker-opt').forEach(function (o) { o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        var badgeEl = opt.querySelector('.flash-item-picker-badge');
+        var nameEl = opt.querySelector('.tpx-picker-name');
+        box.querySelector('.tpx-picker-current').innerHTML =
+          (badgeEl ? badgeEl.outerHTML : '') + '<span class="tpx-picker-name">' + (nameEl ? nameEl.innerHTML : '') + '</span>';
+        box.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+    _flashEnsureItemPickerDocListener();
+  }
+
+  var _flashCloseGen = 0;
+
   function openFlashEdit(card, opts) {
     opts = opts || {};
+    _flashCloseGen++; // invalide un éventuel setTimeout de _flashCloseEdit encore en attente
     _flashFormCardId = card ? card.id : null;
-    _flashFormSpeId = card && card.speId ? card.speId : window.speErrCurrentId;
+    _flashFormSpeId = opts.speIdOverride || (card && card.speId) || window.speErrCurrentId;
 
     var t = document.getElementById('flashEditTitle');
     if (t) t.textContent = card ? 'Modifier la carte' : 'Nouvelle carte';
@@ -35953,6 +36464,32 @@ function speCfg(id) {
 
     var del = document.getElementById('flashEditDelBtn');
     if (del) del.style.display = (card && !opts.hideDelete) ? 'inline-flex' : 'none';
+
+    // ── Contexte item (section 3/4) : uniquement fourni lors d'une création
+    //    depuis les Notes d'une SDD — jamais lors d'une édition normale. ──
+    _flashFormItemFc = (!card && opts.itemCtx && opts.itemCtx.itemFc != null) ? opts.itemCtx.itemFc : null;
+    _flashFormOnSaved = (opts.itemCtx && typeof opts.itemCtx.onSaved === 'function') ? opts.itemCtx.onSaved : null;
+    var ctxEl = document.getElementById('flashFormItemContext');
+    var selWrap = document.getElementById('flashFormItemSelectWrap');
+    if (ctxEl) {
+        if (_flashFormItemFc != null && opts.itemCtx) {
+            var _ctxLabel = opts.itemCtx.itemNum != null
+                ? 'SDD-' + String(opts.itemCtx.itemNum).padStart(3, '0') + (opts.itemCtx.itemName ? ' — ' + _escItemLabel(opts.itemCtx.itemName) : '')
+                : _escItemLabel(opts.itemCtx.itemName || 'SDD');
+            ctxEl.innerHTML = '<i class="fas fa-lock"></i><span>' + _ctxLabel + '</span>';
+            ctxEl.style.display = 'flex';
+            if (selWrap) selWrap.style.display = 'none';
+        } else {
+            ctxEl.style.display = 'none';
+            ctxEl.innerHTML = '';
+            if (selWrap && _flashFormSpeId) {
+                selWrap.style.display = 'flex';
+                _flashBuildItemPicker(_flashFormSpeId, card ? card.itemId : null);
+            } else if (selWrap) {
+                selWrap.style.display = 'none';
+            }
+        }
+    }
 
     var r = document.getElementById('flashFormRecto');
     var v = document.getElementById('flashFormVerso');
@@ -35978,6 +36515,18 @@ function speCfg(id) {
     if (_restoreDraft) {
       if (r) r.innerHTML = sanit(_draft.recto || '');
       if (v) v.innerHTML = sanit(_draft.verso || '');
+      // ── Point 6 : restaurer aussi le classement du brouillon, si le
+      //    sélecteur est visible dans ce contexte (jamais en création
+      //    verrouillée depuis Notes). Réutilise le clic natif sur l'option
+      //    correspondante plutôt que de dupliquer sa logique. ──
+      if (_draft.hasItemId) {
+        var _selWrapRestore = document.getElementById('flashFormItemSelectWrap');
+        if (_selWrapRestore && _selWrapRestore.style.display !== 'none') {
+          var _restoredValue = (_draft.itemId != null && _draft.itemId !== '') ? String(_draft.itemId) : '';
+          var _optToSelect = document.querySelector('#flashItemPickerBox .tpx-picker-opt[data-value="' + _restoredValue.replace(/"/g, '\\"') + '"]');
+          if (_optToSelect) _optToSelect.click();
+        }
+      }
       if (typeof window.showToastNotification === 'function') {
         window.showToastNotification('Une modification non sauvegardée a été restaurée.', 'warning');
       }
@@ -36018,8 +36567,23 @@ function speCfg(id) {
     _flashFormCardId = null;
     _flashFormSpeId = null;
     _activeRT = null;
+    _flashFormItemFc = null; _flashFormOnSaved = null;
 
     _editErr('');
+
+    // ── Le modal se referme avec un fondu de 300ms (--transition-normal) —
+    //    masquer le pill/sélecteur d'item immédiatement créait un décalage
+    //    visuel pendant l'animation. _flashCloseGen protège contre une
+    //    réouverture rapide (avant l'expiration des 300ms) qui écraserait
+    //    par erreur le nouveau contexte déjà configuré. ──
+    var myGen = ++_flashCloseGen;
+    setTimeout(function () {
+      if (myGen !== _flashCloseGen) return;
+      var ctxEl = document.getElementById('flashFormItemContext');
+      if (ctxEl) { ctxEl.style.display = 'none'; ctxEl.innerHTML = ''; }
+      var selWrap = document.getElementById('flashFormItemSelectWrap');
+      if (selWrap) selWrap.style.display = 'none';
+    }, 300);
   }
   var _flashEditPointerStartedInside = false;
 
@@ -36098,6 +36662,35 @@ function _flashSaveForm() {
         recto: sanit(r.innerHTML),
         verso: sanit(v.innerHTML)
     };
+    // ── Classement (section 4/9/12) — deux chemins mutuellement exclusifs :
+    //  1. Contexte verrouillé (création depuis Notes SDD) : itemId vient de
+    //     _flashFormItemFc, UNIQUEMENT à la création.
+    //  2. Sélecteur normal (gestionnaire de cartes, visible) : l'utilisateur
+    //     a explicitement choisi un classement — itemId inclus que ce soit
+    //     une création OU une édition (section 12). ──
+    // ── Classement (section 4/9/12, + point 7 de la mission corrective) ────
+    // Trois chemins mutuellement exclusifs :
+    //  1. Contexte verrouillé (création depuis Notes SDD) : itemId vient de
+    //     _flashFormItemFc, TOUJOURS explicite — jamais à l'édition.
+    //  2. Sélecteur normal, CRÉATION : itemId TOUJOURS explicite (point 9 —
+    //     "Non classé" doit écrire itemId:null, jamais l'omettre).
+    //  3. Sélecteur normal, ÉDITION d'une carte existante : itemId
+    //     UNIQUEMENT si l'utilisateur a RÉELLEMENT touché le picker
+    //     (_flashItemPickerDirty). Sinon, le champ est omis — merge:true
+    //     préserve la valeur Firestore actuelle, même si un autre onglet
+    //     l'a changée entre-temps (protection multi-onglets). ──
+    if (!editingId && _flashFormItemFc != null) {
+        card.itemId = _flashFormItemFc;
+    } else {
+        var _selWrap = document.getElementById('flashFormItemSelectWrap');
+        if (_selWrap && _selWrap.style.display !== 'none') {
+            if (!editingId || _flashItemPickerDirty) {
+                card.itemId = _flashItemPickerValue ? _flashItemPickerValue : null;
+            }
+            // sinon (édition, jamais touché) : itemId omis volontairement.
+        }
+    }
+    var _onSavedCb = _flashFormOnSaved;
 
     var session = _flashSession;
     var isCurrentSessionCard =
@@ -36114,7 +36707,8 @@ saveBtn.innerHTML =
     // jamais l'envoi, et reste en place si la sauvegarde échoue.
     var _draftKey = _flashDraftKey(editingId, refreshSpeId);
     try {
-        var _draftPayload = JSON.stringify({ recto: card.recto, verso: card.verso, speId: card.speId, savedAt: Date.now() });
+        var _hasItemIdForDraft = Object.prototype.hasOwnProperty.call(card, 'itemId');
+        var _draftPayload = JSON.stringify({ recto: card.recto, verso: card.verso, speId: card.speId, savedAt: Date.now(), hasItemId: _hasItemIdForDraft, itemId: _hasItemIdForDraft ? card.itemId : null });
         if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
             window.TPXSafeStore.set(_draftKey, _draftPayload);
         } else {
@@ -36131,7 +36725,11 @@ saveBtn.innerHTML =
             session.cards[session.idx].recto = card.recto;
             session.cards[session.idx].verso = card.verso;
             session.cards[session.idx].speId = card.speId;
+            if (Object.prototype.hasOwnProperty.call(card, 'itemId')) session.cards[session.idx].itemId = card.itemId;
         }
+
+        // Feedback (section 6) : uniquement après succès RÉELLEMENT confirmé.
+        if (_onSavedCb) { try { _onSavedCb(); } catch (e) {} }
 
         _flashCloseEdit();
 
@@ -36194,6 +36792,22 @@ saveBtn.innerHTML =
 
   function _flashStartDue() { var host=document.getElementById('speFlashView_manage'); var cards=host&&host._cards?host._cards.filter(isDue):[]; if(cards.length) startFlashSession(cards,{multi:false}); }
   function _flashStartAll() { var host=document.getElementById('speFlashView_manage'); var cards=host&&host._cards?host._cards.slice():[]; if(cards.length) startFlashSession(cards,{multi:false}); }
+  // ── Session par SDD (section 15) : UNIQUEMENT les cartes de ce groupe.
+  //    Miroir exact de la normalisation de groupe de _buildFlashManageHTML. ──
+  function _flashStartItemGroup(key) {
+    var host = document.getElementById('speFlashView_manage');
+    var allCards = host && host._cards ? host._cards : [];
+    var filtered;
+    if (key === '__none__') {
+      filtered = allCards.filter(function (c) {
+        if (c.itemId == null || c.itemId === '') return true;
+        return !(typeof getSDDMeta === 'function' && getSDDMeta(String(c.itemId)));
+      });
+    } else {
+      filtered = allCards.filter(function (c) { return c.itemId != null && String(c.itemId) === String(key); });
+    }
+    if (filtered.length) startFlashSession(filtered, { multi: false });
+  }
   function _flashOpenReviewDrop(e, id) {
     e.stopPropagation();
     var drop = document.getElementById(id); if (!drop) return;
@@ -36345,6 +36959,17 @@ saveBtn.innerHTML =
     openFlashEdit(s.cards[s.idx], {hideDelete:true});
   }
 
+  // Libellé compact pour la pastille item pendant une session (section 17) :
+  // juste le numéro (SDD-XXX -> XXX), rien pour "Non classé". SDD introuvable
+  // (orpheline) traitée comme Non classé.
+  function _flashSessionItemLabel(card) {
+    if (card.itemId == null || card.itemId === '') return null;
+    var meta = (typeof getSDDMeta === 'function') ? getSDDMeta(String(card.itemId)) : null;
+    if (!meta) return null;
+    if (meta.contentType === 'procedure' && typeof getSDDDisplayCode === 'function') return getSDDDisplayCode(meta);
+    return meta.number != null ? String(meta.number) : (meta.title ? _escItemLabel(meta.title) : null);
+  }
+
   function showFlashCard(index) {
     var s = _flashSession; if (!s) return;
     if (index >= s.cards.length) { showFlashEndScreen(s.results); return; }
@@ -36356,8 +36981,16 @@ saveBtn.innerHTML =
     if (s.mode === 'modal') {
       var _lab = document.getElementById('flashSessSpeLabel');
       if (_lab) { _lab.style.display = 'inline-flex'; _lab.style.background = cfg.color; _lab.innerHTML = '<i class="fas ' + cfg.icon + '"></i><span class="flash-spe-chip-short">' + plain(speShort(card.speId)) + '</span><span class="flash-spe-chip-name">' + plain(speName(card.speId)) + '</span>'; }
+      var _itemLab = document.getElementById('flashSessItemLabel');
+      if (_itemLab) {
+        var _itemTxt = _flashSessionItemLabel(card);
+        if (_itemTxt) { _itemLab.style.display = 'inline-flex'; _itemLab.textContent = _itemTxt; _itemLab.title = _itemTxt; }
+        else { _itemLab.style.display = 'none'; _itemLab.textContent = ''; _itemLab.removeAttribute('title'); }
+      }
     }
     if (!e.stage) return;
+    var _inlineItemTxt = _flashSessionItemLabel(card);
+    var _inlineItemChip = _inlineItemTxt ? '<span class="flash-item-chip" title="' + _escItemLabel(_inlineItemTxt) + '">' + _escItemLabel(_inlineItemTxt) + '</span>' : '';
     e.stage.innerHTML =
       ((s.mode === 'inline') ?
         '<div class="flash-inline-spe-row">' +
@@ -36370,6 +37003,7 @@ saveBtn.innerHTML =
             '<span class="flash-spe-chip-short">' + plain(speShort(card.speId)) + '</span>' +
             '<span class="flash-spe-chip-name">' + plain(speName(card.speId)) + '</span>' +
           '</div>' +
+          _inlineItemChip +
 
         '</div>'
       : '') +
@@ -36407,6 +37041,8 @@ saveBtn.innerHTML =
     // Récap : la pastille de matière du header disparaît (elle reste visible pendant les cartes)
     var _spLabEnd = document.getElementById('flashSessSpeLabel');
     if (_spLabEnd) _spLabEnd.style.display = 'none';
+    var _itemLabEnd = document.getElementById('flashSessItemLabel');
+    if (_itemLabEnd) _itemLabEnd.style.display = 'none';
     if (e.shuffle) e.shuffle.style.display = 'none';   // session terminée : plus de bascule Mélangé/Par matière
     if (e.progress) e.progress.style.width='100%';
     if (e.counter) e.counter.textContent='Terminé';
@@ -36452,6 +37088,95 @@ saveBtn.innerHTML =
     if (e && e.target && e.target.closest && e.target.closest('.flash-drawer') && e.target.id !== 'flashDrawerOverlay') return;
     var ov=document.getElementById('flashDrawerOverlay'); if(ov) ov.classList.remove('active'); _unlockBody('flashDrawer');
   }
+  // ── Filtre par SDD dans Session Flash (par matière, sur demande explicite) ──
+  // null = toutes les cartes de la matière ; sinon, tableau des clés de SDD
+  // autorisées, '__none__' pour "Non classé". Port depuis TableurEnLigne.html.
+  var _flashDrawerItemFilter = {};
+  var _flashDrawerActiveMode = null; // 'all' | 'due' | null
+
+  function _flashDrawerItemGroups(speId, cards) {
+    var groups = {}; var noneKey = '__none__';
+    cards.forEach(function (c) {
+      var raw = (c.itemId == null || c.itemId === '') ? null : String(c.itemId);
+      var info = raw != null ? ((typeof getSDDMeta === 'function') ? getSDDMeta(raw) : null) : null;
+      var key = (raw != null && info) ? raw : noneKey;
+      if (!groups[key]) groups[key] = { info: (key === noneKey ? null : info), count: 0, due: 0 };
+      groups[key].count++;
+      if (isDue(c)) groups[key].due++;
+    });
+    var keys = Object.keys(groups).filter(function (k) { return k !== noneKey; }).sort(function (a, b) {
+      var na = parseInt(groups[a].info && groups[a].info.number, 10);
+      var nb = parseInt(groups[b].info && groups[b].info.number, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1; if (!isNaN(nb)) return 1;
+      return String(a).localeCompare(String(b));
+    });
+    if (groups[noneKey]) keys.unshift(noneKey);
+    return keys.map(function (k) {
+      return { key: k, label: k === noneKey ? 'Non classé' : (_flashItemGroupLabel(groups[k].info) || 'Non classé'), count: groups[k].count, due: groups[k].due };
+    });
+  }
+
+  function _flashDrawerCardMatchesFilter(speId, card) {
+    var filter = _flashDrawerItemFilter[speId];
+    if (!filter) return true;
+    var raw = (card.itemId == null || card.itemId === '') ? null : String(card.itemId);
+    var info = raw != null ? ((typeof getSDDMeta === 'function') ? getSDDMeta(raw) : null) : null;
+    var key = (raw != null && info) ? raw : '__none__';
+    return filter.indexOf(key) !== -1;
+  }
+
+  function _flashDrawerToggleSpecialty(speId) {
+    var row = document.querySelector('.flash-drawer-item[data-spe="' + speId + '"]');
+    if (!row) return;
+    var checkbox = row.querySelector('input[type="checkbox"]');
+    var isChecked = !!(checkbox && checkbox.checked);
+    row.classList.toggle('is-checked', isChecked);
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (sub) sub.classList.toggle('open', isChecked);
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = null;
+    _flashUpdateModeButtons();
+  }
+
+  function _flashDrawerSetMode(speId, mode) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    sub.querySelectorAll('.flash-drawer-mode-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
+    var itemList = sub.querySelector('.flash-drawer-item-list');
+    if (mode === 'all') {
+      _flashDrawerItemFilter[speId] = null;
+      if (itemList) itemList.classList.remove('open');
+    } else {
+      if (!_flashDrawerItemFilter[speId]) {
+        var all = [];
+        if (itemList) itemList.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; all.push(cb.value); });
+        _flashDrawerItemFilter[speId] = all;
+      }
+      if (itemList) itemList.classList.add('open');
+    }
+    updateFlashDrawerCount();
+  }
+
+  function _flashDrawerItemToggled(speId) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    var checked = [];
+    sub.querySelectorAll('.flash-drawer-item-list input[type="checkbox"]:checked').forEach(function (cb) { checked.push(cb.value); });
+    _flashDrawerItemFilter[speId] = checked;
+    updateFlashDrawerCount();
+  }
+
+  function _flashDrawerSyncItemCheckboxes(speId) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    var filter = _flashDrawerItemFilter[speId];
+    if (!filter) return;
+    sub.querySelectorAll('.flash-drawer-item-list input[type="checkbox"]').forEach(function (cb) {
+      cb.checked = filter.indexOf(cb.value) !== -1;
+    });
+  }
+
   function renderFlashDrawerList() {
     var list = document.getElementById('flashDrawerList'); if (!list) return;
     if (!isOnline()) { list.innerHTML='<div class="flash-offline-note"><i class="fas fa-wifi"></i>Disponible en ligne uniquement.</div>'; updateFlashDrawerCount(); return; }
@@ -36467,29 +37192,111 @@ saveBtn.innerHTML =
         var cards=byspe[id]; var due=cards.filter(isDue).length; var cfg=speCfg(id);
 		var btxt=cards.length+' carte'+(cards.length>1?'s':'');
 		var dueBadge=due>0?('<span class="flash-drawer-count-badge due">'+due+' due'+(due>1?'s':'')+'</span>'):'';
-        return '<label class="flash-drawer-item" data-spe="' + id + '" data-due="' + due + '">' +
-          '<input type="checkbox" ' + (due>0?'checked':'') + ' onchange="window._flashDrawerChanged()">' +
+        var isChecked = due > 0;
+        var itemGroups = _flashDrawerItemGroups(id, cards);
+        var itemListHtml = itemGroups.map(function (g) {
+          var itemDueBadge = g.due > 0 ? '<span class="flash-drawer-sub-item-due">' + g.due + ' due' + (g.due > 1 ? 's' : '') + '</span>' : '';
+          return '<label class="flash-drawer-sub-item">' +
+              '<input type="checkbox" value="' + g.key.replace(/"/g, '&quot;') + '" checked onchange="window._flashDrawerItemToggled(\'' + id + '\')">' +
+              '<span class="flash-drawer-sub-item-label">' + g.label + '</span>' +
+              itemDueBadge +
+              '<span class="flash-drawer-sub-item-count">' + g.count + '</span>' +
+            '</label>';
+        }).join('');
+        var subPanel = '<div class="flash-drawer-sub' + (isChecked ? ' open' : '') + '" id="flashDrawerSub_' + id + '"><div class="flash-drawer-sub-inner">' +
+            '<div class="flash-drawer-mode-row">' +
+              '<button type="button" class="flash-drawer-mode-btn active" data-mode="all" onclick="window._flashDrawerSetMode(\'' + id + '\',\'all\')">Toutes les flashcards</button>' +
+              '<button type="button" class="flash-drawer-mode-btn" data-mode="pick" onclick="window._flashDrawerSetMode(\'' + id + '\',\'pick\')">Choisir des SDD</button>' +
+            '</div>' +
+            '<div class="flash-drawer-item-list">' + (itemListHtml || '<div class="flash-drawer-sub-empty">Aucune SDD trouvée.</div>') + '</div>' +
+          '</div></div>';
+        return '<div class="flash-drawer-row-wrap">' +
+          '<label class="flash-drawer-item' + (isChecked ? ' is-checked' : '') + '" data-spe="' + id + '" data-due="' + due + '">' +
+          '<input type="checkbox" ' + (isChecked?'checked':'') + ' onchange="window._flashDrawerToggleSpecialty(\'' + id + '\')">' +
           '<span class="flash-drawer-ico" style="background:' + cfg.color + ';"><i class="fas ' + cfg.icon + '"></i></span>' +
           '<span class="flash-drawer-name">' + plain(speName(id)) + '</span>' +
           dueBadge +
-          '<span class="flash-drawer-count-badge total">' + btxt + '</span></label>';
+          '<span class="flash-drawer-count-badge total">' + btxt + '</span></label>' +
+          subPanel +
+        '</div>';
       }).join('');
-      updateFlashDrawerCount();
+      _flashDrawerItemFilter = {};
+      selectDueFlashMatieres();
     });
   }
   function _items(){ return Array.prototype.slice.call(document.querySelectorAll('#flashDrawerList .flash-drawer-item')); }
-  function selectAllFlashMatieres(){ _items().forEach(function(it){ var c=it.querySelector('input'); if(c) c.checked=true; }); updateFlashDrawerCount(); }
-  function selectDueFlashMatieres(){ _items().forEach(function(it){ var c=it.querySelector('input'); if(c) c.checked=parseInt(it.getAttribute('data-due'),10)>0; }); updateFlashDrawerCount(); }
+  function _flashTotalDueCount() {
+    if (!_flashAllCache) return 0;
+    var total = 0;
+    Object.keys(_flashAllCache).forEach(function (id) { total += _flashAllCache[id].filter(isDue).length; });
+    return total;
+  }
+  function selectAllFlashMatieres(){
+    _items().forEach(function(it){
+      var c = it.querySelector('input');
+      if (!c) return;
+      var speId = it.getAttribute('data-spe');
+      c.checked = true;
+      window._flashDrawerToggleSpecialty(speId);
+      _flashDrawerSetMode(speId, 'all');
+    });
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = 'all';
+    _flashUpdateModeButtons();
+  }
+  function selectDueFlashMatieres(){
+    _items().forEach(function(it){
+      var c = it.querySelector('input');
+      if (!c) return;
+      var speId = it.getAttribute('data-spe');
+      var due = parseInt(it.getAttribute('data-due'), 10);
+      c.checked = due > 0;
+      window._flashDrawerToggleSpecialty(speId);
+      if (due > 0) {
+        var cardsForSpe = _flashAllCache[speId] || [];
+        var groups = _flashDrawerItemGroups(speId, cardsForSpe);
+        var dueKeys = groups.filter(function (g) { return g.due > 0; }).map(function (g) { return g.key; });
+        _flashDrawerItemFilter[speId] = dueKeys;
+        _flashDrawerSetMode(speId, 'pick');
+        _flashDrawerSyncItemCheckboxes(speId);
+      }
+    });
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = _flashTotalDueCount() > 0 ? 'due' : null;
+    _flashUpdateModeButtons();
+  }
+  function selectNoneFlashMatieres(){
+    _items().forEach(function(it){ var c=it.querySelector('input'); if(c){ c.checked=false; window._flashDrawerToggleSpecialty(it.getAttribute('data-spe')); } });
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = null;
+    _flashUpdateModeButtons();
+  }
+  function toggleSelectAllFlashMatieres() {
+    var items = _items();
+    var allChecked = items.length > 0 && items.every(function (it) { var c = it.querySelector('input'); return c && c.checked; });
+    if (allChecked) selectNoneFlashMatieres(); else selectAllFlashMatieres();
+  }
+  function _flashUpdateModeButtons() {
+    var allBtn = document.getElementById('flashSelectAllBtn');
+    var dueBtn = document.getElementById('flashSelectDueBtn');
+    if (allBtn) {
+      allBtn.classList.toggle('flash-drawer-action-active', _flashDrawerActiveMode === 'all');
+      var items = _items();
+      var allChecked = items.length > 0 && items.every(function (it) { var c = it.querySelector('input'); return c && c.checked; });
+      allBtn.innerHTML = allChecked ? '<i class="fas fa-square-check"></i> Tout désélectionner' : 'Tout sélectionner';
+    }
+    if (dueBtn) dueBtn.classList.toggle('flash-drawer-action-active', _flashDrawerActiveMode === 'due');
+  }
   function updateFlashDrawerCount() {
     var cnt=0;
-    if (_flashAllCache) _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=_flashAllCache[id]||[];var due=cards.filter(isDue);cnt+=due.length||cards.length;} });
+    if (_flashAllCache) _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=(_flashAllCache[id]||[]).filter(function(card){return _flashDrawerCardMatchesFilter(id,card);});var due=cards.filter(isDue);cnt+=due.length||cards.length;} });
     var el=document.getElementById('flashDrawerCount'); if(el) el.textContent=cnt+' carte'+(cnt!==1?'s':'')+' sélectionnée'+(cnt!==1?'s':'');
     var btn=document.getElementById('flashLaunchBtn'); if(btn) btn.disabled=cnt===0;
   }
   function launchMultiFlashSession() {
     if (!_flashAllCache) return;
     var collected=[];
-    _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=_flashAllCache[id]||[];var due=cards.filter(isDue);collected=collected.concat(due.length?due:cards);} });
+    _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=(_flashAllCache[id]||[]).filter(function(card){return _flashDrawerCardMatchesFilter(id,card);});var due=cards.filter(isDue);collected=collected.concat(due.length?due:cards);} });
     if (!collected.length) return;
     var ov=document.getElementById('flashDrawerOverlay'); if(ov) ov.classList.remove('active');
     _unlockBody('flashDrawer');
@@ -36519,6 +37326,11 @@ saveBtn.innerHTML =
   window.renderFlashDrawerList = renderFlashDrawerList;
   window.selectAllFlashMatieres = selectAllFlashMatieres;
   window.selectDueFlashMatieres = selectDueFlashMatieres;
+  window.selectNoneFlashMatieres = selectNoneFlashMatieres;
+  window.toggleSelectAllFlashMatieres = toggleSelectAllFlashMatieres;
+  window._flashDrawerToggleSpecialty = _flashDrawerToggleSpecialty;
+  window._flashDrawerSetMode = _flashDrawerSetMode;
+  window._flashDrawerItemToggled = _flashDrawerItemToggled;
   window.updateFlashDrawerCount = updateFlashDrawerCount;
   window.launchMultiFlashSession = launchMultiFlashSession;
   window.updateFlashGlobalCount = updateFlashGlobalCount;
@@ -36528,6 +37340,7 @@ saveBtn.innerHTML =
   window._flashEval = evaluateCard;
   window._flashQuit = quitFlashSession;
   window._flashNewCard = _flashNewCard;
+  window.openFlashEdit = openFlashEdit;
   window._flashEditCard = _flashEditCard;
   window._flashEditCurrentSessionCard = _flashEditCurrentSessionCard;
   window._flashSaveForm = _flashSaveForm;
@@ -36536,6 +37349,7 @@ saveBtn.innerHTML =
   window._flashDeleteCard = _flashDeleteCard;
   window._flashStartDue = _flashStartDue;
   window._flashStartAll = _flashStartAll;
+  window._flashStartItemGroup = _flashStartItemGroup;
   window._flashOpenReviewDrop = _flashOpenReviewDrop;
   window._flashCloseReviewDrop = _flashCloseReviewDrop;
   window._flashRedoFailed = _flashRedoFailed;
@@ -36551,6 +37365,7 @@ saveBtn.innerHTML =
   window._flashSetColor = _flashSetColor;
   window._flashSetHighlight = _flashSetHighlight;
   window.loadFlashCards = loadFlashCards;
+  window.unlinkFlashcardsFromItem = unlinkFlashcardsFromItem;
   window.loadAllDueFlashCards = loadAllDueFlashCards;
   window.saveFlashCard = saveFlashCard;
   window.deleteFlashCard = deleteFlashCard;
@@ -50408,9 +51223,31 @@ var LS_DATA  = 'tpx_' + APP + '_content';
         saveContent(); applyToGlobals(); rerender();
     }
 
-    function deleteSdd(id) {
+    async function deleteSdd(id) {
         var d = state.sdd.filter(function (x) { return x.id === id; })[0];
         if (!d) return;
+        // ── MISSION CORRECTIVE, points 2/3 : la déliaison des flashcards DOIT
+        //    réussir avant toute suppression réelle de la SDD — fail-closed.
+        //    Avant ce correctif, l'appel n'était pas attendu (fire-and-forget)
+        //    et ses erreurs se contentaient d'un catch vide : la SDD pouvait
+        //    donc être supprimée même si la déliaison avait échoué. Utilise la
+        //    première spécialité de la SDD (même choix que speId à la
+        //    création depuis les Notes) : c'est là qu'une éventuelle
+        //    flashcard aurait été créée. ──
+        if (typeof window.unlinkFlashcardsFromItem === 'function' && (d.specialties || [])[0]) {
+            try {
+                await window.unlinkFlashcardsFromItem(d.specialties[0], id);
+            } catch (e) {
+                console.warn('[TPXPerso] Déliaison des flashcards échouée — suppression de la SDD annulée :', e);
+                var _msg = 'Impossible de sécuriser les flashcards liées à cette SDD. La SDD n\'a pas été supprimée. Réessaie lorsque la connexion est disponible.';
+                if (typeof window.showToastNotification === 'function') {
+                    window.showToastNotification(_msg, 'warning');
+                } else {
+                    alert(_msg);
+                }
+                return; // NE PAS supprimer la SDD.
+            }
+        }
         if (isCustom()) { deleteEntryData((d.specialties || [])[0], id); purgeProgress([id]); }
         markDeleted(id);
         state.sdd = state.sdd.filter(function (x) { return x.id !== id; });
@@ -51089,7 +51926,7 @@ var LS_DATA  = 'tpx_' + APP + '_content';
                 if (filtered !== shortEl.value) shortEl.value = filtered;
             });
         }
-        setTimeout(function () { nameEl.focus(); }, 60);
+        setTimeout(function () { if (!window._tcNoAutoFocus) nameEl.focus(); }, 60);
 
         root.querySelector('#tpx-mat-ok').addEventListener('click', function () {
             var name = nameEl.value.trim();
@@ -51304,7 +52141,7 @@ var LS_DATA  = 'tpx_' + APP + '_content';
             /* À la création, le numéro proposé suit la matière choisie. */
             if (!it) numEl.value = nextItemNumber(v);
         });
-        setTimeout(function () { root.querySelector('#tpx-it-name').focus(); }, 60);
+        setTimeout(function () { if (!window._tcNoAutoFocus) root.querySelector('#tpx-it-name').focus(); }, 60);
 
         root.querySelector('#tpx-it-ok').addEventListener('click', function () {
             var nameEl = root.querySelector('#tpx-it-name');
@@ -51368,7 +52205,7 @@ var LS_DATA  = 'tpx_' + APP + '_content';
                 if (i === -1) picked.push(v); else picked.splice(i, 1);
             });
         });
-        setTimeout(function () { root.querySelector('#tpx-sdd-title').focus(); }, 60);
+        setTimeout(function () { if (!window._tcNoAutoFocus) root.querySelector('#tpx-sdd-title').focus(); }, 60);
 
         root.querySelector('#tpx-sdd-ok').addEventListener('click', function () {
             var title = root.querySelector('#tpx-sdd-title').value.trim();

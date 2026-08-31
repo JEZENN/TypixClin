@@ -17857,6 +17857,21 @@ window.TPXNotesPending = {
   padding: 0.25rem 0.7rem; border-radius: var(--border-radius-full);
   margin: 0 auto 0.5rem; max-width: fit-content;
 }
+/* ── Pastille item, à droite de la pastille matière (section 17) ──────────
+   Neutre (pas de couleur par matière, contrairement à .flash-spe-chip) —
+   c'est une info secondaire. Un nom custom long ne casse jamais la carte :
+   largeur maximale + ellipsis + tooltip natif sur survol (section 27). ── */
+.flash-item-chip {
+  display: inline-flex; align-items: center;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--gray-700); background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  padding: 0.25rem 0.65rem; border-radius: var(--border-radius-full);
+  max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: middle;
+}
+[data-theme="dark"] .flash-item-chip { color: #cbd5e1; background: rgba(148,163,184,0.15); border-color: #334155; }
+@media (max-width: 480px) { .flash-item-chip { max-width: 90px; font-size: 0.68rem; } }
 
 .flash-card-container { perspective: 1000px; width: 100%; position: relative; }
 /* PORTAGE ECOS → EDN : bouton crayon d'édition pendant une session */
@@ -17963,7 +17978,11 @@ window.TPXNotesPending = {
 /* ---- Drawer multi-matieres ---- */
 .flash-drawer-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  z-index: var(--z-modal); opacity: 0; visibility: hidden;
+  /* z-index dédié (pas --z-modal, à 300 — bien en dessous de la pastille
+     premium/essai à 1300, ce qui la laissait passer devant sur mobile).
+     Aligné sur la même famille que .flash-edit-overlay (10300) et
+     .flash-session-overlay (10250), définies plus bas dans ce fichier. */
+  z-index: 10200; opacity: 0; visibility: hidden;
   transition: opacity var(--transition-normal), visibility var(--transition-normal);
 }
 .flash-drawer-overlay.active { opacity: 1; visibility: visible; }
@@ -18018,6 +18037,11 @@ window.TPXNotesPending = {
 .flash-drawer-actions button:active { transform: translateY(0); box-shadow: none; }
 [data-theme="dark"] .flash-drawer-actions button { background:#0f172a; border-color:#334155; color:#cbd5e1; }
 [data-theme="dark"] .flash-drawer-actions button:hover { background: var(--primary); border-color: var(--primary); color:#fff; }
+/* État "tout sélectionné" du bouton bascule — rempli, pour indiquer l'état
+   actuel sans dépendre uniquement du changement de texte. */
+.flash-drawer-actions button.flash-drawer-action-active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
 .flash-drawer-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem; }
 .flash-drawer-item {
   display: flex; align-items: center; gap: 0.65rem;
@@ -18030,31 +18054,145 @@ window.TPXNotesPending = {
   border-color: var(--primary); background: rgba(59,130,246,0.04);
   box-shadow: 0 2px 8px rgba(59,130,246,0.12); transform: translateY(-1px);
 }
-.flash-drawer-item:has(input:checked):not(.disabled) {
+/* Mise en avant de la ligne cochée : pilotée par une classe JS (.is-checked),
+   posée en plus de :has() plutôt qu'à sa place — :has() n'est pas fiable sur
+   tous les navigateurs mobiles (déjà rencontré ailleurs dans ce fichier). */
+.flash-drawer-item:has(input:checked):not(.disabled),
+.flash-drawer-item.is-checked:not(.disabled) {
   border-color: var(--primary); background: rgba(59,130,246,0.06);
   box-shadow: 0 2px 8px rgba(59,130,246,0.1);
 }
 [data-theme="dark"] .flash-drawer-item { background:#0f172a; border-color:#334155; }
 [data-theme="dark"] .flash-drawer-item:hover:not(.disabled) { background:rgba(96,165,250,0.08); border-color:#3b82f6; }
-[data-theme="dark"] .flash-drawer-item:has(input:checked):not(.disabled) { background:rgba(96,165,250,0.1); border-color:#3b82f6; }
+[data-theme="dark"] .flash-drawer-item:has(input:checked):not(.disabled),
+[data-theme="dark"] .flash-drawer-item.is-checked:not(.disabled) { background:rgba(96,165,250,0.1); border-color:#3b82f6; }
 .flash-drawer-item.disabled { opacity: 0.45; cursor: not-allowed; }
-/* Custom checkbox */
-.flash-drawer-item input[type=checkbox] {
-  appearance: none; -webkit-appearance: none;
-  width: 18px; height: 18px; min-width: 18px; border-radius: 5px;
-  border: 2px solid var(--gray-300); background: var(--white);
-  cursor: pointer; position: relative; transition: all 0.18s ease;
+
+/* ── Sous-panneau par matière (filtre par item) ──────────────────────────
+   PAS de gap ici : un gap flex s'appliquerait TOUJOURS entre les deux
+   enfants, même quand .flash-drawer-sub est visuellement réduit à 0 (grid-
+   template-rows:0fr) — c'était la cause de l'espace résiduent visible entre
+   chaque matière même sous-panneau fermé. L'espacement, quand le
+   sous-panneau EST ouvert, vient de sa propre margin-top (.open ci-dessous). */
+.flash-drawer-row-wrap { display: flex; flex-direction: column; }
+/* Animation d'ouverture/fermeture : max-height 0→valeur large + overflow
+   hidden. Remplace une première tentative en grid-template-rows:0fr qui
+   laissait un espace résiduel visible (rendu non garanti selon navigateur) —
+   max-height:0 + overflow:hidden garantit une hauteur exactement nulle. */
+.flash-drawer-sub {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-top: 0;
+  transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease, margin-top 0.28s cubic-bezier(0.4,0,0.2,1);
+  margin-left: 1.6rem;
 }
-.flash-drawer-item input[type=checkbox]:checked {
-  background: var(--primary); border-color: var(--primary);
+.flash-drawer-sub.open { max-height: 600px; opacity: 1; margin-top: 0.35rem; }
+.flash-drawer-sub-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0.55rem 0.65rem;
+  border-left: 2px solid var(--gray-200);
+  display: flex; flex-direction: column; gap: 0.45rem;
 }
-.flash-drawer-item input[type=checkbox]:checked::after {
-  content: ''; position: absolute; left: 4px; top: 1px;
-  width: 6px; height: 10px; border: 2px solid #fff; border-top: none; border-left: none;
+[data-theme="dark"] .flash-drawer-sub-inner { border-color: #334155; }
+.flash-drawer-mode-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.flash-drawer-mode-btn {
+  border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600);
+  padding: 0.3rem 0.65rem; border-radius: var(--border-radius-full);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: all 0.15s ease;
+}
+.flash-drawer-mode-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+[data-theme="dark"] .flash-drawer-mode-btn { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+[data-theme="dark"] .flash-drawer-mode-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.flash-drawer-item-list {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 0.24s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease;
+}
+.flash-drawer-item-list.open { max-height: 180px; overflow-y: auto; opacity: 1; }
+.flash-drawer-sub-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.5rem; border-radius: 8px; cursor: pointer; user-select: none;
+  font-size: 0.78rem; color: var(--gray-700);
+  transition: background 0.15s ease;
+}
+.flash-drawer-sub-item:hover { background: rgba(59,130,246,0.06); }
+[data-theme="dark"] .flash-drawer-sub-item { color: #cbd5e1; }
+[data-theme="dark"] .flash-drawer-sub-item:hover { background: rgba(96,165,250,0.08); }
+/* Case à cocher personnalisée pour le choix d'items — même traitement que
+   .flash-drawer-item (appearance:none + coche dessinée en ::after), pas le
+   rendu natif du navigateur qui tranchait avec le reste du site. */
+.flash-drawer-sub-item input[type=checkbox],
+.flash-drawer-sub-item input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important; height: 16px !important; min-width: 16px !important;
+  border-radius: 4px !important;
+  border: 2px solid var(--gray-300) !important;
+  background-color: var(--white) !important;
+  background-image: none !important;
+  margin: 0 !important; padding: 0 !important;
+  cursor: pointer; position: relative; transition: all 0.15s ease;
+}
+.flash-drawer-sub-item input[type=checkbox]:checked,
+.flash-drawer-sub-item input[type="checkbox"]:checked {
+  background-color: var(--primary) !important; border-color: var(--primary) !important;
+}
+.flash-drawer-sub-item input[type=checkbox]:checked::after,
+.flash-drawer-sub-item input[type="checkbox"]:checked::after {
+  content: '' !important; display: block !important; position: absolute !important;
+  left: 4px; top: 0px; width: 4px; height: 9px;
+  border: solid #fff !important; border-width: 0 2px 2px 0 !important;
   transform: rotate(45deg);
 }
-[data-theme="dark"] .flash-drawer-item input[type=checkbox] { background:#1e293b; border-color:#475569; }
-[data-theme="dark"] .flash-drawer-item input[type=checkbox]:checked { background: var(--primary); border-color: var(--primary); }
+[data-theme="dark"] .flash-drawer-sub-item input[type=checkbox],
+[data-theme="dark"] .flash-drawer-sub-item input[type="checkbox"] { background-color:#1e293b !important; border-color:#475569 !important; }
+[data-theme="dark"] .flash-drawer-sub-item input[type=checkbox]:checked,
+[data-theme="dark"] .flash-drawer-sub-item input[type="checkbox"]:checked { background-color: var(--primary) !important; border-color: var(--primary) !important; }
+.flash-drawer-sub-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flash-drawer-sub-item-count { font-size: 0.68rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; }
+.flash-drawer-sub-item-due {
+  font-size: 0.66rem; font-weight: 800; color: var(--danger);
+  background: rgba(220,38,38,0.1); padding: 0.1rem 0.4rem; border-radius: 9999px;
+  flex-shrink: 0; white-space: nowrap;
+}
+[data-theme="dark"] .flash-drawer-sub-item-due { background: rgba(248,113,113,0.16); }
+.flash-drawer-sub-empty { font-size: 0.76rem; color: var(--gray-400); padding: 0.3rem 0.5rem; }
+/* Custom checkbox — !important volontaire : une règle non identifiée
+   quelque part écrasait le rendu personnalisé (coche invisible signalée),
+   sélecteur ciblé et non un reset global, donc sans risque de fuite. */
+.flash-drawer-item input[type=checkbox],
+.flash-drawer-item input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important; height: 18px !important; min-width: 18px !important;
+  border-radius: 5px !important;
+  border: 2px solid var(--gray-300) !important;
+  background-color: var(--white) !important;
+  background-image: none !important;
+  margin: 0 !important; padding: 0 !important;
+  cursor: pointer; position: relative; flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+.flash-drawer-item input[type=checkbox]:checked,
+.flash-drawer-item input[type="checkbox"]:checked {
+  background-color: var(--primary) !important; border-color: var(--primary) !important;
+}
+.flash-drawer-item input[type=checkbox]:checked::after,
+.flash-drawer-item input[type="checkbox"]:checked::after {
+  content: '' !important; display: block !important; position: absolute !important;
+  left: 5px; top: 1px; width: 5px; height: 10px;
+  border: solid #fff !important; border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg);
+}
+[data-theme="dark"] .flash-drawer-item input[type=checkbox],
+[data-theme="dark"] .flash-drawer-item input[type="checkbox"] { background-color:#1e293b !important; border-color:#475569 !important; }
+[data-theme="dark"] .flash-drawer-item input[type=checkbox]:checked,
+[data-theme="dark"] .flash-drawer-item input[type="checkbox"]:checked { background-color: var(--primary) !important; border-color: var(--primary) !important; }
 .flash-drawer-ico { width: 26px; height: 26px; border-radius: 7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; flex-shrink:0; }
 .flash-drawer-name { flex:1; min-width:0; font-size:0.84rem; font-weight:600; color: var(--gray-800); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .flash-drawer-count-badge { font-size:0.72rem; font-weight:700; }
@@ -18215,6 +18353,44 @@ window.TPXNotesPending = {
 }
 .flash-create-btn:hover { background: var(--accent); color:#fff; }
 [data-theme="dark"] .flash-create-btn { background: transparent; }
+
+/* ── Groupes matière→item (section 7/13/14) — en-tête compact sur UNE
+   seule ligne (titre tronqué + compteur + bouton session), plutôt que le
+   titre qui pouvait passer sur 2 lignes puis le bouton sur une 3e. ── */
+.flash-item-group { margin-bottom: 1.1rem; }
+.flash-item-group:last-child { margin-bottom: 0; }
+.flash-item-group-head {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+.flash-item-group-title {
+  font-size: 0.85rem; font-weight: 800; color: var(--gray-700);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="dark"] .flash-item-group-title { color: #e2e8f0; }
+.flash-item-group-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  font-size: 0.72rem; font-weight: 800; white-space: nowrap; flex-shrink: 0;
+  color: var(--primary); background: rgba(59,130,246,0.12);
+  border-radius: 9999px;
+}
+[data-theme="dark"] .flash-item-group-count { background: rgba(96,165,250,0.2); color: #93c5fd; }
+.flash-item-group-session-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(59,130,246,0.08); color: var(--primary); border: none;
+  padding: 0.35rem 0.65rem; border-radius: var(--border-radius-md);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  flex-shrink: 0; white-space: nowrap; transition: background var(--transition-fast);
+}
+.flash-item-group-session-btn:hover { background: rgba(59,130,246,0.16); }
+[data-theme="dark"] .flash-item-group-session-btn { background: rgba(59,130,246,0.16); }
+/* Sur mobile étroit, le libellé du bouton disparaît (icône seule) pour
+   laisser toute la place au titre — le compteur suffit à comprendre. */
+@media (max-width: 420px) {
+  .flash-item-group-session-btn .flash-item-group-session-btn-label { display: none; }
+  .flash-item-group-session-btn { padding: 0.4rem 0.55rem; }
+}
 
 .flash-card-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .flash-list-row {
@@ -18451,6 +18627,46 @@ window.TPXNotesPending = {
 .flash-edit-body .flash-rt-field { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; }
 .flash-edit-body .flash-rt-editor { flex: 1; min-height: 0; max-height: none; overflow-y: auto; scrollbar-gutter: stable; }
 .flash-edit-error { flex-shrink: 0; }
+
+/* ── Contexte item (lecture seule) — visible uniquement quand la flashcard
+   est créée depuis les Notes d'un item (section 4 : l'item est présélectionné
+   ET non modifiable dans ce contexte précis, pas de sélecteur à remplir). ── */
+.flash-form-item-context {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+.flash-form-item-context i { color: var(--primary); flex-shrink: 0; }
+[data-theme="dark"] .flash-form-item-context { background: rgba(59,130,246,0.14); color: #cbd5e1; }
+
+/* ── Sélecteur d'item (édition/création normale, section 10-12) — item
+   FACULTATIF, "Non classé" toujours proposé en premier. Dépend d'une
+   matière déjà fixée par le contexte (Cahier d'erreurs déjà ouvert pour
+   cette matière) : aucune incohérence matière/item possible (section 11),
+   pas de sélecteur de matière séparé à gérer ici. Réutilise .tpx-picker
+   (composant déjà utilisé ailleurs sur le site pour le choix de matière)
+   pour un rendu cohérent, plutôt qu'un <select> natif. ── */
+.flash-form-item-select-wrap { flex-shrink: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+/* Badge numéro dans chaque option du picker (avant le nom de l'item) —
+   même esprit que .tpx-spec-chip (pastille colorée devant le nom d'une
+   matière), en neutre puisqu'il n'y a pas de couleur par item. */
+.flash-item-picker-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 22px; padding: 0 5px;
+    border-radius: 7px; background: var(--tpx-accent-14, rgba(139,92,246,0.14));
+    color: var(--tpx-accent, #8b5cf6);
+    font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+}
+.flash-item-picker-badge-none { background: var(--gray-100); color: var(--gray-500); }
+[data-theme="dark"] .flash-item-picker-badge-none { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
 /* Boutons du modal edit : alignes sur le site, bleu (Annuler gris / Enregistrer bleu / Supprimer rouge) */
 .flash-form-save, .flash-form-cancel, .flash-form-del {
@@ -19171,8 +19387,8 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
       <button onclick="closeFlashDrawer()" aria-label="Fermer"><i class="fas fa-times"></i></button>
     </div>
     <div class="flash-drawer-actions">
-      <button onclick="selectAllFlashMatieres()">Tout sélectionner</button>
-      <button onclick="selectDueFlashMatieres()"><i class="fas fa-bolt"></i> Uniquement les dues</button>
+      <button id="flashSelectAllBtn" onclick="toggleSelectAllFlashMatieres()">Tout sélectionner</button>
+      <button id="flashSelectDueBtn" onclick="selectDueFlashMatieres()"><i class="fas fa-bolt"></i> Uniquement les dues</button>
     </div>
     <div class="flash-drawer-list" id="flashDrawerList"></div>
     <div class="flash-drawer-footer">
@@ -19191,6 +19407,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
       <span class="flash-session-counter" id="flashSessCounter">Carte 1 / 1</span>
       <div class="flash-session-topbar-right">
         <span class="flash-spe-chip flash-sess-spe-label" id="flashSessSpeLabel" style="display:none;"></span>
+        <span class="flash-item-chip" id="flashSessItemLabel" style="display:none;"></span>
         <button type="button" id="flashSessShuffle" class="seg-switch flash-shuffle-seg" style="display:none;" role="switch" aria-checked="true" onclick="window._flashToggleShuffle()">
           <span class="seg-thumb"></span>
           <span class="seg-opt seg-opt-left active" data-shuf="true"><i class="fas fa-random"></i><span>Mélangé</span></span>
@@ -19273,6 +19490,11 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
       </div>
     </div>
     <div class="flash-edit-body">
+      <div class="flash-form-item-context" id="flashFormItemContext" style="display:none;"></div>
+      <div class="flash-form-item-select-wrap" id="flashFormItemSelectWrap" style="display:none;">
+        <label class="flash-rt-label" id="flashFormItemPickerLabel"><i class="fas fa-tag"></i> Classement</label>
+        <div id="flashFormItemPicker"></div>
+      </div>
       <div class="flash-rt-field">
         <div class="flash-rt-label-row"><div class="flash-rt-label"><i class="fas fa-circle-question"></i> Recto (question)</div><span class="flash-char-count" id="flashRectoCharCount" aria-live="polite">0 / 500</span></div>
         <div class="flash-rt-editor" id="flashFormRecto" contenteditable="true" data-ph="Ex : Signes ECG du syndrome de WPW ?"
@@ -32138,6 +32360,23 @@ document.addEventListener('DOMContentLoaded', function() {
     font-family: var(--font-body);
     margin-left: 0;
 }
+/* Bouton Flashcard (header Notes) — même identité visuelle que le panneau
+   Flashcards existant (.spe-flash-panel-icon) : dégradé primary→accent,
+   icône éclair. Placé en premier dans le header (avant Ouvrir LISA). */
+.notes-action-btn.btn-flashcard {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+}
+.notes-action-btn.btn-flashcard i { color: #fff; }
+.notes-action-btn.btn-flashcard:hover { box-shadow: 0 4px 12px rgba(59,130,246,0.45); transform: translateY(-1px); }
+/* État "sauvegardé" bref après création réussie (section 6) — même logique
+   que le check du bouton Todo (notesAddToTodo), pas de nouvel état permanent :
+   le bouton redevient cliquable juste après, pour créer une autre carte. */
+.notes-action-btn.btn-flashcard.just-saved {
+    background: #10b981 !important;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.4) !important;
+}
 /* Expansion au survol uniquement sur devices avec hover réel (pas tactile) */
 @media (hover: hover) {
     .notes-action-btn:hover {
@@ -33915,6 +34154,24 @@ body.tc-kb-open-phone .flash-expand-btn {
 
             <!-- ══════════════ AOÛT 2026 (bis) ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon amber">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Flashcards améliorées 🃏</h4>
+                    <p>
+                        Les flashcards peuvent désormais être associées à un <strong>item</strong>
+                        et sont automatiquement regroupées par item dans le
+                        <strong>Cahier d'erreurs</strong>. Créez-en une directement depuis les
+                        <strong>notes d'un item</strong> (nouveau bouton dans l'en-tête), reclassez
+                        progressivement vos anciennes flashcards, et lancez une session ciblée sur
+                        un seul item d'un simple clic. Dans <strong>Session Flash</strong>, choisissez
+                        aussi précisément quels items réviser par matière.
+                    </p>
+                </div>
+            </div>
 
             <div class="whats-new-section">
                 <div class="whats-new-section-icon purple">
@@ -36306,6 +36563,44 @@ function notesAddToTodo() {
     }
 }
 
+// ── Bouton Flashcard du header Notes (section 2/3/4) ──────────────────
+// Ouvre le modal de création EXISTANT (openFlashEdit, système flashcards
+// partagé — section 5), avec la matière et l'item courants de la note déjà
+// ouverte, verrouillés (non modifiables dans ce contexte).
+function notesOpenFlashcard() {
+    var specialtyId = window._notesCurrentSpecialtyId;
+    var fc           = window._notesCurrentFc;
+    var num          = window._notesCurrentNum;
+    var name         = window._notesCurrentItemName;
+    if (!specialtyId || fc == null) return; // aucun item courant : rien à faire
+    if (typeof window.openFlashEdit !== 'function') return;
+    window.openFlashEdit(null, specialtyId, {
+        itemFc: fc,
+        itemNum: num,
+        itemName: name,
+        onSaved: notesFlashcardSavedFeedback
+    });
+}
+
+// Feedback de réussite (section 6) : même logique que notesAddToTodo — un
+// check bref (vert), affiché SEULEMENT après confirmation réelle de
+// sauvegarde (jamais avant, jamais de façon optimiste — appelé uniquement
+// depuis le .then() de saveFlashCard() dans _flashSaveForm()). Contrairement
+// au bouton Todo, le bouton Flashcard n'a pas d'état final différent : il
+// redevient identique à son état de départ, pour pouvoir créer une autre
+// carte pour le même item sans avoir à rouvrir les Notes.
+function notesFlashcardSavedFeedback() {
+    var btn = document.getElementById('notesFlashcardBtn');
+    if (!btn) return;
+    var prevHtml = btn.innerHTML;
+    btn.classList.add('just-saved');
+    btn.innerHTML = '<i class="fas fa-check"></i><span class="notes-btn-label">Ajoutée</span>';
+    setTimeout(function () {
+        btn.classList.remove('just-saved');
+        btn.innerHTML = prevHtml;
+    }, 1400);
+}
+
 
 
 function notesAskClear() {
@@ -36498,6 +36793,10 @@ function notesBuildOic(padded) {
 		<span class="notes-autosave-dot" id="notesAutosaveDot">
 		  <i id="notesAutosaveIcon" class="fas fa-sync-alt"></i>
 		</span>
+		<button class="notes-action-btn btn-flashcard" id="notesFlashcardBtn" onclick="notesOpenFlashcard()" title="Créer une flashcard pour cet item">
+		  <i class="fas fa-bolt"></i>
+		  <span class="notes-btn-label">Flashcard</span>
+		</button>
 		<button class="notes-action-btn btn-lisa" onclick="notesOpenLisa()">
 		  <i class="fas fa-book-open"></i>
 		  <span class="notes-btn-label">Ouvrir LISA</span>
@@ -46479,9 +46778,17 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   var _flashSession = null;
   var _flashFormCardId = null;
   var _flashFormSpeId = null;            /* PORTAGE: spé ciblée par le formulaire (peut différer du cahier en session) */
+  var _flashFormItemFc = null;           /* item verrouillé (création depuis Notes) — null = flashcard "Non classé" */
+  var _flashFormOnSaved = null;          /* callback optionnel après sauvegarde réussie (feedback bouton Notes) */
+  var _flashCloseGen = 0;                /* invalide un setTimeout de fermeture en attente si le modal est rouvert avant expiration */
   var _flashSessionEditCardId = null;    /* PORTAGE: id de la carte éditée pendant une session */
   var _flashAllCache = null;
   var _activeRT = null;
+  function _escItemLabel(s) {
+    var d = document.createElement('div');
+    d.textContent = String(s == null ? '' : s);
+    return d.innerHTML;
+  }
   /* ===== Limite de caractères des flashcards (recto/verso indépendants) ===== */
   var FLASHCARD_SIDE_LIMIT = 500;
   var _flashRectoEffLimit = FLASHCARD_SIDE_LIMIT;
@@ -46584,13 +46891,67 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   function _ref(b, id) { return b.doc(b.getDb(), 'users', b.getCurrentUser().uid, TPXC('FlashCards'), id); }
   function _all(snap) { var o=[]; snap.forEach(function(d){ var x=d.data(); x.id=d.id; o.push(x); }); return o; }
   function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
+  // ── Section 30 : suppression d'un item ≠ suppression de ses flashcards.
+  //    Un numéro d'item supprimé peut être réutilisé par un item DIFFÉRENT
+  //    créé plus tard dans la même matière (nextItemNumber() ne réserve pas
+  //    les numéros des items supprimés) — sans ce délien immédiat, les
+  //    anciennes flashcards se retrouveraient silencieusement associées au
+  //    nouvel item, sans rapport avec l'ancien. On délie donc IMMÉDIATEMENT
+  //    à la suppression, plutôt que de tenter de distinguer les deux items
+  //    a posteriori (impossible : ils partagent le même numéro). Les
+  //    flashcards elles-mêmes ne sont JAMAIS supprimées, seulement reclassées
+  //    en "Non classé" (itemId → null).
+  //    MISSION CORRECTIVE, points 2/3 : cette fonction doit désormais
+  //    RÉELLEMENT ÉCHOUER (promesse rejetée) si la lecture des flashcards ou
+  //    l'ÉCRITURE D'AU MOINS UNE carte échoue — jamais avaler l'erreur en
+  //    silence. C'est ce qui permet à deleteItem() (plus bas) d'attendre
+  //    cette confirmation avant de supprimer l'item : fail-closed, pas de
+  //    suppression d'item tant que la déliaison n'est pas prouvée réussie. ──
+  function unlinkFlashcardsFromItem(speId, itemFc) {
+    var b = fb(); if (!b || speId == null || itemFc == null) return Promise.resolve();
+    // ⚠️ Ne PAS réutiliser loadFlashCards() ici : elle avale ses propres
+    // erreurs de lecture en interne (retourne [] en cas d'échec réseau),
+    // ce qui ferait croire à tort qu'il n'y a "rien à délier" alors que la
+    // lecture a réellement échoué — exactement le contraire du fail-closed
+    // recherché. Requête directe, sans filet de sécurité, pour que toute
+    // erreur remonte fidèlement à l'appelant.
+    return b.getDocs(b.query(_col(b), b.where('speId', '==', speId))).then(_all).then(function (cards) {
+      var toUnlink = cards.filter(function (c) { return String(c.itemId) === String(itemFc); });
+      if (!toUnlink.length) return;
+      var _ts = (typeof b.serverTimestamp === 'function') ? b.serverTimestamp() : new Date().toISOString();
+      return Promise.all(toUnlink.map(function (c) {
+        return b.setDoc(_ref(b, c.id), { itemId: null, updatedAt: _ts }, { merge: true });
+        // Pas de .catch() ici : une écriture individuelle en échec doit faire
+        // rejeter tout Promise.all, remontant l'échec à l'appelant.
+      }));
+    });
+    // Pas de .catch() global non plus : on veut que l'appelant sache qu'on
+    // n'a PAS pu vérifier/délier, donc on laisse le rejet remonter.
+  }
   function loadAllDueFlashCards() { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('nextReview','<=',nowISO()))).then(_all).catch(function(e){console.warn(e);return[];}); }
   function loadAllFlashCards() { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(_col(b)).then(_all).catch(function(e){console.warn(e);return[];}); }
   function saveFlashCard(card) {
     var b=fb(); if(!b) return Promise.reject(new Error('offline'));
     var _ts = (typeof b.serverTimestamp === 'function') ? b.serverTimestamp() : new Date().toISOString();
-    if (card.id) return b.setDoc(_ref(b,card.id), { speId:card.speId, recto:card.recto, verso:card.verso, updatedAt:_ts }, {merge:true}).then(function(){return card.id;});
-    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), updatedAt:_ts, source:'manuel' };
+    if (card.id) {
+      // ── Édition : itemId n'est INCLUS dans l'écriture que si l'appelant l'a
+      //    explicitement fourni (reclassement volontaire, ex. gestionnaire de
+      //    cartes). Absent de `card` → absent de l'objet envoyé à Firestore →
+      //    merge:true ne touche PAS le champ existant. Une simple correction
+      //    de texte ne peut donc JAMAIS effacer silencieusement un classement
+      //    déjà en place, ni celui d'une ancienne carte sans itemId. ──
+      var _upd = { speId:card.speId, recto:card.recto, verso:card.verso, updatedAt:_ts };
+      if (Object.prototype.hasOwnProperty.call(card, 'itemId')) _upd.itemId = card.itemId;
+      return b.setDoc(_ref(b,card.id), _upd, {merge:true}).then(function(){return card.id;});
+    }
+    // ── Création : itemId toujours écrit explicitement (null si aucun
+    //    contexte item fourni) — "Non classé" par défaut, jamais absent ni
+    //    undefined, pour un modèle de données cohérent sur toutes les
+    //    NOUVELLES cartes (section 9). Les cartes déjà existantes créées
+    //    avant cette évolution restent, elles, sans ce champ — traitées de
+    //    façon identique ("Non classé") partout où le classement est lu. ──
+    var doc={ speId:card.speId, recto:card.recto, verso:card.verso, itemId:(card.itemId != null ? card.itemId : null),
+              interval:0, nextReview:nowISO(), lastReview:null, createdAt:nowISO(), updatedAt:_ts, source:'manuel' };
     return b.addDoc(_col(b), doc).then(function(r){return r.id;});
   }
   function deleteFlashCard(id) { var b=fb(); if(!b) return Promise.reject(new Error('offline')); return b.deleteDoc(_ref(b,id)); }
@@ -46692,17 +47053,93 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     }, 220);
   }
 
+  // ── Résolution d'un item (numéro + nom) à partir de speId+itemId ────────
+  // Fonctionne indifféremment en officiel ET en mode sur-mesure (section 18) :
+  // window.SPECIALTIES_DATA est déjà basculé vers le bon jeu de données par
+  // applyToGlobals() (module TPXPerso) selon le mode actif — aucune logique
+  // spécifique custom n'est nécessaire ici. Pour un item custom, fc === num
+  // (garanti par buildCustomEdn()), donc la même comparaison fonctionne pour
+  // les deux types d'item sans distinction.
+  function _flashFindItemInfo(speId, itemId) {
+    var SD = window.SPECIALTIES_DATA || [];
+    for (var i = 0; i < SD.length; i++) {
+      if (SD[i].id !== speId || !SD[i].items) continue;
+      for (var j = 0; j < SD[i].items.length; j++) {
+        if (String(SD[i].items[j].fc) === String(itemId)) return SD[i].items[j];
+      }
+      break;
+    }
+    return null; // item introuvable (supprimé sans déliaison, ancienne donnée…) : traité comme Non classé à l'affichage
+  }
+  // Libellé d'un groupe d'item — jamais "Item undefined/null/0" (section 22).
+  function _flashItemGroupLabel(info) {
+    if (!info) return null;
+    if (info.num != null && info.num !== '') return 'Item ' + info.num + (info.name ? ' — ' + _escItemLabel(info.name) : '');
+    return info.name ? _escItemLabel(info.name) : 'Item personnalisé';
+  }
+
   // ---------- Vue Gestion ----------
   function _buildFlashManageHTML(cards) {
     var due = cards.filter(isDue);
-    var rows = cards.map(function(c){
-      var st = statusInfo(c);
-      return '<div class="flash-list-row ' + st.cls + '" onclick="window._flashEditCard(\'' + c.id + '\')">' +
-        '<span class="flash-list-recto">' + plain(c.recto) + '</span>' +
-        '<span class="flash-list-status ' + st.cls + '"><i class="fas ' + st.icon + '"></i>' + st.txt + '</span>' +
-      '</div>';
+
+    // ── Groupement par item (section 7/13/14) ──────────────────────────
+    // Clé de groupe normalisée : null/undefined/'' -> "Non classé", même
+    // traitement pour les anciennes cartes SANS le champ itemId (section 8)
+    // et pour un itemId qui ne résout plus rien (item supprimé sans
+    // déliaison — filet de sécurité, jamais de groupe cassé affiché).
+    var groups = {};       // key -> { info, cards: [] }
+    var noneKey = '__none__';
+    cards.forEach(function (c) {
+      var raw = (c.itemId == null || c.itemId === '') ? null : String(c.itemId);
+      var info = raw != null ? _flashFindItemInfo(c.speId, raw) : null;
+      var key = (raw != null && info) ? raw : noneKey;
+      if (!groups[key]) groups[key] = { info: (key === noneKey ? null : info), cards: [] };
+      groups[key].cards.push(c);
+    });
+
+    // Ordre : Non classé en premier (section 7), puis items triés par
+    // numéro croissant quand c'est un nombre, sinon alphabétique en repli.
+    var orderedKeys = Object.keys(groups).filter(function (k) { return k !== noneKey; }).sort(function (a, b2) {
+      var na = parseInt(groups[a].info && groups[a].info.num, 10);
+      var nb = parseInt(groups[b2].info && groups[b2].info.num, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1;
+      if (!isNaN(nb)) return 1;
+      return String(a).localeCompare(String(b2));
+    });
+    if (groups[noneKey]) orderedKeys.unshift(noneKey);
+
+    function _rowsHtml(groupCards) {
+      return groupCards.map(function (c) {
+        var st = statusInfo(c);
+        return '<div class="flash-list-row ' + st.cls + '" onclick="window._flashEditCard(\'' + c.id + '\')">' +
+          '<span class="flash-list-recto">' + plain(c.recto) + '</span>' +
+          '<span class="flash-list-status ' + st.cls + '"><i class="fas ' + st.icon + '"></i>' + st.txt + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    var groupsHtml = orderedKeys.map(function (key) {
+      var g = groups[key];
+      var label = key === noneKey ? 'Non classé' : (_flashItemGroupLabel(g.info) || 'Non classé');
+      var count = g.cards.length;
+      // Session par item (section 15) : UNIQUEMENT les cartes de ce groupe,
+      // jamais mélangées avec un autre item — cf. _flashStartItemGroup.
+      // En-tête compact sur une seule ligne (titre tronqué + infobulle,
+      // plutôt que de passer sur 2-3 lignes pour un intitulé long).
+      return '<div class="flash-item-group">' +
+          '<div class="flash-item-group-head">' +
+            '<span class="flash-item-group-title" title="' + label.replace(/<[^>]*>/g, '') + '">' + (key === noneKey ? '<i class="fas fa-inbox"></i> ' : '') + label + '</span>' +
+            '<span class="flash-item-group-count" title="' + count + ' carte' + (count > 1 ? 's' : '') + '">' + count + '</span>' +
+            '<button class="flash-item-group-session-btn" onclick="window._flashStartItemGroup(\'' + String(key).replace(/'/g, "\\'") + '\')">' +
+              '<i class="fas fa-bolt"></i><span class="flash-item-group-session-btn-label">Réviser</span>' +
+            '</button>' +
+          '</div>' +
+          '<div class="flash-card-list">' + _rowsHtml(g.cards) + '</div>' +
+        '</div>';
     }).join('');
-    if (!cards.length) rows = '<div class="flash-empty"><i class="fas fa-layer-group"></i>Aucune carte pour cette matière.<br>Créez-en une pour commencer.</div>';
+
+    if (!cards.length) groupsHtml = '<div class="flash-empty"><i class="fas fa-layer-group"></i>Aucune carte pour cette matière.<br>Créez-en une pour commencer.</div>';
 
     var revBtn, reviewDropId = 'flashReviewDropMenu';
     if (due.length) {
@@ -46729,7 +47166,7 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
       '</div>' +
       '<div class="flash-manage-head"><span class="flash-manage-title">Toutes mes cartes (' + cards.length + ')</span>' +
         '<button class="flash-create-btn" onclick="window._flashNewCard()"><i class="fas fa-plus"></i> Créer</button></div>' +
-      '<div class="flash-card-list">' + rows + '</div>';
+      groupsHtml;
   }
 
   function renderFlashManageView(speId) {
@@ -46778,6 +47215,23 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (cardId) return 'flashcard_pending_' + uid + '_' + cardId;
     return 'flashcard_pending_' + uid + '_new_' + (speId || 'unknown');
   }
+  // ── MISSION CORRECTIVE, point 6 : le brouillon local doit aussi protéger
+  //    le classement (itemId), pas seulement recto/verso/speId. Réplique
+  //    EXACTEMENT la même logique que _flashSaveForm (dirty pour une
+  //    édition, toujours explicite pour une création) pour que la
+  //    restauration reproduise fidèlement ce qui aurait été enregistré. ──
+  function _flashComputeItemIdForDraft() {
+    if (!_flashFormCardId && _flashFormItemFc != null) {
+      return { has: true, value: _flashFormItemFc };
+    }
+    var _selWrap = document.getElementById('flashFormItemSelectWrap');
+    if (_selWrap && _selWrap.style.display !== 'none') {
+      if (!_flashFormCardId || _flashItemPickerDirty) {
+        return { has: true, value: _flashItemPickerValue ? _flashItemPickerValue : null };
+      }
+    }
+    return { has: false, value: undefined };
+  }
   function _flashReadDraft(cardId, speId) {
     try {
       var raw = localStorage.getItem(_flashDraftKey(cardId, speId));
@@ -46805,18 +47259,194 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     try {
       var _speId = _flashFormSpeId || window.speErrCurrentId;
       var _draftKey = _flashDraftKey(_flashFormCardId, _speId);
+      var _itemForDraft = _flashComputeItemIdForDraft();
       var _payload = JSON.stringify({
         recto: recto, verso: verso,
         speId: _speId,
-        savedAt: Date.now()
+        savedAt: Date.now(),
+        hasItemId: _itemForDraft.has,
+        itemId: _itemForDraft.has ? _itemForDraft.value : null
       });
       localStorage.setItem(_draftKey, _payload);
     } catch (e) {}
   });
-  function openFlashEdit(card, speIdOverride) {
+  // Peuple le sélecteur d'item pour une matière donnée (section 10/11/12).
+  // "Non classé" toujours en première option. Fonctionne pour officiel ET
+  // custom via SPECIALTIES_DATA (déjà basculé par applyToGlobals).
+  // ── Picker d'item personnalisé (correctif : remplace le <select> natif par
+  //    un composant réutilisant .tpx-picker, déjà utilisé ailleurs sur le
+  //    site pour le choix de matière — même style, même comportement
+  //    d'ouverture/fermeture, cohérent visuellement. ──
+  var _flashItemPickerValue = '';        // '' = Non classé — source de vérité lue par _flashSaveForm
+  var _flashItemPickerDocBound = false;  // le listener document (clic dehors -> ferme) n'est posé qu'une fois
+  // ── MISSION CORRECTIVE, point 7 : protection multi-onglets. Sans ce
+  //    suivi, une ÉDITION qui ne touche QUE le texte réécrivait quand même
+  //    itemId à chaque sauvegarde (avec la valeur affichée au moment de
+  //    l'ouverture du formulaire) — si un AUTRE onglet avait reclassé la
+  //    carte entre-temps, cette réécriture silencieuse effaçait son
+  //    changement. _flashItemPickerDirty ne passe à true QUE si
+  //    l'utilisateur clique réellement une option du picker ; _flashSaveForm
+  //    n'inclut alors itemId dans l'écriture QUE si dirty === true (édition)
+  //    — sinon le champ est omis, et merge:true préserve la valeur Firestore
+  //    actuelle, quelle qu'elle soit. ──
+  var _flashOriginalItemId = null;
+  var _flashItemPickerDirty = false;
+
+  function _flashItemPickerOptLabel(it) {
+    return (it.num != null && it.num !== '')
+      ? ('Item ' + it.num + (it.name ? ' — ' + it.name : ''))
+      : (it.name || 'Item personnalisé');
+  }
+
+  function _flashEnsureItemPickerDocListener() {
+    if (_flashItemPickerDocBound) return;
+    _flashItemPickerDocBound = true;
+    document.addEventListener('click', function (e) {
+      var box = document.getElementById('flashItemPickerBox');
+      if (!box || !box.classList.contains('open')) return;
+      if (!e.target.closest || !e.target.closest('#flashItemPickerBox')) {
+        box.classList.remove('open');
+        var btn = box.querySelector('.tpx-picker-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  function _flashBuildItemPicker(speId, selectedItemId) {
+    var host = document.getElementById('flashFormItemPicker');
+    if (!host) return;
+    var items = [];
+    var SD = window.SPECIALTIES_DATA || [];
+    for (var i = 0; i < SD.length; i++) {
+      if (SD[i].id === speId) { items = SD[i].items || []; break; }
+    }
+    _flashItemPickerValue = (selectedItemId != null && selectedItemId !== '') ? String(selectedItemId) : '';
+
+    var noneSel = !_flashItemPickerValue;
+    var currentFound = !noneSel && items.filter(function (it) { return String(it.fc) === _flashItemPickerValue; })[0];
+    // ── MISSION CORRECTIVE, point 5 : un itemId qui ne résout plus vers
+    //    aucun item réel (item supprimé sans déliaison, donnée historique...)
+    //    doit être traité comme RÉELLEMENT "Non classé", pas seulement à
+    //    l'affichage. Avant ce correctif, _flashItemPickerValue conservait
+    //    l'ID orphelin même quand "Non classé" était affiché — un
+    //    enregistrement sans toucher au picker aurait alors réécrit ce même
+    //    ID orphelin au lieu de null. ──
+    if (!noneSel && !currentFound) {
+      _flashItemPickerValue = '';
+      noneSel = true;
+    }
+    // Point 7 : "original" = la valeur RÉELLEMENT résolue (post-correctif
+    // orphelin ci-dessus), jamais l'ID brut potentiellement orphelin.
+    _flashOriginalItemId = _flashItemPickerValue;
+    _flashItemPickerDirty = false;
+    // ── Bouton fermé : toujours pastille numéro + titre seul, JAMAIS le
+    //    texte "Item X — Nom" concaténé (répétitif avec la pastille déjà
+    //    visible). Une valeur sélectionnée mais introuvable (item supprimé
+    //    sans déliaison) retombe visuellement sur "Non classé". ──
+    var currentBadgeHtml, currentName;
+    if (currentFound) {
+      var curBadge = (currentFound.num != null && currentFound.num !== '') ? _escItemLabel(String(currentFound.num)) : '<i class="fas fa-star"></i>';
+      currentBadgeHtml = '<span class="flash-item-picker-badge">' + curBadge + '</span>';
+      currentName = _escItemLabel(currentFound.name || 'Item personnalisé');
+    } else {
+      currentBadgeHtml = '<span class="flash-item-picker-badge flash-item-picker-badge-none"><i class="fas fa-inbox"></i></span>';
+      currentName = 'Non classé';
+    }
+
+    var optionsHtml =
+      '<div class="tpx-picker-opt' + (noneSel ? ' selected' : '') + '" role="option" data-value="">' +
+        '<span class="flash-item-picker-badge flash-item-picker-badge-none"><i class="fas fa-inbox"></i></span>' +
+        '<span class="tpx-picker-name">Non classé</span>' +
+        '<i class="fas fa-check tpx-picker-tick"></i>' +
+      '</div>' +
+      items.map(function (it) {
+        var isSel = _flashItemPickerValue === String(it.fc);
+        var badge = (it.num != null && it.num !== '') ? _escItemLabel(String(it.num)) : '<i class="fas fa-star"></i>';
+        return '<div class="tpx-picker-opt' + (isSel ? ' selected' : '') + '" role="option" data-value="' + _escItemLabel(String(it.fc)) + '">' +
+            '<span class="flash-item-picker-badge">' + badge + '</span>' +
+            '<span class="tpx-picker-name">' + _escItemLabel(it.name || 'Item personnalisé') + '</span>' +
+            '<i class="fas fa-check tpx-picker-tick"></i>' +
+          '</div>';
+      }).join('');
+
+    host.innerHTML =
+      '<div class="tpx-picker" id="flashItemPickerBox">' +
+        '<button type="button" class="tpx-picker-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="flashFormItemPickerLabel">' +
+          '<span class="tpx-picker-current">' + currentBadgeHtml + '<span class="tpx-picker-name">' + currentName + '</span></span>' +
+          '<i class="fas fa-chevron-down tpx-picker-caret"></i>' +
+        '</button>' +
+        '<div class="tpx-picker-list" role="listbox">' + optionsHtml + '</div>' +
+      '</div>';
+
+    var box = host.querySelector('#flashItemPickerBox');
+    var btn = box.querySelector('.tpx-picker-btn');
+    var list = box.querySelector('.tpx-picker-list');
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var opening = !box.classList.contains('open');
+      box.classList.toggle('open', opening);
+      btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) {
+        var cur = list.querySelector('.tpx-picker-opt.selected');
+        if (cur) list.scrollTop = Math.max(0, cur.offsetTop - list.clientHeight / 2);
+      }
+    });
+    list.querySelectorAll('.tpx-picker-opt').forEach(function (opt) {
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        _flashItemPickerValue = opt.getAttribute('data-value') || '';
+        _flashItemPickerDirty = true; // l'utilisateur a réellement touché le picker (point 7)
+        list.querySelectorAll('.tpx-picker-opt').forEach(function (o) { o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        // ── Recopie directement la pastille + le nom de l'option cliquée
+        //    (même markup, jamais une reconstruction texte séparée) — garantit
+        //    que le bouton fermé reste TOUJOURS cohérent avec la liste. ──
+        var badgeEl = opt.querySelector('.flash-item-picker-badge');
+        var nameEl = opt.querySelector('.tpx-picker-name');
+        box.querySelector('.tpx-picker-current').innerHTML =
+          (badgeEl ? badgeEl.outerHTML : '') + '<span class="tpx-picker-name">' + (nameEl ? nameEl.innerHTML : '') + '</span>';
+        box.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+    _flashEnsureItemPickerDocListener();
+  }
+
+  function openFlashEdit(card, speIdOverride, itemCtx) {
+    _flashCloseGen++; // invalide un éventuel setTimeout de _flashCloseEdit encore en attente (réouverture rapide)
     _flashFormCardId = card ? card.id : null;
     _flashFormSpeId = speIdOverride || (card && card.speId) || window.speErrCurrentId || null;
     if (speIdOverride === undefined) _flashSessionEditCardId = null; // édition normale (gestionnaire)
+    // ── Contexte item (section 3/4) : uniquement fourni lors d'une création
+    //    depuis les Notes d'un item — jamais lors d'une édition normale
+    //    depuis le gestionnaire de cartes (card non-null), pour ne jamais
+    //    reclasser silencieusement une carte existante. ──
+    _flashFormItemFc = (!card && itemCtx && itemCtx.itemFc != null) ? itemCtx.itemFc : null;
+    _flashFormOnSaved = (itemCtx && typeof itemCtx.onSaved === 'function') ? itemCtx.onSaved : null;
+    var ctxEl = document.getElementById('flashFormItemContext');
+    var selWrap = document.getElementById('flashFormItemSelectWrap');
+    if (ctxEl) {
+        if (_flashFormItemFc != null && itemCtx) {
+            var _ctxLabel = itemCtx.itemNum != null
+                ? 'Item ' + itemCtx.itemNum + (itemCtx.itemName ? ' — ' + _escItemLabel(itemCtx.itemName) : '')
+                : _escItemLabel(itemCtx.itemName || 'Item personnalisé');
+            ctxEl.innerHTML = '<i class="fas fa-lock"></i><span>' + _ctxLabel + '</span>';
+            ctxEl.style.display = 'flex';
+            if (selWrap) selWrap.style.display = 'none'; // contexte verrouillé : pas de sélecteur (section 4)
+        } else {
+            ctxEl.style.display = 'none';
+            ctxEl.innerHTML = '';
+            // ── Création/édition normale (section 10-12) : sélecteur d'item,
+            //    facultatif, "Non classé" toujours disponible en premier.
+            //    Pré-sélectionne le classement actuel si on édite une carte. ──
+            if (selWrap && _flashFormSpeId) {
+                selWrap.style.display = 'flex';
+                _flashBuildItemPicker(_flashFormSpeId, card ? card.itemId : null);
+            } else if (selWrap) {
+                selWrap.style.display = 'none';
+            }
+        }
+    }
     var t = document.getElementById('flashEditTitle'); if (t) t.textContent = card ? 'Modifier la carte' : 'Nouvelle carte';
     var sv = document.getElementById('flashEditSaveBtn'); if (sv) sv.innerHTML = '<i class="fas fa-check"></i> ' + (card ? 'Enregistrer' : 'Créer');
     var del = document.getElementById('flashEditDelBtn'); if (del) del.style.display = card ? 'inline-flex' : 'none';
@@ -46852,6 +47482,21 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (_restoreDraft) {
       if (r) r.innerHTML = sanit(_draft.recto || '');
       if (v) v.innerHTML = sanit(_draft.verso || '');
+      // ── Point 6 : restaurer aussi le classement du brouillon, si le
+      //    sélecteur est visible dans ce contexte (jamais en création
+      //    verrouillée depuis Notes, qui impose déjà son propre itemId —
+      //    point 8, inchangé). Réutilise le clic natif sur l'option
+      //    correspondante plutôt que de dupliquer sa logique : garantit que
+      //    _flashItemPickerValue, _flashItemPickerDirty et l'affichage du
+      //    bouton fermé restent parfaitement cohérents entre eux. ──
+      if (_draft.hasItemId) {
+        var _selWrapRestore = document.getElementById('flashFormItemSelectWrap');
+        if (_selWrapRestore && _selWrapRestore.style.display !== 'none') {
+          var _restoredValue = (_draft.itemId != null && _draft.itemId !== '') ? String(_draft.itemId) : '';
+          var _optToSelect = document.querySelector('#flashItemPickerBox .tpx-picker-opt[data-value="' + _restoredValue.replace(/"/g, '\\"') + '"]');
+          if (_optToSelect) _optToSelect.click();
+        }
+      }
       if (typeof window.showToastNotification === 'function') {
         window.showToastNotification('Une modification non sauvegardée a été restaurée.', 'warning');
       }
@@ -46878,6 +47523,26 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   function _flashCloseEdit() {
     var ov = document.getElementById('flashEditOverlay'); if (ov) ov.classList.remove('active');
     _flashFormCardId = null; _activeRT = null; _editErr('');
+    _flashFormItemFc = null; _flashFormOnSaved = null;
+    // ── Le modal se referme avec un fondu de 300ms (--transition-normal).
+    //    Masquer immédiatement le pill/sélecteur d'item créait un décalage
+    //    visuel : cette partie disparaissait d'un coup, avant le reste du
+    //    modal qui continuait de s'estomper progressivement. On attend donc
+    //    la fin de l'animation avant de les réinitialiser — invisible pour
+    //    l'utilisateur (le modal est déjà masqué à ce moment), mais sans
+    //    saut brutal PENDANT le fondu.
+    //    _flashCloseGen protège contre une réouverture très rapide (avant
+    //    la fin des 300ms) : sans ce garde-fou, ce setTimeout pourrait
+    //    s'exécuter APRÈS qu'openFlashEdit ait déjà configuré le nouveau
+    //    contexte, et l'écraser par erreur. ──
+    var myGen = ++_flashCloseGen;
+    setTimeout(function () {
+      if (myGen !== _flashCloseGen) return; // le modal a été rouvert entre-temps
+      var ctxEl = document.getElementById('flashFormItemContext');
+      if (ctxEl) { ctxEl.style.display = 'none'; ctxEl.innerHTML = ''; }
+      var selWrap = document.getElementById('flashFormItemSelectWrap');
+      if (selWrap) selWrap.style.display = 'none';
+    }, 300);
   }
   var _flashEditPointerStartedInside = false;
 
@@ -46921,12 +47586,39 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…'; }
     var speId = _flashFormSpeId || window.speErrCurrentId;
     var card = { id:_flashFormCardId, speId:speId, recto:sanit(r.innerHTML), verso:sanit(v.innerHTML) };
+    // ── Classement (section 4/9/12, + point 7 de la mission corrective) ────
+    // Trois chemins mutuellement exclusifs (jamais deux à la fois — cf.
+    // openFlashEdit qui affiche l'un OU l'autre, jamais les deux) :
+    //  1. Contexte verrouillé (création depuis Notes) : itemId vient de
+    //     _flashFormItemFc, TOUJOURS explicite (points 8) — jamais à
+    //     l'édition (ce chemin n'est utilisé qu'à la création, card=null).
+    //  2. Sélecteur normal, CRÉATION (gestionnaire) : itemId TOUJOURS
+    //     explicite (point 9 — "Non classé" doit écrire itemId:null pour
+    //     une nouvelle carte, jamais l'omettre).
+    //  3. Sélecteur normal, ÉDITION d'une carte existante : itemId
+    //     UNIQUEMENT si l'utilisateur a RÉELLEMENT touché le picker
+    //     (_flashItemPickerDirty). Sinon, le champ est omis — merge:true
+    //     préserve alors la valeur Firestore actuelle telle quelle, même si
+    //     un autre onglet l'a changée entre-temps (protection multi-onglets).
+    if (!_flashFormCardId && _flashFormItemFc != null) {
+        card.itemId = _flashFormItemFc;
+    } else {
+        var _selWrap = document.getElementById('flashFormItemSelectWrap');
+        if (_selWrap && _selWrap.style.display !== 'none') {
+            if (!_flashFormCardId || _flashItemPickerDirty) {
+                card.itemId = _flashItemPickerValue ? _flashItemPickerValue : null;
+            }
+            // sinon (édition, jamais touché) : itemId omis volontairement.
+        }
+    }
+    var _onSavedCb = _flashFormOnSaved;
     var sessionEditId = _flashSessionEditCardId;
     // 🔒 Brouillon local écrit AVANT la tentative Firestore : ne bloque
     // jamais l'envoi, et reste en place si la sauvegarde échoue.
     var _draftKey = _flashDraftKey(_flashFormCardId, speId);
     try {
-      var _draftPayload = JSON.stringify({ recto: card.recto, verso: card.verso, speId: card.speId, savedAt: Date.now() });
+      var _hasItemIdForDraft = Object.prototype.hasOwnProperty.call(card, 'itemId');
+      var _draftPayload = JSON.stringify({ recto: card.recto, verso: card.verso, speId: card.speId, savedAt: Date.now(), hasItemId: _hasItemIdForDraft, itemId: _hasItemIdForDraft ? card.itemId : null });
       if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
         window.TPXSafeStore.set(_draftKey, _draftPayload);
       } else {
@@ -46941,7 +47633,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
       if (sessionEditId && _flashSession) {
         var arr = _flashSession.cards || [];
         for (var i = 0; i < arr.length; i++) {
-          if (arr[i].id === sessionEditId) { arr[i].recto = card.recto; arr[i].verso = card.verso; arr[i].speId = card.speId; break; }
+          if (arr[i].id === sessionEditId) { arr[i].recto = card.recto; arr[i].verso = card.verso; arr[i].speId = card.speId; if (Object.prototype.hasOwnProperty.call(card, 'itemId')) arr[i].itemId = card.itemId; break; }
         }
         if (_flashSession.cards[_flashSession.idx] && _flashSession.cards[_flashSession.idx].id === sessionEditId) {
           var front = document.querySelector('#speFlashCard .flash-card-face.front');
@@ -46951,6 +47643,15 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
         }
       }
       if (btn) { btn.disabled = false; btn.innerHTML = prevHtml; }
+      // Feedback (section 6) : uniquement après succès RÉELLEMENT confirmé
+      // par saveFlashCard() (dans ce .then), jamais de façon optimiste.
+      if (_onSavedCb) { try { _onSavedCb(); } catch (e) {} }
+      // ── Correctif : la bordure du bouton Cahier d'erreurs (.spe-err-btn.has-content)
+      //    n'était rafraîchie qu'à la FERMETURE du panneau Cahier d'erreurs
+      //    (wrapClose) — jamais depuis la création d'une flashcard via Notes,
+      //    qui ne passe pas par ce panneau. On rafraîchit ici directement,
+      //    après CHAQUE création réussie, quel que soit le point d'entrée. ──
+      if (window._flashRefreshSpeMarks) { try { window._flashRefreshSpeMarks(); } catch (e) {} }
       _flashCloseEdit();
       if (sessionEditId) { _flashShowEditSaved(); }
       // Rafraîchir le gestionnaire si présent (idempotent)
@@ -46998,6 +47699,26 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
 
   function _flashStartDue() { var host=document.getElementById('speFlashView_manage'); var cards=host&&host._cards?host._cards.filter(isDue):[]; if(cards.length) startFlashSession(cards,{multi:false}); }
   function _flashStartAll() { var host=document.getElementById('speFlashView_manage'); var cards=host&&host._cards?host._cards.slice():[]; if(cards.length) startFlashSession(cards,{multi:false}); }
+  // ── Session par item (section 15) : UNIQUEMENT les cartes de ce groupe
+  //    précis, jamais mélangées avec un autre item. Réutilise startFlashSession
+  //    telle quelle (section 5) — même moteur que "Réviser tout"/"Dues", pas
+  //    de nouveau système. Miroir exact de la normalisation de groupe faite
+  //    dans _buildFlashManageHTML, pour que le clic corresponde toujours
+  //    précisément à ce que l'utilisateur voit affiché. ──
+  function _flashStartItemGroup(key) {
+    var host = document.getElementById('speFlashView_manage');
+    var allCards = host && host._cards ? host._cards : [];
+    var filtered;
+    if (key === '__none__') {
+      filtered = allCards.filter(function (c) {
+        if (c.itemId == null || c.itemId === '') return true;
+        return !_flashFindItemInfo(c.speId, String(c.itemId)); // orphelin -> traité comme Non classé, cohérent avec l'affichage
+      });
+    } else {
+      filtered = allCards.filter(function (c) { return c.itemId != null && String(c.itemId) === String(key); });
+    }
+    if (filtered.length) startFlashSession(filtered, { multi: false });
+  }
   function _flashOpenReviewDrop(e, id) {
     e.stopPropagation();
     var drop = document.getElementById(id); if (!drop) return;
@@ -47090,6 +47811,18 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     }
     showFlashCard(s.idx);
   }
+  // Libellé compact pour la pastille item pendant une session (section 17) :
+  // juste le numéro pour un item avec numéro, le nom pour un item custom
+  // sans numéro, rien pour "Non classé" (section 17 laisse ce choix — retenu
+  // pour rester sobre). Item introuvable (orphelin) traité comme Non classé.
+  function _flashSessionItemLabel(card) {
+    if (card.itemId == null || card.itemId === '') return null;
+    var info = _flashFindItemInfo(card.speId, String(card.itemId));
+    if (!info) return null;
+    if (info.num != null && info.num !== '') return String(info.num);
+    return info.name ? _escItemLabel(info.name) : null;
+  }
+
   function showFlashCard(index) {
     var s = _flashSession; if (!s) return;
     if (index >= s.cards.length) { showFlashEndScreen(s.results); return; }
@@ -47100,10 +47833,18 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     if (s.mode === 'modal') {
       var _lab = document.getElementById('flashSessSpeLabel');
       if (_lab) { _lab.style.display = 'inline-flex'; _lab.style.background = cfg.color; _lab.innerHTML = '<i class="fas ' + cfg.icon + '"></i><span class="flash-spe-chip-short">' + plain(speShort(card.speId)) + '</span><span class="flash-spe-chip-name">' + plain(speName(card.speId)) + '</span>'; }
+      var _itemLab = document.getElementById('flashSessItemLabel');
+      if (_itemLab) {
+        var _itemTxt = _flashSessionItemLabel(card);
+        if (_itemTxt) { _itemLab.style.display = 'inline-flex'; _itemLab.textContent = _itemTxt; _itemLab.title = _itemTxt; }
+        else { _itemLab.style.display = 'none'; _itemLab.textContent = ''; _itemLab.removeAttribute('title'); }
+      }
     }
     if (!e.stage) return;
+    var _inlineItemTxt = _flashSessionItemLabel(card);
+    var _inlineItemChip = _inlineItemTxt ? '<span class="flash-item-chip" title="' + _escItemLabel(_inlineItemTxt) + '">' + _escItemLabel(_inlineItemTxt) + '</span>' : '';
     e.stage.innerHTML =
-      ((s.multi && s.mode === 'inline') ? '<div class="flash-spe-chip" style="background:' + cfg.color + ';"><i class="fas ' + cfg.icon + '"></i><span class="flash-spe-chip-short">' + plain(speShort(card.speId)) + '</span><span class="flash-spe-chip-name">' + plain(speName(card.speId)) + '</span></div>' : '') +
+      ((s.multi && s.mode === 'inline') ? '<div class="flash-spe-chip" style="background:' + cfg.color + ';"><i class="fas ' + cfg.icon + '"></i><span class="flash-spe-chip-short">' + plain(speShort(card.speId)) + '</span><span class="flash-spe-chip-name">' + plain(speName(card.speId)) + '</span></div>' + _inlineItemChip : '') +
       '<div class="flash-card-container"><div class="flash-card" id="speFlashCard">' +
         '<div class="flash-card-face front">' + sanit(card.recto) + '</div>' +
         '<div class="flash-card-face back">' + sanit(card.verso) + '</div>' +
@@ -47131,6 +47872,8 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     // Récap : la pastille de matière du header disparaît (elle reste visible pendant les cartes)
     var _spLabEnd = document.getElementById('flashSessSpeLabel');
     if (_spLabEnd) _spLabEnd.style.display = 'none';
+    var _itemLabEnd = document.getElementById('flashSessItemLabel');
+    if (_itemLabEnd) _itemLabEnd.style.display = 'none';
     if (e.shuffle) e.shuffle.style.display = 'none';   // récap : plus de bascule Mélangé / Par matière
     if (e.progress) e.progress.style.width='100%';
     if (e.counter) e.counter.textContent='Terminé';
@@ -47191,29 +47934,243 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
         var cards=byspe[id]; var due=cards.filter(isDue).length; var cfg=speCfg(id);
         var bcls=due>0?'due':'none'; var btxt=cards.length+' carte'+(cards.length>1?'s':'');
         var dueBadge=due>0?('<span class="flash-drawer-count-badge due">'+due+' due'+(due>1?'s':'')+'</span>'):'';
-        return '<label class="flash-drawer-item" data-spe="' + id + '" data-due="' + due + '">' +
-          '<input type="checkbox" ' + (due>0?'checked':'') + ' onchange="window._flashDrawerChanged()">' +
+        var isChecked = due > 0;
+        // ── Sous-panneau par matière : "Toutes les flashcards" (par défaut) /
+        //    "Choisir des items" (dont Non classé). Replié si la matière n'est
+        //    pas cochée, déplié dès qu'elle l'est ("quand je clique sur une
+        //    matière"). ──
+        var itemGroups = _flashDrawerItemGroups(id, cards);
+        var itemListHtml = itemGroups.map(function (g) {
+          var itemDueBadge = g.due > 0 ? '<span class="flash-drawer-sub-item-due">' + g.due + ' due' + (g.due > 1 ? 's' : '') + '</span>' : '';
+          return '<label class="flash-drawer-sub-item">' +
+              '<input type="checkbox" value="' + g.key.replace(/"/g, '&quot;') + '" checked onchange="window._flashDrawerItemToggled(\'' + id + '\')">' +
+              '<span class="flash-drawer-sub-item-label">' + g.label + '</span>' +
+              itemDueBadge +
+              '<span class="flash-drawer-sub-item-count">' + g.count + '</span>' +
+            '</label>';
+        }).join('');
+        var subPanel = '<div class="flash-drawer-sub' + (isChecked ? ' open' : '') + '" id="flashDrawerSub_' + id + '"><div class="flash-drawer-sub-inner">' +
+            '<div class="flash-drawer-mode-row">' +
+              '<button type="button" class="flash-drawer-mode-btn active" data-mode="all" onclick="window._flashDrawerSetMode(\'' + id + '\',\'all\')">Toutes les flashcards</button>' +
+              '<button type="button" class="flash-drawer-mode-btn" data-mode="pick" onclick="window._flashDrawerSetMode(\'' + id + '\',\'pick\')">Choisir des items</button>' +
+            '</div>' +
+            '<div class="flash-drawer-item-list">' + (itemListHtml || '<div class="flash-drawer-sub-empty">Aucun item trouvé.</div>') + '</div>' +
+          '</div></div>';
+        return '<div class="flash-drawer-row-wrap">' +
+          '<label class="flash-drawer-item' + (isChecked ? ' is-checked' : '') + '" data-spe="' + id + '" data-due="' + due + '">' +
+          '<input type="checkbox" ' + (isChecked?'checked':'') + ' onchange="window._flashDrawerToggleSpecialty(\'' + id + '\')">' +
           '<span class="flash-drawer-ico" style="background:' + cfg.color + ';"><i class="fas ' + cfg.icon + '"></i></span>' +
           '<span class="flash-drawer-name">' + plain(speName(id)) + '</span>' +
           dueBadge +
-          '<span class="flash-drawer-count-badge ' + bcls + '">' + btxt + '</span></label>';
+          '<span class="flash-drawer-count-badge ' + bcls + '">' + btxt + '</span></label>' +
+          subPanel +
+        '</div>';
       }).join('');
-      updateFlashDrawerCount();
+      _flashDrawerItemFilter = {}; // repart de "toutes les cartes" pour chaque matière à chaque (ré)ouverture du tiroir
+      // Applique directement le préréglage "Uniquement les dues" à l'ouverture
+      // (les matières avec des dues sont déjà précochées côté HTML — ceci
+      // bascule en plus leur sous-panneau sur "Choisir des items" avec
+      // uniquement les items dus cochés, cohérent avec un clic manuel sur
+      // le bouton). Repasse le bouton en blanc tout seul s'il n'y a aucune due.
+      selectDueFlashMatieres();
     });
   }
+  // ── Filtre par item dans Session Flash (par matière, sur demande explicite) ──
+  // null = toutes les cartes de la matière (comportement d'origine, inchangé
+  // tant que l'utilisateur ne personnalise rien) ; sinon, Set des clés d'item
+  // autorisées (speId+itemKey), '__none__' pour "Non classé".
+  var _flashDrawerItemFilter = {};
+  // 'all' | 'due' | null — quel bouton de sélection groupée met en avant
+  // (bleu), indépendamment de l'état brut des cases (cf. _flashUpdateModeButtons).
+  var _flashDrawerActiveMode = null;
+
+  function _flashDrawerItemGroups(speId, cards) {
+    var groups = {}; var noneKey = '__none__';
+    cards.forEach(function (c) {
+      var raw = (c.itemId == null || c.itemId === '') ? null : String(c.itemId);
+      var info = raw != null ? _flashFindItemInfo(speId, raw) : null;
+      var key = (raw != null && info) ? raw : noneKey;
+      if (!groups[key]) groups[key] = { info: (key === noneKey ? null : info), count: 0, due: 0 };
+      groups[key].count++;
+      if (isDue(c)) groups[key].due++;
+    });
+    var keys = Object.keys(groups).filter(function (k) { return k !== noneKey; }).sort(function (a, b) {
+      var na = parseInt(groups[a].info && groups[a].info.num, 10);
+      var nb = parseInt(groups[b].info && groups[b].info.num, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1; if (!isNaN(nb)) return 1;
+      return String(a).localeCompare(String(b));
+    });
+    if (groups[noneKey]) keys.unshift(noneKey);
+    return keys.map(function (k) {
+      return { key: k, label: k === noneKey ? 'Non classé' : (_flashItemGroupLabel(groups[k].info) || 'Non classé'), count: groups[k].count, due: groups[k].due };
+    });
+  }
+
+  function _flashDrawerCardMatchesFilter(speId, card) {
+    var filter = _flashDrawerItemFilter[speId];
+    if (!filter) return true; // pas de filtre personnalisé : toutes les cartes de la matière
+    var raw = (card.itemId == null || card.itemId === '') ? null : String(card.itemId);
+    var info = raw != null ? _flashFindItemInfo(speId, raw) : null;
+    var key = (raw != null && info) ? raw : '__none__';
+    return filter.indexOf(key) !== -1;
+  }
+
+  // Bascule l'affichage du sous-panneau (toutes / choisir des items) à chaque
+  // coche/décoche d'une matière — appelé en plus de updateFlashDrawerCount.
+  function _flashDrawerToggleSpecialty(speId) {
+    var row = document.querySelector('.flash-drawer-item[data-spe="' + speId + '"]');
+    if (!row) return;
+    var checkbox = row.querySelector('input[type="checkbox"]');
+    var isChecked = !!(checkbox && checkbox.checked);
+    row.classList.toggle('is-checked', isChecked);
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (sub) sub.classList.toggle('open', isChecked);
+    updateFlashDrawerCount();
+    // Un ajustement manuel case par case ne correspond plus précisément à un
+    // des deux préréglages : les fonctions de sélection groupée (plus bas)
+    // réaffirment explicitement le bon mode juste après leur propre boucle,
+    // qui passe aussi par ici — donc cette remise à zéro est sans effet net
+    // pour elles, seulement pour un clic manuel isolé sur une matière.
+    _flashDrawerActiveMode = null;
+    _flashUpdateModeButtons();
+  }
+
+  function _flashDrawerSetMode(speId, mode) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    sub.querySelectorAll('.flash-drawer-mode-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-mode') === mode); });
+    var itemList = sub.querySelector('.flash-drawer-item-list');
+    if (mode === 'all') {
+      _flashDrawerItemFilter[speId] = null;
+      if (itemList) itemList.classList.remove('open');
+    } else {
+      if (!_flashDrawerItemFilter[speId]) {
+        // Première bascule vers "Choisir des items" : on part de TOUT coché
+        // (base identique à "toutes les cartes"), l'utilisateur décoche ensuite.
+        var all = [];
+        if (itemList) itemList.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; all.push(cb.value); });
+        _flashDrawerItemFilter[speId] = all;
+      }
+      if (itemList) itemList.classList.add('open');
+    }
+    updateFlashDrawerCount();
+  }
+
+  function _flashDrawerItemToggled(speId) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    var checked = [];
+    sub.querySelectorAll('.flash-drawer-item-list input[type="checkbox"]:checked').forEach(function (cb) { checked.push(cb.value); });
+    _flashDrawerItemFilter[speId] = checked;
+    updateFlashDrawerCount();
+  }
+
   function _items(){ return Array.prototype.slice.call(document.querySelectorAll('#flashDrawerList .flash-drawer-item')); }
-  function selectAllFlashMatieres(){ _items().forEach(function(it){ var c=it.querySelector('input'); if(c) c.checked=true; }); updateFlashDrawerCount(); }
-  function selectDueFlashMatieres(){ _items().forEach(function(it){ var c=it.querySelector('input'); if(c) c.checked=parseInt(it.getAttribute('data-due'),10)>0; }); updateFlashDrawerCount(); }
+  function _flashTotalDueCount() {
+    if (!_flashAllCache) return 0;
+    var total = 0;
+    Object.keys(_flashAllCache).forEach(function (id) { total += _flashAllCache[id].filter(isDue).length; });
+    return total;
+  }
+  function selectAllFlashMatieres(){
+    _items().forEach(function(it){
+      var c = it.querySelector('input');
+      if (!c) return;
+      var speId = it.getAttribute('data-spe');
+      c.checked = true;
+      window._flashDrawerToggleSpecialty(speId);
+      // Repasse la matière sur "Toutes les flashcards" — sinon une matière
+      // restée sur "Choisir des items" (ex. après un clic sur "Uniquement
+      // les dues") garderait son filtre restreint aux seuls items dus.
+      _flashDrawerSetMode(speId, 'all');
+    });
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = 'all';
+    _flashUpdateModeButtons();
+  }
+  // Synchronise l'état visuel (coché/décoché) des cases à cocher d'item avec
+  // le filtre actuellement en vigueur pour cette matière — utilisé quand le
+  // filtre est posé programmatiquement (ex. depuis selectDueFlashMatieres),
+  // pas via un clic direct sur une case (qui, lui, met déjà tout à jour).
+  function _flashDrawerSyncItemCheckboxes(speId) {
+    var sub = document.getElementById('flashDrawerSub_' + speId);
+    if (!sub) return;
+    var filter = _flashDrawerItemFilter[speId];
+    if (!filter) return;
+    sub.querySelectorAll('.flash-drawer-item-list input[type="checkbox"]').forEach(function (cb) {
+      cb.checked = filter.indexOf(cb.value) !== -1;
+    });
+  }
+  function selectDueFlashMatieres(){
+    _items().forEach(function(it){
+      var c = it.querySelector('input');
+      if (!c) return;
+      var speId = it.getAttribute('data-spe');
+      var due = parseInt(it.getAttribute('data-due'), 10);
+      c.checked = due > 0;
+      window._flashDrawerToggleSpecialty(speId);
+      if (due > 0) {
+        // Pour une matière avec des dues, ne pas rester sur "Toutes les
+        // flashcards" : basculer sur "Choisir des items", avec UNIQUEMENT
+        // les items ayant au moins une carte due cochés (pas tous les items
+        // de la matière — un item sans due reste décoché).
+        var cardsForSpe = _flashAllCache[speId] || [];
+        var groups = _flashDrawerItemGroups(speId, cardsForSpe);
+        var dueKeys = groups.filter(function (g) { return g.due > 0; }).map(function (g) { return g.key; });
+        _flashDrawerItemFilter[speId] = dueKeys;
+        _flashDrawerSetMode(speId, 'pick');
+        _flashDrawerSyncItemCheckboxes(speId);
+      }
+    });
+    updateFlashDrawerCount();
+    // Section demandée : si aucune carte n'est due, le bouton reste blanc
+    // (pas de mode "actif" affiché, même si le clic a bien eu lieu).
+    _flashDrawerActiveMode = _flashTotalDueCount() > 0 ? 'due' : null;
+    _flashUpdateModeButtons();
+  }
+  function selectNoneFlashMatieres(){
+    _items().forEach(function(it){ var c=it.querySelector('input'); if(c){ c.checked=false; window._flashDrawerToggleSpecialty(it.getAttribute('data-spe')); } });
+    updateFlashDrawerCount();
+    _flashDrawerActiveMode = null;
+    _flashUpdateModeButtons();
+  }
+  // ── Bascule du bouton "Tout sélectionner" (1er clic : tout coche, 2e clic :
+  //    tout décoche), avec le libellé du bouton qui reflète l'état actuel —
+  //    y compris si l'utilisateur a coché/décoché des matières une par une
+  //    entre-temps (cf. _flashUpdateModeButtons, appelée à chaque changement). ──
+  function toggleSelectAllFlashMatieres() {
+    var items = _items();
+    var allChecked = items.length > 0 && items.every(function (it) { var c = it.querySelector('input'); return c && c.checked; });
+    if (allChecked) selectNoneFlashMatieres(); else selectAllFlashMatieres();
+  }
+  // ── Mise en avant (bleu) des boutons "Tout sélectionner"/"Uniquement les
+  //    dues" — pilotée par _flashDrawerActiveMode, un état EXPLICITE et non
+  //    par un recalcul depuis les cases cochées : sinon, si "dues" cochait
+  //    par coïncidence TOUTES les matières, "Tout sélectionner" se
+  //    retrouverait aussi mis en avant à tort. Cliquer sur l'un efface
+  //    toujours l'autre. ──
+  function _flashUpdateModeButtons() {
+    var allBtn = document.getElementById('flashSelectAllBtn');
+    var dueBtn = document.getElementById('flashSelectDueBtn');
+    if (allBtn) {
+      allBtn.classList.toggle('flash-drawer-action-active', _flashDrawerActiveMode === 'all');
+      var items = _items();
+      var allChecked = items.length > 0 && items.every(function (it) { var c = it.querySelector('input'); return c && c.checked; });
+      allBtn.innerHTML = allChecked ? '<i class="fas fa-square-check"></i> Tout désélectionner' : 'Tout sélectionner';
+    }
+    if (dueBtn) dueBtn.classList.toggle('flash-drawer-action-active', _flashDrawerActiveMode === 'due');
+  }
   function updateFlashDrawerCount() {
     var cnt=0;
-    if (_flashAllCache) _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=_flashAllCache[id]||[];var due=cards.filter(isDue);cnt+=due.length||cards.length;} });
+    if (_flashAllCache) _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=(_flashAllCache[id]||[]).filter(function(card){return _flashDrawerCardMatchesFilter(id,card);});var due=cards.filter(isDue);cnt+=due.length||cards.length;} });
     var el=document.getElementById('flashDrawerCount'); if(el) el.textContent=cnt+' carte'+(cnt!==1?'s':'')+' sélectionnée'+(cnt!==1?'s':'');
     var btn=document.getElementById('flashLaunchBtn'); if(btn) btn.disabled=cnt===0;
   }
   function launchMultiFlashSession() {
     if (!_flashAllCache) return;
     var collected=[];
-    _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=_flashAllCache[id]||[];var due=cards.filter(isDue);collected=collected.concat(due.length?due:cards);} });
+    _items().forEach(function(it){ var c=it.querySelector('input'); if(c&&c.checked){var id=it.getAttribute('data-spe');var cards=(_flashAllCache[id]||[]).filter(function(card){return _flashDrawerCardMatchesFilter(id,card);});var due=cards.filter(isDue);collected=collected.concat(due.length?due:cards);} });
     if (!collected.length) return;
     var ov=document.getElementById('flashDrawerOverlay'); if(ov) ov.classList.remove('active'); // masque le drawer SANS deverrouiller (evite le decalage)
     startFlashSession(collected, { multi:true });
@@ -47243,6 +48200,11 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   window.renderFlashDrawerList = renderFlashDrawerList;
   window.selectAllFlashMatieres = selectAllFlashMatieres;
   window.selectDueFlashMatieres = selectDueFlashMatieres;
+  window.selectNoneFlashMatieres = selectNoneFlashMatieres;
+  window.toggleSelectAllFlashMatieres = toggleSelectAllFlashMatieres;
+  window._flashDrawerToggleSpecialty = _flashDrawerToggleSpecialty;
+  window._flashDrawerSetMode = _flashDrawerSetMode;
+  window._flashDrawerItemToggled = _flashDrawerItemToggled;
   window.updateFlashDrawerCount = updateFlashDrawerCount;
   window.launchMultiFlashSession = launchMultiFlashSession;
   window.updateFlashGlobalCount = updateFlashGlobalCount;
@@ -47252,6 +48214,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   window._flashEval = evaluateCard;
   window._flashQuit = quitFlashSession;
   window._flashNewCard = _flashNewCard;
+  window.openFlashEdit = openFlashEdit;
   window._flashEditCard = _flashEditCard;
   window._flashSaveForm = _flashSaveForm;
   window._flashEditCurrentSessionCard = _flashEditCurrentSessionCard;
@@ -47260,6 +48223,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   window._flashDeleteCard = _flashDeleteCard;
   window._flashStartDue = _flashStartDue;
   window._flashStartAll = _flashStartAll;
+  window._flashStartItemGroup = _flashStartItemGroup;
   window._flashOpenReviewDrop = _flashOpenReviewDrop;
   window._flashCloseReviewDrop = _flashCloseReviewDrop;
   window._flashRedoFailed = _flashRedoFailed;
@@ -47275,6 +48239,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   window._flashSetColor = _flashSetColor;
   window._flashSetHighlight = _flashSetHighlight;
   window.loadFlashCards = loadFlashCards;
+  window.unlinkFlashcardsFromItem = unlinkFlashcardsFromItem;
   window.loadAllDueFlashCards = loadAllDueFlashCards;
   window.saveFlashCard = saveFlashCard;
   window.deleteFlashCard = deleteFlashCard;
@@ -56347,9 +57312,31 @@ function setTrainingsPageVisible(visible) {
         saveContent(); applyToGlobals(); rerender();
     }
 
-    function deleteItem(key) {
+    async function deleteItem(key) {
         var it = state.items.filter(function (i) { return i.specialtyId + '|' + i.num === key; })[0];
         if (!it) return;
+        // ── MISSION CORRECTIVE, points 2/3 : la déliaison des flashcards DOIT
+        //    réussir avant toute suppression réelle de l'item — fail-closed.
+        //    Avant ce correctif, l'appel n'était pas attendu (fire-and-forget)
+        //    et ses erreurs se contentaient d'un console.warn : l'item pouvait
+        //    donc être supprimé même si la déliaison avait échoué, ouvrant la
+        //    voie au scénario de collision décrit à la définition de
+        //    unlinkFlashcardsFromItem (numéro réutilisé par un item différent,
+        //    anciennes flashcards silencieusement mal associées). ──
+        if (typeof window.unlinkFlashcardsFromItem === 'function') {
+            try {
+                await window.unlinkFlashcardsFromItem(it.specialtyId, it.num);
+            } catch (e) {
+                console.warn('[TPXPerso] Déliaison des flashcards échouée — suppression de l\'item annulée :', e);
+                var _msg = 'Impossible de sécuriser les flashcards liées à cet item. L\'item n\'a pas été supprimé. Réessaie lorsque la connexion est disponible.';
+                if (typeof window.showToastNotification === 'function') {
+                    window.showToastNotification(_msg, 'warning');
+                } else {
+                    alert(_msg);
+                }
+                return; // NE PAS supprimer l'item : ni markDeleted, ni retrait de state.items.
+            }
+        }
         var progressKey = it.specialtyId + '-' + it.num;
         if (isCustom()) { deleteEntryData(it.specialtyId, progressKey); purgeProgress([progressKey]); }
         markDeleted(key);
@@ -57068,7 +58055,7 @@ function setTrainingsPageVisible(visible) {
                 if (filtered !== shortEl.value) shortEl.value = filtered;
             });
         }
-        setTimeout(function () { nameEl.focus(); }, 60);
+        setTimeout(function () { if (!window._tcNoAutoFocus) nameEl.focus(); }, 60);
 
         root.querySelector('#tpx-mat-ok').addEventListener('click', function () {
             var name = nameEl.value.trim();
@@ -57319,7 +58306,7 @@ function setTrainingsPageVisible(visible) {
             /* À la création, le numéro proposé suit la matière choisie. */
             if (!it) numEl.value = nextItemNumber(v);
         }, isExisting);
-        setTimeout(function () { root.querySelector('#tpx-it-name').focus(); }, 60);
+        setTimeout(function () { if (!window._tcNoAutoFocus) root.querySelector('#tpx-it-name').focus(); }, 60);
 
         root.querySelector('#tpx-it-ok').addEventListener('click', function () {
             var nameEl = root.querySelector('#tpx-it-name');
