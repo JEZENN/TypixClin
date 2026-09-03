@@ -150,6 +150,15 @@ window.tcLoadAnalytics();
     --confidence-3: #f59e0b;
     --confidence-4: #22c55e;
     --confidence-5: #15803d;
+    /* Couleurs stables (rouge/orange/vert), INDÉPENDANTES du barème de
+       confiance — pour tout ce qui réutilisait confidence-1/3/5 sans
+       rapport avec le barème (flashcards fail/hesitant/know, statuts
+       due/soon/known…). confidence-1/3/5 changent de valeur selon le
+       barème choisi (5 ou 10, cf. html[data-conf-scale="10"] plus bas) ;
+       ces variables-ci ne changent JAMAIS, quel que soit le barème. */
+    --tpx-status-bad: #991b1b;
+    --tpx-status-mid: #f59e0b;
+    --tpx-status-good: #15803d;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -173,6 +182,25 @@ window.tcLoadAnalytics();
     --z-modal: 300;
 	--z-toast: 400;
     --z-max: 9999;
+}
+
+/* ── Barème de confiance sur 10 (mission de portage P1Planner) ──────────
+   Dégradé rouge → vert propre sur 10 niveaux, PAS une réutilisation des 5
+   couleurs de base : un niveau 5/10 n'est que le milieu de l'échelle, il
+   ne doit pas ressortir en vert foncé comme le ferait un 5/5 "parfait" sur
+   le barème à 5. Palette identique à celle déjà validée dans P1Planner.
+   Attribut posé sur <html> par tpxApplyConfidenceScaleAttr(). ── */
+html[data-conf-scale="10"] {
+    --confidence-1: #991b1b;
+    --confidence-2: #b91c1c;
+    --confidence-3: #dc2626;
+    --confidence-4: #ea580c;
+    --confidence-5: #f59e0b;
+    --confidence-6: #ca8a04;
+    --confidence-7: #84cc16;
+    --confidence-8: #22c55e;
+    --confidence-9: #16a34a;
+    --confidence-10: #15803d;
 }
 
 [data-theme="dark"] {
@@ -1929,6 +1957,20 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     opacity: 0.55;
     transition: opacity var(--transition-normal), border-color var(--transition-normal), background var(--transition-normal), box-shadow var(--transition-normal);
 }
+/* Grille de correspondance — modal de confirmation du changement de barème */
+.cs-confirm-table { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.6rem; }
+.cs-confirm-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.4rem 0.6rem; border-radius: var(--border-radius-md);
+    background: var(--gray-100);
+}
+[data-theme="dark"] .cs-confirm-row { background: rgba(148,163,184,0.1); }
+.cs-confirm-pastille {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px; border-radius: 7px; color: #fff;
+    font-size: 0.78rem; font-weight: 800; flex-shrink: 0;
+}
+.cs-confirm-arrow { color: var(--gray-400); font-size: 0.8rem; }
 [data-theme="dark"] .settings-explain-row { background: var(--gray-50); }
 .settings-explain-row.is-active {
     opacity: 1;
@@ -3506,13 +3548,19 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .tour-badge:hover { border-color: var(--primary); color: var(--primary); transform: scale(1.05); }
 
 .tour-badge:active { border-color: var(--primary); color: var(--primary); transform: scale(0.88); }
-.tour-badge.c1:active, .tour-badge.c2:active, .tour-badge.c3:active, .tour-badge.c4:active, .tour-badge.c5:active { transform: scale(0.88); filter: brightness(0.85); }
+.tour-badge.c1:active, .tour-badge.c2:active, .tour-badge.c3:active, .tour-badge.c4:active, .tour-badge.c5:active,
+.tour-badge.c6:active, .tour-badge.c7:active, .tour-badge.c8:active, .tour-badge.c9:active, .tour-badge.c10:active { transform: scale(0.88); filter: brightness(0.85); }
 
 .tour-badge.c1 { background: var(--confidence-1); border-color: var(--confidence-1); color: white; }
 .tour-badge.c2 { background: var(--confidence-2); border-color: var(--confidence-2); color: white; }
 .tour-badge.c3 { background: var(--confidence-3); border-color: var(--confidence-3); color: white; }
 .tour-badge.c4 { background: var(--confidence-4); border-color: var(--confidence-4); color: white; }
 .tour-badge.c5 { background: var(--confidence-5); border-color: var(--confidence-5); color: white; }
+.tour-badge.c6 { background: var(--confidence-6); border-color: var(--confidence-6); color: white; }
+.tour-badge.c7 { background: var(--confidence-7); border-color: var(--confidence-7); color: white; }
+.tour-badge.c8 { background: var(--confidence-8); border-color: var(--confidence-8); color: white; }
+.tour-badge.c9 { background: var(--confidence-9); border-color: var(--confidence-9); color: white; }
+.tour-badge.c10 { background: var(--confidence-10); border-color: var(--confidence-10); color: white; }
 .tour-dates { display: flex; gap: 2px; margin-top: 2px; }
 .tour-date { width: 30px; font-size: 0.6rem; color: var(--gray-500); text-align: center; overflow: hidden; font-family: var(--font-body); }
 
@@ -4168,15 +4216,34 @@ input[type="date"].modal-input {
 
 
 .confidence-buttons { display: flex; gap: 0.5rem; justify-content: center; }
+/* Barème sur 10 : 2 rangées FORCÉES de 5 (pas un flex-wrap non contrôlé
+   qui donnerait 8+2 ou toute autre répartition selon la largeur). */
+.confidence-buttons[data-conf-scale="10"] { flex-direction: column; gap: 0.4rem; }
+.confidence-buttons-row { display: flex; gap: 0.5rem; justify-content: center; }
+.confidence-buttons[data-conf-scale="10"] .confidence-btn { width: 42px; height: 42px; font-size: 1.05rem; }
 .confidence-btn { width: 50px; height: 50px; border-radius: var(--border-radius-md); border: 3px solid transparent; font-size: 1.2rem; font-weight: 700; color: white; cursor: pointer; transition: all var(--transition-fast); opacity: 0.7; }
 .confidence-btn:hover { transform: scale(1.1); opacity: 1; }
 
 .confidence-btn.selected { opacity: 1; transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+/* Dernier niveau de confiance enregistré (référence visuelle, PAS une
+   sélection) — même anneau blanc intérieur que le popover compact
+   (.ct-conf-pop button.current), pour rester cohérent entre mode compact
+   et mode détaillé, exactement comme demandé. */
+.confidence-btn.current { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72); filter: brightness(1.06); }
+/* Si le dernier niveau enregistré est AUSSI la valeur sélectionnée (édition
+   d'un tour existant) : fusionner les deux effets plutôt que de laisser l'un
+   écraser l'autre (box-shadow ne se cumule pas entre deux règles séparées). */
+.confidence-btn.selected.current { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72), 0 4px 12px rgba(0,0,0,0.3); }
 .confidence-btn.c1 { background: var(--confidence-1); }
 .confidence-btn.c2 { background: var(--confidence-2); }
 .confidence-btn.c3 { background: var(--confidence-3); }
 .confidence-btn.c4 { background: var(--confidence-4); }
 .confidence-btn.c5 { background: var(--confidence-5); }
+.confidence-btn.c6 { background: var(--confidence-6); }
+.confidence-btn.c7 { background: var(--confidence-7); }
+.confidence-btn.c8 { background: var(--confidence-8); }
+.confidence-btn.c9 { background: var(--confidence-9); }
+.confidence-btn.c10 { background: var(--confidence-10); }
 
 .confidence-error { 
     display: none; 
@@ -9402,6 +9469,14 @@ body.tours-compact .ranking-extra-stat.time-stat {
     font-weight: 600;
     color: var(--gray-700);
 }
+/* Coins plus droits pour matcher les boutons environnants — ciblé
+   uniquement sur ces trois sélecteurs (pagination items/entraînements,
+   mois/année planning), sans toucher au composant dropdown générique
+   utilisé ailleurs sur le site. */
+.pagination-dropdown .custom-dropdown-btn,
+.planning-date-selector .custom-dropdown-btn {
+    border-radius: var(--border-radius-md);
+}
 
 .custom-dropdown-btn:hover {
     border-color: var(--primary);
@@ -13801,6 +13876,15 @@ window._getScrollbarWidth = function() {
 .ct-conf-pop .ccp1{background:var(--confidence-1);} .ct-conf-pop .ccp2{background:var(--confidence-2);}
 .ct-conf-pop .ccp3{background:var(--confidence-3);} .ct-conf-pop .ccp4{background:var(--confidence-4);}
 .ct-conf-pop .ccp5{background:var(--confidence-5);}
+.ct-conf-pop .ccp6{background:var(--confidence-6);} .ct-conf-pop .ccp7{background:var(--confidence-7);}
+.ct-conf-pop .ccp8{background:var(--confidence-8);} .ct-conf-pop .ccp9{background:var(--confidence-9);}
+.ct-conf-pop .ccp10{background:var(--confidence-10);}
+/* Barème sur 10 : boutons plus petits, 2 rangées de 5 — popover plus haut
+   en conséquence (contexte popover ancré, plus contraint qu'un modal). */
+.ct-conf-pop.ccp-scale10.open { width:230px; height:118px; }
+.ct-conf-pop.ccp-scale10 .ccp-row { height: 38px; gap: 5px; }
+.ct-conf-pop.ccp-scale10 button { width:38px; height:38px; font-size:15px; border-radius:9px; }
+.ct-conf-pop.ccp-scale10 .ccp-rows-wrap { display:flex; flex-direction:column; gap:5px; }
 /* ===== Popover de confirmation de suppression (zone -) — même style que le picker de confiance ===== */
 .ct-rm-pop {
   position:fixed; z-index:9999;
@@ -17755,9 +17839,14 @@ window.TPXNotesPending = {
 [data-theme="dark"] .flash-due-banner { background:#0f172a; border-color:#334155; }
 .flash-due-banner-text { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); }
 .flash-due-banner-text b { color: var(--danger); }
+/* Rotation animée du chevron du bouton "Réviser" (Cahier d'erreurs) —
+   pivote de 180° à l'ouverture du menu déroulant "Tout réviser"/"Dues". */
+.flash-review-chevron { transition: transform 0.2s ease; display: inline-block; }
+.flash-review-chevron.open { transform: rotate(180deg); }
 .flash-launch-session-btn {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--confidence-5); color:#fff; border:none;
+  /* Couleur fixe — cf. commentaire identique sur .flash-launch-btn plus haut. */
+  background: #15803d; color:#fff; border:none;
   padding: 0.6rem 1.1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
@@ -17795,7 +17884,7 @@ window.TPXNotesPending = {
 .flash-list-status { font-size: 0.72rem; font-weight: 600; white-space: nowrap; display:inline-flex; align-items:center; gap:4px; }
 .flash-list-status.due { color: var(--danger); }
 .flash-list-status.soon { color: var(--warning); }
-.flash-list-status.known { color: var(--confidence-5); }
+.flash-list-status.known { color: var(--tpx-status-good); }
 
 .flash-empty { text-align: center; color: var(--gray-500); font-size: 0.85rem; padding: 2rem 1rem; }
 .flash-empty i { font-size: 1.8rem; opacity: 0.4; display:block; margin-bottom: 0.6rem; }
@@ -17828,7 +17917,7 @@ window.TPXNotesPending = {
 }
 .flash-form-cancel { background: var(--gray-200); color: var(--gray-700); }
 [data-theme="dark"] .flash-form-cancel { background:#334155; color:#cbd5e1; }
-.flash-form-save { background: var(--confidence-5); color:#fff; }
+.flash-form-save { background: var(--tpx-status-good); color:#fff; }
 .flash-form-del { background: var(--danger); color:#fff; margin-right: auto; }
 
 /* ---- Session : flip 3D ---- */
@@ -17923,14 +18012,14 @@ window.TPXNotesPending = {
 }
 .flash-eval-btn:hover { box-shadow: var(--shadow-md); }
 .flash-eval-btn:active { transform: scale(0.95); }
-.flash-eval-btn.fail     { background: var(--confidence-1); color:#fff; }
-.flash-eval-btn.hesitant { background: var(--confidence-3); color:#fff; }
-.flash-eval-btn.know     { background: var(--confidence-5); color:#fff; }
+.flash-eval-btn.fail     { background: var(--tpx-status-bad); color:#fff; }
+.flash-eval-btn.hesitant { background: var(--tpx-status-mid); color:#fff; }
+.flash-eval-btn.know     { background: var(--tpx-status-good); color:#fff; }
 .flash-eval-btn-sub { font-size: 0.68rem; font-weight: 500; opacity: 0.85; }
 
 /* ---- Fin de session ---- */
 .flash-end { text-align: center; padding: 1.5rem 1rem; }
-.flash-end-icon { font-size: 2.6rem; color: var(--confidence-5); margin-bottom: 0.6rem; }
+.flash-end-icon { font-size: 2.6rem; color: var(--tpx-status-good); margin-bottom: 0.6rem; }
 .flash-end-title { font-size: 1.15rem; font-weight: 800; color: var(--gray-800); margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; }
 .flash-end-sub { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1.25rem; }
 .flash-end-stats { display: flex; flex-direction: column; gap: 0.4rem; max-width: 280px; margin: 0 auto 1.25rem; }
@@ -17939,13 +18028,13 @@ window.TPXNotesPending = {
   padding: 0.5rem 0.9rem; border-radius: var(--border-radius-md);
   font-size: 0.85rem; font-weight: 600;
 }
-.flash-end-stat.fail     { background: rgba(153,27,27,0.12); color: var(--confidence-1); }
-.flash-end-stat.hesitant { background: rgba(245,158,11,0.12); color: var(--confidence-3); }
-.flash-end-stat.know     { background: rgba(21,128,61,0.12); color: var(--confidence-5); }
+.flash-end-stat.fail     { background: rgba(153,27,27,0.12); color: var(--tpx-status-bad); }
+.flash-end-stat.hesitant { background: rgba(245,158,11,0.12); color: var(--tpx-status-mid); }
+.flash-end-stat.know     { background: rgba(21,128,61,0.12); color: var(--tpx-status-good); }
 .flash-end-stat b { font-size: 1rem; }
 .flash-end-actions { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
 .flash-redo-btn {
-  background: var(--confidence-1); color:#fff; border:none;
+  background: var(--tpx-status-bad); color:#fff; border:none;
   padding: 0.6rem 1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.83rem; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; gap: 0.4rem;
@@ -18204,7 +18293,12 @@ window.TPXNotesPending = {
 #flashDrawerCount { font-size: 0.8rem; font-weight: 600; color: var(--gray-600); }
 .flash-launch-btn {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--confidence-5); color:#fff; border:none;
+  /* Couleur fixe, indépendante du barème de confiance — ce bouton ne
+     représente aucun niveau de confiance, il réutilisait accidentellement
+     var(--confidence-5), qui change désormais de valeur selon le barème
+     (5 ou 10) et cassait donc sa couleur. Valeur identique à l'ancienne
+     var(--confidence-5) sur barème 5, pour un rendu visuel inchangé. */
+  background: #15803d; color:#fff; border:none;
   padding: 0.6rem 1.1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;
 }
@@ -18401,16 +18495,16 @@ window.TPXNotesPending = {
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .flash-list-row:hover { box-shadow: var(--shadow-md); transform: translateX(2px); }
-.flash-list-row.due    { border-left-color: var(--confidence-1); }
-.flash-list-row.soon   { border-left-color: var(--confidence-3); }
-.flash-list-row.known  { border-left-color: var(--confidence-5); }
+.flash-list-row.due    { border-left-color: var(--tpx-status-bad); }
+.flash-list-row.soon   { border-left-color: var(--tpx-status-mid); }
+.flash-list-row.known  { border-left-color: var(--tpx-status-good); }
 [data-theme="dark"] .flash-list-row { background:#0f172a; border-color:#334155; }
 .flash-list-recto { flex:1; min-width:0; font-size:0.88rem; color: var(--gray-800); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 [data-theme="dark"] .flash-list-recto { color:#e2e8f0; }
 .flash-list-status { font-size:0.72rem; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px; }
-.flash-list-status.due { color: var(--confidence-1); }
-.flash-list-status.soon { color: var(--confidence-3); }
-.flash-list-status.known { color: var(--confidence-5); }
+.flash-list-status.due { color: var(--tpx-status-bad); }
+.flash-list-status.soon { color: var(--tpx-status-mid); }
+.flash-list-status.known { color: var(--tpx-status-good); }
 
 /* ---- Formulaire rich-text ---- */
 .flash-form {
@@ -18470,7 +18564,7 @@ window.TPXNotesPending = {
 }
 .flash-form-cancel { background: var(--gray-100); color: var(--gray-600); }
 [data-theme="dark"] .flash-form-cancel { background:#334155; color:#cbd5e1; }
-.flash-form-save { background: var(--confidence-5); color:#fff; }
+.flash-form-save { background: var(--tpx-status-good); color:#fff; }
 .flash-form-save:hover { filter: brightness(1.05); }
 .flash-form-del { background: transparent; color: var(--danger); margin-right:auto; padding-left: 0; }
 .flash-form-del:hover { text-decoration: underline; }
@@ -18754,12 +18848,12 @@ window.TPXNotesPending = {
 .flash-back-btn:active { transform: scale(0.97); }
 [data-theme="dark"] .flash-back-btn { background: linear-gradient(135deg, var(--accent), var(--primary)); }
 .flash-redo-btn {
-  background: transparent; color: var(--confidence-1); border: 1.5px solid var(--confidence-1);
+  background: transparent; color: var(--tpx-status-bad); border: 1.5px solid var(--tpx-status-bad);
   padding: 0.72rem 1.4rem; border-radius: var(--border-radius-full);
   font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: var(--font-body);
   display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.15s;
 }
-.flash-redo-btn:hover { background: var(--confidence-1); color: #fff; box-shadow: var(--shadow-md); }
+.flash-redo-btn:hover { background: var(--tpx-status-bad); color: #fff; box-shadow: var(--shadow-md); }
 .flash-redo-btn:active { transform: scale(0.97); }
 
 /* ===================== FLASHCARDS v8 : hauteur fixe + teintes recto/verso ===================== */
@@ -19091,9 +19185,9 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-row { background: #1e293b; border-color: #334155; }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-row:hover { background: #263449; border-color: var(--primary); }
-.spe-flash-info-panel .flash-list-row.due  { border-left-color: var(--confidence-1); }
-.spe-flash-info-panel .flash-list-row.soon { border-left-color: var(--confidence-3); }
-.spe-flash-info-panel .flash-list-row.known{ border-left-color: var(--confidence-5); }
+.spe-flash-info-panel .flash-list-row.due  { border-left-color: var(--tpx-status-bad); }
+.spe-flash-info-panel .flash-list-row.soon { border-left-color: var(--tpx-status-mid); }
+.spe-flash-info-panel .flash-list-row.known{ border-left-color: var(--tpx-status-good); }
 .spe-flash-info-panel .flash-list-recto { flex: 1; min-width: 0; font-size: 0.82rem; color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-recto { color: #cbd5e1; }
 .spe-flash-info-panel .flash-list-status { font-size: 0.67rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
@@ -19147,8 +19241,8 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 [data-theme="dark"] .flash-review-drop-item:hover { background: #0f172a; color: var(--primary-light); }
 .flash-review-drop-item i { width: 13px; text-align: center; color: var(--gray-400); font-size: 0.76rem; flex-shrink: 0; }
 .flash-review-drop-item:hover i { color: var(--primary); }
-.flash-review-drop-item.due i { color: var(--confidence-1); }
-.flash-review-drop-item.due:hover { color: var(--confidence-1); background: rgba(153,27,27,0.04); }
+.flash-review-drop-item.due i { color: var(--tpx-status-bad); }
+.flash-review-drop-item.due:hover { color: var(--tpx-status-bad); background: rgba(153,27,27,0.04); }
 [data-theme="dark"] .flash-review-drop-item.due:hover { background: rgba(239,68,68,0.07); }
 .flash-review-drop-count {
   margin-left: auto;
@@ -19161,7 +19255,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 }
 [data-theme="dark"] .flash-review-drop-count { background: #334155; color: #64748b; }
 .flash-review-drop-item:hover .flash-review-drop-count { background: rgba(59,130,246,0.1); color: var(--primary); }
-.flash-review-drop-item.due:hover .flash-review-drop-count { background: rgba(153,27,27,0.1); color: var(--confidence-1); }
+.flash-review-drop-item.due:hover .flash-review-drop-count { background: rgba(153,27,27,0.1); color: var(--tpx-status-bad); }
 
 /* ===== Drawer Session Flash : icône encadrée + séparation header ===== */
 .flash-drawer-header {
@@ -19556,13 +19650,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
         
 <div class="modal-section">
     <label class="modal-label">Confiance <span style="color:#ef4444">*</span></label>
-    <div class="confidence-buttons">
-        <button class="confidence-btn c1" data-confidence="1">1</button>
-        <button class="confidence-btn c2" data-confidence="2">2</button>
-        <button class="confidence-btn c3" data-confidence="3">3</button>
-        <button class="confidence-btn c4" data-confidence="4">4</button>
-        <button class="confidence-btn c5" data-confidence="5">5</button>
-    </div>
+    <div class="confidence-buttons" id="confidence-buttons"></div>
     <div class="confidence-error" id="confidence-error">Veuillez sélectionner un niveau de confiance</div>
 </div>
         
@@ -20195,12 +20283,77 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
                 </div>
             </div>
 
+            <!-- Réglage 3 : Barème de confiance (mission de portage P1Planner) -->
+            <div class="settings-card" data-setting="confidence-scale">
+                <div class="settings-card-head">
+                    <div class="settings-card-icon tours"><i class="fas fa-gauge-high"></i></div>
+                    <div class="settings-card-titles">
+                        <div class="settings-card-title">Barème par défaut</div>
+                        <div class="settings-card-sub">Choisissez le nombre de niveaux de confiance pour évaluer vos tours de révision.</div>
+                    </div>
+                </div>
+
+                <div class="settings-switch-row">
+                    <button type="button" id="confidence-scale-switch" class="seg-switch settings-seg" role="switch" aria-checked="false">
+                        <span class="seg-thumb"></span>
+                        <span class="seg-opt seg-opt-left active" data-cscale="5">5 niveaux</span>
+                        <span class="seg-opt seg-opt-right" data-cscale="10">10 niveaux</span>
+                    </button>
+                </div>
+
+                <div class="settings-explain">
+                    <div class="settings-explain-row" data-mode="5">
+                        <span class="settings-explain-ico"><i class="fas fa-gauge-simple"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>5 niveaux</strong>
+                            <span>Le barème par défaut, simple et rapide à saisir.</span>
+                        </div>
+                    </div>
+                    <div class="settings-explain-row" data-mode="10">
+                        <span class="settings-explain-ico"><i class="fas fa-gauge-high"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>10 niveaux</strong>
+                            <span>Une granularité plus fine pour nuancer votre ressenti.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div><!-- /.settings-modal-body -->
 
         <!-- Footer fixe (même style que le modal d'aide) -->
         <div class="help-modal-footer settings-modal-footer">
             <button class="help-modal-btn" onclick="closeSettingsModal()">
                 <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Modal de confirmation — changement de barème de confiance ══════════════
+     Réutilise l'identité visuelle déjà établie (unified-modal-header,
+     settings-modal-overlay) plutôt que d'importer le style de P1Planner. -->
+<div class="settings-modal-overlay" id="confidence-scale-confirm-overlay" onclick="if(event.target===this) window.tpxCloseConfidenceScaleConfirm();">
+    <div class="settings-modal-inner" id="confidence-scale-confirm-inner" style="max-width:480px;">
+        <div class="unified-modal-header">
+            <div class="unified-modal-title">
+                <div class="unified-modal-icon"><i class="fas fa-gauge-high"></i></div>
+                <h3 class="unified-modal-heading" id="cs-confirm-title">Changer de barème ?</h3>
+            </div>
+            <button class="notes-close-btn" onclick="window.tpxCloseConfidenceScaleConfirm()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="settings-modal-body">
+            <p class="settings-intro" id="cs-confirm-intro"></p>
+            <div id="cs-confirm-table" class="cs-confirm-table"></div>
+            <p class="settings-intro" id="cs-confirm-granularity-note" style="margin-top:0.8rem;font-size:0.82rem;color:var(--gray-500);">
+                Vos tours déjà enregistrés seront convertis selon cette correspondance — aucune donnée n'est perdue, mais cette action modifie vos données existantes.
+            </p>
+            <div id="cs-confirm-error" class="settings-intro" style="display:none;color:var(--tpx-danger,#dc2626);font-weight:600;"></div>
+        </div>
+        <div class="help-modal-footer settings-modal-footer">
+            <button class="tpx-btn" type="button" onclick="window.tpxCloseConfidenceScaleConfirm()">Annuler</button>
+            <button class="tpx-btn tpx-btn-primary" type="button" id="cs-confirm-go-btn" style="margin-left:auto;" onclick="window.tpxConfirmConfidenceScaleChange()">
+                <i class="fas fa-check"></i> Confirmer le changement
             </button>
         </div>
     </div>
@@ -20273,14 +20426,14 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 </script>
 
 
-<script defer src="data.js?v=3"></script>
+<script defer src="data.js?v=4"></script>
 <script type="module">
 
 
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, getBlob } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -20322,6 +20475,7 @@ window._fsGetDoc = getDoc;
 window._fsUpdateDoc = updateDoc;
 window._fsSetDoc = setDoc;
 window._fsDeleteDoc = deleteDoc;
+window._fsRunTransaction = runTransaction;
 
 
 // ===== CONFIGURATION DES RESSOURCES PERSONNALISÉES =====
@@ -21003,6 +21157,15 @@ const TPX_PREMIUM_BLOCKED_ACTIONS = [
     'planning-status', 'planning-text', 'planning-specialty'
 ];
 function canPerformAction(actionName) {
+    // ── MISSION CORRECTIVE (bugs résiduels), points 8-9 : garde centrale
+    //    unique. 'tour' est le SEUL actionName qui gate réellement les
+    //    points de mutation de items[*].tours[] (ouverture du modal,
+    //    bouton Enregistrer, bouton Réinitialiser, entrée depuis la
+    //    todolist — tous vérifiés un par un). Ne bloque JAMAIS les autres
+    //    actions (notes, navigation, stats, checklist, aide...). ──
+    if (window._confidenceScaleMigrationInFlight && actionName === 'tour') {
+        return false;
+    }
     if (isOfflineMode || window.offlineActionsBlocked) {
         showOfflineActionBlockedMessage(actionName);
         return false;
@@ -21923,6 +22086,10 @@ async function updateUserUI(user) {
             if (typeof window._checkToursViewMode === 'function') {
                 window._checkToursViewMode();
             }
+            // ── Charger le barème de confiance (5 / 10) ──
+            if (typeof window._checkConfidenceScale === 'function') {
+                window._checkConfidenceScale();
+            }
             // ── Charger la préférence de périmètre des stats (collèges / référence) ──
             if (typeof window._checkItemsScopeMode === 'function') {
                 window._checkItemsScopeMode();
@@ -22369,6 +22536,12 @@ window.addEventListener('pagehide', () => {
     try {
         const pendingKey = `planning_pending_${currentUser.uid}`;
         const _pendingPayload = JSON.stringify({
+            schemaVersion: 2,
+            // ── MISSION CORRECTIVE (bugs résiduels), point 1 : même métadonnée
+            //    de barème que debouncedSave() — sans elle, un pending écrit en
+            //    barème 10 serait interprété comme barème 5 historique au
+            //    prochain chargement (4/10 → reconverti à tort en 8/10). ──
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
             data: {
                 items:             userData.items             || {},
                 trophies:          userData.trophies          || {},
@@ -22510,7 +22683,11 @@ async function saveBackupToFirebase(userId, data) {
             details: content,
             data: cleanData,
             notesEntrainements: notesEntrainementsMap,
-            notesSpecialites: notesSpecialitesMap
+            notesSpecialites: notesSpecialitesMap,
+            // ── MISSION CORRECTIVE, point 10 : le barème associé aux valeurs
+            //    de ce backup. Un ancien backup sans ce champ = barème
+            //    historique 5 (le barème 10 n'était pas encore déployé). ──
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
         };
         
         // Sauvegarder dans une collection séparée "planningBackups"
@@ -22973,6 +23150,26 @@ function loadUserData(userId) {
 						const userData_notesErreursBackup = userData.notesErreurs;
       window.userData = userData; // sync global
 
+						// ── MISSION CORRECTIVE, point 3 : synchronise le barème de
+						//    confiance directement depuis CE MÊME snapshot (pas une
+						//    lecture séparée) — se déclenche en live à chaque mise à
+						//    jour, pas seulement au login. Absence de confidenceScale
+						//    = barème historique 5, sans migration automatique. ──
+						if (newData.confidenceScale === 5 || newData.confidenceScale === 10) {
+							if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+								window.tpxSetConfidenceScaleRuntime(newData.confidenceScale);
+							}
+						} else if (window._confidenceScaleRuntime == null) {
+							// Rien en Firestore ET rien encore posé cette session : barème
+							// historique 5, explicite (pas juste laissé au défaut implicite).
+							if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+								window.tpxSetConfidenceScaleRuntime(5);
+							}
+						}
+						if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+						if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+
+
 						// ── RESTAURATION PENDINGSYNC ─────────────────────────────────────
 						// Si des données locales plus récentes existent (écriture pagehide),
 						// on les restaure et on les re-synchronise avec Firebase.
@@ -22990,8 +23187,26 @@ function loadUserData(userId) {
 									// Pas de limite de durée : si le pendingSync existe encore, c'est que
 									// Firebase n'a jamais reçu ces données (sinon saveUserData() l'aurait supprimé).
 									if (_pending.data && _pendingTime > _firebaseTime) {
+										// ── MISSION CORRECTIVE, points 9/10 : convertir une COPIE des
+										//    tours du pending si son bareme differe du bareme Firestore
+										//    desormais confirme. Absence de confidenceScale sur un ancien
+										//    pending = bareme historique 5. ──
+										var _pendingScale = (_pending.confidenceScale === 10) ? 10 : 5;
+										var _firestoreScale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+										var _pendingItems = _pending.data.items || {};
+										if (_pendingScale !== _firestoreScale && typeof window.convertConfidenceValue === 'function') {
+											var _convertedPendingItems = {};
+											Object.keys(_pendingItems).forEach(function (k) {
+												var _it = _pendingItems[k];
+												if (!_it || !Array.isArray(_it.tours)) { _convertedPendingItems[k] = _it; return; }
+												_convertedPendingItems[k] = Object.assign({}, _it, {
+													tours: _it.tours.map(function (v) { return window.convertConfidenceValue(v, _pendingScale, _firestoreScale); })
+												});
+											});
+											_pendingItems = _convertedPendingItems;
+										}
 										userData = {
-											items:             _pending.data.items             || userData.items             || {},
+	items:             _pendingItems             || userData.items             || {},
 											trophies:          _pending.data.trophies          || userData.trophies          || {},
 											planningData:      _pending.data.planningData      || userData.planningData      || {},
 											checklistData:     _pending.data.checklistData     || userData.checklistData     || [],
@@ -23781,7 +23996,12 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
             return copy;
         }),
         deletedDefaultIds: userData.deletedDefaultIds || [],
-        lastUpdated: timestamp // ✅ Utiliser le timestamp local, pas userData.lastUpdated
+        lastUpdated: timestamp, // ✅ Utiliser le timestamp local, pas userData.lastUpdated
+        // ── MISSION CORRECTIVE, point 12 : une sauvegarde normale des tours
+        //    doit toujours réaffirmer le barème actuel, pour qu'un document
+        //    ne puisse jamais se retrouver avec des valeurs et un barème
+        //    incohérents entre eux. ──
+        confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
     };
     
     try {
@@ -24387,6 +24607,65 @@ if (!canPerformAction('save')) return;
     }
 }
 
+// ── MISSION CORRECTIVE (bugs résiduels), points 2-5 : la restauration ne
+//    doit JAMAIS annoncer un succès sans confirmation Firestore réelle.
+//    saveUserData() n'est pas une API fiable à cet effet (plusieurs
+//    branches peuvent `return;` silencieusement sans lever d'exception).
+//    Cette fonction dédiée écrit directement le document et ne retourne
+//    true QUE si Firestore a réellement confirmé l'écriture. ──
+async function saveRestoredPlanningDataConfirmed(restoredData, restoredScale) {
+    if (!currentUser || !restoredData) return false;
+
+    // ── MISSION CORRECTIVE (restauration backup), point 1 — P0 : même
+    //    protection anti-écrasement que saveUserData(), AVANT tout setDoc.
+    //    Un backup officiel vide/corrompu ne doit jamais écraser
+    //    planningRevision/{uid} avec items:{}. Exception programme
+    //    sur-mesure conservée (une liste vide y est un état légitime). ──
+    const _isCustom = !!(
+        window.TPXPerso &&
+        typeof window.TPXPerso.isCustom === 'function' &&
+        window.TPXPerso.isCustom()
+    );
+    if (Object.keys(restoredData.items || {}).length === 0 && !_isCustom) {
+        console.error('[Restore] Backup refusé : items vides ou invalides');
+        return false;
+    }
+
+    try {
+        // ── Point 2 : timestamp neuf — un backup ancien restauré aujourd'hui
+        //    doit être considéré comme une nouvelle révision aujourd'hui, pas
+        //    avec son ancien lastUpdated. restoredData étant le MÊME objet que
+        //    _restoredCopy chez l'appelant (passé par référence), cette
+        //    mutation se reflète automatiquement là-bas aussi. ──
+        const restoreTimestamp = new Date().toISOString();
+        restoredData.lastUpdated = restoreTimestamp;
+
+        const _payload = {
+            items:             restoredData.items             || {},
+            trophies:          restoredData.trophies          || {},
+            planningData:      restoredData.planningData      || {},
+            checklistData:     restoredData.checklistData     || [],
+            selectedResources: restoredData.selectedResources || [],
+            trainings:         restoredData.trainings         || [],
+            deletedDefaultIds: restoredData.deletedDefaultIds || [],
+            lastUpdated:       restoreTimestamp,
+            // Barème restauré EN MÊME TEMPS que les tours, dans la même
+            // écriture confirmée — jamais l'un sans l'autre.
+            confidenceScale:   (restoredScale === 10) ? 10 : 5
+        };
+        // ── Préserve notesErreurs legacy s'il était présent dans le backup
+        //    restauré, comme le fait déjà saveBackupToFirebase() à la
+        //    création (même protection, cf. point 16). ──
+        if (restoredData.notesErreurs !== undefined) _payload.notesErreurs = restoredData.notesErreurs;
+
+        await setDoc(doc(db, 'planningRevision', currentUser.uid), _payload, { merge: true });
+        return true; // Firestore a réellement confirmé l'écriture (await résolu sans exception)
+    } catch (e) {
+        console.warn('[Restore] Écriture de restauration non confirmée :', e);
+        return false; // offline / permission-denied / timeout / toute autre exception
+    }
+}
+
 async function performRestoreFirebase() {
     if (!currentUser) return;
     
@@ -24406,11 +24685,34 @@ async function performRestoreFirebase() {
         const restoredSpeNotes = (backupDocData && backupDocData.notesSpecialites) ? backupDocData.notesSpecialites : null;
         
         if (restored) {
-            userData = restored;
+            // ── MISSION CORRECTIVE, points 3-4 : on prépare une COPIE et on la
+            //    fait CONFIRMER par Firestore AVANT de toucher userData, le
+            //    runtime du barème ou l'UI. Si la confirmation échoue (hors-
+            //    ligne, permission-denied, timeout...), les données actuelles
+            //    de l'application restent intactes — jamais remplacées par une
+            //    restauration non confirmée. ──
+            var _backupScale = (backupDocData && backupDocData.confidenceScale === 10) ? 10 : 5;
+            var _restoredCopy = JSON.parse(JSON.stringify(restored));
+            _restoredCopy.confidenceScale = _backupScale;
+
+            var _confirmed = await saveRestoredPlanningDataConfirmed(_restoredCopy, _backupScale);
+            if (!_confirmed) {
+                throw new Error('restore-not-confirmed');
+            }
+
+            // Firestore a réellement confirmé : SEULEMENT MAINTENANT on bascule
+            // l'état local, le runtime du barème et l'UI.
+            // (_restoredCopy.lastUpdated a déjà été mis à jour avec un
+            // timestamp neuf DANS saveRestoredPlanningDataConfirmed — même
+            // objet passé par référence, donc déjà cohérent avec ce qui vient
+            // d'être écrit sur Firestore, sans dupliquer la génération.)
+            userData = _restoredCopy;
             window.userData = userData; // sync global
-            
-            // Mettre à jour le cache — Sauvegarder sur Firebase (données principales)
-            await saveUserData();
+            if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+                window.tpxSetConfidenceScaleRuntime(_backupScale);
+            }
+            if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+            if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
             
             // ── Restaurer les notes du cahier d'erreurs dans notesEntrainements ──
             if (restoredNotes && Object.keys(restoredNotes).length > 0) {
@@ -24467,12 +24769,19 @@ async function performRestoreFirebase() {
         
     } catch (error) {
         console.error('Erreur restauration Firebase:', error);
-        
+
+        // ── Point 4 : message spécifique si la restauration n'a pas pu être
+        //    confirmée par Firestore (offline, permission-denied, timeout...)
+        //    — les données actuelles n'ont pas été remplacées, le backup
+        //    reste disponible pour une nouvelle tentative. ──
+        var _isUnconfirmed = error && error.message === 'restore-not-confirmed';
         await showCustomAlert({
             type: 'error',
             icon: 'times-circle',
             title: 'Erreur de restauration',
-            message: 'Une erreur est survenue lors de la restauration depuis le cloud.',
+            message: _isUnconfirmed
+                ? 'La restauration n\'a pas pu être confirmée par le serveur. Vos données actuelles n\'ont pas été remplacées. Réessayez lorsque la connexion est stable.'
+                : 'Une erreur est survenue lors de la restauration depuis le cloud.',
             okText: 'Compris'
         });
         
@@ -24625,6 +24934,12 @@ function debouncedSave() {
         try {
             const _safeTimestamp = new Date().toISOString();
             const _pendingPayload = JSON.stringify({
+                schemaVersion: 2,
+                // ── MISSION CORRECTIVE, point 8 : le barème associé décrit les
+                //    valeurs contenues dans data.items[*].tours[] — indispensable
+                //    pour reconvertir correctement une restauration de pending si
+                //    le barème Firestore a changé entre-temps. ──
+                confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
                 data: {
                     items:             userData.items             || {},
                     trophies:          userData.trophies          || {},
@@ -24923,7 +25238,11 @@ function getSpecialtyProgress(s, scope) {
         });
     });
     
-    const avgFeeling = feelings.length > 0 ? Math.round((feelings.reduce((a, b) => a + b, 0) / feelings.length) * 10) / 10 : null;
+    const avgFeeling = feelings.length > 0
+        ? Math.round((feelings.reduce((a, b) => a + b, 0) / feelings.length) * 10) / 10
+        : null; // valeur BRUTE (vraie échelle) — la normalisation vers 0-5 se
+                 // fait ponctuellement là où c'est nécessaire (getFeelingClass),
+                 // jamais à la source, pour que l'affichage montre la vraie valeur.
 	const timeFormatted = formatTime(totalMinutes);
 			
 return { 
@@ -25058,7 +25377,12 @@ function renderStats() {
     if (statTimeToday) statTimeToday.textContent = formatTime(dailyStats.minutesToday);
     
     if (statFeelingToday) {
-        statFeelingToday.textContent = dailyStats.avgFeeling !== null ? dailyStats.avgFeeling.toFixed(1) + '/5' : '--';
+        // Widget compact à 5 pastilles fixes, volontairement indépendant du
+        // barème réel — on normalise la moyenne (qui peut être sur 1-10)
+        // vers son équivalent 0-5 avant affichage, plutôt que de réinventer
+        // ce petit résumé en 10 niveaux (hors périmètre de cette mission).
+        var _csDaily = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+        statFeelingToday.textContent = dailyStats.avgFeeling !== null ? dailyStats.avgFeeling.toFixed(1) + '/' + _csDaily : '--';
     }
     
     if (feelingIndicator) {
@@ -25066,7 +25390,8 @@ function renderStats() {
         dots.forEach(dot => dot.classList.remove('active', 'c1', 'c2', 'c3', 'c4', 'c5'));
         
         if (dailyStats.avgFeeling !== null) {
-            const roundedFeeling = Math.round(dailyStats.avgFeeling);
+            var _csDaily2 = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+            const roundedFeeling = Math.min(5, Math.max(1, Math.round(dailyStats.avgFeeling * (5 / _csDaily2))));
             dots.forEach(dot => {
                 const level = parseInt(dot.dataset.level);
                 if (level <= roundedFeeling) dot.classList.add('active', 'c' + roundedFeeling);
@@ -25150,7 +25475,7 @@ function renderPriorityItems() {
             const validTours = d.tours.filter(t => t !== null);
             const avgFeeling = validTours.length > 0
                 ? validTours.reduce((a, b) => a + b, 0) / validTours.length
-                : null;
+                : null; // valeur BRUTE — cf. commentaire dans getSpecialtyProgress
 
             // Jours depuis la dernière révision
             const lastDateStr = d.tourDates.filter(x => x).pop() || d.lastRevision;
@@ -25208,10 +25533,16 @@ function renderPriorityItems() {
 
     function getFeelingClass(f) {
         if (f === null) return 'feeling-none';
-        if (f < 1.5) return 'feeling-c1';
-        if (f < 2.5) return 'feeling-c2';
-        if (f < 3.5) return 'feeling-c3';
-        if (f < 4.5) return 'feeling-c4';
+        // f est une valeur BRUTE (vraie échelle) — normalisée ici, en
+        // interne, uniquement pour choisir parmi les 5 classes CSS
+        // existantes (feeling-c1..c5). L'affichage, lui, montre la vraie
+        // valeur ailleurs — ne pas modifier f directement.
+        var _csFeel = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+        var fOn5 = f * (5 / _csFeel);
+        if (fOn5 < 1.5) return 'feeling-c1';
+        if (fOn5 < 2.5) return 'feeling-c2';
+        if (fOn5 < 3.5) return 'feeling-c3';
+        if (fOn5 < 4.5) return 'feeling-c4';
         return 'feeling-c5';
     }
 
@@ -25225,7 +25556,7 @@ function renderPriorityItems() {
 const top10 = allItems.slice(0, 6);
 
     container.innerHTML = top10.map((item, idx) => {
-        const feelingDisplay = item.avgFeeling !== null ? item.avgFeeling.toFixed(1) + '/5' : '--';
+        const feelingDisplay = item.avgFeeling !== null ? item.avgFeeling.toFixed(1) + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '--';
         const feelingCls     = getFeelingClass(item.avgFeeling);
         const delayCls       = getDelayClass(item.daysSince);
         const escapedName    = tpxEscOnclickArg(item.name);
@@ -25298,17 +25629,22 @@ const podiumOrder = top3.map((s, i) => ({ s, rank: i + 1 }));
 
     function getFeelingClass(f) {
         if (!f || f === 0) return 'feeling-none';
-        if (f < 1.5) return 'feeling-c1';
-        if (f < 2.5) return 'feeling-c2';
-        if (f < 3.5) return 'feeling-c3';
-        if (f < 4.5) return 'feeling-c4';
+        // f est une valeur BRUTE (vraie échelle) — normalisée ici, en
+        // interne, uniquement pour choisir parmi les 5 classes CSS
+        // existantes (feeling-c1..c5).
+        var _csFeel2 = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+        var fOn5b = f * (5 / _csFeel2);
+        if (fOn5b < 1.5) return 'feeling-c1';
+        if (fOn5b < 2.5) return 'feeling-c2';
+        if (fOn5b < 3.5) return 'feeling-c3';
+        if (fOn5b < 4.5) return 'feeling-c4';
         return 'feeling-c5';
     }
 
     container.innerHTML = podiumOrder.map(({ s, rank }) => {
         const cfg  = SPECIALTY_CONFIG[s.id] || { color: '#6b7280', icon: 'fa-book-medical' };
         const prog = s.prog;
-        const feelingDisplay = s.avgFeeling > 0 ? s.avgFeeling.toFixed(1) + '/5' : '--';
+        const feelingDisplay = s.avgFeeling > 0 ? s.avgFeeling.toFixed(1) + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '--';
         const feelingCls     = getFeelingClass(s.avgFeeling > 0 ? s.avgFeeling : null);
         const isComplete     = prog.percentage === 100;
 
@@ -25478,11 +25814,13 @@ function renderDashboardSpecialties() {
         let feelingClass = 'feeling-none';
         let feelingDisplay = '--';
         if (prog.avgFeeling !== null) {
-            feelingDisplay = prog.avgFeeling.toFixed(1) + '/5';
-            if (prog.avgFeeling < 1.5) feelingClass = 'feeling-c1';
-            else if (prog.avgFeeling < 2.5) feelingClass = 'feeling-c2';
-            else if (prog.avgFeeling < 3.5) feelingClass = 'feeling-c3';
-            else if (prog.avgFeeling < 4.5) feelingClass = 'feeling-c4';
+            var _csSpecList = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+            feelingDisplay = prog.avgFeeling.toFixed(1) + '/' + _csSpecList;
+            var _fOn5SpecList = prog.avgFeeling * (5 / _csSpecList); // normalisation LOCALE, uniquement pour choisir la classe CSS
+            if (_fOn5SpecList < 1.5) feelingClass = 'feeling-c1';
+            else if (_fOn5SpecList < 2.5) feelingClass = 'feeling-c2';
+            else if (_fOn5SpecList < 3.5) feelingClass = 'feeling-c3';
+            else if (_fOn5SpecList < 4.5) feelingClass = 'feeling-c4';
             else feelingClass = 'feeling-c5';
         }
         
@@ -26582,6 +26920,10 @@ let selectedConfidence = null;
 let selectedSupport = null;
 
 window.openConfidenceModal = function(el) {
+    // Régénère les boutons selon le barème courant (5 ou 10) AVANT toute
+    // logique de présélection plus bas (qui cherche un bouton par
+    // data-confidence — doit donc déjà exister dans le DOM à ce stade).
+    if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
     // Origine todolist (drapeau posé par openTourModalFromChecklist) — capturé et réinitialisé tôt
     var _fromChecklist = !!window._tourFromChecklist;
     window._tourFromChecklist = false;
@@ -26616,8 +26958,21 @@ if (item) {
     selectedSupport = d.tourSupports ? d.tourSupports[tourIndex] : null;
     
     // Reset UI
-    document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected', 'current'));
     document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
+    
+    // ── Marqueur "dernier niveau enregistré" (anneau blanc, référence visuelle
+    //    — PAS une sélection) : le dernier tour réellement rempli AVANT celui
+    //    qu'on est en train d'ajouter/modifier. Sur un nouveau tour (aucune
+    //    valeur présélectionnée), ça donne à l'utilisateur un repère de son
+    //    ressenti la dernière fois, exactement comme le popover compact. ──
+    let _lastRecordedConf = null;
+    for (let i = tourIndex - 1; i >= 0; i--) {
+        if (d.tours[i] != null) { _lastRecordedConf = d.tours[i]; break; }
+    }
+    if (_lastRecordedConf != null) {
+        document.querySelector('.confidence-btn[data-confidence="' + _lastRecordedConf + '"]')?.classList.add('current');
+    }
     
     // Reset erreurs
     document.getElementById('confidence-error')?.classList.remove('visible');
@@ -26705,19 +27060,50 @@ if (selectedConfidence) {
     confidenceModal.classList.add('active');
 };
 
-document.querySelectorAll('.confidence-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const wasSelected = this.classList.contains('selected');
+// ── Barème de confiance : rendu dynamique 5 ou 10 niveaux ──────────────
+// Génère les boutons du modal principal selon window.getConfidenceScale().
+// 2 rangées FORCÉES de 5 sur un barème à 10 (pas un flex-wrap non
+// contrôlé qui donnerait 8+2 ou toute autre répartition selon la largeur).
+window.tpxRenderConfidenceButtons = function () {
+    var box = document.getElementById('confidence-buttons');
+    if (!box) return;
+    var scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    box.setAttribute('data-conf-scale', String(scale));
+    function btnHtml(v) { return '<button class="confidence-btn c' + v + '" data-confidence="' + v + '">' + v + '</button>'; }
+    if (scale === 10) {
+        var row1 = '', row2 = '';
+        for (var v1 = 1; v1 <= 5; v1++) row1 += btnHtml(v1);
+        for (var v2 = 6; v2 <= 10; v2++) row2 += btnHtml(v2);
+        box.innerHTML = '<div class="confidence-buttons-row">' + row1 + '</div>' +
+                         '<div class="confidence-buttons-row">' + row2 + '</div>';
+    } else {
+        var html = '';
+        for (var v = 1; v <= scale; v++) html += btnHtml(v);
+        box.innerHTML = html;
+    }
+};
+
+// Délégation d'événements sur le conteneur STABLE (id="confidence-buttons")
+// plutôt qu'une liaison directe sur chaque bouton — indispensable puisque
+// les boutons sont désormais régénérés dynamiquement (tpxRenderConfidenceButtons)
+// et perdraient toute liaison directe à chaque réouverture du modal.
+(function () {
+    var container = document.getElementById('confidence-buttons');
+    if (!container) return;
+    container.addEventListener('click', function (e) {
+        var btn = e.target.closest('.confidence-btn');
+        if (!btn || !container.contains(btn)) return;
+        const wasSelected = btn.classList.contains('selected');
         document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected'));
         if (wasSelected) {
             selectedConfidence = null;
         } else {
-            this.classList.add('selected');
-            selectedConfidence = parseInt(this.dataset.confidence);
+            btn.classList.add('selected');
+            selectedConfidence = parseInt(btn.dataset.confidence);
             document.getElementById('confidence-error')?.classList.remove('visible');
         }
     });
-});
+})();
 
 document.querySelectorAll('.support-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -27431,18 +27817,19 @@ function initWeeklyCharts() {
     // Graphique Ressenti
 const ctxFeeling = document.getElementById('chart-feeling-weekly');
 if (ctxFeeling) {
+    var _csChart = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
     chartFeelingWeekly = new Chart(ctxFeeling, createChartConfig(
         'Ressenti',
         { labels, values: feelingData },
         '#ec4899',
-        { min: 0, max: 5, unit: '' }
+        { min: 0, max: _csChart, unit: '' }
     ));
 }
     
     // Mettre à jour les totaux
     document.getElementById('weekly-tours-total').textContent = totalTours;
     document.getElementById('weekly-time-total').textContent = formatDuration(totalTime * 60);
-    document.getElementById('weekly-feeling-avg').textContent = avgFeeling !== null ? avgFeeling + '/5' : '--';
+    document.getElementById('weekly-feeling-avg').textContent = avgFeeling !== null ? avgFeeling + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '--';
 }
 
 
@@ -29563,7 +29950,12 @@ function saveTrophies() {
             
             if (day.confidenceCount >= 5) {
                 const avgConfidence = day.confidenceSum / day.confidenceCount;
-                if (avgConfidence === 5) {
+                // ── MISSION CORRECTIVE, point 13 : "parfait" = le MAXIMUM du
+                //    barème actif (5 ou 10), jamais un 5 codé en dur — sinon
+                //    un jour à 5/10 (à peine la moyenne) serait compté comme
+                //    parfait par erreur. ──
+                const _perfectScale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+                if (avgConfidence === _perfectScale) {
                     hadPerfectDay = true;
                 }
             }
@@ -34200,6 +34592,25 @@ body.tc-kb-open-phone .flash-expand-btn {
             </button>
         </div>
         <div class="whats-new-modal-body">
+
+            <!-- ══════════════ SEPTEMBRE 2026 ══════════════ -->
+            <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Septembre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon amber">
+                    <i class="fas fa-gauge-high"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Barème de confiance sur 10 niveaux 🎯</h4>
+                    <p>
+                        Évaluez vos tours de révision avec plus de nuance grâce au nouveau
+                        <strong>barème sur 10 niveaux</strong>, en plus du barème par défaut
+                        sur 5. Réglable à tout moment dans <strong>Paramètres</strong> — vos
+                        tours déjà enregistrés sont convertis selon une table de
+                        correspondance claire, avec confirmation avant tout changement.
+                    </p>
+                </div>
+            </div>
 
             <!-- ══════════════ AOÛT 2026 (bis) ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
@@ -44684,8 +45095,8 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 <script>
 (function() {
     // Clé Firestore (champ dans doc users/{uid}) et localStorage (fallback hors-ligne)
-    var FS_FIELD      = 'whatsNewSeen_v4';
-    var LS_KEY        = 'whatsNew_seen_v4';
+    var FS_FIELD      = 'whatsNewSeen_v5';
+    var LS_KEY        = 'whatsNew_seen_v5';
     var _seenResolved = false; // évite de re-montrer la pastille après résolution
 
     /* ── Animations ── */
@@ -45159,7 +45570,9 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 
   var CONF_COLORS = {
     1: 'var(--confidence-1)', 2: 'var(--confidence-2)', 3: 'var(--confidence-3)',
-    4: 'var(--confidence-4)', 5: 'var(--confidence-5)'
+    4: 'var(--confidence-4)', 5: 'var(--confidence-5)',
+    6: 'var(--confidence-6)', 7: 'var(--confidence-7)', 8: 'var(--confidence-8)',
+    9: 'var(--confidence-9)', 10: 'var(--confidence-10)'
   };
 
   // Palette du compteur selon le NOMBRE de tours (reprise du prototype bouton.html, étendue 0→8)
@@ -45288,6 +45701,349 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     } catch (e) {}
   }
   window.getToursViewMode = getMode;
+
+  /* ══════════════════════════════════════════════════════════════
+     BARÈME DE CONFIANCE (5 ↔ 10) — mission de portage depuis P1Planner
+     ──────────────────────────────────────────────────────────────
+     Divergence structurelle IMPORTANTE avec P1Planner : là-bas, chaque
+     "cours" est un document Firestore séparé (collection courses/), la
+     migration doit donc utiliser un writeBatch multi-documents pour rester
+     atomique. Ici, TOUS les items d'un utilisateur vivent dans un SEUL
+     champ userData.items{} sur le document users/{uid} — une seule
+     écriture de ce document suffit à être atomique par nature, aucun
+     writeBatch nécessaire.
+
+     Sécurité : jamais de chemin pointé Firestore du type
+     "items.CLÉ.tours" (updateDoc avec dot-path) — si une clé d'item
+     contenait un point, ce serait interprété à tort comme un chemin
+     imbriqué plutôt qu'une clé littérale, risque réel de corruption
+     silencieuse. On réécrit donc le champ items ENTIER en une fois,
+     jamais des sous-chemins individuels. ══════════════════════════ */
+  function _csUid() { return (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : 'anon'; }
+  function _csKey() { return 'confidenceScale__' + _csUid(); }
+
+  // ── MISSION CORRECTIVE, point 2 : localStorage n'est qu'un cache de
+  //    confort, jamais la source de vérité. window._confidenceScaleRuntime
+  //    est la valeur réellement utilisée pendant la session — posée
+  //    explicitement dès qu'on connaît la valeur Firestore (login, listener,
+  //    migration réussie), jamais déduite implicitement de localStorage
+  //    seul. Un quota localStorage plein ou une erreur d'écriture ne peut
+  //    donc jamais faire "oublier" un barème 10 confirmé côté serveur. ──
+  window._confidenceScaleRuntime = null;
+  function tpxSetConfidenceScaleRuntime(scale) {
+    if (scale !== 5 && scale !== 10) return;
+    window._confidenceScaleRuntime = scale;
+    try { localStorage.setItem(_csKey(), String(scale)); } catch (e) {}
+    applyConfidenceScaleAttr(scale);
+  }
+  window.tpxSetConfidenceScaleRuntime = tpxSetConfidenceScaleRuntime;
+
+  function getConfidenceScale() {
+    if (window._confidenceScaleRuntime === 5 || window._confidenceScaleRuntime === 10) {
+      return window._confidenceScaleRuntime;
+    }
+    try {
+      var v = parseInt(localStorage.getItem(_csKey()), 10);
+      if (v === 5 || v === 10) return v;
+    } catch (e) {}
+    return 5; // défaut historique : 5, comme tous les comptes déjà en place
+  }
+  window.getConfidenceScale = getConfidenceScale;
+
+  // Tables de conversion EXACTES, identiques à P1Planner (déjà validées).
+  var CS_MAP_5_TO_10 = { 1: 2, 2: 4, 3: 6, 4: 8, 5: 10 };
+  var CS_MAP_10_TO_5 = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5 };
+
+  function convertConfidenceValue(v, fromScale, toScale) {
+    if (v == null) return null; // une case de tour non enregistrée reste non enregistrée
+    if (fromScale === toScale) return v;
+    var map = (fromScale === 5 && toScale === 10) ? CS_MAP_5_TO_10
+            : (fromScale === 10 && toScale === 5) ? CS_MAP_10_TO_5
+            : null;
+    if (!map || map[v] == null) return v; // valeur hors table (ne devrait pas arriver) : ne jamais l'effacer
+    return map[v];
+  }
+  window.convertConfidenceValue = convertConfidenceValue;
+
+  function applyConfidenceScaleAttr(scale) {
+    try { document.documentElement.setAttribute('data-conf-scale', String(scale)); } catch (e) {}
+  }
+  window.tpxApplyConfidenceScaleAttr = applyConfidenceScaleAttr;
+  applyConfidenceScaleAttr(getConfidenceScale());
+
+  // ── MISSION CORRECTIVE, points 4 et 18 : verrou anti-double-migration +
+  //    flush obligatoire des modifications locales AVANT tout changement de
+  //    barème. Sans ça, un tour tout juste ajouté (encore dans le debounce
+  //    de 5s) pourrait être écrasé par la version serveur relue pendant la
+  //    migration — le tour disparaîtrait silencieusement. ──
+  window._confidenceScaleMigrationInFlight = false;
+
+  async function flushEdnBeforeConfidenceScaleMigration() {
+    // Annule le debounce en attente : on va sauvegarder nous-mêmes, tout de
+    // suite, plutôt que de laisser un setTimeout concurrent partir en même
+    // temps que la migration.
+    try { if (typeof saveTimeout !== 'undefined' && saveTimeout) { clearTimeout(saveTimeout); saveTimeout = null; } } catch (e) {}
+
+    var uid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : null;
+    var pendingKey = uid ? ('planning_pending_' + uid) : null;
+    var hadPending = false;
+    try { hadPending = !!(pendingKey && localStorage.getItem(pendingKey)); } catch (e) {}
+
+    var hadUnsaved = false;
+    try { hadUnsaved = !!(typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges); } catch (e) {}
+
+    if (!hadUnsaved && !hadPending) return true; // rien à synchroniser, migration peut continuer
+
+    try {
+      if (typeof saveUserData === 'function') { await saveUserData(); }
+    } catch (e) {
+      console.warn('[ConfScale] flush avant migration a échoué :', e);
+      return false;
+    }
+
+    // Vérification RÉELLE du succès — jamais une supposition optimiste.
+    var stillUnsaved = false;
+    try { stillUnsaved = !!(typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges); } catch (e) {}
+    if (stillUnsaved) return false;
+
+    var stillPending = false;
+    try { stillPending = !!(pendingKey && localStorage.getItem(pendingKey)); } catch (e) {}
+    if (stillPending) return false; // un pending plus récent a pu être créé pendant l'await
+
+    return true;
+  }
+  window.flushEdnBeforeConfidenceScaleMigration = flushEdnBeforeConfidenceScaleMigration;
+
+  /* Migration complète : convertit TOUS les d.tours[] de userData.items ET
+     écrit le nouveau barème, dans UNE SEULE transaction Firestore.
+     ── MISSION CORRECTIVE, point 5 : remplace le schéma getDoc→conversion→
+     setDoc (fenêtre de course possible) par runTransaction — fromScale est
+     lu EXCLUSIVEMENT depuis le document tel que vu PAR LA TRANSACTION,
+     jamais depuis getConfidenceScale() (qui pourrait refléter un état
+     local déjà obsolète). ── */
+  async function migrateConfidenceScale(newScale) {
+    var user = window.currentUser;
+    if (!user || !userData) return { ok: false, error: 'not-signed-in' };
+
+    if (window._confidenceScaleMigrationInFlight) return { ok: false, error: 'migration-in-flight' };
+    window._confidenceScaleMigrationInFlight = true;
+
+    try {
+      // Point 4 : jamais de migration tant que les modifications locales ne
+      // sont pas confirmées par Firestore.
+      var flushed = await flushEdnBeforeConfidenceScaleMigration();
+      if (!flushed) return { ok: false, error: 'unsynced-local-changes' };
+
+      var _db = window._fsDb || (typeof db !== 'undefined' ? db : null);
+      var _doc = window._fsDoc || (typeof doc !== 'undefined' ? doc : null);
+      var _runTransaction = window._fsRunTransaction || (typeof runTransaction !== 'undefined' ? runTransaction : null);
+      if (!_db || !_doc || !_runTransaction) return { ok: false, error: 'firestore-unavailable' };
+      var ref = _doc(_db, 'planningRevision', user.uid);
+
+      var changedCount = 0;
+      var finalItems = null;
+      var finalFromScale = null;
+
+      try {
+        await _runTransaction(_db, async function (transaction) {
+          var snap = await transaction.get(ref);
+          var data = snap.exists() ? (snap.data() || {}) : {};
+          // ── Point 5 : fromScale vient EXCLUSIVEMENT du document lu DANS
+          //    la transaction — jamais de getConfidenceScale(). ──
+          var fromScale = (data.confidenceScale === 10) ? 10 : 5;
+          finalFromScale = fromScale;
+
+          if (fromScale === newScale) {
+            // Rien à reconvertir — on réaffirme quand même confidenceScale
+            // pour rester cohérent (idempotent, aucune donnée touchée).
+            finalItems = data.items || {};
+            transaction.set(ref, { confidenceScale: newScale }, { merge: true });
+            return;
+          }
+
+          // ── Point 6 : conversion strictement limitée à item.tours[] —
+          //    copies non destructives (Object.assign), tous les autres
+          //    champs (tourDates, tourDurations, tourSupports, lastRevision,
+          //    resources, num, fc, name, et tout champ inconnu) préservés
+          //    intacts, jamais reconstruits avec une liste de champs connus. ──
+          var items = data.items || {};
+          var newItems = {};
+          Object.keys(items).forEach(function (key) {
+            var d = items[key];
+            if (!d || !Array.isArray(d.tours)) { newItems[key] = d; return; }
+            var newTours = d.tours.map(function (v) { return convertConfidenceValue(v, fromScale, newScale); });
+            var changed = false;
+            for (var i = 0; i < newTours.length; i++) { if (newTours[i] !== d.tours[i]) { changed = true; break; } }
+            if (changed) changedCount++;
+            newItems[key] = changed ? Object.assign({}, d, { tours: newTours }) : d;
+          });
+
+          transaction.set(ref, { items: newItems, confidenceScale: newScale }, { merge: true });
+          finalItems = newItems;
+        });
+      } catch (e) {
+        console.warn('[ConfScale] Échec migration barème (transaction) :', e);
+        return { ok: false, error: e }; // rien n'a été modifié en mémoire à ce stade : état cohérent garanti
+      }
+
+      // ── Point 7 : état local mis à jour SEULEMENT après commit réel de la
+      //    transaction, jamais avant. ──
+      if (finalItems) userData.items = finalItems;
+      window.userData = userData;
+      tpxSetConfidenceScaleRuntime(newScale);
+      return { ok: true, changed: changedCount, fromScale: finalFromScale };
+    } finally {
+      window._confidenceScaleMigrationInFlight = false;
+    }
+  }
+  window.tpxMigrateConfidenceScale = migrateConfidenceScale;
+
+  /* Charge le barème depuis Firestore au login (aligne localStorage) —
+     même motif que _checkToursViewMode juste au-dessus. */
+  window._checkConfidenceScale = async function () {
+    try {
+      var user = window.currentUser;
+      if (!user) return;
+      var _db = window._fsDb || (typeof db !== 'undefined' ? db : null);
+      var _doc = window._fsDoc || (typeof doc !== 'undefined' ? doc : null);
+      var _getDoc = window._fsGetDoc || (typeof getDoc !== 'undefined' ? getDoc : null);
+      if (!_db || !_doc || !_getDoc) return;
+      // Même document que la migration (planningRevision/{uid}) — pas
+      // users/{uid}, qui ne contient jamais les tours ni ce réglage.
+      var snap = await _getDoc(_doc(_db, 'planningRevision', user.uid));
+      var data = snap.exists() ? snap.data() : {};
+      var stored = data.confidenceScale;
+      if (stored !== 5 && stored !== 10) return; // rien stocké → défaut local (5), aucune régression
+      // ── MISSION CORRECTIVE (bugs résiduels), point 6 : passer par le
+      //    setter runtime centralisé plutôt que d'écrire localStorage et
+      //    d'appliquer l'attribut CSS séparément — évite de contourner
+      //    window._confidenceScaleRuntime, qui doit rester la source unique
+      //    utilisée pendant la session. ──
+      if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+        window.tpxSetConfidenceScaleRuntime(stored);
+      }
+      if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+      if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+    } catch (e) {}
+  };
+
+  /* ---------- Réglage Paramètres : switch + modal de confirmation ---------- */
+  window.tpxUpdateConfidenceScaleSwitchUI = function () {
+    if (typeof window._syncSettingsUI === 'function') window._syncSettingsUI(true);
+  };
+
+  var _csPendingTarget = null; // barème visé, en attente de confirmation utilisateur
+
+  // Palettes explicites (mêmes valeurs que le CSS) — utilisées ici en JS pour
+  // éviter toute ambiguïté avec var(--confidence-N), qui dépend de l'attribut
+  // data-conf-scale global et donnait la MAUVAISE couleur pour la colonne
+  // d'arrivée quand on convertit de 10 vers 5 (les variables -1 à -5 sont
+  // alors celles, différentes, de la palette interpolée sur 10).
+  var CS_COLORS_5  = { 1: '#991b1b', 2: '#dc2626', 3: '#f59e0b', 4: '#22c55e', 5: '#15803d' };
+  var CS_COLORS_10 = { 1: '#991b1b', 2: '#b91c1c', 3: '#dc2626', 4: '#ea580c', 5: '#f59e0b', 6: '#ca8a04', 7: '#84cc16', 8: '#22c55e', 9: '#16a34a', 10: '#15803d' };
+
+  function _csBuildCorrespondenceTable(fromScale, toScale) {
+    var map = (fromScale === 5 && toScale === 10) ? CS_MAP_5_TO_10 : CS_MAP_10_TO_5;
+    var fromColors = fromScale === 10 ? CS_COLORS_10 : CS_COLORS_5;
+    var toColors = toScale === 10 ? CS_COLORS_10 : CS_COLORS_5;
+    var rows = '';
+    Object.keys(map).sort(function (a, b) { return a - b; }).forEach(function (k) {
+      rows += '<div class="cs-confirm-row">' +
+        '<span class="cs-confirm-pastille" style="background:' + fromColors[k] + '">' + k + '</span>' +
+        '<i class="fas fa-arrow-right cs-confirm-arrow"></i>' +
+        '<span class="cs-confirm-pastille" style="background:' + toColors[map[k]] + '">' + map[k] + '</span>' +
+        '</div>';
+    });
+    return rows;
+  }
+
+  window.tpxRequestConfidenceScaleChange = function (wantScale) {
+    var current = getConfidenceScale();
+    if (current === wantScale) return;
+    _csPendingTarget = wantScale;
+    var titleEl = document.getElementById('cs-confirm-title');
+    var introEl = document.getElementById('cs-confirm-intro');
+    var tableEl = document.getElementById('cs-confirm-table');
+    var errEl = document.getElementById('cs-confirm-error');
+    var noteEl = document.getElementById('cs-confirm-granularity-note');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (titleEl) titleEl.textContent = 'Passer au barème ' + wantScale + ' niveaux ?';
+    if (introEl) introEl.textContent = 'Vos tours déjà enregistrés en ' + current + ' niveaux seront convertis en ' + wantScale + ' niveaux selon cette correspondance :';
+    if (tableEl) tableEl.innerHTML = _csBuildCorrespondenceTable(current, wantScale);
+    // ── MISSION CORRECTIVE, point 17 : "aucune donnée n'est perdue" est
+    //    trompeur pour 10→5, qui regroupe volontairement deux niveaux en
+    //    un seul (1 et 2 deviennent tous les deux 1, etc.) — la précision
+    //    ne pourra pas être retrouvée automatiquement si on repasse à 10
+    //    ensuite. Message différent selon le sens réel de la conversion. ──
+    if (noteEl) {
+      if (current === 10 && wantScale === 5) {
+        noteEl.textContent = 'Le passage de 10 à 5 niveaux regroupe certaines notes deux par deux. Aucun tour ne sera supprimé, mais la précision supplémentaire du barème sur 10 ne pourra pas être retrouvée automatiquement si vous repassez ensuite au barème sur 10.';
+      } else {
+        noteEl.textContent = 'Vos niveaux seront convertis selon la correspondance indiquée — aucune donnée n\'est perdue, mais cette action modifie vos données existantes.';
+      }
+    }
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (ov) { ov.classList.remove('closing'); ov.classList.add('active'); }
+  };
+  window.requestConfidenceScaleChange = window.tpxRequestConfidenceScaleChange; // alias, cohérent avec le nom P1Planner
+
+  window.tpxCloseConfidenceScaleConfirm = function () {
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (!ov || !ov.classList.contains('active')) return;
+    // Même motif de fermeture que closeSettingsModal() : .closing puis
+    // retrait de .active après 180ms, pour une disparition animée cohérente
+    // avec le reste du site (pas un classList.remove('active') abrupt).
+    ov.classList.add('closing');
+    setTimeout(function () { ov.classList.remove('active', 'closing'); }, 180);
+    _csPendingTarget = null;
+  };
+
+  window.tpxConfirmConfidenceScaleChange = async function () {
+    if (_csPendingTarget == null) return;
+    var target = _csPendingTarget;
+    var btn = document.getElementById('cs-confirm-go-btn');
+    var sw = document.getElementById('confidence-scale-switch');
+    var errEl = document.getElementById('cs-confirm-error');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conversion en cours…'; }
+    if (sw) sw.style.pointerEvents = 'none'; // point 18 : switch verrouillé pendant toute la migration
+    var res = await migrateConfidenceScale(target);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmer le changement'; }
+    if (sw) sw.style.pointerEvents = '';
+    if (!res.ok) {
+      // Fail-closed : rien n'a été modifié (garanti par migrateConfidenceScale
+      // elle-même), le message ne doit JAMAIS annoncer un succès ici.
+      var _msg = 'La conversion a échoué (connexion indisponible ?). Aucune donnée n\'a été modifiée — réessayez lorsque la connexion est rétablie.';
+      if (res.error === 'unsynced-local-changes') {
+        // ── Point 4 : message dédié quand la migration a été refusée parce
+        //    que des modifications locales n'ont pas pu être confirmées par
+        //    Firestore avant de commencer — jamais un message générique ici. ──
+        _msg = 'Impossible de changer de barème tant que vos dernières modifications ne sont pas synchronisées. Vos données ont été conservées.';
+      } else if (res.error === 'migration-in-flight') {
+        _msg = 'Une conversion est déjà en cours. Veuillez patienter.';
+      }
+      if (errEl) { errEl.style.display = ''; errEl.textContent = _msg; }
+      return;
+    }
+    _csPendingTarget = null;
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (ov) { ov.classList.add('closing'); setTimeout(function () { ov.classList.remove('active', 'closing'); }, 180); }
+    if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+    if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+    if (typeof renderItemsTable === 'function') renderItemsTable(); // rafraîchit les badges de tour déjà affichés
+  };
+
+  // Clic sur un segment précis du switch Paramètres — ouvre la confirmation,
+  // ne bascule jamais silencieusement (cf. tpxConfirmConfidenceScaleChange).
+  (function () {
+    var sw = document.getElementById('confidence-scale-switch');
+    if (!sw) return;
+    sw.addEventListener('click', function (e) {
+      var opt = e.target.closest && e.target.closest('.seg-opt');
+      var want = opt ? parseInt(opt.getAttribute('data-cscale'), 10) : (getConfidenceScale() === 10 ? 5 : 10);
+      window.tpxRequestConfidenceScaleChange(want);
+    });
+  })();
 
   /* ---------- Chargement initial depuis Firestore ----------
      Appelée au login (cf. _checkToursViewMode plus bas). Si l'utilisateur
@@ -45463,6 +46219,13 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 
   /* ---------- Écriture effective d'un tour ---------- */
   function doAdd(sId, fc, conf) {
+    // ── MISSION CORRECTIVE (bugs résiduels), point 10 : défense en
+    //    profondeur. Le clic sur une pastille du popover compact appelle
+    //    doAdd() directement, SANS repasser par canPerformAction('tour')
+    //    (contrairement à compactTourAdd/compactTourRemove qui, eux,
+    //    gardent seulement l'OUVERTURE du picker — le clic sur une valeur
+    //    à l'intérieur, lui, n'était pas protégé). ──
+    if (window._confidenceScaleMigrationInFlight) return;
     var d = _getItemData(sId, fc);
     if (!d) return;
     var key = _getItemKey(sId, fc);
@@ -45723,29 +46486,47 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     var currentLevel = lastTourConf(d);
 
     var pop = document.createElement('div');
-    pop.className = 'ct-conf-pop';
+    var _confScale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    pop.className = 'ct-conf-pop' + (_confScale === 10 ? ' ccp-scale10' : '');
     pop.id = 'ct-conf-pop';
-    var html = '<div class="ccp-title">Nouveau niveau de confiance</div><div class="ccp-row">';
-    for (var v = 1; v <= 5; v++) {
-      var cur = (v === currentLevel) ? ' current' : '';
-      html += '<button class="ccp' + v + cur + '" data-v="' + v + '">' + v + '</button>';
+    var html = '<div class="ccp-title">Nouveau niveau de confiance</div>';
+    if (_confScale === 10) {
+      html += '<div class="ccp-rows-wrap">';
+      html += '<div class="ccp-row">';
+      for (var v1 = 1; v1 <= 5; v1++) {
+        var cur1 = (v1 === currentLevel) ? ' current' : '';
+        html += '<button class="ccp' + v1 + cur1 + '" data-v="' + v1 + '">' + v1 + '</button>';
+      }
+      html += '</div><div class="ccp-row">';
+      for (var v2 = 6; v2 <= 10; v2++) {
+        var cur2 = (v2 === currentLevel) ? ' current' : '';
+        html += '<button class="ccp' + v2 + cur2 + '" data-v="' + v2 + '">' + v2 + '</button>';
+      }
+      html += '</div></div>';
+    } else {
+      html += '<div class="ccp-row">';
+      for (var v = 1; v <= 5; v++) {
+        var cur = (v === currentLevel) ? ' current' : '';
+        html += '<button class="ccp' + v + cur + '" data-v="' + v + '">' + v + '</button>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
     pop.innerHTML = html;
     document.body.appendChild(pop);
     _activePop = pop;
 
     // Position de départ : pile sur la pastille Confiance (overlay 54×54).
-    // À l'ouverture, le picker grandit de 54 → 80 px en hauteur ; pour que la rangée
-    // de boutons reste alignée sur la pastille, on décale le top vers le HAUT de la
-    // différence (26 px) — le titre apparaît ainsi au-dessus de la pastille.
-    var openedHeight = 80;
-    var openedExtraTop = openedHeight - ar.height; // = 26
+    // À l'ouverture, le picker grandit de 54 → 80/118 px en hauteur (selon le
+    // barème) ; pour que la rangée de boutons reste alignée sur la pastille,
+    // on décale le top vers le HAUT de la différence — le titre apparaît
+    // ainsi au-dessus de la pastille.
+    var openedHeight = (_confScale === 10) ? 118 : 80;
+    var openedExtraTop = openedHeight - ar.height;
     pop.style.top  = (ar.top - openedExtraTop) + 'px';
     pop.style.left = ar.left + 'px';
 
     // Si pas assez de place à droite, on s'ouvre vers la gauche
-    var targetWidth = 260;
+    var targetWidth = (_confScale === 10) ? 230 : 260;
     var spaceRight = window.innerWidth - ar.left - 8;
     if (spaceRight < targetWidth) {
       pop.style.left = Math.max(8, ar.right - targetWidth) + 'px';
@@ -46269,9 +47050,13 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
         if (val == null) {
             return '<div class="tours-today-score empty"><span class="tours-today-score-badge">—</span><small>' + sub + '</small></div>';
         }
-        var lvl = Math.max(1, Math.min(5, Math.round(val)));
+        // Texte : vraie valeur / vrai barème (dynamique), cohérent avec le
+        // reste de l'app. La pastille de couleur (n1-n5, seulement 5 classes
+        // CSS existantes) reste une approximation normalisée sur 0-5.
+        var _csScore = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+        var lvl = Math.max(1, Math.min(5, Math.round(val * (5 / _csScore))));
         return '<div class="tours-today-score n' + lvl + '">' +
-                   '<span class="tours-today-score-badge">' + val.toFixed(1) + '/5</span>' +
+                   '<span class="tours-today-score-badge">' + val.toFixed(1) + '/' + _csScore + '</span>' +
                    '<small>' + sub + '</small>' +
                '</div>';
     }
@@ -46546,9 +47331,13 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
         if (val == null) {
             return '<div class="tours-today-score empty"><span class="tours-today-score-badge">—</span><small>' + sub + '</small></div>';
         }
-        var lvl = Math.max(1, Math.min(5, Math.round(val)));
+        // Texte : vraie valeur / vrai barème (dynamique), cohérent avec le
+        // reste de l'app. La pastille de couleur (n1-n5, seulement 5 classes
+        // CSS existantes) reste une approximation normalisée sur 0-5.
+        var _csScore = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+        var lvl = Math.max(1, Math.min(5, Math.round(val * (5 / _csScore))));
         return '<div class="tours-today-score n' + lvl + '">' +
-                   '<span class="tours-today-score-badge">' + val.toFixed(1) + '/5</span>' +
+                   '<span class="tours-today-score-badge">' + val.toFixed(1) + '/' + _csScore + '</span>' +
                    '<small>' + sub + '</small>' +
                '</div>';
     }
@@ -46748,6 +47537,21 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
       .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === scope); });
     document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="tours"] .settings-explain-row')
       .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === tours); });
+
+    // Barème de confiance (mission de portage P1Planner)
+    var cscale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    var sw3 = $('confidence-scale-switch');
+    if (sw3) {
+      var is10 = cscale === 10;
+      sw3.classList.toggle('on', is10);
+      sw3.setAttribute('aria-checked', is10 ? 'true' : 'false');
+      var l3 = sw3.querySelector('.seg-opt-left'), r3 = sw3.querySelector('.seg-opt-right');
+      if (l3) l3.classList.toggle('active', !is10);
+      if (r3) r3.classList.toggle('active', is10);
+      if (window._positionSegThumb) window._positionSegThumb(sw3, !!instant);
+    }
+    document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="confidence-scale"] .settings-explain-row')
+      .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === String(cscale)); });
   }
   window._syncSettingsUI = syncSettingsUI;
 
@@ -47193,7 +47997,7 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     var revBtn, reviewDropId = 'flashReviewDropMenu';
     if (due.length) {
       revBtn = '<div class="flash-review-btn-wrap" style="position:relative;display:inline-block;">' +
-        '<button class="flash-launch-session-btn" onclick="window._flashOpenReviewDrop(event,\'' + reviewDropId + '\',' + due.length + ',' + cards.length + ')"><i class="fas fa-bolt"></i> Réviser <i class="fas fa-chevron-down" style="font-size:0.7em;margin-left:3px;"></i></button>' +
+        '<button class="flash-launch-session-btn" onclick="window._flashOpenReviewDrop(event,\'' + reviewDropId + '\',' + due.length + ',' + cards.length + ')"><i class="fas fa-bolt"></i> Réviser <i class="fas fa-chevron-down flash-review-chevron" style="font-size:0.7em;margin-left:3px;"></i></button>' +
         '<div class="flash-review-drop" id="' + reviewDropId + '" style="display:none;">' +
           '<button class="flash-review-drop-item" onclick="window._flashStartAll();window._flashCloseReviewDrop(\'' + reviewDropId + '\')"><i class="fas fa-layer-group"></i> Tout réviser <span class="flash-review-drop-count">(' + cards.length + ')</span></button>' +
           '<button class="flash-review-drop-item due" onclick="window._flashStartDue();window._flashCloseReviewDrop(\'' + reviewDropId + '\')"><i class="fas fa-bolt"></i> Dues <span class="flash-review-drop-count">(' + due.length + ')</span></button>' +
@@ -47772,18 +48576,38 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     e.stopPropagation();
     var drop = document.getElementById(id); if (!drop) return;
     var isOpen = drop.style.display !== 'none';
-    // Ferme tous les drops ouverts
-    document.querySelectorAll('.flash-review-drop').forEach(function(d){ d.style.display='none'; });
+    // Ferme tous les drops ouverts (et fait pivoter leur chevron en retour)
+    document.querySelectorAll('.flash-review-drop').forEach(function(d){
+      d.style.display='none';
+      var btn = d.previousElementSibling;
+      var chev = btn && btn.querySelector('.flash-review-chevron');
+      if (chev) chev.classList.remove('open');
+    });
     if (!isOpen) {
       drop.style.display = 'block';
+      var thisBtn = drop.previousElementSibling;
+      var thisChev = thisBtn && thisBtn.querySelector('.flash-review-chevron');
+      if (thisChev) thisChev.classList.add('open');
       // Ferme si clic en dehors
       setTimeout(function() {
-        function _close(ev) { if (!drop.contains(ev.target)) { drop.style.display='none'; document.removeEventListener('click', _close, true); } }
+        function _close(ev) {
+          if (!drop.contains(ev.target)) {
+            drop.style.display='none';
+            if (thisChev) thisChev.classList.remove('open');
+            document.removeEventListener('click', _close, true);
+          }
+        }
         document.addEventListener('click', _close, true);
       }, 0);
     }
   }
-  function _flashCloseReviewDrop(id) { var d=document.getElementById(id); if(d) d.style.display='none'; }
+  function _flashCloseReviewDrop(id) {
+    var d=document.getElementById(id); if(!d) return;
+    d.style.display='none';
+    var btn = d.previousElementSibling;
+    var chev = btn && btn.querySelector('.flash-review-chevron');
+    if (chev) chev.classList.remove('open');
+  }
 
   // ---------- Session ----------
   function _shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
@@ -50614,7 +51438,9 @@ window.pushBackupVersion = async function (uid, data, content) {
   try {
     const id = new Date().toISOString().replace(/[:.]/g, '-');
     await setDoc(doc(db, 'planningBackups', uid, 'versions', id), {
-      data, itemsCount: content && content.items, details: content || null, createdAt: serverTimestamp()
+      data, itemsCount: content && content.items, details: content || null, createdAt: serverTimestamp(),
+      // ── MISSION CORRECTIVE, point 10 : même barème que le backup principal. ──
+      confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
     });
     const snap = await getDocs(query(collection(db, 'planningBackups', uid, 'versions'), orderBy('createdAt', 'desc')));
     const docs = snap.docs;
@@ -53204,6 +54030,27 @@ html[data-theme="pastel"] {
     --confidence-3:#c19a58;
     --confidence-4:#70c090;
     --confidence-5:#256b46;
+}
+/* ── MISSION CORRECTIVE, point 16 : sans cette règle, le bloc ci-dessus
+   (plus tôt dans le fichier n'a aucune importance : même sélecteur simple
+   html[data-theme="pastel"], donc l'ORDRE DANS LE FICHIER décide — et ce
+   bloc, placé en toute fin, écraserait TOUJOURS confidence-1..5 même sur
+   un compte en barème 10) écraserait les 5 premiers niveaux de la palette
+   sur 10. Sélecteur à DEUX attributs = plus spécifique, gagne quel que
+   soit l'ordre. Palette monotone (1=rouge, 5-6=milieu, 10=vert) ; les
+   teintes 1 et 10 sont réutilisées telles quelles car identiques à la
+   palette pastel 5 niveaux (mêmes couleurs de base aux deux extrémités). ── */
+html[data-theme="pastel"][data-conf-scale="10"] {
+    --confidence-1:#ad5555;
+    --confidence-2:#b66159;
+    --confidence-3:#bd7857;
+    --confidence-4:#c19a58;
+    --confidence-5:#a8a860;
+    --confidence-6:#8fae66;
+    --confidence-7:#78b06e;
+    --confidence-8:#70c090;
+    --confidence-9:#4a9868;
+    --confidence-10:#256b46;
 }
 html[data-theme="pastel"] {
     scrollbar-color:#6388c5 #e5e7eb;

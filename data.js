@@ -1057,7 +1057,8 @@ var SPECIALTIES_DATA=[
 {"fc":"FC31","num":"290","name":"Épidémiologie, facteurs de risque et prévention des cancers"},
 {"fc":"FC32","num":"300","name":"Tumeurs du col et du corps utérin"},
 {"fc":"FC33","num":"312","name":"Tumeurs du sein"},
-{"fc":"FC34","num":"306","name":"Tumeurs de l’ovaire"}
+{"fc":"FC34","num":"306","name":"Tumeurs de l’ovaire"},
+{"fc":"FC35","num":"09","name":"Éthique médicale"}
 ]},
 
 {"id":"orl","name":"ORL - CMF","items":[
