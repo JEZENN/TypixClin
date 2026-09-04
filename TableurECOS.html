@@ -106,6 +106,14 @@ window._pastelChart = (function () {
     --confidence-3: #f59e0b;
     --confidence-4: #22c55e;
     --confidence-5: #15803d;
+    /* Couleurs stables (rouge/orange/vert), INDÉPENDANTES du barème de
+       confiance — pour tout ce qui réutiliserait confidence-1/3/5 sans
+       rapport avec le barème (même précaution prise sur EDN, où le bouton
+       "Réviser" de Session Flash et tout le système flashcard fail/
+       hesitant/know réutilisaient ces variables par erreur). */
+    --tpx-status-bad: #991b1b;
+    --tpx-status-mid: #f59e0b;
+    --tpx-status-good: #15803d;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -129,6 +137,20 @@ window._pastelChart = (function () {
     --z-modal: 300;
 	--z-toast: 400;
     --z-max: 9999;
+}
+
+/* ── Barème de confiance sur 10 (mission de portage) ── */
+html[data-conf-scale="10"] {
+    --confidence-1: #991b1b;
+    --confidence-2: #b91c1c;
+    --confidence-3: #dc2626;
+    --confidence-4: #ea580c;
+    --confidence-5: #f59e0b;
+    --confidence-6: #ca8a04;
+    --confidence-7: #84cc16;
+    --confidence-8: #22c55e;
+    --confidence-9: #16a34a;
+    --confidence-10: #15803d;
 }
 
 [data-theme="dark"] {
@@ -1939,6 +1961,20 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     opacity: 0.55;
     transition: opacity var(--transition-normal), border-color var(--transition-normal), background var(--transition-normal), box-shadow var(--transition-normal);
 }
+/* Grille de correspondance — modal de confirmation du changement de barème */
+.cs-confirm-table { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.6rem; }
+.cs-confirm-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.4rem 0.6rem; border-radius: var(--border-radius-md);
+    background: var(--gray-100);
+}
+[data-theme="dark"] .cs-confirm-row { background: rgba(148,163,184,0.1); }
+.cs-confirm-pastille {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px; border-radius: 7px; color: #fff;
+    font-size: 0.78rem; font-weight: 800; flex-shrink: 0;
+}
+.cs-confirm-arrow { color: var(--gray-400); font-size: 0.8rem; }
 [data-theme="dark"] .settings-explain-row { background: var(--gray-50); }
 .settings-explain-row.is-active {
     opacity: 1;
@@ -4493,6 +4529,11 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .todo-sdd-confidence-btn.confidence-3 { background: var(--confidence-3); }
 .todo-sdd-confidence-btn.confidence-4 { background: var(--confidence-4); }
 .todo-sdd-confidence-btn.confidence-5 { background: var(--confidence-5); }
+.todo-sdd-confidence-btn.confidence-6 { background: var(--confidence-6); }
+.todo-sdd-confidence-btn.confidence-7 { background: var(--confidence-7); }
+.todo-sdd-confidence-btn.confidence-8 { background: var(--confidence-8); }
+.todo-sdd-confidence-btn.confidence-9 { background: var(--confidence-9); }
+.todo-sdd-confidence-btn.confidence-10 { background: var(--confidence-10); }
 .modal-close { position: absolute; top: 1rem; right: 1rem; width: 30px; height: 30px; border-radius: 50%; background: var(--danger-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--danger); transition: all var(--transition-fast); }
 .modal-close:hover { background: var(--danger); color: #ffffff; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
 .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center; color: var(--gray-900); }
@@ -14218,6 +14259,14 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .ct-conf-pop .ccp1{background:var(--confidence-1);} .ct-conf-pop .ccp2{background:var(--confidence-2);}
 .ct-conf-pop .ccp3{background:var(--confidence-3);} .ct-conf-pop .ccp4{background:var(--confidence-4);}
 .ct-conf-pop .ccp5{background:var(--confidence-5);}
+.ct-conf-pop .ccp6{background:var(--confidence-6);} .ct-conf-pop .ccp7{background:var(--confidence-7);}
+.ct-conf-pop .ccp8{background:var(--confidence-8);} .ct-conf-pop .ccp9{background:var(--confidence-9);}
+.ct-conf-pop .ccp10{background:var(--confidence-10);}
+/* Barème sur 10 : boutons plus petits, 2 rangées de 5 — popover plus haut. */
+.ct-conf-pop.ccp-scale10.open { width:230px; height:118px; }
+.ct-conf-pop.ccp-scale10 .ccp-row { height: 38px; gap: 5px; }
+.ct-conf-pop.ccp-scale10 button { width:38px; height:38px; font-size:15px; border-radius:9px; }
+.ct-conf-pop.ccp-scale10 .ccp-rows-wrap { display:flex; flex-direction:column; gap:5px; }
 /* ===== Popover de confirmation de suppression (zone -) — même style que le picker de confiance ===== */
 .ct-rm-pop {
   position:fixed; z-index:9999;
@@ -14338,7 +14387,8 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .flash-due-banner-text b { color: var(--danger); }
 .flash-launch-session-btn {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--confidence-5); color:#fff; border:none;
+  /* Couleur fixe, indépendante du barème — même correctif que sur EDN. */
+  background: var(--tpx-status-good); color:#fff; border:none;
   padding: 0.6rem 1.1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
@@ -14376,7 +14426,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .flash-list-status { font-size: 0.72rem; font-weight: 600; white-space: nowrap; display:inline-flex; align-items:center; gap:4px; }
 .flash-list-status.due { color: var(--danger); }
 .flash-list-status.soon { color: var(--warning); }
-.flash-list-status.known { color: var(--confidence-5); }
+.flash-list-status.known { color: var(--tpx-status-good); }
 
 .flash-empty { text-align: center; color: var(--gray-500); font-size: 0.85rem; padding: 2rem 1rem; }
 .flash-empty i { font-size: 1.8rem; opacity: 0.4; display:block; margin-bottom: 0.6rem; }
@@ -14409,7 +14459,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 .flash-form-cancel { background: var(--gray-200); color: var(--gray-700); }
 [data-theme="dark"] .flash-form-cancel { background:#334155; color:#cbd5e1; }
-.flash-form-save { background: var(--confidence-5); color:#fff; }
+.flash-form-save { background: var(--tpx-status-good); color:#fff; }
 .flash-form-del { background: var(--danger); color:#fff; margin-right: auto; }
 
 /* ---- Session : flip 3D ---- */
@@ -14498,14 +14548,14 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 .flash-eval-btn:hover { box-shadow: var(--shadow-md); }
 .flash-eval-btn:active { transform: scale(0.95); }
-.flash-eval-btn.fail     { background: var(--confidence-1); color:#fff; }
-.flash-eval-btn.hesitant { background: var(--confidence-3); color:#fff; }
-.flash-eval-btn.know     { background: var(--confidence-5); color:#fff; }
+.flash-eval-btn.fail     { background: var(--tpx-status-bad); color:#fff; }
+.flash-eval-btn.hesitant { background: var(--tpx-status-mid); color:#fff; }
+.flash-eval-btn.know     { background: var(--tpx-status-good); color:#fff; }
 .flash-eval-btn-sub { font-size: 0.68rem; font-weight: 500; opacity: 0.85; }
 
 /* ---- Fin de session ---- */
 .flash-end { text-align: center; padding: 1.5rem 1rem; }
-.flash-end-icon { font-size: 2.6rem; color: var(--confidence-5); margin-bottom: 0.6rem; }
+.flash-end-icon { font-size: 2.6rem; color: var(--tpx-status-good); margin-bottom: 0.6rem; }
 .flash-end-title { font-size: 1.15rem; font-weight: 800; color: var(--gray-800); margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; }
 .flash-end-sub { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1.25rem; }
 .flash-end-stats { display: flex; flex-direction: column; gap: 0.4rem; max-width: 280px; margin: 0 auto 1.25rem; }
@@ -14514,13 +14564,13 @@ body.ecos-offline-locked .send-to-checklist-btn {
   padding: 0.5rem 0.9rem; border-radius: var(--border-radius-md);
   font-size: 0.85rem; font-weight: 600;
 }
-.flash-end-stat.fail     { background: rgba(153,27,27,0.12); color: var(--confidence-1); }
-.flash-end-stat.hesitant { background: rgba(245,158,11,0.12); color: var(--confidence-3); }
-.flash-end-stat.know     { background: rgba(21,128,61,0.12); color: var(--confidence-5); }
+.flash-end-stat.fail     { background: rgba(153,27,27,0.12); color: var(--tpx-status-bad); }
+.flash-end-stat.hesitant { background: rgba(245,158,11,0.12); color: var(--tpx-status-mid); }
+.flash-end-stat.know     { background: rgba(21,128,61,0.12); color: var(--tpx-status-good); }
 .flash-end-stat b { font-size: 1rem; }
 .flash-end-actions { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
 .flash-redo-btn {
-  background: var(--confidence-1); color:#fff; border:none;
+  background: var(--tpx-status-bad); color:#fff; border:none;
   padding: 0.6rem 1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.83rem; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; gap: 0.4rem;
@@ -14822,7 +14872,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 #flashDrawerCount { font-size: 0.8rem; font-weight: 600; color: var(--gray-600); }
 .flash-launch-btn {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  background: var(--confidence-5); color:#fff; border:none;
+  background: var(--tpx-status-good); color:#fff; border:none;
   padding: 0.6rem 1.1rem; border-radius: var(--border-radius-md);
   font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;
 }
@@ -15020,16 +15070,16 @@ body.ecos-offline-locked .send-to-checklist-btn {
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .flash-list-row:hover { box-shadow: var(--shadow-md); transform: translateX(2px); }
-.flash-list-row.due    { border-left-color: var(--confidence-1); }
-.flash-list-row.soon   { border-left-color: var(--confidence-3); }
-.flash-list-row.known  { border-left-color: var(--confidence-5); }
+.flash-list-row.due    { border-left-color: var(--tpx-status-bad); }
+.flash-list-row.soon   { border-left-color: var(--tpx-status-mid); }
+.flash-list-row.known  { border-left-color: var(--tpx-status-good); }
 [data-theme="dark"] .flash-list-row { background:#0f172a; border-color:#334155; }
 .flash-list-recto { flex:1; min-width:0; font-size:0.88rem; color: var(--gray-800); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 [data-theme="dark"] .flash-list-recto { color:#e2e8f0; }
 .flash-list-status { font-size:0.72rem; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px; }
-.flash-list-status.due { color: var(--confidence-1); }
-.flash-list-status.soon { color: var(--confidence-3); }
-.flash-list-status.known { color: var(--confidence-5); }
+.flash-list-status.due { color: var(--tpx-status-bad); }
+.flash-list-status.soon { color: var(--tpx-status-mid); }
+.flash-list-status.known { color: var(--tpx-status-good); }
 
 /* ---- Formulaire rich-text ---- */
 .flash-form {
@@ -15089,7 +15139,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 .flash-form-cancel { background: var(--gray-100); color: var(--gray-600); }
 [data-theme="dark"] .flash-form-cancel { background:#334155; color:#cbd5e1; }
-.flash-form-save { background: var(--confidence-5); color:#fff; }
+.flash-form-save { background: var(--tpx-status-good); color:#fff; }
 .flash-form-save:hover { filter: brightness(1.05); }
 .flash-form-del { background: transparent; color: var(--danger); margin-right:auto; padding-left: 0; }
 .flash-form-del:hover { text-decoration: underline; }
@@ -15429,12 +15479,12 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .flash-back-btn:active { transform: scale(0.97); }
 [data-theme="dark"] .flash-back-btn { background: linear-gradient(135deg, var(--accent), var(--primary)); }
 .flash-redo-btn {
-  background: transparent; color: var(--confidence-1); border: 1.5px solid var(--confidence-1);
+  background: transparent; color: var(--tpx-status-bad); border: 1.5px solid var(--tpx-status-bad);
   padding: 0.72rem 1.4rem; border-radius: var(--border-radius-full);
   font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: var(--font-body);
   display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.15s;
 }
-.flash-redo-btn:hover { background: var(--confidence-1); color: #fff; box-shadow: var(--shadow-md); }
+.flash-redo-btn:hover { background: var(--tpx-status-bad); color: #fff; box-shadow: var(--shadow-md); }
 .flash-redo-btn:active { transform: scale(0.97); }
 
 /* ===================== FLASHCARDS v8 : hauteur fixe + teintes recto/verso ===================== */
@@ -15657,9 +15707,9 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-row { background: #1e293b; border-color: #334155; }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-row:hover { background: #263449; border-color: var(--primary); }
-.spe-flash-info-panel .flash-list-row.due  { border-left-color: var(--confidence-1); }
-.spe-flash-info-panel .flash-list-row.soon { border-left-color: var(--confidence-3); }
-.spe-flash-info-panel .flash-list-row.known{ border-left-color: var(--confidence-5); }
+.spe-flash-info-panel .flash-list-row.due  { border-left-color: var(--tpx-status-bad); }
+.spe-flash-info-panel .flash-list-row.soon { border-left-color: var(--tpx-status-mid); }
+.spe-flash-info-panel .flash-list-row.known{ border-left-color: var(--tpx-status-good); }
 .spe-flash-info-panel .flash-list-recto { flex: 1; min-width: 0; font-size: 0.82rem; color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [data-theme="dark"] .spe-flash-info-panel .flash-list-recto { color: #cbd5e1; }
 .spe-flash-info-panel .flash-list-status { font-size: 0.67rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
@@ -15713,8 +15763,8 @@ body.ecos-offline-locked .send-to-checklist-btn {
 [data-theme="dark"] .flash-review-drop-item:hover { background: #0f172a; color: var(--primary-light); }
 .flash-review-drop-item i { width: 13px; text-align: center; color: var(--gray-400); font-size: 0.76rem; flex-shrink: 0; }
 .flash-review-drop-item:hover i { color: var(--primary); }
-.flash-review-drop-item.due i { color: var(--confidence-1); }
-.flash-review-drop-item.due:hover { color: var(--confidence-1); background: rgba(153,27,27,0.04); }
+.flash-review-drop-item.due i { color: var(--tpx-status-bad); }
+.flash-review-drop-item.due:hover { color: var(--tpx-status-bad); background: rgba(153,27,27,0.04); }
 [data-theme="dark"] .flash-review-drop-item.due:hover { background: rgba(239,68,68,0.07); }
 .flash-review-drop-count {
   margin-left: auto;
@@ -15727,7 +15777,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 [data-theme="dark"] .flash-review-drop-count { background: #334155; color: #64748b; }
 .flash-review-drop-item:hover .flash-review-drop-count { background: rgba(59,130,246,0.1); color: var(--primary); }
-.flash-review-drop-item.due:hover .flash-review-drop-count { background: rgba(153,27,27,0.1); color: var(--confidence-1); }
+.flash-review-drop-item.due:hover .flash-review-drop-count { background: rgba(153,27,27,0.1); color: var(--tpx-status-bad); }
 
 /* ===== CSS BLOCK 27213-29848 ===== */
 
@@ -20930,11 +20980,28 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 }
 .ecos-conf-btn:hover { transform: translateY(-3px) scale(1.08); opacity: 1; box-shadow: var(--shadow-md); }
 .ecos-conf-btn.sel { opacity: 1; transform: scale(1.15); box-shadow: 0 4px 14px rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.6); }
+/* Dernier niveau de confiance enregistré (référence visuelle, PAS une
+   sélection) — même anneau blanc intérieur que le popover compact
+   (.ct-conf-pop button.current), cohérent entre mode compact et modal
+   principal. Reste sur le bouton d'origine même si l'utilisateur clique
+   ailleurs (cf. openConfPicker/openConfEditOnly : .current n'est posé
+   qu'à l'ouverture, jamais retouché par ecosConfSelect). */
+.ecos-conf-btn.current { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72); filter: brightness(1.06); }
+.ecos-conf-btn.sel.current { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72), 0 4px 14px rgba(0,0,0,0.25); }
 .ecos-conf-btn.v1 { background: var(--confidence-1); color: #fff; }
 .ecos-conf-btn.v2 { background: var(--confidence-2); color: #fff; }
 .ecos-conf-btn.v3 { background: var(--confidence-3); color: #78350f; }
 .ecos-conf-btn.v4 { background: var(--confidence-4); color: #fff; }
-.ecos-conf-btn.v5 { background: var(--confidence-5); color: #fff; }
+.ecos-conf-btn.v5 { background: var(--confidence-5); color: #78350f; }
+.ecos-conf-btn.v6 { background: var(--confidence-6); color: #78350f; }
+.ecos-conf-btn.v7 { background: var(--confidence-7); color: #365314; }
+.ecos-conf-btn.v8 { background: var(--confidence-8); color: #fff; }
+.ecos-conf-btn.v9 { background: var(--confidence-9); color: #fff; }
+.ecos-conf-btn.v10 { background: var(--confidence-10); color: #fff; }
+/* Barème sur 10 : 2 rangées de 5, boutons légèrement réduits. */
+.ecos-conf-row.ecos-conf-row-10 { flex-direction: column; gap: 0.4rem; }
+.ecos-conf-row-line { display: flex; gap: 0.5rem; justify-content: center; }
+.ecos-conf-row.ecos-conf-row-10 .ecos-conf-btn { width: 44px; height: 44px; font-size: 1rem; }
 .ecos-conf-actions { display: flex; gap: 0.6rem; }
 .ecos-conf-actions button { flex: 1; padding: 0.6rem; border-radius: var(--border-radius-md); font-weight: 700; font-size: 0.85rem; }
 .ecos-conf-actions .cancel { background: var(--gray-100); color: var(--gray-600); }
@@ -21915,6 +21982,11 @@ body.tc-kb-open-phone .flash-expand-btn {
 .ecos-spec-conf-badge.conf-3 { background: var(--confidence-3, #f59e0b); }
 .ecos-spec-conf-badge.conf-4 { background: var(--confidence-4, #22c55e); }
 .ecos-spec-conf-badge.conf-5 { background: var(--confidence-5, #15803d); }
+.ecos-spec-conf-badge.conf-6 { background: var(--confidence-6, #ca8a04); }
+.ecos-spec-conf-badge.conf-7 { background: var(--confidence-7, #84cc16); }
+.ecos-spec-conf-badge.conf-8 { background: var(--confidence-8, #22c55e); }
+.ecos-spec-conf-badge.conf-9 { background: var(--confidence-9, #16a34a); }
+.ecos-spec-conf-badge.conf-10 { background: var(--confidence-10, #15803d); }
 /* Séparateur */
 .ecos-spec-sep { height: 1px; background: var(--gray-200); margin: 0.65rem 0; }
 /* Ligne 2 : pastilles stations */
@@ -21969,6 +22041,12 @@ body.tc-kb-open-phone .flash-expand-btn {
     background: var(--confidence-5);
     color: white;
 }
+
+.priority-pill.conf-pill-6 { background: var(--confidence-6); color: white; }
+.priority-pill.conf-pill-7 { background: var(--confidence-7); color: white; }
+.priority-pill.conf-pill-8 { background: var(--confidence-8); color: white; }
+.priority-pill.conf-pill-9 { background: var(--confidence-9); color: white; }
+.priority-pill.conf-pill-10 { background: var(--confidence-10); color: white; }
 .priority-pill.conf-pill-none { background: var(--gray-200); color: var(--gray-500); }
 .priority-pill.delay-pill.delay-ok       { background: rgba(16,185,129,0.12); color: #065f46; }
 .priority-pill.delay-pill.delay-mid      { background: rgba(245,158,11,0.15); color: #92400e; }
@@ -22111,6 +22189,11 @@ body.tc-kb-open-phone .flash-expand-btn {
 .ecos-stats-detail-confidence.conf-3 { background: var(--confidence-3,#f59e0b); }
 .ecos-stats-detail-confidence.conf-4 { background: var(--confidence-4,#10b981); }
 .ecos-stats-detail-confidence.conf-5 { background: var(--confidence-5,#3b82f6); }
+.ecos-stats-detail-confidence.conf-6 { background: var(--confidence-6,#ca8a04); }
+.ecos-stats-detail-confidence.conf-7 { background: var(--confidence-7,#84cc16); }
+.ecos-stats-detail-confidence.conf-8 { background: var(--confidence-8,#22c55e); }
+.ecos-stats-detail-confidence.conf-9 { background: var(--confidence-9,#16a34a); }
+.ecos-stats-detail-confidence.conf-10 { background: var(--confidence-10,#15803d); }
 .ecos-stats-detail-confidence.conf-none { background: var(--gray-300); color: var(--gray-600); }
 @media (max-width: 640px) { .ecos-stats-detail-modal { height: 90vh; max-height: 90vh; } }
 
@@ -25798,13 +25881,7 @@ window.TPXNotesPending = {
     <div class="ecos-conf-modal">
         <h3><i class="fas fa-gauge-high"></i> Niveau de confiance</h3>
         <div class="sub" id="ecos-conf-sub">Quel est votre niveau de confiance ?</div>
-        <div class="ecos-conf-row">
-            <button class="ecos-conf-btn v1" data-val="1" onclick="ecosConfSelect(1)">1</button>
-            <button class="ecos-conf-btn v2" data-val="2" onclick="ecosConfSelect(2)">2</button>
-            <button class="ecos-conf-btn v3" data-val="3" onclick="ecosConfSelect(3)">3</button>
-            <button class="ecos-conf-btn v4" data-val="4" onclick="ecosConfSelect(4)">4</button>
-            <button class="ecos-conf-btn v5" data-val="5" onclick="ecosConfSelect(5)">5</button>
-        </div>
+        <div class="ecos-conf-row" id="ecos-conf-row"></div>
         <div class="ecos-conf-actions">
             <button class="cancel" onclick="closeConfPicker()">Annuler</button>
             <button class="login-sidebar-btn" style="margin:0;" onclick="ecosConfConfirm()"><i class="fas fa-check"></i> Valider</button>
@@ -26420,6 +26497,25 @@ window.TPXNotesPending = {
         </div>
 
         <div class="whats-new-modal-body">
+
+            <!-- ══════════════ SEPTEMBRE 2026 ══════════════ -->
+            <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Septembre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon amber">
+                    <i class="fas fa-gauge-high"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Barème de confiance sur 10 niveaux 🎯</h4>
+                    <p>
+                        Évaluez vos stations avec plus de nuance grâce au nouveau
+                        <strong>barème sur 10 niveaux</strong>, en plus du barème par défaut
+                        sur 5. Réglable à tout moment dans <strong>Paramètres</strong> — vos
+                        stations déjà enregistrées sont converties selon une table de
+                        correspondance claire, avec confirmation avant tout changement.
+                    </p>
+                </div>
+            </div>
 
             <!-- ══════════════ AOÛT 2026 (bis) ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
@@ -27166,6 +27262,346 @@ function ecosDefaultSDD() {
     };
 }
 
+/* ══════════════════════════════════════════════════════════════
+   BARÈME DE CONFIANCE (5 ↔ 10) — mission de portage (ECOS)
+   ──────────────────────────────────────────────────────────────
+   Structure de données RÉELLE (auditée, pas supposée) : contrairement à
+   EDN (tableau positionnel d.tours[]), une SDD ECOS stocke :
+     - sdd.confidence   valeur SCALAIRE, le dernier niveau enregistré
+     - sdd.history[]    tableau de { type, date, confidence } — CHAQUE
+                         entrée a sa propre confiance à convertir
+   Document Firestore réel : ECOSRevision/{uid}, champ "sdds" — PAS
+   users/{uid} (qui ne contient que des préférences, jamais les SDD). ══ */
+function _csEcosUid() { return (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : 'anon'; }
+function _csEcosKey() { return 'confidenceScaleECOS__' + _csEcosUid(); }
+
+// ── MISSION CORRECTIVE ECOS, points 1-2 : localStorage n'est qu'un cache
+//    de confort, jamais la source de vérité. window._confidenceScaleECOSRuntime
+//    est la valeur réellement utilisée pendant la session — posée
+//    explicitement dès qu'on connaît la valeur Firestore. Un quota
+//    localStorage plein ne peut donc jamais faire "oublier" un barème 10
+//    confirmé côté serveur. ──
+window._confidenceScaleECOSRuntime = null;
+function tpxSetConfidenceScaleECOSRuntime(scale) {
+    if (scale !== 5 && scale !== 10) return;
+    window._confidenceScaleECOSRuntime = scale;
+    try { localStorage.setItem(_csEcosKey(), String(scale)); } catch (e) {}
+    applyConfidenceScaleAttr(scale);
+}
+window.tpxSetConfidenceScaleECOSRuntime = tpxSetConfidenceScaleECOSRuntime;
+
+function getConfidenceScale() {
+    if (window._confidenceScaleECOSRuntime === 5 || window._confidenceScaleECOSRuntime === 10) {
+        return window._confidenceScaleECOSRuntime;
+    }
+    try {
+        var v = parseInt(localStorage.getItem(_csEcosKey()), 10);
+        if (v === 5 || v === 10) return v;
+    } catch (e) {}
+    return 5; // défaut historique : 5, comme tous les comptes déjà en place
+}
+window.getConfidenceScale = getConfidenceScale;
+
+// Tables de conversion EXACTES, identiques à EDN/P1Planner (déjà validées).
+var CS_MAP_5_TO_10 = { 1: 2, 2: 4, 3: 6, 4: 8, 5: 10 };
+var CS_MAP_10_TO_5 = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5 };
+
+function convertConfidenceValue(v, fromScale, toScale) {
+    if (v == null) return null;
+    if (fromScale === toScale) return v;
+    var map = (fromScale === 5 && toScale === 10) ? CS_MAP_5_TO_10
+            : (fromScale === 10 && toScale === 5) ? CS_MAP_10_TO_5
+            : null;
+    if (!map || map[v] == null) return v; // valeur hors table : ne jamais l'effacer
+    return map[v];
+}
+window.convertConfidenceValue = convertConfidenceValue;
+
+function applyConfidenceScaleAttr(scale) {
+    try { document.documentElement.setAttribute('data-conf-scale', String(scale)); } catch (e) {}
+}
+window.tpxApplyConfidenceScaleAttr = applyConfidenceScaleAttr;
+applyConfidenceScaleAttr(getConfidenceScale());
+
+// ── MISSION CORRECTIVE ECOS, point 21 : verrou anti-double-migration. ──
+window._confidenceScaleECOSMigrationInFlight = false;
+
+/* Points 4 : flush obligatoire avant toute migration de barème. ECOS a
+   déjà une API de sauvegarde forcée fiable (forceSaveECOSAsync, retourne
+   vraiment true/false selon la confirmation Firestore) — pas besoin de
+   réinventer un mécanisme, juste de l'appeler et de vérifier son retour. */
+async function flushEcosBeforeConfidenceScaleMigration() {
+    try {
+        var uid = (window.currentUser && window.currentUser.uid) ? window.currentUser.uid : null;
+        if (!uid) return false;
+        var pendingKey = 'ecos_pending_' + uid;
+
+        var hasPending = false;
+        try { hasPending = !!localStorage.getItem(pendingKey); } catch (e) {}
+
+        // ── MISSION CORRECTIVE ECOS (résiduels), point 2 — P0 : pending
+        //    présent ≠ synchronisé. forceSaveECOSAsync() retourne true sans
+        //    rien écrire si ecosHasUnsavedChanges est déjà false (state
+        //    en mémoire), même si un pending existe encore en localStorage
+        //    (ex : provenant d'une session précédente). On flush donc le
+        //    pending EXPLICITEMENT en premier, et on exige sa disparition
+        //    réelle avant de considérer cette étape terminée. ──
+        if (hasPending) {
+            if (typeof flushPendingEcosData !== 'function') return false;
+            var pendingOk = await flushPendingEcosData();
+            if (!pendingOk) return false;
+            try { if (localStorage.getItem(pendingKey)) return false; } catch (e) { return false; }
+        }
+
+        // Modifications en mémoire encore non couvertes par le pending
+        // (ex : changement très récent, pending pas encore réécrit).
+        if (ecosHasUnsavedChanges) {
+            if (typeof forceSaveECOSAsync !== 'function') return false;
+            var saveOk = await forceSaveECOSAsync();
+            if (!saveOk) return false;
+        }
+
+        // Double vérification finale — jamais une supposition optimiste.
+        try { if (localStorage.getItem(pendingKey)) return false; } catch (e) { return false; }
+        if (ecosHasUnsavedChanges) return false;
+
+        return true;
+    } catch (e) {
+        console.warn('[ConfScaleECOS] flush avant migration a échoué :', e);
+        return false;
+    }
+}
+window.flushEcosBeforeConfidenceScaleMigration = flushEcosBeforeConfidenceScaleMigration;
+
+/* Migration complète : convertit sdd.confidence ET chaque entrée de
+   sdd.history[].confidence, pour toutes les SDD, dans UNE SEULE transaction
+   Firestore. ── MISSION CORRECTIVE ECOS, point 5 : remplace le schéma
+   getDoc→conversion→setDoc (fenêtre de course) par runTransaction —
+   fromScale est lu EXCLUSIVEMENT depuis le document tel que vu PAR LA
+   TRANSACTION, jamais depuis getConfidenceScale(). ── */
+async function migrateConfidenceScaleECOS(newScale) {
+    var user = window.currentUser;
+    if (!user || !window.ecosData) return { ok: false, error: 'not-signed-in' };
+
+    if (window._confidenceScaleECOSMigrationInFlight) return { ok: false, error: 'migration-in-flight' };
+    window._confidenceScaleECOSMigrationInFlight = true;
+
+    try {
+        // Point 4 : jamais de migration tant que les modifications locales ne
+        // sont pas confirmées par Firestore.
+        var flushed = await flushEcosBeforeConfidenceScaleMigration();
+        if (!flushed) return { ok: false, error: 'unsynced-local-changes' };
+
+        var _db = window._fsDb || (typeof db !== 'undefined' ? db : null);
+        var _doc = window._fsDoc || (typeof doc !== 'undefined' ? doc : null);
+        var _runTransaction = window._fsRunTransaction || (typeof runTransaction !== 'undefined' ? runTransaction : null);
+        if (!_db || !_doc || !_runTransaction) return { ok: false, error: 'firestore-unavailable' };
+        var ref = _doc(_db, 'ECOSRevision', user.uid);
+
+        var changedCount = 0;
+        var finalSdds = null;
+        var finalFromScale = null;
+
+        try {
+            await _runTransaction(_db, async function (transaction) {
+                var snap = await transaction.get(ref);
+                var data = snap.exists() ? (snap.data() || {}) : {};
+                // ── Point 5 : fromScale vient EXCLUSIVEMENT du document lu
+                //    DANS la transaction — jamais de getConfidenceScale(). ──
+                var fromScale = (data.confidenceScale === 10) ? 10 : 5;
+                finalFromScale = fromScale;
+
+                if (fromScale === newScale) {
+                    finalSdds = data.sdds || {};
+                    transaction.set(ref, { confidenceScale: newScale }, { merge: true });
+                    return;
+                }
+
+                // ── Point 6 : conversion strictement limitée à
+                //    sdd.confidence et sdd.history[*].confidence — copies non
+                //    destructives (Object.assign), tous les autres champs
+                //    (psPssCount, sansPsCount, fairePasserCount, lastRevision,
+                //    priority, resources, history[*].type, history[*].date, et
+                //    tout champ inconnu) préservés intacts. ──
+                var sdds = data.sdds || {};
+                var newSdds = {};
+                Object.keys(sdds).forEach(function (id) {
+                    var s = sdds[id];
+                    if (!s) { newSdds[id] = s; return; }
+                    var newS = Object.assign({}, s);
+                    var changed = false;
+                    if (s.confidence != null) {
+                        var newConf = convertConfidenceValue(s.confidence, fromScale, newScale);
+                        if (newConf !== s.confidence) changed = true;
+                        newS.confidence = newConf;
+                    }
+                    if (Array.isArray(s.history)) {
+                        newS.history = s.history.map(function (h) {
+                            if (!h || h.confidence == null) return h;
+                            var newHConf = convertConfidenceValue(h.confidence, fromScale, newScale);
+                            if (newHConf !== h.confidence) changed = true;
+                            return Object.assign({}, h, { confidence: newHConf });
+                        });
+                    }
+                    if (changed) changedCount++;
+                    newSdds[id] = newS;
+                });
+
+                transaction.set(ref, { sdds: newSdds, confidenceScale: newScale }, { merge: true });
+                finalSdds = newSdds;
+            });
+        } catch (e) {
+            console.warn('[ConfScaleECOS] Échec migration barème (transaction) :', e);
+            return { ok: false, error: e }; // rien n'a été modifié en mémoire à ce stade : état cohérent garanti
+        }
+
+        // ── Point 7 : état local mis à jour SEULEMENT après commit réel. ──
+        if (finalSdds) window.ecosData.sdds = finalSdds;
+        window.ecosData.confidenceScale = newScale;
+        tpxSetConfidenceScaleECOSRuntime(newScale);
+        return { ok: true, changed: changedCount, fromScale: finalFromScale };
+    } finally {
+        window._confidenceScaleECOSMigrationInFlight = false;
+    }
+}
+window.tpxMigrateConfidenceScaleECOS = migrateConfidenceScaleECOS;
+
+/* Charge le barème depuis Firestore au login (même document que la
+   migration : ECOSRevision/{uid}) — aligne localStorage. */
+window._checkConfidenceScaleECOS = async function () {
+    try {
+        var user = window.currentUser;
+        if (!user) return;
+        var _db = window._fsDb || (typeof db !== 'undefined' ? db : null);
+        var _doc = window._fsDoc || (typeof doc !== 'undefined' ? doc : null);
+        var _getDoc = window._fsGetDoc || (typeof getDoc !== 'undefined' ? getDoc : null);
+        if (!_db || !_doc || !_getDoc) return;
+        var snap = await _getDoc(_doc(_db, 'ECOSRevision', user.uid));
+        var data = snap.exists() ? snap.data() : {};
+        var stored = data.confidenceScale;
+        if (stored !== 5 && stored !== 10) return; // rien stocké → défaut local (5), aucune régression
+        if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+            window.tpxSetConfidenceScaleECOSRuntime(stored);
+        }
+        if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+    } catch (e) {}
+};
+
+/* ---------- Réglage Paramètres : switch + modal de confirmation (ECOS) ---------- */
+window.tpxUpdateConfidenceScaleSwitchUI = function () {
+    var sw = document.getElementById('confidence-scale-switch');
+    if (!sw) return;
+    var is10 = getConfidenceScale() === 10;
+    sw.querySelectorAll('.tpx-seg-opt').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-cscale') === String(is10 ? 10 : 5));
+    });
+    document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="confidence-scale"] .settings-explain-row')
+        .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === String(is10 ? 10 : 5)); });
+};
+
+var _csEcosPendingTarget = null;
+var CS_COLORS_5  = { 1: '#991b1b', 2: '#dc2626', 3: '#f59e0b', 4: '#22c55e', 5: '#15803d' };
+var CS_COLORS_10 = { 1: '#991b1b', 2: '#b91c1c', 3: '#dc2626', 4: '#ea580c', 5: '#f59e0b', 6: '#ca8a04', 7: '#84cc16', 8: '#22c55e', 9: '#16a34a', 10: '#15803d' };
+
+function _csEcosBuildCorrespondenceTable(fromScale, toScale) {
+    var map = (fromScale === 5 && toScale === 10) ? CS_MAP_5_TO_10 : CS_MAP_10_TO_5;
+    var fromColors = fromScale === 10 ? CS_COLORS_10 : CS_COLORS_5;
+    var toColors = toScale === 10 ? CS_COLORS_10 : CS_COLORS_5;
+    var rows = '';
+    Object.keys(map).sort(function (a, b) { return a - b; }).forEach(function (k) {
+        rows += '<div class="cs-confirm-row">' +
+            '<span class="cs-confirm-pastille" style="background:' + fromColors[k] + '">' + k + '</span>' +
+            '<i class="fas fa-arrow-right cs-confirm-arrow"></i>' +
+            '<span class="cs-confirm-pastille" style="background:' + toColors[map[k]] + '">' + map[k] + '</span>' +
+            '</div>';
+    });
+    return rows;
+}
+
+window.tpxRequestConfidenceScaleChangeECOS = function (wantScale) {
+    var current = getConfidenceScale();
+    if (current === wantScale) return;
+    _csEcosPendingTarget = wantScale;
+    var titleEl = document.getElementById('cs-confirm-title');
+    var introEl = document.getElementById('cs-confirm-intro');
+    var tableEl = document.getElementById('cs-confirm-table');
+    var errEl = document.getElementById('cs-confirm-error');
+    var noteEl = document.getElementById('cs-confirm-granularity-note');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (titleEl) titleEl.textContent = 'Passer au barème ' + wantScale + ' niveaux ?';
+    if (introEl) introEl.textContent = 'Vos stations déjà enregistrées en ' + current + ' niveaux seront converties en ' + wantScale + ' niveaux selon cette correspondance :';
+    if (tableEl) tableEl.innerHTML = _csEcosBuildCorrespondenceTable(current, wantScale);
+    // ── MISSION CORRECTIVE ECOS, point 20 : "aucune donnée n'est perdue" est
+    //    trompeur pour 10→5, qui regroupe volontairement deux niveaux en un
+    //    seul. Message différent selon le sens réel de la conversion. ──
+    if (noteEl) {
+        if (current === 10 && wantScale === 5) {
+            noteEl.textContent = 'Le passage de 10 à 5 niveaux regroupe certaines notes deux par deux. Aucun passage ni historique ne sera supprimé, mais la précision supplémentaire du barème sur 10 ne pourra pas être retrouvée automatiquement si vous revenez ensuite au barème sur 10.';
+        } else {
+            noteEl.textContent = 'Vos stations déjà enregistrées seront converties selon cette correspondance — aucune donnée n\'est perdue, mais cette action modifie vos données existantes.';
+        }
+    }
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (ov) { ov.classList.remove('closing'); ov.classList.add('active'); }
+};
+
+window.tpxCloseConfidenceScaleConfirmECOS = function () {
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (!ov || !ov.classList.contains('active')) return;
+    // Même motif de fermeture animée que closeSettingsModal() (.closing + 180ms).
+    ov.classList.add('closing');
+    setTimeout(function () { ov.classList.remove('active', 'closing'); }, 180);
+    _csEcosPendingTarget = null;
+};
+
+window.tpxConfirmConfidenceScaleChangeECOS = async function () {
+    if (_csEcosPendingTarget == null) return;
+    var target = _csEcosPendingTarget;
+    var btn = document.getElementById('cs-confirm-go-btn');
+    var sw = document.getElementById('confidence-scale-switch');
+    var errEl = document.getElementById('cs-confirm-error');
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conversion en cours…'; }
+    if (sw) sw.style.pointerEvents = 'none'; // point 21 : switch verrouillé pendant toute la migration
+    var res = await migrateConfidenceScaleECOS(target);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmer le changement'; }
+    if (sw) sw.style.pointerEvents = '';
+    if (!res.ok) {
+        // Fail-closed : rien n'a été modifié (garanti par migrateConfidenceScaleECOS
+        // elle-même), le message ne doit JAMAIS annoncer un succès ici.
+        var _msg = 'La conversion a échoué (connexion indisponible ?). Aucune donnée n\'a été modifiée — réessayez lorsque la connexion est rétablie.';
+        if (res.error === 'unsynced-local-changes') {
+            _msg = 'Impossible de changer de barème tant que vos dernières modifications ne sont pas synchronisées. Vos données ont été conservées.';
+        } else if (res.error === 'migration-in-flight') {
+            _msg = 'Une conversion est déjà en cours. Veuillez patienter.';
+        }
+        if (errEl) { errEl.style.display = ''; errEl.textContent = _msg; }
+        return;
+    }
+    _csEcosPendingTarget = null;
+    var ov = document.getElementById('confidence-scale-confirm-overlay');
+    if (ov) { ov.classList.add('closing'); setTimeout(function () { ov.classList.remove('active', 'closing'); }, 180); }
+    if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+    if (typeof renderSDDTable === 'function') renderSDDTable(); // rafraîchit les badges déjà affichés
+};
+
+// Clic sur un segment précis du switch Paramètres — ouvre la confirmation,
+// ne bascule jamais silencieusement.
+// ── Délégation sur document plutôt qu'une liaison directe sur le bouton :
+//    ce script s'exécute bien avant que le HTML du modal Paramètres (bien
+//    plus loin dans le fichier) ne soit parsé — une liaison directe ici ne
+//    trouvait jamais l'élément (getElementById renvoyait null en silence),
+//    d'où le bouton qui ne réagissait à aucun clic. La délégation sur
+//    document fonctionne quel que soit l'ordre de chargement, puisqu'elle
+//    n'évalue la cible qu'au moment réel du clic, pas à la liaison. ──
+document.addEventListener('click', function (e) {
+    var sw = e.target.closest && e.target.closest('#confidence-scale-switch');
+    if (!sw) return;
+    var opt = e.target.closest('.tpx-seg-opt');
+    var want = opt ? parseInt(opt.getAttribute('data-cscale'), 10) : (getConfidenceScale() === 10 ? 5 : 10);
+    window.tpxRequestConfidenceScaleChangeECOS(want);
+});
+
 function getSDDState(id) {
     if (!window.ecosData) return ecosDefaultSDD();
     if (!window.ecosData.sdds[id]) return ecosDefaultSDD();
@@ -27417,6 +27853,13 @@ function sddIncrement(sddId, type) {
 }
 
 function applySDDIncrement(sddId, type, confidence) {
+    // ── MISSION CORRECTIVE ECOS (résiduels), point 4 : défense en
+    //    profondeur. Cette fonction peut être appelée directement depuis
+    //    plusieurs chemins sans repasser systématiquement par
+    //    canPerformEcosAction — garde posée ici même, avant toute
+    //    modification de psPssCount/sansPsCount/fairePasserCount/
+    //    confidence/history/lastRevision. ──
+    if (window._confidenceScaleECOSMigrationInFlight) return false;
     if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     // Garde centrale : les procédures (P1..P8) n'acceptent que sans_ps / faire_passer.
     // Empêche toute mutation du compteur et de l'historique, y compris en appel direct.
@@ -27448,6 +27891,9 @@ function applySDDIncrement(sddId, type, confidence) {
 }
 
 function sddDecrement(sddId, type) {
+    // ── MISSION CORRECTIVE ECOS (résiduels), point 4 : même garde qu'sur
+    //    applySDDIncrement — voir commentaire là-bas. ──
+    if (window._confidenceScaleECOSMigrationInFlight) return false;
     if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return; } /* Premium : lecture seule */
     if (window.canPerformEcosAction && !window.canPerformEcosAction('decrement')) return;
     const s = getSDDState(sddId);
@@ -27484,13 +27930,43 @@ function sddDecrement(sddId, type) {
 }
 
 /* Picker de confiance (modal) */
+// Rendu dynamique du picker de confiance principal (5 ou 10 niveaux) — les
+// boutons étaient codés en dur en HTML statique, remplacés par un conteneur
+// vide généré à l'ouverture. onclick="ecosConfSelect(n)" reste identique,
+// tous les sélecteurs existants (.ecos-conf-btn, data-val) continuent de
+// fonctionner sans modification.
+function _ecosRenderConfPicker() {
+    var box = document.getElementById('ecos-conf-row');
+    if (!box) return;
+    var scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    box.classList.toggle('ecos-conf-row-10', scale === 10);
+    function btnHtml(v) { return '<button class="ecos-conf-btn v' + v + '" data-val="' + v + '" onclick="ecosConfSelect(' + v + ')">' + v + '</button>'; }
+    if (scale === 10) {
+        var row1 = '', row2 = '';
+        for (var v1 = 1; v1 <= 5; v1++) row1 += btnHtml(v1);
+        for (var v2 = 6; v2 <= 10; v2++) row2 += btnHtml(v2);
+        box.innerHTML = '<div class="ecos-conf-row-line">' + row1 + '</div><div class="ecos-conf-row-line">' + row2 + '</div>';
+    } else {
+        var html = ''; for (var v = 1; v <= scale; v++) html += btnHtml(v);
+        box.innerHTML = html;
+    }
+}
+window._ecosRenderConfPicker = _ecosRenderConfPicker;
+
 function openConfPicker(sddId, type) {
+    _ecosRenderConfPicker();
     confPickerContext = { sddId, type };
     const cur = getSDDState(sddId).confidence;
     const overlay = document.getElementById('ecos-conf-overlay');
     const label = (type === 'ps_pss') ? 'Station avec PS/PSS' : 'Station sans PS';
     document.getElementById('ecos-conf-sub').textContent = label + ' — quel est votre niveau de confiance ?';
-    document.querySelectorAll('.ecos-conf-btn').forEach(b => b.classList.toggle('sel', parseInt(b.dataset.val) === cur));
+    document.querySelectorAll('.ecos-conf-btn').forEach(b => {
+        b.classList.toggle('sel', parseInt(b.dataset.val) === cur);
+        // Marqueur de référence (anneau blanc) — reste fixé sur le dernier
+        // niveau réellement enregistré, indépendamment de .sel qui bouge au
+        // fil des clics de l'utilisateur (cf. ecosConfSelect ci-dessous).
+        b.classList.toggle('current', parseInt(b.dataset.val) === cur);
+    });
     overlay.classList.add('active');
 }
 function ecosConfSelect(val) {
@@ -27501,7 +27977,18 @@ function ecosConfConfirm() {
     if (!confPickerContext) return;
     if (window.canPerformEcosAction && !window.canPerformEcosAction('confidence')) { document.getElementById('ecos-conf-overlay').classList.remove('active'); return; }
     const ctx = confPickerContext;
-    const chosen = ctx._chosen || getSDDState(ctx.sddId).confidence || 3;
+    // ── MISSION CORRECTIVE ECOS, point 16 : plus de "|| 3" silencieux — un
+    //    3 par défaut était le milieu du barème 5, une valeur arbitraire et
+    //    fausse en barème 10. Si aucun niveau choisi ET aucune confiance
+    //    précédente, on refuse d'enregistrer plutôt que d'inventer une
+    //    valeur. La confiance précédente reste réutilisable explicitement
+    //    (comportement historique conservé pour ce cas). ──
+    const chosen = ctx._chosen || getSDDState(ctx.sddId).confidence;
+    if (chosen == null) {
+        var _errEl = document.getElementById('ecos-conf-sub');
+        if (_errEl) { _errEl.textContent = 'Choisissez un niveau de confiance.'; _errEl.style.color = 'var(--tpx-status-bad, #dc2626)'; }
+        return;
+    }
     document.getElementById('ecos-conf-overlay').classList.remove('active');
     applySDDIncrement(ctx.sddId, ctx.type, chosen);
 }
@@ -27511,10 +27998,14 @@ function closeConfPicker() {
 
 /* Réglage de confiance direct depuis la cellule (sans incrément) */
 function openConfEditOnly(sddId) {
+    _ecosRenderConfPicker();
     confPickerContext = { sddId, type: 'edit' };
     const cur = getSDDState(sddId).confidence;
     document.getElementById('ecos-conf-sub').textContent = 'Modifier le niveau de confiance de cette SDD';
-    document.querySelectorAll('.ecos-conf-btn').forEach(b => b.classList.toggle('sel', parseInt(b.dataset.val) === cur));
+    document.querySelectorAll('.ecos-conf-btn').forEach(b => {
+        b.classList.toggle('sel', parseInt(b.dataset.val) === cur);
+        b.classList.toggle('current', parseInt(b.dataset.val) === cur);
+    });
     confPickerContext._chosen = cur;
     document.getElementById('ecos-conf-overlay').classList.add('active');
 }
@@ -27568,7 +28059,11 @@ function _buildValidationPopoverHTML(selectedType) {
             '<div class="todo-sdd-inline-conf">' +
                 '<div class="todo-sdd-inline-conf-title"><i class="fas ' + icon + '" style="color:' + accent + '"></i> ' + label + ' — Nouvelle confiance</div>' +
                 '<div class="todo-sdd-confidence-grid">' +
-                    [1,2,3,4,5].map(function(n){
+                    (function () {
+                        var _scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+                        var _levels = []; for (var i = 1; i <= _scale; i++) _levels.push(i);
+                        return _levels;
+                    })().map(function(n){
                         var isCur = (n === curConf);
                         var curClass = isCur ? ' current-confidence' : '';
                         var curStyle = '';
@@ -27822,11 +28317,14 @@ function openTodoSDDConfidencePopover(type) {
         '<div class="todo-sdd-confidence-card">' +
             '<div class="todo-sdd-confidence-title"><i class="fas ' + icon + '" style="color:' + accent + ';margin-right:6px;"></i>' + label + ' — Nouvelle confiance</div>' +
             '<div class="todo-sdd-confidence-grid">' +
-                [1,2,3,4,5].map(function(n){
+                (function () {
+                    var _scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+                    var _levels = []; for (var i = 1; i <= _scale; i++) _levels.push(i);
+                    return _levels;
+                })().map(function(n){
                     var isCur = (n === _curConf);
-                    var extraStyle = isCur ? ' outline:2px solid #111827;outline-offset:2px;' : '';
                     var extraClass = isCur ? ' current-confidence' : '';
-                    return '<button class="todo-sdd-confidence-btn confidence-' + n + extraClass + '" style="' + extraStyle + '" onclick="confirmTodoSDDConfidence(' + n + ')">' + n + '</button>';
+                    return '<button class="todo-sdd-confidence-btn confidence-' + n + extraClass + '" onclick="confirmTodoSDDConfidence(' + n + ')">' + n + '</button>';
                 }).join('') +
             '</div>' +
         '</div>';
@@ -28312,7 +28810,7 @@ function renderSDDTable() {
         const inTodo = (window.ecosData && window.ecosData.checklistData || []).some(c => c.sddId === sdd.id);
         const badges = (sdd.specialties || []).slice(0, 3).map(specialtyBadgeHTML).join('');
         const confClass = s.confidence ? 'c' + s.confidence : 'none';
-        const confTxt = s.confidence ? s.confidence + '/5' : '—';
+        const confTxt = s.confidence ? s.confidence + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—';
 
         // 3.6 — Supports affichés (max 3) + bouton overflow "···" pour les autres
         let resCell;
@@ -28452,7 +28950,7 @@ function ecosPalAt(n) {
     var arr = dark ? ECOS_CT_PAL_DARK : (pastel ? ECOS_CT_PAL_PASTEL : ECOS_CT_PAL);
     return arr[Math.min(Math.max(n, 0), arr.length - 1)];
 }
-var ECOS_CONF_COLORS = { 1:'var(--confidence-1)', 2:'var(--confidence-2)', 3:'var(--confidence-3)', 4:'var(--confidence-4)', 5:'var(--confidence-5)' };
+var ECOS_CONF_COLORS = { 1:'var(--confidence-1)', 2:'var(--confidence-2)', 3:'var(--confidence-3)', 4:'var(--confidence-4)', 5:'var(--confidence-5)', 6:'var(--confidence-6)', 7:'var(--confidence-7)', 8:'var(--confidence-8)', 9:'var(--confidence-9)', 10:'var(--confidence-10)' };
 function ecosDateClass(iso) {
     var d = ecosDaysSince(iso);
     if (d == null) return 'never';
@@ -28985,19 +29483,31 @@ function openEcosConfPop(ev, sddId, type) {
     const anchor = ev.currentTarget;
     const ar = anchor.getBoundingClientRect();
     const cur = getSDDState(sddId).confidence;
+    const _confScale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
     const pop = document.createElement('div');
-    pop.className = 'ct-conf-pop';
-    let html = '<div class="ccp-title">Nouveau niveau de confiance</div><div class="ccp-row">';
-    for (let v = 1; v <= 5; v++) html += '<button class="ccp' + v + (v === cur ? ' current' : '') + '" data-v="' + v + '">' + v + '</button>';
-    html += '</div>';
+    pop.className = 'ct-conf-pop' + (_confScale === 10 ? ' ccp-scale10' : '');
+    let html = '<div class="ccp-title">Nouveau niveau de confiance</div>';
+    if (_confScale === 10) {
+        html += '<div class="ccp-rows-wrap"><div class="ccp-row">';
+        for (let v1 = 1; v1 <= 5; v1++) html += '<button class="ccp' + v1 + (v1 === cur ? ' current' : '') + '" data-v="' + v1 + '">' + v1 + '</button>';
+        html += '</div><div class="ccp-row">';
+        for (let v2 = 6; v2 <= 10; v2++) html += '<button class="ccp' + v2 + (v2 === cur ? ' current' : '') + '" data-v="' + v2 + '">' + v2 + '</button>';
+        html += '</div></div>';
+    } else {
+        html += '<div class="ccp-row">';
+        for (let v = 1; v <= 5; v++) html += '<button class="ccp' + v + (v === cur ? ' current' : '') + '" data-v="' + v + '">' + v + '</button>';
+        html += '</div>';
+    }
     pop.innerHTML = html;
     document.body.appendChild(pop);
     _ecosConfPopEl = pop;
+    const popW = _confScale === 10 ? 230 : 260;
+    const popH = _confScale === 10 ? 118 : 80;
     let left = ar.left - 90;
-    if (left + 260 > window.innerWidth - 8) left = window.innerWidth - 268;
+    if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
     if (left < 8) left = 8;
     let top = ar.bottom + 6;
-    if (top + 80 > window.innerHeight - 8) top = ar.top - 86;
+    if (top + popH > window.innerHeight - 8) top = ar.top - popH - 6;
     pop.style.left = left + 'px';
     pop.style.top = top + 'px';
     requestAnimationFrame(() => pop.classList.add('open'));
@@ -29803,7 +30313,7 @@ function renderDashboardSpecialties() {
         const icon  = ECOS_SPEC_ICONS[sp.id] || 'fa-book-medical';
         const hasContent = window._ecosErrHasContent && window._ecosErrHasContent[sp.id];
         let confCls = 'conf-none', confLabel = '—';
-        if (confN > 0) { const r = Math.round(avgConf); confCls = 'conf-' + r; confLabel = avgConf.toFixed(1) + '/5'; }
+        if (confN > 0) { const r = Math.round(avgConf); confCls = 'conf-' + r; confLabel = avgConf.toFixed(1) + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5); }
         return `<div class="ecos-spec-card" data-specialty-id="${sp.id}" style="border-left-color:${color};" onclick="goToSDDsForSpecialty('${sp.id}')">
             <div class="ecos-spec-header">
                 <span class="ecos-spec-name">
@@ -30107,7 +30617,7 @@ function renderECOSWeeklyCharts(weekKey) {
     setTxt('ecos-stat-week-sans', wSansTot);
     setTxt('ecos-stat-week-ps', wPsTot);
     setTxt('ecos-stat-week-pass', wPassTot);
-    setTxt('ecos-stat-week-conf', wConfAvg !== '—' ? wConfAvg + '/5' : '—');
+    setTxt('ecos-stat-week-conf', wConfAvg !== '—' ? wConfAvg + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—');
 
     function makeChart(canvasId, label, data, color, opts) {
         var ctx = document.getElementById(canvasId);
@@ -30153,7 +30663,7 @@ function renderECOSWeeklyCharts(weekKey) {
     makeChart('chart-ecos-sans-weekly', 'Sans PS', sansDays, '#f59e0b', { unit: '' });
     makeChart('chart-ecos-ps-weekly', 'PS/PSS', psDays, '#3b82f6', { unit: '' });
     makeChart('chart-ecos-pass-weekly', 'Fait passer', passDays, '#10b981', { unit: '' });
-    makeChart('chart-ecos-conf-weekly', 'Confiance', confDays, '#ec4899', { min: 0, max: 5, unit: '' });
+    makeChart('chart-ecos-conf-weekly', 'Confiance', confDays, '#ec4899', { min: 0, max: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5, unit: '' });
 
     // Resync charts quand thème change
     var themeBtn = document.getElementById('theme-toggle');
@@ -30237,6 +30747,17 @@ function refreshEcosPriorityIfNeeded() {
 }
 window.refreshEcosPriorityIfNeeded = refreshEcosPriorityIfNeeded;
 
+/* ── MISSION CORRECTIVE ECOS, point 13 : la formule historique (6-conf)*4
+   suppose un barème 1-5. Sur 10, confidence=10 donnerait (6-10)*4=-16, un
+   score NÉGATIF. On normalise d'abord sur 5 pour conserver EXACTEMENT le
+   même comportement relatif, quel que soit le barème actif. ── */
+function ecosConfidenceOn5(value) {
+    if (value == null) return null;
+    var scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    return value * (5 / scale);
+}
+window.ecosConfidenceOn5 = ecosConfidenceOn5;
+
 /* SDD à revoir en priorité — score composite (pratique personnelle uniquement) */
 function computePriorityScore(sdd) {
     const s = getSDDState(sdd.id);
@@ -30245,8 +30766,9 @@ function computePriorityScore(sdd) {
     // priorité manuelle (poids important)
     if (s.priority === 'relative') score += 20;
     else if (s.priority === 'urgent') score += 40;
-    // confiance personnelle faible → score haut
-    if (own.latestOwnConfidence) score += (6 - own.latestOwnConfidence) * 4; else score += 10;
+    // confiance personnelle faible → score haut (normalisée sur 5, cf. point 13)
+    const _conf5 = ecosConfidenceOn5(own.latestOwnConfidence);
+    if (_conf5 != null) score += (6 - _conf5) * 4; else score += 10;
     // ancienneté de la dernière PRATIQUE PERSONNELLE
     const days = ecosDaysSince(own.lastOwnPracticeDate);
     if (days == null) {
@@ -30325,7 +30847,7 @@ function renderPriorityList() {
         // Pastille confiance PERSONNELLE
         const conf = own.latestOwnConfidence;
         const confCls = conf ? 'conf-pill-' + conf : 'conf-pill-none';
-        const confLabel = conf ? conf + '/5' : '—';
+        const confLabel = conf ? conf + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—';
 
         // Pastille jours depuis dernière PRATIQUE PERSONNELLE
         const days = ecosDaysSince(own.lastOwnPracticeDate);
@@ -30399,7 +30921,7 @@ function renderPreferredSubjects() {
         if (confN > 0) {
             const r = Math.round(avgConf);
             confCls = 'conf-' + r;
-            confLabel = avgConf.toFixed(1) + '/5';
+            confLabel = avgConf.toFixed(1) + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5);
         }
         return `<div class="ranking-podium-item ${podiumClass[rank]}">
             <div class="ranking-medal-float">${medals[rank]}</div>
@@ -30826,7 +31348,7 @@ function openEcosStatsDetailModal(period, type) {
                 return `<span class="sdd-badge" style="background:${getSpecColor(spId)};color:white;padding:2px 7px;border-radius:4px;font-size:0.65rem;font-weight:700;">${c.label||spId}</span>`;
             }).join('');
             const confHtml = showConf
-                ? `<div class="ecos-stats-detail-confidence ${e.confidence ? 'conf-' + e.confidence : 'conf-none'}">${e.confidence ? e.confidence + '/5' : '—'}</div>`
+                ? `<div class="ecos-stats-detail-confidence ${e.confidence ? 'conf-' + e.confidence : 'conf-none'}">${e.confidence ? e.confidence + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—'}</div>`
                 : '';
             return `<div class="ecos-stats-detail-row">
                 <div class="ecos-stats-detail-row-accent" style="background:${color};"></div>
@@ -33799,7 +34321,7 @@ window.rsSyncSelfTodoState = rsSyncSelfTodoState;
 /* Reconstruit les pastilles de stats (passages / confiance / date) d'une carte */
 function rsBuildSelfPills(st) {
     var confCls = st.confidence ? 'conf-pill-' + st.confidence : 'conf-pill-none';
-    var confTxt = st.confidence ? st.confidence + '/5' : '—';
+    var confTxt = st.confidence ? st.confidence + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—';
     var days = ecosDaysSince(st.lastRevision);
     var delayCls = (days == null) ? 'conf-pill-none' : (days <= 3 ? 'delay-ok' : (days <= 7 ? 'delay-mid' : (days <= 14 ? 'delay-high' : 'delay-critical')));
     var dateTxt = st.lastRevision ? ecosFormatDate(st.lastRevision) : 'Jamais révisée';
@@ -34081,7 +34603,12 @@ function rstationPick(opts) {
         var done = (st.psPssCount || 0) + (st.sansPsCount || 0);    // nb de passages de l'expéditeur (les moins faites d'abord)
         var w = 1;
         if (opts.priority === 'confiance') {
-            w *= st.confidence ? (6 - st.confidence) : 4;            // conf 1 → ×5 … conf 5 → ×1, jamais notée → ×4
+            // ── MISSION CORRECTIVE ECOS, point 14 : même normalisation que
+            //    computePriorityScore — sur barème 10, (6-confidence) pouvait
+            //    devenir négatif ou nul, cassant le tirage pondéré. Math.max(1,…)
+            //    garantit un poids STRICTEMENT positif dans tous les cas. ──
+            var _conf5w = ecosConfidenceOn5(st.confidence);
+            w *= (_conf5w != null) ? Math.max(1, 6 - _conf5w) : 4;    // conf 1 → ×5 … conf 5 → ×1, jamais notée → ×4
         } else if (opts.priority === 'anciennete') {
             var d = ecosDaysSince(st.lastRevision);
             w *= (d == null) ? 7 : (1 + Math.min(d, 90) / 15);       // jamais revue → ×7, sinon jusqu'à ×7 à 90 j
@@ -34135,7 +34662,7 @@ function rstationCardHTML(sddId, options) {
     var badges = (meta.specialties || []).slice(0, 3).map(specialtyBadgeHTML).join('');
     var num = meta.number != null ? meta.number : String(sddId || '').replace('SDD-', '');
     var confCls = st.confidence ? 'conf-pill-' + st.confidence : 'conf-pill-none';
-    var confTxt = st.confidence ? st.confidence + '/5' : '—';
+    var confTxt = st.confidence ? st.confidence + '/' + ((typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5) : '—';
     var days = ecosDaysSince(st.lastRevision);
     var delayCls = (days == null) ? 'conf-pill-none' : (days <= 3 ? 'delay-ok' : (days <= 7 ? 'delay-mid' : (days <= 14 ? 'delay-high' : 'delay-critical')));
     var dateTxt = st.lastRevision ? ecosFormatDate(st.lastRevision) : 'Jamais révisée';
@@ -34671,7 +35198,7 @@ function closeFbSentToast() {
 /* ----------------------------------------------------------------------------
    NOUVEAUTÉS & AIDE
    ---------------------------------------------------------------------------- */
-const ECOS_WHATSNEW_VERSION = 'ecos-v3';
+const ECOS_WHATSNEW_VERSION = 'ecos-v4';
 function openWhatsNewModal() {
     const overlay = document.getElementById('whatsNewModalOverlay');
 
@@ -37865,7 +38392,7 @@ saveBtn.innerHTML =
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, collection, getDoc, getDocs, onSnapshot, updateDoc, setDoc, addDoc, deleteDoc, query, where, orderBy, arrayUnion, arrayRemove, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, getDocFromServer, getDocs, onSnapshot, updateDoc, setDoc, addDoc, deleteDoc, query, where, orderBy, arrayUnion, arrayRemove, writeBatch, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -37889,6 +38416,7 @@ window._fsDoc = doc;
 window._fsGetDoc = getDoc;
 window._fsSetDoc = setDoc;
 window._fsUpdateDoc = updateDoc;
+window._fsRunTransaction = runTransaction;
 /* Firebase Storage (images des notes / cahiers d'erreurs) */
 const _storage = getStorage(app);
 window._storage        = _storage;
@@ -38047,6 +38575,42 @@ async function handleEcosOnline() {
     }
     let pendingSynced = true;
     if (ecosHasPending()) {
+        // ── CORRECTIF P0 (reconnexion) : résoudre explicitement le barème
+        //    cible depuis Firestore AVANT tout flush. Sans ça,
+        //    flushPendingEcosData() peut retomber sur getConfidenceScale()
+        //    = 5 par défaut si le runtime n'a jamais été initialisé (ex :
+        //    démarrage hors ligne, pending/cache chargés sans passer par le
+        //    chemin normal de synchronisation) — reconvertissant à tort un
+        //    pending réellement en 10 vers 5, et réécrivant Firestore avec
+        //    un barème différent sans action volontaire de l'utilisateur. ──
+        var _targetScale = null;
+        try {
+            var _ref = doc(db, 'ECOSRevision', currentUser.uid);
+            var _snap = await getDocFromServer(_ref);
+            if (_snap.exists()) {
+                var _fsData = _snap.data() || {};
+                _targetScale = (_fsData.confidenceScale === 10) ? 10 : 5;
+            } else {
+                // Pas de barème serveur autoritaire : celui du pending fait foi.
+                var _pendingRaw = ecosReadPending(currentUser.uid);
+                _targetScale = (_pendingRaw && _pendingRaw.confidenceScale === 10) ? 10 : 5;
+            }
+        } catch (e) {
+            // Fail-closed : lecture Firestore impossible (offline, permission-
+            // denied, timeout...) — ne JAMAIS flusher, ne JAMAIS supprimer le
+            // pending, ne JAMAIS changer le barème sur une simple supposition.
+            console.warn('[ECOS] Reconnexion : impossible de confirmer le barème Firestore', e);
+            ecosConnectionState = 'offline';
+            showEcosOfflineNotification();
+            return;
+        }
+        if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+            window.tpxSetConfidenceScaleECOSRuntime(_targetScale);
+        }
+        if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') {
+            window.tpxUpdateConfidenceScaleSwitchUI();
+        }
+
         showEcosOfflineSyncing();
         pendingSynced = await flushPendingEcosData();
         if (!pendingSynced) {
@@ -38087,25 +38651,108 @@ async function flushPendingEcosData() {
     if (!pending) return true;
     ecosHadPendingFlag = true;
     const data = pending.data || pending; // tolère ancien format { data, ts }
-    // Ne jamais pousser des sdds vides si du contenu a existé
+    // Ne jamais pousser des sdds vides si du contenu a existé (repère local,
+    // rapide, mais pas encore autoritaire — voir la vraie protection après
+    // la lecture serveur ci-dessous, qui couvre aussi une session fraîche
+    // où window.ecosHadContent est encore faux).
     const incomingEmpty = !data || !data.sdds || Object.keys(data.sdds || {}).length === 0;
     if (incomingEmpty && window.ecosHadContent) {
         // pending corrompu/vide : on le retire sans écraser Firestore
         clearPendingECOS();
         return true;
     }
+
+    // ── MISSION CORRECTIVE ECOS (résiduels), point 3 : flushPendingEcosData()
+    //    doit devenir sûre PAR ELLE-MÊME, même appelée depuis un autre chemin
+    //    futur. Barème cible résolu par une lecture SERVEUR obligatoire (pas
+    //    le cache Firestore, pas getConfidenceScale()) — une seule fois, puis
+    //    réutilisée pour la conversion des sdds ET le confidenceScale écrit,
+    //    garantissant qu'ils ne peuvent jamais diverger. ──
+    const pendingScale = (pending && pending.confidenceScale === 10) ? 10 : 5;
+    let targetScale = null;
+    let serverHasSdds = false;
+    try {
+        const _ref = doc(db, 'ECOSRevision', currentUser.uid);
+        const _snap = await getDocFromServer(_ref);
+        if (_snap.exists()) {
+            const _fsData = _snap.data() || {};
+            serverHasSdds = !!_fsData.sdds && Object.keys(_fsData.sdds || {}).length > 0;
+            targetScale = (_fsData.confidenceScale === 10) ? 10 : 5;
+        } else {
+            targetScale = pendingScale; // pas de barème serveur autoritaire
+        }
+    } catch (e) {
+        console.warn('[ECOS] flushPending refusé : barème serveur non confirmé', e);
+        return false; // fail-closed : aucune écriture, aucune conversion, pending conservé
+    }
+
+    // ── Point 1 — P0 : le serveur fraîchement lu (pas window.ecosHadContent,
+    //    qui peut être faux sur une session neuve ou après une erreur
+    //    réseau) est la source autoritaire. Un pending vide ne doit JAMAIS
+    //    écraser des SDD Firestore réellement existantes. ──
+    if (incomingEmpty && serverHasSdds) {
+        console.warn('[ECOS] flushPending refusé : pending vide alors que Firestore contient des SDD');
+        return false; // ne supprime pas le pending, n'écrit rien, ne bascule rien
+    }
+
+    if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+        window.tpxSetConfidenceScaleECOSRuntime(targetScale);
+    }
+
+    let sddsToSave = data.sdds || {};
+    if (pendingScale !== targetScale && typeof window.convertConfidenceValue === 'function') {
+        const converted = {};
+        Object.keys(sddsToSave).forEach(function (id) {
+            const s = sddsToSave[id];
+            if (!s) { converted[id] = s; return; }
+            const newS = Object.assign({}, s);
+            if (s.confidence != null) {
+                newS.confidence = window.convertConfidenceValue(s.confidence, pendingScale, targetScale);
+            }
+            if (Array.isArray(s.history)) {
+                newS.history = s.history.map(function (h) {
+                    if (!h || h.confidence == null) return h;
+                    return Object.assign({}, h, { confidence: window.convertConfidenceValue(h.confidence, pendingScale, targetScale) });
+                });
+            }
+            converted[id] = newS;
+        });
+        sddsToSave = converted;
+    }
+
+    // ── Point 2 — P0 : copie normalisée et cohérente, préservant tous les
+    //    champs (y compris inconnus) de "data". C'est CETTE copie qui devra
+    //    remplacer window.ecosData après succès — jamais l'ancienne, dont
+    //    les sdds sont encore dans pendingScale et désynchronisées de ce qui
+    //    vient réellement d'être écrit sur Firestore. ──
+    const normalizedLastUpdated = data.lastUpdated || new Date().toISOString();
+    const normalizedData = Object.assign({}, data, {
+        sdds: sddsToSave,
+        confidenceScale: targetScale,
+        lastUpdated: normalizedLastUpdated
+    });
+
     const dataToSave = {
-        sdds: data.sdds || {},
-        planningData: data.planningData || {},
-        checklistData: data.checklistData || [],
-        selectedResources: data.selectedResources || [],
-        trophies: data.trophies || {},
-        sddPageSize: (data.sddPageSize != null ? data.sddPageSize : 25),
-        lastUpdated: data.lastUpdated || new Date().toISOString()
+        sdds: normalizedData.sdds || {},
+        planningData: normalizedData.planningData || {},
+        checklistData: normalizedData.checklistData || [],
+        selectedResources: normalizedData.selectedResources || [],
+        trophies: normalizedData.trophies || {},
+        sddPageSize: (normalizedData.sddPageSize != null ? normalizedData.sddPageSize : 25),
+        lastUpdated: normalizedLastUpdated,
+        // Même targetScale que celui utilisé pour convertir sddsToSave
+        // ci-dessus — ne peuvent plus jamais diverger.
+        confidenceScale: targetScale
     };
     try {
         await setDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave, { merge: true });
         if (window.bumpMetric) window.bumpMetric('writes', 1);
+        // ── Point 2 : window.ecosData basculé SEULEMENT après succès réel,
+        //    et vers la copie NORMALISÉE (valeurs déjà converties) — jamais
+        //    l'ancien objet en mémoire, pour que le cache local réécrit
+        //    juste après décrive exactement ce qui vient d'être confirmé
+        //    par Firestore, pas l'ancien état pré-conversion. ──
+        window.ecosData = normalizedData;
         writeLocalECOSCache(currentUser.uid, window.ecosData);
         clearPendingECOS();
         ecosHasUnsavedChanges = false;
@@ -38279,6 +38926,14 @@ function ecosOfflineGuard(e) {
 
 /* Garde central : à appeler au début des mutations importantes. */
 function canPerformEcosAction(actionName) {
+    // ── MISSION CORRECTIVE ECOS (résiduels), point 3 — P1 : garde centrale.
+    //    Bloque UNIQUEMENT les actions qui modifient réellement sdds/
+    //    confidence/history/compteurs de passages pendant la migration —
+    //    jamais la navigation, la lecture, les stats, l'aide ou les notes. ──
+    if (window._confidenceScaleECOSMigrationInFlight &&
+        (actionName === 'increment' || actionName === 'decrement' || actionName === 'confidence')) {
+        return false;
+    }
     if (isOfflineMode || window.ecosOfflineActionsBlocked) {
         showEcosOfflineBlockedMessage(actionName);
         return false;
@@ -38403,10 +39058,53 @@ function loadECOSUserData(uid) {
         if (window._ecosFirstSnapshot) {
             // ── Section 1.7 : restauration au tout premier chargement ──
             window._ecosFirstSnapshot = false;
+            // Capturé AVANT que resolved.data n'écrase "data" plus bas.
+            const _fsScaleAtLoad = (exists && data && data.confidenceScale === 10) ? 10 : 5;
             const resolved = ecosResolveLoadData(uid, data, exists);
             data = resolved.data;
             if (resolved.pendingNewer) {
+                // ── MISSION CORRECTIVE ECOS, point 9 : si le barème du pending
+                //    diffère du barème Firestore confirmé (uniquement si un
+                //    document Firestore existait réellement pour servir de
+                //    référence), convertir une COPIE de ses SDD avant usage.
+                //    Le pending ORIGINAL en localStorage n'est jamais modifié
+                //    ici — seule la copie chargée en mémoire l'est. ──
+                if (exists && resolved.pendingScale !== _fsScaleAtLoad && data && data.sdds && typeof window.convertConfidenceValue === 'function') {
+                    var _convertedSdds = {};
+                    Object.keys(data.sdds).forEach(function (id) {
+                        var s = data.sdds[id];
+                        if (!s) { _convertedSdds[id] = s; return; }
+                        var newS = Object.assign({}, s);
+                        if (s.confidence != null) newS.confidence = window.convertConfidenceValue(s.confidence, resolved.pendingScale, _fsScaleAtLoad);
+                        if (Array.isArray(s.history)) {
+                            newS.history = s.history.map(function (h) {
+                                if (!h || h.confidence == null) return h;
+                                return Object.assign({}, h, { confidence: window.convertConfidenceValue(h.confidence, resolved.pendingScale, _fsScaleAtLoad) });
+                            });
+                        }
+                        _convertedSdds[id] = newS;
+                    });
+                    data = Object.assign({}, data, { sdds: _convertedSdds, confidenceScale: _fsScaleAtLoad });
+                }
                 window.ecosHadContent = data && data.sdds && Object.keys(data.sdds).length > 0;
+
+                // ── CORRECTIF P0 : le runtime doit être synchronisé avec le
+                //    barème de référence AVANT tout appel à
+                //    flushPendingEcosData() — sans ça, ce dernier peut lire
+                //    getConfidenceScale() alors que le runtime n'a pas encore
+                //    reçu le barème Firestore (resté sur un ancien cache local
+                //    par exemple), et reconvertir silencieusement vers le
+                //    mauvais barème. ──
+                var _resolvedScale = exists ? _fsScaleAtLoad : resolved.pendingScale;
+                if (_resolvedScale !== 5 && _resolvedScale !== 10) _resolvedScale = 5;
+                data = Object.assign({}, data, { confidenceScale: _resolvedScale });
+                if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+                    window.tpxSetConfidenceScaleECOSRuntime(_resolvedScale);
+                }
+                if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') {
+                    window.tpxUpdateConfidenceScaleSwitchUI();
+                }
+
                 if (window._onECOSDataLoaded) window._onECOSDataLoaded(data);
                 setTimeout(() => { if (!isOfflineMode && currentUser) flushPendingEcosData(); }, 1200);
                 return;
@@ -38418,6 +39116,26 @@ function loadECOSUserData(uid) {
             data = readLocalECOSCache(uid) || { sdds: {}, planningData: {}, checklistData: [], selectedResources: ['hypocampus', 'edni', 'ecosim'], trophies: {}, sddPageSize: 25, lastUpdated: new Date().toISOString() };
             if (!data.trophies) data.trophies = {};
         }
+        // Barème de confiance : lu directement depuis le même flux onSnapshot
+        // que le reste des données ECOS — pas de lecture Firestore séparée,
+        // et se met à jour en LIVE (pas seulement au login) si changé depuis
+        // un autre onglet/appareil.
+        // ── MISSION CORRECTIVE ECOS, point 3 : passe par le setter runtime
+        //    centralisé plutôt que d'écrire localStorage et d'appliquer
+        //    l'attribut CSS séparément — évite de contourner
+        //    window._confidenceScaleECOSRuntime. ──
+        if (data.confidenceScale === 5 || data.confidenceScale === 10) {
+            if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+                window.tpxSetConfidenceScaleECOSRuntime(data.confidenceScale);
+            }
+        } else if (window._confidenceScaleECOSRuntime == null) {
+            // Rien en Firestore ET rien encore posé cette session : barème
+            // historique 5, explicite (pas juste laissé au défaut implicite).
+            if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+                window.tpxSetConfidenceScaleECOSRuntime(5);
+            }
+        }
+        if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
         if (window._onECOSDataLoaded) window._onECOSDataLoaded(data);
     }, err => {
         // Erreur réseau / permission / timeout : NE PAS traiter comme une absence de données.
@@ -38450,6 +39168,12 @@ function ecosDataTime(d) {
 function ecosResolveLoadData(uid, firestoreData, firestoreExists) {
     const pendingRaw = ecosReadPending(uid);
     const pending = pendingRaw ? (pendingRaw.data || pendingRaw) : null;
+    // ── MISSION CORRECTIVE ECOS, point 9 : barème associé au pending, lu au
+    //    niveau racine (pendingRaw.confidenceScale, PAS pending.confidenceScale
+    //    — la métadonnée vit à côté de "data", pas dedans). Absence = barème
+    //    historique 5 (le barème 10 n'était pas encore déployé). Simple
+    //    ajout au retour, aucune branche de décision existante modifiée. ──
+    const pendingScale = (pendingRaw && pendingRaw.confidenceScale === 10) ? 10 : 5;
     // ⚠️ pendingRaw.savedAt (heure d'écriture physique du pending) DOIT primer
     // sur ecosDataTime(pending) (pending.lastUpdated, une valeur imbriquée qui
     // peut rester périmée si le contenu métier n'a pas changé entre deux
@@ -38464,8 +39188,8 @@ function ecosResolveLoadData(uid, firestoreData, firestoreExists) {
     const fsEmpty = !firestoreData || !firestoreData.sdds || Object.keys(firestoreData.sdds || {}).length === 0;
     const pendingNonEmpty = pending && pending.sdds && Object.keys(pending.sdds || {}).length > 0;
 
-    if (fsEmpty && pendingNonEmpty) return { data: pending, pendingNewer: true };
-    if (pending && pendingTime > fsTime && pendingNonEmpty) return { data: pending, pendingNewer: true };
+    if (fsEmpty && pendingNonEmpty) return { data: pending, pendingNewer: true, pendingScale: pendingScale };
+    if (pending && pendingTime > fsTime && pendingNonEmpty) return { data: pending, pendingNewer: true, pendingScale: pendingScale };
     if (pending && fsTime > pendingTime && firestoreExists && !fsEmpty) {
         // 🔒 Mise en quarantaine du pending jugé plus ancien, non destructive :
         // on ne perd jamais cette donnée. Ne jamais écraser un backup déjà en
@@ -38476,7 +39200,10 @@ function ecosResolveLoadData(uid, firestoreData, firestoreExists) {
         try {
             const _existingConflict = localStorage.getItem('ecos_conflict_' + uid);
             if (!_existingConflict) {
-                const _conflictPayload = JSON.stringify({ savedAt: Date.now(), data: pending });
+                // ── MISSION CORRECTIVE ECOS, point 11 : le barème associé,
+                //    pour ne jamais interpréter à tort une sauvegarde 5 comme
+                //    une sauvegarde 10 lors d'une restauration manuelle. ──
+                const _conflictPayload = JSON.stringify({ savedAt: Date.now(), data: pending, confidenceScale: pendingScale });
                 if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
                     conflictSaved = !!window.TPXSafeStore.set('ecos_conflict_' + uid, _conflictPayload);
                 } else {
@@ -38507,7 +39234,7 @@ function ecosResolveLoadData(uid, firestoreData, firestoreExists) {
     if (firestoreExists && !fsEmpty) return { data: firestoreData, pendingNewer: false };
     const cache = readLocalECOSCache(uid);
     if (cache && cache.sdds && Object.keys(cache.sdds || {}).length > 0) return { data: cache, pendingNewer: false };
-    if (pendingNonEmpty) return { data: pending, pendingNewer: true };
+    if (pendingNonEmpty) return { data: pending, pendingNewer: true, pendingScale: pendingScale };
     return { data: firestoreData, pendingNewer: false };
 }
 
@@ -38534,26 +39261,58 @@ function clearEcosConflictBackup(uid) {
    Le backup ecos_conflict_<uid> n'est supprimé QUE si Firestore confirme
    l'écriture ; en cas d'échec, timeout, permission-denied ou réseau
    indisponible, il reste présent pour une nouvelle tentative. */
+/* ── MISSION CORRECTIVE ECOS (résiduels), point 5 : écrit directement le
+   backup de conflit restauré vers ECOSRevision/{uid} et ne retourne true
+   QUE si Firestore confirme réellement. Ne dépend jamais du runtime
+   courant pour déterminer le barème à écrire — utilise exclusivement
+   backupScale, passé explicitement par l'appelant. ── */
+async function saveEcosConflictRestoreConfirmed(restoredCopy, backupScale) {
+    if (!currentUser || !restoredCopy) return false;
+    try {
+        var _payload = {
+            sdds: restoredCopy.sdds || {},
+            planningData: restoredCopy.planningData || {},
+            checklistData: restoredCopy.checklistData || [],
+            selectedResources: restoredCopy.selectedResources || [],
+            trophies: restoredCopy.trophies || {},
+            sddPageSize: (restoredCopy.sddPageSize != null ? restoredCopy.sddPageSize : 25),
+            lastUpdated: new Date().toISOString(),
+            confidenceScale: (backupScale === 10) ? 10 : 5
+        };
+        await setDoc(doc(db, 'ECOSRevision', currentUser.uid), _payload, { merge: true });
+        return true; // Firestore a réellement confirmé l'écriture (await résolu sans exception)
+    } catch (e) {
+        console.warn('[ECOS] Restauration du conflit non confirmée :', e);
+        return false; // offline / permission-denied / timeout / toute autre exception
+    }
+}
+window.saveEcosConflictRestoreConfirmed = saveEcosConflictRestoreConfirmed;
+
 async function restoreEcosConflictBackup(uid) {
     var backup = readEcosConflictBackup(uid);
     if (!backup || !backup.data) return false;
-    window.ecosData = backup.data;
-    // ecosHasUnsavedChanges doit être vrai pour que forceSaveECOSAsync()
-    // tente réellement l'écriture (voir son étape 5 : "rien à sauvegarder").
-    if (typeof ecosHasUnsavedChanges !== 'undefined') ecosHasUnsavedChanges = true;
-    var confirmed = false;
-    if (typeof forceSaveECOSAsync === 'function') {
-        try { confirmed = await forceSaveECOSAsync(); } catch (e) { confirmed = false; }
-    } else if (typeof window._saveECOSData === 'function') {
-        // Filet défensif si forceSaveECOSAsync est indisponible : on ne peut
-        // alors rien confirmer, donc on NE supprime PAS le backup.
-        window._saveECOSData();
-        confirmed = false;
-    }
+
+    // ── Point 5 : préparer une COPIE, jamais toucher window.ecosData ni le
+    //    runtime tant que Firestore n'a pas réellement confirmé. Le barème
+    //    vient EXCLUSIVEMENT du backup (jamais du runtime actuel). ──
+    var restoredCopy = JSON.parse(JSON.stringify(backup.data));
+    var backupScale = (backup.confidenceScale === 10) ? 10 : 5;
+
+    var confirmed = await saveEcosConflictRestoreConfirmed(restoredCopy, backupScale);
+
     if (confirmed) {
+        // Firestore a réellement confirmé : SEULEMENT MAINTENANT on bascule
+        // l'état local et le runtime.
+        window.ecosData = restoredCopy;
+        window.ecosData.confidenceScale = backupScale;
+        if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') {
+            window.tpxSetConfidenceScaleECOSRuntime(backupScale);
+        }
         clearEcosConflictBackup(uid);
         return true;
     }
+    // Échec : window.ecosData, le runtime et le backup restent tous
+    // strictement inchangés — aucune bascule optimiste.
     console.warn('[ECOS] Restauration du conflit non confirmée par Firestore — backup conservé pour nouvelle tentative.');
     return false;
 }
@@ -38610,7 +39369,8 @@ async function saveECOSUserData(retryCount = 0) {
         selectedResources: window.ecosData.selectedResources || [],
         trophies: window.ecosData.trophies || {},
         sddPageSize: (window.ecosData.sddPageSize != null ? window.ecosData.sddPageSize : 25),
-        lastUpdated: timestamp
+        lastUpdated: timestamp,
+        confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
     };
 
     // PROTECTION : ne pas écraser Firestore par des sdds vides si on a déjà eu du contenu
@@ -38651,8 +39411,14 @@ function writePendingECOS() {
     if (!currentUser || !window.ecosData) return;
     try {
         var _payload = JSON.stringify({
-            schemaVersion: 1,
+            schemaVersion: 2,
             uid: currentUser.uid,
+            // ── MISSION CORRECTIVE ECOS, point 8 : le barème associé décrit
+            //    les valeurs contenues dans data.sdds[*].confidence et
+            //    data.sdds[*].history[*].confidence — indispensable pour
+            //    reconvertir correctement une restauration de pending si le
+            //    barème Firestore a changé entre-temps. ──
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
             savedAt: Date.now(),
             lastUpdated: window.ecosData.lastUpdated,
             ts: Date.now(),
@@ -38698,7 +39464,8 @@ function forceSaveECOSAsync() {
                 selectedResources: window.ecosData.selectedResources || [],
                 trophies: window.ecosData.trophies || {},
                 sddPageSize: (window.ecosData.sddPageSize != null ? window.ecosData.sddPageSize : 25),
-                lastUpdated: timestamp
+                lastUpdated: timestamp,
+                confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
             };
             // 9. protection anti-écrasement par du vide
             if (Object.keys(dataToSave.sdds).length === 0 && window.ecosHadContent) {
@@ -44763,11 +45530,73 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .
 
         <div class="settings-modal-body">
             <p class="settings-intro">Gérez les informations de votre compte TypixClin. Elles sont communes à l'ensemble du site.</p>
+
+            <!-- Réglage : Barème de confiance (mission de portage) -->
+            <div class="settings-card" data-setting="confidence-scale">
+                <div class="settings-card-head">
+                    <div class="settings-card-icon tours"><i class="fas fa-gauge-high"></i></div>
+                    <div class="settings-card-titles">
+                        <div class="settings-card-title">Barème par défaut</div>
+                        <div class="settings-card-sub">Choisissez le nombre de niveaux de confiance pour évaluer vos stations.</div>
+                    </div>
+                </div>
+
+                <div class="settings-switch-row">
+                    <div class="tpx-seg" id="confidence-scale-switch" role="group">
+                        <button type="button" class="tpx-seg-opt active" data-v="a" data-cscale="5"><i class="fas fa-gauge-simple"></i>5 niveaux</button>
+                        <button type="button" class="tpx-seg-opt" data-v="b" data-cscale="10"><i class="fas fa-gauge-high"></i>10 niveaux</button>
+                    </div>
+                </div>
+
+                <div class="settings-explain">
+                    <div class="settings-explain-row" data-mode="5">
+                        <span class="settings-explain-ico"><i class="fas fa-gauge-simple"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>5 niveaux</strong>
+                            <span>Le barème par défaut, simple et rapide à saisir.</span>
+                        </div>
+                    </div>
+                    <div class="settings-explain-row" data-mode="10">
+                        <span class="settings-explain-ico"><i class="fas fa-gauge-high"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>10 niveaux</strong>
+                            <span>Une granularité plus fine pour nuancer votre ressenti.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="help-modal-footer settings-modal-footer">
             <button class="help-modal-btn" onclick="closeSettingsModal()">
                 <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Modal de confirmation — changement de barème (ECOS) ══════════════ -->
+<div class="settings-modal-overlay" id="confidence-scale-confirm-overlay" onclick="if(event.target===this) window.tpxCloseConfidenceScaleConfirmECOS();">
+    <div class="settings-modal-inner" id="confidence-scale-confirm-inner" style="max-width:480px;">
+        <div class="unified-modal-header">
+            <div class="unified-modal-title">
+                <div class="unified-modal-icon"><i class="fas fa-gauge-high"></i></div>
+                <h3 class="unified-modal-heading" id="cs-confirm-title">Changer de barème ?</h3>
+            </div>
+            <button class="notes-close-btn" onclick="window.tpxCloseConfidenceScaleConfirmECOS()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="settings-modal-body">
+            <p class="settings-intro" id="cs-confirm-intro"></p>
+            <div id="cs-confirm-table" class="cs-confirm-table"></div>
+            <p class="settings-intro" id="cs-confirm-granularity-note" style="margin-top:0.8rem;font-size:0.82rem;color:var(--gray-500);">
+                Vos stations déjà enregistrées seront converties selon cette correspondance — aucune donnée n'est perdue, mais cette action modifie vos données existantes.
+            </p>
+            <div id="cs-confirm-error" class="settings-intro" style="display:none;color:var(--tpx-danger,#dc2626);font-weight:600;"></div>
+        </div>
+        <div class="help-modal-footer settings-modal-footer">
+            <button class="tpx-btn" type="button" onclick="window.tpxCloseConfidenceScaleConfirmECOS()">Annuler</button>
+            <button class="tpx-btn tpx-btn-primary" type="button" id="cs-confirm-go-btn" style="margin-left:auto;" onclick="window.tpxConfirmConfidenceScaleChangeECOS()">
+                <i class="fas fa-check"></i> Confirmer le changement
             </button>
         </div>
     </div>
@@ -44787,6 +45616,12 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) .planning-day-detail-overlay.active .
 
         overlay.classList.remove('closing');
         overlay.classList.add('active');
+
+        // Barème de confiance : re-synchronise l'affichage à chaque
+        // ouverture, plutôt que de compter uniquement sur le passage précoce
+        // dans onSnapshot (qui peut ne pas encore avoir eu lieu selon le
+        // moment exact du chargement).
+        if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
 
         if (typeof window._getScrollbarWidth === 'function' && typeof window._setScrollbarComp === 'function') {
             var sw = window._getScrollbarWidth();
@@ -46200,6 +47035,25 @@ html[data-theme="pastel"] {
     --confidence-3:#c19a58;
     --confidence-4:#5fb27e;
     --confidence-5:#50a971;
+}
+/* ── MISSION CORRECTIVE ECOS, point 19 : sans cette règle, le bloc
+   ci-dessus (même sélecteur simple html[data-theme="pastel"]) écraserait
+   TOUJOURS confidence-1..5 même sur un compte en barème 10, car l'ORDRE
+   DANS LE FICHIER déciderait sinon (ce bloc étant placé en fin de
+   document). Sélecteur à DEUX attributs = plus spécifique, gagne quel que
+   soit l'ordre. Palette monotone propre à ECOS (teintes 1 et 5 déjà
+   identiques à la palette pastel 5 niveaux, réutilisées telles quelles). ── */
+html[data-theme="pastel"][data-conf-scale="10"] {
+    --confidence-1:#ad5555;
+    --confidence-2:#b6615b;
+    --confidence-3:#bd7857;
+    --confidence-4:#c19a58;
+    --confidence-5:#a8ad60;
+    --confidence-6:#8fb268;
+    --confidence-7:#78b070;
+    --confidence-8:#5fb27e;
+    --confidence-9:#54ab77;
+    --confidence-10:#50a971;
 }
 html[data-theme="pastel"] {
     scrollbar-color:#6388c5 #e5e7eb;
