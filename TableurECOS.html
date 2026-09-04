@@ -27346,24 +27346,31 @@ async function flushEcosBeforeConfidenceScaleMigration() {
         //    (ex : provenant d'une session précédente). On flush donc le
         //    pending EXPLICITEMENT en premier, et on exige sa disparition
         //    réelle avant de considérer cette étape terminée. ──
+        // ── CORRECTIF (barème, "impossible de changer") : ecosHasUnsavedChanges
+        //    est déclarée avec `let` dans un bloc <script type="module">
+        //    DIFFÉRENT de celui-ci — y référencer la variable nue lève une
+        //    ReferenceError à CHAQUE appel, capturée par le catch englobant,
+        //    qui renvoyait donc systématiquement false. window._saveECOSData()
+        //    appelle toujours writePendingECOS() immédiatement après avoir
+        //    posé ecosHasUnsavedChanges=true : vérifier l'existence du
+        //    pending est donc un signal équivalent, et accessible depuis
+        //    n'importe quel bloc script. flushPendingEcosData/
+        //    forceSaveECOSAsync préfixés par window. pour la même raison
+        //    (accès inter-scripts, sinon également en erreur). ──
         if (hasPending) {
-            if (typeof flushPendingEcosData !== 'function') return false;
-            var pendingOk = await flushPendingEcosData();
+            if (typeof window.flushPendingEcosData !== 'function') return false;
+            var pendingOk = await window.flushPendingEcosData();
             if (!pendingOk) return false;
             try { if (localStorage.getItem(pendingKey)) return false; } catch (e) { return false; }
-        }
-
-        // Modifications en mémoire encore non couvertes par le pending
-        // (ex : changement très récent, pending pas encore réécrit).
-        if (ecosHasUnsavedChanges) {
-            if (typeof forceSaveECOSAsync !== 'function') return false;
-            var saveOk = await forceSaveECOSAsync();
+        } else if (typeof window.forceSaveECOSAsync === 'function') {
+            // Aucun pending détecté, mais une modification a pu être faite
+            // dans la même frame sans être encore écrite : filet de sécurité.
+            var saveOk = await window.forceSaveECOSAsync();
             if (!saveOk) return false;
         }
 
         // Double vérification finale — jamais une supposition optimiste.
         try { if (localStorage.getItem(pendingKey)) return false; } catch (e) { return false; }
-        if (ecosHasUnsavedChanges) return false;
 
         return true;
     } catch (e) {
