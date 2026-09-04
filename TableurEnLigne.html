@@ -20418,7 +20418,15 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
     var el = document.getElementById('toast-logout');
     if (!el || typeof MutationObserver === 'undefined') return;
     var sync = function () {
-        document.body.classList.toggle('tpx-logout-toast-showing', el.classList.contains('show'));
+        // .hide déclenche un fondu de 500ms (opacity 1→0), le toast reste
+        // donc visuellement présent pendant la quasi-totalité de cette
+        // transition — pas seulement pendant .show. Sans compter .hide ici
+        // aussi, la pastille réapparaissait prématurément le temps du fondu
+        // (entre le retrait de .show et sa réapplication avec le message
+        // suivant, ~500ms), donnant l'impression d'un clignotement pendant
+        // la séquence de déconnexion.
+        var showing = el.classList.contains('show') || el.classList.contains('hide');
+        document.body.classList.toggle('tpx-logout-toast-showing', showing);
     };
     new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] });
     sync();
@@ -21371,6 +21379,13 @@ function showTourSuccessAnimation() {
     const oldElements = checkContainer.querySelectorAll('.confetti, .success-particle');
     oldElements.forEach(el => el.remove());
     
+    // Masquer la barre de défilement latérale le temps de l'animation, sans
+    // décalage de mise en page — passe par le verrou centralisé du site
+    // (compte les "propriétaires" actifs), plutôt qu'une manipulation
+    // directe de overflow qui pourrait entrer en conflit si un autre
+    // élément a lui aussi la barre verrouillée au même moment.
+    if (window._ednScrollLock) window._ednScrollLock('tourSuccess');
+    
     // Afficher l'overlay
     overlay.classList.add('show');
     
@@ -21385,6 +21400,8 @@ function showTourSuccessAnimation() {
     // Masquer l'overlay
     setTimeout(() => {
         overlay.classList.remove('show');
+        // Réafficher la barre de défilement sans décalage.
+        if (window._ednScrollUnlock) window._ednScrollUnlock('tourSuccess');
     }, 1500);
 }
 
