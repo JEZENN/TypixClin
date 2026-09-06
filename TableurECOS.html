@@ -14507,7 +14507,7 @@ body.ecos-offline-locked .send-to-checklist-btn {
 [data-theme="dark"] .flash-item-chip { color: #cbd5e1; background: rgba(148,163,184,0.15); border-color: #334155; }
 @media (max-width: 480px) { .flash-item-chip { max-width: 90px; font-size: 0.68rem; } }
 
-.flash-card-container { perspective: 1000px; width: 100%; }
+.flash-card-container { perspective: 1000px; width: 100%; position: relative; }
 .flash-card {
   position: relative; transform-style: preserve-3d;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -15730,6 +15730,10 @@ body.ecos-offline-locked .send-to-checklist-btn {
 .spe-flash-info-panel .flash-empty i { font-size: 1.75rem; opacity: 0.3; }
 
 /* ===== Dropdown "Réviser" ===== */
+/* Rotation animée du chevron à l'ouverture du menu déroulant "Tout réviser"/
+   "Dues" — miroir EDN (.flash-review-chevron). */
+.flash-review-chevron { transition: transform 0.2s ease; display: inline-block; }
+.flash-review-chevron.open { transform: rotate(180deg); }
 .flash-review-btn-wrap { position: relative; display: inline-block; flex-shrink: 0; }
 .flash-review-drop {
   position: absolute;
@@ -27016,16 +27020,6 @@ window.TPXNotesPending = {
     <div class="flash-session-topbar">
       <span class="flash-session-counter" id="flashSessCounter">Carte 1 / 1</span>
       <div class="flash-session-topbar-right">
-                <button type="button"
-                class="flash-session-edit-btn"
-                id="flashSessEditBtn"
-                style="display:none;"
-                onclick="window._flashEditCurrentSessionCard(event)"
-                aria-label="Modifier la carte"
-                data-tooltip="Modifier">
-          <i class="fas fa-pen"></i>
-        </button>
-		
 		<span class="flash-spe-chip flash-sess-spe-label" id="flashSessSpeLabel" style="display:none;"></span>
 		<span class="flash-item-chip" id="flashSessItemLabel" style="display:none;"></span>
 
@@ -36510,7 +36504,7 @@ function speCfg(id) {
   function _col(b) { var u = b.getCurrentUser(); return b.collection(b.getDb(), 'users', u.uid, TPXC('FlashCardsECOS')); }
   function _ref(b, id) { return b.doc(b.getDb(), 'users', b.getCurrentUser().uid, TPXC('FlashCardsECOS'), id); }
   function _all(snap) { var o=[]; snap.forEach(function(d){ var x=d.data(); x.id=d.id; o.push(x); }); return o; }
-  function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
+  function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); if (typeof _flushPendingFlashReviewsECOS === 'function') { try { _flushPendingFlashReviewsECOS(); } catch (e) {} } return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
   // ── Suppression d'une SDD ≠ suppression de ses flashcards. Les ID de SDD
   //    custom utilisent newId('sdd') (aléatoire, jamais réutilisé après
   //    suppression) — pas de risque de collision comme sur les numéros
@@ -36568,7 +36562,72 @@ function speCfg(id) {
     return b.addDoc(_col(b), doc).then(function(r){return r.id;});
   }
   function deleteFlashCard(id) { var b=fb(); if(!b) return Promise.reject(new Error('offline')); return b.deleteDoc(_ref(b,id)); }
-  function updateCardAfterReview(id, card, rating) { var b=fb(); if(!b) return Promise.resolve(); return b.updateDoc(_ref(b,id), updateCardInterval(card,rating)).catch(function(e){console.warn(e);}); }
+
+  // ── CORRECTIF (audit sécurité/perte de données, section E — flashcards,
+  //    miroir du correctif équivalent côté EDN) : une révision qui échouait
+  //    disparaissait sans retry ni trace récupérable. Un retry rapide, puis
+  //    mise en file locale (par uid) si ça échoue encore ; _flushPendingFlashReviewsECOS
+  //    la retente à la prochaine occasion. ──
+  function _flashReviewQueueKeyECOS() {
+    var b = fb(); var u = b && b.getCurrentUser && b.getCurrentUser();
+    return u ? ('flashReviewPendingECOS_' + u.uid) : null;
+  }
+  function _flashQueueFailedReviewECOS(id, speId, update) {
+    var key = _flashReviewQueueKeyECOS();
+    if (!key) return;
+    try {
+      var raw = localStorage.getItem(key);
+      var queue = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(queue)) queue = [];
+      queue = queue.filter(function (q) { return q && q.id !== id; });
+      queue.push({ id: id, speId: speId, update: update, queuedAt: Date.now() });
+      localStorage.setItem(key, JSON.stringify(queue));
+    } catch (e) {}
+  }
+  function _flashDequeueReviewECOS(id) {
+    var key = _flashReviewQueueKeyECOS();
+    if (!key) return;
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return;
+      var queue = JSON.parse(raw);
+      if (!Array.isArray(queue)) return;
+      queue = queue.filter(function (q) { return q && q.id !== id; });
+      if (queue.length) localStorage.setItem(key, JSON.stringify(queue));
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function _flashSendReviewUpdateECOS(id, update) {
+    var b = fb(); if (!b) return Promise.resolve(false);
+    return b.updateDoc(_ref(b, id), update).then(function () { _flashDequeueReviewECOS(id); return true; }).catch(function (e) { console.warn(e); return false; });
+  }
+  function updateCardAfterReview(id, card, rating) {
+    var update = updateCardInterval(card, rating);
+    return _flashSendReviewUpdateECOS(id, update).then(function (ok) {
+      if (ok) return true;
+      return new Promise(function (resolve) { setTimeout(resolve, 1500); }).then(function () {
+        return _flashSendReviewUpdateECOS(id, update);
+      }).then(function (ok2) {
+        if (!ok2) _flashQueueFailedReviewECOS(id, card.speId, update);
+        return ok2;
+      });
+    });
+  }
+  function _flushPendingFlashReviewsECOS() {
+    var key = _flashReviewQueueKeyECOS();
+    if (!key) return;
+    var raw;
+    try { raw = localStorage.getItem(key); } catch (e) { return; }
+    if (!raw) return;
+    var queue;
+    try { queue = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(queue) || !queue.length) return;
+    queue.forEach(function (q) {
+      if (!q || !q.id || !q.update) return;
+      _flashSendReviewUpdateECOS(q.id, q.update);
+    });
+  }
+  window._flushPendingFlashReviewsECOS = _flushPendingFlashReviewsECOS;
 
   // ---------- Rich-text ----------
   function _rtFocus(el) { _activeRT = el; _flashUpdateToolbar(true); }
@@ -36724,7 +36783,7 @@ function speCfg(id) {
     var revBtn, reviewDropId = 'flashReviewDropMenu';
     if (due.length) {
       revBtn = '<div class="flash-review-btn-wrap" style="position:relative;display:inline-block;">' +
-        '<button class="flash-launch-session-btn" onclick="window._flashOpenReviewDrop(event,\'' + reviewDropId + '\',' + due.length + ',' + cards.length + ')"><i class="fas fa-bolt"></i> Réviser <i class="fas fa-chevron-down" style="font-size:0.7em;margin-left:3px;"></i></button>' +
+        '<button class="flash-launch-session-btn" onclick="window._flashOpenReviewDrop(event,\'' + reviewDropId + '\',' + due.length + ',' + cards.length + ')"><i class="fas fa-bolt"></i> Réviser <i class="fas fa-chevron-down flash-review-chevron" style="font-size:0.7em;margin-left:3px;"></i></button>' +
         '<div class="flash-review-drop" id="' + reviewDropId + '" style="display:none;">' +
           '<button class="flash-review-drop-item" onclick="window._flashStartAll();window._flashCloseReviewDrop(\'' + reviewDropId + '\')"><i class="fas fa-layer-group"></i> Tout réviser <span class="flash-review-drop-count">(' + cards.length + ')</span></button>' +
           '<button class="flash-review-drop-item due" onclick="window._flashStartDue();window._flashCloseReviewDrop(\'' + reviewDropId + '\')"><i class="fas fa-bolt"></i> Dues <span class="flash-review-drop-count">(' + due.length + ')</span></button>' +
@@ -37342,20 +37401,42 @@ saveBtn.innerHTML =
     }
     if (filtered.length) startFlashSession(filtered, { multi: false });
   }
+  // ── Rotation du chevron à l'ouverture/fermeture (miroir EDN) ──
   function _flashOpenReviewDrop(e, id) {
     e.stopPropagation();
     var drop = document.getElementById(id); if (!drop) return;
     var isOpen = drop.style.display !== 'none';
-    document.querySelectorAll('.flash-review-drop').forEach(function(d){ d.style.display='none'; });
+    // Ferme tous les drops ouverts (et fait pivoter leur chevron en retour)
+    document.querySelectorAll('.flash-review-drop').forEach(function(d){
+      d.style.display='none';
+      var btn = d.previousElementSibling;
+      var chev = btn && btn.querySelector('.flash-review-chevron');
+      if (chev) chev.classList.remove('open');
+    });
     if (!isOpen) {
       drop.style.display = 'block';
+      var thisBtn = drop.previousElementSibling;
+      var thisChev = thisBtn && thisBtn.querySelector('.flash-review-chevron');
+      if (thisChev) thisChev.classList.add('open');
       setTimeout(function() {
-        function _close(ev) { if (!drop.contains(ev.target)) { drop.style.display='none'; document.removeEventListener('click', _close, true); } }
+        function _close(ev) {
+          if (!drop.contains(ev.target)) {
+            drop.style.display='none';
+            if (thisChev) thisChev.classList.remove('open');
+            document.removeEventListener('click', _close, true);
+          }
+        }
         document.addEventListener('click', _close, true);
       }, 0);
     }
   }
-  function _flashCloseReviewDrop(id) { var d=document.getElementById(id); if(d) d.style.display='none'; }
+  function _flashCloseReviewDrop(id) {
+    var d=document.getElementById(id); if(!d) return;
+    d.style.display='none';
+    var btn = d.previousElementSibling;
+    var chev = btn && btn.querySelector('.flash-review-chevron');
+    if (chev) chev.classList.remove('open');
+  }
 
   // ---------- Session ----------
   function _shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
@@ -37544,7 +37625,24 @@ saveBtn.innerHTML =
       '<div class="flash-card-container"><div class="flash-card" id="speFlashCard">' +
         '<div class="flash-card-face front">' + sanit(card.recto) + '</div>' +
         '<div class="flash-card-face back">' + sanit(card.verso) + '</div>' +
-      '</div></div>' +
+      '</div>' +
+      // ── CORRECTIF (signalé) : le bouton "Modifier" du mode plein écran
+      //    ("modal") vivait en dur dans l'en-tête (flash-session-topbar),
+      //    séparé de la carte — contrairement à EDN où il est positionné
+      //    dans le coin supérieur droit DE LA CARTE elle-même. Reproduit ici
+      //    exactement le placement EDN (bouton réinjecté à chaque carte,
+      //    même id `flashSessEditBtn` réutilisé par _setFlashSessionEditVisible
+      //    / _flashShowEditSaved, positionnement en style inline pour ne pas
+      //    affecter le bouton `.flash-inline-spe-row .flash-session-edit-btn`
+      //    du mode "inline", qui reste inchangé). ──
+      // Infobulle native (title) retirée sur demande : remplacée par le
+      // dépliement au survol façon header des notes (.notes-btn-label,
+      // cf. règle #flashSessEditBtn ci-dessous) — aria-label conservé pour
+      // l'accessibilité (lecteurs d'écran), sans bulle visuelle.
+      (s.mode === 'modal'
+        ? '<button type="button" class="flash-session-edit-btn" id="flashSessEditBtn" style="display:none;position:absolute;top:10px;right:10px;z-index:5;" onclick="window._flashEditCurrentSessionCard(event)" aria-label="Modifier cette carte"><i class="fas fa-pen"></i><span class="notes-btn-label">Modifier</span></button>'
+        : '') +
+      '</div>' +
       '<div class="flash-action-zone">' +
         '<div id="speFlashRevealWrap"><button class="flash-reveal-btn" onclick="window._flashFlip()"><i class="fas fa-eye"></i> Voir la réponse</button></div>' +
         '<div id="speFlashEvalWrap" style="display:none;"><div class="flash-eval-btns">' +
@@ -37568,7 +37666,27 @@ saveBtn.innerHTML =
         _setFlashSessionEditVisible(true);
     }, 200);
   }
-  function evaluateCard(rating) { var s=_flashSession; if(!s) return; var card=s.cards[s.idx]; if(s.results[rating]) s.results[rating].push(card); updateCardAfterReview(card.id,card,rating); showFlashCard(s.idx+1); }
+  function evaluateCard(rating) {
+    var s=_flashSession; if(!s) return;
+    var card=s.cards[s.idx];
+    if(s.results[rating]) s.results[rating].push(card);
+    // ── CORRECTIF (bug signalé : badge "Session Flash" bloqué sur 1 même
+    //    après avoir fini les cartes dues) : l'écriture Firestore de la
+    //    révision n'est pas attendue avant d'enchaîner sur la carte suivante
+    //    (fluidité voulue), mais showFlashEndScreen() recalcule le badge
+    //    IMMÉDIATEMENT à la fin de la session — souvent avant que l'écriture
+    //    de la DERNIÈRE carte ait été confirmée par Firestore. Le badge
+    //    comptait alors encore cette carte comme due, et rien ne le
+    //    recalculait plus jamais après coup. On raccroche donc ici un second
+    //    recalcul, une fois l'écriture réellement confirmée. ──
+    updateCardAfterReview(card.id,card,rating).then(function(ok){
+      if (ok) {
+        if (typeof updateFlashGlobalCount === 'function') updateFlashGlobalCount();
+        if (card.speId && typeof updateSpeFlashBadge === 'function') updateSpeFlashBadge(card.speId);
+      }
+    });
+    showFlashCard(s.idx+1);
+  }
   function showFlashEndScreen(results) {
     var s = _flashSession; if (!s) return; var e = s.els;
     _setFlashSessionEditVisible(false);
@@ -39045,6 +39163,17 @@ function loadECOSUserData(uid) {
     ecosFirebaseLoaded = false;
     window._ecosFirstSnapshot = true;
     if (ecosUnsub) ecosUnsub();
+    // ── CORRECTIF (audit sécurité/perte de données, section C, miroir du
+    //    correctif équivalent côté EDN/loadUserData) : annuler aussi un
+    //    debounce de sauvegarde encore programmé pour le PRÉCÉDENT compte.
+    //    onAuthStateChanged peut passer directement d'un compte A à un
+    //    compte B sans état null intermédiaire (reconnexion depuis un autre
+    //    onglet partageant la même persistance Auth) — dans ce cas la
+    //    déconnexion (qui annule déjà _saveTimer, cf. logoutBtn ci-dessous)
+    //    n'est jamais exécutée. Sans ce nettoyage ici, ce timer se
+    //    déclencherait avec currentUser déjà passé à B, écrivant les
+    //    données de A dans ECOSRevision DE B. ──
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
     ecosUnsub = onSnapshot(doc(db, 'ECOSRevision', uid), snap => {
         if (window.bumpMetric) window.bumpMetric('reads', 1);
         // Distinguer : document inexistant / vide / présent
@@ -39338,9 +39467,18 @@ let _saveTimer = null;
 /* Partie 2 — état des modifications non sauvegardées + promesse de sauvegarde partagée */
 let ecosHasUnsavedChanges = false;
 let ecosSaveInFlight = null;
+// ── CORRECTIF (audit sécurité/perte de données, section A — miroir du même
+//    correctif côté EDN/_dataRevisionCounter) : incrémenté à CHAQUE
+//    modification. saveECOSUserData()/forceSaveECOSAsync() capturent sa
+//    valeur au moment du snapshot envoyé à Firestore ; si une modification
+//    plus récente est survenue entre-temps, la confirmation de CETTE
+//    sauvegarde-ci ne doit pas déclarer ecosHasUnsavedChanges = false — la
+//    modification plus récente reste due à sa propre sauvegarde. ──
+let _ecosDataRevisionCounter = 0;
 window._saveECOSData = function () {
     // Une modification métier est en attente de confirmation Firestore
     ecosHasUnsavedChanges = true;
+    _ecosDataRevisionCounter++;
     // Section 1.5 : sécuriser IMMÉDIATEMENT une copie locale (cache + pending)
     // avant le debounce Firestore. La sécurité des données ne dépend jamais
     // d'une seule écriture Firestore asynchrone.
@@ -39368,6 +39506,10 @@ async function saveECOSUserData(retryCount = 0) {
         return;
     }
 
+    // Révision capturée AU MOMENT du snapshot (cf. commentaire sur
+    // _ecosDataRevisionCounter) — jamais après l'await qui suit.
+    const _savingRevision = _ecosDataRevisionCounter;
+
     const timestamp = new Date().toISOString();
     const dataToSave = {
         sdds: window.ecosData.sdds || {},
@@ -39392,20 +39534,30 @@ async function saveECOSUserData(retryCount = 0) {
         await updateDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave);
         if (window.bumpMetric) window.bumpMetric('writes', 1);
         window.ecosData.lastUpdated = timestamp;
-        ecosHasUnsavedChanges = false;
-        setSaveIndicator('saved');
         writeLocalECOSCache(currentUser.uid, window.ecosData);
-        clearPendingECOS();
+        // Ne déclarer "tout sauvegardé" (dirty flag ET pending local effacé)
+        // que si rien de plus récent n'est arrivé depuis ce snapshot. Sinon,
+        // le pending local créé par CETTE modification plus récente
+        // (window._saveECOSData → writePendingECOS()) correspond à une
+        // donnée jamais envoyée : le supprimer ici la perdrait pour de bon
+        // si l'onglet se ferme avant le prochain debounce.
+        if (_ecosDataRevisionCounter === _savingRevision) {
+            ecosHasUnsavedChanges = false;
+            setSaveIndicator('saved');
+            clearPendingECOS();
+        }
     } catch (e) {
         if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e);
         if (e.code === 'not-found') {
             try {
                 await setDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave, { merge: true });
                 window.ecosData.lastUpdated = timestamp;
-                ecosHasUnsavedChanges = false;
-                setSaveIndicator('saved');
                 writeLocalECOSCache(currentUser.uid, window.ecosData);
-                clearPendingECOS();
+                if (_ecosDataRevisionCounter === _savingRevision) {
+                    ecosHasUnsavedChanges = false;
+                    setSaveIndicator('saved');
+                    clearPendingECOS();
+                }
             } catch (e2) { if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e2); retrySave(retryCount, MAX, DELAYS); }
         } else { retrySave(retryCount, MAX, DELAYS); }
     }
@@ -39462,6 +39614,12 @@ function forceSaveECOSAsync() {
             let waited = 0;
             while (!ecosFirebaseLoaded && waited < 5000) { await new Promise(r => setTimeout(r, 200)); waited += 200; }
             if (!ecosFirebaseLoaded) return false;
+            // Révision capturée AU MOMENT du snapshot ci-dessous — si une
+            // nouvelle modification arrive pendant l'écriture, ce snapshot-ci
+            // ne doit pas être confondu avec "tout est sauvegardé" (cf.
+            // _ecosDataRevisionCounter). Pertinent ici en particulier car le
+            // résultat conditionne une NAVIGATION (navigateAfterEcosSave).
+            const _savingRevision = _ecosDataRevisionCounter;
             // 8. payload identique à la sauvegarde normale
             const timestamp = new Date().toISOString();
             const dataToSave = {
@@ -39485,6 +39643,16 @@ function forceSaveECOSAsync() {
             if (ok) {
                 window.ecosData.lastUpdated = timestamp;
                 writeLocalECOSCache(currentUser.uid, window.ecosData); // 14
+                // Si une modification plus récente est arrivée PENDANT cette
+                // écriture, elle n'a pas été envoyée par CE snapshot : ne pas
+                // effacer son pending local (perte de données), ne pas la
+                // déclarer sauvegardée, et surtout ne pas autoriser la
+                // navigation qui attend ce retour (cf. navigateAfterEcosSave)
+                // — on signale false pour qu'elle soit réessayée.
+                if (_ecosDataRevisionCounter !== _savingRevision) {
+                    setSaveIndicator('saving');
+                    return false;
+                }
                 clearPendingECOS();                                   // 15
                 ecosHasUnsavedChanges = false;                        // 16
                 setSaveIndicator('saved');                            // 17
@@ -41564,6 +41732,48 @@ window.addEventListener('scroll', () => { const h = document.getElementById('hea
 }
 
 /* ===== Flash session : bouton modifier la carte affiché après réponse ===== */
+/* Sur la carte du mode plein écran (#flashSessEditBtn) : dépliement au
+   survol façon header des notes (.notes-action-btn / .notes-btn-label),
+   remplace l'ancienne infobulle native (title). Sélecteur par id pour ne
+   pas affecter #flashInlineEditBtn (mode inline du cahier, resté circulaire
+   fixe, inchangé). */
+#flashSessEditBtn {
+  width: auto;
+  max-width: 32px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border-radius: 16px;
+  transition:
+    max-width 0.42s cubic-bezier(0.4,0,0.2,1),
+    padding 0.42s cubic-bezier(0.4,0,0.2,1),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+@media (hover: hover) {
+  #flashSessEditBtn:hover {
+    max-width: 140px;
+    padding: 0 12px 0 9px;
+  }
+  #flashSessEditBtn:hover .notes-btn-label {
+    opacity: 1;
+    max-width: 100px;
+    margin-left: 6px;
+  }
+}
+#flashSessEditBtn .notes-btn-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.25s ease, max-width 0.42s cubic-bezier(0.4,0,0.2,1), margin-left 0.42s cubic-bezier(0.4,0,0.2,1);
+  font-family: var(--font-body);
+  margin-left: 0;
+}
 .flash-session-edit-btn {
   width: 32px;
   height: 32px;
@@ -51798,9 +52008,21 @@ var LS_DATA  = 'tpx_' + APP + '_content';
        puis on y réapplique nos ajouts et nos modifications.
 
        Résultat : les ajouts faits ailleurs survivent, les suppressions
-       volontaires sont respectées, et aucune version n'est perdue en silence. */
-    function mergeById(remote, local, keyOf) {
-        var out = [], seen = {};
+       volontaires sont respectées, et aucune version n'est perdue en silence.
+
+       ── CORRECTIF (audit sécurité/perte de données, section D — miroir du
+       correctif équivalent côté EDN) : `local` seul ne suffit pas à décider
+       qui gagne — un item présent dans `local` peut simplement n'avoir
+       JAMAIS été retouché cette session (recopié tel quel depuis le
+       chargement). Sans le comparer à `localAtLoad` (l'état capturé au
+       chargement, cf. loadFromFirestore), cet item non modifié écrasait
+       systématiquement un renommage ou une modification faits ailleurs
+       entre-temps sur ce même id. `localAtLoad` peut être null (échec de
+       capture) : dans ce cas on retombe sur l'ancien comportement (local
+       fait foi), par prudence plutôt que de risquer une perte silencieuse. ──*/
+    function mergeById(remote, local, localAtLoad, keyOf) {
+        var out = [], seen = {}, atLoadByKey = {};
+        (localAtLoad || []).forEach(function (a) { atLoadByKey[keyOf(a)] = a; });
         (remote || []).forEach(function (r) {
             var k = keyOf(r);
             if (state.deletedIds[k]) return;      // supprimé ici : on ne le ressuscite pas
@@ -51809,8 +52031,23 @@ var LS_DATA  = 'tpx_' + APP + '_content';
         });
         (local || []).forEach(function (l) {
             var k = keyOf(l);
-            if (seen[k] !== undefined) out[seen[k]] = l;   // notre version fait foi
-            else { seen[k] = out.length; out.push(l); }
+            var atLoad = localAtLoad ? atLoadByKey[k] : undefined;
+            var unchangedSinceLoad = localAtLoad
+                ? (atLoad !== undefined && JSON.stringify(atLoad) === JSON.stringify(l))
+                : false; // pas de référence : comportement prudent = toujours "modifié"
+            if (seen[k] !== undefined) {
+                // Présent des deux côtés : ne remplacer la version distante
+                // (potentiellement renommée/modifiée ailleurs) que si CETTE
+                // session l'a réellement modifiée depuis le chargement.
+                if (!unchangedSinceLoad) out[seen[k]] = l;
+            } else if (!unchangedSinceLoad || atLoad === undefined) {
+                // Absent de remote : soit un ajout local jamais vu au
+                // chargement (atLoad === undefined) → on le garde ; soit un
+                // item modifié ET supprimé ailleurs entre-temps → conflit
+                // rare, on préserve la modification locale.
+                seen[k] = out.length; out.push(l);
+            }
+            // sinon : supprimé ailleurs et jamais retouché ici → pas ressuscité.
         });
         return out;
     }
@@ -51830,16 +52067,16 @@ var LS_DATA  = 'tpx_' + APP + '_content';
                 var remoteStamp = d ? (d.updatedAt || null) : null;
                 if (d && remoteStamp && remoteStamp !== state.remoteStamp) {
                     console.warn('[TPXPerso] Contenu modifié ailleurs depuis le chargement : fusion au lieu d\'un écrasement.');
-                    specialties = mergeById(d.specialties, state.specialties, function (x) { return x.id; });
+                    specialties = mergeById(d.specialties, state.specialties, state.specialtiesAtLoad, function (x) { return x.id; });
                     if (APP === 'edn') {
-                        items = mergeById(d.items, state.items, function (x) { return x.specialtyId + '|' + x.num; });
+                        items = mergeById(d.items, state.items, state.itemsAtLoad, function (x) { return x.specialtyId + '|' + x.num; });
                         /* Un item dont la matière a disparu de la fusion serait
                            orphelin : on l'écarte. */
                         var known = {};
                         specialties.forEach(function (sp) { known[sp.id] = true; });
                         items = items.filter(function (i) { return known[i.specialtyId]; });
                     } else {
-                        sdd = mergeById(d.sdd, state.sdd, function (x) { return x.id; });
+                        sdd = mergeById(d.sdd, state.sdd, state.sddAtLoad, function (x) { return x.id; });
                     }
                     state.specialties = specialties;
                     state.items = items;
@@ -51862,6 +52099,15 @@ var LS_DATA  = 'tpx_' + APP + '_content';
             await f.set(ref, payload, { merge: false });
             state.remoteStamp = stamp;
             state.deletedIds = {};      // la suppression est actée côté serveur
+            // Réaligner la référence "AtLoad" sur ce qui vient d'être écrit
+            // (cf. commentaire détaillé côté EDN) — sinon une modification
+            // déjà sauvegardée continuerait à écraser un changement distant
+            // plus récent survenu après CETTE sauvegarde.
+            try {
+                state.specialtiesAtLoad = JSON.parse(JSON.stringify(specialties));
+                state.itemsAtLoad = JSON.parse(JSON.stringify(items));
+                state.sddAtLoad = JSON.parse(JSON.stringify(sdd));
+            } catch (e2) {}
             saveLocal();
         } catch (e) {
             console.warn('[TPXPerso] Sauvegarde du contenu impossible :', e);
@@ -51942,6 +52188,16 @@ var LS_DATA  = 'tpx_' + APP + '_content';
                 /* Document absent : contenu sur-mesure jamais créé. C'est un
                    état légitime, l'écriture est donc autorisée. */
                 state.specialties = []; state.items = []; state.sdd = [];
+            }
+            // ── CORRECTIF (audit, section D, miroir EDN) : capture de l'état
+            //    TEL QUE CHARGÉ pour mergeById() — cf. commentaire détaillé
+            //    côté EDN/loadFromFirestore. ──
+            try {
+                state.specialtiesAtLoad = JSON.parse(JSON.stringify(state.specialties));
+                state.itemsAtLoad = JSON.parse(JSON.stringify(state.items));
+                state.sddAtLoad = JSON.parse(JSON.stringify(state.sdd));
+            } catch (e3) {
+                state.specialtiesAtLoad = null; state.itemsAtLoad = null; state.sddAtLoad = null;
             }
             contentOk = true;
         } catch (e) {

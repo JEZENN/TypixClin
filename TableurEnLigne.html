@@ -22312,8 +22312,29 @@ logoutBtn?.addEventListener('click', async () => {
         // 3️⃣ Forcer la sauvegarde immédiate si des modifications existent
         if (hasUnsavedChanges && currentUser) {
             await forceSaveAsync();
+
+            // ── CORRECTIF (audit, section A) : vérification RÉELLE du succès,
+            //    jamais une supposition optimiste — même principe que
+            //    flushEdnBeforeConfidenceScaleMigration(). Si la sauvegarde a
+            //    échoué (hasUnsavedChanges toujours vrai), on retente UNE fois
+            //    avant de se résoudre à prévenir l'utilisateur plutôt que de le
+            //    déconnecter en silence avec des données non enregistrées. ──
+            if (hasUnsavedChanges) {
+                await forceSaveAsync();
+            }
+            if (hasUnsavedChanges) {
+                setSaveIndicator('error');
+                if (toast) {
+                    toast.querySelector('.toast-logout-title').textContent = 'Sauvegarde impossible';
+                    toast.querySelector('.toast-logout-message').textContent = 'Vérifiez votre connexion et réessayez — vos modifications ne sont pas perdues, mais la déconnexion a été annulée.';
+                    toast.classList.remove('hide');
+                    toast.classList.add('show');
+                    setTimeout(() => { toast.classList.remove('show'); toast.classList.add('hide'); }, 5000);
+                }
+                return; // ⛔ Ne PAS déconnecter tant que la sauvegarde n'est pas confirmée
+            }
         }
-        
+
         // ✅ Afficher le check vert
         setSaveIndicator('saved');
 
@@ -22388,14 +22409,23 @@ document.addEventListener('DOMContentLoaded', () => {
         btnWaitSave.addEventListener('click', async () => {
             // Fermer la modal
             hideWarningModal();
-            
+
             // Afficher indicateur dans le header
 			setSaveIndicator('saving');
 
-            
+
             // Forcer la sauvegarde immédiate
             await forceSaveAsync();
-			
+
+            // ── CORRECTIF (audit, section A) : forceSaveAsync() ne garantit plus
+            //    le succès à lui seul (cf. son commentaire) — vérifier réellement
+            //    avant d'afficher un succès trompeur. Si ça échoue encore, on
+            //    réaffiche l'avertissement plutôt que de laisser croire que
+            //    l'utilisateur peut fermer la page sans risque. ──
+            if (hasUnsavedChanges) {
+                setSaveIndicator('error');
+                showWarningModal();
+            }
         });
     }
     
@@ -22459,10 +22489,22 @@ async function forceSaveAsync() {
     if (saveTimeout) clearTimeout(saveTimeout);
     if (hasUnsavedChanges && currentUser) {
         userData.lastUpdated = new Date().toISOString();
-        
-        // Sauvegarder Firebase et ATTENDRE
+
+        // Sauvegarder Firebase et ATTENDRE.
+        // ── CORRECTIF (audit sécurité/perte de données, section A) : ne PLUS
+        //    poser hasUnsavedChanges = false sans condition ici. saveUserData()
+        //    ne rejette JAMAIS sa promesse (même après échec définitif après
+        //    3 tentatives, ou si le premier essai échoue et qu'aucune retry
+        //    n'a encore eu lieu) — attendre sa résolution ne prouve donc rien.
+        //    saveUserData() gère déjà lui-même hasUnsavedChanges correctement
+        //    (il ne le repasse à false QUE sur confirmation Firestore réelle,
+        //    cf. _savingRevision) : on se contente de lire son résultat au lieu
+        //    de l'écraser. Avant ce correctif, un logout ou le bouton
+        //    "Attendre" pouvait déclarer "sauvegardé" et perdre les données
+        //    dès que la PREMIÈRE tentative échouait, sans attendre les
+        //    tentatives suivantes (2s/4s/8s) qui n'ont plus le temps de
+        //    s'exécuter une fois signOut()/fermeture enclenché. ──
         await saveUserData();
-        hasUnsavedChanges = false;
     }
 }
 
@@ -22666,6 +22708,15 @@ async function saveBackupToFirebase(userId, data) {
         // ── Inclure les notes du cahier d'erreurs (subcollection notesEntrainements) ──
         // On lit toute la subcollection et on l'embarque dans le backup sous la clé
         // notesEntrainements : { [trainId]: { html, updatedAt } }
+        // ── CORRECTIF (audit sécurité/perte de données, section F) : ces deux
+        //    lectures peuvent échouer sans faire échouer le backup entier
+        //    (volontaire — le planning reste sauvegardé) ; mais avant ce
+        //    correctif rien ne distinguait alors ce backup d'un backup
+        //    réellement complet. Un admin restaurant depuis un backup marqué
+        //    "complet" alors qu'il lui manquait les cahiers n'aurait aucun
+        //    moyen de le savoir. `partial`/`missingParts` rendent cette
+        //    incomplétude explicite, sans changer le contenu sauvegardé. ──
+        const _backupMissingParts = [];
         const notesEntrainementsMap = {};
         try {
             const notesRef = collection(db, 'users', userId, 'notesEntrainements');
@@ -22677,6 +22728,7 @@ async function saveBackupToFirebase(userId, data) {
         } catch (notesErr) {
             // Non bloquant : le backup continue sans les notes plutôt que d'échouer
             console.warn('[Backup] Impossible de lire notesEntrainements :', notesErr);
+            _backupMissingParts.push('notesEntrainements');
         }
 
         // -- Inclure le cahier d'erreurs par specialite (subcollection ErreurSpe) --
@@ -22690,6 +22742,7 @@ async function saveBackupToFirebase(userId, data) {
             console.log('[Backup] ErreurSpe incluses :', Object.keys(notesSpecialitesMap).length);
         } catch (speErr) {
             console.warn('[Backup] Impossible de lire ErreurSpe :', speErr);
+            _backupMissingParts.push('notesSpecialites');
         }
 
         const backupData = {
@@ -22701,6 +22754,10 @@ async function saveBackupToFirebase(userId, data) {
             data: cleanData,
             notesEntrainements: notesEntrainementsMap,
             notesSpecialites: notesSpecialitesMap,
+            // Backup marqué explicitement partiel si une des deux subcollections
+            // ci-dessus n'a pas pu être lue — jamais silencieusement "complet".
+            partial: _backupMissingParts.length > 0,
+            missingParts: _backupMissingParts,
             // ── MISSION CORRECTIVE, point 10 : le barème associé aux valeurs
             //    de ce backup. Un ancien backup sans ce champ = barème
             //    historique 5 (le barème 10 n'était pas encore déployé). ──
@@ -22824,12 +22881,23 @@ async function saveCloudBackup(userId, data, isManual = false) {
 		}
         
         const backupDocRef = doc(db, 'planningBackups', userId);
-        
+
+        // ── CORRECTIF (audit sécurité/perte de données, section F) : cette
+        //    fonction n'est appelée par AUCUN chemin actif actuellement
+        //    (vérifié — ni bouton, ni appel automatique, contrairement à
+        //    checkAndAutoSaveCloud/saveBackupToFirebase qui, eux, sont bien
+        //    actifs). Elle reste néanmoins un piège si jamais réactivée : un
+        //    setDoc SANS merge REMPLACE tout le document planningBackups/{uid},
+        //    effaçant les champs data/notesEntrainements/notesSpecialites/
+        //    confidenceScale écrits par saveBackupToFirebase() — les deux
+        //    formats de backup (celui-ci et l'historique) doivent coexister,
+        //    jamais s'écraser l'un l'autre. merge:true corrige ce risque sans
+        //    changer le comportement actuel (fonction toujours inactive). ──
         await setDoc(backupDocRef, {
             cloudBackup: data,
             cloudBackupDate: new Date().toISOString(),
             isManual: isManual
-        });
+        }, { merge: true });
 		
         
         
@@ -22942,7 +23010,12 @@ async function checkAndAutoSaveCloud(userId) {
     
     try {
         const cloudBackup = await getCloudBackup(userId);
-        const FOURTEEN_DAYS = 3 * 24 * 60 * 60 * 1000; // 14 jours en millisecondes
+        // ── CORRECTIF (audit, section F) : renommée — cette constante valait
+        //    déjà 3 jours dans le code, malgré son nom. Corrigé pour éviter
+        //    qu'une future "correction" du nom vers 14 jours réels ne
+        //    réduise silencieusement la fréquence réelle des backups cloud
+        //    (÷4,6). Valeur INCHANGÉE : seul le nom trompeur est corrigé. ──
+        const CLOUD_BACKUP_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000; // 3 jours
         const now = Date.now();
         
         let needsCloudSave = false;
@@ -22960,9 +23033,9 @@ async function checkAndAutoSaveCloud(userId) {
             
             
             
-            if (now - lastCloudSave > FOURTEEN_DAYS) {
+            if (now - lastCloudSave > CLOUD_BACKUP_MAX_AGE_MS) {
                 needsCloudSave = true;
-                reason = `Plus de 14 jours (${daysSinceCloud.toFixed(0)} jours)`;
+                reason = `Plus de 3 jours (${daysSinceCloud.toFixed(0)} jours)`;
                 
             } else {
                 
@@ -23067,10 +23140,26 @@ function initializeUserData() {
 
 function loadUserData(userId) {
     if (userId) {
-        
+
+        // ── CORRECTIF (audit sécurité/perte de données, section C) : nettoyage
+        //    défensif, INCONDITIONNEL, avant tout rattachement à ce userId.
+        //    updateUserUI(null) fait déjà ce ménage au logout, mais
+        //    onAuthStateChanged peut aussi passer DIRECTEMENT d'un compte A à
+        //    un compte B SANS état null intermédiaire (ex. reconnexion depuis
+        //    un autre onglet partageant la même persistance Auth) — dans ce
+        //    cas la branche logout n'est jamais exécutée. Sans ce nettoyage
+        //    ici : (1) l'ancien listener onSnapshot de A resterait actif et
+        //    pourrait encore écrire les données de A dans le userData
+        //    partagé après le chargement de B ; (2) un debounce de sauvegarde
+        //    encore programmé pour A se déclencherait avec currentUser déjà
+        //    passé à B, écrivant les données de A dans le document
+        //    planningRevision DE B. ──
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        if (saveTimeout) { clearTimeout(saveTimeout); saveTimeout = null; }
+
 		    firebaseDataLoaded = false;
     setSaveIndicator('saving');
-		
+
 		// 🔥 Cache pour affichage rapide
           const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures
         
@@ -23985,13 +24074,26 @@ if (!firebaseDataLoaded) {
         clearTimeout(safetyTimeout);
     };
     
+    // ── CORRECTIF (audit, section A) : révision capturée AU MOMENT du snapshot
+    //    envoyé à Firestore. Si l'utilisateur modifie encore pendant l'envoi
+    //    (_dataRevisionCounter avance), CETTE confirmation ne concerne que
+    //    l'état capturé ici — pas la modification plus récente, qui reste due
+    //    à sa propre sauvegarde (le debounce programmé au moment de cette
+    //    modification-là s'en charge séparément). ──
+    const _savingRevision = _dataRevisionCounter;
+
     // Fonction pour afficher le succès
     const showSaveSuccess = () => {
         saveCompleted = true;
         cleanupTimeout();
-        setSaveIndicator('saved');
+        // Ne montrer "sauvegardé" que si aucune modification plus récente
+        // n'est en attente — sinon l'indicateur 'saving' déjà affiché par
+        // cette modification plus récente reste l'état correct à montrer.
+        if (_dataRevisionCounter === _savingRevision) {
+            setSaveIndicator('saved');
+        }
     };
-    
+
     // ✅ CORRECTION : Créer un snapshot immuable des données AVANT la sauvegarde
     const timestamp = new Date().toISOString();
     const dataToSave = {
@@ -24051,7 +24153,12 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
         if (!saveTimedOut && !saveCancelled) {
             userData.lastUpdated = timestamp; // ✅ Maintenant on peut modifier
             lastSaveTime = Date.now();
-            hasUnsavedChanges = false;
+            // Ne déclarer "tout sauvegardé" que si rien de plus récent n'est
+            // arrivé depuis le snapshot envoyé (cf. _savingRevision plus haut) —
+            // sinon une V2 en cours resterait marquée "sauvegardée" à tort.
+            if (_dataRevisionCounter === _savingRevision) {
+                hasUnsavedChanges = false;
+            }
             showSaveSuccess();
             invalidateStatsCache();
             
@@ -24124,7 +24231,9 @@ if (
                 if (!saveTimedOut && !saveCancelled) {
                     userData.lastUpdated = timestamp; // ✅ Mutation après succès
                     lastSaveTime = Date.now();
-                    hasUnsavedChanges = false;
+                    if (_dataRevisionCounter === _savingRevision) {
+                        hasUnsavedChanges = false;
+                    }
                     showSaveSuccess();
                     invalidateStatsCache();
                     
@@ -24927,6 +25036,16 @@ let lastSaveTime = Date.now();
 let hasUnsavedChanges = false; // Track si des modifications ne sont pas sauvegardées
 let hadUnsavedChangesBeforeOffline = false; // Mémoriser les modifications perdues en mode hors ligne
 
+// ── CORRECTIF (audit sécurité/perte de données, section A) : compteur incrémenté
+//    à CHAQUE modification (debouncedSave). saveUserData() capture sa valeur au
+//    moment du snapshot envoyé à Firestore ; si ce compteur a encore bougé entre
+//    temps (l'utilisateur a continué à modifier PENDANT l'envoi), la confirmation
+//    de CETTE sauvegarde ne doit pas déclarer "tout est sauvegardé" — une V2 plus
+//    récente existe et n'a pas encore été confirmée par sa propre sauvegarde.
+//    Sans ce compteur, hasUnsavedChanges = false était posé sans condition dès
+//    qu'UNE sauvegarde réussissait, même périmée. ──
+let _dataRevisionCounter = 0;
+
 const DEBOUNCE_DELAY = 5 * 1000; // 5 secondes de debounce
 
 // OPTION : Afficher le message d'avertissement à la fermeture
@@ -24939,6 +25058,7 @@ const ENABLE_WINDOWS_WARNING = false; // Désactivé — remplacé par le systè
 function debouncedSave() {
     // Marquer qu'il y a des modifications non sauvegardées
     hasUnsavedChanges = true;
+    _dataRevisionCounter++;
     
     // Afficher l'indicateur dans le header (flèches circulaires)
     setSaveIndicator('saving');
@@ -43988,27 +44108,44 @@ async function importSharedNote(html, docId, myUid, fromName, sharedPaths) {
     // Sauvegarder dans Firestore EN PREMIER (avant d'écrire dans l'éditeur)
     let _saveOk = false;
     try {
+        // ── CORRECTIF (audit sécurité/perte de données, section E) :
+        //    saveNoteToFirestore() ne rejette JAMAIS sa promesse (elle catche
+        //    ses propres erreurs et résout wrote===false) — attendre sa
+        //    résolution seule ne prouvait donc rien. Avant ce correctif, un
+        //    échec réseau ici passait quand même par le chemin "succès" :
+        //    la note partagée source était supprimée (deleteSharedNote)
+        //    alors que le contenu importé n'existait encore que dans le
+        //    pending local de CET appareil — perte définitive si l'appareil
+        //    changeait ou le stockage local était vidé avant resynchronisation. ──
+        let _wrote = false;
         if (typeof saveNoteToFirestore === 'function') {
-            await saveNoteToFirestore(window._notesCurrentItemKey, finalHtml);
+            _wrote = await saveNoteToFirestore(window._notesCurrentItemKey, finalHtml);
         } else if (window.saveNoteToFirestore) {
-            await window.saveNoteToFirestore(window._notesCurrentItemKey, finalHtml);
+            _wrote = await window.saveNoteToFirestore(window._notesCurrentItemKey, finalHtml);
         }
 
-        // ✅ Firestore confirmé → on met à jour l'éditeur
-        editor.innerHTML = finalHtml;
+        if (!_wrote) {
+            console.warn('[Share] Import non confirmé par Firestore — note partagée conservée, brouillon local en attente.');
+            if (typeof window.showToastNotification === 'function') {
+                window.showToastNotification("Import non synchronisé (connexion). La note partagée reste disponible, réessayez.", 'warning');
+            }
+        } else {
+            // ✅ Firestore confirmé → on met à jour l'éditeur
+            editor.innerHTML = finalHtml;
 
-        // ── Ré-attacher les events sur les wrappers image (click, touch, guard) ──
-        if (typeof window._notesRewrapImages === 'function') {
-            window._notesRewrapImages(editor);
+            // ── Ré-attacher les events sur les wrappers image (click, touch, guard) ──
+            if (typeof window._notesRewrapImages === 'function') {
+                window._notesRewrapImages(editor);
+            }
+
+            _saveOk = true;
+            // Supprimer la note partagee uniquement si la sauvegarde a reussi
+            await deleteSharedNote(docId, myUid, null);
+            // Nettoyer les images temporaires de sharedNoteImages/ (uniquement celles copiées avec succès)
+            cleanupPaths.forEach(p => {
+                try { window._deleteObject(window._storageRef(window._storage, p)).catch(()=>{}); } catch(x) {}
+            });
         }
-
-        _saveOk = true;
-        // Supprimer la note partagee uniquement si la sauvegarde a reussi
-        await deleteSharedNote(docId, myUid, null);
-        // Nettoyer les images temporaires de sharedNoteImages/ (uniquement celles copiées avec succès)
-        cleanupPaths.forEach(p => {
-            try { window._deleteObject(window._storageRef(window._storage, p)).catch(()=>{}); } catch(x) {}
-        });
     } catch(e) {
         console.error('[Share] echec sauvegarde import:', e);
         // L'éditeur n'a PAS été modifié → aucune restauration nécessaire
@@ -47760,7 +47897,7 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   function _col(b) { var u = b.getCurrentUser(); return b.collection(b.getDb(), 'users', u.uid, TPXC('FlashCards')); }
   function _ref(b, id) { return b.doc(b.getDb(), 'users', b.getCurrentUser().uid, TPXC('FlashCards'), id); }
   function _all(snap) { var o=[]; snap.forEach(function(d){ var x=d.data(); x.id=d.id; o.push(x); }); return o; }
-  function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
+  function loadFlashCards(speId) { var b=fb(); if(!b) return Promise.resolve([]); if (typeof _flushPendingFlashReviews === 'function') { try { _flushPendingFlashReviews(); } catch (e) {} } return b.getDocs(b.query(_col(b), b.where('speId','==',speId))).then(_all).catch(function(e){console.warn(e);return[];}); }
   // ── Section 30 : suppression d'un item ≠ suppression de ses flashcards.
   //    Un numéro d'item supprimé peut être réutilisé par un item DIFFÉRENT
   //    créé plus tard dans la même matière (nextItemNumber() ne réserve pas
@@ -47825,7 +47962,81 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     return b.addDoc(_col(b), doc).then(function(r){return r.id;});
   }
   function deleteFlashCard(id) { var b=fb(); if(!b) return Promise.reject(new Error('offline')); return b.deleteDoc(_ref(b,id)); }
-  function updateCardAfterReview(id, card, rating) { var b=fb(); if(!b) return Promise.resolve(); return b.updateDoc(_ref(b,id), updateCardInterval(card,rating)).catch(function(e){console.warn(e);}); }
+
+  // ── CORRECTIF (audit sécurité/perte de données, section E — flashcards) :
+  //    l'ancienne version envoyait la mise à jour d'intervalle et avalait
+  //    toute erreur (console.warn seul) — une révision faite pendant un
+  //    accroc réseau disparaissait sans retry ni trace récupérable. On
+  //    retente une fois, puis on conserve la révision non confirmée dans une
+  //    file locale (par uid) plutôt que de la perdre ; _flushPendingFlashReviews
+  //    la retente à la prochaine occasion (nouvelle révision réussie, ou
+  //    ouverture du gestionnaire de cartes). ──
+  function _flashReviewQueueKey() {
+    var b = fb(); var u = b && b.getCurrentUser && b.getCurrentUser();
+    return u ? ('flashReviewPending_' + u.uid) : null;
+  }
+  function _flashQueueFailedReview(id, speId, update) {
+    var key = _flashReviewQueueKey();
+    if (!key) return;
+    try {
+      var raw = localStorage.getItem(key);
+      var queue = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(queue)) queue = [];
+      // Remplace toute entrée en attente pour la MÊME carte (inutile de
+      // conserver un historique de révisions intermédiaires non confirmées :
+      // seule la dernière fait foi).
+      queue = queue.filter(function (q) { return q && q.id !== id; });
+      queue.push({ id: id, speId: speId, update: update, queuedAt: Date.now() });
+      localStorage.setItem(key, JSON.stringify(queue));
+    } catch (e) {}
+  }
+  function _flashDequeueReview(id) {
+    var key = _flashReviewQueueKey();
+    if (!key) return;
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return;
+      var queue = JSON.parse(raw);
+      if (!Array.isArray(queue)) return;
+      queue = queue.filter(function (q) { return q && q.id !== id; });
+      if (queue.length) localStorage.setItem(key, JSON.stringify(queue));
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function _flashSendReviewUpdate(id, update) {
+    var b = fb(); if (!b) return Promise.resolve(false);
+    return b.updateDoc(_ref(b, id), update).then(function () { _flashDequeueReview(id); return true; }).catch(function (e) { console.warn(e); return false; });
+  }
+  function updateCardAfterReview(id, card, rating) {
+    var update = updateCardInterval(card, rating);
+    return _flashSendReviewUpdate(id, update).then(function (ok) {
+      if (ok) return true;
+      // Un seul retry rapide (accroc réseau transitoire) avant de mettre en file.
+      return new Promise(function (resolve) { setTimeout(resolve, 1500); }).then(function () {
+        return _flashSendReviewUpdate(id, update);
+      }).then(function (ok2) {
+        if (!ok2) _flashQueueFailedReview(id, card.speId, update);
+        return ok2;
+      });
+    });
+  }
+  // Retente les révisions en attente (appelée opportunément — nouvelle
+  // révision réussie, ouverture du gestionnaire de cartes — jamais en boucle).
+  function _flushPendingFlashReviews() {
+    var key = _flashReviewQueueKey();
+    if (!key) return;
+    var raw;
+    try { raw = localStorage.getItem(key); } catch (e) { return; }
+    if (!raw) return;
+    var queue;
+    try { queue = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(queue) || !queue.length) return;
+    queue.forEach(function (q) {
+      if (!q || !q.id || !q.update) return;
+      _flashSendReviewUpdate(q.id, q.update);
+    });
+  }
+  window._flushPendingFlashReviews = _flushPendingFlashReviews;
 
   // ---------- Rich-text ----------
   function _rtFocus(el) { _activeRT = el; _flashUpdateToolbar(true); }
@@ -48756,7 +48967,28 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
     var ev = document.getElementById('speFlashEvalWrap'); setTimeout(function(){ if (ev) ev.style.display='block'; }, 200);
     _setFlashSessionEditVisible(true); /* PORTAGE: crayon visible seulement après affichage de la réponse */
   }
-  function evaluateCard(rating) { var s=_flashSession; if(!s) return; var card=s.cards[s.idx]; if(s.results[rating]) s.results[rating].push(card); updateCardAfterReview(card.id,card,rating); showFlashCard(s.idx+1); }
+  function evaluateCard(rating) {
+    var s=_flashSession; if(!s) return;
+    var card=s.cards[s.idx];
+    if(s.results[rating]) s.results[rating].push(card);
+    // ── CORRECTIF (bug signalé côté ECOS, même code ici : badge "Session
+    //    Flash" bloqué sur 1 même après avoir fini les cartes dues) :
+    //    l'écriture Firestore de la révision n'est pas attendue avant
+    //    d'enchaîner sur la carte suivante (fluidité voulue), mais
+    //    showFlashEndScreen() recalcule le badge IMMÉDIATEMENT à la fin de
+    //    la session — souvent avant que l'écriture de la DERNIÈRE carte ait
+    //    été confirmée par Firestore. Le badge comptait alors encore cette
+    //    carte comme due, et rien ne le recalculait plus jamais après coup.
+    //    On raccroche donc ici un second recalcul, une fois l'écriture
+    //    réellement confirmée. ──
+    updateCardAfterReview(card.id,card,rating).then(function(ok){
+      if (ok) {
+        if (typeof updateFlashGlobalCount === 'function') updateFlashGlobalCount();
+        if (card.speId && typeof updateSpeFlashBadge === 'function') updateSpeFlashBadge(card.speId);
+      }
+    });
+    showFlashCard(s.idx+1);
+  }
   function showFlashEndScreen(results) {
     var s = _flashSession; if (!s) return; var e = s.els;
     // Récap : la pastille de matière du header disparaît (elle reste visible pendant les cartes)
@@ -57847,9 +58079,21 @@ function setTrainingsPageVisible(visible) {
        puis on y réapplique nos ajouts et nos modifications.
 
        Résultat : les ajouts faits ailleurs survivent, les suppressions
-       volontaires sont respectées, et aucune version n'est perdue en silence. */
-    function mergeById(remote, local, keyOf) {
-        var out = [], seen = {};
+       volontaires sont respectées, et aucune version n'est perdue en silence.
+
+       ── CORRECTIF (audit, section D) : `local` seul ne suffit pas à décider
+       qui gagne — un item présent dans `local` peut simplement n'avoir
+       JAMAIS été retouché cette session (recopié tel quel depuis le
+       chargement). Sans le comparer à `localAtLoad` (l'état capturé au
+       chargement, cf. loadFromFirestore), cet item non modifié écrasait
+       systématiquement un renommage ou une modification faits ailleurs
+       entre-temps sur ce même id — l'inverse de ce que ce garde-fou est censé
+       éviter. `localAtLoad` peut être null (échec de capture) : dans ce cas
+       on retombe sur l'ancien comportement (local fait foi), par prudence
+       plutôt que de risquer une perte silencieuse. ──*/
+    function mergeById(remote, local, localAtLoad, keyOf) {
+        var out = [], seen = {}, atLoadByKey = {};
+        (localAtLoad || []).forEach(function (a) { atLoadByKey[keyOf(a)] = a; });
         (remote || []).forEach(function (r) {
             var k = keyOf(r);
             if (state.deletedIds[k]) return;      // supprimé ici : on ne le ressuscite pas
@@ -57858,8 +58102,26 @@ function setTrainingsPageVisible(visible) {
         });
         (local || []).forEach(function (l) {
             var k = keyOf(l);
-            if (seen[k] !== undefined) out[seen[k]] = l;   // notre version fait foi
-            else { seen[k] = out.length; out.push(l); }
+            var atLoad = localAtLoad ? atLoadByKey[k] : undefined;
+            var unchangedSinceLoad = localAtLoad
+                ? (atLoad !== undefined && JSON.stringify(atLoad) === JSON.stringify(l))
+                : false; // pas de référence : comportement prudent = toujours "modifié"
+            if (seen[k] !== undefined) {
+                // Présent des deux côtés : ne remplacer la version distante
+                // (potentiellement renommée/modifiée ailleurs) que si CETTE
+                // session l'a réellement modifiée depuis le chargement.
+                if (!unchangedSinceLoad) out[seen[k]] = l;
+            } else if (!unchangedSinceLoad || atLoad === undefined) {
+                // Absent de remote : soit un ajout local jamais vu au
+                // chargement (atLoad === undefined) → on le garde ; soit un
+                // item présent au chargement mais réellement modifié depuis
+                // ET supprimé ailleurs entre-temps → conflit rare, on
+                // préserve la modification locale plutôt que de la perdre.
+                seen[k] = out.length; out.push(l);
+            }
+            // sinon (atLoad existait, local === atLoad, absent de remote) :
+            // supprimé ailleurs et jamais retouché ici → on ne le ressuscite
+            // pas, symétrique de deletedIds mais pour une suppression distante.
         });
         return out;
     }
@@ -57879,16 +58141,16 @@ function setTrainingsPageVisible(visible) {
                 var remoteStamp = d ? (d.updatedAt || null) : null;
                 if (d && remoteStamp && remoteStamp !== state.remoteStamp) {
                     console.warn('[TPXPerso] Contenu modifié ailleurs depuis le chargement : fusion au lieu d\'un écrasement.');
-                    specialties = mergeById(d.specialties, state.specialties, function (x) { return x.id; });
+                    specialties = mergeById(d.specialties, state.specialties, state.specialtiesAtLoad, function (x) { return x.id; });
                     if (APP === 'edn') {
-                        items = mergeById(d.items, state.items, function (x) { return x.specialtyId + '|' + x.num; });
+                        items = mergeById(d.items, state.items, state.itemsAtLoad, function (x) { return x.specialtyId + '|' + x.num; });
                         /* Un item dont la matière a disparu de la fusion serait
                            orphelin : on l'écarte. */
                         var known = {};
                         specialties.forEach(function (sp) { known[sp.id] = true; });
                         items = items.filter(function (i) { return known[i.specialtyId]; });
                     } else {
-                        sdd = mergeById(d.sdd, state.sdd, function (x) { return x.id; });
+                        sdd = mergeById(d.sdd, state.sdd, state.sddAtLoad, function (x) { return x.id; });
                     }
                     state.specialties = specialties;
                     state.items = items;
@@ -57911,6 +58173,17 @@ function setTrainingsPageVisible(visible) {
             await f.set(ref, payload, { merge: false });
             state.remoteStamp = stamp;
             state.deletedIds = {};      // la suppression est actée côté serveur
+            // ── CORRECTIF (audit, section D) : réaligner la référence "AtLoad"
+            //    sur ce qui vient d'être réellement écrit. Sans ça, une
+            //    modification déjà sauvegardée continuerait à paraître "encore
+            //    modifiée depuis le chargement de la page" indéfiniment, et
+            //    écraserait à tort un changement distant plus récent survenu
+            //    APRÈS cette sauvegarde-ci lors d'une fusion future. ──
+            try {
+                state.specialtiesAtLoad = JSON.parse(JSON.stringify(specialties));
+                state.itemsAtLoad = JSON.parse(JSON.stringify(items));
+                state.sddAtLoad = JSON.parse(JSON.stringify(sdd));
+            } catch (e2) {}
             saveLocal();
         } catch (e) {
             console.warn('[TPXPerso] Sauvegarde du contenu impossible :', e);
@@ -58039,6 +58312,22 @@ function setTrainingsPageVisible(visible) {
             state.specialties = [];
             state.items = [];
             state.sdd = [];
+        }
+
+        // ── CORRECTIF (audit sécurité/perte de données, section D) : capture
+        //    de l'état TEL QUE CHARGÉ, pour que mergeById() puisse distinguer
+        //    "jamais retouché depuis le chargement" de "modifié cette session"
+        //    — sans ça, un item local juste recopié tel quel écrasait
+        //    systématiquement un renommage/une suppression fait ailleurs entre
+        //    temps (cf. commentaire sur mergeById ci-dessous). ──
+        try {
+            state.specialtiesAtLoad = JSON.parse(JSON.stringify(state.specialties));
+            state.itemsAtLoad = JSON.parse(JSON.stringify(state.items));
+            state.sddAtLoad = JSON.parse(JSON.stringify(state.sdd));
+        } catch (e) {
+            state.specialtiesAtLoad = null;
+            state.itemsAtLoad = null;
+            state.sddAtLoad = null;
         }
 
         contentOk = true;

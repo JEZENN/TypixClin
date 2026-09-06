@@ -1691,7 +1691,18 @@ registerForm.addEventListener('submit', async (e) => {
     const firstname = document.getElementById('register-firstname').value.trim();
     const lastname = document.getElementById('register-lastname').value.trim();
     const name = firstname + ' ' + lastname;
-    const email = document.getElementById('register-email').value;
+    // ── CORRECTIF (audit sécurité/perte de données) : Firebase Auth normalise
+    //    TOUJOURS l'email en minuscules côté compte (request.auth.token.email
+    //    sera en minuscules). Sans ce .trim().toLowerCase() ici, un email tapé
+    //    avec au moins une majuscule (ex. "Jean.Dupont@Gmail.com") créait bien
+    //    le compte Auth, mais le setDoc juste après échouait TOUJOURS avec
+    //    permission-denied (la règle Firestore `create` exige exactement
+    //    request.resource.data.email == request.auth.token.email) — laissant
+    //    un compte Auth orphelin, sans profil Firestore, sans aucun moyen de
+    //    le réparer automatiquement (la connexion email/mot de passe ne
+    //    recrée pas le profil manquant). Confirmé en testant l'inscription
+    //    réelle contre l'émulateur Firestore/Auth. ──
+    const email = document.getElementById('register-email').value.trim().toLowerCase();
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
     const registerBtn = document.getElementById('register-btn');
