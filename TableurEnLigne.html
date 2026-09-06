@@ -17964,14 +17964,29 @@ window.TPXNotesPending = {
 
 .flash-card-container { perspective: 1000px; width: 100%; position: relative; }
 /* PORTAGE ECOS → EDN : bouton crayon d'édition pendant une session */
-.flash-session-edit-btn { position: absolute; top: 10px; right: 10px; z-index: 5; width: 34px; height: 34px; border: none; border-radius: 50%;
-    background: rgba(37,99,235,0.12); color: #2563eb; cursor: pointer; align-items: center; justify-content: center; font-size: 0.85rem;
-    transition: background .15s ease, transform .12s ease; }
+/* ── CORRECTIF (miroir ECOS) : dépliement au survol façon header des notes
+   (.notes-btn-label), remplace l'ancienne infobulle native (title) — voir
+   showFlashCard() plus bas pour le retrait de l'attribut title/ajout du span. ── */
+.flash-session-edit-btn { position: absolute; top: 10px; right: 10px; z-index: 5;
+    width: auto; min-width: 34px; max-width: 34px; height: 34px; border: none; border-radius: 17px;
+    background: rgba(37,99,235,0.12); color: #2563eb; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;
+    padding: 0; overflow: hidden; white-space: nowrap;
+    transition: max-width 0.42s cubic-bezier(0.4,0,0.2,1), padding 0.42s cubic-bezier(0.4,0,0.2,1), background .15s ease, transform .12s ease; }
 .flash-session-edit-btn:hover { background: #2563eb; color: #fff; }
 .flash-session-edit-btn:active { transform: scale(0.9); }
 .flash-session-edit-btn.saved { background: #16a34a; color: #fff; }
 [data-theme="dark"] .flash-session-edit-btn { background: rgba(96,165,250,0.2); color: #93c5fd; }
 [data-theme="dark"] .flash-session-edit-btn:hover { background: #3b82f6; color: #fff; }
+@media (hover: hover) {
+  .flash-session-edit-btn:hover { max-width: 140px; padding: 0 12px 0 9px; }
+  .flash-session-edit-btn:hover .notes-btn-label { opacity: 1; max-width: 100px; margin-left: 6px; }
+}
+.flash-session-edit-btn .notes-btn-label {
+  font-size: 0.78rem; font-weight: 600; opacity: 0; max-width: 0; overflow: hidden; white-space: nowrap;
+  transition: opacity 0.25s ease, max-width 0.42s cubic-bezier(0.4,0,0.2,1), margin-left 0.42s cubic-bezier(0.4,0,0.2,1);
+  font-family: var(--font-body); margin-left: 0;
+}
 .flash-card {
   position: relative; transform-style: preserve-3d;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -48950,7 +48965,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
         '<div class="flash-card-face front">' + sanit(card.recto) + '</div>' +
         '<div class="flash-card-face back">' + sanit(card.verso) + '</div>' +
       '</div>' +
-      '<button type="button" class="flash-session-edit-btn" id="flashSessEditBtn" style="display:none;" onclick="window._flashEditCurrentSessionCard(event)" title="Modifier cette carte" aria-label="Modifier cette carte"><i class="fas fa-pen"></i></button>' +
+      '<button type="button" class="flash-session-edit-btn" id="flashSessEditBtn" style="display:none;" onclick="window._flashEditCurrentSessionCard(event)" aria-label="Modifier cette carte"><i class="fas fa-pen"></i><span class="notes-btn-label">Modifier</span></button>' +
       '</div>' +
       '<div class="flash-action-zone">' +
         '<div id="speFlashRevealWrap"><button class="flash-reveal-btn" onclick="window._flashFlip()"><i class="fas fa-eye"></i> Voir la réponse</button></div>' +
