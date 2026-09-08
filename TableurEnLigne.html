@@ -5352,7 +5352,27 @@ input[type="date"].modal-input {
 @media (min-width: 900px) and (max-width: 1100px) {
     .tour-cell { min-width: 185px; }
     .tour-badge { width: 19px; height: 17px; font-size: 0.52rem; border-width: 1px; }
-    .tour-date { width: 28px; font-size: 0.48rem; white-space: nowrap; overflow: visible; }
+    /* BUGFIX (2026-09-08) : .tour-date faisait 28px alors que .tour-badge (et
+       son .tour-badge-wrapper, sans min-width dédié ici) ne fait que 19px —
+       chaque colonne "date" (rangée du dessous) était donc ~9px plus large
+       que la colonne "tour" correspondante (rangée du dessus), d'où un
+       décalage progressif entre les deux rangées au fil des 8 tours, visible
+       en mode détaillé sur les écrans à cette largeur (ex : iPad Pro 12.9"
+       en portrait, ~1024px). Même correctif déjà appliqué par ailleurs
+       (cf. les commentaires "aligner la largeur des dates sur celle des
+       badges" un peu plus bas dans ce fichier, à 768px et 480px) : largeur
+       de .tour-date ET .tour-badge-wrapper alignée sur celle de .tour-badge. */
+    .tour-date { width: 19px; font-size: 0.48rem; white-space: nowrap; overflow: visible; }
+    .tour-badge-wrapper { min-width: 19px; }
+    /* .tour-duration/.tour-support héritent sinon une police 0.6rem (taille de
+       base, pensée pour le badge 30px par défaut) : sur un badge à 19px, un
+       texte "0:15" ou "QCM" à cette taille dépasse largement la colonne et
+       fait quand même gonfler .tour-badge-wrapper au-delà de son min-width,
+       ce qui recrée un décalage (progressif au fil des tours) même une fois
+       .tour-date aligné ci-dessus. Réduite ici pour rester proche de 19px. */
+    .tour-info { gap: 1px; margin-top: 3px; }
+    .tour-duration { font-size: 0.42rem; white-space: nowrap; }
+    .tour-support { font-size: 0.42rem; padding: 0 2px; white-space: nowrap; }
     .resources-cell { min-width: 80px; }
     .resources-grid { grid-template-columns: 1fr; gap: 2px; }
     .resource-box { font-size: 0.55rem; padding: 0.12rem 0.2rem; min-height: 20px; border-width: 1px; }
@@ -38090,16 +38110,28 @@ document.addEventListener('touchend', function(e) {
    élément qui déborde, et devient donc scrollable, ce qui garde le header ET
    les boutons Enregistrer/Réinitialiser (dans .modal-actions, en fin de
    .confidence-modal-body) toujours atteignables quelle que soit la hauteur
-   d'écran. */
+   d'écran.
+   ⚠️ !important sur max-height/overflow : une règle générique préexistante,
+   @media screen and (max-height: 450px) .modal-content (cf. ligne ~5715),
+   neutralise TOTALEMENT ce correctif en dessous de 450px de haut (elle pose
+   max-height:none !important + overflow:visible !important sur la même
+   classe de base .modal-content) — vérifié en conditions réelles (uid de
+   test, vraie carte de tour) : sans !important ici, max-height calculé
+   valait "none" malgré cette règle, à cause de cet !important plus ancien.
+   Cette règle générique confie alors le scroll à .modal lui-même (aussi
+   réécrit en !important à ce même breakpoint) : ça fonctionne aussi, mais
+   de façon incohérente avec le comportement ci-dessus (toute la modal
+   grandit et défile, au lieu de son seul corps interne). !important ici
+   garantit un comportement IDENTIQUE quelle que soit la hauteur d'écran. */
 #confidence-modal .confidence-modal-content {
     padding: 0 !important;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden !important;
     max-width: 420px;
     width: 95%;
-    max-height: 96vh;
-    max-height: 96dvh;
+    max-height: 96vh !important;
+    max-height: 96dvh !important;
 }
 .confidence-modal-body {
     padding: 1.25rem 1.5rem 1.5rem;
@@ -52598,6 +52630,18 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     min-height: 0 !important;
     flex-shrink: 1 !important;
 }
+/* BUGFIX (2026-09-08) : sans plancher, .flash-rt-editor (recto/verso, flex:1
+   + min-height:0, cf. ligne ~18737) se laisse comprimer par le flex jusqu'à
+   devenir minuscule — voire quasi invisible — quand le clavier de l'iPad
+   grignote une grosse partie de la hauteur visible et que .flash-edit-modal
+   est écrêté juste au-dessus (bloc précédent). On leur donne une hauteur
+   minimale utilisable ; si la somme (header + barre d'outils + les deux
+   champs à leur plancher + footer) dépasse la zone visible, c'est
+   .flash-edit-body qui défile (il a déjà overflow-y:auto, ligne ~18704) —
+   jamais les champs qui rétrécissent à l'infini. */
+body.tc-kb-open .flash-edit-overlay.active .flash-edit-body .flash-rt-editor {
+    min-height: 110px;
+}
 /* Le cahier d'erreurs (tiroir) est positionné en absolu dans son overlay :
    on l'ancre haut/bas pour qu'il épouse la zone visible et suive les
    glissements de l'overlay. */
@@ -52661,6 +52705,52 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
         margin: 0 !important;
         padding: 0 !important;
         z-index: 3;
+    }
+}
+
+/* ── BUGFIX (2026-09-08) : modal flashcards sur TÉLÉPHONE — même souci que
+   sur iPad, mais le clavier téléphone est volontairement laissé en
+   comportement natif partout ailleurs (cf. commentaire plus haut). Sur
+   #flashEditOverlay spécifiquement, le header + la barre de mise en forme
+   sont assez hauts pour que le "scroll to reveal focused input" natif
+   d'iOS/Android pousse la partie haute du modal entièrement HORS écran
+   (au-dessus, invisible) à l'ouverture du clavier : plus moyen d'accéder
+   aux boutons gras/italique/couleur pendant la saisie du recto ou du verso.
+   On applique donc ICI, UNIQUEMENT à ce modal, le même principe d'épinglage
+   par visualViewport que la version tablette ci-dessus — code et variables
+   CSS totalement séparés (préfixe --tcpf-* et classe tc-phone-flashkb) pour
+   ne RIEN changer au comportement des autres modals sur téléphone ni à la
+   logique tablette existante. Script associé juste après ce style. ── */
+@media (max-width: 900px) {
+    body.tc-phone-flashkb #flashEditOverlay.active {
+        position: fixed !important;
+        top: var(--tcpf-top, 0px) !important;
+        left: var(--tcpf-left, 0px) !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: var(--tcpf-w, 100vw) !important;
+        height: var(--tcpf-h, 100vh) !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        transition: top 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    left 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    width 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    height 0.3s cubic-bezier(0.33, 0.8, 0.3, 1) !important;
+    }
+    /* Header + barre d'outils restent visibles (flex-shrink:0, déjà le cas
+       normalement) ; c'est le corps (recto/verso, overflow-y:auto) qui
+       s'ajuste et défile — jamais le header qui disparaît. */
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-modal {
+        height: var(--tcpf-rest-h, auto) !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        flex-shrink: 1 !important;
+    }
+    /* Même plancher que sur iPad : les champs recto/verso ne rétrécissent
+       jamais en dessous d'une taille utilisable — c'est le corps du modal
+       qui défile au besoin pour atteindre l'autre champ. */
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-body .flash-rt-editor {
+        min-height: 90px;
     }
 }
 </style>
@@ -52938,6 +53028,95 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
             if (t.classList.contains(OVERLAY_CLASSES[i])) { if (e.cancelable) e.preventDefault(); return; }
         }
     }, { passive: false });
+})();
+</script>
+
+<!-- ═══ CORRECTIF CLAVIER VIRTUEL — TÉLÉPHONE, MODAL FLASHCARDS UNIQUEMENT ═══
+     Script indépendant du bloc tablette ci-dessus (aucune variable ni
+     fonction partagée) : n'agit QUE sur #flashEditOverlay, QUE sur
+     téléphone. Reprend le même principe (épinglage par visualViewport)
+     que la version tablette, sans toucher au comportement natif conservé
+     partout ailleurs sur téléphone (cf. commentaire plus haut). -->
+<script>
+(function () {
+    'use strict';
+    if (!window.visualViewport) return; /* navigateurs sans l'API : comportement natif inchangé */
+
+    var IS_TABLET = Math.min(window.screen.width || 0, window.screen.height || 0) >= 600;
+    if (IS_TABLET) return; /* la tablette a déjà son propre traitement complet ci-dessus */
+
+    var overlay = document.getElementById('flashEditOverlay');
+    var modal = overlay && overlay.querySelector('.flash-edit-modal');
+    if (!overlay || !modal) return;
+
+    var root = document.documentElement;
+    var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
+    var raf = null;
+    var restH = null;
+    var _baseH = window.innerHeight;
+    window.addEventListener('resize', function () {
+        if (window.innerHeight > _baseH) _baseH = window.innerHeight;
+    });
+
+    function setVars(top, left, w, h) {
+        root.style.setProperty('--tcpf-top', Math.round(top) + 'px');
+        root.style.setProperty('--tcpf-left', Math.round(left) + 'px');
+        root.style.setProperty('--tcpf-w', Math.round(w) + 'px');
+        root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
+    }
+
+    function apply() {
+        var body = document.body;
+        if (!overlay.classList.contains('active')) {
+            if (body.classList.contains('tc-phone-flashkb')) {
+                body.classList.remove('tc-phone-flashkb');
+                restH = null;
+            }
+            return;
+        }
+        var vv = window.visualViewport;
+        var ref = Math.max(window.innerHeight, _baseH);
+        var kb = Math.max(0, ref - vv.height - vv.offsetTop);
+        var open = kb > KB_MIN;
+        var wasOpen = body.classList.contains('tc-phone-flashkb');
+        if (open) {
+            if (!wasOpen) {
+                /* Hauteur de repos mesurée AVANT l'épinglage, comme sur tablette :
+                   le modal reste figé à cette hauteur (écrêtée par la zone
+                   visible) pendant toute la séquence. */
+                restH = modal.offsetHeight;
+                if (restH) modal.style.setProperty('--tcpf-rest-h', restH + 'px');
+                setVars(0, 0, window.innerWidth, ref);
+                body.classList.add('tc-phone-flashkb');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        var v = window.visualViewport;
+                        setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+                    });
+                });
+            } else {
+                setVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
+            }
+        } else if (wasOpen) {
+            body.classList.remove('tc-phone-flashkb');
+            modal.style.removeProperty('--tcpf-rest-h');
+            restH = null;
+        }
+    }
+    function onChange() {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; apply(); });
+    }
+    window.visualViewport.addEventListener('resize', onChange);
+    window.visualViewport.addEventListener('scroll', onChange);
+    document.addEventListener('focusin', function (e) {
+        if (!overlay.contains(e.target)) return;
+        setTimeout(onChange, 320);
+    });
+    document.addEventListener('focusout', function (e) {
+        if (!overlay.contains(e.target)) return;
+        setTimeout(onChange, 300);
+    });
 })();
 </script>
 

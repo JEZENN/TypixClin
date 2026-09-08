@@ -5769,7 +5769,20 @@ input[type="date"].modal-input {
 @media (min-width: 900px) and (max-width: 1100px) {
     .tour-cell { min-width: 185px; }
     .tour-badge { width: 19px; height: 17px; font-size: 0.52rem; border-width: 1px; }
-    .tour-date { width: 28px; font-size: 0.48rem; white-space: nowrap; overflow: visible; }
+    /* BUGFIX (2026-09-08) : même correctif que sur TableurEnLigne.html —
+       .tour-date faisait 28px alors que .tour-badge ne fait que 19px, d'où
+       un décalage progressif entre la rangée des tours et celle des dates
+       en dessous (mode détaillé, écrans ~900-1100px, ex : iPad Pro 12.9"
+       en portrait). Largeur alignée sur .tour-badge. */
+    .tour-date { width: 19px; font-size: 0.48rem; white-space: nowrap; overflow: visible; }
+    .tour-badge-wrapper { min-width: 19px; }
+    /* Idem TableurEnLigne.html : .tour-duration/.tour-support héritent sinon
+       une police 0.6rem (pensée pour le badge 30px par défaut) qui, sur un
+       badge à 19px, fait gonfler .tour-badge-wrapper au-delà de son
+       min-width et recrée un décalage progressif malgré la ligne ci-dessus. */
+    .tour-info { gap: 1px; margin-top: 3px; }
+    .tour-duration { font-size: 0.42rem; white-space: nowrap; }
+    .tour-support { font-size: 0.42rem; padding: 0 2px; white-space: nowrap; }
     .resources-cell { min-width: 80px; }
     .resources-grid { grid-template-columns: 1fr; gap: 2px; }
     .resource-box { font-size: 0.55rem; padding: 0.12rem 0.2rem; min-height: 20px; border-width: 1px; }
@@ -21424,6 +21437,47 @@ body.tc-kb-open-phone .flash-expand-btn {
     pointer-events: none !important;
 }
 
+/* BUGFIX (2026-09-08) : modal flashcards (#flashEditOverlay) sur TÉLÉPHONE —
+   son header + sa barre de mise en forme sont assez hauts pour que le
+   "scroll to reveal focused input" natif d'iOS/Android les pousse
+   entièrement hors écran à l'ouverture du clavier : plus moyen d'accéder aux
+   boutons gras/italique/couleur pendant la saisie du recto ou du verso. On
+   épingle donc CE modal précisément (variables --tcpf-*, posées par le
+   script juste après la détection tc-kb-open-phone ci-dessous), même
+   principe que le correctif tablette plus bas dans ce fichier. */
+@media (max-width: 900px) {
+    body.tc-kb-open-phone #flashEditOverlay.active {
+        position: fixed !important;
+        top: var(--tcpf-top, 0px) !important;
+        left: var(--tcpf-left, 0px) !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: var(--tcpf-w, 100vw) !important;
+        height: var(--tcpf-h, 100vh) !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        transition: top 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    left 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    width 0.3s cubic-bezier(0.33, 0.8, 0.3, 1),
+                    height 0.3s cubic-bezier(0.33, 0.8, 0.3, 1) !important;
+    }
+    /* Header + barre d'outils restent visibles (flex-shrink:0, déjà le cas
+       normalement) ; c'est le corps (recto/verso, overflow-y:auto) qui
+       s'ajuste et défile — jamais le header qui disparaît. */
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-modal {
+        height: var(--tcpf-rest-h, auto) !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        flex-shrink: 1 !important;
+    }
+    /* Même plancher que sur iPad : les champs recto/verso ne rétrécissent
+       jamais en dessous d'une taille utilisable — c'est le corps du modal
+       qui défile au besoin pour atteindre l'autre champ. */
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body .flash-rt-editor {
+        min-height: 90px;
+    }
+}
+
 /* Modal SDD : empilé jusqu'à 860px */
 @media (max-width: 860px) {
     #sdd-notes-overlay .notes-textmax-sep { display: block; }
@@ -31637,10 +31691,39 @@ function toggleSDDPanelMax(btn) {
     if (!IS_PHONE) return;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
     var raf = null;
+    var root = document.documentElement;
+    /* BUGFIX (2026-09-08) : en plus de la classe tc-kb-open-phone (déjà
+       utilisée ci-dessus pour désactiver "Agrandir"), on pose ici les
+       variables --tcpf-* qui pilotent l'épinglage de #flashEditOverlay
+       (règle CSS juste au-dessus) — voir son commentaire pour le pourquoi.
+       Snapshot de la hauteur de repos AVANT épinglage, comme la version
+       tablette plus bas dans ce fichier, pour un glissement sans saut. */
+    var _flashRestH = null;
+    function setFlashVars(top, left, w, h) {
+        root.style.setProperty('--tcpf-top', Math.round(top) + 'px');
+        root.style.setProperty('--tcpf-left', Math.round(left) + 'px');
+        root.style.setProperty('--tcpf-w', Math.round(w) + 'px');
+        root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
+    }
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
-        document.body.classList.toggle('tc-kb-open-phone', kb > KB_MIN);
+        var open = kb > KB_MIN;
+        var body = document.body;
+        var wasOpen = body.classList.contains('tc-kb-open-phone');
+        body.classList.toggle('tc-kb-open-phone', open);
+        var overlay = document.getElementById('flashEditOverlay');
+        var modal = overlay && overlay.querySelector('.flash-edit-modal');
+        if (open && overlay && modal && overlay.classList.contains('active')) {
+            if (!wasOpen) {
+                _flashRestH = modal.offsetHeight;
+                if (_flashRestH) modal.style.setProperty('--tcpf-rest-h', _flashRestH + 'px');
+            }
+            setFlashVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
+        } else if (!open && modal) {
+            modal.style.removeProperty('--tcpf-rest-h');
+            _flashRestH = null;
+        }
     }
     function onChange() {
         if (raf) return;
@@ -45401,6 +45484,18 @@ body.tc-kb-open .tours-today-modal-overlay.active .tours-today-modal {
     max-height: 100% !important;
     min-height: 0 !important;
     flex-shrink: 1 !important;
+}
+/* BUGFIX (2026-09-08) : sans plancher, .flash-rt-editor (recto/verso, flex:1
+   + min-height:0, cf. ligne ~15303) se laisse comprimer par le flex jusqu'à
+   devenir minuscule quand le clavier de l'iPad grignote une grosse partie de
+   la hauteur visible et que .flash-edit-modal est écrêté juste au-dessus
+   (bloc précédent). On leur donne une hauteur minimale utilisable ; si la
+   somme (header + barre d'outils + les deux champs à leur plancher + footer)
+   dépasse la zone visible, c'est .flash-edit-body qui défile (il a déjà
+   overflow-y:auto, ligne ~15270) — jamais les champs qui rétrécissent à
+   l'infini. Même correctif que sur TableurEnLigne.html. */
+body.tc-kb-open .flash-edit-overlay.active .flash-edit-body .flash-rt-editor {
+    min-height: 110px;
 }
 /* Le cahier d'erreurs (tiroir) est positionné en absolu dans son overlay :
    on l'ancre haut/bas pour qu'il épouse la zone visible et suive les
