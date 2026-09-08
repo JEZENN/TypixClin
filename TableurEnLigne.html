@@ -3561,8 +3561,8 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .tour-badge.c8 { background: var(--confidence-8); border-color: var(--confidence-8); color: white; }
 .tour-badge.c9 { background: var(--confidence-9); border-color: var(--confidence-9); color: white; }
 .tour-badge.c10 { background: var(--confidence-10); border-color: var(--confidence-10); color: white; }
-.tour-dates { display: flex; gap: 2px; margin-top: 2px; }
-.tour-date { width: 30px; font-size: 0.6rem; color: var(--gray-500); text-align: center; overflow: hidden; font-family: var(--font-body); }
+.tour-dates { display: flex; gap: 2px; margin-top: 2px; } /* classe conservee mais plus generee (BUGFIX 2026-09-09, cf. renderItemsTable) : la date est maintenant DANS .tour-badge-wrapper */
+.tour-date { width: 30px; font-size: 0.6rem; color: var(--gray-500); text-align: center; overflow: hidden; font-family: var(--font-body); margin-top: 2px; }
 
 .resources-cell { min-width: 140px; padding: 0.5rem !important; }
 
@@ -26497,24 +26497,37 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
                 }
                 info = (_durHtml || _supHtml) ? '<div class="tour-info">' + _durHtml + _supHtml + '</div>' : '';
             }
-            
-            if (isLocked) {
-                return '<div class="tour-badge-wrapper"><span class="tour-badge locked">T' + (i + 1) + '</span></div>';
-            }
-            
-            if (isEditable) {
-                return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" data-specialty="' + safeSpecAttr + '" data-fc="' + safeFcAttr + '" data-tour="' + i + '" onclick="openConfidenceModal(this)">T' + (i + 1) + '</span>' + info + '</div>';
-            }
-            
-            return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" style="cursor: default;">T' + (i + 1) + '</span>' + info + '</div>';
-        }).join('');
 
-        const tourDates = rowHasDate
-            ? d.tourDates.map((dt, i) => dt
-                ? '<span class="tour-date">' + formatDate(dt) + '</span>'
-                : '<span class="tour-date ti-placeholder">\u00A0</span>'
-              ).join('')
-            : '';
+            // BUGFIX (2026-09-09) : la date rejoint desormais SA case (au lieu
+            // d'une rangee .tour-dates separee en dessous, cf. ancien code) --
+            // deux rangees flex independantes devaient garder des largeurs de
+            // colonnes identiques pour rester alignees ; un mismatch (meme
+            // minime) ou un rendu flex different d'un moteur a l'autre
+            // (Safari/iPad notamment) provoquait un decalage progressif,
+            // colonne apres colonne, malgre un rendu correct sur Chrome. En
+            // integrant la date dans la case de son badge, les deux ne
+            // peuvent plus structurellement se desynchroniser. Meme logique
+            // de reservation d'emplacement que duree/support (rowHasDate,
+            // TOUS les index y compris verrouilles, comme le faisait l'ancienne
+            // rangee .tour-dates) -- rien d'autre ne change.
+            var dateHtml = '';
+            if (rowHasDate) {
+                var _dt = d.tourDates ? d.tourDates[i] : null;
+                dateHtml = _dt
+                    ? '<span class="tour-date">' + formatDate(_dt) + '</span>'
+                    : '<span class="tour-date ti-placeholder">\u00A0</span>';
+            }
+
+            if (isLocked) {
+                return '<div class="tour-badge-wrapper"><span class="tour-badge locked">T' + (i + 1) + '</span>' + dateHtml + '</div>';
+            }
+
+            if (isEditable) {
+                return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" data-specialty="' + safeSpecAttr + '" data-fc="' + safeFcAttr + '" data-tour="' + i + '" onclick="openConfidenceModal(this)">T' + (i + 1) + '</span>' + info + dateHtml + '</div>';
+            }
+
+            return '<div class="tour-badge-wrapper"><span class="tour-badge ' + (c ? 'c' + c : '') + '" style="cursor: default;">T' + (i + 1) + '</span>' + info + dateHtml + '</div>';
+        }).join('');
         const days = item.daysSince;
         let daysBadge = '<span class="days-badge never">—</span>';
         if (days !== null) {
@@ -26589,7 +26602,9 @@ var _priorityIcon = '<button class="' + _prioBtnCls + '" data-specialty="' + saf
 var __compactMode = (typeof window.getToursViewMode === 'function' && window.getToursViewMode() === 'compact');
 var __tourCellInner = (__compactMode && typeof window.buildCompactCell === 'function')
   ? window.buildCompactCell(item.specialtyId, item.fc)
-  : ('<div class="tour-badges">' + tourBadges + '</div>' + (tourDates ? '<div class="tour-dates">' + tourDates + '</div>' : ''));
+  // BUGFIX (2026-09-09) : la date est desormais generee A L'INTERIEUR de
+  // chaque tourBadges (cf. plus haut) -- plus de rangee .tour-dates separee.
+  : ('<div class="tour-badges">' + tourBadges + '</div>');
 
 return '<tr><td class="item-num">' + tpxEscHtml(item.num) + '<br><div style="display:flex;align-items:center;gap:3px;flex-wrap:nowrap;margin-top:2px;">' + notesBtn + checklistBtn + '</div></td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + tpxEscHtml(item.specialtyName) + referenceHtml + '</td>' +					
             '<td class="tour-cell" data-specialty="' + safeSpecAttr + '" data-fc="' + safeFcAttr + '">' + __tourCellInner + '</td>' +
