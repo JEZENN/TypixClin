@@ -38075,6 +38075,22 @@ document.addEventListener('touchend', function(e) {
 /* .train-modal-redesign .modal-title-bar remplace par .unified-modal-header */
 
 /* ===== MODAL TOUR : structure flex sans padding sur modal-content ===== */
+/* BUGFIX (2026-09-08) : sans max-height ici, la boîte grandit avec son
+   contenu sans limite — sur un écran peu haut (portable 13"/14", fenêtre
+   réduite...), avec le barème 10 niveaux (confidence-buttons sur 2 rangées,
+   cf. ligne ~27217) le modal dépasse la hauteur de l'écran. Comme .modal
+   (ligne ~4085) centre son contenu sans permettre de scroller la boîte
+   elle-même, le bas (bouton "Enregistrer") se retrouve hors écran et
+   inatteignable — ni la molette ni le drag ne peuvent l'atteindre, car rien
+   n'est scrollable : .confidence-modal-body a déjà overflow-y:auto + flex:1
+   (ligne suivante) mais ça ne sert à rien sans une hauteur de parent bornée
+   pour le contraindre. Le max-height ci-dessous borne la boîte à la fenêtre
+   (même pattern déjà utilisé pour #train-modal, cf. style="max-height:96vh"
+   sur la modal "Ajouter un entrainement") : le corps devient alors le seul
+   élément qui déborde, et devient donc scrollable, ce qui garde le header ET
+   les boutons Enregistrer/Réinitialiser (dans .modal-actions, en fin de
+   .confidence-modal-body) toujours atteignables quelle que soit la hauteur
+   d'écran. */
 #confidence-modal .confidence-modal-content {
     padding: 0 !important;
     display: flex;
@@ -38082,6 +38098,8 @@ document.addEventListener('touchend', function(e) {
     overflow: hidden;
     max-width: 420px;
     width: 95%;
+    max-height: 96vh;
+    max-height: 96dvh;
 }
 .confidence-modal-body {
     padding: 1.25rem 1.5rem 1.5rem;

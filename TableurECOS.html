@@ -20970,9 +20970,21 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 }
 .ecos-conf-overlay.active { display: flex; animation: modalOverlayIn 0.2s ease forwards; }
 .ecos-conf-overlay.closing { display: flex; animation: modalOverlayOut 0.18s ease forwards; }
+/* BUGFIX (2026-09-08) : pas de max-height/overflow ici à l'origine — sur un
+   écran peu haut, avec le barème 10 niveaux (.ecos-conf-row-10, 2 rangées de
+   boutons, cf. plus bas) ce modal peut dépasser la hauteur de l'écran. Comme
+   .ecos-conf-overlay centre son contenu sans le rendre scrollable, le bouton
+   "Valider" (dans .ecos-conf-actions, en fin de boîte) se retrouve hors
+   écran et inatteignable. max-height + overflow-y:auto bornent la boîte à la
+   fenêtre et la rendent scrollable elle-même (même boîte pour le picker de
+   confiance #ecos-conf-overlay ET la modal priorité #ecos-prio-overlay,
+   toutes deux courtes en temps normal — aucune régression attendue). */
 .ecos-conf-modal {
     background: var(--white); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-xl);
     padding: 1.6rem; width: min(420px, 92vw); text-align: center; animation: modalContentIn 0.22s ease forwards;
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
 }
 .ecos-conf-modal h3 { font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--gray-900); }
 .ecos-conf-modal .sub { font-size: 0.82rem; color: var(--gray-500); margin-bottom: 1.1rem; }
