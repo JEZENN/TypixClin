@@ -53096,8 +53096,6 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
     if (!overlay || !modal) return;
 
     var root = document.documentElement;
-    var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
-    var raf = null;
     var restH = null;
     var _baseH = window.innerHeight;
     window.addEventListener('resize', function () {
@@ -53111,75 +53109,103 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
         root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
     }
 
-    /* BUGFIX (2026-09-09) : fermeture épinglage retardée (comme sur
-       tablette, cf. _closeTimer plus haut dans ce fichier) — sans ce
-       délai, un creux TRANSITOIRE de la hauteur visible (la barre de
-       suggestions du clavier qui change de contenu, une frappe près du
-       bord bas de l'écran...) faisait immédiatement chuter kb sous KB_MIN
-       ne serait-ce qu'une frame, décrochant puis raccrochant l'épinglage :
-       perçu comme "la barre d'outils disparaît" au moindre effleurement
-       près du bas du clavier. Seule une fermeture confirmée après ce délai
-       décroche réellement l'épinglage. */
+    /* BUGFIX (2026-09-09) v2 : REFONTE — l'ancienne version decidait
+       d'epingler/decrocher en calculant une hauteur de clavier
+       (kb = hauteur ecran - hauteur visualViewport) et en comparant a un
+       seuil. Meme avec un delai de fermeture, le passage du champ recto au
+       champ verso restait instable sur de vrais iPhone (le clavier ne
+       change pourtant pas de hauteur entre les deux champs) : la barre
+       d'outils/le footer redevenaient visibles au mauvais moment, preuve
+       que cette estimation de hauteur n'etait pas fiable d'un champ a
+       l'autre sur Safari iOS.
+       Nouveau principe, plus direct : on epingle tant qu'un champ DE CE
+       MODAL a le focus, point. Plus besoin de deviner si le clavier est
+       "ouvert" via un calcul de hauteur fragile -- avoir le focus dans
+       #flashEditOverlay EST la condition. Le passage recto -> verso
+       (focusout puis focusin quasi immediat, meme cible = le modal) annule
+       le minuteur de fermeture avant qu'il ne se declenche, donc plus de
+       decrochage entre les deux champs. */
+    function isEditingInOverlay() {
+        var el = document.activeElement;
+        return !!(el && overlay.contains(el) &&
+            (el.isContentEditable || el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'));
+    }
+
     var _closeTimer = null;
-    function apply() {
+    function engage() {
+        if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
         var body = document.body;
-        if (!overlay.classList.contains('active')) {
-            if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+        var wasOpen = body.classList.contains('tc-phone-flashkb');
+        if (!wasOpen) {
+            /* Hauteur de repos mesuree AVANT l'epinglage, comme sur tablette :
+               le modal reste fige a cette hauteur (ecretee par la zone
+               visible) pendant toute la sequence. */
+            restH = modal.offsetHeight;
+            if (restH) modal.style.setProperty('--tcpf-rest-h', restH + 'px');
+            setVars(0, 0, window.innerWidth, Math.max(window.innerHeight, _baseH));
+            body.classList.add('tc-phone-flashkb');
+        }
+        var v = window.visualViewport;
+        setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+    }
+    function scheduleDisengage() {
+        if (_closeTimer) return;
+        _closeTimer = setTimeout(function () {
+            _closeTimer = null;
+            if (isEditingInOverlay()) return; /* re-verifie : un autre champ du modal a peut-etre pris le focus entre-temps */
+            var body = document.body;
             if (body.classList.contains('tc-phone-flashkb')) {
                 body.classList.remove('tc-phone-flashkb');
+                modal.style.removeProperty('--tcpf-rest-h');
                 restH = null;
             }
-            return;
-        }
-        var vv = window.visualViewport;
-        var ref = Math.max(window.innerHeight, _baseH);
-        var kb = Math.max(0, ref - vv.height - vv.offsetTop);
-        var open = kb > KB_MIN;
-        var wasOpen = body.classList.contains('tc-phone-flashkb');
-        if (open) {
-            if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
-            if (!wasOpen) {
-                /* Hauteur de repos mesurée AVANT l'épinglage, comme sur tablette :
-                   le modal reste figé à cette hauteur (écrêtée par la zone
-                   visible) pendant toute la séquence. */
-                restH = modal.offsetHeight;
-                if (restH) modal.style.setProperty('--tcpf-rest-h', restH + 'px');
-                setVars(0, 0, window.innerWidth, ref);
-                body.classList.add('tc-phone-flashkb');
-                requestAnimationFrame(function () {
-                    requestAnimationFrame(function () {
-                        var v = window.visualViewport;
-                        setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
-                    });
-                });
-            } else {
-                setVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
-            }
-        } else if (wasOpen && !_closeTimer) {
-            _closeTimer = setTimeout(function () {
-                _closeTimer = null;
-                if (body.classList.contains('tc-phone-flashkb')) {
-                    body.classList.remove('tc-phone-flashkb');
-                    modal.style.removeProperty('--tcpf-rest-h');
-                    restH = null;
-                }
-            }, 340);
-        }
+        }, 350);
     }
-    function onChange() {
-        if (raf) return;
-        raf = requestAnimationFrame(function () { raf = null; apply(); });
-    }
-    window.visualViewport.addEventListener('resize', onChange);
-    window.visualViewport.addEventListener('scroll', onChange);
+
     document.addEventListener('focusin', function (e) {
         if (!overlay.contains(e.target)) return;
-        setTimeout(onChange, 320);
+        if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+        /* Court delai : laisse le clavier/visualViewport se stabiliser
+           avant de mesurer la zone visible (comportement iOS). */
+        setTimeout(function () {
+            if (isEditingInOverlay()) engage();
+        }, 300);
     });
     document.addEventListener('focusout', function (e) {
         if (!overlay.contains(e.target)) return;
-        setTimeout(onChange, 300);
+        scheduleDisengage();
     });
+    /* Le clavier peut legerement changer de hauteur (barre de suggestions,
+       rotation...) pendant la saisie : on garde la zone epinglee a jour
+       sans jamais decider d'un decrochage ici -- seul focusout le fait. */
+    window.visualViewport.addEventListener('resize', function () {
+        if (isEditingInOverlay()) engage();
+    });
+    window.visualViewport.addEventListener('scroll', function () {
+        if (isEditingInOverlay()) {
+            var v = window.visualViewport;
+            setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+        }
+    });
+    /* Filet de securite : _flashCloseEdit() ferme le modal (retire .active)
+       SANS jamais retirer le focus du champ en cours d'edition -- sans ce
+       filet, un decrochage base uniquement sur focusout ne se produirait
+       jamais dans ce cas precis (Annuler / Creer / clic sur le voile), et
+       tc-phone-flashkb resterait colle sur <body> (inoffensif visuellement,
+       les regles CSS exigeant aussi #flashEditOverlay.active, mais autant
+       nettoyer proprement). Un MutationObserver couvre TOUTES les fermetures
+       sans avoir a modifier chacune des fonctions qui ferment ce modal. */
+    new MutationObserver(function () {
+        if (!overlay.classList.contains('active')) {
+            if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+            var body = document.body;
+            if (body.classList.contains('tc-phone-flashkb')) {
+                body.classList.remove('tc-phone-flashkb');
+                modal.style.removeProperty('--tcpf-rest-h');
+                restH = null;
+            }
+        }
+    }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
 })();
 </script>
 

@@ -21446,7 +21446,13 @@ body.tc-kb-open-phone .flash-expand-btn {
    script juste après la détection tc-kb-open-phone ci-dessous), même
    principe que le correctif tablette plus bas dans ce fichier. */
 @media (max-width: 900px) {
-    body.tc-kb-open-phone #flashEditOverlay.active {
+    /* BUGFIX (2026-09-09) v2 : classe dediee tc-phone-flashkb (au lieu de
+       tc-kb-open-phone, partagee avec la desactivation des boutons
+       "Agrandir" ailleurs dans ce fichier) -- l'epinglage de ce modal est
+       desormais pilote par un script SEPARE, base sur le focus, pas sur un
+       calcul de hauteur de clavier. Voir ce script (juste apres la
+       detection tc-kb-open-phone) pour le detail et le pourquoi. */
+    body.tc-phone-flashkb #flashEditOverlay.active {
         position: fixed !important;
         top: var(--tcpf-top, 0px) !important;
         left: var(--tcpf-left, 0px) !important;
@@ -21464,7 +21470,7 @@ body.tc-kb-open-phone .flash-expand-btn {
     /* La barre d'outils reste visible (flex-shrink:0, déjà le cas
        normalement) ; c'est le corps (recto/verso, overflow-y:auto) qui
        s'ajuste et défile — jamais la barre d'outils qui disparaît. */
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-modal {
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-modal {
         height: var(--tcpf-rest-h, auto) !important;
         max-height: 100% !important;
         min-height: 0 !important;
@@ -21478,8 +21484,8 @@ body.tc-kb-open-phone .flash-expand-btn {
        haut. Rien ne change hors clavier ouvert : header et footer
        réapparaissent normalement à sa fermeture (il suffit de refermer le
        clavier pour retrouver Annuler/Créer). Idem TableurEnLigne.html. */
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-header,
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-footer {
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-header,
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-footer {
         display: none;
     }
     /* BUGFIX (2026-09-09) : le couple flex:1 imbriqué (.flash-edit-body >
@@ -21491,14 +21497,14 @@ body.tc-kb-open-phone .flash-expand-btn {
        pour ce cas précis : chaque champ reprend un flux de bloc normal,
        hauteur fixe (pas flex-grow), plus prévisible et strictement
        identique entre moteurs de rendu. Idem TableurEnLigne.html. */
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body {
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-body {
         display: block !important;
     }
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body .flash-rt-field {
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-body .flash-rt-field {
         display: block !important;
         margin-bottom: 0.7rem !important;
     }
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body .flash-rt-editor {
+    body.tc-phone-flashkb #flashEditOverlay.active .flash-edit-body .flash-rt-editor {
         display: block !important;
         height: 90px !important;
         min-height: 0 !important;
@@ -31721,30 +31727,14 @@ function toggleSDDPanelMax(btn) {
     if (!IS_PHONE) return;
     var KB_MIN = 120; /* px : en dessous, on ne considère pas qu'un clavier est ouvert */
     var raf = null;
-    var root = document.documentElement;
-    /* BUGFIX (2026-09-08) : en plus de la classe tc-kb-open-phone (déjà
-       utilisée ci-dessus pour désactiver "Agrandir"), on pose ici les
-       variables --tcpf-* qui pilotent l'épinglage de #flashEditOverlay
-       (règle CSS juste au-dessus) — voir son commentaire pour le pourquoi.
-       Snapshot de la hauteur de repos AVANT épinglage, comme la version
-       tablette plus bas dans ce fichier, pour un glissement sans saut. */
-    var _flashRestH = null;
-    function setFlashVars(top, left, w, h) {
-        root.style.setProperty('--tcpf-top', Math.round(top) + 'px');
-        root.style.setProperty('--tcpf-left', Math.round(left) + 'px');
-        root.style.setProperty('--tcpf-w', Math.round(w) + 'px');
-        root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
-    }
-    /* BUGFIX (2026-09-09) : fermeture retardée (comme sur tablette, cf.
-       _closeTimer plus bas dans ce fichier) — sans ce délai, un creux
-       TRANSITOIRE de la hauteur visible (barre de suggestions du clavier
-       qui change, frappe près du bord bas...) faisait immédiatement
-       repasser `open` à false ne serait-ce qu'une frame, retirant puis
-       remettant tc-kb-open-phone : perçu comme "la barre d'outils
-       disparaît" (modal flashcard) au moindre effleurement près du bas du
-       clavier — affectait aussi un clignotement des boutons "Agrandir"
-       (Notes/Cahier d'erreurs) au passage. Seule une fermeture confirmée
-       après ce délai retire réellement la classe. */
+    /* BUGFIX (2026-09-09) : fermeture retardée -- sans ce délai, un creux
+       TRANSITOIRE de la hauteur visible faisait immédiatement repasser
+       `open` à false ne serait-ce qu'une frame, provoquant un clignotement
+       des boutons "Agrandir" (Notes/Cahier d'erreurs). Seule une fermeture
+       confirmée après ce délai retire réellement la classe. (L'épinglage
+       du modal flashcards, qui utilisait aussi cette classe/ce calcul
+       jusqu'ici, a sa propre logique séparée juste après ce script --
+       basée sur le focus, plus fiable, cf. son commentaire.) */
     var _closeTimer = null;
     function apply() {
         var vv = window.visualViewport;
@@ -31752,26 +31742,13 @@ function toggleSDDPanelMax(btn) {
         var open = kb > KB_MIN;
         var body = document.body;
         var wasOpen = body.classList.contains('tc-kb-open-phone');
-        var overlay = document.getElementById('flashEditOverlay');
-        var modal = overlay && overlay.querySelector('.flash-edit-modal');
         if (open) {
             if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
             if (!wasOpen) body.classList.add('tc-kb-open-phone');
-            if (overlay && modal && overlay.classList.contains('active')) {
-                if (!wasOpen) {
-                    _flashRestH = modal.offsetHeight;
-                    if (_flashRestH) modal.style.setProperty('--tcpf-rest-h', _flashRestH + 'px');
-                }
-                setFlashVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
-            }
         } else if (wasOpen && !_closeTimer) {
             _closeTimer = setTimeout(function () {
                 _closeTimer = null;
                 body.classList.remove('tc-kb-open-phone');
-                if (modal) {
-                    modal.style.removeProperty('--tcpf-rest-h');
-                    _flashRestH = null;
-                }
             }, 340);
         }
     }
@@ -31782,6 +31759,110 @@ function toggleSDDPanelMax(btn) {
     window.visualViewport.addEventListener('resize', onChange);
     window.visualViewport.addEventListener('scroll', onChange);
 })();
+
+/* ═══ CORRECTIF CLAVIER VIRTUEL -- TELEPHONE, MODAL FLASHCARDS UNIQUEMENT ═══
+   Script independant du bloc ci-dessus (aucune variable partagee) : n'agit
+   QUE sur #flashEditOverlay, QUE sur telephone.
+   BUGFIX (2026-09-09) v2 : REFONTE -- l'ancienne version decidait
+   d'epingler/decrocher en calculant une hauteur de clavier et en comparant
+   a un seuil. Meme avec un delai de fermeture, le passage du champ recto au
+   champ verso restait instable sur de vrais iPhone (le clavier ne change
+   pourtant pas de hauteur entre les deux champs) : la barre d'outils/le
+   footer redevenaient visibles au mauvais moment. Nouveau principe, plus
+   direct : on epingle tant qu'un champ DE CE MODAL a le focus, point. Le
+   passage recto -> verso (focusout puis focusin quasi immediat, meme
+   cible = le modal) annule le minuteur de fermeture avant qu'il ne se
+   declenche, donc plus de decrochage entre les deux champs. Idem
+   TableurEnLigne.html. */
+(function () {
+    'use strict';
+    if (!window.visualViewport) return;
+    var IS_TABLET = Math.min(window.screen.width || 0, window.screen.height || 0) >= 600;
+    if (IS_TABLET) return; /* la tablette a deja son propre traitement complet plus bas dans ce fichier */
+
+    var overlay = document.getElementById('flashEditOverlay');
+    var modal = overlay && overlay.querySelector('.flash-edit-modal');
+    if (!overlay || !modal) return;
+
+    var root = document.documentElement;
+    var restH = null;
+
+    function setVars(top, left, w, h) {
+        root.style.setProperty('--tcpf-top', Math.round(top) + 'px');
+        root.style.setProperty('--tcpf-left', Math.round(left) + 'px');
+        root.style.setProperty('--tcpf-w', Math.round(w) + 'px');
+        root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
+    }
+    function isEditingInOverlay() {
+        var el = document.activeElement;
+        return !!(el && overlay.contains(el) &&
+            (el.isContentEditable || el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'));
+    }
+
+    var _flashCloseTimer = null;
+    function engage() {
+        if (_flashCloseTimer) { clearTimeout(_flashCloseTimer); _flashCloseTimer = null; }
+        var body = document.body;
+        var wasOpen = body.classList.contains('tc-phone-flashkb');
+        if (!wasOpen) {
+            restH = modal.offsetHeight;
+            if (restH) modal.style.setProperty('--tcpf-rest-h', restH + 'px');
+            setVars(0, 0, window.innerWidth, window.innerHeight);
+            body.classList.add('tc-phone-flashkb');
+        }
+        var v = window.visualViewport;
+        setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+    }
+    function scheduleDisengage() {
+        if (_flashCloseTimer) return;
+        _flashCloseTimer = setTimeout(function () {
+            _flashCloseTimer = null;
+            if (isEditingInOverlay()) return;
+            var body = document.body;
+            if (body.classList.contains('tc-phone-flashkb')) {
+                body.classList.remove('tc-phone-flashkb');
+                modal.style.removeProperty('--tcpf-rest-h');
+                restH = null;
+            }
+        }, 350);
+    }
+
+    document.addEventListener('focusin', function (e) {
+        if (!overlay.contains(e.target)) return;
+        if (_flashCloseTimer) { clearTimeout(_flashCloseTimer); _flashCloseTimer = null; }
+        setTimeout(function () {
+            if (isEditingInOverlay()) engage();
+        }, 300);
+    });
+    document.addEventListener('focusout', function (e) {
+        if (!overlay.contains(e.target)) return;
+        scheduleDisengage();
+    });
+    window.visualViewport.addEventListener('resize', function () {
+        if (isEditingInOverlay()) engage();
+    });
+    window.visualViewport.addEventListener('scroll', function () {
+        if (isEditingInOverlay()) {
+            var v = window.visualViewport;
+            setVars(v.offsetTop, v.offsetLeft, v.width, v.height);
+        }
+    });
+    /* Filet de securite : la fermeture du modal (Annuler/Creer/voile) ne
+       retire jamais le focus du champ en cours d'edition -- sans ce filet,
+       tc-phone-flashkb resterait colle sur <body> apres fermeture. */
+    new MutationObserver(function () {
+        if (!overlay.classList.contains('active')) {
+            if (_flashCloseTimer) { clearTimeout(_flashCloseTimer); _flashCloseTimer = null; }
+            var body = document.body;
+            if (body.classList.contains('tc-phone-flashkb')) {
+                body.classList.remove('tc-phone-flashkb');
+                modal.style.removeProperty('--tcpf-rest-h');
+                restH = null;
+            }
+        }
+    }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+})();
+
 function renderSDDObjectives(meta) {
     if (meta && meta.contentType === "procedure") {
         renderProcedureContent(meta);
