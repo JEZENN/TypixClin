@@ -21471,21 +21471,40 @@ body.tc-kb-open-phone .flash-expand-btn {
         flex-shrink: 1 !important;
     }
     /* Demande utilisateur (2026-09-09) : le header ("Nouvelle carte" + croix
-       de fermeture) n'apporte rien pendant la saisie et prend de la place
-       précieuse sur téléphone — masqué tant que le clavier est ouvert, pour
-       laisser plus de hauteur aux champs recto/verso. Seule la barre
-       d'outils reste épinglée en haut. La fermeture reste possible via le
-       bouton "Annuler" du footer (jamais masqué). Rien ne change hors
-       clavier ouvert : le header réapparaît normalement à la fermeture.
-       Idem TableurEnLigne.html. */
-    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-header {
+       de fermeture) ET le footer (Annuler/Créer) n'apportent rien pendant
+       la saisie et prennent de la place précieuse sur téléphone — masqués
+       tant que le clavier est ouvert, pour laisser un maximum de hauteur
+       aux champs recto/verso. Seule la barre d'outils reste épinglée en
+       haut. Rien ne change hors clavier ouvert : header et footer
+       réapparaissent normalement à sa fermeture (il suffit de refermer le
+       clavier pour retrouver Annuler/Créer). Idem TableurEnLigne.html. */
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-header,
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-footer {
         display: none;
     }
-    /* Même plancher que sur iPad : les champs recto/verso ne rétrécissent
-       jamais en dessous d'une taille utilisable — c'est le corps du modal
-       qui défile au besoin pour atteindre l'autre champ. */
+    /* BUGFIX (2026-09-09) : le couple flex:1 imbriqué (.flash-edit-body >
+       .flash-rt-field > .flash-rt-editor, chacun flex:1/min-height:0) posait
+       un plancher de 90px sur l'éditeur SANS bornage équivalent sur
+       .flash-rt-field lui-même — sur Safari iOS, ça provoquait un
+       chevauchement visuel entre le champ recto et le champ verso au lieu
+       d'un simple agrandissement du corps scrollable. On sort donc du flex
+       pour ce cas précis : chaque champ reprend un flux de bloc normal,
+       hauteur fixe (pas flex-grow), plus prévisible et strictement
+       identique entre moteurs de rendu. Idem TableurEnLigne.html. */
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body {
+        display: block !important;
+    }
+    body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body .flash-rt-field {
+        display: block !important;
+        margin-bottom: 0.7rem !important;
+    }
     body.tc-kb-open-phone #flashEditOverlay.active .flash-edit-body .flash-rt-editor {
-        min-height: 90px;
+        display: block !important;
+        height: 90px !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        flex: none !important;
+        overflow-y: auto !important;
     }
 }
 
@@ -31716,24 +31735,44 @@ function toggleSDDPanelMax(btn) {
         root.style.setProperty('--tcpf-w', Math.round(w) + 'px');
         root.style.setProperty('--tcpf-h', Math.round(h) + 'px');
     }
+    /* BUGFIX (2026-09-09) : fermeture retardée (comme sur tablette, cf.
+       _closeTimer plus bas dans ce fichier) — sans ce délai, un creux
+       TRANSITOIRE de la hauteur visible (barre de suggestions du clavier
+       qui change, frappe près du bord bas...) faisait immédiatement
+       repasser `open` à false ne serait-ce qu'une frame, retirant puis
+       remettant tc-kb-open-phone : perçu comme "la barre d'outils
+       disparaît" (modal flashcard) au moindre effleurement près du bas du
+       clavier — affectait aussi un clignotement des boutons "Agrandir"
+       (Notes/Cahier d'erreurs) au passage. Seule une fermeture confirmée
+       après ce délai retire réellement la classe. */
+    var _closeTimer = null;
     function apply() {
         var vv = window.visualViewport;
         var kb = Math.max(0, window.innerHeight - vv.height);
         var open = kb > KB_MIN;
         var body = document.body;
         var wasOpen = body.classList.contains('tc-kb-open-phone');
-        body.classList.toggle('tc-kb-open-phone', open);
         var overlay = document.getElementById('flashEditOverlay');
         var modal = overlay && overlay.querySelector('.flash-edit-modal');
-        if (open && overlay && modal && overlay.classList.contains('active')) {
-            if (!wasOpen) {
-                _flashRestH = modal.offsetHeight;
-                if (_flashRestH) modal.style.setProperty('--tcpf-rest-h', _flashRestH + 'px');
+        if (open) {
+            if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+            if (!wasOpen) body.classList.add('tc-kb-open-phone');
+            if (overlay && modal && overlay.classList.contains('active')) {
+                if (!wasOpen) {
+                    _flashRestH = modal.offsetHeight;
+                    if (_flashRestH) modal.style.setProperty('--tcpf-rest-h', _flashRestH + 'px');
+                }
+                setFlashVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
             }
-            setFlashVars(vv.offsetTop, vv.offsetLeft, vv.width, vv.height);
-        } else if (!open && modal) {
-            modal.style.removeProperty('--tcpf-rest-h');
-            _flashRestH = null;
+        } else if (wasOpen && !_closeTimer) {
+            _closeTimer = setTimeout(function () {
+                _closeTimer = null;
+                body.classList.remove('tc-kb-open-phone');
+                if (modal) {
+                    modal.style.removeProperty('--tcpf-rest-h');
+                    _flashRestH = null;
+                }
+            }, 340);
         }
     }
     function onChange() {
