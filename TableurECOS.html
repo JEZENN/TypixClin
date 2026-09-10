@@ -17826,6 +17826,8 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 
 /* Palettes couleur */
+/* DESIGN (2026-09-10) : meme grille que TableurEnLigne.html — 20 teintes
+   fixes en carres arrondis, 5 colonnes, coche sur la teinte active. */
 .notes-color-picker-wrapper { position: relative; display: inline-flex; align-items: center; }
 .notes-color-palette {
     position: absolute;
@@ -17839,24 +17841,48 @@ body.ecos-offline-locked .send-to-checklist-btn {
     box-shadow: 0 8px 24px rgba(0,0,0,0.14);
     z-index: 10100;
     display: grid;
-    grid-template-columns: repeat(6, 22px);
+    grid-template-columns: repeat(5, 22px);
     gap: 5px;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.15s ease;
+    /* BUGFIX (2026-09-10) : "transition: all" animait aussi top/left/
+       transform -- au moment ou le JS reparente la palette et recalcule sa
+       position (fixed, coordonnees ecran), le navigateur INTERPOLAIT entre
+       son ancienne position (dans la toolbar, "calc(100% + 6px)" d'un
+       parent totalement different une fois reparentee) et sa nouvelle
+       position ecran : la palette semblait partir du bas de l'ecran avant
+       de glisser au bon endroit. Fondu SEUL, comme sur TableurEnLigne.html
+       (cf. son commentaire identique) : ne jamais animer top/left/transform
+       ici, sinon le repositionnement JS fait glisser la palette. */
+    transition: opacity 0.15s ease, visibility 0.15s ease;
     pointer-events: none;
 }
 .notes-color-palette.open { opacity: 1; visibility: visible; pointer-events: all; }
 .notes-color-dot {
+    position: relative;
     width: 22px;
     height: 22px;
-    border-radius: 50%;
+    border-radius: 7px;
     cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.1s, border-color 0.1s;
 }
-.notes-color-dot:hover { transform: scale(1.25); border-color: var(--gray-400); }
-.notes-color-dot.active { transform: scale(1.10); border-color: var(--gray-600); box-shadow: 0 0 0 2px var(--gray-300); }
+.notes-color-dot:hover { transform: scale(1.15); border-color: var(--gray-400); }
+.notes-color-dot.active { transform: scale(1.08); border-color: var(--gray-600); box-shadow: 0 0 0 2px var(--gray-300); }
+.notes-color-dot.active::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    text-shadow: 0 0 2px rgba(0,0,0,0.65), 0 0 1px rgba(0,0,0,0.65);
+    pointer-events: none;
+}
 
 /* Bouton surligné quand sa palette est ouverte */
 .notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn {
@@ -26114,12 +26140,66 @@ window.TPXNotesPending = {
                     </div>
                     <div class="notes-toolbar-sep"></div>
                     <div class="notes-toolbar-group">
-                        <button class="notes-tool-btn" onmousedown="notesSetColor(event,'#ef4444')" data-tooltip="Rouge"><span style="color:#ef4444;font-weight:800;">A</span></button>
-                        <button class="notes-tool-btn" onmousedown="notesSetColor(event,'#3b82f6')" data-tooltip="Bleu"><span style="color:#3b82f6;font-weight:800;">A</span></button>
-                        <button class="notes-tool-btn" onmousedown="notesSetColor(event,'#10b981')" data-tooltip="Vert"><span style="color:#10b981;font-weight:800;">A</span></button>
-                        <button class="notes-tool-btn" onmousedown="notesSetColor(event,'#111827')" data-tooltip="Noir"><span style="font-weight:800;">A</span></button>
-                        <button class="notes-tool-btn" onmousedown="notesSetHighlight(event,'#fef08a')" data-tooltip="Surligner jaune"><i class="fas fa-highlighter" style="color:#eab308;font-size:0.72rem;"></i></button>
-                        <button class="notes-tool-btn" onmousedown="notesSetHighlight(event,'#bbf7d0')" data-tooltip="Surligner vert"><i class="fas fa-highlighter" style="color:#22c55e;font-size:0.72rem;"></i></button>
+                        <div class="notes-color-picker-wrapper">
+                          <button class="notes-tool-btn" onmousedown="ecosTogglePalette('sddTextPalette',event)" ontouchstart="ecosTogglePalette('sddTextPalette',event)" data-tooltip="Couleur du texte">
+                            <span class="notes-color-bar-btn">
+                              <span class="notes-color-bar-label">A</span>
+                              <span class="notes-color-bar" id="sddTextBar" style="background:#ef4444;"></span>
+                            </span>
+                          </button>
+                          <div class="notes-color-palette" id="sddTextPalette">
+                            <div class="notes-color-dot" style="background:#111827" onmousedown="notesSetColor(event,'#111827')" ontouchstart="notesSetColor(event,'#111827')"></div>
+                            <div class="notes-color-dot" style="background:#ef4444" onmousedown="notesSetColor(event,'#ef4444')" ontouchstart="notesSetColor(event,'#ef4444')"></div>
+                            <div class="notes-color-dot" style="background:#f97316" onmousedown="notesSetColor(event,'#f97316')" ontouchstart="notesSetColor(event,'#f97316')"></div>
+                            <div class="notes-color-dot" style="background:#f59e0b" onmousedown="notesSetColor(event,'#f59e0b')" ontouchstart="notesSetColor(event,'#f59e0b')"></div>
+                            <div class="notes-color-dot" style="background:#10b981" onmousedown="notesSetColor(event,'#10b981')" ontouchstart="notesSetColor(event,'#10b981')"></div>
+                            <div class="notes-color-dot" style="background:#3b82f6" onmousedown="notesSetColor(event,'#3b82f6')" ontouchstart="notesSetColor(event,'#3b82f6')"></div>
+                            <div class="notes-color-dot" style="background:#8b5cf6" onmousedown="notesSetColor(event,'#8b5cf6')" ontouchstart="notesSetColor(event,'#8b5cf6')"></div>
+                            <div class="notes-color-dot" style="background:#ec4899" onmousedown="notesSetColor(event,'#ec4899')" ontouchstart="notesSetColor(event,'#ec4899')"></div>
+                            <div class="notes-color-dot" style="background:#6b7280" onmousedown="notesSetColor(event,'#6b7280')" ontouchstart="notesSetColor(event,'#6b7280')"></div>
+                            <div class="notes-color-dot" style="background:#eab308" onmousedown="notesSetColor(event,'#eab308')" ontouchstart="notesSetColor(event,'#eab308')"></div>
+                            <div class="notes-color-dot" style="background:#84cc16" onmousedown="notesSetColor(event,'#84cc16')" ontouchstart="notesSetColor(event,'#84cc16')"></div>
+                            <div class="notes-color-dot" style="background:#14b8a6" onmousedown="notesSetColor(event,'#14b8a6')" ontouchstart="notesSetColor(event,'#14b8a6')"></div>
+                            <div class="notes-color-dot" style="background:#06b6d4" onmousedown="notesSetColor(event,'#06b6d4')" ontouchstart="notesSetColor(event,'#06b6d4')"></div>
+                            <div class="notes-color-dot" style="background:#0ea5e9" onmousedown="notesSetColor(event,'#0ea5e9')" ontouchstart="notesSetColor(event,'#0ea5e9')"></div>
+                            <div class="notes-color-dot" style="background:#6366f1" onmousedown="notesSetColor(event,'#6366f1')" ontouchstart="notesSetColor(event,'#6366f1')"></div>
+                            <div class="notes-color-dot" style="background:#a855f7" onmousedown="notesSetColor(event,'#a855f7')" ontouchstart="notesSetColor(event,'#a855f7')"></div>
+                            <div class="notes-color-dot" style="background:#f43f5e" onmousedown="notesSetColor(event,'#f43f5e')" ontouchstart="notesSetColor(event,'#f43f5e')"></div>
+                            <div class="notes-color-dot" style="background:#78716c" onmousedown="notesSetColor(event,'#78716c')" ontouchstart="notesSetColor(event,'#78716c')"></div>
+                            <div class="notes-color-dot" style="background:#1e293b" onmousedown="notesSetColor(event,'#1e293b')" ontouchstart="notesSetColor(event,'#1e293b')"></div>
+                            <div class="notes-color-dot" style="background:#92400e" onmousedown="notesSetColor(event,'#92400e')" ontouchstart="notesSetColor(event,'#92400e')"></div>
+                          </div>
+                        </div>
+                        <div class="notes-color-picker-wrapper">
+                          <button class="notes-tool-btn" onmousedown="ecosTogglePalette('sddHighlightPalette',event)" ontouchstart="ecosTogglePalette('sddHighlightPalette',event)" data-tooltip="Surligner">
+                            <span class="notes-color-bar-btn">
+                              <i class="fas fa-highlighter" style="font-size:0.7rem;line-height:1;"></i>
+                              <span class="notes-color-bar" id="sddHighlightBar" style="background:#fef08a;"></span>
+                            </span>
+                          </button>
+                          <div class="notes-color-palette" id="sddHighlightPalette">
+                            <div class="notes-color-dot" style="background:#fef08a" onmousedown="notesSetHighlight(event,'#fef08a')" ontouchstart="notesSetHighlight(event,'#fef08a')"></div>
+                            <div class="notes-color-dot" style="background:#bbf7d0" onmousedown="notesSetHighlight(event,'#bbf7d0')" ontouchstart="notesSetHighlight(event,'#bbf7d0')"></div>
+                            <div class="notes-color-dot" style="background:#bfdbfe" onmousedown="notesSetHighlight(event,'#bfdbfe')" ontouchstart="notesSetHighlight(event,'#bfdbfe')"></div>
+                            <div class="notes-color-dot" style="background:#fecaca" onmousedown="notesSetHighlight(event,'#fecaca')" ontouchstart="notesSetHighlight(event,'#fecaca')"></div>
+                            <div class="notes-color-dot" style="background:#e9d5ff" onmousedown="notesSetHighlight(event,'#e9d5ff')" ontouchstart="notesSetHighlight(event,'#e9d5ff')"></div>
+                            <div class="notes-color-dot" style="background:#fed7aa" onmousedown="notesSetHighlight(event,'#fed7aa')" ontouchstart="notesSetHighlight(event,'#fed7aa')"></div>
+                            <div class="notes-color-dot" style="background:#f1f5f9;border:2px solid #d1d5db;" onmousedown="notesSetHighlight(event,'transparent')" ontouchstart="notesSetHighlight(event,'transparent')"></div>
+                            <div class="notes-color-dot" style="background:#fef9c3" onmousedown="notesSetHighlight(event,'#fef9c3')" ontouchstart="notesSetHighlight(event,'#fef9c3')"></div>
+                            <div class="notes-color-dot" style="background:#d9f99d" onmousedown="notesSetHighlight(event,'#d9f99d')" ontouchstart="notesSetHighlight(event,'#d9f99d')"></div>
+                            <div class="notes-color-dot" style="background:#99f6e4" onmousedown="notesSetHighlight(event,'#99f6e4')" ontouchstart="notesSetHighlight(event,'#99f6e4')"></div>
+                            <div class="notes-color-dot" style="background:#a5f3fc" onmousedown="notesSetHighlight(event,'#a5f3fc')" ontouchstart="notesSetHighlight(event,'#a5f3fc')"></div>
+                            <div class="notes-color-dot" style="background:#bae6fd" onmousedown="notesSetHighlight(event,'#bae6fd')" ontouchstart="notesSetHighlight(event,'#bae6fd')"></div>
+                            <div class="notes-color-dot" style="background:#c7d2fe" onmousedown="notesSetHighlight(event,'#c7d2fe')" ontouchstart="notesSetHighlight(event,'#c7d2fe')"></div>
+                            <div class="notes-color-dot" style="background:#ddd6fe" onmousedown="notesSetHighlight(event,'#ddd6fe')" ontouchstart="notesSetHighlight(event,'#ddd6fe')"></div>
+                            <div class="notes-color-dot" style="background:#fbcfe8" onmousedown="notesSetHighlight(event,'#fbcfe8')" ontouchstart="notesSetHighlight(event,'#fbcfe8')"></div>
+                            <div class="notes-color-dot" style="background:#fecdd3" onmousedown="notesSetHighlight(event,'#fecdd3')" ontouchstart="notesSetHighlight(event,'#fecdd3')"></div>
+                            <div class="notes-color-dot" style="background:#e7e5e4" onmousedown="notesSetHighlight(event,'#e7e5e4')" ontouchstart="notesSetHighlight(event,'#e7e5e4')"></div>
+                            <div class="notes-color-dot" style="background:#e2e8f0" onmousedown="notesSetHighlight(event,'#e2e8f0')" ontouchstart="notesSetHighlight(event,'#e2e8f0')"></div>
+                            <div class="notes-color-dot" style="background:#cbd5e1" onmousedown="notesSetHighlight(event,'#cbd5e1')" ontouchstart="notesSetHighlight(event,'#cbd5e1')"></div>
+                            <div class="notes-color-dot" style="background:#e7d5c0" onmousedown="notesSetHighlight(event,'#e7d5c0')" ontouchstart="notesSetHighlight(event,'#e7d5c0')"></div>
+                          </div>
+                        </div>
                     </div>
                     <div class="notes-toolbar-sep"></div>
                     <div class="notes-toolbar-group">
@@ -26984,29 +27064,66 @@ window.TPXNotesPending = {
 		  <div class="notes-toolbar-sep"></div>
 
 <div class="notes-toolbar-group">
-  <button class="notes-tool-btn" onmousedown="ecosErrSetColor(event,'#ef4444')" ontouchstart="ecosErrSetColor(event,'#ef4444')" data-tooltip="Texte rouge">
-    <span style="color:#ef4444;font-weight:800;">A</span>
-  </button>
-
-  <button class="notes-tool-btn" onmousedown="ecosErrSetColor(event,'#3b82f6')" ontouchstart="ecosErrSetColor(event,'#3b82f6')" data-tooltip="Texte bleu">
-    <span style="color:#3b82f6;font-weight:800;">A</span>
-  </button>
-
-  <button class="notes-tool-btn" onmousedown="ecosErrSetColor(event,'#10b981')" ontouchstart="ecosErrSetColor(event,'#10b981')" data-tooltip="Texte vert">
-    <span style="color:#10b981;font-weight:800;">A</span>
-  </button>
-
-  <button class="notes-tool-btn" onmousedown="ecosErrSetColor(event,'#4b5563')" ontouchstart="ecosErrSetColor(event,'#4b5563')" data-tooltip="Texte gris">
-    <span style="color:#4b5563;font-weight:800;">A</span>
-  </button>
-
-  <button class="notes-tool-btn" onmousedown="ecosErrSetHighlight(event,'#fef08a')" ontouchstart="ecosErrSetHighlight(event,'#fef08a')" data-tooltip="Surligner jaune">
-    <i class="fas fa-highlighter" style="color:#eab308;font-size:0.78rem;"></i>
-  </button>
-
-  <button class="notes-tool-btn" onmousedown="ecosErrSetHighlight(event,'#bbf7d0')" ontouchstart="ecosErrSetHighlight(event,'#bbf7d0')" data-tooltip="Surligner vert">
-    <i class="fas fa-highlighter" style="color:#22c55e;font-size:0.78rem;"></i>
-  </button>
+  <div class="notes-color-picker-wrapper">
+    <button class="notes-tool-btn" onmousedown="ecosTogglePalette('errTextPalette',event)" ontouchstart="ecosTogglePalette('errTextPalette',event)" data-tooltip="Couleur du texte">
+      <span class="notes-color-bar-btn">
+        <span class="notes-color-bar-label">A</span>
+        <span class="notes-color-bar" id="errTextBar" style="background:#ef4444;"></span>
+      </span>
+    </button>
+    <div class="notes-color-palette" id="errTextPalette">
+      <div class="notes-color-dot" style="background:#111827" onmousedown="ecosErrSetColor(event,'#111827')" ontouchstart="ecosErrSetColor(event,'#111827')"></div>
+      <div class="notes-color-dot" style="background:#ef4444" onmousedown="ecosErrSetColor(event,'#ef4444')" ontouchstart="ecosErrSetColor(event,'#ef4444')"></div>
+      <div class="notes-color-dot" style="background:#f97316" onmousedown="ecosErrSetColor(event,'#f97316')" ontouchstart="ecosErrSetColor(event,'#f97316')"></div>
+      <div class="notes-color-dot" style="background:#f59e0b" onmousedown="ecosErrSetColor(event,'#f59e0b')" ontouchstart="ecosErrSetColor(event,'#f59e0b')"></div>
+      <div class="notes-color-dot" style="background:#10b981" onmousedown="ecosErrSetColor(event,'#10b981')" ontouchstart="ecosErrSetColor(event,'#10b981')"></div>
+      <div class="notes-color-dot" style="background:#3b82f6" onmousedown="ecosErrSetColor(event,'#3b82f6')" ontouchstart="ecosErrSetColor(event,'#3b82f6')"></div>
+      <div class="notes-color-dot" style="background:#8b5cf6" onmousedown="ecosErrSetColor(event,'#8b5cf6')" ontouchstart="ecosErrSetColor(event,'#8b5cf6')"></div>
+      <div class="notes-color-dot" style="background:#ec4899" onmousedown="ecosErrSetColor(event,'#ec4899')" ontouchstart="ecosErrSetColor(event,'#ec4899')"></div>
+      <div class="notes-color-dot" style="background:#4b5563" onmousedown="ecosErrSetColor(event,'#4b5563')" ontouchstart="ecosErrSetColor(event,'#4b5563')"></div>
+      <div class="notes-color-dot" style="background:#eab308" onmousedown="ecosErrSetColor(event,'#eab308')" ontouchstart="ecosErrSetColor(event,'#eab308')"></div>
+      <div class="notes-color-dot" style="background:#84cc16" onmousedown="ecosErrSetColor(event,'#84cc16')" ontouchstart="ecosErrSetColor(event,'#84cc16')"></div>
+      <div class="notes-color-dot" style="background:#14b8a6" onmousedown="ecosErrSetColor(event,'#14b8a6')" ontouchstart="ecosErrSetColor(event,'#14b8a6')"></div>
+      <div class="notes-color-dot" style="background:#06b6d4" onmousedown="ecosErrSetColor(event,'#06b6d4')" ontouchstart="ecosErrSetColor(event,'#06b6d4')"></div>
+      <div class="notes-color-dot" style="background:#0ea5e9" onmousedown="ecosErrSetColor(event,'#0ea5e9')" ontouchstart="ecosErrSetColor(event,'#0ea5e9')"></div>
+      <div class="notes-color-dot" style="background:#6366f1" onmousedown="ecosErrSetColor(event,'#6366f1')" ontouchstart="ecosErrSetColor(event,'#6366f1')"></div>
+      <div class="notes-color-dot" style="background:#a855f7" onmousedown="ecosErrSetColor(event,'#a855f7')" ontouchstart="ecosErrSetColor(event,'#a855f7')"></div>
+      <div class="notes-color-dot" style="background:#f43f5e" onmousedown="ecosErrSetColor(event,'#f43f5e')" ontouchstart="ecosErrSetColor(event,'#f43f5e')"></div>
+      <div class="notes-color-dot" style="background:#78716c" onmousedown="ecosErrSetColor(event,'#78716c')" ontouchstart="ecosErrSetColor(event,'#78716c')"></div>
+      <div class="notes-color-dot" style="background:#1e293b" onmousedown="ecosErrSetColor(event,'#1e293b')" ontouchstart="ecosErrSetColor(event,'#1e293b')"></div>
+      <div class="notes-color-dot" style="background:#92400e" onmousedown="ecosErrSetColor(event,'#92400e')" ontouchstart="ecosErrSetColor(event,'#92400e')"></div>
+    </div>
+  </div>
+  <div class="notes-color-picker-wrapper">
+    <button class="notes-tool-btn" onmousedown="ecosTogglePalette('errHighlightPalette',event)" ontouchstart="ecosTogglePalette('errHighlightPalette',event)" data-tooltip="Surligner">
+      <span class="notes-color-bar-btn">
+        <i class="fas fa-highlighter" style="font-size:0.7rem;line-height:1;"></i>
+        <span class="notes-color-bar" id="errHighlightBar" style="background:#fef08a;"></span>
+      </span>
+    </button>
+    <div class="notes-color-palette" id="errHighlightPalette">
+      <div class="notes-color-dot" style="background:#fef08a" onmousedown="ecosErrSetHighlight(event,'#fef08a')" ontouchstart="ecosErrSetHighlight(event,'#fef08a')"></div>
+      <div class="notes-color-dot" style="background:#bbf7d0" onmousedown="ecosErrSetHighlight(event,'#bbf7d0')" ontouchstart="ecosErrSetHighlight(event,'#bbf7d0')"></div>
+      <div class="notes-color-dot" style="background:#bfdbfe" onmousedown="ecosErrSetHighlight(event,'#bfdbfe')" ontouchstart="ecosErrSetHighlight(event,'#bfdbfe')"></div>
+      <div class="notes-color-dot" style="background:#fecaca" onmousedown="ecosErrSetHighlight(event,'#fecaca')" ontouchstart="ecosErrSetHighlight(event,'#fecaca')"></div>
+      <div class="notes-color-dot" style="background:#e9d5ff" onmousedown="ecosErrSetHighlight(event,'#e9d5ff')" ontouchstart="ecosErrSetHighlight(event,'#e9d5ff')"></div>
+      <div class="notes-color-dot" style="background:#fed7aa" onmousedown="ecosErrSetHighlight(event,'#fed7aa')" ontouchstart="ecosErrSetHighlight(event,'#fed7aa')"></div>
+      <div class="notes-color-dot" style="background:#f1f5f9;border:2px solid #d1d5db;" onmousedown="ecosErrSetHighlight(event,'transparent')" ontouchstart="ecosErrSetHighlight(event,'transparent')"></div>
+      <div class="notes-color-dot" style="background:#fef9c3" onmousedown="ecosErrSetHighlight(event,'#fef9c3')" ontouchstart="ecosErrSetHighlight(event,'#fef9c3')"></div>
+      <div class="notes-color-dot" style="background:#d9f99d" onmousedown="ecosErrSetHighlight(event,'#d9f99d')" ontouchstart="ecosErrSetHighlight(event,'#d9f99d')"></div>
+      <div class="notes-color-dot" style="background:#99f6e4" onmousedown="ecosErrSetHighlight(event,'#99f6e4')" ontouchstart="ecosErrSetHighlight(event,'#99f6e4')"></div>
+      <div class="notes-color-dot" style="background:#a5f3fc" onmousedown="ecosErrSetHighlight(event,'#a5f3fc')" ontouchstart="ecosErrSetHighlight(event,'#a5f3fc')"></div>
+      <div class="notes-color-dot" style="background:#bae6fd" onmousedown="ecosErrSetHighlight(event,'#bae6fd')" ontouchstart="ecosErrSetHighlight(event,'#bae6fd')"></div>
+      <div class="notes-color-dot" style="background:#c7d2fe" onmousedown="ecosErrSetHighlight(event,'#c7d2fe')" ontouchstart="ecosErrSetHighlight(event,'#c7d2fe')"></div>
+      <div class="notes-color-dot" style="background:#ddd6fe" onmousedown="ecosErrSetHighlight(event,'#ddd6fe')" ontouchstart="ecosErrSetHighlight(event,'#ddd6fe')"></div>
+      <div class="notes-color-dot" style="background:#fbcfe8" onmousedown="ecosErrSetHighlight(event,'#fbcfe8')" ontouchstart="ecosErrSetHighlight(event,'#fbcfe8')"></div>
+      <div class="notes-color-dot" style="background:#fecdd3" onmousedown="ecosErrSetHighlight(event,'#fecdd3')" ontouchstart="ecosErrSetHighlight(event,'#fecdd3')"></div>
+      <div class="notes-color-dot" style="background:#e7e5e4" onmousedown="ecosErrSetHighlight(event,'#e7e5e4')" ontouchstart="ecosErrSetHighlight(event,'#e7e5e4')"></div>
+      <div class="notes-color-dot" style="background:#e2e8f0" onmousedown="ecosErrSetHighlight(event,'#e2e8f0')" ontouchstart="ecosErrSetHighlight(event,'#e2e8f0')"></div>
+      <div class="notes-color-dot" style="background:#cbd5e1" onmousedown="ecosErrSetHighlight(event,'#cbd5e1')" ontouchstart="ecosErrSetHighlight(event,'#cbd5e1')"></div>
+      <div class="notes-color-dot" style="background:#e7d5c0" onmousedown="ecosErrSetHighlight(event,'#e7d5c0')" ontouchstart="ecosErrSetHighlight(event,'#e7d5c0')"></div>
+    </div>
+  </div>
 </div>
 
           <div class="notes-toolbar-sep"></div>
@@ -27161,24 +27278,66 @@ window.TPXNotesPending = {
       </div>
       <div class="notes-toolbar-sep"></div>
       <div class="notes-toolbar-group">
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetColor(event,'#ef4444')" data-tooltip="Texte rouge">
-          <span style="color:#ef4444;font-weight:800;">A</span>
-        </button>
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetColor(event,'#3b82f6')" data-tooltip="Texte bleu">
-          <span style="color:#3b82f6;font-weight:800;">A</span>
-        </button>
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetColor(event,'#10b981')" data-tooltip="Texte vert">
-          <span style="color:#10b981;font-weight:800;">A</span>
-        </button>
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetColor(event,'#4b5563')" data-tooltip="Texte gris">
-          <span style="color:#4b5563;font-weight:800;">A</span>
-        </button>
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetHighlight(event,'#fef08a')" data-tooltip="Surligner jaune">
-          <i class="fas fa-highlighter" style="color:#eab308;font-size:0.78rem;"></i>
-        </button>
-        <button type="button" class="notes-tool-btn" onmousedown="event.preventDefault();window._flashSetHighlight(event,'#bbf7d0')" data-tooltip="Surligner vert">
-          <i class="fas fa-highlighter" style="color:#22c55e;font-size:0.78rem;"></i>
-        </button>
+        <div class="notes-color-picker-wrapper">
+          <button type="button" class="notes-tool-btn" onmousedown="window._flashTogglePalette('flashTextPalette',event)" ontouchstart="window._flashTogglePalette('flashTextPalette',event)" data-tooltip="Couleur du texte">
+            <span class="notes-color-bar-btn">
+              <span class="notes-color-bar-label">A</span>
+              <span class="notes-color-bar" id="flashTextBar" style="background:#ef4444;"></span>
+            </span>
+          </button>
+          <div class="notes-color-palette" id="flashTextPalette">
+            <div class="notes-color-dot" style="background:#111827" onmousedown="window._flashSetColor(event,'#111827')" ontouchstart="window._flashSetColor(event,'#111827')"></div>
+            <div class="notes-color-dot" style="background:#ef4444" onmousedown="window._flashSetColor(event,'#ef4444')" ontouchstart="window._flashSetColor(event,'#ef4444')"></div>
+            <div class="notes-color-dot" style="background:#f97316" onmousedown="window._flashSetColor(event,'#f97316')" ontouchstart="window._flashSetColor(event,'#f97316')"></div>
+            <div class="notes-color-dot" style="background:#f59e0b" onmousedown="window._flashSetColor(event,'#f59e0b')" ontouchstart="window._flashSetColor(event,'#f59e0b')"></div>
+            <div class="notes-color-dot" style="background:#10b981" onmousedown="window._flashSetColor(event,'#10b981')" ontouchstart="window._flashSetColor(event,'#10b981')"></div>
+            <div class="notes-color-dot" style="background:#3b82f6" onmousedown="window._flashSetColor(event,'#3b82f6')" ontouchstart="window._flashSetColor(event,'#3b82f6')"></div>
+            <div class="notes-color-dot" style="background:#8b5cf6" onmousedown="window._flashSetColor(event,'#8b5cf6')" ontouchstart="window._flashSetColor(event,'#8b5cf6')"></div>
+            <div class="notes-color-dot" style="background:#ec4899" onmousedown="window._flashSetColor(event,'#ec4899')" ontouchstart="window._flashSetColor(event,'#ec4899')"></div>
+            <div class="notes-color-dot" style="background:#6b7280" onmousedown="window._flashSetColor(event,'#6b7280')" ontouchstart="window._flashSetColor(event,'#6b7280')"></div>
+            <div class="notes-color-dot" style="background:#eab308" onmousedown="window._flashSetColor(event,'#eab308')" ontouchstart="window._flashSetColor(event,'#eab308')"></div>
+            <div class="notes-color-dot" style="background:#84cc16" onmousedown="window._flashSetColor(event,'#84cc16')" ontouchstart="window._flashSetColor(event,'#84cc16')"></div>
+            <div class="notes-color-dot" style="background:#14b8a6" onmousedown="window._flashSetColor(event,'#14b8a6')" ontouchstart="window._flashSetColor(event,'#14b8a6')"></div>
+            <div class="notes-color-dot" style="background:#06b6d4" onmousedown="window._flashSetColor(event,'#06b6d4')" ontouchstart="window._flashSetColor(event,'#06b6d4')"></div>
+            <div class="notes-color-dot" style="background:#0ea5e9" onmousedown="window._flashSetColor(event,'#0ea5e9')" ontouchstart="window._flashSetColor(event,'#0ea5e9')"></div>
+            <div class="notes-color-dot" style="background:#6366f1" onmousedown="window._flashSetColor(event,'#6366f1')" ontouchstart="window._flashSetColor(event,'#6366f1')"></div>
+            <div class="notes-color-dot" style="background:#a855f7" onmousedown="window._flashSetColor(event,'#a855f7')" ontouchstart="window._flashSetColor(event,'#a855f7')"></div>
+            <div class="notes-color-dot" style="background:#f43f5e" onmousedown="window._flashSetColor(event,'#f43f5e')" ontouchstart="window._flashSetColor(event,'#f43f5e')"></div>
+            <div class="notes-color-dot" style="background:#78716c" onmousedown="window._flashSetColor(event,'#78716c')" ontouchstart="window._flashSetColor(event,'#78716c')"></div>
+            <div class="notes-color-dot" style="background:#1e293b" onmousedown="window._flashSetColor(event,'#1e293b')" ontouchstart="window._flashSetColor(event,'#1e293b')"></div>
+            <div class="notes-color-dot" style="background:#92400e" onmousedown="window._flashSetColor(event,'#92400e')" ontouchstart="window._flashSetColor(event,'#92400e')"></div>
+          </div>
+        </div>
+        <div class="notes-color-picker-wrapper">
+          <button type="button" class="notes-tool-btn" onmousedown="window._flashTogglePalette('flashHighlightPalette',event)" ontouchstart="window._flashTogglePalette('flashHighlightPalette',event)" data-tooltip="Surligner">
+            <span class="notes-color-bar-btn">
+              <i class="fas fa-highlighter" style="font-size:0.7rem;line-height:1;"></i>
+              <span class="notes-color-bar" id="flashHighlightBar" style="background:#fef08a;"></span>
+            </span>
+          </button>
+          <div class="notes-color-palette" id="flashHighlightPalette">
+            <div class="notes-color-dot" style="background:#fef08a" onmousedown="window._flashSetHighlight(event,'#fef08a')" ontouchstart="window._flashSetHighlight(event,'#fef08a')"></div>
+            <div class="notes-color-dot" style="background:#bbf7d0" onmousedown="window._flashSetHighlight(event,'#bbf7d0')" ontouchstart="window._flashSetHighlight(event,'#bbf7d0')"></div>
+            <div class="notes-color-dot" style="background:#bfdbfe" onmousedown="window._flashSetHighlight(event,'#bfdbfe')" ontouchstart="window._flashSetHighlight(event,'#bfdbfe')"></div>
+            <div class="notes-color-dot" style="background:#fecaca" onmousedown="window._flashSetHighlight(event,'#fecaca')" ontouchstart="window._flashSetHighlight(event,'#fecaca')"></div>
+            <div class="notes-color-dot" style="background:#e9d5ff" onmousedown="window._flashSetHighlight(event,'#e9d5ff')" ontouchstart="window._flashSetHighlight(event,'#e9d5ff')"></div>
+            <div class="notes-color-dot" style="background:#fed7aa" onmousedown="window._flashSetHighlight(event,'#fed7aa')" ontouchstart="window._flashSetHighlight(event,'#fed7aa')"></div>
+            <div class="notes-color-dot" style="background:#f1f5f9;border:2px solid #d1d5db;" onmousedown="window._flashSetHighlight(event,'transparent')" ontouchstart="window._flashSetHighlight(event,'transparent')"></div>
+            <div class="notes-color-dot" style="background:#fef9c3" onmousedown="window._flashSetHighlight(event,'#fef9c3')" ontouchstart="window._flashSetHighlight(event,'#fef9c3')"></div>
+            <div class="notes-color-dot" style="background:#d9f99d" onmousedown="window._flashSetHighlight(event,'#d9f99d')" ontouchstart="window._flashSetHighlight(event,'#d9f99d')"></div>
+            <div class="notes-color-dot" style="background:#99f6e4" onmousedown="window._flashSetHighlight(event,'#99f6e4')" ontouchstart="window._flashSetHighlight(event,'#99f6e4')"></div>
+            <div class="notes-color-dot" style="background:#a5f3fc" onmousedown="window._flashSetHighlight(event,'#a5f3fc')" ontouchstart="window._flashSetHighlight(event,'#a5f3fc')"></div>
+            <div class="notes-color-dot" style="background:#bae6fd" onmousedown="window._flashSetHighlight(event,'#bae6fd')" ontouchstart="window._flashSetHighlight(event,'#bae6fd')"></div>
+            <div class="notes-color-dot" style="background:#c7d2fe" onmousedown="window._flashSetHighlight(event,'#c7d2fe')" ontouchstart="window._flashSetHighlight(event,'#c7d2fe')"></div>
+            <div class="notes-color-dot" style="background:#ddd6fe" onmousedown="window._flashSetHighlight(event,'#ddd6fe')" ontouchstart="window._flashSetHighlight(event,'#ddd6fe')"></div>
+            <div class="notes-color-dot" style="background:#fbcfe8" onmousedown="window._flashSetHighlight(event,'#fbcfe8')" ontouchstart="window._flashSetHighlight(event,'#fbcfe8')"></div>
+            <div class="notes-color-dot" style="background:#fecdd3" onmousedown="window._flashSetHighlight(event,'#fecdd3')" ontouchstart="window._flashSetHighlight(event,'#fecdd3')"></div>
+            <div class="notes-color-dot" style="background:#e7e5e4" onmousedown="window._flashSetHighlight(event,'#e7e5e4')" ontouchstart="window._flashSetHighlight(event,'#e7e5e4')"></div>
+            <div class="notes-color-dot" style="background:#e2e8f0" onmousedown="window._flashSetHighlight(event,'#e2e8f0')" ontouchstart="window._flashSetHighlight(event,'#e2e8f0')"></div>
+            <div class="notes-color-dot" style="background:#cbd5e1" onmousedown="window._flashSetHighlight(event,'#cbd5e1')" ontouchstart="window._flashSetHighlight(event,'#cbd5e1')"></div>
+            <div class="notes-color-dot" style="background:#e7d5c0" onmousedown="window._flashSetHighlight(event,'#e7d5c0')" ontouchstart="window._flashSetHighlight(event,'#e7d5c0')"></div>
+          </div>
+        </div>
       </div>
       <div class="notes-toolbar-sep"></div>
       <div class="notes-toolbar-group">
@@ -30342,6 +30501,26 @@ function ecosErrUpdateToolbar() {
         var b = document.getElementById('ecosErrBtn' + f);
         if (b) b.classList.toggle('active', document.queryCommandState(f === 'Strike' ? 'strikeThrough' : f.toLowerCase()));
     });
+    // BUGFIX (2026-09-10) : idem notesUpdateToolbar -- la pastille de
+    // couleur active n'etait jamais mise en valeur. notesRgbToHex est
+    // declaree plus bas dans ce fichier mais reste disponible ici (les
+    // declarations `function` sont hissees en haut de leur portee).
+    if (typeof notesRgbToHex === 'function') {
+        var textColor = document.queryCommandValue('foreColor');
+        var hexColor = notesRgbToHex(textColor);
+        document.querySelectorAll('#errTextPalette .notes-color-dot').forEach(function (dot) {
+            dot.classList.toggle('active', notesRgbToHex(dot.style.background) === hexColor);
+        });
+        var tBar = document.getElementById('errTextBar');
+        if (tBar && hexColor && hexColor !== 'transparent') tBar.style.background = hexColor;
+        var hlColor = document.queryCommandValue('hiliteColor') || document.queryCommandValue('backColor');
+        var hexHl = notesRgbToHex(hlColor);
+        document.querySelectorAll('#errHighlightPalette .notes-color-dot').forEach(function (dot) {
+            dot.classList.toggle('active', notesRgbToHex(dot.style.background) === hexHl);
+        });
+        var hBar = document.getElementById('errHighlightBar');
+        if (hBar) hBar.style.background = (!hexHl || hexHl === 'transparent') ? '#fef08a' : hexHl;
+    }
     ecosErrUpdateCount();
 }
 
@@ -32500,6 +32679,24 @@ function notesUpdateToolbar() {
         try { isActive = document.queryCommandState(map[id]); } catch(e) {}
         btn.classList.toggle('active', !!isActive);
     });
+    // BUGFIX (2026-09-10) : marquait uniquement gras/italique/souligne/barre
+    // comme actifs -- la pastille de couleur correspondant a la couleur
+    // reellement appliquee au point d'insertion n'etait jamais mise en
+    // valeur (contrairement a TableurEnLigne.html). Meme logique que la-bas.
+    var textColor = document.queryCommandValue('foreColor');
+    var hexColor = notesRgbToHex(textColor);
+    document.querySelectorAll('#sddTextPalette .notes-color-dot').forEach(function (dot) {
+        dot.classList.toggle('active', notesRgbToHex(dot.style.background) === hexColor);
+    });
+    var tBar = document.getElementById('sddTextBar');
+    if (tBar && hexColor && hexColor !== 'transparent') tBar.style.background = hexColor;
+    var hlColor = document.queryCommandValue('hiliteColor') || document.queryCommandValue('backColor');
+    var hexHl = notesRgbToHex(hlColor);
+    document.querySelectorAll('#sddHighlightPalette .notes-color-dot').forEach(function (dot) {
+        dot.classList.toggle('active', notesRgbToHex(dot.style.background) === hexHl);
+    });
+    var hBar = document.getElementById('sddHighlightBar');
+    if (hBar) hBar.style.background = (!hexHl || hexHl === 'transparent') ? '#fef08a' : hexHl;
 }
 window.notesUpdateToolbar = notesUpdateToolbar;
 document.addEventListener('selectionchange', function() {
@@ -32528,6 +32725,131 @@ function notesSetHighlight(event, color) {
     document.getElementById('sdd-notes-editor').focus();
     notesOnInput();
 }
+/* ═══ DESIGN (2026-09-10) : palette de couleurs deroulante (notes SDD /
+   cahier d'erreurs / flashcards ECOS) ═══
+   Meme systeme que sur TableurEnLigne.html : le bouton "A" (texte) et le
+   surligneur ouvrent desormais une grille de 20 teintes fixes en carres
+   arrondis, au lieu d'une poignee de boutons individuels par couleur. Les
+   fonctions qui APPLIQUENT la couleur (notesSetColor/notesSetHighlight,
+   ecosErrSetColor/ecosErrSetHighlight, window._flashSetColor/Highlight)
+   sont TOTALEMENT INCHANGEES : seule l'interface qui les declenche change.
+   Le mecanisme (execCommand foreColor/hiliteColor) et donc les donnees
+   deja enregistrees ne bougent pas.
+   Gestion tactile (demande explicite) : bouton bascule ET chaque pastille
+   ont a la fois onmousedown ET ontouchstart, avec un garde-fou anti-double-
+   declenchement (~600ms) car le mobile synthetise souvent un mousedown
+   APRES un touchstart sur le meme geste — sans ce garde-fou la palette
+   s'ouvrirait puis se refermerait aussitot sur un simple tap. Identique au
+   mecanisme deja utilise et testé sur TableurEnLigne.html. */
+/* BUGFIX (2026-09-10) : convertit une couleur "rgb(r, g, b)" (format
+   renvoye par document.queryCommandValue) en hex, pour pouvoir la comparer
+   au "style.background" (hex) des pastilles et savoir laquelle est active.
+   N'existait pas du tout dans ce fichier -- sans elle, aucune pastille
+   n'etait jamais marquee .active (la coche de selection n'apparaissait
+   jamais), contrairement a TableurEnLigne.html qui a deja cette fonction.
+   Egalement utilisee par _flashUpdateToolbar plus bas (deja ecrite pour
+   s'en servir si elle existe, avec repli sur une fonction identite tant
+   qu'elle manquait) : sa couleur active se met donc AUSSI a jour
+   correctement a partir de maintenant, sans rien changer a ce fichier-la. */
+function notesRgbToHex(str) {
+    if (!str || str === 'transparent' || str === 'rgba(0, 0, 0, 0)') return 'transparent';
+    var m = str.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!m) return (str || '').toLowerCase().replace(/\s/g, '');
+    return '#' + [m[1], m[2], m[3]].map(function (x) {
+        return ('0' + parseInt(x).toString(16)).slice(-2);
+    }).join('');
+}
+
+var _ecosLastTouchPalette = 0;
+function ecosTogglePalette(id, event) {
+    if (event) {
+        if (event.type === 'touchstart') { _ecosLastTouchPalette = Date.now(); }
+        else if (event.type === 'mousedown' && Date.now() - _ecosLastTouchPalette < 600) return;
+    }
+    var palette = document.getElementById(id);
+    if (!palette) return;
+    var isOpen = palette.classList.contains('open');
+    ecosCloseAllPalettes();
+    if (!isOpen) { palette.classList.add('open'); _ecosRepositionPalette(palette); }
+}
+function ecosCloseAllPalettes() {
+    document.querySelectorAll('.notes-color-palette').forEach(function (p) {
+        p.classList.remove('open');
+        p.style.position = ''; p.style.left = ''; p.style.top = ''; p.style.transform = '';
+        p.style.zIndex = '';
+        if (p._ecosOrigParent && p.parentElement !== p._ecosOrigParent) {
+            if (p._ecosOrigNext && p._ecosOrigNext.parentNode === p._ecosOrigParent) {
+                p._ecosOrigParent.insertBefore(p, p._ecosOrigNext);
+            } else {
+                p._ecosOrigParent.appendChild(p);
+            }
+        }
+    });
+}
+/* Sort la palette de la toolbar en position:fixed (coordonnees ecran
+   pures) pour echapper a tout overflow:hidden/auto d'un ancetre (corps de
+   modal scrollable...) — inconditionnel ici (contrairement a la version
+   TableurEnLigne.html qui ne le fait que si la toolbar defile
+   horizontalement) : les toolbars ECOS passent a la ligne (flex-wrap) au
+   lieu de defiler, donc rien ne permet de detecter le meme cas ; sortir
+   systematiquement est le choix le plus sûr, sans inconvenient sur desktop.
+   BUGFIX (meme categorie que sur TableurEnLigne.html) : sur telephone,
+   quand la modal flashcards ECOS est epinglee au-dessus du clavier virtuel
+   (tc-phone-flashkb / tc-kb-open), un position:fixed "natif" pose sur un
+   element SORTI de cette zone deja epinglee se positionne de facon
+   incoherente sur Safari iOS face au clavier — on reparente alors DANS
+   l'overlay deja epingle et on positionne en absolute par rapport a lui,
+   plutot que dans <body> en fixed. */
+function _ecosRepositionPalette(palette) {
+    var wrapper = palette.closest('.notes-color-picker-wrapper');
+    var btn = wrapper ? (wrapper.querySelector('.notes-tool-btn') || wrapper) : palette;
+    var r = btn.getBoundingClientRect();
+    var kbPinnedOverlay = (document.body.classList.contains('tc-phone-flashkb') || document.body.classList.contains('tc-kb-open'))
+        ? palette.closest('#flashEditOverlay.active')
+        : null;
+    if (kbPinnedOverlay) {
+        if (palette.parentElement !== kbPinnedOverlay) {
+            palette._ecosOrigParent = palette.parentElement;
+            palette._ecosOrigNext = palette.nextSibling;
+            kbPinnedOverlay.appendChild(palette);
+        }
+        var or = kbPinnedOverlay.getBoundingClientRect();
+        palette.style.position = 'absolute';
+        palette.style.zIndex = '100050';
+        var pwPinned = palette.offsetWidth || 150;
+        var cxPinned = Math.max(pwPinned / 2 + 8, Math.min(or.width - pwPinned / 2 - 8, (r.left + r.width / 2) - or.left));
+        palette.style.left = cxPinned + 'px';
+        palette.style.top = (r.bottom - or.top + 6) + 'px';
+        palette.style.transform = 'translateX(-50%)';
+        return;
+    }
+    if (palette.parentElement !== document.body) {
+        palette._ecosOrigParent = palette.parentElement;
+        palette._ecosOrigNext = palette.nextSibling;
+        document.body.appendChild(palette);
+    }
+    palette.style.position = 'fixed';
+    palette.style.zIndex = '100050';
+    var pw = palette.offsetWidth || 150;
+    var cx = Math.max(pw / 2 + 8, Math.min(window.innerWidth - pw / 2 - 8, r.left + r.width / 2));
+    palette.style.left = cx + 'px';
+    palette.style.top = (r.bottom + 6) + 'px';
+    palette.style.transform = 'translateX(-50%)';
+}
+/* Fermeture au clic/tap en dehors — mousedown ET touchstart pour rester
+   fiable sur tactile pur (pas de mousedown synthetise avant un certain
+   delai sur certains navigateurs mobiles). */
+document.addEventListener('mousedown', function (e) {
+    if (!e.target.closest('.notes-color-picker-wrapper') && !e.target.closest('.notes-color-palette')) {
+        ecosCloseAllPalettes();
+    }
+});
+document.addEventListener('touchstart', function (e) {
+    if (!e.target.closest('.notes-color-picker-wrapper') && !e.target.closest('.notes-color-palette')) {
+        ecosCloseAllPalettes();
+    }
+}, { passive: true });
+
 function notesClear() {
     var editor = document.getElementById('sdd-notes-editor');
     if (editor && typeof window._deleteEditorImagesFromHtml === 'function') window._deleteEditorImagesFromHtml(editor.innerHTML || '');
@@ -36904,12 +37226,27 @@ function speCfg(id) {
     document.querySelectorAll('#flashHighlightPalette .notes-color-dot').forEach(function(d){ d.classList.toggle('active', rgb2hex(d.style.background) === hlhex); });
     var hBar = document.getElementById('flashHighlightBar'); if (hBar) hBar.style.background = (!hlhex || hlhex === 'transparent') ? '#fef08a' : hlhex;
   }
+  /* BUGFIX (2026-09-10) : garde-fou anti-double-declenchement tactile (le
+     mobile synthetise souvent un mousedown APRES un touchstart sur le
+     meme geste — sans lui la palette s'ouvrait puis se refermait aussitot
+     sur un simple tap) + repositionnement fiable (echappe a un eventuel
+     overflow d'ancetre, et gere le cas modal epinglee au-dessus du clavier
+     virtuel telephone) — meme mecanisme que ecosTogglePalette ci-dessus. */
+  var _flashLastTouchPalette = 0;
   function _flashTogglePalette(id, event) {
-    if (event) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      if (event.type === 'touchstart') { _flashLastTouchPalette = Date.now(); }
+      else if (event.type === 'mousedown' && Date.now() - _flashLastTouchPalette < 600) return;
+    }
     var pal = document.getElementById(id); if (!pal) return;
     var isOpen = pal.classList.contains('open');
-    document.querySelectorAll('.notes-color-palette.open').forEach(function(p){ p.classList.remove('open'); });
-    if (!isOpen) pal.classList.add('open');
+    if (typeof ecosCloseAllPalettes === 'function') ecosCloseAllPalettes();
+    else document.querySelectorAll('.notes-color-palette.open').forEach(function(p){ p.classList.remove('open'); });
+    if (!isOpen) {
+      pal.classList.add('open');
+      if (typeof _ecosRepositionPalette === 'function') _ecosRepositionPalette(pal);
+    }
   }
   function _flashSetColor(event, color) {
     if (event) event.preventDefault();
