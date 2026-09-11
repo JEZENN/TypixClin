@@ -1776,6 +1776,21 @@ async function doRestore(uid, source, versionId) {
         const updateData = {};
         planningFields.forEach(f => { if (dataToRestore[f] !== undefined) updateData[f] = dataToRestore[f]; });
 
+        // BUGFIX 2026-09-11 : confidenceScale (barème 5 ou 10) vit dans CE MÊME
+        // document, à côté de items — partout ailleurs dans le tableur, les deux
+        // sont toujours lus/écrits ensemble (cf. TableurEnLigne.html, logique
+        // "MISSION CORRECTIVE" de conversion de barème). En ne restaurant que
+        // items sans confidenceScale, le document se retrouvait avec des valeurs
+        // de confiance écrites sous UN barème (celui de la sauvegarde) et un
+        // confidenceScale resté à l'ancien barème (celui du compte au moment de
+        // la restauration) — état que l'app n'a jamais prévu, d'où le plantage.
+        // Toujours forcé depuis la MÊME sauvegarde que items, jamais laissé à la
+        // valeur actuellement en base ; absent de la sauvegarde = barème
+        // historique 5 (même convention que partout ailleurs dans le code).
+        if (updateData.items !== undefined) {
+            updateData.confidenceScale = (dataToRestore.confidenceScale === 10) ? 10 : 5;
+        }
+
         if (Object.keys(updateData).length === 0) throw new Error('Aucun champ de planning à restaurer');
 
         // Sécurité anti-corruption : refuser une restauration qui viderait le planning
