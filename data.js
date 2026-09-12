@@ -10,7 +10,8 @@ var BADGE_CONFIG = {
 	'chir-vasc': { label: 'Chir Vasc', class: 'chir-vasc' },
     'ortho': { label: 'Ortho', class: 'ortho' },
 	'genet': { label: 'Genet', class: 'genet' },
-	'parasito': { label: 'Parasito', class: 'parasito' }
+	'parasito': { label: 'Parasito', class: 'parasito' },
+	'medgen': { label: 'Méd Gé', class: 'medgen' }
 };
 
 var SPECIALTY_SHORT = {
@@ -59,13 +60,13 @@ var ITEM_BADGES = {
     'oncologie|Cancérologie': 'anapath',
     
     // CMF (orl)
-    'orl|Développement bucco-dentaire et anomalies': 'cmf',
+    'orl|Développement bucco-dentaire et anomalies': ['cmf', 'medgen'], // BUGFIX 2026-09-13 : medgen ajouté EN PLUS, sans écraser cmf
     'orl|Traumatologie maxillo-faciale': 'cmf',
     'orl|Tumeurs des os de la face': 'cmf',
     'orl|Tumeurs cutanées épithéliales et mélaniques de la face': 'cmf',
     'orl|Malformations vasculaires et hémangiomes de la face': 'cmf',
     'orl|Cellulite faciale origine dentaire': 'cmf',
-    'orl|Pathologies non tumorales de la muqueuse buccale': 'cmf',
+    'orl|Pathologies non tumorales de la muqueuse buccale': ['cmf', 'medgen'], // BUGFIX 2026-09-13
     'orl|Pathologies des glandes salivaires': 'cmf',
     
     // Neurochir (neurologie)
@@ -91,22 +92,22 @@ var ITEM_BADGES = {
     'cardiologie|Artériopathies aorte et membres inférieurs': 'chir-vasc',
     
     // Nutrition (endocrinologie)
-    'endocrinologie|Prévention primaire par la nutrition': 'nutrition',
+    'endocrinologie|Prévention primaire par la nutrition': ['nutrition', 'medgen'], // BUGFIX 2026-09-13
     'endocrinologie|Modifications thérapeutiques du mode de vie (nutrition)': 'nutrition',
-    'endocrinologie|Aptitude au sport et nutrition du sportif': 'nutrition',
+    'endocrinologie|Aptitude au sport et nutrition du sportif': ['nutrition', 'medgen'], // BUGFIX 2026-09-13
     'endocrinologie|Besoins nutritionnels et grossesse': 'nutrition',
-    'endocrinologie|Allaitement maternel': 'nutrition',
+    'endocrinologie|Allaitement maternel': ['nutrition', 'medgen'], // BUGFIX 2026-09-13
     'endocrinologie|Amaigrissement à tous les âges (nutrition)': 'nutrition',
     'endocrinologie|Dénutrition adulte enfant': 'nutrition',
     'endocrinologie|Troubles nutritionnels du sujet âgé': 'nutrition',
     'endocrinologie|Troubles des conduites alimentaires adolescent et adulte (Nutrition)': 'nutrition',
     
     // MPR (geriatrie)
-    'geriatrie|Éthique médicale et protection juridique': 'mpr',
+    'geriatrie|Éthique médicale et protection juridique': ['mpr', 'medgen'], // BUGFIX 2026-09-13
     'geriatrie|Santé des populations': 'mpr',
     'geriatrie|Enfant handicapé : orientation et prise en charge': 'mpr',
     'geriatrie|Compression médullaire non traumatique et syndrome de la queue de cheval': 'mpr',
-    'geriatrie|Rachialgie': 'mpr',
+    'geriatrie|Rachialgie': ['mpr', 'medgen'], // BUGFIX 2026-09-13
     'geriatrie|Sclérose en plaques': 'mpr',
     'geriatrie|Maladie de Parkinson': 'mpr',
     'geriatrie|Troubles marche et équilibre': 'mpr',
@@ -118,8 +119,8 @@ var ITEM_BADGES = {
     'geriatrie|Polyarthrite rhumatoïde': 'mpr',
     'geriatrie|Spondylarthrite': 'mpr',
     'geriatrie|Syndrome douloureux régional complexe': 'mpr',
-    'geriatrie|Modifications thérapeutiques du mode de vie': 'mpr',
-    'geriatrie|Aptitude au sport adulte et enfant': 'mpr',
+    'geriatrie|Modifications thérapeutiques du mode de vie': ['mpr', 'medgen'], // BUGFIX 2026-09-13
+    'geriatrie|Aptitude au sport adulte et enfant': ['mpr', 'medgen'], // BUGFIX 2026-09-13
     'geriatrie|Thérapeutiques non médicamenteuses et dispositifs médicaux': 'mpr',
     'geriatrie|Accidents vasculaires cérébraux': 'mpr',
     
@@ -138,7 +139,7 @@ var ITEM_BADGES = {
     'osteo|Fractures extrémité inférieure du radius (ITEM 363 LISA UNIQUE)': 'ortho',
     'osteo|Surveillance malade sous plâtre ou résine': 'ortho',
     'osteo|Prise en charge immédiate préhospitalière et intrahospitalière (ITEM 334 LISA UNIQUE)': 'ortho',
-    'osteo|Dépistage des anomalies orthopédiques': 'ortho',
+    'osteo|Dépistage des anomalies orthopédiques': ['ortho', 'medgen'], // BUGFIX 2026-09-13
     'osteo|Fractures chez enfant': 'ortho',
 	
 	// génétique 
@@ -155,9 +156,181 @@ var ITEM_BADGES = {
 	'infectiologie|Gale et pédiculose': 'parasito',
 	'infectiologie|Parasitoses digestives': 'parasito',
 	'infectiologie|Zoonoses': 'parasito',
-	'infectiologie|Voyage en pays tropical': 'parasito'
-	
+	'infectiologie|Voyage en pays tropical': ['parasito', 'medgen'], // BUGFIX 2026-09-13
+
+	// médecine générale (2026-09-11 : premier lot d'items sans ambiguïté —
+	// un seul rattachement en data.js, correspondant au collège LiSA
+	// "Médecine générale (CNGE)" en écriture.)
+
+	'geriatrie|Autonomie et dépendance chez la personne âgée': 'medgen',
+	'infectiologie|Grippe': 'medgen',
+	'dermatologie|Grosse jambe rouge aiguë': 'medgen',
+
+	// médecine générale (2026-09-12 : second lot, à partir de la table des
+	// matières du référentiel officiel du Collège (liste communiquée par
+	// l'utilisateur, 70 items/chapitres). Chaque occurrence data.js du même
+	// numéro d'item a été rattachée, SAUF celles qui portaient déjà un AUTRE
+	// badge avant cet ajout (11 occurrences volontairement laissées
+	// inchangées, pour ne pas écraser un rattachement déjà choisi sans
+	// validation explicite — cf. rapport fourni séparément) et l'item #119
+	// (absent de data.js sous ce numéro).)
+
+	'sante-publique|Discriminations et santé': 'medgen',
+	'gynecologie|Éthique médicale': 'medgen',
+	'geriatrie|Introduction à l’éthique médicale': 'medgen',
+	'medecine-legale|Introduction à l’éthique médicale': 'medgen',
+	'medecine-legale|Violence et santé': 'medgen',
+	'gynecologie|Grossesse normale': 'medgen',
+	'nephrologie|Grossesse normale et complications vasculo-rénales': 'medgen',
+	'gynecologie|Prévention des risques fœtaux : infections et médicaments': 'medgen',
+	'gynecologie|Prévention des risques fœtaux : toxiques et irradiations': 'medgen',
+	'infectiologie|Prévention des risques fœtaux': 'medgen',
+	'gynecologie|Allaitement': 'medgen',
+	'gynecologie|Contraception': 'medgen',
+	'endocrinologie|Contraception': 'medgen',
+	'urologie|Contraception masculine': 'medgen',
+	'gynecologie|Interruption volontaire de grossesse': 'medgen',
+	'pediatrie|Dépistages chez l’enfant (+ITEM 52 et 89)': 'medgen',
+	'pediatrie|Suivi médical pédiatrique (+ITEM 59 et 256)': 'medgen',
+	'ophtalmologie|Suivi d’un nourrisson': 'medgen',
+	'psychiatrie|Développement psychomoteur du nourrisson et de l’enfant': 'medgen',
+	'pediatrie|Développement psychomoteur du nourrisson et de l’enfant': 'medgen',
+	'gynecologie|Puberté normale et pathologique': 'medgen',
+	'pediatrie|Puberté normale et pathologique': 'medgen',
+	'psychiatrie|Épisode dépressif caractérisé et trouble dépressif récurrent (ITEM 66 LISA UNIQUE)': 'medgen',
+	'psychiatrie|Troubles anxieux et troubles de la personnalité (ITEM 66 LISA UNIQUE)': 'medgen',
+	'psychiatrie|Troubles à symptomatologie somatique et apparentés': 'medgen',
+	'douleur|Fibromyalgie': 'medgen',
+	'medecine-interne|Troubles à symptomatologie somatique': 'medgen',
+	'psychiatrie|Prescription et surveillance des psychotropes': 'medgen',
+	'pneumologie|Addiction au tabac': 'medgen',
+	'psychiatrie|Addiction au tabac': 'medgen',
+	'sante-publique|Addiction au tabac': 'medgen',
+	'neurologie|Addiction à l’alcool et complications': 'medgen',
+	'psychiatrie|Addiction à l’alcool': 'medgen',
+	'sante-publique|Addiction à l’alcool': 'medgen',
+	'psychiatrie|Addictions comportementales': 'medgen',
+	'sante-publique|Addictions comportementales': 'medgen',
+	'psychiatrie|Dopage et conduites dopantes': 'medgen',
+	'osteo|Rachialgie': 'medgen',
+	'douleur|Lombalgies et radiculalgies chroniques': 'medgen',
+	'urologie|Douleurs lombaires aigues': 'medgen',
+	'orl|Migraine, névralgie V et algies de la face': 'medgen',
+	'neurologie|Migraine, névralgie du trijumeau et algies de la face': 'medgen',
+	'douleur|Céphalées, migraines, algies vasculaires et névralgies faciales': 'medgen',
+	'neurologie|Troubles marche et équilibre': 'medgen',
+	'osteo|Troubles marche et équilibre': 'medgen',
+	'geriatrie|Raisonner devant une chute et démarche diagnostique et thérapeutique': 'medgen',
+	'pneumologie|Troubles du sommeil de l’enfant et de l’adulte': 'medgen',
+	'orl|Troubles du sommeil': 'medgen',
+	'neurologie|Troubles du sommeil': 'medgen',
+	'psychiatrie|Troubles du sommeil de l’enfant et de l’adulte': 'medgen',
+	'pediatrie|Troubles du sommeil et SAOS': 'medgen',
+	'dermatologie|Dermatoses faciales : acné, rosacée, dermatite séborrhéique': 'medgen',
+	'geriatrie|Vieillissement normal': 'medgen',
+	'geriatrie|Raisonner devant une plainte mnésique et un trouble neurocognitif': 'medgen',
+	'geriatrie|Prendre une décision de soins palliatifs et accompagner le patient': 'medgen',
+	'douleur|Soins palliatifs : repères cliniques et organisation': 'medgen',
+	'psychiatrie|Deuil normal et pathologique': 'medgen',
+	'infectiologie|Surveillance des maladies infectieuses transmissibles': 'medgen',
+	'sante-publique|Surveillance des maladies infectieuses transmissibles': 'medgen',
+	'pediatrie|Vaccinations': 'medgen',
+	'infectiologie|Vaccinations': 'medgen',
+	'sante-publique|Vaccinations': 'medgen',
+	'pediatrie|Fièvre aiguë': 'medgen',
+	'infectiologie|Fièvre aiguë chez l’enfant et l’adulte': 'medgen',
+	'orl|Infections nasosinusiennes': 'medgen',
+	'orl|Corps étrangers ORL': 'medgen',
+	'pediatrie|Rhinopharyngite aiguë': 'medgen',
+	'pediatrie|Sinusites': 'medgen',
+	'infectiologie|Infections naso-sinusiennes de l’adulte et de l’enfant': 'medgen',
+	'orl|Angines et rhinopharyngites': 'medgen',
+	'pediatrie|Angines': 'medgen',
+	'infectiologie|Angines de l’adulte et de l’enfant et rhinopharyngites de l’enfant': 'medgen',
+	'orl|Otites infectieuses': 'medgen',
+	'pediatrie|Otites': 'medgen',
+	'infectiologie|Otites infectieuses de l’adulte et de l’enfant': 'medgen',
+	'pneumologie|Infections broncho-pulmonaires communautaires de l’adulte': 'medgen',
+	'pediatrie|Bronchiolite aiguë du nourrisson': 'medgen',
+	'pediatrie|Pneumonies aiguës communautaires': 'medgen',
+	'mir|Pneumonie aiguë communautaire grave': 'medgen',
+	'infectiologie|Infections broncho-pulmonaires communautaires de l’adulte et de l’enfant': 'medgen',
+	'pediatrie|Infections urinaires': 'medgen',
+	'mir|Sepsis urinaire grave': 'medgen',
+	'nephrologie|Infections urinaires de l’adulte et de l’enfant': 'medgen',
+	'infectiologie|Infections urinaires de l’adulte et au cours de la grossesse': 'medgen',
+	'urologie|Infections urinaires de l’adulte et de l’enfant': 'medgen',
+	'gynecologie|Infections génitales de la femme': 'medgen',
+	'infectiologie|Infections sexuellement transmissibles': 'medgen',
+	'dermatologie|Infections sexuellement transmissibles': 'medgen',
+	'neurologie|Infections à herpès virus et infections par le VIH': 'medgen',
+	'infectiologie|Infections à herpès virus du sujet immunocompétent': 'medgen',
+	'dermatologie|Infections à herpès virus du sujet immunocompétent': 'medgen',
+	'pediatrie|Spécificités infectiologiques pédiatriques': 'medgen',
+	'mir|Antibiothérapie d’urgence': 'medgen',
+	'infectiologie|Prescription et surveillance des anti-infectieux chez l’adulte et l’enfant': 'medgen',
+	'pneumologie|Toux chez l’adulte': 'medgen',
+	'pediatrie|Toux': 'medgen',
+	'pneumologie|Bronchopneumopathie chronique obstructive': 'medgen',
+	'mir|Insuffisance respiratoire aiguë du patient BPCO': 'medgen',
+	'cardiologie|Athérome et patient polyathéromateux': 'medgen',
+	'sante-publique|Athérome : épidémiologie et physiopathologie': 'medgen',
+	'cardiologie|Facteurs de risque cardiovasculaires et prévention': 'medgen',
+	'sante-publique|Facteurs de risque cardiovasculaire et prévention': 'medgen',
+	'cardiologie|Dyslipidémies': 'medgen',
+	'endocrinologie|Dyslipidémies': 'medgen',
+	'cardiologie|Hypertension artérielle': 'medgen',
+	'pediatrie|Hypertension artérielle de l’enfant': 'medgen',
+	'endocrinologie|HTA de l’adulte (causes endocriniennes)': 'medgen',
+	'mir|Urgences hypertensives et HTA maligne': 'medgen',
+	'nephrologie|Hypertension artérielle de l’adulte et de l’enfant': 'medgen',
+	'medecine-interne|Hypertension artérielle de l\'adulte': 'medgen',
+	'ophtalmologie|Rétinopathie hypertensive': 'medgen',
+	'cardiologie|Palpitations et troubles du rythme': 'medgen',
+	'pediatrie|Diabète de type 1 et de type 2': 'medgen',
+	'endocrinologie|Diabète de type 1, type 2 et complications': 'medgen',
+	'mir|Acidocétose diabétique et état hyperosmolaire': 'medgen',
+	'nephrologie|Néphropathies diabétiques': 'medgen',
+	'ophtalmologie|Rétinopathie diabétique': 'medgen',
+	'endocrinologie|Modifications thérapeutiques du mode de vie': 'medgen',
+	'pediatrie|Dénutrition chez l’adulte et l’enfant': 'medgen',
+	'endocrinologie|Dénutrition adulte et enfant': 'medgen',
+	'endocrinologie|Amaigrissement à tous les âges': 'medgen',
+	'medecine-interne|Amaigrissement à tous les âges': 'medgen',
+	'pediatrie|Obésité de l’enfant et de l’adulte': 'medgen',
+	'endocrinologie|Obésité enfant et adulte': 'medgen',
+	'osteo|Aptitude au sport': 'medgen',
+	'hge|Reflux gastro-œsophagien et hernie hiatale': 'medgen',
+	'pediatrie|Reflux gastro-œsophagien': 'medgen',
+	'hge|Constipation': 'medgen',
+	'pediatrie|Constipation': 'medgen',
+	'hge|Colopathie fonctionnelle': 'medgen',
+	'hge|Diarrhée aiguë': 'medgen',
+	'pediatrie|Diarrhée aiguë': 'medgen',
+	'gynecologie|Épidémiologie, facteurs de risque et prévention des cancers': 'medgen',
+	'oncologie|Épidémiologie, facteurs de risque, prévention et dépistage des cancers': 'medgen',
+	'medecine-legale|Cancers': 'medgen',
+	'sante-publique|Épidémiologie, facteurs de risque, prévention et dépistage des cancers': 'medgen',
+	'oncologie|Diagnostic des cancers, signes d’appel et investigations paracliniques': 'medgen',
+	'gynecologie|Tumeurs du col et du corps utérin': 'medgen',
+	'oncologie|Tumeurs du col utérin et du corps utérin': 'medgen',
+	'hge|Tumeurs colorectales': 'medgen',
+	'oncologie|Tumeurs du côlon et du rectum': 'medgen',
+	'gynecologie|Tumeurs du sein': 'medgen',
+	'oncologie|Tumeurs du sein': 'medgen',
+	'therapeutique|Choix et décision thérapeutique': 'medgen',
+	'therapeutique|Décision thérapeutique personnalisée': 'medgen',
+	'geriatrie|Apprendre à prescrire chez le patient âgé': 'medgen',
+	'therapeutique|Éducation thérapeutique, observance et automédication': 'medgen',
+	'medecine-interne|Éducation thérapeutique et observance': 'medgen',
+	'therapeutique|Thérapeutiques non médicamenteuses et dispositifs médicaux': 'medgen',
+	'psychiatrie|Risque et conduites suicidaires': 'medgen',
+	'pediatrie|Risque et conduites suicidaires chez l’enfant et l’adolescent': 'medgen',
+	'medecine-legale|Impact de l’environnement sur la santé': 'medgen',
+	'sante-publique|Impact de l’environnement sur la santé': 'medgen'
+
 };
+
 
 var ITEM_REFERENCE = {
     // Format: 'numéro|idCollège': true
@@ -263,7 +436,7 @@ var ITEM_REFERENCE = {
     '99|neurologie': true,
     '100|neurologie': true,
     '101|neurologie': true,
-    '102|neurologie': true,
+    '102|ophtalmologie': true, // BUGFIX 2026-09-11 : écriture LiSA = Ophtalmologie (COUF), pas Neurologie
     '103|orl': true,
     '104|neurologie': true,
     '105|neurologie': true,
@@ -297,7 +470,7 @@ var ITEM_REFERENCE = {
     '134|douleur': true,
     '135|douleur': true,
     '136|mir': true,
-    '137|douleur': true,
+    '137|pediatrie': true, // BUGFIX 2026-09-11 : écriture LiSA = Pédiatrie (CNPU), pas Douleur
     '138|douleur': true,
     '139|douleur': true,
     '140|douleur': true,
@@ -361,7 +534,7 @@ var ITEM_REFERENCE = {
     '198|osteo': true,
     '199|douleur': true,
     '200|osteo': true,
-    '201|medecine-interne': true,
+    '201|nephrologie': true, // BUGFIX 2026-09-11 : écriture LiSA = Néphrologie (CUEN), pas Médecine interne
     '202|medecine-interne': true,
     '203|pneumologie': true,
     '204|pneumologie': true,
@@ -446,7 +619,7 @@ var ITEM_REFERENCE = {
     '283|hge': true,
     '284|hge': true,
     '285|hge': true,
-    '286|hge': true,
+    '286|pediatrie': true, // BUGFIX 2026-09-11 : écriture LiSA = Pédiatrie (CNPU), pas HGE
     '287|hge': true,
     '288|hge': true,
     '289|hge': true,
@@ -500,7 +673,7 @@ var ITEM_REFERENCE = {
     '337|mir': true,
     '338|mir': true,
     '339|cardiologie': true,
-    '340|neurologie': true,
+    '340|mir': true, // BUGFIX 2026-09-11 : écriture LiSA = MIR/Urgences/Anesthésie-Réa, pas Neurologie
     '341|mir': true,
     '342|neurologie': true,
     '343|neurologie': true,

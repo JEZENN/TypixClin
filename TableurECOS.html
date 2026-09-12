@@ -14496,21 +14496,27 @@ body.ecos-offline-locked .send-to-checklist-btn {
 [data-theme="dark"] .flash-shuffle-toggle { background:#0f172a; border-color:#334155; }
 
 .flash-spe-chip {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  font-size: 0.72rem; font-weight: 700; color:#fff;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  font-size: 0.72rem; font-weight: 700; color:#fff; line-height: 1;
   padding: 0.25rem 0.7rem; border-radius: var(--border-radius-full);
   margin: 0 auto 0.5rem; max-width: fit-content;
 }
 /* Chip de spécialité : toujours en pastille (abréviation), jamais le nom complet */
 .flash-sess-spe-label .flash-spe-chip-name, .flash-spe-chip .flash-spe-chip-name { display: none !important; }
-.flash-sess-spe-label .flash-spe-chip-short, .flash-spe-chip .flash-spe-chip-short { display: inline !important; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+/* BUGFIX (2026-09-12) : letter-spacing ajoute aussi un espacement APRÈS le
+   dernier caractère — le texte semblait décalé vers la gauche dans la
+   pastille malgré align-items/justify-content:center sur le conteneur.
+   padding-right identique au letter-spacing neutralise cet espacement de
+   trop sans changer le rendu visuel des lettres. display:inline-block
+   (plutôt que inline) pour que ce padding s'applique réellement. */
+.flash-sess-spe-label .flash-spe-chip-short, .flash-spe-chip .flash-spe-chip-short { display: inline-block !important; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; padding-right: 0.03em; }
 @media (max-width: 768px) {
   .flash-sess-spe-label i, .flash-spe-chip i { display: none !important; }
 }
 /* ── Pastille item, à droite de la pastille matière (section 17) ── */
 .flash-item-chip {
-  display: inline-flex; align-items: center;
-  font-size: 0.72rem; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; line-height: 1;
   color: var(--gray-700); background: var(--gray-100);
   border: 1px solid var(--gray-200);
   padding: 0.25rem 0.65rem; border-radius: var(--border-radius-full);
@@ -14519,6 +14525,9 @@ body.ecos-offline-locked .send-to-checklist-btn {
 }
 [data-theme="dark"] .flash-item-chip { color: #cbd5e1; background: rgba(148,163,184,0.15); border-color: #334155; }
 @media (max-width: 480px) { .flash-item-chip { max-width: 90px; font-size: 0.68rem; } }
+/* BUGFIX (2026-09-12) : "Carte X / Y" → juste "X / Y" sur téléphone, pour
+   gagner de la place dans la barre du haut de la session flashcards. */
+@media (max-width: 768px) { .flash-session-counter-label { display: none; } }
 
 .flash-card-container { perspective: 1000px; width: 100%; position: relative; }
 .flash-card {
@@ -27948,14 +27957,46 @@ function invalidateECOSStatsCache() { ecosStatsCacheValid = false; }
 
 /* Appelé par le module quand les données Firestore arrivent / changent */
 window._onECOSDataLoaded = function (data) {
+    // BUGFIX 2026-09-11 : multi-onglets — si CET onglet a une modification
+    // locale pas encore confirmée (ecosHasUnsavedChanges, lu via l'accesseur
+    // exposé plus bas dans le fichier) au moment où un snapshot Firestore
+    // arrive (écrit par un AUTRE onglet/appareil), ne plus remplacer
+    // window.ecosData.sdds en bloc — ça effaçait silencieusement l'édition en
+    // cours de cet onglet dès réception, avant même que son propre debounce
+    // n'ait eu la chance de la sauvegarder. Fusion à la place (union des
+    // historiques par SDD), même logique que saveECOSUserData().
+    // BUGFIX 2026-09-13 : une restauration admin plus récente que ce que cet
+    // onglet connaissait déjà doit gagner face à une modification locale non
+    // confirmée — sinon la fusion ci-dessous réinjecterait exactement ce que
+    // la restauration voulait effacer (cf. TableurEnLigne.html, même correctif).
+    var _priorRestoredAtMs = (typeof window._tpxRestoredAtMs === 'function') ? window._tpxRestoredAtMs(window.ecosData && window.ecosData.restoredAt) : 0;
+    var _snapshotRestoredAtMs = (typeof window._tpxRestoredAtMs === 'function') ? window._tpxRestoredAtMs(data && data.restoredAt) : 0;
+    var _newerRestoreDetected = _snapshotRestoredAtMs > 0 && _snapshotRestoredAtMs > _priorRestoredAtMs;
+    if (_newerRestoreDetected) {
+        console.warn('⚠️ Restauration admin ECOS plus récente détectée (snapshot) — état restauré adopté, modifications locales non confirmées abandonnées');
+        if (typeof window._ecosClearUnsavedChanges === 'function') window._ecosClearUnsavedChanges();
+    }
+    var _hadUnsaved = !_newerRestoreDetected && (typeof window._ecosHasUnsavedChangesNow === 'function') && window._ecosHasUnsavedChangesNow();
+    var _localSddsBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.sdds) ? window.ecosData.sdds : null;
+    var _localPlanningBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.planningData) ? window.ecosData.planningData : null;
+    var _localChecklistBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.checklistData) ? window.ecosData.checklistData : null;
     window.ecosData = data || ecosDefaultData();
     if (!window.ecosData.sdds) window.ecosData.sdds = {};
+    if (_localSddsBeforeSnapshot && typeof window._tpxEcosMergeSddsMaps === 'function') {
+        window.ecosData.sdds = window._tpxEcosMergeSddsMaps(window.ecosData.sdds, _localSddsBeforeSnapshot);
+    }
     if (!Array.isArray(window.ecosData.selectedResources)) {
         // Défauts uniquement si la propriété n'existe pas du tout. [] est un état valide à conserver.
         window.ecosData.selectedResources = ['hypocampus', 'edni', 'ecosim'];
     }
     if (!window.ecosData.checklistData) window.ecosData.checklistData = [];
     if (!window.ecosData.planningData) window.ecosData.planningData = {};
+    if (_localPlanningBeforeSnapshot && typeof window._tpxMergePlanningData === 'function') {
+        window.ecosData.planningData = window._tpxMergePlanningData(window.ecosData.planningData, _localPlanningBeforeSnapshot);
+    }
+    if (_localChecklistBeforeSnapshot && typeof window._tpxMergeChecklistData === 'function') {
+        window.ecosData.checklistData = window._tpxMergeChecklistData(window.ecosData.checklistData, _localChecklistBeforeSnapshot);
+    }
     if (!window.ecosData.trophies) window.ecosData.trophies = {};
     if (Object.keys(window.ecosData.sdds).length > 0) window.ecosHadContent = true;
     invalidateECOSStatsCache();
@@ -38154,7 +38195,10 @@ saveBtn.innerHTML =
     s.idx = index;
     var card = s.cards[index], cfg = speCfg(card.speId), e = s.els;
     _setFlashSessionEditVisible(false);
-    if (e.counter) e.counter.textContent = 'Carte ' + (index+1) + ' / ' + s.cards.length;
+    // BUGFIX (2026-09-12) : "Carte " masqué en CSS sur téléphone (gagner de
+    // la place) — innerHTML avec un span dédié plutôt que textContent, pour
+    // que la règle @media puisse cacher le préfixe sans toucher au nombre.
+    if (e.counter) e.counter.innerHTML = '<span class="flash-session-counter-label">Carte </span>' + (index+1) + ' / ' + s.cards.length;
     if (e.progress) e.progress.style.width = Math.round((index / s.cards.length) * 100) + '%';
     if (s.mode === 'modal') {
       var _lab = document.getElementById('flashSessSpeLabel');
@@ -39806,6 +39850,12 @@ function loadECOSUserData(uid) {
 
                 if (window._onECOSDataLoaded) window._onECOSDataLoaded(data);
                 setTimeout(() => { if (!isOfflineMode && currentUser) flushPendingEcosData(); }, 1200);
+                // AJOUT (2026-09-11) : sauvegarde cloud ECOS auto — même délai
+                // (3s) et même déclenchement (une fois par session, si la
+                // dernière sauvegarde a plus de 3 jours) que côté EDN.
+                setTimeout(() => {
+                    if (currentUser && currentUser.uid === uid) checkAndAutoSaveEcosCloud(uid);
+                }, 3000);
                 return;
             }
         }
@@ -40029,6 +40079,20 @@ function writeLocalECOSCache(uid, data) {
 let _saveTimer = null;
 /* Partie 2 — état des modifications non sauvegardées + promesse de sauvegarde partagée */
 let ecosHasUnsavedChanges = false;
+// BUGFIX 2026-09-11 : accesseur exposé sur window — ecosHasUnsavedChanges vit
+// dans ce <script type="module"> (scope fermé, jamais accessible depuis un
+// autre <script>) alors que _onECOSDataLoaded (qui en a besoin pour la fusion
+// anti-course multi-onglets) est défini dans un <script> classique plus haut
+// dans le fichier. Lecture toujours à jour, sans variable miroir à resynchroniser.
+window._ecosHasUnsavedChangesNow = function () { return ecosHasUnsavedChanges; };
+// BUGFIX 2026-09-13 : même raison que l'accesseur ci-dessus (scope fermé du
+// <script type="module">) — _onECOSDataLoaded a besoin d'abandonner
+// proprement une sauvegarde locale devenue périmée (restauration admin plus
+// récente détectée), sans laisser le debounce en cours la réécrire quand même.
+window._ecosClearUnsavedChanges = function () {
+    ecosHasUnsavedChanges = false;
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+};
 let ecosSaveInFlight = null;
 // ── CORRECTIF (audit sécurité/perte de données, section A — miroir du même
 //    correctif côté EDN/_dataRevisionCounter) : incrémenté à CHAQUE
@@ -40060,6 +40124,307 @@ window._saveECOSData = function () {
     _saveTimer = setTimeout(() => saveECOSUserData(0), 5000);
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// BUGFIX (2026-09-11) — FUSION ANTI-COURSE MULTI-ONGLETS (ECOS)
+//   Même correctif que TableurEnLigne.html : plusieurs onglets/appareils
+//   ouverts sur le même compte pouvaient s'écraser silencieusement l'un
+//   l'autre (le dernier à sauvegarder effaçait les révisions de SDD
+//   enregistrées entre-temps ailleurs). saveECOSUserData() encapsule
+//   désormais son écriture dans une transaction : si la révision serveur
+//   a changé depuis notre dernier chargement, on fusionne `sdds` au lieu
+//   d'écraser.
+//   Structure d'une SDD (cf. commentaire "BARÈME DE CONFIANCE" plus haut
+//   dans ce fichier) : history[] est un journal append-only de passages
+//   { type, date, confidence } — psPssCount/sansPsCount/fairePasserCount,
+//   confidence et lastRevision sont TOUJOURS dérivés de ce journal (voir
+//   applySDDIncrement/sddDecrement). On fusionne donc en UNION des deux
+//   historiques (dédoublonnée), puis on RECALCULE les champs dérivés à
+//   partir du résultat — jamais une valeur à part qui pourrait diverger
+//   de l'historique réel, et aucun passage enregistré ailleurs ne peut
+//   plus disparaître.
+// ═══════════════════════════════════════════════════════════════════
+function _tpxEcosMergeSDD(serverSdd, localSdd) {
+    if (!serverSdd) return localSdd;
+    if (!localSdd) return serverSdd;
+    var sHist = serverSdd.history || [];
+    var lHist = localSdd.history || [];
+    var seen = {};
+    var mergedHist = [];
+    sHist.concat(lHist).forEach(function (h) {
+        if (!h) return;
+        var k = (h.type || '') + '|' + (h.date || '') + '|' + (h.confidence == null ? '' : h.confidence);
+        if (!seen[k]) { seen[k] = true; mergedHist.push(h); }
+    });
+    mergedHist.sort(function (a, b) { return new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime(); });
+
+    var counts = { ps_pss: 0, sans_ps: 0, faire_passer: 0 };
+    mergedHist.forEach(function (h) { if (counts[h.type] != null) counts[h.type]++; });
+
+    var mergedState = { history: mergedHist };
+    var lastRevision = (typeof getLastOwnPracticeDate === 'function') ? getLastOwnPracticeDate(mergedState) : null;
+    var confidence = null;
+    for (var i = mergedHist.length - 1; i >= 0; i--) {
+        var h = mergedHist[i];
+        if ((h.type === 'ps_pss' || h.type === 'sans_ps') && h.confidence != null) { confidence = h.confidence; break; }
+    }
+
+    return {
+        psPssCount: counts.ps_pss,
+        sansPsCount: counts.sans_ps,
+        fairePasserCount: counts.faire_passer,
+        confidence: confidence,
+        lastRevision: lastRevision,
+        priority: localSdd.priority || serverSdd.priority || 'none',
+        resources: Object.assign({}, serverSdd.resources || {}, localSdd.resources || {}),
+        history: mergedHist
+    };
+}
+function _tpxEcosMergeSddsMaps(serverSdds, localSdds) {
+    var merged = {};
+    var keys = {};
+    Object.keys(serverSdds || {}).forEach(function (k) { keys[k] = true; });
+    Object.keys(localSdds || {}).forEach(function (k) { keys[k] = true; });
+    Object.keys(keys).forEach(function (k) {
+        merged[k] = _tpxEcosMergeSDD((serverSdds || {})[k], (localSdds || {})[k]);
+    });
+    return merged;
+}
+window._tpxEcosMergeSddsMaps = _tpxEcosMergeSddsMaps;
+
+// ── BUGFIX (2026-09-11, extension) : même principe pour planningData
+//    (calendrier du Planning ECOS, clé = date) et checklistData (to-do
+//    list, tableau d'objets avec id unique) — mêmes fonctions que
+//    TableurEnLigne.html, structure de données identique. ──
+function _tpxMergePlanningData(serverPD, localPD) {
+    var merged = {};
+    var keys = {};
+    Object.keys(serverPD || {}).forEach(function (k) { keys[k] = true; });
+    Object.keys(localPD || {}).forEach(function (k) { keys[k] = true; });
+    Object.keys(keys).forEach(function (k) {
+        var s = (serverPD || {})[k], l = (localPD || {})[k];
+        if (!s) { merged[k] = l; return; }
+        if (!l) { merged[k] = s; return; }
+        merged[k] = l; // les deux ont modifié ce jour : cet onglet l'emporte pour CE jour (union des jours ci-dessus garantit qu'aucun autre n'est perdu)
+    });
+    return merged;
+}
+window._tpxMergePlanningData = _tpxMergePlanningData;
+
+function _tpxMergeChecklistData(serverArr, localArr) {
+    var byId = {};
+    (serverArr || []).forEach(function (item) { if (item && item.id != null) byId[item.id] = item; });
+    (localArr || []).forEach(function (item) { if (item && item.id != null) byId[item.id] = item; });
+    var seen = {};
+    var merged = [];
+    (localArr || []).forEach(function (item) { if (item && item.id != null && !seen[item.id]) { seen[item.id] = true; merged.push(byId[item.id]); } });
+    (serverArr || []).forEach(function (item) { if (item && item.id != null && !seen[item.id]) { seen[item.id] = true; merged.push(byId[item.id]); } });
+    return merged;
+}
+window._tpxMergeChecklistData = _tpxMergeChecklistData;
+
+// ── BUGFIX (2026-09-13) : même correctif que côté EDN — la fusion
+//    anti-course multi-onglets ci-dessus jouait aussi contre une
+//    restauration admin volontaire (admin.html ~doRestore) : un onglet
+//    resté ouvert réinjectait ses propres SDD/planning (plus récents, mais
+//    antérieurs à la restauration voulue) à sa prochaine sauvegarde,
+//    annulant silencieusement la restauration. admin.html pose désormais un
+//    horodatage serveur dédié `restoredAt` sur le document restauré ; cette
+//    fonction compare cet horodatage à celui que CET onglet connaissait déjà
+//    pour détecter une restauration plus récente et, dans ce cas
+//    UNIQUEMENT, adopter l'état restauré tel quel au lieu de fusionner. ──
+function _tpxRestoredAtMs(v) {
+    if (!v) return 0;
+    if (typeof v.toMillis === 'function') return v.toMillis();
+    if (v instanceof Date) return v.getTime();
+    var t = Date.parse(v);
+    return isNaN(t) ? 0 : t;
+}
+window._tpxRestoredAtMs = _tpxRestoredAtMs;
+
+// ═══════════════════════════════════════════════════════════════════
+// AJOUT (2026-09-11) — SYSTÈME DE SAUVEGARDE ECOS
+//   Miroir exact du système déjà en place côté EDN (saveBackupToFirebase /
+//   checkAndAutoSaveCloud / pushBackupVersion, cf. TableurEnLigne.html) —
+//   jusqu'ici ECOS n'avait AUCUNE sauvegarde séparée : en cas d'incident du
+//   même type que celui déjà rencontré côté EDN (course multi-onglets,
+//   avant le correctif du même jour), rien n'aurait été récupérable pour
+//   un utilisateur ECOS. Même collection séparée (ECOSBackups/{uid}), même
+//   déclenchement (une fois par session, si la dernière sauvegarde a plus
+//   de 3 jours), même historique versionné (5 dernières versions).
+// ═══════════════════════════════════════════════════════════════════
+function countEcosDataContent(data) {
+    if (!data) return { total: 0 };
+    const counts = {
+        sdds: Object.keys(data.sdds || {}).length,
+        trophies: Object.keys(data.trophies || {}).length,
+        planningDays: Object.keys(data.planningData || {}).length,
+        checklistItems: (data.checklistData || []).length,
+        resources: (data.selectedResources || []).length
+    };
+    counts.total = counts.sdds + counts.trophies + counts.planningDays + counts.checklistItems + counts.resources;
+    return counts;
+}
+window.countEcosDataContent = countEcosDataContent;
+
+async function saveEcosBackupToFirebase(userId, data) {
+    if (!userId || !data) return { success: false, error: 'Données manquantes' };
+    try {
+        const content = countEcosDataContent(data);
+        // Ne sauvegarder que si les données ont du contenu significatif —
+        // même garde-fou que saveBackupToFirebase() côté EDN.
+        if (content.sdds === 0) {
+            return { success: false, error: 'Aucune donnée à sauvegarder' };
+        }
+
+        const cleanData = JSON.parse(JSON.stringify(data));
+
+        // Inclure les notes des SDD (subcollection notesECOS) et le cahier
+        // d'erreurs (subcollection ErreurECOS) — équivalent ECOS de
+        // notesEntrainements/ErreurSpe côté EDN. Chaque lecture peut échouer
+        // SANS faire échouer le backup entier (le planning/les SDD restent
+        // sauvegardés) — mais le backup est alors marqué explicitement
+        // partiel, jamais silencieusement "complet".
+        const _backupMissingParts = [];
+        const notesECOSMap = {};
+        try {
+            const notesRef = collection(db, 'users', userId, TPXC('notesECOS'));
+            const notesSnap = await getDocs(notesRef);
+            notesSnap.forEach(function (noteDoc) { notesECOSMap[noteDoc.id] = noteDoc.data(); });
+        } catch (notesErr) {
+            console.warn('[Backup ECOS] Impossible de lire notesECOS :', notesErr);
+            _backupMissingParts.push('notesECOS');
+        }
+        const erreurECOSMap = {};
+        try {
+            const erreurRef = collection(db, 'users', userId, TPXC('ErreurECOS'));
+            const erreurSnap = await getDocs(erreurRef);
+            erreurSnap.forEach(function (speDoc) { erreurECOSMap[speDoc.id] = speDoc.data(); });
+        } catch (erreurErr) {
+            console.warn('[Backup ECOS] Impossible de lire ErreurECOS :', erreurErr);
+            _backupMissingParts.push('erreurECOS');
+        }
+
+        let backupData = {
+            timestamp: new Date().toISOString(),
+            date: new Date().toISOString().split('T')[0],
+            itemsCount: content.sdds,
+            totalCount: content.total,
+            details: content,
+            data: cleanData,
+            notesECOS: notesECOSMap,
+            erreurECOS: erreurECOSMap,
+            partial: _backupMissingParts.length > 0,
+            missingParts: _backupMissingParts,
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
+        };
+
+        // ── BUGFIX (2026-09-13) : PROTECTION TAILLE — même correctif que
+        //    saveBackupToFirebase() côté EDN. Firestore refuse tout document
+        //    dépassant 1 Mo ; notesECOS/erreurECOS (HTML enrichi) peuvent
+        //    grossir vite chez un utilisateur très actif. On retire d'abord
+        //    ces parties secondaires (déjà individuellement protégées,
+        //    chaque note étant son propre document) avant de renoncer, en
+        //    dernier recours, au backup entier plutôt qu'une écriture vouée
+        //    à l'échec. ──
+        const FIRESTORE_DOC_SAFE_LIMIT = 750 * 1024; // 750 Ko, marge sous la limite réelle de 1 Mo
+        function _tpxByteSize(obj) {
+            try { return new TextEncoder().encode(JSON.stringify(obj)).length; }
+            catch (e) { return JSON.stringify(obj).length; }
+        }
+        let _backupSize = _tpxByteSize(backupData);
+        if (_backupSize > FIRESTORE_DOC_SAFE_LIMIT) {
+            console.warn('[Backup ECOS] Sauvegarde trop volumineuse (' + Math.round(_backupSize/1024) + ' Ko) — notesECOS/erreurECOS retirés pour rester sous la limite Firestore.');
+            backupData = Object.assign({}, backupData, {
+                notesECOS: {},
+                erreurECOS: {},
+                partial: true,
+                missingParts: _backupMissingParts.concat(['notesECOS (taille)', 'erreurECOS (taille)'])
+            });
+            _backupSize = _tpxByteSize(backupData);
+        }
+        if (_backupSize > FIRESTORE_DOC_SAFE_LIMIT) {
+            console.error('[Backup ECOS] Sauvegarde annulée : même sans notesECOS/erreurECOS, la taille (' + Math.round(_backupSize/1024) + ' Ko) dépasse la limite Firestore.');
+            return { success: false, error: 'Sauvegarde trop volumineuse pour Firestore' };
+        }
+
+        await setDoc(doc(db, 'ECOSBackups', userId), backupData);
+        if (window.bumpMetric) window.bumpMetric('writes', 1);
+        // BUGFIX (2026-09-13) : même correctif que côté EDN — cet appel
+        // partait en "tire et oublie" (ni await, ni gestion d'échec), ce qui
+        // pouvait laisser l'historique versionné en retard sur la sauvegarde
+        // principale si la page se fermait juste après. pushEcosBackupVersion()
+        // gère déjà ses erreurs en interne (try/catch).
+        if (window.pushEcosBackupVersion) await window.pushEcosBackupVersion(userId, cleanData, content);
+
+        return { success: true, content: content };
+    } catch (e) {
+        console.error('❌ Erreur backup ECOS Firebase:', e);
+        return { success: false, error: e.message };
+    }
+}
+window.saveEcosBackupToFirebase = saveEcosBackupToFirebase;
+
+async function getEcosCloudBackup(userId) {
+    if (!userId) return null;
+    try {
+        const backupDoc = await getDoc(doc(db, 'ECOSBackups', userId));
+        if (!backupDoc.exists()) return null;
+        const docData = backupDoc.data();
+        return {
+            cloudBackup: docData.data,
+            cloudBackupDate: docData.timestamp,
+            itemsCount: docData.itemsCount,
+            date: docData.date
+        };
+    } catch (e) {
+        console.error('❌ Erreur lecture backup ECOS Firebase:', e);
+        return null;
+    }
+}
+
+async function checkAndAutoSaveEcosCloud(userId) {
+    if (!userId || !window.ecosData) return;
+    const content = countEcosDataContent(window.ecosData);
+    if (content.sdds === 0) return;
+    try {
+        const cloudBackup = await getEcosCloudBackup(userId);
+        const CLOUD_BACKUP_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000; // 3 jours — même seuil que EDN
+        const now = Date.now();
+        let needsCloudSave = false;
+        if (!cloudBackup || !cloudBackup.cloudBackupDate) {
+            needsCloudSave = true;
+        } else {
+            const lastCloudSave = new Date(cloudBackup.cloudBackupDate).getTime();
+            if (now - lastCloudSave > CLOUD_BACKUP_MAX_AGE_MS) needsCloudSave = true;
+        }
+        if (needsCloudSave) {
+            setSaveIndicator('saving');
+            const result = await saveEcosBackupToFirebase(userId, window.ecosData);
+            setSaveIndicator(result.success ? 'saved' : 'error');
+        }
+    } catch (error) {
+        console.error('❌ Erreur vérification cloud backup ECOS:', error);
+        // Par sécurité, on tente une sauvegarde en cas d'erreur (même comportement que EDN)
+        await saveEcosBackupToFirebase(userId, window.ecosData);
+    }
+}
+window.checkAndAutoSaveEcosCloud = checkAndAutoSaveEcosCloud;
+
+// ── Historique des sauvegardes ECOS (5 dernières versions) ──
+window.pushEcosBackupVersion = async function (uid, data, content) {
+    if (!db || !data) return;
+    try {
+        const id = new Date().toISOString().replace(/[:.]/g, '-');
+        await setDoc(doc(db, 'ECOSBackups', uid, 'versions', id), {
+            data, itemsCount: content && content.sdds, details: content || null, createdAt: serverTimestamp(),
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
+        });
+        const snap = await getDocs(query(collection(db, 'ECOSBackups', uid, 'versions'), orderBy('createdAt', 'desc')));
+        const docs = snap.docs;
+        for (let i = 5; i < docs.length; i++) await deleteDoc(docs[i].ref);
+    } catch (e) { console.warn('[Backup ECOS] version backup :', e.message); }
+};
+
 async function saveECOSUserData(retryCount = 0) {
     if (!currentUser || !window.ecosData) return;
     if (isOfflineMode) { console.warn('⚠️ Sauvegarde ECOS bloquée : hors ligne'); writePendingECOS(); setSaveIndicator('saving'); return; }
@@ -40072,6 +40437,12 @@ async function saveECOSUserData(retryCount = 0) {
     // Révision capturée AU MOMENT du snapshot (cf. commentaire sur
     // _ecosDataRevisionCounter) — jamais après l'await qui suit.
     const _savingRevision = _ecosDataRevisionCounter;
+
+    // BUGFIX 2026-09-11 : révision serveur que CETTE édition suppose être la
+    // plus récente — jeton de concurrence optimiste pour la transaction plus bas.
+    const _baseRevision = (window.ecosData && window.ecosData.lastUpdated) || null;
+    // BUGFIX 2026-09-13 : dernière restauration admin connue de CET onglet.
+    const _baseRestoredAtMs = _tpxRestoredAtMs(window.ecosData && window.ecosData.restoredAt);
 
     const timestamp = new Date().toISOString();
     const dataToSave = {
@@ -40094,8 +40465,49 @@ async function saveECOSUserData(retryCount = 0) {
     setSaveIndicator('saving');
     const MAX = 3; const DELAYS = [2000, 4000, 8000];
     try {
-        await updateDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave);
+        // BUGFIX 2026-09-11 : transaction plutôt qu'un simple updateDoc — si un
+        // autre onglet/appareil a sauvegardé depuis notre dernier chargement,
+        // on fusionne `sdds` (_tpxEcosMergeSddsMaps) au lieu d'écraser en bloc.
+        // Cas normal (pas de conflit) : comportement identique à l'ancien updateDoc.
+        const _ecosRef = doc(db, 'ECOSRevision', currentUser.uid);
+        let _finalDataToSave = dataToSave;
+        let _serverRestoredAt = null;
+        await runTransaction(db, async (transaction) => {
+            const _serverSnap = await transaction.get(_ecosRef);
+            const _serverData = _serverSnap.exists() ? _serverSnap.data() : null;
+            if (_serverData && _baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== _baseRevision) {
+                const _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
+                if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
+                    // BUGFIX 2026-09-13 : restauration admin plus récente que ce que cet
+                    // onglet connaissait — adopter l'état restauré tel quel plutôt que
+                    // de fusionner (qui réinjecterait ce que la restauration a effacé).
+                    console.warn('⚠️ Restauration admin ECOS plus récente détectée — état restauré adopté au lieu d\'une fusion');
+                    _finalDataToSave = Object.assign({}, dataToSave, {
+                        sdds: _serverData.sdds || {},
+                        planningData: _serverData.planningData || {},
+                        checklistData: _serverData.checklistData || []
+                    });
+                    _serverRestoredAt = _serverData.restoredAt;
+                } else {
+                    console.warn('⚠️ Conflit ECOS détecté (autre onglet/appareil) — fusion des SDD/planning/checklist au lieu d\'écrasement');
+                    _finalDataToSave = Object.assign({}, dataToSave, {
+                        sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, dataToSave.sdds || {}),
+                        planningData: _tpxMergePlanningData(_serverData.planningData || {}, dataToSave.planningData || {}),
+                        checklistData: _tpxMergeChecklistData(_serverData.checklistData || [], dataToSave.checklistData || [])
+                    });
+                }
+            }
+            transaction.update(_ecosRef, _finalDataToSave);
+        });
         if (window.bumpMetric) window.bumpMetric('writes', 1);
+        if (_finalDataToSave !== dataToSave) {
+            window.ecosData.sdds = _finalDataToSave.sdds;
+            window.ecosData.planningData = _finalDataToSave.planningData;
+            window.ecosData.checklistData = _finalDataToSave.checklistData;
+        }
+        // BUGFIX 2026-09-13 : mémoriser l'horodatage de restauration détecté,
+        // sinon la prochaine sauvegarde de cet onglet répéterait le problème.
+        if (_serverRestoredAt) window.ecosData.restoredAt = _serverRestoredAt;
         window.ecosData.lastUpdated = timestamp;
         writeLocalECOSCache(currentUser.uid, window.ecosData);
         // Ne déclarer "tout sauvegardé" (dirty flag ET pending local effacé)
@@ -40183,6 +40595,9 @@ function forceSaveECOSAsync() {
             // _ecosDataRevisionCounter). Pertinent ici en particulier car le
             // résultat conditionne une NAVIGATION (navigateAfterEcosSave).
             const _savingRevision = _ecosDataRevisionCounter;
+            // BUGFIX 2026-09-11 : jeton de concurrence optimiste, transmis à
+            // ecosWriteWithRetry (cf. son commentaire).
+            const _baseRevision = (window.ecosData && window.ecosData.lastUpdated) || null;
             // 8. payload identique à la sauvegarde normale
             const timestamp = new Date().toISOString();
             const dataToSave = {
@@ -40202,7 +40617,7 @@ function forceSaveECOSAsync() {
             }
             setSaveIndicator('saving');
             // 10-12. écriture immédiate, sans debounce, avec gestion not-found
-            const ok = await ecosWriteWithRetry(dataToSave, 2);
+            const ok = await ecosWriteWithRetry(dataToSave, 2, _baseRevision);
             if (ok) {
                 window.ecosData.lastUpdated = timestamp;
                 writeLocalECOSCache(currentUser.uid, window.ecosData); // 14
@@ -40240,11 +40655,49 @@ function forceSaveECOSAsync() {
 window.forceSaveECOSAsync = forceSaveECOSAsync;
 
 /* Écriture Firestore immédiate avec retries attendus (await + délais explicites). */
-async function ecosWriteWithRetry(dataToSave, maxRetries) {
+async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
     const ref = doc(db, 'ECOSRevision', currentUser.uid);
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            await updateDoc(ref, dataToSave);
+            // BUGFIX 2026-09-11 : même protection anti-course multi-onglets que
+            // saveECOSUserData() — cette fonction est utilisée pour la sauvegarde
+            // FORCÉE à la déconnexion/navigation, un moment particulièrement à
+            // risque si un autre onglet a aussi sauvegardé entre-temps.
+            let _final = dataToSave;
+            let _serverRestoredAt = null;
+            const _baseRestoredAtMs = _tpxRestoredAtMs(window.ecosData && window.ecosData.restoredAt);
+            await runTransaction(db, async (transaction) => {
+                const _snap = await transaction.get(ref);
+                const _serverData = _snap.exists() ? _snap.data() : null;
+                if (_serverData && baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== baseRevision) {
+                    const _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
+                    if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
+                        // BUGFIX 2026-09-13 : même correctif que saveECOSUserData() — une
+                        // restauration admin plus récente prime sur la sauvegarde forcée.
+                        console.warn('⚠️ Restauration admin ECOS plus récente détectée (sauvegarde forcée) — état restauré adopté');
+                        _final = Object.assign({}, dataToSave, {
+                            sdds: _serverData.sdds || {},
+                            planningData: _serverData.planningData || {},
+                            checklistData: _serverData.checklistData || []
+                        });
+                        _serverRestoredAt = _serverData.restoredAt;
+                    } else {
+                        console.warn('⚠️ Conflit ECOS détecté (sauvegarde forcée) — fusion des SDD/planning/checklist au lieu d\'écrasement');
+                        _final = Object.assign({}, dataToSave, {
+                            sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, dataToSave.sdds || {}),
+                            planningData: _tpxMergePlanningData(_serverData.planningData || {}, dataToSave.planningData || {}),
+                            checklistData: _tpxMergeChecklistData(_serverData.checklistData || [], dataToSave.checklistData || [])
+                        });
+                    }
+                }
+                transaction.update(ref, _final);
+            });
+            if (_final !== dataToSave && window.ecosData) {
+                window.ecosData.sdds = _final.sdds;
+                window.ecosData.planningData = _final.planningData;
+                window.ecosData.checklistData = _final.checklistData;
+            }
+            if (_serverRestoredAt && window.ecosData) window.ecosData.restoredAt = _serverRestoredAt;
             return true;
         } catch (e) {
             if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e);

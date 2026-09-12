@@ -735,7 +735,7 @@ a { color:var(--blue); text-decoration:none; }
 
             <div class="alert alert-warning" style="margin-bottom:1.5rem">
                 <i class="fas fa-exclamation-triangle"></i>
-                <strong>Attention :</strong> La restauration écrase le planning EDN de l'utilisateur (collection <code>planningRevision</code>). L'abonnement et le compte ne sont pas touchés.
+                <strong>Attention :</strong> La restauration écrase le planning de l'utilisateur — EDN (<code>planningRevision</code>) ou ECOS (<code>ECOSRevision</code>) selon la sauvegarde choisie. L'abonnement et le compte ne sont pas touchés.
             </div>
 
             <div class="backup-search">
@@ -1613,6 +1613,23 @@ window.saveSubscription = async function() {
 };
 
 // ─── BACKUP ───
+// AJOUT (2026-09-11) : EDN et ECOS ont chacun leur propre collection de
+// sauvegarde (planningBackups / ECOSBackups) — la config ci-dessous évite
+// de dupliquer toute la logique de recherche/affichage/restauration pour
+// les deux, un seul jeu de fonctions paramétré par `product`.
+const BACKUP_PRODUCTS = {
+    edn: {
+        label: 'EDN', collection: 'planningBackups', targetDoc: 'planningRevision',
+        itemsKey: 'items', itemsLabel: 'Items',
+        restoreFields: ['items', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'trainings', 'deletedDefaultIds']
+    },
+    ecos: {
+        label: 'ECOS', collection: 'ECOSBackups', targetDoc: 'ECOSRevision',
+        itemsKey: 'sdds', itemsLabel: 'SDD',
+        restoreFields: ['sdds', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'sddPageSize']
+    }
+};
+
 window.searchBackup = async function() {
     const uid = document.getElementById('backup-uid-input').value.trim();
     if (!uid) { toast('Entrez un UID utilisateur', 'error'); return; }
@@ -1623,27 +1640,29 @@ window.searchBackup = async function() {
     document.getElementById('backup-result-area').innerHTML = '<div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Recherche des sauvegardes…</p></div>';
 
     try {
-        // Legacy doc + user + historique de versions (sous-collection)
-        let versionsSnap = { docs: [] };
-        try {
-            versionsSnap = await getDocs(query(collection(db, 'planningBackups', uid, 'versions'), orderBy('createdAt', 'desc'), limit(20)));
-        } catch(e) { /* sous-collection absente = pas d'historique, on continue */ }
+        const perProduct = {};
+        for (const product of Object.keys(BACKUP_PRODUCTS)) {
+            const cfg = BACKUP_PRODUCTS[product];
+            let versionsSnap = { docs: [] };
+            try {
+                versionsSnap = await getDocs(query(collection(db, cfg.collection, uid, 'versions'), orderBy('createdAt', 'desc'), limit(20)));
+            } catch (e) { /* sous-collection absente = pas d'historique, on continue */ }
+            const backupSnap = await getDoc(doc(db, cfg.collection, uid));
+            perProduct[product] = {
+                legacy: backupSnap.exists() ? backupSnap.data() : null,
+                versions: versionsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+            };
+        }
 
-        const [backupSnap, userSnap] = await Promise.all([
-            getDoc(doc(db, 'planningBackups', uid)),
-            getDoc(doc(db, 'users', uid))
-        ]);
-
-        if (!backupSnap.exists() && !userSnap.exists() && versionsSnap.docs.length === 0) {
+        const userSnap = await getDoc(doc(db, 'users', uid));
+        const anyData = userSnap.exists() || Object.keys(BACKUP_PRODUCTS).some(p => perProduct[p].legacy || perProduct[p].versions.length > 0);
+        if (!anyData) {
             document.getElementById('backup-result-area').innerHTML = `<div class="no-backup"><i class="fas fa-search"></i><p>Aucun utilisateur ni sauvegarde trouvé pour cet UID.</p></div>`;
             return;
         }
 
         const userData = userSnap.exists() ? userSnap.data() : null;
-        const legacy = backupSnap.exists() ? backupSnap.data() : null;
-        const versions = versionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        renderBackupResult(uid, userData, legacy, versions);
+        renderBackupResult(uid, userData, perProduct);
     } catch (e) {
         document.getElementById('backup-result-area').innerHTML = `<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Erreur : ${e.message}</div>`;
     } finally {
@@ -1652,7 +1671,7 @@ window.searchBackup = async function() {
     }
 };
 
-function renderBackupResult(uid, user, legacy, versions) {
+function renderBackupResult(uid, user, perProduct) {
     const area = document.getElementById('backup-result-area');
     let html = '';
 
@@ -1664,59 +1683,72 @@ function renderBackupResult(uid, user, legacy, versions) {
         </div>`;
     }
 
-    let cards = '';
+    Object.keys(BACKUP_PRODUCTS).forEach(product => {
+        const cfg = BACKUP_PRODUCTS[product];
+        const { legacy, versions } = perProduct[product];
+        let cards = '';
 
-    // 1) Historique versionné (le plus récent en haut) — si vous installez les versions
-    versions.forEach((v, i) => {
-        const data = v.data || v.cloudBackup;
-        cards += renderBackupCard({
-            uid, source: 'version', versionId: v.id,
-            title: i === 0 ? 'Version la plus récente' : `Version du ${formatDate(v.createdAt || v.timestamp)}`,
-            date: v.createdAt || v.timestamp,
-            items: v.itemsCount ?? (data && data.items ? Object.keys(data.items).length : null),
-            details: v.details,
-            hasData: !!data,
-            isManual: v.isManual
+        // 1) Historique versionné (le plus récent en haut)
+        versions.forEach((v, i) => {
+            const data = v.data || v.cloudBackup;
+            cards += renderBackupCard({
+                uid, product, source: 'version', versionId: v.id,
+                title: i === 0 ? 'Version la plus récente' : `Version du ${formatDate(v.createdAt || v.timestamp)}`,
+                date: v.createdAt || v.timestamp,
+                items: v.itemsCount ?? (data && data[cfg.itemsKey] ? Object.keys(data[cfg.itemsKey]).length : null),
+                itemsLabel: cfg.itemsLabel,
+                details: v.details,
+                hasData: !!data,
+                isManual: v.isManual
+            });
         });
+
+        // 2) Sauvegarde « principale »
+        if (legacy && (legacy.data || legacy.timestamp)) {
+            cards += renderBackupCard({
+                uid, product, source: 'main',
+                title: 'Sauvegarde principale',
+                date: legacy.timestamp || legacy.date,
+                items: legacy.itemsCount,
+                itemsLabel: cfg.itemsLabel,
+                details: legacy.details,
+                hasData: !!legacy.data
+            });
+        }
+
+        // 3) Sauvegarde cloud (champ cloudBackup du doc legacy)
+        if (legacy && legacy.cloudBackup && legacy.cloudBackupDate) {
+            cards += renderBackupCard({
+                uid, product, source: 'cloud',
+                title: 'Sauvegarde cloud',
+                date: legacy.cloudBackupDate,
+                items: legacy.cloudBackup[cfg.itemsKey] ? Object.keys(legacy.cloudBackup[cfg.itemsKey]).length : null,
+                itemsLabel: cfg.itemsLabel,
+                details: null,
+                hasData: true,
+                isManual: legacy.isManual
+            });
+        }
+
+        html += `<div style="margin-top:1.5rem;margin-bottom:0.75rem;font-family:var(--font-display);font-weight:700;display:flex;align-items:center;gap:0.5rem">
+            <i class="fas fa-table"></i> ${cfg.label}
+        </div>`;
+        if (!cards) {
+            html += `<div class="no-backup"><i class="fas fa-database"></i><p>Aucune donnée ${cfg.label} restaurable pour cet utilisateur.</p></div>`;
+        } else {
+            if (versions.length > 0) {
+                html += `<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem"><i class="fas fa-clock-rotate-left"></i> ${versions.length} version(s) dans l'historique. Choisissez celle à restaurer.</div>`;
+            }
+            html += cards;
+        }
     });
 
-    // 2) Sauvegarde « principale » (doc legacy planningBackups/{uid})
-    if (legacy && (legacy.data || legacy.timestamp)) {
-        cards += renderBackupCard({
-            uid, source: 'main',
-            title: 'Sauvegarde principale',
-            date: legacy.timestamp || legacy.date,
-            items: legacy.itemsCount,
-            details: legacy.details,
-            hasData: !!legacy.data
-        });
-    }
-
-    // 3) Sauvegarde cloud (champ cloudBackup du doc legacy)
-    if (legacy && legacy.cloudBackup && legacy.cloudBackupDate) {
-        cards += renderBackupCard({
-            uid, source: 'cloud',
-            title: 'Sauvegarde cloud',
-            date: legacy.cloudBackupDate,
-            items: legacy.cloudBackup.items ? Object.keys(legacy.cloudBackup.items).length : null,
-            details: null,
-            hasData: true,
-            isManual: legacy.isManual
-        });
-    }
-
-    if (!cards) {
-        cards = `<div class="no-backup"><i class="fas fa-database"></i><p>Aucune donnée restaurable pour cet utilisateur (le document existe peut-être mais est vide).</p></div>`;
-    } else if (versions.length > 0) {
-        html += `<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem"><i class="fas fa-clock-rotate-left"></i> ${versions.length} version(s) dans l'historique. Choisissez celle à restaurer.</div>`;
-    }
-
-    area.innerHTML = html + cards;
+    area.innerHTML = html;
 }
 
-function renderBackupCard({ uid, source, versionId, title, date, items, details, hasData, isManual }) {
+function renderBackupCard({ uid, product, source, versionId, title, date, items, itemsLabel, details, hasData, isManual }) {
     const itemsHtml = items != null
-        ? `<div class="backup-meta-item"><div class="backup-meta-label">Éléments</div><div class="backup-meta-value blue">${items}</div></div>`
+        ? `<div class="backup-meta-item"><div class="backup-meta-label">${itemsLabel || 'Éléments'}</div><div class="backup-meta-value blue">${items}</div></div>`
         : '';
     const manualBadge = isManual ? '<span class="badge badge-premium" style="font-size:0.65rem">Manuelle</span>' : '';
     const vId = versionId ? `, '${versionId}'` : '';
@@ -1737,77 +1769,89 @@ function renderBackupCard({ uid, source, versionId, title, date, items, details,
             ${details ? `<div class="backup-meta-item"><div class="backup-meta-label">Matières</div><div class="backup-meta-value blue">${details.specialties||'—'}</div></div>` : ''}
         </div>
         ${hasData ? `<div class="backup-actions">
-            <button class="btn btn-success" onclick="confirmRestore('${uid}', '${source}'${vId})">
+            <button class="btn btn-success" onclick="confirmRestore('${uid}', '${product}', '${source}'${vId})">
                 <i class="fas fa-undo-alt"></i> Restaurer cette version
             </button>
         </div>` : ''}
     </div>`;
 }
 
-window.confirmRestore = function(uid, source, versionId) {
+window.confirmRestore = function(uid, product, source, versionId) {
     const user = allUsers.find(u => u.uid === uid);
     const name = user ? user.displayName || user.email : uid;
+    const cfg = BACKUP_PRODUCTS[product];
     confirmAction(
         '⚠️ Restaurer la sauvegarde',
-        `Restaurer le planning EDN de <strong>${name}</strong> à partir de cette version ?<br><br>Les données de planning actuelles (collection <code>planningRevision</code>) seront remplacées. L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
-        async () => { await doRestore(uid, source, versionId); }
+        `Restaurer le planning ${cfg.label} de <strong>${name}</strong> à partir de cette version ?<br><br>Les données de planning ${cfg.label} actuelles (collection <code>${cfg.targetDoc}</code>) seront remplacées. L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
+        async () => { await doRestore(uid, product, source, versionId); }
     );
 };
 
-async function doRestore(uid, source, versionId) {
+async function doRestore(uid, product, source, versionId) {
+    const cfg = BACKUP_PRODUCTS[product];
     try {
         let dataToRestore = null;
 
         if (source === 'version') {
-            const vSnap = await getDoc(doc(db, 'planningBackups', uid, 'versions', versionId));
+            const vSnap = await getDoc(doc(db, cfg.collection, uid, 'versions', versionId));
             if (!vSnap.exists()) throw new Error('Version introuvable');
             const v = vSnap.data();
             dataToRestore = v.data || v.cloudBackup;
         } else {
-            const backupSnap = await getDoc(doc(db, 'planningBackups', uid));
+            const backupSnap = await getDoc(doc(db, cfg.collection, uid));
             if (!backupSnap.exists()) throw new Error('Sauvegarde introuvable');
             const backup = backupSnap.data();
             dataToRestore = source === 'cloud' ? backup.cloudBackup : backup.data;
         }
         if (!dataToRestore) throw new Error('Données de sauvegarde vides');
 
-        // Champs réellement lus par le tableur EDN (doc planningRevision/{uid})
-        const planningFields = ['items', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'trainings', 'deletedDefaultIds'];
+        // Champs réellement lus par le tableur (doc planningRevision/{uid} pour
+        // EDN, ECOSRevision/{uid} pour ECOS) — cf. cfg.restoreFields ci-dessus.
         const updateData = {};
-        planningFields.forEach(f => { if (dataToRestore[f] !== undefined) updateData[f] = dataToRestore[f]; });
+        cfg.restoreFields.forEach(f => { if (dataToRestore[f] !== undefined) updateData[f] = dataToRestore[f]; });
 
         // BUGFIX 2026-09-11 : confidenceScale (barème 5 ou 10) vit dans CE MÊME
-        // document, à côté de items — partout ailleurs dans le tableur, les deux
-        // sont toujours lus/écrits ensemble (cf. TableurEnLigne.html, logique
-        // "MISSION CORRECTIVE" de conversion de barème). En ne restaurant que
-        // items sans confidenceScale, le document se retrouvait avec des valeurs
-        // de confiance écrites sous UN barème (celui de la sauvegarde) et un
-        // confidenceScale resté à l'ancien barème (celui du compte au moment de
-        // la restauration) — état que l'app n'a jamais prévu, d'où le plantage.
-        // Toujours forcé depuis la MÊME sauvegarde que items, jamais laissé à la
-        // valeur actuellement en base ; absent de la sauvegarde = barème
-        // historique 5 (même convention que partout ailleurs dans le code).
-        if (updateData.items !== undefined) {
+        // document, à côté de items/sdds — partout ailleurs dans le tableur, les
+        // deux sont toujours lus/écrits ensemble (cf. TableurEnLigne.html /
+        // TableurECOS.html, logique "MISSION CORRECTIVE" de conversion de
+        // barème). En ne restaurant que items/sdds sans confidenceScale, le
+        // document se retrouvait avec des valeurs de confiance écrites sous UN
+        // barème (celui de la sauvegarde) et un confidenceScale resté à
+        // l'ancien barème (celui du compte au moment de la restauration) —
+        // état que l'app n'a jamais prévu, d'où le plantage. Toujours forcé
+        // depuis la MÊME sauvegarde que items/sdds, jamais laissé à la valeur
+        // actuellement en base ; absent de la sauvegarde = barème historique 5
+        // (même convention que partout ailleurs dans le code).
+        if (updateData[cfg.itemsKey] !== undefined) {
             updateData.confidenceScale = (dataToRestore.confidenceScale === 10) ? 10 : 5;
         }
 
         if (Object.keys(updateData).length === 0) throw new Error('Aucun champ de planning à restaurer');
 
         // Sécurité anti-corruption : refuser une restauration qui viderait le planning
-        if (updateData.items && Object.keys(updateData.items).length === 0) {
-            throw new Error('Cette version ne contient aucun item — restauration annulée');
+        if (updateData[cfg.itemsKey] && Object.keys(updateData[cfg.itemsKey]).length === 0) {
+            throw new Error('Cette version ne contient aucune donnée — restauration annulée');
         }
 
         updateData.lastUpdated = serverTimestamp();
-        await setDoc(doc(db, 'planningRevision', uid), updateData, { merge: true });
+        // BUGFIX 2026-09-13 : horodatage dédié, distinct de lastUpdated — les
+        // tableurs EDN/ECOS le comparent à ce qu'un onglet resté ouvert
+        // connaissait déjà pour détecter qu'une restauration admin a eu lieu
+        // entre-temps. Sans lui, un onglet ouvert au moment de la
+        // restauration réinjectait ses propres modifications (plus récentes,
+        // mais antérieures à la restauration) à sa prochaine sauvegarde,
+        // annulant silencieusement la restauration.
+        updateData.restoredAt = serverTimestamp();
+        await setDoc(doc(db, cfg.targetDoc, uid), updateData, { merge: true });
 
         // Trace côté users (sans toucher à l'abonnement)
         await updateDoc(doc(db, 'users', uid), {
             lastRestoredAt: serverTimestamp(),
-            lastRestoredBy: currentAdmin.uid
+            lastRestoredBy: currentAdmin.uid,
+            lastRestoredProduct: product
         }).catch(()=>{});
 
-        toast('Planning restauré — l\'utilisateur le verra en temps réel', 'success');
+        toast(`Planning ${cfg.label} restauré — l'utilisateur le verra en temps réel`, 'success');
     } catch (e) {
         toast('Erreur de restauration : ' + e.message, 'error');
     }
