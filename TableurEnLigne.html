@@ -48665,15 +48665,41 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     document.querySelectorAll('#flashHighlightPalette .notes-color-dot').forEach(function(d){ d.classList.toggle('active', rgb2hex(d.style.background) === hlhex); });
     var hBar = document.getElementById('flashHighlightBar'); if (hBar) hBar.style.background = (!hlhex || hlhex === 'transparent') ? '#fef08a' : hlhex;
   }
+  var _flashLastTouchPalette = 0;
   function _flashTogglePalette(id, event) {
-    if (event) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      // BUGFIX (2026-09-13) : empêche cet événement de REMONTER jusqu'à
+      // #flashEditOverlay, qui se ferme sur un clic à son propre niveau
+      // (_flashEditOverlayClick). Sur téléphone, même avec preventDefault()
+      // sur le touchstart, le modal continuait de se fermer dès l'appui sur
+      // ce bouton — stopPropagation() coupe court à toute remontée de
+      // l'événement vers l'overlay, quelle que soit la raison exacte
+      // (clic fantôme mal ciblé, retargeting Safari, etc.), plutôt que de
+      // compter uniquement sur la suppression du clic fantôme.
+      event.stopPropagation();
+      // BUGFIX (2026-09-13) : garde tactile manquante ici (déjà présente côté
+      // ECOS, jamais reportée sur cette version EDN plus ancienne du code) —
+      // si malgré preventDefault() un mousedown fantôme est quand même généré
+      // juste après le touchstart, il ré-exécutait cette fonction une seconde
+      // fois (isOpen déjà true -> re-toggle -> ferme la palette juste après
+      // l'avoir ouverte), un comportement erratique qui pouvait contribuer à
+      // la fermeture du modal en cascade. On ignore tout mousedown dans les
+      // 600ms suivant un touchstart sur ce même bouton.
+      if (event.type === 'touchstart') { _flashLastTouchPalette = Date.now(); }
+      else if (event.type === 'mousedown' && Date.now() - _flashLastTouchPalette < 600) return;
+    }
     var pal = document.getElementById(id); if (!pal) return;
     var isOpen = pal.classList.contains('open');
     document.querySelectorAll('.notes-color-palette.open').forEach(function(p){ p.classList.remove('open'); p.style.position=''; p.style.left=''; p.style.top=''; p.style.transform=''; });
     if (!isOpen) { pal.classList.add('open'); if (typeof _notesRepositionPalette === 'function') _notesRepositionPalette(pal); }
   }
   function _flashSetColor(event, color, barId) {
-    if (event) event.preventDefault();
+    // BUGFIX (2026-09-13) : cf. _flashTogglePalette — stopPropagation()
+    // empêche cet événement d'atteindre #flashEditOverlay (qui se ferme sur
+    // un clic à son propre niveau), quelle que soit la cause exacte d'un
+    // éventuel clic fantôme mal ciblé sur téléphone.
+    if (event) { event.preventDefault(); event.stopPropagation(); }
     if (!_activeRT) _activeRT = document.getElementById('flashFormRecto');
     if (!_activeRT) return;
     _activeRT.focus();
@@ -48685,7 +48711,8 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     _updateFlashCounters();
   }
   function _flashSetHighlight(event, color) {
-    if (event) event.preventDefault();
+    // BUGFIX (2026-09-13) : cf. _flashTogglePalette / _flashSetColor.
+    if (event) { event.preventDefault(); event.stopPropagation(); }
     if (!_activeRT) _activeRT = document.getElementById('flashFormRecto');
     if (!_activeRT) return;
     _activeRT.focus();
