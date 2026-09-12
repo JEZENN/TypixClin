@@ -49234,7 +49234,16 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 
 function _flashEditOverlayPointerDown(e) {
     var modal = document.querySelector('#flashEditOverlay .flash-edit-modal');
-    _flashEditPointerStartedInside = !!(modal && modal.contains(e.target));
+    // BUGFIX (2026-09-13) : la palette de couleur est reparentée HORS de
+    // .flash-edit-modal pendant l'édition (dans <body>, ou directement dans
+    // #flashEditOverlay quand le clavier est épinglé — cf.
+    // _notesRepositionPalette) — modal.contains(e.target) devient alors FAUX
+    // pour un tap sur elle, même si l'intention est clairement de rester
+    // DANS le formulaire. On traite donc aussi "a commencé sur une palette
+    // de couleur (ouverte ou non, où qu'elle vive dans le DOM)" comme
+    // "commencé à l'intérieur", peu importe où le reparenting l'a placée.
+    var onPalette = !!(e.target && e.target.closest && (e.target.closest('.notes-color-palette') || e.target.closest('.notes-color-picker-wrapper')));
+    _flashEditPointerStartedInside = !!((modal && modal.contains(e.target)) || onPalette);
 }
 
 function _flashEditOverlayClick(e) {
@@ -49242,6 +49251,16 @@ function _flashEditOverlayClick(e) {
     if (!overlay) return;
 
     if (e.target !== overlay) return;
+
+    // BUGFIX (2026-09-13) : filet de sécurité supplémentaire — si une
+    // palette de couleur du formulaire est actuellement ouverte, on ne
+    // ferme jamais le modal sur ce clic, quelle qu'en soit l'origine exacte
+    // (clic fantôme mal ciblé sur téléphone, retargeting après reparenting,
+    // etc.). L'utilisateur est manifestement en train de choisir une
+    // couleur, pas de fermer le formulaire.
+    if (document.querySelector('#flashEditOverlay .notes-color-palette.open')) {
+        return;
+    }
 
     /*
       Si le clic / la sélection a commencé dans le modal puis finit dehors,
