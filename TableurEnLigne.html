@@ -3664,7 +3664,20 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
-.tour-page-arrow:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; transform: scale(1.06); }
+/* BUGFIX (2026-09-15) : sur écran tactile, il n'existe pas de vrai "survol"
+   -- au lieu de ça, la plupart des navigateurs mobiles appliquent :hover dès
+   le tap et le laissent COLLÉ tant que l'utilisateur ne touche pas autre
+   chose (pas de curseur qui "quitte" l'élément pour déclencher :hover
+   naturellement) : le bouton restait visuellement en surbrillance -- et,
+   plus bas, l'info-bulle personnalisée restait affichée -- bien après le
+   tap, comme si le doigt était toujours dessus (signalé par l'utilisateur).
+   `@media (hover: hover)` cible UNIQUEMENT les appareils qui savent
+   vraiment survoler (souris/trackpad) -- sur tactile, ces règles ne
+   s'appliquent tout simplement jamais, donc rien ne peut rester "collé" :
+   c'est la solution standard pour ce problème (pas un correctif ad hoc). */
+@media (hover: hover) {
+    .tour-page-arrow:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; transform: scale(1.06); }
+}
 .tour-page-arrow:active:not(:disabled) { transform: scale(0.92); }
 .tour-page-arrow:disabled { background: var(--gray-50); border-color: var(--gray-200); color: var(--gray-300); box-shadow: none; cursor: not-allowed; }
 /* AJOUT (2026-09-14) : info-bulle personnalisée au survol/focus (remplace
@@ -3720,8 +3733,21 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     transition: opacity 0.15s ease, transform 0.15s ease;
     z-index: 20;
 }
-.tour-page-arrow[data-tooltip]:hover:not(:disabled)::after, .tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::after,
-.tour-page-arrow[data-tooltip]:hover:not(:disabled)::before, .tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::before {
+/* BUGFIX (2026-09-15) : même raison que le :hover du bouton juste au-dessus
+   -- l'info-bulle restait affichée après un tap sur tactile (pas de vrai
+   survol pour la faire disparaître). :focus-visible reste HORS de ce garde
+   (voulu) : un navigateur ne l'applique normalement qu'à une navigation
+   clavier, jamais à un tap tactile ou un clic souris -- pas concerné par ce
+   problème, et nécessaire pour l'accessibilité clavier. */
+@media (hover: hover) {
+    .tour-page-arrow[data-tooltip]:hover:not(:disabled)::after,
+    .tour-page-arrow[data-tooltip]:hover:not(:disabled)::before {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+.tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::after,
+.tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::before {
     opacity: 1;
     transform: translate(-50%, 0);
 }
@@ -5823,12 +5849,34 @@ input[type="date"].modal-input {
     .tour-duration {
         font-size: 0.5rem;
     }
-    
+
     .tour-support {
         font-size: 0.5rem;
         padding: 0px 3px;
     }
-	
+    /* BUGFIX (2026-09-15) : CAUSE RACINE du "décalage en vague" sur téléphone
+       PORTRAIT signalé par l'utilisateur (absent en paysage/iPad). Les deux
+       règles ci-dessus (1 classe) ne redéfinissent PAS
+       .tour-duration.ti-placeholder / .tour-support.ti-placeholder (2
+       classes, définies tout en haut du fichier ~ligne 4861/4870, donc PLUS
+       SPÉCIFIQUES -- elles l'emportent quel que soit l'ordre dans le
+       fichier). Le placeholder (case sans durée/support) restait donc à
+       0.6rem (taille de base) alors que le contenu RÉEL passait à 0.5rem
+       ICI -- deux hauteurs de ligne différentes pour .tour-info selon que
+       CETTE case précise a un support enregistré ou pas, d'où la date
+       décalée verticalement au fil de la ligne ("vague"). Uniquement
+       reproductible à ce palier précis : partout ailleurs (bureau, tablette,
+       ≤768px), placeholder ET contenu réel restent tous les deux à 0.6rem
+       (aucune règle ne les distingue), donc aucun écart -- cohérent avec
+       "ça fonctionne en paysage/iPad". */
+    .tour-duration.ti-placeholder {
+        font-size: 0.5rem;
+    }
+    .tour-support.ti-placeholder {
+        font-size: 0.5rem;
+        padding: 0px 3px;
+    }
+
 
     
     .app-nav-btn span {
