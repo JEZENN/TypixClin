@@ -3505,7 +3505,10 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     position: absolute;
     top: calc(100% + 7px);
     right: 0;
-    background: var(--gray-800, #1f2937);
+    /* BUGFIX (2026-09-15) : même correctif que .tour-page-arrow[data-tooltip]
+       ~ligne 3681 -- var(--gray-800) s'inverse en thème sombre (quasi blanc),
+       rendant ce tooltip aussi illisible en mode sombre. Couleur fixe. */
+    background: #1f2937;
     color: #fff;
     padding: 0.35rem 0.55rem;
     border-radius: 6px;
@@ -3684,7 +3687,14 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     bottom: calc(100% + 9px);
     left: 50%;
     transform: translate(-50%, 4px);
-    background: var(--gray-800, #1f2937);
+    /* BUGFIX (2026-09-15) : #1f2937 en dur (jamais var(--gray-800)) --
+       --gray-800 s'INVERSE en thème sombre (#f3f4f6, quasi blanc, cf. le
+       bloc [data-theme="dark"] du :root) puisque toute l'échelle de gris y
+       est inversée pour rester lisible en tant que TEXTE sur fond sombre.
+       Une bulle de tooltip doit au contraire rester foncée dans TOUS les
+       thèmes (comme une info-bulle système) -- signalé par l'utilisateur :
+       tooltip blanc sur fond clair-ish en mode sombre, illisible. */
+    background: #1f2937;
     color: #fff;
     font-size: 0.7rem;
     font-weight: 600;
@@ -3704,7 +3714,7 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     left: 50%;
     transform: translate(-50%, 4px);
     border: 5px solid transparent;
-    border-top-color: var(--gray-800, #1f2937);
+    border-top-color: #1f2937; /* BUGFIX (2026-09-15) : idem ::after ci-dessus, fixe dans tous les thèmes */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease, transform 0.15s ease;
@@ -3783,6 +3793,30 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
    moins de 8 tours faits) -- même logique que .tour-page-arrow:disabled juste
    au-dessus, posé par renderItemsTable (classe tour-page-indicator-muted). */
 .tour-page-indicator.tour-page-indicator-muted { color: var(--gray-300); font-weight: 600; }
+
+/* BUGFIX (2026-09-15) : la flèche/l'indicateur débordaient dans .days-cell
+   (chevauchement avec la pastille de priorité, signalé par l'utilisateur,
+   capture à l'appui sur téléphone). CAUSE RACINE : le commentaire v5
+   ci-dessus (~ligne 3622) supposait que table-layout:auto élargirait tout
+   seul la colonne .tour-cell pour "accueillir la flèche" en trop -- FAUX :
+   la flèche/l'indicateur sont en position:absolute, donc EXCLUS du calcul
+   de largeur intrinsèque d'une cellule de tableau (spec CSS) ; seul le
+   contenu en flux normal (les 8 badges) compte pour ce calcul. Sur grand
+   écran l'espace en trop redistribué par table-layout:auto masquait le
+   problème par coïncidence (cf. le vrai correctif de fond, .tour-badges-shell
+   plus haut, pour ce mécanisme de redistribution) ; sur téléphone, aucun
+   espace en trop n'existe, donc rien ne compensait. Correctif : un
+   padding-right RÉEL (en flux normal, donc bien compté par table-layout:auto)
+   sur .tour-cell, réservant exactement l'espace que la flèche occupe déjà
+   visuellement (margin-left + largeur) -- seulement quand le mode étendu
+   est actif (:has, aucun changement pour les comptes qui ne l'activent
+   jamais). Valeur alignée sur la taille de flèche RÉELLEMENT utilisée à
+   chaque palier (26px partout sauf ≤480px, cf. le correctif iPad du
+   2026-09-15 qui a supprimé les tailles réduites intermédiaires). */
+.tour-cell:has(.tour-badges-extended) { padding-right: 35px; }
+@media (max-width: 480px) {
+    .tour-cell:has(.tour-badges-extended) { padding-right: 31px; }
+}
 
 .resources-cell { min-width: 140px; padding: 0.5rem !important; }
 
@@ -5571,44 +5605,20 @@ input[type="date"].modal-input {
 }
 
 @media (min-width: 900px) and (max-width: 1100px) {
-    .tour-cell { min-width: 185px; }
-    .tour-badge { width: 19px; height: 17px; font-size: 0.52rem; border-width: 1px; }
-    /* BUGFIX (2026-09-14, v5) : badge NON réduit en mode étendu -- cf. commentaire
-       détaillé ~ligne 3584 (la flèche ne dépend plus d'un budget de largeur
-       économisé dans le badge depuis le passage à .tour-badges-shell). */
-    .tour-page-arrow { top: 0; left: 100%; margin-left: 7px; width: 15px; height: 15px; font-size: 0.42rem; }
-    .tour-page-indicator { left: 100%; margin-left: 7px; width: 15px; font-size: 0.6rem; top: 17px; }
-    /* BUGFIX (2026-09-08) : .tour-date faisait 28px alors que .tour-badge (et
-       son .tour-badge-wrapper, sans min-width dédié ici) ne fait que 19px —
-       chaque colonne "date" (rangée du dessous) était donc ~9px plus large
-       que la colonne "tour" correspondante (rangée du dessus), d'où un
-       décalage progressif entre les deux rangées au fil des 8 tours, visible
-       en mode détaillé sur les écrans à cette largeur (ex : iPad Pro 12.9"
-       en portrait, ~1024px). Même correctif déjà appliqué par ailleurs
-       (cf. les commentaires "aligner la largeur des dates sur celle des
-       badges" un peu plus bas dans ce fichier, à 768px et 480px) : largeur
-       de .tour-date ET .tour-badge-wrapper alignée sur celle de .tour-badge. */
-    .tour-date { width: 19px; font-size: 0.48rem; white-space: nowrap; overflow: visible; }
-    .tour-badge-wrapper { min-width: 19px; }
-    /* .tour-duration/.tour-support héritent sinon une police 0.6rem (taille de
-       base, pensée pour le badge 30px par défaut) : sur un badge à 19px, un
-       texte "0:15" ou "QCM" à cette taille dépasse largement la colonne et
-       fait quand même gonfler .tour-badge-wrapper au-delà de son min-width,
-       ce qui recrée un décalage (progressif au fil des tours) même une fois
-       .tour-date aligné ci-dessus. Réduite ici pour rester proche de 19px. */
-    .tour-info { gap: 1px; margin-top: 3px; }
-    .tour-duration { font-size: 0.42rem; white-space: nowrap; }
-    .tour-support { font-size: 0.42rem; padding: 0 2px; white-space: nowrap; }
-    .resources-cell { min-width: 80px; }
-    .resources-grid { grid-template-columns: 1fr; gap: 2px; }
-    .resource-box { font-size: 0.55rem; padding: 0.12rem 0.2rem; min-height: 20px; border-width: 1px; }
-    .days-cell { min-width: 42px; }
-    .items-table .item-num { min-width: 76px; }
-    .items-table .item-name { max-width: 150px; }
-    .items-table .item-specialty { max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .items-table td, .items-table th { padding: 0.4rem 0.3rem; }
-    .items-table { font-size: 0.78rem; }
-	
+    /* BUGFIX (2026-09-15) : toutes les règles de rétrécissement du tableau
+       (cases de tour, dates, flèche/indicateur de pagination, colonnes
+       numéro/intitulé/spécialité/ressources/jours, police globale) qui
+       vivaient ici ont été SUPPRIMÉES — retour utilisateur direct sur iPad
+       tenu verticalement (~1024px, la largeur visée par ce palier) : les
+       cases de tour devenaient minuscules et les dates se chevauchaient,
+       "un truc bizarre". Remplacé par un mécanisme structurel : le tableau
+       garde désormais sa taille NATURELLE (identique au bureau) sur toute
+       cette plage, et défile horizontalement dans son conteneur au lieu de
+       se comprimer — cf. la règle .items-table { width: max-content } plus
+       bas (~ligne 5663, palier tablette). Aucune valeur figée à maintenir
+       ici : la largeur naturelle s'adapte automatiquement si le contenu du
+       tableau change plus tard (ex. ajout d'une colonne). */
+
 	.send-to-checklist-btn,
 	.added-to-checklist-badge {
 		width: 34px;
@@ -5654,24 +5664,40 @@ input[type="date"].modal-input {
 
 /* ===== RESPONSIVE TABLEUR ===== */
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
     #page-items .items-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     #page-items .section-card {
         overflow: visible;
-    }
-    
-    #page-items .items-table {
-        min-width: 800px;
     }
 
 #page-items .filter-bar {
     flex-wrap: wrap;
 }
-	
+
+}
+
+/* BUGFIX (2026-09-15) : sur iPad tenu verticalement (et petites tablettes
+   portrait, ~744 à ~1100px — iPad mini/Air/Pro 11"/Pro 12.9" en portrait),
+   le tableau ne doit plus se comprimer pour tenir dans la largeur de
+   l'écran (cases de tour minuscules, dates chevauchées, "truc bizarre"
+   signalé par l'utilisateur) : il garde sa taille NATURELLE (celle du
+   bureau, aucune règle de rétrécissement) et défile horizontalement dans
+   .items-container (overflow-x: auto, cf. juste au-dessus) — exactement le
+   même principe que sur téléphone (où le tableau défile déjà). Borné à
+   min-width: 481px pour NE PAS toucher au réglage téléphone (≤480px,
+   longuement calé avec l'utilisateur, hors sujet ici) : celui-ci continue
+   de rétrécir les cases comme avant, inchangé. width: max-content (plutôt
+   qu'un min-width en pixels à deviner) s'adapte automatiquement à la
+   largeur réelle du contenu, aujourd'hui comme si une colonne est ajoutée
+   plus tard. */
+@media (min-width: 481px) and (max-width: 1100px) {
+    #page-items .items-table {
+        width: max-content;
+    }
 }
 
 /* ===== FILTRE-BAR : layout grid stable sur tous les écrans moyens ===== */
@@ -5726,29 +5752,10 @@ input[type="date"].modal-input {
         font-size: 1rem;
     }
     
-    .tour-badge-wrapper {
-        min-width: 28px;
-    }
-
-    .tour-badge {
-        width: 28px;
-        height: 26px;
-        font-size: 0.6rem;
-    }
-    /* Mode détaillé (non compact) : aligner la largeur des dates sur celle des
-       badges (28px) pour que la rangée de dates ne soit plus plus large que la
-       rangée de badges et ne déborde plus sur le côté. */
-    .tour-date {
-        width: 28px;
-        font-size: 0.55rem;
-        white-space: nowrap;
-        overflow: hidden;
-    }
-    /* BUGFIX (2026-09-14, v4) : ancré via .tour-badges-shell (left:100%) comme
-       la règle de base -- cf. commentaire détaillé sur .tour-badges-shell
-       ~ligne 3601. Badge à sa taille normale (28px, non réduite) -- cf. v5. */
-    .tour-page-arrow { top: 0; left: 100%; margin-left: 9px; width: 24px; height: 24px; font-size: 0.58rem; }
-    .tour-page-indicator { left: 100%; margin-left: 9px; width: 24px; font-size: 0.7rem; top: 27px; }
+    /* BUGFIX (2026-09-15) : cases de tour/dates/flèche/indicateur ramenées à
+       leur taille normale (celle du bureau) à ce palier aussi -- cf. le
+       correctif structurel ~ligne 5663 (.items-table { width: max-content }
+       + défilement horizontal) qui remplace le rétrécissement historique. */
 
 	    .section-body {
         padding: 0.75rem;
@@ -27107,7 +27114,7 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
         return; 
     }
     emptyState.style.display = 'none';
-    
+
     // Générer le HTML seulement pour les items paginés
     tbody.innerHTML = paginatedItems.map(item => {
         const d = getItemData(item.specialtyId, item.fc);
@@ -27148,33 +27155,21 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
         if (_tpxExtended) {
             const _tpxKey = getItemKey(item.specialtyId, item.fc);
             const _tpxT8Filled = d.tours[7] != null;
-            // BUGFIX (2026-09-14, CRITIQUE) : "T8 rempli => page 2 par défaut"
-            // semblait correct pour un tour VENANT d'être complété (demande
-            // originale), mais casse tout item HISTORIQUEMENT terminé à 8
-            // tours (extrêmement courant) : à CHAQUE rendu (rechargement,
-            // restauration...), la page par défaut redevenait 2, masquant
-            // T1-T6 (réels, jamais perdus en base) derrière la fenêtre T7-T14
-            // -- signalé par l'utilisateur après une restauration, où
-            // plusieurs lignes affichaient T7/T8 (ou même juste des cases
-            // vides) sans plus aucune trace visible de T1-T6, l'utilisateur
-            // craignant une perte de données réelle. Ce n'était QUE
-            // l'affichage : d.tours n'est jamais modifié par cette logique de
-            // fenêtrage/pagination, purement visuelle.
-            // Correctif : l'avance automatique ne se déclenche plus que sur
-            // la TRANSITION "T8 vient d'être rempli PENDANT cette session"
-            // (comme demandé à l'origine), jamais simplement parce qu'il
-            // l'est déjà -- window._tpxT8SeenFilled retient, en RAM pour
-            // cette session seulement, si CETTE ligne avait déjà été vue
-            // avec T8 rempli. Un item ayant réellement des tours au-delà de
-            // T8 (T9+) va quand même par défaut en page 2, peu importe la
-            // session -- c'est la vraie donnée qui justifie la page 2 ici,
-            // pas un simple flag de transition.
-            window._tpxT8SeenFilled = window._tpxT8SeenFilled || {};
-            const _tpxPrevT8Seen = window._tpxT8SeenFilled[_tpxKey]; // undefined = jamais vu cette session
-            const _tpxT8JustCompleted = _tpxT8Filled && _tpxPrevT8Seen === false;
-            window._tpxT8SeenFilled[_tpxKey] = _tpxT8Filled;
-            const _tpxHasPostT8 = d.tours.length > 8 && d.tours.slice(8).some(function (t) { return t != null; });
-            const _tpxDefaultPage = (_tpxHasPostT8 || _tpxT8JustCompleted) ? 2 : 1;
+            // RÈGLE (2026-09-15, révise le BUGFIX CRITIQUE du 2026-09-14) :
+            // page 2 par défaut dès que T8 est rempli, à chaque rendu (donc
+            // aussi bien après un rechargement complet qu'à l'instant où le
+            // réglage 14 tours vient d'être activé) -- demande explicite de
+            // l'utilisateur, reconfirmée après qu'on lui ait signalé que
+            // c'était l'ancien comportement CRITIQUE (celui qui avait fait
+            // craindre une perte de données le 14/09, quand T1-T6 semblaient
+            // avoir disparu). Différence assumée cette fois : la flèche de
+            // pagination existe maintenant et est bien identifiée -- revenir
+            // à la page 1 pour consulter T1-T6 ne demande qu'un clic, donc ce
+            // n'est plus perçu comme une perte. d.tours n'est de toute façon
+            // JAMAIS modifié par cette logique de fenêtrage, purement
+            // visuelle -- aucune donnée n'est concernée, seul l'onglet
+            // affiché par défaut change.
+            const _tpxDefaultPage = _tpxT8Filled ? 2 : 1;
             const _tpxOverride = window._tpxTourPageOverride ? window._tpxTourPageOverride[_tpxKey] : null;
             let _tpxPage = (_tpxOverride === 1 || _tpxOverride === 2) ? _tpxOverride : _tpxDefaultPage;
             if (_tpxPage === 2 && !_tpxT8Filled) _tpxPage = 1; // filet de sécurité si T8 est effacé après coup
@@ -27261,11 +27256,21 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
             const isEditable = (c !== null && i === lastDoneIndex) || (c === null && i === nextTourIndex);
             const isLocked = c === null && i !== nextTourIndex;
             
+            // BUGFIX (2026-09-15) : réservation d'emplacement durée/support/date
+            // retirée du `if (c)` -- une case NON remplie (verrouillée, ou la
+            // prochaine case éditable encore vide) ne recevait jusqu'ici JAMAIS
+            // de .tour-info, même quand rowHasDuration/rowHasSupport valait true
+            // pour la ligne (un AUTRE tour de la fenêtre affichée a une durée/un
+            // support). .tour-badge-wrapper empile badge/[info]/date en colonne :
+            // une case sans .tour-info est donc plus COURTE que ses voisines qui
+            // en ont une (même vide/placeholder), ce qui décale sa date vers le
+            // haut par rapport aux autres -- signalé par l'utilisateur (capture à
+            // l'appui, téléphone portrait et paysage). `duration`/`support`
+            // valent de toute façon null pour une case jamais remplie, donc le
+            // repli en placeholder ci-dessous s'applique déjà naturellement,
+            // sans changement de logique -- seule la condition `if (c)` saute.
             let info = '';
-            if (c) {
-                // Réserve un emplacement durée/support UNIQUEMENT si la ligne en contient au moins un
-                // (donc pas d'espace vide superflu quand aucun tour n'a indiqué cette donnée),
-                // tout en gardant l'alignement quand un tour seulement renseigne durée/support.
+            if (true) {
                 var _durIsZero = !duration || /^\s*0+\s*:\s*0+\s*$/.test(duration);
                 var _durHtml = '';
                 if (rowHasDuration) {
