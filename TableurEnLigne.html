@@ -150,6 +150,31 @@ window.tcLoadAnalytics();
     --confidence-3: #f59e0b;
     --confidence-4: #22c55e;
     --confidence-5: #15803d;
+    /* BUGFIX (2026-09-14, CRITIQUE) : --confidence-6 à -10 n'étaient définies
+       QUE sous html[data-conf-scale="10"] plus bas -- un tour dont la valeur
+       stockée est 6-10 (enregistré à un moment où le compte était sur le
+       barème 10, ou restauré depuis une sauvegarde prise sous ce barème)
+       n'avait ALORS AUCUNE couleur tant que le compte est sur le barème 5 :
+       var(--confidence-6) etc. pointe vers une variable non définie, invalide
+       au calcul → le badge retombe silencieusement sur le style de base
+       (fond blanc, bordure grise) -- visuellement indiscernable d'un tour
+       jamais rempli, alors que la valeur existe bel et bien dans les
+       données. Signalé par l'utilisateur après une restauration ("le niveau
+       de confiance a disparu"), confirmé en observant que changer de barème
+       faisait "réapparaître" certains tours (leur valeur passe alors par
+       convertConfidenceValue(), qui les ramène dans la plage 1-5 -- toujours
+       définie -- corrigeant l'affichage comme effet de bord, pas la cause).
+       Valeurs par défaut ajoutées ici = mêmes couleurs que le dégradé
+       10 niveaux (cf. html[data-conf-scale="10"] plus bas) : un badge 6-10
+       affiche désormais TOUJOURS une couleur cohérente, que le compte soit
+       actuellement sur le barème 5 ou 10 -- aucune conversion de données
+       requise, aucune valeur n'a jamais été perdue, seul l'AFFICHAGE était
+       cassé. */
+    --confidence-6: #ca8a04;
+    --confidence-7: #84cc16;
+    --confidence-8: #22c55e;
+    --confidence-9: #16a34a;
+    --confidence-10: #15803d;
     /* Couleurs stables (rouge/orange/vert), INDÉPENDANTES du barème de
        confiance — pour tout ce qui réutilisait confidence-1/3/5 sans
        rapport avec le barème (flashcards fail/hesitant/know, statuts
@@ -3564,6 +3589,201 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .tour-dates { display: flex; gap: 2px; margin-top: 2px; } /* classe conservee mais plus generee (BUGFIX 2026-09-09, cf. renderItemsTable) : la date est maintenant DANS .tour-badge-wrapper */
 .tour-date { width: 30px; font-size: 0.6rem; color: var(--gray-500); text-align: center; overflow: hidden; font-family: var(--font-body); margin-top: 2px; }
 
+/* ── AJOUT (2026-09-13) : flèche de pagination T1-T8 / T7-T14 (réglage "14
+   tours"). BUGFIX (2026-09-13, v3) : la v2 ancrait la flèche à droite de
+   .tour-badges (position:absolute, left:100%) -- ça évitait bien d'élargir
+   la colonne, MAIS .tour-badges remplit quasiment tout l'espace disponible
+   dans .tour-cell (une fois le padding de la cellule déduit), donc la
+   flèche débordait dans la cellule SUIVANTE (.days-cell) et chevauchait le
+   bouton de priorité (signalé par l'utilisateur, capture à l'appui).
+   v3 : la flèche est maintenant ancrée à .tour-cell lui-même (right:Npx),
+   JAMAIS au-delà de son propre bord droit -- structurellement impossible
+   qu'elle déborde dans la colonne suivante, quel que soit le calcul de
+   marge (contrairement à v2, qui dépendait d'un calcul de padding qui
+   s'est révélé faux). v3 réduisait aussi le gap et la largeur des badges
+   en mode étendu pour "économiser" la place nécessaire à la flèche --
+   DEVENU OBSOLÈTE en v4/v5 (cf. plus bas) : la flèche est maintenant sur
+   .tour-badges-shell (left:100%), n'a plus besoin de ce budget, et les
+   badges retrouvent leur taille normale. Aucun changement visuel pour les
+   comptes qui n'activent jamais le réglage, dans tous les cas. */
+.tour-cell { position: relative; }
+/* BUGFIX (2026-09-14, v5) : les versions précédentes réduisaient la largeur
+   des badges (30->28px) et le gap (2->1px) en mode étendu, pour "économiser"
+   la place nécessaire à la flèche DANS le budget de .tour-cell -- ça rendait
+   la ligne visiblement plus tassée qu'en mode normal (retour utilisateur,
+   capture à l'appui comparant les deux : "quand la flèche n'était pas là
+   c'était mieux"). Devenu inutile depuis le passage à .tour-badges-shell
+   (cf. plus bas) : la flèche ne dépend plus d'un budget de largeur à
+   économiser dans .tour-cell, donc plus besoin de comprimer les badges --
+   ils gardent leur taille normale, identique au mode non étendu. .tour-cell
+   n'ayant pas de max-width et la table étant en table-layout:auto, la
+   colonne peut légèrement s'élargir pour accueillir la flèche quand le
+   réglage est actif (comme n'importe quel autre contenu plus large qu'avant)
+   -- compromis assumé au profit d'un rendu identique au mode normal. */
+/* BUGFIX (2026-09-14, v4 -- CAUSE RACINE) : la flèche/l'indicateur étaient
+   ancrés via `right:Npx` depuis le bord de .tour-cell, en supposant sa
+   largeur exactement égale à son min-width. Or .tour-cell n'a pas de
+   max-width, et la table est en table-layout:auto : dès que la table
+   dispose de plus d'espace que la somme des largeurs minimales de ses
+   colonnes (fréquent sur grand écran), le navigateur redistribue l'espace
+   en trop -- .tour-cell peut donc être BIEN plus large que son min-width en
+   pratique, alors que les 8 badges (largeur fixe, 231px desktop) restent
+   collés à gauche : la flèche, ancrée sur le bord DROIT réel de la cellule
+   (devenu variable et imprévisible), se retrouvait très loin des badges
+   (retour utilisateur répété, capture à l'appui, le problème persistait
+   malgré plusieurs correctifs précédents qui affinaient un calcul reposant
+   sur une hypothèse de largeur de cellule fausse).
+   CORRECTIF DÉFINITIF : .tour-badges-shell (display:inline-block) enveloppe
+   .tour-badges ET sert d'ancre `position:relative` à la flèche/l'indicateur,
+   qui utilisent désormais `left:100%` au lieu de `right:Npx` -- un
+   inline-block se réduit TOUJOURS exactement à la largeur de son contenu
+   (les 8 badges, 231px desktop, garantis fixes par le garde-fou ci-dessus),
+   jamais à celle de .tour-cell. La position est donc maintenant
+   STRUCTURELLEMENT indépendante de la largeur réelle de la colonne, quelle
+   qu'elle soit -- impossible qu'elle dérive à nouveau. .tour-badges (qui
+   reçoit le transform de l'anim de changement de page) reste un FRÈRE de la
+   flèche à l'intérieur du shell -- jamais son parent -- donc toujours
+   immunisé contre le piège "transform = nouveau référentiel de
+   positionnement" (déjà identifié et évité au correctif précédent). */
+.tour-badges-shell { position: relative; display: inline-block; vertical-align: top; }
+.tour-page-arrow {
+    position: absolute;
+    /* BUGFIX (2026-09-14, v6) : espace au dernier badge agrandi (4->9px, ~2x)
+       suite au retour utilisateur ("trop proche"), maintenant qu'on sait que
+       le budget est structurellement sûr (cf. .tour-badges-shell). */
+    left: 100%; margin-left: 9px;
+    top: 0;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--gray-300); background: var(--gray-100);
+    color: var(--gray-600); cursor: pointer; font-size: 0.6rem;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+.tour-page-arrow:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; transform: scale(1.06); }
+.tour-page-arrow:active:not(:disabled) { transform: scale(0.92); }
+.tour-page-arrow:disabled { background: var(--gray-50); border-color: var(--gray-200); color: var(--gray-300); box-shadow: none; cursor: not-allowed; }
+/* AJOUT (2026-09-14) : info-bulle personnalisée au survol/focus (remplace
+   l'attribut title natif, dont l'apparence grise par défaut du navigateur ne
+   suit pas le thème du site et n'est pas positionnable -- retour utilisateur,
+   capture à l'appui). Contenu piloté par data-tooltip (posé par
+   renderItemsTable). Petite flèche (::before) pour la rattacher visuellement
+   au bouton.
+   BUGFIX (2026-09-14, v7) : contrairement à ce que dit le commentaire qui
+   suivait ici, :hover s'applique bien en CSS sur un bouton disabled (seuls
+   le clic et le focus sont bloqués par l'attribut, pas le survol visuel) --
+   la bulle apparaissait donc aussi sur la flèche grisée, avant que T8 (ou
+   T14) ne soit rempli (retour utilisateur, capture à l'appui : "quand moins
+   de 8 tours le tooltip ne doit pas apparaître"). :not(:disabled) ajouté
+   explicitement ci-dessous pour corriger. */
+.tour-page-arrow[data-tooltip] { overflow: visible; }
+.tour-page-arrow[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    background: var(--gray-800, #1f2937);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 5px 9px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+.tour-page-arrow[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    border: 5px solid transparent;
+    border-top-color: var(--gray-800, #1f2937);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+.tour-page-arrow[data-tooltip]:hover:not(:disabled)::after, .tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::after,
+.tour-page-arrow[data-tooltip]:hover:not(:disabled)::before, .tour-page-arrow[data-tooltip]:focus-visible:not(:disabled)::before {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+/* BUGFIX (2026-09-13, v4) : l'animation précédente faisait tourner/zoomer
+   le BOUTON entier (cercle + bordure + icône) tout en échangeant l'icône
+   fa-chevron-right <-> fa-chevron-left d'un coup sec au milieu du
+   mouvement -- rendu "bizarre" (signalé par l'utilisateur). Un seul glyphe
+   (fa-chevron-right) est désormais utilisé en permanence ; c'est SON
+   ROND (l'icône <i>, pas le bouton) qui pivote de 0° à 180° pour pointer
+   vers la gauche -- le bouton (cercle/bordure/fond) reste parfaitement
+   immobile, seule la flèche tourne "à l'intérieur". La classe -left/-right
+   fixe l'état final (cas normal, sans animation) ; la classe -anim ne
+   s'ajoute QUE quand le sens vient de changer pour CETTE ligne précise
+   (window._tpxTourArrowPrevDir, cf. renderItemsTable), jamais à chaque
+   re-rendu global du tableau. */
+.tour-page-arrow i { display: block; transform: rotate(0deg); }
+.tour-page-arrow.tour-page-arrow-left i { transform: rotate(180deg); }
+@keyframes tourArrowIconToLeft  { from { transform: rotate(0deg);   } to { transform: rotate(180deg); } }
+@keyframes tourArrowIconToRight { from { transform: rotate(180deg); } to { transform: rotate(0deg);   } }
+.tour-page-arrow.tour-page-arrow-left.tour-page-arrow-anim  i { animation: tourArrowIconToLeft  0.3s ease forwards; }
+.tour-page-arrow.tour-page-arrow-right.tour-page-arrow-anim i { animation: tourArrowIconToRight 0.3s ease forwards; }
+/* AJOUT : quand la PAGE de cette ligne vient de changer (T1-T8 <-> T7-T14,
+   même détection que la flèche ci-dessus), les 8 cases glissent + fondent en
+   entrée -- sens du glissement selon la direction (vers la page 2 : entrée
+   par la droite : window._tpxPageSlide positif ; retour page 1 : par la
+   gauche : négatif), posé en style inline par renderItemsTable. */
+@keyframes tourBadgesPageIn {
+    0%   { opacity: 0; transform: translateX(var(--tpx-page-slide, 8px)); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+.tour-badges.tour-badges-page-anim { animation: tourBadgesPageIn 0.28s ease; }
+/* AJOUT (2026-09-14) : indicateur de page "1/2"/"2/2" sous la flèche. Texte
+   simple (pas de fond/pastille) pour rester cohérent avec .tour-date déjà
+   utilisé sous chaque badge, et parce qu'une pastille n'aurait pas la place
+   de respirer sur une largeur aussi étroite (15 à 26px selon le palier).
+   En position:absolute comme la flèche -- FRÈRE de .tour-badges, jamais un
+   enfant : aucun impact possible sur la largeur de la colonne ni sur la
+   position des badges/de la flèche, quel que soit le palier.
+   BUGFIX (2026-09-14, v3) : ancré via `bottom` au départ (pour rester dans
+   la cellule même sur une ligne sans aucune date) -- mais `bottom` colle au
+   bas de la LIGNE ENTIÈRE, dont la hauteur varie avec le nombre de tours
+   affichant une date (jusqu'à 8 lignes de dates empilées) : sur une ligne
+   chargée, l'indicateur se retrouvait très en dessous de la flèche au lieu
+   de "juste en dessous" (retour utilisateur, capture à l'appui). Remplacé
+   par un décalage FIXE depuis le BAS DE LA FLÈCHE elle-même (top de la
+   flèche + sa hauteur + un petit espace) -- l'indicateur reste ainsi
+   TOUJOURS collé au bouton, quelle que soit la hauteur réelle de la ligne
+   (dates ou pas). var(--gray-500) = même variable que .tour-date : suit
+   automatiquement le thème clair/sombre/pastel, sans règle supplémentaire. */
+.tour-page-indicator {
+    position: absolute;
+    /* BUGFIX (2026-09-14, v4) : ancré comme la flèche via .tour-badges-shell
+       (left:100%) plutôt que .tour-cell (right:Npx) -- cf. le commentaire
+       détaillé sur .tour-badges-shell plus haut pour la cause racine. top =
+       hauteur de la flèche (26px) + petit espace (3px), pour rester "juste
+       en dessous du bouton" comme demandé -- toujours correct puisque la
+       flèche est maintenant à top:0 dans le même référentiel. */
+    /* BUGFIX (2026-09-14, v6) : même espace agrandi que la flèche juste au-dessus. */
+    top: 29px; left: 100%; margin-left: 9px;
+    width: 26px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    line-height: 1;
+    pointer-events: none;
+}
+/* AJOUT (2026-09-14) : plus discret tant que la flèche est désactivée (page 1,
+   moins de 8 tours faits) -- même logique que .tour-page-arrow:disabled juste
+   au-dessus, posé par renderItemsTable (classe tour-page-indicator-muted). */
+.tour-page-indicator.tour-page-indicator-muted { color: var(--gray-300); font-weight: 600; }
+
 .resources-cell { min-width: 140px; padding: 0.5rem !important; }
 
 /* Grille des ressources 2x2 */
@@ -5353,6 +5573,11 @@ input[type="date"].modal-input {
 @media (min-width: 900px) and (max-width: 1100px) {
     .tour-cell { min-width: 185px; }
     .tour-badge { width: 19px; height: 17px; font-size: 0.52rem; border-width: 1px; }
+    /* BUGFIX (2026-09-14, v5) : badge NON réduit en mode étendu -- cf. commentaire
+       détaillé ~ligne 3584 (la flèche ne dépend plus d'un budget de largeur
+       économisé dans le badge depuis le passage à .tour-badges-shell). */
+    .tour-page-arrow { top: 0; left: 100%; margin-left: 7px; width: 15px; height: 15px; font-size: 0.42rem; }
+    .tour-page-indicator { left: 100%; margin-left: 7px; width: 15px; font-size: 0.6rem; top: 17px; }
     /* BUGFIX (2026-09-08) : .tour-date faisait 28px alors que .tour-badge (et
        son .tour-badge-wrapper, sans min-width dédié ici) ne fait que 19px —
        chaque colonne "date" (rangée du dessous) était donc ~9px plus large
@@ -5504,7 +5729,7 @@ input[type="date"].modal-input {
     .tour-badge-wrapper {
         min-width: 28px;
     }
-    
+
     .tour-badge {
         width: 28px;
         height: 26px;
@@ -5519,7 +5744,12 @@ input[type="date"].modal-input {
         white-space: nowrap;
         overflow: hidden;
     }
-	
+    /* BUGFIX (2026-09-14, v4) : ancré via .tour-badges-shell (left:100%) comme
+       la règle de base -- cf. commentaire détaillé sur .tour-badges-shell
+       ~ligne 3601. Badge à sa taille normale (28px, non réduite) -- cf. v5. */
+    .tour-page-arrow { top: 0; left: 100%; margin-left: 9px; width: 24px; height: 24px; font-size: 0.58rem; }
+    .tour-page-indicator { left: 100%; margin-left: 9px; width: 24px; font-size: 0.7rem; top: 27px; }
+
 	    .section-body {
         padding: 0.75rem;
     }
@@ -5561,6 +5791,13 @@ input[type="date"].modal-input {
         white-space: nowrap;
         overflow: hidden;
     }
+    /* BUGFIX (2026-09-14, v4) : flèche/indicateur ancrés via .tour-badges-shell
+       (left:100%) comme la règle de base -- cf. commentaire détaillé sur
+       .tour-badges-shell ~ligne 3601. BUGFIX (2026-09-14, v5) : plus de
+       réduction de largeur de badge en mode étendu (cf. ~ligne 3584) -- le
+       badge non-étendu fait déjà 26px à ce palier, rien à "reclaimer". */
+    .tour-page-arrow { top: 0; left: 100%; margin-left: 9px; width: 22px; height: 22px; font-size: 0.58rem; }
+    .tour-page-indicator { left: 100%; margin-left: 9px; width: 22px; font-size: 0.68rem; top: 25px; }
     /* Le badge est enveloppé dans .tour-badge-wrapper (min-width héritée de 28px du
        bloc ≤768). À ≤480 le badge/date font 26px : sans cette règle, la colonne de
        badge (28px) est plus large que la date (26px) → décalage progressif vers la
@@ -5568,7 +5805,7 @@ input[type="date"].modal-input {
     .tour-badge-wrapper {
         min-width: 26px;
     }
-    
+
 .tour-info {
         display: flex;
         flex-direction: column;
@@ -20439,6 +20676,42 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
                 </div>
             </div>
 
+            <!-- Réglage 4 : Nombre de tours (2026-09-13) -->
+            <div class="settings-card" data-setting="extended-tours">
+                <div class="settings-card-head">
+                    <div class="settings-card-icon tours"><i class="fas fa-layer-group"></i></div>
+                    <div class="settings-card-titles">
+                        <div class="settings-card-title">Nombre de tours</div>
+                        <div class="settings-card-sub">Choisissez combien de tours de révision peuvent être enregistrés par item.</div>
+                    </div>
+                </div>
+
+                <div class="settings-switch-row">
+                    <button type="button" id="extended-tours-switch" class="seg-switch settings-seg" role="switch" aria-checked="false">
+                        <span class="seg-thumb"></span>
+                        <span class="seg-opt seg-opt-left active" data-etours="8">8 tours</span>
+                        <span class="seg-opt seg-opt-right" data-etours="14">14 tours</span>
+                    </button>
+                </div>
+
+                <div class="settings-explain">
+                    <div class="settings-explain-row" data-mode="8">
+                        <span class="settings-explain-ico"><i class="fas fa-table-cells"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>8 tours</strong>
+                            <span>Le nombre de tours par défaut, comme aujourd'hui.</span>
+                        </div>
+                    </div>
+                    <div class="settings-explain-row" data-mode="14">
+                        <span class="settings-explain-ico"><i class="fas fa-table-cells-large"></i></span>
+                        <div class="settings-explain-txt">
+                            <strong>14 tours</strong>
+                            <span>Pour les items nécessitant plus de révisions — une flèche à côté de T8 permet de naviguer entre les deux pages de tours.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div><!-- /.settings-modal-body -->
 
         <!-- Footer fixe (même style que le modal d'aide) -->
@@ -20460,7 +20733,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
                 <div class="unified-modal-icon"><i class="fas fa-gauge-high"></i></div>
                 <h3 class="unified-modal-heading" id="cs-confirm-title">Changer de barème ?</h3>
             </div>
-            <button class="notes-close-btn" onclick="window.tpxCloseConfidenceScaleConfirm()"><i class="fas fa-times"></i></button>
+            <button class="notes-close-btn" id="cs-confirm-x-btn" onclick="window.tpxCloseConfidenceScaleConfirm()"><i class="fas fa-times"></i></button>
         </div>
         <div class="settings-modal-body">
             <p class="settings-intro" id="cs-confirm-intro"></p>
@@ -20471,7 +20744,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
             <div id="cs-confirm-error" class="settings-intro" style="display:none;color:var(--tpx-danger,#dc2626);font-weight:600;"></div>
         </div>
         <div class="help-modal-footer settings-modal-footer">
-            <button class="tpx-btn" type="button" onclick="window.tpxCloseConfidenceScaleConfirm()">Annuler</button>
+            <button class="tpx-btn" type="button" id="cs-confirm-cancel-btn" onclick="window.tpxCloseConfidenceScaleConfirm()">Annuler</button>
             <button class="tpx-btn tpx-btn-primary" type="button" id="cs-confirm-go-btn" style="margin-left:auto;" onclick="window.tpxConfirmConfidenceScaleChange()">
                 <i class="fas fa-check"></i> Confirmer le changement
             </button>
@@ -21520,8 +21793,19 @@ function showTourSuccessAnimation() {
     // Masquer l'overlay
     setTimeout(() => {
         overlay.classList.remove('show');
-        // Réafficher la barre de défilement sans décalage.
-        if (window._ednScrollUnlock) window._ednScrollUnlock('tourSuccess');
+        // BUGFIX (2026-09-13) : déverrouiller la scrollbar APRÈS la fin du
+        // fondu de sortie de l'overlay (transition: opacity 0.3s, cf.
+        // .tour-success-overlay), pas au même instant que le retrait de
+        // .show. Le déverrouillage immédiat faisait réapparaître la
+        // scrollbar (et retirait la compensation de largeur associée)
+        // PENDANT que le check était encore visible en train de s'estomper,
+        // provoquant un décalage visible en plein milieu de l'animation.
+        // En attendant la fin du fondu, le check est déjà invisible
+        // (opacity/visibility) quand le décalage se produit -- plus rien à
+        // voir bouger.
+        setTimeout(() => {
+            if (window._ednScrollUnlock) window._ednScrollUnlock('tourSuccess');
+        }, 300);
     }, 1500);
 }
 
@@ -22721,6 +23005,7 @@ window.addEventListener('pagehide', () => {
             //    barème 10 serait interprété comme barème 5 historique au
             //    prochain chargement (4/10 → reconverti à tort en 8/10). ──
             confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
+            extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false,
             data: {
                 items:             userData.items             || {},
                 trophies:          userData.trophies          || {},
@@ -22881,7 +23166,8 @@ async function saveBackupToFirebase(userId, data) {
             // ── MISSION CORRECTIVE, point 10 : le barème associé aux valeurs
             //    de ce backup. Un ancien backup sans ce champ = barème
             //    historique 5 (le barème 10 n'était pas encore déployé). ──
-            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
+            confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
+            extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false
         };
 
         // ── BUGFIX (2026-09-13) : PROTECTION TAILLE — Firestore refuse tout
@@ -23481,6 +23767,20 @@ function loadUserData(userId) {
 						}
 						if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
 						if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+
+						// ── AJOUT (2026-09-13) : même principe pour le nombre de tours
+						//    (8 par défaut, 14 en option) — synchronisé depuis CE MÊME
+						//    snapshot, absence de champ = 8 tours (comportement historique). ──
+						if (newData.extendedTours === true || newData.extendedTours === false) {
+							if (typeof window.tpxSetExtendedToursRuntime === 'function') {
+								window.tpxSetExtendedToursRuntime(newData.extendedTours);
+							}
+						} else if (window._extendedToursRuntime == null) {
+							if (typeof window.tpxSetExtendedToursRuntime === 'function') {
+								window.tpxSetExtendedToursRuntime(false);
+							}
+						}
+						if (typeof window.tpxUpdateExtendedToursSwitchUI === 'function') window.tpxUpdateExtendedToursSwitchUI();
 
 
 						// ── RESTAURATION PENDINGSYNC ─────────────────────────────────────
@@ -24457,7 +24757,9 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
         //    doit toujours réaffirmer le barème actuel, pour qu'un document
         //    ne puisse jamais se retrouver avec des valeurs et un barème
         //    incohérents entre eux. ──
-        confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
+        confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
+        // ── AJOUT (2026-09-13) : même principe pour le nombre de tours. ──
+        extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false
     };
     
     try {
@@ -25467,6 +25769,7 @@ function debouncedSave() {
                 //    pour reconvertir correctement une restauration de pending si
                 //    le barème Firestore a changé entre-temps. ──
                 confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
+            extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false,
                 data: {
                     items:             userData.items             || {},
                     trophies:          userData.trophies          || {},
@@ -26815,18 +27118,144 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
         const safeFcAttr   = tpxEscHtml(item.fc);
         const safeSpecAttr = tpxEscHtml(item.specialtyId);
         
-        // ── Drapeaux globaux à la LIGNE : un slot durée/support/date n'est réservé
-        //    que si au moins un tour de cette ligne contient cette information.
-        const __isZeroDurStr = (v) => !v || /^\s*0+\s*:\s*0+\s*$/.test(v);
-        const rowHasDuration = (d.tourDurations || []).some((v, i) => d.tours[i] && v && !__isZeroDurStr(v));
-        const rowHasSupport  = (d.tourSupports  || []).some((v, i) => d.tours[i] && v);
-        const rowHasDate     = (d.tourDates     || []).some((v, i) => d.tours[i] && v);
+        // ── AJOUT (2026-09-13) : extension du nombre de tours 8 → 14. Par défaut
+        //    (réglage désactivé, TOUS les comptes existants), le comportement
+        //    ci-dessous reste STRICTEMENT identique à avant : fenêtre = indices
+        //    0 à 7, aucune flèche générée. Quand le réglage est activé pour ce
+        //    compte, la grille affiche toujours exactement 8 cases, réparties
+        //    sur 2 "pages" : page 1 = T1-T8 (indices 0-7), page 2 = T7-T14
+        //    (indices 6-13, T7/T8 répétés pour le contexte). La page par
+        //    défaut est dérivée des données (page 2 dès que T8 est rempli —
+        //    c'est ce qui réalise l'avancement automatique demandé), une
+        //    bascule manuelle via la flèche est mémorisée en RAM par item
+        //    (window._tpxTourPageOverride) et se réinitialise naturellement à
+        //    chaque re-rendu complet du tableau : ce n'est qu'une préférence
+        //    de vue de session, jamais persistée ni sauvegardée.
+        // Calculé AVANT les drapeaux rowHasDuration/rowHasSupport/rowHasDate
+        // ci-dessous (BUGFIX 2026-09-13) : ces drapeaux doivent être bornés à
+        // la fenêtre affichée (la page courante), pas à la totalité de
+        // d.tours, sinon un espace vide "durée/support" s'affiche sur une
+        // page qui n'en a pourtant aucun, simplement parce que l'AUTRE page
+        // en contenait un.
+        const _tpxExtended = (typeof window.getExtendedTours === 'function') && window.getExtendedTours();
+        let _tpxWindowStart = 0;
+        let _tpxPageArrowHtml = '';
+        let _tpxPageIndicatorHtml = '';
+        // Classe(s)/style complets du <div class="tour-badges ..."> (cf. plus bas) --
+        // construit comme une chaîne AUTONOME (jamais fragmentée à l'intérieur d'un
+        // attribut déjà ouvert ailleurs) pour éviter tout guillemet mal refermé.
+        let _tpxBadgesOpenTag = '<div class="tour-badges tour-badges-extended">';
+        if (_tpxExtended) {
+            const _tpxKey = getItemKey(item.specialtyId, item.fc);
+            const _tpxT8Filled = d.tours[7] != null;
+            // BUGFIX (2026-09-14, CRITIQUE) : "T8 rempli => page 2 par défaut"
+            // semblait correct pour un tour VENANT d'être complété (demande
+            // originale), mais casse tout item HISTORIQUEMENT terminé à 8
+            // tours (extrêmement courant) : à CHAQUE rendu (rechargement,
+            // restauration...), la page par défaut redevenait 2, masquant
+            // T1-T6 (réels, jamais perdus en base) derrière la fenêtre T7-T14
+            // -- signalé par l'utilisateur après une restauration, où
+            // plusieurs lignes affichaient T7/T8 (ou même juste des cases
+            // vides) sans plus aucune trace visible de T1-T6, l'utilisateur
+            // craignant une perte de données réelle. Ce n'était QUE
+            // l'affichage : d.tours n'est jamais modifié par cette logique de
+            // fenêtrage/pagination, purement visuelle.
+            // Correctif : l'avance automatique ne se déclenche plus que sur
+            // la TRANSITION "T8 vient d'être rempli PENDANT cette session"
+            // (comme demandé à l'origine), jamais simplement parce qu'il
+            // l'est déjà -- window._tpxT8SeenFilled retient, en RAM pour
+            // cette session seulement, si CETTE ligne avait déjà été vue
+            // avec T8 rempli. Un item ayant réellement des tours au-delà de
+            // T8 (T9+) va quand même par défaut en page 2, peu importe la
+            // session -- c'est la vraie donnée qui justifie la page 2 ici,
+            // pas un simple flag de transition.
+            window._tpxT8SeenFilled = window._tpxT8SeenFilled || {};
+            const _tpxPrevT8Seen = window._tpxT8SeenFilled[_tpxKey]; // undefined = jamais vu cette session
+            const _tpxT8JustCompleted = _tpxT8Filled && _tpxPrevT8Seen === false;
+            window._tpxT8SeenFilled[_tpxKey] = _tpxT8Filled;
+            const _tpxHasPostT8 = d.tours.length > 8 && d.tours.slice(8).some(function (t) { return t != null; });
+            const _tpxDefaultPage = (_tpxHasPostT8 || _tpxT8JustCompleted) ? 2 : 1;
+            const _tpxOverride = window._tpxTourPageOverride ? window._tpxTourPageOverride[_tpxKey] : null;
+            let _tpxPage = (_tpxOverride === 1 || _tpxOverride === 2) ? _tpxOverride : _tpxDefaultPage;
+            if (_tpxPage === 2 && !_tpxT8Filled) _tpxPage = 1; // filet de sécurité si T8 est effacé après coup
+            _tpxWindowStart = (_tpxPage === 2) ? 6 : 0;
+            const _tpxArrowDir = (_tpxPage === 2) ? 'left' : 'right';
+            const _tpxArrowDisabled = (_tpxPage === 1 && !_tpxT8Filled);
+            // AJOUT : détecte si le sens/la page viennent de changer depuis le
+            // rendu précédent de CETTE ligne précise (auto-avancement à T8
+            // rempli, ou clic manuel) -- pas à chaque re-rendu global du
+            // tableau (recherche, tri, autre tour validé ailleurs...), qui
+            // ferait sinon "clignoter"/glisser toutes les lignes visibles à
+            // chaque frappe dans la recherche. Sert à la fois pour l'anim de
+            // l'icône de la flèche ET pour l'anim d'entrée des 8 cases.
+            window._tpxTourArrowPrevDir = window._tpxTourArrowPrevDir || {};
+            const _tpxPrevArrowDir = window._tpxTourArrowPrevDir[_tpxKey];
+            const _tpxArrowJustFlipped = (_tpxPrevArrowDir != null && _tpxPrevArrowDir !== _tpxArrowDir);
+            window._tpxTourArrowPrevDir[_tpxKey] = _tpxArrowDir;
+            if (_tpxArrowJustFlipped) {
+                // Vers la page 2 (T7-T14) : les nouvelles cases arrivent "depuis la
+                // droite" (+8px) ; retour page 1 : "depuis la gauche" (-8px).
+                const _tpxSlide = (_tpxPage === 2) ? 8 : -8;
+                _tpxBadgesOpenTag = '<div class="tour-badges tour-badges-extended tour-badges-page-anim" style="--tpx-page-slide:' + _tpxSlide + 'px">';
+            }
+            // BUGFIX (2026-09-13, v4) : un seul glyphe (fa-chevron-right) utilisé
+            // en permanence -- c'est lui qui pivote de 0°/180° en CSS selon le
+            // sens (cf. .tour-page-arrow-left i), jamais échangé pour une autre
+            // icône (l'échange net au milieu d'une rotation du BOUTON entier
+            // rendait l'ancienne animation "bizarre", signalé par l'utilisateur).
+            // AJOUT (2026-09-14) : info-bulle personnalisée (data-tooltip + CSS
+            // ::after, cf. .tour-page-arrow[data-tooltip]) au lieu de l'attribut
+            // title natif -- l'info-bulle grise/noire par défaut du navigateur
+            // ne suit pas le thème du site et n'est pas positionnable (retour
+            // utilisateur, capture à l'appui). aria-label conservé pour
+            // l'accessibilité (lecteurs d'écran), sans déclencher l'info-bulle native.
+            var _tpxArrowTooltip = (_tpxPage === 2 ? 'Tours 1 à 8' : 'Tours 9 à 14');
+            _tpxPageArrowHtml = '<button type="button" class="tour-page-arrow tour-page-arrow-' + _tpxArrowDir +
+                (_tpxArrowJustFlipped ? ' tour-page-arrow-anim' : '') + '"' +
+                (_tpxArrowDisabled ? ' disabled' : '') +
+                ' data-specialty="' + safeSpecAttr + '" data-fc="' + safeFcAttr + '" data-arrow-dir="' + _tpxArrowDir + '"' +
+                ' onclick="window.tpxToggleTourPage(this)"' +
+                ' data-tooltip="' + _tpxArrowTooltip + '" aria-label="' + _tpxArrowTooltip + '">' +
+                '<i class="fas fa-chevron-right"></i></button>';
+            // AJOUT (2026-09-14) : indicateur "1/2" / "2/2" sous la flèche --
+            // texte simple (pas une pastille à fond) pour rester cohérent avec
+            // .tour-date, déjà utilisé juste en dessous de chaque badge, et
+            // parce que le fond+bordure d'une pastille n'aurait pas eu la place
+            // de respirer dans une largeur aussi étroite (15 à 26px selon le
+            // palier). Ancré en position:absolute comme la flèche (jamais un
+            // enfant en flux : aucun impact possible sur la largeur de la
+            // colonne ni sur la position des badges/de la flèche). Couleur en
+            // var(--gray-500), la même variable déjà utilisée par .tour-date :
+            // s'adapte automatiquement aux thèmes clair/sombre/pastel sans
+            // règle supplémentaire, exactement comme les dates le font déjà.
+            // AJOUT (2026-09-14) : plus discret (grisé) tant que la flèche est
+            // désactivée (moins de 8 tours faits sur cette page) -- reflète le
+            // même état que le bouton, cf. .tour-page-indicator.tour-page-indicator-muted.
+            _tpxPageIndicatorHtml = '<span class="tour-page-indicator' + (_tpxArrowDisabled ? ' tour-page-indicator-muted' : '') + '" aria-hidden="true">' + _tpxPage + '/2</span>';
+        }
+        const _tpxWindowEnd = _tpxWindowStart + 8; // exclu
 
-        const tourBadges = d.tours.map((c, i) => {
+        // ── Drapeaux à la LIGNE mais bornés à la PAGE affichée (cf. commentaire
+        //    ci-dessus) : un slot durée/support/date n'est réservé que si au
+        //    moins un tour VISIBLE SUR CETTE PAGE contient cette information.
+        const __isZeroDurStr = (v) => !v || /^\s*0+\s*:\s*0+\s*$/.test(v);
+        const rowHasDuration = (d.tourDurations || []).some((v, i) => i >= _tpxWindowStart && i < _tpxWindowEnd && d.tours[i] && v && !__isZeroDurStr(v));
+        const rowHasSupport  = (d.tourSupports  || []).some((v, i) => i >= _tpxWindowStart && i < _tpxWindowEnd && d.tours[i] && v);
+        const rowHasDate     = (d.tourDates     || []).some((v, i) => i >= _tpxWindowStart && i < _tpxWindowEnd && d.tours[i] && v);
+
+        const tourBadges = [0, 1, 2, 3, 4, 5, 6, 7].map((_offset) => {
+            const i = _tpxWindowStart + _offset;
+            // Normalise en null au-delà de la longueur réelle de d.tours (ex : réglage
+            // tout juste activé, l'utilisateur n'a pas encore atteint T9) : sans cette
+            // normalisation, c vaudrait `undefined`, et les comparaisons strictes
+            // `=== null` / `!== null` ci-dessous (isEditable/isLocked) se comporteraient
+            // différemment d'un index "jamais rempli" classique — un index au-delà de
+            // la fin du tableau DOIT être traité exactement comme un index non rempli.
+            const c = (i < d.tours.length) ? d.tours[i] : null;
             const duration = d.tourDurations ? d.tourDurations[i] : null;
             const support = d.tourSupports ? d.tourSupports[i] : null;
             const supportLabels = { qcm: 'QCM', college: 'COL', anki: 'LIS', perso: 'PER', codex: 'COD', conf: 'CNF' };
-            
+
             const lastDoneIndex = d.tours.reduce((last, t, idx) => t !== null ? idx : last, -1);
             const nextTourIndex = lastDoneIndex + 1;
             const isEditable = (c !== null && i === lastDoneIndex) || (c === null && i === nextTourIndex);
@@ -26969,7 +27398,28 @@ var __tourCellInner = (__compactMode && typeof window.buildCompactCell === 'func
   ? window.buildCompactCell(item.specialtyId, item.fc)
   // BUGFIX (2026-09-09) : la date est desormais generee A L'INTERIEUR de
   // chaque tourBadges (cf. plus haut) -- plus de rangee .tour-dates separee.
-  : ('<div class="tour-badges">' + tourBadges + '</div>');
+  // BUGFIX (2026-09-14, v4 -- cause racine enfin identifiée) : la flèche/
+  // l'indicateur étaient ancrés via `right:Npx` depuis le bord de .tour-cell,
+  // en supposant sa largeur EXACTEMENT égale à son min-width (280/185px
+  // selon le palier). Or .tour-cell n'a pas de max-width et la table est en
+  // table-layout:auto : dès que la table dispose de plus de place que la
+  // somme des largeurs minimales de ses colonnes (cas fréquent sur grand
+  // écran), le navigateur redistribue l'espace en trop -- .tour-cell peut
+  // alors être BIEN plus large que son min-width, alors que les 8 badges
+  // (231px fixes) restent collés à gauche : la flèche, ancrée sur le bord
+  // DROIT réel de la cellule (devenue plus large), se retrouvait très loin
+  // des badges (retour utilisateur répété, capture à l'appui). Correctif :
+  // la flèche/l'indicateur sont maintenant ancrés sur .tour-badges-shell
+  // (display:inline-block -- se réduit exactement à la largeur des 8
+  // badges, jamais à celle de .tour-cell) via `left:100%`, indépendamment
+  // de la largeur réelle de la colonne, quelle qu'elle soit. .tour-badges
+  // (qui reçoit le transform de l'anim de changement de page) reste un
+  // FRÈRE de la flèche à l'intérieur du shell -- jamais son parent -- donc
+  // toujours immunisé contre le piège "transform = nouveau référentiel de
+  // positionnement" déjà résolu au correctif précédent.
+  : (_tpxExtended
+      ? '<div class="tour-badges-shell">' + _tpxBadgesOpenTag + tourBadges + '</div>' + _tpxPageArrowHtml + _tpxPageIndicatorHtml + '</div>'
+      : ('<div class="tour-badges">' + tourBadges + '</div>'));
 
 return '<tr><td class="item-num">' + tpxEscHtml(item.num) + '<br><div style="display:flex;align-items:center;gap:3px;flex-wrap:nowrap;margin-top:2px;">' + notesBtn + checklistBtn + '</div></td><td class="item-name">' + nameHtml + badgeHtml + '</td><td class="item-specialty" style="background-color:' + specCfg.color + '20; color:' + specCfg.color + '; font-weight: 500;">' + tpxEscHtml(item.specialtyName) + referenceHtml + '</td>' +					
             '<td class="tour-cell" data-specialty="' + safeSpecAttr + '" data-fc="' + safeFcAttr + '">' + __tourCellInner + '</td>' +
@@ -31356,6 +31806,23 @@ window.getItemKey        = getItemKey;         // idem
 window.debouncedSave     = debouncedSave;      // idem
 window.renderItemsTable  = renderItemsTable;   // idem
 window.hasUnsavedChanges_setter = function(v) { hasUnsavedChanges = v; };
+
+// ── AJOUT (2026-09-13) : flèche de pagination T1-T8 / T7-T14 (visible
+//    uniquement si le réglage "14 tours" est actif pour ce compte, cf.
+//    renderItemsTable plus haut). window._tpxTourPageOverride ne mémorise
+//    qu'une préférence de vue EN RAM (jamais persistée, jamais sauvegardée,
+//    jamais envoyée à Firestore) : elle se réinitialise naturellement à
+//    chaque re-rendu complet du tableau, exactement comme conçu.
+window._tpxTourPageOverride = window._tpxTourPageOverride || {};
+window.tpxToggleTourPage = function (btn) {
+    if (!btn || btn.disabled) return;
+    var sId = btn.getAttribute('data-specialty');
+    var fc  = btn.getAttribute('data-fc');
+    var key = getItemKey(sId, fc);
+    var dir = btn.getAttribute('data-arrow-dir'); // 'right' (→ page 2, T9-T14) ou 'left' (→ page 1, T1-T8)
+    window._tpxTourPageOverride[key] = (dir === 'right') ? 2 : 1;
+    if (typeof renderItemsTable === 'function') renderItemsTable();
+};
 window.loadNoteFromFirestore = loadNoteFromFirestore;  // pour les notes items
 window.saveNoteToFirestore   = saveNoteToFirestore;    // pour les notes items
 
@@ -35224,6 +35691,23 @@ body.tc-kb-open-phone .flash-expand-btn {
                         sur 5. Réglable à tout moment dans <strong>Paramètres</strong> — vos
                         tours déjà enregistrés sont convertis selon une table de
                         correspondance claire, avec confirmation avant tout changement.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon green">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Jusqu'à 14 tours de révision 🔁</h4>
+                    <p>
+                        Le tableur EDN permet désormais d'enregistrer jusqu'à
+                        <strong>14 tours</strong> par item, au lieu de 8.
+                        Réglable à tout moment dans <strong>Paramètres</strong>,
+                        juste en dessous du barème de confiance — désactivé
+                        par défaut, vos données actuelles ne changent pas tant
+                        que vous ne l'activez pas.
                     </p>
                 </div>
             </div>
@@ -45823,12 +46307,13 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
 <script>
 (function() {
     // Clé Firestore (champ dans doc users/{uid}) et localStorage (fallback hors-ligne)
-    // BUGFIX 2026-09-13 : v5 -> v6 — nouveau contenu ajouté (palette couleurs,
-    // collège Médecine Générale) dans le même modal ; sans changer ce numéro,
-    // quiconque avait déjà vu v5 (même juste l'entrée barème/10) ne recevrait
-    // plus jamais la pastille de notification pour ce nouveau contenu.
-    var FS_FIELD      = 'whatsNewSeen_v6';
-    var LS_KEY        = 'whatsNew_seen_v6';
+    // BUGFIX 2026-09-13 : v6 -> v7 — nouveau contenu ajouté (extension du
+    // nombre de tours à 14) dans le même modal ; sans changer ce numéro,
+    // quiconque avait déjà vu v6 ne recevrait plus jamais la pastille de
+    // notification pour ce nouveau contenu. Même raisonnement que v5 -> v6
+    // juste au-dessus.
+    var FS_FIELD      = 'whatsNewSeen_v7';
+    var LS_KEY        = 'whatsNew_seen_v7';
     var _seenResolved = false; // évite de re-montrer la pastille après résolution
 
     /* ── Animations ── */
@@ -46482,6 +46967,42 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   }
   window.getConfidenceScale = getConfidenceScale;
 
+  // ── AJOUT (2026-09-13) : nombre de tours (8 par défaut, 14 en option) —
+  //    même schéma que confidenceScale ci-dessus (runtime > localStorage >
+  //    défaut). Contrairement au barème, ce réglage n'a JAMAIS besoin de
+  //    convertir quoi que ce soit dans les données existantes : les tours
+  //    1-8 restent structurellement identiques quel que soit ce réglage,
+  //    et un tableau JS s'étend naturellement dès qu'on écrit à un index
+  //    au-delà de sa longueur actuelle (d.tours[8] = ... sur un tableau de
+  //    8 cases fonctionne nativement, sans migration). Un compte qui
+  //    n'active jamais cette option n'a donc RIEN de différent dans ses
+  //    données par rapport à avant ce correctif. ──
+  function _etKey() { return 'extendedTours__' + _csUid(); }
+  window._extendedToursRuntime = null;
+  function tpxSetExtendedToursRuntime(val) {
+    var b = (val === true || val === false) ? val : null;
+    if (b === null) return;
+    window._extendedToursRuntime = b;
+    try { localStorage.setItem(_etKey(), b ? '1' : '0'); } catch (e) {}
+  }
+  window.tpxSetExtendedToursRuntime = tpxSetExtendedToursRuntime;
+
+  function getExtendedTours() {
+    if (window._extendedToursRuntime === true || window._extendedToursRuntime === false) {
+      return window._extendedToursRuntime;
+    }
+    try {
+      var v = localStorage.getItem(_etKey());
+      if (v === '1') return true;
+      if (v === '0') return false;
+    } catch (e) {}
+    return false; // défaut historique : 8 tours, comme tous les comptes déjà en place
+  }
+  window.getExtendedTours = getExtendedTours;
+  // Nombre de tours réellement affichés/autorisés selon ce réglage.
+  function tpxMaxToursAllowed() { return getExtendedTours() ? 14 : 8; }
+  window.tpxMaxToursAllowed = tpxMaxToursAllowed;
+
   // Tables de conversion EXACTES, identiques à P1Planner (déjà validées).
   var CS_MAP_5_TO_10 = { 1: 2, 2: 4, 3: 6, 4: 8, 5: 10 };
   var CS_MAP_10_TO_5 = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5 };
@@ -46720,6 +47241,16 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   window.requestConfidenceScaleChange = window.tpxRequestConfidenceScaleChange; // alias, cohérent avec le nom P1Planner
 
   window.tpxCloseConfidenceScaleConfirm = function () {
+    // BUGFIX (2026-09-14) : tant que la migration est réellement en vol
+    // (transaction Firestore envoyée, pas encore résolue), "Annuler" / la
+    // croix / le clic sur le fond ne doivent RIEN faire — la fermeture
+    // silencieuse laissait croire à l'utilisateur que la conversion avait
+    // été stoppée alors qu'elle continuait en tâche de fond et s'appliquait
+    // quand même une fois la transaction résolue. Une transaction Firestore
+    // déjà envoyée ne peut de toute façon pas être annulée côté client sans
+    // risquer un état ambigu (converti côté serveur, pas côté UI) — la
+    // bloquer visuellement est la seule option sûre tant qu'elle tourne.
+    if (window._confidenceScaleMigrationInFlight) return;
     var ov = document.getElementById('confidence-scale-confirm-overlay');
     if (!ov || !ov.classList.contains('active')) return;
     // Même motif de fermeture que closeSettingsModal() : .closing puis
@@ -46736,11 +47267,22 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     var btn = document.getElementById('cs-confirm-go-btn');
     var sw = document.getElementById('confidence-scale-switch');
     var errEl = document.getElementById('cs-confirm-error');
+    // BUGFIX (2026-09-14) : "Annuler" et la croix de fermeture doivent être
+    // verrouillés pendant toute la durée de la migration — cf. le garde
+    // ajouté dans tpxCloseConfidenceScaleConfirm(). Les désactiver ici aussi
+    // visuellement (pas seulement bloquer leur clic) évite qu'ils paraissent
+    // cliquables alors qu'ils ne feront rien tant que ça tourne.
+    var cancelBtn = document.getElementById('cs-confirm-cancel-btn');
+    var xBtn = document.getElementById('cs-confirm-x-btn');
     if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conversion en cours…'; }
+    if (cancelBtn) cancelBtn.disabled = true;
+    if (xBtn) xBtn.disabled = true;
     if (sw) sw.style.pointerEvents = 'none'; // point 18 : switch verrouillé pendant toute la migration
     var res = await migrateConfidenceScale(target);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmer le changement'; }
+    if (cancelBtn) cancelBtn.disabled = false;
+    if (xBtn) xBtn.disabled = false;
     if (sw) sw.style.pointerEvents = '';
     if (!res.ok) {
       // Fail-closed : rien n'a été modifié (garanti par migrateConfidenceScale
@@ -46774,6 +47316,43 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
       var opt = e.target.closest && e.target.closest('.seg-opt');
       var want = opt ? parseInt(opt.getAttribute('data-cscale'), 10) : (getConfidenceScale() === 10 ? 5 : 10);
       window.tpxRequestConfidenceScaleChange(want);
+    });
+  })();
+
+  // ── AJOUT (2026-09-13) : switch "Nombre de tours" — pas de conversion de
+  //    valeurs à faire (contrairement au barème de confiance), donc pas de
+  //    modal de confirmation/migration nécessaire : bascule directe, puis
+  //    sauvegarde et rafraîchissement de l'affichage. ──
+  window.tpxUpdateExtendedToursSwitchUI = function (instant) {
+    var extended = (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false;
+    var sw = document.getElementById('extended-tours-switch');
+    if (sw) {
+      sw.classList.toggle('on', extended);
+      sw.setAttribute('aria-checked', extended ? 'true' : 'false');
+      var l = sw.querySelector('.seg-opt-left'), r = sw.querySelector('.seg-opt-right');
+      if (l) l.classList.toggle('active', !extended);
+      if (r) r.classList.toggle('active', extended);
+      if (window._positionSegThumb) window._positionSegThumb(sw, !!instant);
+    }
+    document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="extended-tours"] .settings-explain-row')
+      .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === (extended ? '14' : '8')); });
+  };
+
+  (function () {
+    var sw = document.getElementById('extended-tours-switch');
+    if (!sw) return;
+    sw.addEventListener('click', function (e) {
+      var opt = e.target.closest && e.target.closest('.seg-opt');
+      var want = opt ? (parseInt(opt.getAttribute('data-etours'), 10) === 14) : !window.getExtendedTours();
+      if (typeof window.tpxSetExtendedToursRuntime === 'function') window.tpxSetExtendedToursRuntime(want);
+      window.tpxUpdateExtendedToursSwitchUI();
+      // Persiste immédiatement (même mécanisme que toute autre modification :
+      // debouncedSave() écrit userData ; extendedTours est lu depuis
+      // getExtendedTours() à chaque sauvegarde, pas depuis userData lui-même).
+      if (typeof debouncedSave === 'function' && window.currentUser) debouncedSave();
+      // Rafraîchit le tableau : fait apparaître/disparaître la flèche T8→T9
+      // selon le nouveau réglage, sur toutes les lignes déjà affichées.
+      if (typeof renderItemsTable === 'function') renderItemsTable();
     });
   })();
 
@@ -46817,7 +47396,18 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (!d || !d.tours) return 0;
     return d.tours.filter(function (t) { return t != null; }).length;
   }
-  function maxTours(d) { return (d && d.tours) ? d.tours.length : 8; }
+  // AJOUT (2026-09-13) : le mode compact doit lui aussi pouvoir aller au-delà
+  // de 8 tours quand le réglage "14 tours" est actif (cf. renderItemsTable /
+  // getExtendedTours plus haut) -- MÊME quand l'utilisateur n'a encore JAMAIS
+  // ouvert la vue détaillée (donc d.tours n'a pas encore grandi au-delà de 8
+  // réellement). Réglage désactivé => tpxMaxToursAllowed() renvoie 8, donc
+  // Math.max(real, 8) === real : comportement STRICTEMENT identique à avant
+  // pour tous les comptes déjà en place (real vaut toujours au moins 8).
+  function maxTours(d) {
+    var real = (d && d.tours) ? d.tours.length : 8;
+    var allowed = (typeof window.tpxMaxToursAllowed === 'function') ? window.tpxMaxToursAllowed() : 8;
+    return Math.max(real, allowed);
+  }
 
   // Confiance "active" pour le prochain tour : override sinon dernier tour
   function pendingConf(key, d) {
@@ -46971,8 +47561,15 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (!d.tourSupports) d.tourSupports = [null,null,null,null,null,null,null,null];
     // 🛡️ Trouver le premier emplacement réellement vide dans d.tours
     // (et NON tourCount, qui pourrait pointer sur une case déjà occupée si le tableau est lacunaire)
+    // AJOUT (2026-09-13) : borne sur maxTours(d), PAS d.tours.length -- sinon
+    // impossible d'ajouter un 9e tour tant que le tableau n'a pas déjà grandi
+    // au-delà de 8 par un autre chemin (ex: vue détaillée). d.tours[i] pour un
+    // index au-delà de la longueur actuelle du tableau vaut `undefined`, et
+    // `undefined == null` (égalité non stricte) est vrai : aucune autre
+    // adaptation nécessaire, la case est déjà correctement vue comme vide.
     var idx = -1;
-    for (var i = 0; i < d.tours.length; i++) {
+    var _maxT = maxTours(d);
+    for (var i = 0; i < _maxT; i++) {
       if (d.tours[i] == null) { idx = i; break; }
     }
     if (idx < 0) {
@@ -48284,6 +48881,9 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     }
     document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="confidence-scale"] .settings-explain-row')
       .forEach(function (row) { row.classList.toggle('is-active', row.getAttribute('data-mode') === String(cscale)); });
+
+    // Nombre de tours (2026-09-13)
+    if (typeof window.tpxUpdateExtendedToursSwitchUI === 'function') window.tpxUpdateExtendedToursSwitchUI(instant);
   }
   window._syncSettingsUI = syncSettingsUI;
 
@@ -52316,7 +52916,9 @@ window.pushBackupVersion = async function (uid, data, content) {
     await setDoc(doc(db, 'planningBackups', uid, 'versions', id), {
       data, itemsCount: content && content.items, details: content || null, createdAt: serverTimestamp(),
       // ── MISSION CORRECTIVE, point 10 : même barème que le backup principal. ──
-      confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5
+      confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
+      // ── AJOUT (2026-09-13) : idem pour le nombre de tours. ──
+      extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false
     });
     const snap = await getDocs(query(collection(db, 'planningBackups', uid, 'versions'), orderBy('createdAt', 'desc')));
     const docs = snap.docs;
@@ -55127,6 +55729,16 @@ html[data-theme="pastel"] {
     --confidence-3:#c19a58;
     --confidence-4:#70c090;
     --confidence-5:#256b46;
+    /* BUGFIX (2026-09-14, CRITIQUE) : même trou que sur :root (cf. commentaire
+       détaillé tout en haut du fichier, ~ligne 153) -- ce thème ne définissait
+       --confidence-6 à -10 que sous data-conf-scale="10" (cf. bloc plus bas),
+       laissant un tour à 6-10 sans couleur du tout en thème pastel + barème
+       5. Valeurs par défaut = mêmes couleurs que le dégradé 10 niveaux pastel. */
+    --confidence-6:#8fae66;
+    --confidence-7:#78b06e;
+    --confidence-8:#70c090;
+    --confidence-9:#4a9868;
+    --confidence-10:#256b46;
 }
 /* ── MISSION CORRECTIVE, point 16 : sans cette règle, le bloc ci-dessus
    (plus tôt dans le fichier n'a aucune importance : même sélecteur simple
