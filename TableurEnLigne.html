@@ -21116,52 +21116,61 @@ function initOfflineDetection() {
 
 /**
  * Vérifier le statut de connexion
+ * BUGFIX (2026-09-16) : sondait auparavant google.com puis cloudflare.com
+ * (deux domaines tiers SANS AUCUN RAPPORT avec Firebase) pour décider si le
+ * site est "hors ligne" -- ce qui bloque ALORS toute sauvegarde
+ * (isOfflineMode, tout en haut de saveUserData()), même quand Firestore
+ * lui-même est parfaitement joignable. Deux cas réels où ça se déclenchait
+ * à tort : un bloqueur de pub qui filtre les requêtes favicon.ico vers des
+ * domaines tiers (fréquent, considéré comme du pistage), ou un réseau qui
+ * filtre google.com/cloudflare.com spécifiquement (wifi d'établissement)
+ * sans bloquer Firebase. Un seul cycle de sonde ratée suffisait à basculer
+ * en mode hors ligne, sans aucune tolérance.
+ * CORRECTIF : reprend exactement le mécanisme déjà utilisé et validé côté
+ * ECOS (TableurECOS.html, checkEcosConnection/ecosProbeNetwork) -- sonde le
+ * MÊME domaine que celui déjà chargé (typixclin.fr lui-même, jamais bloqué
+ * par un bloqueur de pub puisque ce n'est pas une ressource tierce), et
+ * n'exige plus une seule sonde ratée mais bien DEUX cycles consécutifs
+ * (~20s) avant de conclure au mode hors ligne -- élimine les faux positifs
+ * d'un blip réseau isolé.
  */
+let _ednConnectionFailureStreak = 0;
+async function _ednProbeNetwork() {
+    if (location.protocol === 'file:') return true; // sonde impossible en local file://, on se fie à navigator.onLine
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        await fetch(location.origin + location.pathname + '?_ednping=' + Date.now(), {
+            method: 'HEAD',
+            cache: 'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 async function checkOfflineStatus() {
     if (!navigator.onLine) {
+        _ednConnectionFailureStreak = 2;
         if (!isOfflineMode) {
             handleOffline();
         }
         return;
     }
-    
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        await fetch('https://www.google.com/favicon.ico', {
-            method: 'HEAD',
-            mode: 'no-cors',
-            cache: 'no-cache',
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
+
+    const ok = await _ednProbeNetwork();
+    if (ok) {
+        _ednConnectionFailureStreak = 0;
         if (isOfflineMode) {
             handleOnline();
         }
-    } catch (error) {
-        try {
-            const controller2 = new AbortController();
-            const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
-            
-            await fetch('https://cloudflare.com/favicon.ico', {
-                method: 'HEAD',
-                mode: 'no-cors',
-                cache: 'no-cache',
-                signal: controller2.signal
-            });
-            
-            clearTimeout(timeoutId2);
-            
-            if (isOfflineMode) {
-                handleOnline();
-            }
-        } catch (error2) {
-            if (!isOfflineMode) {
-                handleOffline();
-            }
+    } else {
+        // Stabilisation : deux échecs consécutifs avant de basculer hors ligne.
+        _ednConnectionFailureStreak++;
+        if (_ednConnectionFailureStreak >= 2 && !isOfflineMode) {
+            handleOffline();
         }
     }
 }
