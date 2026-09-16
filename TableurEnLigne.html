@@ -32015,11 +32015,35 @@ window.tpxToggleTourPage = function (btn) {
         var _freshBtn = _findArrowBtn();
         if (_freshBtn) {
             _freshBtn.classList.add('tpx-touch-peek');
-            setTimeout(function () {
-                var _b = _findArrowBtn();
-                if (_b) _b.classList.remove('tpx-touch-peek');
-            }, 2500);
+            // BUGFIX (2026-09-16) : le minuteur seul suffisait pour l'AUTO-
+            // disparition demandée, mais tapoter ailleurs AVANT les 2,5s ne
+            // faisait plus rien du tout -- la bulle restait collée jusqu'à
+            // l'écoulement complet du délai, ressentie comme "ça ne
+            // disparaît plus" (signalé par l'utilisateur). Ajout d'un
+            // second déclencheur, en plus du minuteur : le premier tap
+            // ailleurs (n'importe où hors de CE bouton) referme aussi
+            // immédiatement. Écouteur posé en phase de capture sur
+            // document -- posé ICI, APRÈS le clic en cours (qui a déjà fini
+            // sa propre phase de capture avant que ce onclick ne s'exécute),
+            // donc sans risque qu'il se déclenche sur le tap qui vient
+            // d'ouvrir la bulle.
+            var _touchPeekTimer = setTimeout(_tpxDismissTouchPeek, 2500);
+            document.addEventListener('click', _tpxDismissOnOutsideTap, true);
+            document.addEventListener('touchstart', _tpxDismissOnOutsideTap, true);
         }
+    }
+
+    function _tpxDismissTouchPeek() {
+        clearTimeout(_touchPeekTimer);
+        document.removeEventListener('click', _tpxDismissOnOutsideTap, true);
+        document.removeEventListener('touchstart', _tpxDismissOnOutsideTap, true);
+        var _b = _findArrowBtn();
+        if (_b) _b.classList.remove('tpx-touch-peek');
+    }
+
+    function _tpxDismissOnOutsideTap(ev) {
+        var _b = _findArrowBtn();
+        if (!_b || !_b.contains(ev.target)) _tpxDismissTouchPeek();
     }
 };
 window.loadNoteFromFirestore = loadNoteFromFirestore;  // pour les notes items
