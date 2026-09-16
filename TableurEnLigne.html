@@ -24161,36 +24161,51 @@ if (_legacyMigrationAttemptedUid !== userId) {
 // 🌐 VÉRIFICATION DE CONNEXION AVANT SAUVEGARDE
 // ═══════════════════════════════════════════════════════════════
 
+// BUGFIX (2026-09-16) : signalé par un compte tout juste créé ("mes données
+// ne s'enregistrent jamais, je perds tout au rechargement") ET reproduit par
+// l'utilisateur lui-même depuis le Japon (bandeau orange "Mode hors ligne"
+// récurrent, connexion internationale forcément plus lente/instable qu'en
+// France). CAUSE : ce ping tolérait seulement 3 secondes avant d'abandonner
+// TOUTE la sauvegarde -- bien en-deçà d'un aller-retour normal pour une
+// connexion longue distance ou juste momentanément chargée, qui n'a POURTANT
+// RIEN d'anormal. Vérifié sur les métriques Firestore (Firebase Console) :
+// quasi aucun refus de règles (20 sur 76k) au moment du signalement -- la
+// quasi-totalité des sauvegardes bloquées n'atteignaient donc JAMAIS
+// Firestore, interceptées ici en amont, jamais par un vrai problème de
+// permission. Délai remonté à 8s (donne une vraie chance à une connexion
+// lente-mais-fonctionnelle) -- la sauvegarde elle-même reste protégée par
+// son propre système de 3 tentatives avec délais progressifs (cf. plus bas),
+// qui n'était jusqu'ici jamais atteint dès que CE ping dépassait 3s.
 async function checkConnectionBeforeSave() {
     // 1. Vérifier navigator.onLine
     if (!navigator.onLine) {
         console.warn('🔴 Hors ligne - Sauvegarde Firebase annulée');
         return false;
     }
-    
+
     // 2. Tester un ping rapide vers Firebase
     try {
         const startTime = Date.now();
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 3000)
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 8000)
         );
-        
+
         // Ping simple sur le document user
         const pingPromise = getDoc(doc(db, 'users', currentUser.uid));
-        
+
         await Promise.race([pingPromise, timeoutPromise]);
-        
+
         const pingTime = Date.now() - startTime;
-        
-        // Si ping > 3 secondes, connexion trop lente
-        if (pingTime > 3000) {
+
+        // Si ping > 8 secondes, connexion trop lente
+        if (pingTime > 8000) {
             console.warn(`🟡 Connexion lente (${pingTime}ms) - Sauvegarde risquée`);
             return false;
         }
-        
-        
+
+
         return true;
-        
+
     } catch (error) {
         console.error('🔴 Connexion Firebase impossible:', error.message);
         return false;
@@ -24677,27 +24692,48 @@ async function saveUserData(retryCount = 0) {
 if (!firebaseDataLoaded) {
     console.warn('⚠️ SAUVEGARDE BLOQUÉE : Firebase n\'a pas fini de charger');
     setSaveIndicator('saving');
-    
-    // Réessayer dans 2 secondes
-    setTimeout(() => {
-        if (firebaseDataLoaded) {
-            saveUserData(retryCount);
-        }
-    }, 2000);
-    
+
+    // BUGFIX (2026-09-16) : ne réessayait QU'UNE seule fois après 2s, et
+    // abandonnait pour de bon (silencieusement) si Firebase mettait plus de
+    // 2s à finir son chargement initial -- courant sur une connexion
+    // lente/instable (signalé depuis un compte tout juste créé + reproduit
+    // par l'utilisateur lui-même depuis le Japon). La sauvegarde restait
+    // alors bloquée jusqu'à la prochaine modification. Réessaie maintenant
+    // automatiquement toutes les 2s, jusqu'à 10 fois (20s) avant d'abandonner
+    // pour de bon -- largement suffisant pour un chargement initial lent.
+    window._tpxSaveWaitAttempts = (window._tpxSaveWaitAttempts || 0) + 1;
+    if (window._tpxSaveWaitAttempts <= 10) {
+        setTimeout(() => { saveUserData(retryCount); }, 2000);
+    } else {
+        window._tpxSaveWaitAttempts = 0;
+        console.error('❌ Sauvegarde abandonnée : Firebase n\'a jamais fini de charger après 20s');
+    }
     return;
 }
-    
+window._tpxSaveWaitAttempts = 0;
+
     // 🔍 Vérifier la connexion avant d'essayer Firebase
     const connectionOK = await checkConnectionBeforeSave();
-    
+
     if (!connectionOK) {
         console.warn('⚠️ Connexion instable - Sauvegarde Firebase reportée');
         showConnectionWarning();
         setSaveIndicator('saving');
+        // BUGFIX (2026-09-16) : idem ci-dessus -- abandonnait jusqu'ici sans
+        // aucun réessai automatique, ne comptant que sur un clic manuel sur
+        // "Réessayer" dans le bandeau. Réessaie maintenant tout seul toutes
+        // les 4s, jusqu'à 5 fois (20s) -- le clic manuel reste disponible et
+        // fonctionne toujours en parallèle si l'utilisateur préfère forcer.
+        window._tpxConnRetryAttempts = (window._tpxConnRetryAttempts || 0) + 1;
+        if (window._tpxConnRetryAttempts <= 5) {
+            setTimeout(() => { saveUserData(retryCount); }, 4000);
+        } else {
+            window._tpxConnRetryAttempts = 0;
+        }
         return;
     }
-    
+    window._tpxConnRetryAttempts = 0;
+
     hideConnectionWarning();
     
     // ════════════════════════════════════════════════════════════

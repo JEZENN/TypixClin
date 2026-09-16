@@ -40442,9 +40442,22 @@ async function saveECOSUserData(retryCount = 0) {
     if (isOfflineMode) { console.warn('⚠️ Sauvegarde ECOS bloquée : hors ligne'); writePendingECOS(); setSaveIndicator('saving'); return; }
     if (!ecosFirebaseLoaded) {
         setSaveIndicator('saving');
-        setTimeout(() => { if (ecosFirebaseLoaded) saveECOSUserData(retryCount); }, 1500);
+        // BUGFIX (2026-09-16) : miroir du correctif appliqué à saveUserData()
+        // dans TableurEnLigne.html -- ne réessayait QU'UNE seule fois après
+        // 1,5s, et abandonnait pour de bon (silencieusement) si Firebase
+        // mettait plus longtemps à finir de charger (connexion lente/
+        // instable). Réessaie maintenant automatiquement toutes les 1,5s,
+        // jusqu'à 10 fois (15s) avant d'abandonner pour de bon.
+        window._tpxEcosSaveWaitAttempts = (window._tpxEcosSaveWaitAttempts || 0) + 1;
+        if (window._tpxEcosSaveWaitAttempts <= 10) {
+            setTimeout(() => { saveECOSUserData(retryCount); }, 1500);
+        } else {
+            window._tpxEcosSaveWaitAttempts = 0;
+            console.error('❌ Sauvegarde ECOS abandonnée : Firebase n\'a jamais fini de charger après 15s');
+        }
         return;
     }
+    window._tpxEcosSaveWaitAttempts = 0;
 
     // Révision capturée AU MOMENT du snapshot (cf. commentaire sur
     // _ecosDataRevisionCounter) — jamais après l'await qui suit.
