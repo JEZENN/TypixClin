@@ -3751,6 +3751,22 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     opacity: 1;
     transform: translate(-50%, 0);
 }
+/* AJOUT (2026-09-16) : sur tactile, le survol n'existe pas du tout (cf. le
+   garde @media (hover:hover) juste au-dessus) -- mais le but n'était pas
+   seulement d'empêcher que ça reste "collé" après un tap : l'utilisateur
+   veut qu'un tap affiche VRAIMENT le tooltip et le fond en surbrillance,
+   puis que ça disparaisse tout seul après quelques secondes, sans avoir à
+   taper ailleurs. Classe posée/retirée par JS (cf. tpxToggleTourPage),
+   volontairement HORS de tout @media : doit s'appliquer sur tactile ET
+   fonctionner quel que soit l'appareil si jamais posée. */
+.tour-page-arrow.tpx-touch-peek:not(:disabled) {
+    background: var(--primary); border-color: var(--primary); color: #fff; transform: scale(1.06);
+}
+.tour-page-arrow[data-tooltip].tpx-touch-peek:not(:disabled)::after,
+.tour-page-arrow[data-tooltip].tpx-touch-peek:not(:disabled)::before {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
 /* BUGFIX (2026-09-13, v4) : l'animation précédente faisait tourner/zoomer
    le BOUTON entier (cercle + bordure + icône) tout en échangeant l'icône
    fa-chevron-right <-> fa-chevron-left d'un coup sec au milieu du
@@ -31974,6 +31990,37 @@ window.tpxToggleTourPage = function (btn) {
     var dir = btn.getAttribute('data-arrow-dir'); // 'right' (→ page 2, T9-T14) ou 'left' (→ page 1, T1-T8)
     window._tpxTourPageOverride[key] = (dir === 'right') ? 2 : 1;
     if (typeof renderItemsTable === 'function') renderItemsTable();
+
+    // AJOUT (2026-09-16) : sur tactile, affiche VRAIMENT le tooltip + la
+    // surbrillance au tap (pas seulement "empêcher que ça reste collé",
+    // cf. le correctif du 2026-09-15) puis les fait disparaître tout seuls
+    // après quelques secondes, sans que l'utilisateur ait à taper ailleurs.
+    // renderItemsTable() ci-dessus vient de RECONSTRUIRE tout le HTML de la
+    // ligne -- `btn` (le bouton d'origine) est donc déjà détaché du DOM à ce
+    // stade ; on doit retrouver le NOUVEAU bouton (même data-specialty/fc)
+    // pour que la classe ait un effet visible, et le retrouver À NOUVEAU au
+    // moment de la retirer (un autre re-rendu a pu survenir entre-temps).
+    var _hasRealHover = false;
+    try { _hasRealHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches); } catch (e2) {}
+    if (!_hasRealHover) {
+        var _findArrowBtn = function () {
+            var candidates = document.querySelectorAll('.tour-page-arrow[data-tooltip]');
+            for (var i = 0; i < candidates.length; i++) {
+                if (candidates[i].getAttribute('data-specialty') === sId && candidates[i].getAttribute('data-fc') === fc) {
+                    return candidates[i];
+                }
+            }
+            return null;
+        };
+        var _freshBtn = _findArrowBtn();
+        if (_freshBtn) {
+            _freshBtn.classList.add('tpx-touch-peek');
+            setTimeout(function () {
+                var _b = _findArrowBtn();
+                if (_b) _b.classList.remove('tpx-touch-peek');
+            }, 2500);
+        }
+    }
 };
 window.loadNoteFromFirestore = loadNoteFromFirestore;  // pour les notes items
 window.saveNoteToFirestore   = saveNoteToFirestore;    // pour les notes items
