@@ -23639,7 +23639,43 @@ function countDataContent(data) {
 
 
 
-function initializeUserData() { 
+// BUGFIX (2026-09-16, CRITIQUE) : signalé comme touchant TOUS les comptes
+// créés depuis le 14/09 (document planningRevision jamais créé, vérifié
+// directement sur plusieurs comptes dans la Console Firebase -- donc pas
+// une question de chance réseau, un vrai bug reproductible). CAUSE RACINE
+// TROUVÉE : window.DEFAULT_TRAININGS est défini dans data.js, chargé en
+// <script defer> -- si CE script échoue à charger (bloqueur de pub, 404,
+// coupure réseau pile à ce moment), la variable reste `undefined` pour de
+// bon. Or JSON.parse(JSON.stringify(undefined)) LÈVE UNE EXCEPTION
+// (JSON.stringify(undefined) renvoie `undefined`, pas une chaîne, et
+// JSON.parse(undefined) plante) -- ce qui arrivait EXACTEMENT dans
+// initializeUserData(), appelée UNIQUEMENT pour un compte vraiment nouveau
+// (jamais pour un compte existant, qui a déjà ses données en base). Le plantage
+// interrompait la fonction avant même que userData soit assigné, empêchant
+// tout le reste de la séquence de login (firebaseDataLoaded jamais mis à
+// true, saveUserData() jamais appelée) -- exactement le symptôme "rien ne
+// se sauvegarde, tout disparaît au rechargement", à 100% reproductible pour
+// tout nouveau compte tombant sur ce data.js manquant, indépendamment de la
+// qualité de la connexion au moment précis de la sauvegarde elle-même.
+// CORRECTIF : repli sur un tableau vide au lieu de planter si DEFAULT_TRAININGS
+// n'est pas (encore) disponible -- le compte peut alors se créer et
+// sauvegarder normalement ; les entraînements par défaut se rattraperont
+// tout seuls au prochain chargement réussi de data.js (mécanisme de
+// synchronisation déjà existant, cf. syncNewDefaultTrainings plus bas).
+function _tpxSafeDefaultTrainings() {
+    try {
+        return Array.isArray(window.DEFAULT_TRAININGS) ? JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS)) : [];
+    } catch (e) {
+        console.error('❌ DEFAULT_TRAININGS indisponible (data.js non chargé ?) -- repli sur liste vide :', e);
+        return [];
+    }
+}
+// Exposée sur window : d'autres <script> plus loin dans le fichier (portée
+// différente de ce <script type="module">) en ont aussi besoin, notamment
+// loadTrainings()/initTrainingsData() -- cf. BUGFIX ci-dessus.
+window._tpxSafeDefaultTrainings = _tpxSafeDefaultTrainings;
+
+function initializeUserData() {
     // 🛡️ BUG #11 CORRIGÉ : Initialisation complète garantie
     const initialData = {
         items: {},
@@ -23647,16 +23683,16 @@ function initializeUserData() {
         planningData: {},
         checklistData: [],
         selectedResources: [],
-        trainings: JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS)), // 🏋️ Entrainements par défaut
+        trainings: _tpxSafeDefaultTrainings(), // 🏋️ Entrainements par défaut
         lastUpdated: new Date().toISOString()
     };
-    
+
     // Vérifier que toutes les propriétés existent
     if (!initialData.planningData) initialData.planningData = {};
     if (!initialData.checklistData) initialData.checklistData = [];
     if (!initialData.selectedResources) initialData.selectedResources = [];
-    if (!initialData.trainings) initialData.trainings = JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS));
-    
+    if (!initialData.trainings) initialData.trainings = _tpxSafeDefaultTrainings();
+
     return initialData;
 }
 
@@ -23795,7 +23831,7 @@ function loadUserData(userId) {
 								? _tpxMergeChecklistData(newData.checklistData || [], _localChecklistBeforeSnapshot)
 								: (newData.checklistData || []),
 							selectedResources: newData.selectedResources || [],
-							trainings: !_trainingsWereMissing ? newData.trainings : JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS)),
+							trainings: !_trainingsWereMissing ? newData.trainings : _tpxSafeDefaultTrainings(),
 							deletedDefaultIds: newData.deletedDefaultIds || [],
 							restoredAt: newData.restoredAt || (userData && userData.restoredAt) || null,
 							lastUpdated: newData.lastUpdated || new Date().toISOString()
@@ -23888,7 +23924,7 @@ function loadUserData(userId) {
 											planningData:      _pending.data.planningData      || userData.planningData      || {},
 											checklistData:     _pending.data.checklistData     || userData.checklistData     || [],
 											selectedResources: _pending.data.selectedResources || userData.selectedResources || [],
-											trainings:         _pending.data.trainings !== undefined ? _pending.data.trainings : (userData.trainings || JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS))),
+											trainings:         _pending.data.trainings !== undefined ? _pending.data.trainings : (userData.trainings || _tpxSafeDefaultTrainings()),
 											deletedDefaultIds: _pending.data.deletedDefaultIds || userData.deletedDefaultIds || [],
 											lastUpdated:       _pending.data.lastUpdated
 										};
@@ -40337,7 +40373,9 @@ function loadTrainings() {
   // Trainings charges depuis Firebase via userData
   if (!window.userData) window.userData = {};
   if (window.userData.trainings === undefined || window.userData.trainings === null) {
-    window.userData.trainings = JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS));
+    // BUGFIX (2026-09-16) : cf. _tpxSafeDefaultTrainings() -- évite de
+    // planter si data.js (donc window.DEFAULT_TRAININGS) n'a pas chargé.
+    window.userData.trainings = (typeof window._tpxSafeDefaultTrainings === 'function') ? window._tpxSafeDefaultTrainings() : [];
   }
   return window.userData.trainings.length > 0;
 }
@@ -40345,7 +40383,7 @@ function loadTrainings() {
 function initTrainingsData() {
   if (!window.userData) window.userData = {};
   if (window.userData.trainings === undefined || window.userData.trainings === null) {
-    window.userData.trainings = JSON.parse(JSON.stringify(window.DEFAULT_TRAININGS));
+    window.userData.trainings = (typeof window._tpxSafeDefaultTrainings === 'function') ? window._tpxSafeDefaultTrainings() : [];
   }
 }
 
