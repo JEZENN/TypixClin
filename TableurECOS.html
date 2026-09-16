@@ -40548,7 +40548,17 @@ async function saveECOSUserData(retryCount = 0) {
         }
     } catch (e) {
         if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e);
-        if (e.code === 'not-found') {
+        // BUGFIX (2026-09-16, CRITIQUE) : miroir du correctif appliqué côté
+        // EDN (saveUserData) -- vérifié empiriquement contre l'émulateur
+        // Firestore ET signalé par un utilisateur en conditions réelles :
+        // transaction.update() sur un document inexistant renvoie
+        // e.code="invalid-argument" (message "Can't update a document that
+        // doesn't exist."), jamais "not-found". Ce garde ne se déclenchait
+        // donc jamais, et le document ECOSRevision d'un nouveau compte
+        // n'était jamais créé au premier essai.
+        var _isDocMissingError = e.code === 'not-found'
+            || (e.code === 'invalid-argument' && /doesn't exist/i.test(e.message || ''));
+        if (_isDocMissingError) {
             try {
                 await setDoc(doc(db, 'ECOSRevision', currentUser.uid), dataToSave, { merge: true });
                 window.ecosData.lastUpdated = timestamp;
@@ -40726,7 +40736,12 @@ async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
             return true;
         } catch (e) {
             if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e);
-            if (e && e.code === 'not-found') {
+            // BUGFIX (2026-09-16, CRITIQUE) : cf. le correctif miroir plus
+            // haut dans ce fichier (saveECOSUserData) -- même garde trop
+            // strict, même correction.
+            var _isDocMissingError2 = (e && e.code === 'not-found')
+                || (e && e.code === 'invalid-argument' && /doesn't exist/i.test(e.message || ''));
+            if (_isDocMissingError2) {
                 try { await setDoc(ref, dataToSave, { merge: true }); return true; }
                 catch (e2) { if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e2); }
             }

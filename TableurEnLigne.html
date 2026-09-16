@@ -25044,7 +25044,25 @@ if (
         }
         
         // FALLBACK : setDoc si document not-found
-        if (e.code === 'not-found') {
+        // BUGFIX (2026-09-16, CRITIQUE) : ce garde-fou était censé rattraper
+        // exactement le cas d'un compte tout juste créé (document pas encore
+        // créé) en basculant sur setDoc(...,{merge:true}) -- mais il ne se
+        // déclenchait JAMAIS en pratique. Vérifié par un test direct contre
+        // l'émulateur Firestore : transaction.update() sur un document
+        // inexistant renvoie e.code = 'invalid-argument' (message "Can't
+        // update a document that doesn't exist."), PAS 'not-found' comme
+        // attendu ici -- confirmé aussi en conditions réelles par un
+        // utilisateur (capture de la console, même message exact). Résultat
+        // concret : le document n'était JAMAIS créé pour un nouveau compte,
+        // même une fois le plantage de _tpxSafeDefaultTrainings() corrigé --
+        // la sauvegarde échouait quand même juste après, silencieusement
+        // pour l'utilisateur (juste un message en console qu'il ne voit
+        // jamais). Élargi pour reconnaître aussi ce code réel, en plus de
+        // 'not-found' gardé par sécurité (comportement possible d'autres
+        // versions du SDK ou d'autres chemins d'appel hors transaction).
+        var _isDocMissingError = e.code === 'not-found'
+            || (e.code === 'invalid-argument' && /doesn't exist/i.test(e.message || ''));
+        if (_isDocMissingError) {
             if (Object.keys(userData.items || {}).length === 0) {
                 console.warn('⚠️ setDoc bloqué : données vides');
                 cleanupTimeout(); // ✅ CORRECTION
