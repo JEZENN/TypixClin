@@ -52417,7 +52417,13 @@ window._todoValidateAnim = function (itemId, apply) {
            Elle n'apparaît plus sur ce minuteur fixe : elle attend la fermeture
            du modal Présentation (voir Onb.close() et _tpxConsumePendingWelcomeNudge
            ci-dessous), avec un filet de sécurité si la présentation ne se
-           déclenche jamais (Firestore indisponible, onglet dupliqué, etc.). */
+           déclenche jamais (Firestore indisponible, onglet dupliqué, etc.).
+           BUGFIX (2026-09-16) : miroir du correctif appliqué côté EDN --
+           15s était trop court (plus court que le temps de lecture réel de
+           la présentation), donc ce filet se déclenchait presque toujours
+           AVANT la fermeture réelle du modal. Remonté à 60s, puis à 2
+           minutes (120s), encore jugé trop court -- même valeur finale que
+           côté EDN. */
         if (!udata.feedbackNudgeSeen) {
             if (camp.campaignId) welcomePatch.feedbackCampaignSeen = camp.campaignId;
             window._pendingWelcomeNudge = welcomePatch;
@@ -52425,7 +52431,7 @@ window._todoValidateAnim = function (itemId, apply) {
                 if (window._pendingWelcomeNudge && typeof window._tpxConsumePendingWelcomeNudge === 'function') {
                     window._tpxConsumePendingWelcomeNudge();
                 }
-            }, 15000);
+            }, 120000);
             return;
         }
 

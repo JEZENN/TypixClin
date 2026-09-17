@@ -44537,7 +44537,19 @@ document.getElementById('friends-add-input')?.addEventListener('keydown', functi
            Elle n'apparaît plus sur ce minuteur fixe : elle attend la fermeture
            du modal Présentation (voir Onb.close() et _tpxConsumePendingWelcomeNudge
            ci-dessous), avec un filet de sécurité si la présentation ne se
-           déclenche jamais (Firestore indisponible, onglet dupliqué, etc.). */
+           déclenche jamais (Firestore indisponible, onglet dupliqué, etc.).
+           BUGFIX (2026-09-16) : ce filet était à 15s -- trop court, plus
+           court que le temps que beaucoup de gens passent réellement à lire
+           la présentation. Il se déclenchait donc presque systématiquement
+           AVANT la fermeture réelle du modal (signalé par l'utilisateur :
+           le bandeau apparaissait PENDANT la présentation, pas après),
+           annulant l'intention même de ce garde. Remonté une première fois
+           à 60s, encore jugé trop court par l'utilisateur -- remonté à 2
+           minutes (120s) : une présentation normale se ferme largement
+           avant, donc le vrai déclencheur (Onb.close()) arrive presque
+           toujours en premier ; en cas de souci réel (Firestore
+           indisponible, etc.), le bandeau reste garanti de finir par
+           apparaître, juste plus tard. */
         if (!udata.feedbackNudgeSeen) {
             if (camp.campaignId) welcomePatch.feedbackCampaignSeen = camp.campaignId;
             window._pendingWelcomeNudge = welcomePatch;
@@ -44545,7 +44557,7 @@ document.getElementById('friends-add-input')?.addEventListener('keydown', functi
                 if (window._pendingWelcomeNudge && typeof window._tpxConsumePendingWelcomeNudge === 'function') {
                     window._tpxConsumePendingWelcomeNudge();
                 }
-            }, 15000);
+            }, 120000);
             return;
         }
 
