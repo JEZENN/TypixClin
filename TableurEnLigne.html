@@ -10398,6 +10398,32 @@ body.tours-compact .ranking-extra-stat.time-stat {
     .toast-notification.persist {
         bottom: 70px;
     }
+
+    /* BUGFIX (2026-09-17, suite) : signalé par l'utilisateur -- sur mobile,
+       le bandeau orange "connexion instable" (#connection-warning-toast,
+       pleine largeur en bas) chevauchait tout toast générique non persistant
+       (ex. "Entrainement ajouté !") qui s'affichait pendant ce temps. Même
+       principe que la règle .persist ci-dessus : on pousse le toast au-dessus.
+       Valeur mesurée dans le navigateur (pas devinée) : le bandeau fait
+       ~100.8px de haut à bottom:1rem(16px) -> son bord haut est à ~117px du
+       bas ; 130px laisse une marge de sécurité. */
+    body.tpx-connwarn-showing .toast-notification:not(.persist) {
+        bottom: 130px;
+    }
+}
+
+/* BUGFIX (2026-09-17, suite) : même chevauchement possible en desktop (le
+   bandeau orange est à bottom:2rem, le toast générique à bottom:20px --
+   zones qui se recouvrent). min-width:769px (exclusif du bloc mobile
+   ci-dessus, même seuil que le reste du fichier) : sans ça, les deux règles
+   ayant la même spécificité, celle qui apparaît en dernier dans le fichier
+   gagnerait TOUJOURS, y compris sur mobile -- exactement le bug qu'on corrige.
+   Valeur mesurée : bandeau ~100.8px de haut à bottom:2rem(32px) -> bord haut
+   à ~133px du bas ; 145px laisse une marge de sécurité. */
+@media (min-width: 769px) {
+    body.tpx-connwarn-showing .toast-notification:not(.persist) {
+        bottom: 145px;
+    }
 }
 
 .toast-notification.toast-warning {
@@ -16162,6 +16188,11 @@ window.TPXNotesPending = {
     background: var(--tpx-danger-08);
 }
 .tpx-note-state.save-error i, .tpx-note-state.save-error strong { color: var(--tpx-danger-text); }
+.tpx-note-state.save-error-toolarge {
+    border: 1px solid var(--tpx-danger-35);
+    background: var(--tpx-danger-08);
+}
+.tpx-note-state.save-error-toolarge i, .tpx-note-state.save-error-toolarge strong { color: var(--tpx-danger-text); }
 
 @media (max-width: 560px) {
     .tpx-note-state { font-size: 0.78rem; padding: 0.7rem 0.75rem; }
@@ -18098,6 +18129,8 @@ window.TPXNotesPending = {
 
         <!-- Footer -->
 <div id="trainImgFloatingPopup" class="notes-img-ctrl-panel">
+  <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgEnlarge('train')" data-tooltip="Agrandir"><i class="fas fa-expand"></i></button>
+  <div class="img-popup-sep"></div>
   <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveUp('train')" data-tooltip="Monter"><i class="fas fa-arrow-up"></i></button>
   <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveDown('train')" data-tooltip="Descendre"><i class="fas fa-arrow-down"></i></button>
   <div class="img-popup-sep"></div>
@@ -19808,6 +19841,8 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 
         <!-- Popup flottant image -->
         <div id="speImgFloatingPopup" class="notes-img-ctrl-panel">
+          <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgEnlarge('spe')" data-tooltip="Agrandir"><i class="fas fa-expand"></i></button>
+          <div class="img-popup-sep"></div>
           <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveUp('spe')" data-tooltip="Monter"><i class="fas fa-arrow-up"></i></button>
           <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveDown('spe')" data-tooltip="Descendre"><i class="fas fa-arrow-down"></i></button>
           <div class="img-popup-sep"></div>
@@ -20905,7 +20940,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, collection, getDoc, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, collection, getDoc, getDocFromServer, onSnapshot, updateDoc, setDoc, deleteField, addDoc, arrayUnion, arrayRemove, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, getBlob } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -21193,7 +21228,18 @@ async function checkOfflineStatus() {
 
 function handleOffline() {
     if (isOfflineMode) return;
-    
+
+    // BUGFIX (2026-09-17, suite) : signalé par l'utilisateur -- le bandeau
+    // orange "connexion instable" (showConnectionWarning(), affiché quand
+    // l'écriture Firestore échoue alors que la sonde réseau passe encore)
+    // n'était jamais masqué ici. Si la connexion se dégradait ENSUITE
+    // jusqu'à la coupure complète, le bandeau ROUGE de mode hors ligne
+    // s'affichait PAR-DESSUS l'orange, jamais retiré -- chevauchement
+    // visuel sur petit écran (les deux sont ancrés en bas). Le rouge étant
+    // strictement plus sévère/prioritaire, on retire l'orange avant de
+    // l'afficher.
+    if (typeof hideConnectionWarning === 'function') hideConnectionWarning();
+
     // Vérifier s'il y a des modifications non sauvegardées
     const hadUnsavedChanges = typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges;
     
@@ -23071,6 +23117,9 @@ function isLegacyMigrationConfirmedForCurrentUser() {
 
 window.addEventListener('pagehide', () => {
     if (!hasUnsavedChanges || !currentUser) return;
+    // (2026-09-19) Même garde que debouncedSave() : jamais de brouillon (ni de
+    // sauvegarde) depuis un état vide optimiste non confirmé par le serveur.
+    if (_tpxUnconfirmedOptimistic) return;
 
     // Horodater la modification locale
     userData.lastUpdated = new Date().toISOString();
@@ -23712,8 +23761,97 @@ function initializeUserData() {
     return initialData;
 }
 
+// BUGFIX (2026-09-18, CRITIQUE) : signalé par l'utilisateur -- un compte
+// réellement nouveau qui essuie une ERREUR sur son tout premier onSnapshot
+// (pas "document absent" : une vraie erreur -- permission-denied transitoire,
+// cache IndexedDB Firestore corrompu localement, etc.) ne voyait JAMAIS son
+// document créé, même après des dizaines de reconnexions. Le callback
+// d'erreur de onSnapshot (plus bas) construisait des données vides en
+// mémoire mais n'appelait JAMAIS saveUserData() -- volontairement, pour ne
+// jamais risquer d'écraser les vraies données d'un utilisateur EXISTANT sur
+// un simple blip réseau (une erreur onSnapshot ne veut pas forcément dire
+// "le document n'existe pas"). Bonne intention, mais un compte vraiment neuf
+// qui tombe sur ce chemin reste bloqué indéfiniment.
+//
+// Cette fonction lève le doute AVANT d'agir : une lecture ponctuelle forcée
+// depuis le SERVEUR (getDocFromServer, jamais le cache IndexedDB local --
+// c'est justement lui qui peut être la cause de l'erreur onSnapshot initiale,
+// donc le relire ne prouverait rien) confirme avec certitude si le document
+// existe réellement.
+//   • Existe déjà  -> l'erreur onSnapshot était transitoire : les VRAIES
+//     données sont renvoyées (jamais remplacées par du vide).
+//   • N'existe pas -> compte neuf confirmé : création sûre.
+//   • 3 tentatives échouées -> comportement de secours INCHANGÉ (rien
+//     perdu, mais rien créé tant qu'on n'est pas sûr).
+async function _tpxConfirmDocMissingAndInit(userId) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const freshSnap = await getDocFromServer(doc(db, 'planningRevision', userId));
+            if (!currentUser || currentUser.uid !== userId) return { aborted: true };
+            if (freshSnap.exists()) {
+                const d = freshSnap.data() || {};
+                return {
+                    confirmed: true, exists: true,
+                    data: {
+                        items: d.items || {},
+                        trophies: d.trophies || {},
+                        planningData: d.planningData || {},
+                        checklistData: d.checklistData || [],
+                        selectedResources: d.selectedResources || [],
+                        trainings: d.trainings !== undefined ? d.trainings : _tpxSafeDefaultTrainings(),
+                        deletedDefaultIds: d.deletedDefaultIds || [],
+                        restoredAt: d.restoredAt || null,
+                        notesErreurs: d.notesErreurs,
+                        lastUpdated: d.lastUpdated || new Date().toISOString()
+                    },
+                    // BUGFIX (2026-09-19, CRITIQUE) : trouvé par un test de bout en bout.
+                    // Réglages portés par le même document (voir le callback de succès
+                    // de onSnapshot) : gardés À PART de `data` pour ne rien ajouter à userData.
+                    settings: { confidenceScale: d.confidenceScale, extendedTours: d.extendedTours }
+                };
+            }
+            return { confirmed: true, exists: false };
+        } catch (err) {
+            console.warn(`⚠️ Vérification ponctuelle document (tentative ${attempt + 1}/3) échouée :`, err);
+            if (attempt < 2) await new Promise(r => setTimeout(r, 3000));
+        }
+    }
+    return { confirmed: false };
+}
+
+// BUGFIX (2026-09-18, suite -- course détectée à l'audit) : le listener
+// onSnapshot continue de se reconnecter tout seul après une erreur (comportement
+// natif du SDK Firestore, jamais interrompu par le callback d'erreur). Si une
+// reconnexion réussit PENDANT que _tpxConfirmDocMissingAndInit() est encore en
+// cours (jusqu'à ~9s), le callback de succès applique déjà l'état correct
+// (fusion pendingSync incluse) -- la réponse de la vérification, plus simple et
+// potentiellement obsolète à ce stade, ne doit alors PLUS être appliquée derrière.
+// Incrémenté au tout début du callback de succès ; capturé au moment où l'erreur
+// lance la vérification, comparé une fois celle-ci résolue.
+let _tpxSnapshotSuccessGen = 0;
+
+// BUGFIX (2026-09-19, CRITIQUE) : trouvé par un test de bout en bout contre
+// l'émulateur. Après une erreur d'écoute SANS aucune donnée locale, l'écran
+// affiche un état vide optimiste (initializeUserData()) le temps de la
+// vérification ponctuelle. Si la moindre modification était faite dans ce
+// laps de temps -- ou si la vérification échouait 3 fois puis que le serveur
+// redevenait joignable -- la sauvegarde envoyait cet état vide au serveur :
+// items/planning/checklist étaient bien fusionnés, mais trophées, ressources,
+// entraînements (dont les personnalisés), entraînements supprimés, mode 14
+// tours et tous les champs annexes des items étaient réécrits à leur valeur
+// PAR DÉFAUT. Ce drapeau vaut true UNIQUEMENT tant que l'état affiché n'est pas
+// confirmé par le serveur ; saveUserData() n'écrit alors rien, et debouncedSave()
+// / pagehide n'écrivent PAS non plus de brouillon planning_pending_<uid> (relu au
+// prochain chargement comme plus récent que le serveur, il aurait le même effet).
+// Une modification faite dans cet état reste donc en mémoire seulement : mieux
+// vaut la perdre que corrompre le compte. Remis à false dès qu'un vrai état
+// serveur est adopté (snapshot, vérification ponctuelle -- où la modification est
+// alors fusionnée et sauvegardée) ou que l'absence du document est confirmée.
+let _tpxUnconfirmedOptimistic = false;
+
 function loadUserData(userId) {
     if (userId) {
+        _tpxUnconfirmedOptimistic = false; // nouveau rattachement : repart d'un état sain
 
         // ── CORRECTIF (audit sécurité/perte de données, section C) : nettoyage
         //    défensif, INCONDITIONNEL, avant tout rattachement à ce userId.
@@ -23761,6 +23899,8 @@ function loadUserData(userId) {
         // ✅ TOUJOURS activer onSnapshot (même si cache utilisé ci-dessus)
 			unsubscribe = onSnapshot(doc(db, 'planningRevision', userId), docSnap => {
 				if (window.bumpMetric) window.bumpMetric('reads', 1);
+				_tpxSnapshotSuccessGen++; // cf. BUGFIX 2026-09-18 juste au-dessus de loadUserData()
+				_tpxUnconfirmedOptimistic = false; // un vrai snapshot serveur remplace l'état optimiste
 				if (docSnap.exists()) {
 					const newData = docSnap.data();
 					
@@ -24197,17 +24337,139 @@ if (_legacyMigrationAttemptedUid !== userId) {
             }
             
             // Fallback sur backup
-            
-            // Dernier recours : données vides (mais PAS de sauvegarde !)
-            console.error('❌ Aucune donnée de secours disponible');
+
+            // Dernier recours : affichage immédiat de données vides (pour ne
+            // pas laisser l'utilisateur devant un écran figé) PENDANT qu'une
+            // vérification ponctuelle tourne en fond -- voir
+            // _tpxConfirmDocMissingAndInit() plus haut pour le détail complet
+            // du correctif (2026-09-18, CRITIQUE).
+            console.error('❌ Aucune donnée de secours disponible -- vérification ponctuelle en cours avant toute décision');
             userData = initializeUserData();
             window.userData = userData; // sync global
-            renderAll(); 
-			
+            _tpxUnconfirmedOptimistic = true; // cf. drapeau déclaré avant loadUserData() : rien n'est écrit tant que non confirmé
+            renderAll();
+
 			    firebaseDataLoaded = true;
     setSaveIndicator('hidden');
-	
-	
+
+    const _genAtError = _tpxSnapshotSuccessGen;
+    _tpxConfirmDocMissingAndInit(userId).then(result => {
+        if (!currentUser || currentUser.uid !== userId || result.aborted) return;
+        // BUGFIX (2026-09-18, suite) : le listener s'est reconnecté tout seul
+        // et a déjà traité un vrai snapshot (avec sa fusion pendingSync
+        // complète) PENDANT cette vérification -- sa réponse, plus simple,
+        // est maintenant obsolète et ne doit rien écraser.
+        if (_tpxSnapshotSuccessGen !== _genAtError) {
+            console.warn('✅ Le listener onSnapshot s\'est rétabli tout seul entretemps -- vérification ponctuelle abandonnée (obsolète).');
+            return;
+        }
+        if (result.confirmed && result.exists) {
+            // Si l'utilisateur a déjà commencé à modifier l'état vide optimiste
+            // affiché plus haut PENDANT que cette vérification tournait en fond
+            // (généralement <1s, jusqu'à ~9s en cas de connexion dégradée), sa
+            // modification ne doit ni disparaître ni écraser les données serveur.
+            // BUGFIX (2026-09-19, CRITIQUE) : la version du 18/09 abandonnait
+            // simplement l'adoption dans ce cas -- trou trouvé par un test de bout
+            // en bout contre l'émulateur : l'état vide optimiste NON remplacé
+            // partait ensuite dans la sauvegarde, et celle-ci ne fusionne que
+            // items/planning/checklist -- trophées, ressources, entraînements (dont
+            // les perso), entraînements supprimés et mode 14 tours étaient réécrits
+            // à leur valeur PAR DÉFAUT dans Firestore. On fait donc comme le
+            // callback de succès de onSnapshot quand un snapshot arrive alors que
+            // des modifications locales existent : les données serveur servent de
+            // base, les modifications locales sont fusionnées par-dessus (mêmes
+            // fonctions de fusion), et tout le reste vient du serveur.
+            var _adopt = result.data;
+            if (hasUnsavedChanges) {
+                console.warn('⚠️ Vérification ponctuelle : document existant détecté ET modification locale déjà en cours -- fusion (données réelles + modification locale), rien n\'est écrasé.');
+                // Items : le serveur tel quel, sauf ceux que l'utilisateur a réellement
+                // touchés pendant la panne (les autres, à l'état vide optimiste, ne
+                // sont PAS fusionnés : ils réécraseraient priorité et dernière
+                // révision du serveur par des valeurs par défaut).
+                var _srvItems = result.data.items || {};
+                var _locItems = (userData && userData.items) || {};
+                var _mergedItems = Object.assign({}, _srvItems);
+                var _nn = function (a) { return Array.isArray(a) && a.some(function (v) { return v !== null && v !== undefined; }); };
+                Object.keys(_locItems).forEach(function (k) {
+                    var li = _locItems[k];
+                    if (!li) return;
+                    var _edited = _nn(li.tours) || _nn(li.tourDates) || _nn(li.tourDurations) || _nn(li.tourSupports)
+                        || (li.resources && Object.keys(li.resources).length > 0)
+                        || (li.priority !== null && li.priority !== undefined)
+                        || (li.lastRevision !== null && li.lastRevision !== undefined);
+                    if (!_edited) return;
+                    var si = _srvItems[k];
+                    var m = _tpxMergeTourItem(si, li);
+                    if (si && m) {
+                        if (m.priority === null || m.priority === undefined) m.priority = (si.priority !== undefined ? si.priority : null);
+                        if (m.lastRevision === null || m.lastRevision === undefined) m.lastRevision = (si.lastRevision !== undefined ? si.lastRevision : null);
+                    }
+                    _mergedItems[k] = m;
+                });
+                _adopt = {
+                    items: _mergedItems,
+                    trophies: result.data.trophies || {},
+                    planningData: _tpxMergePlanningData(result.data.planningData || {}, (userData && userData.planningData) || {}),
+                    checklistData: _tpxMergeChecklistData(result.data.checklistData || [], (userData && userData.checklistData) || []),
+                    selectedResources: result.data.selectedResources || [],
+                    trainings: result.data.trainings,
+                    deletedDefaultIds: result.data.deletedDefaultIds || [],
+                    restoredAt: result.data.restoredAt || null,
+                    lastUpdated: result.data.lastUpdated
+                };
+                if (result.data.notesErreurs !== undefined) _adopt.notesErreurs = result.data.notesErreurs;
+            } else {
+                console.warn('✅ Vérification ponctuelle : le document existe réellement -- erreur onSnapshot transitoire, données réelles chargées (rien perdu).');
+            }
+            userData = _adopt;
+            window.userData = userData;
+            _tpxUnconfirmedOptimistic = false; // vrai état serveur adopté : les sauvegardes peuvent reprendre
+            // BUGFIX (2026-09-19, CRITIQUE) : trouvé par un test de bout en bout contre
+            // l'émulateur. Les DONNÉES étaient bien rechargées, mais pas les RÉGLAGES
+            // portés par le même document (barème de confiance 5/10, mode 14 tours) :
+            // ils restaient à leurs valeurs par défaut locales, et la sauvegarde
+            // suivante (qui réaffirme toujours ces deux réglages) les aurait écrasés
+            // dans Firestore -- mode 14 tours coupé, barème de 10 réinterprété sur 5.
+            // Reproduit À L'IDENTIQUE la synchronisation du callback de succès de
+            // onSnapshot (plus haut dans loadUserData), à partir des mêmes valeurs.
+            var _rs = result.settings || {};
+            if (_rs.confidenceScale === 5 || _rs.confidenceScale === 10) {
+                if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+                    window.tpxSetConfidenceScaleRuntime(_rs.confidenceScale);
+                }
+            } else if (window._confidenceScaleRuntime == null) {
+                if (typeof window.tpxSetConfidenceScaleRuntime === 'function') {
+                    window.tpxSetConfidenceScaleRuntime(5);
+                }
+            }
+            if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+            if (typeof window.tpxRenderConfidenceButtons === 'function') window.tpxRenderConfidenceButtons();
+            if (_rs.extendedTours === true || _rs.extendedTours === false) {
+                if (typeof window.tpxSetExtendedToursRuntime === 'function') {
+                    window.tpxSetExtendedToursRuntime(_rs.extendedTours);
+                }
+            } else if (window._extendedToursRuntime == null) {
+                if (typeof window.tpxSetExtendedToursRuntime === 'function') {
+                    window.tpxSetExtendedToursRuntime(false);
+                }
+            }
+            if (typeof window.tpxUpdateExtendedToursSwitchUI === 'function') window.tpxUpdateExtendedToursSwitchUI();
+            loadResourcesConfig();
+            if (typeof PlanningModule !== 'undefined' && PlanningModule.loadData) {
+                PlanningModule.loadData();
+                if (PlanningModule.renderCalendar) PlanningModule.renderCalendar();
+                if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
+            }
+            renderAll();
+        } else if (result.confirmed && !result.exists) {
+            console.warn('✅ Vérification ponctuelle confirmée : compte réellement nouveau -- création du document.');
+            _tpxUnconfirmedOptimistic = false; // absence du document CONFIRMÉE par le serveur : rien à écraser
+            saveUserData(); // userData est déjà le résultat d'initializeUserData() affiché plus haut
+        }
+        // sinon (!result.confirmed) : 3 tentatives de vérification ont échoué
+        // -- on laisse l'état déjà affiché tel quel, sans sauvegarder tant
+        // qu'on n'est pas sûr (comportement de secours d'origine, inchangé).
+    });
         });
     } else {
         // Pas connecté : rediriger vers login (car app premium uniquement)
@@ -24278,7 +24540,14 @@ let connectionWarningToast = null;
 function showConnectionWarning() {
     // Si le toast existe déjà, ne rien faire
     if (connectionWarningToast) return;
-    
+    // BUGFIX (2026-09-17, suite) : signalé par l'utilisateur -- ce bandeau et
+    // les toasts génériques (showToastNotification, ex. "Entrainement
+    // ajouté !") occupent tous les deux le bas de l'écran et se
+    // chevauchaient sur mobile/iPad. Même mécanisme déjà utilisé pour
+    // éviter que le toast persistant ne chevauche le bandeau ROUGE hors
+    // ligne (classe sur body + règle CSS dédiée) -- voir .tpx-connwarn-showing.
+    document.body.classList.add('tpx-connwarn-showing');
+
     // Créer le toast
     connectionWarningToast = document.createElement('div');
     connectionWarningToast.id = 'connection-warning-toast';
@@ -24286,7 +24555,7 @@ function showConnectionWarning() {
         <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
             <i class="fas fa-wifi-slash" style="font-size: 1.25rem; margin-top: 0.125rem;"></i>
             <div style="flex: 1;">
-                <div style="font-weight: 600; margin-bottom: 0.25rem;">Mode hors ligne</div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Connexion instable</div>
                 <div style="font-size: 0.875rem; opacity: 0.9; line-height: 1.4;">Données sécurisées localement</div>
             </div>
             <button onclick="retryFirebaseSave()" style="background: rgba(255,255,255,0.2); color: white; padding: 0.375rem 0.75rem; border-radius: 0.375rem; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; white-space: nowrap;">
@@ -24354,6 +24623,7 @@ function showConnectionWarning() {
 }
 
 function hideConnectionWarning() {
+    document.body.classList.remove('tpx-connwarn-showing');
     if (connectionWarningToast) {
         connectionWarningToast.style.animation = 'slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
         setTimeout(() => {
@@ -24362,7 +24632,7 @@ function hideConnectionWarning() {
                 connectionWarningToast = null;
             }
         }, 300);
-        
+
     }
 }
 
@@ -24773,6 +25043,26 @@ if (!firebaseDataLoaded) {
 }
 window._tpxSaveWaitAttempts = 0;
 
+// 🛡️ BUGFIX (2026-09-19, CRITIQUE) : voir _tpxUnconfirmedOptimistic (avant
+// loadUserData). L'état affiché est un état vide optimiste NON confirmé par le
+// serveur : ne rien écrire (il écraserait trophées, ressources, entraînements,
+// réglages...). On réessaie toutes les 2s (jusqu'à 30s, largement plus que la
+// vérification ponctuelle, ~9s au plus) : dès que l'état serveur est adopté, la
+// sauvegarde part d'elle-même, sur des données fusionnées avec la modification.
+if (_tpxUnconfirmedOptimistic) {
+    console.warn('⚠️ SAUVEGARDE DIFFÉRÉE : l\'état affiché n\'est pas encore confirmé par le serveur (erreur de chargement) -- rien n\'est écrit tant que ce n\'est pas le cas.');
+    setSaveIndicator('saving');
+    window._tpxUnconfirmedWaitAttempts = (window._tpxUnconfirmedWaitAttempts || 0) + 1;
+    if (window._tpxUnconfirmedWaitAttempts <= 15) {
+        setTimeout(() => { saveUserData(retryCount); }, 2000);
+    } else {
+        window._tpxUnconfirmedWaitAttempts = 0;
+        console.error('❌ Sauvegarde abandonnée : état jamais confirmé par le serveur après 30s -- rien n\'a été écrit (les données en ligne sont intactes). Rechargez la page.');
+    }
+    return;
+}
+window._tpxUnconfirmedWaitAttempts = 0;
+
     // 🔍 Vérifier la connexion avant d'essayer Firebase
     const connectionOK = await checkConnectionBeforeSave();
 
@@ -24829,17 +25119,55 @@ window._tpxSaveWaitAttempts = 0;
                 }, delay);
                 
             } else {
-                // ❌ ÉCHEC DÉFINITIF après 3 tentatives
-                console.error('❌ Échec définitif après 3 tentatives');
-                
+                // ❌ ÉCHEC DÉFINITIF après 3 tentatives (ce cycle-ci)
+                console.error('❌ Échec définitif après 3 tentatives (ce cycle)');
+
                 // 💾 FALLBACK : Sauvegarder en LOCAL
                 try {
                     const cacheKey = `planning_cache_${currentUser.uid}`;
                     localStorage.setItem(cacheKey, JSON.stringify(userData));
                     localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
                     console.log('💾 Sauvegarde locale de secours créée');
-                    setSaveIndicator('hidden');
-                    
+                    // BUGFIX (2026-09-17, CRITIQUE) : signalé par l'utilisateur --
+                    // "sauvegardé localement, restauré au retour d'une connexion
+                    // correcte" était affiché, mais rien ne relançait jamais la
+                    // tentative après cet échec définitif : setSaveIndicator('hidden')
+                    // faisait même disparaître l'avertissement, laissant croire que
+                    // tout allait bien. La modification restait bien intacte dans
+                    // planning_pending_<uid> (écrite à CHAQUE frappe par
+                    // debouncedSave(), indépendamment de cet échec) -- mais rien ne
+                    // la renvoyait tant que l'utilisateur ne rechargeait pas la page
+                    // ou ne modifiait pas autre chose (les deux seuls déclencheurs
+                    // existants). Si la coupure durait plus longtemps que ça, la
+                    // sauvegarde restait bloquée indéfiniment, malgré la promesse
+                    // faite à l'écran. Corrigé : indicateur laissé VISIBLE (pas
+                    // 'hidden', qui donnait une fausse impression que tout est bon),
+                    // et une nouvelle tentative complète est reprogrammée
+                    // automatiquement 30s plus tard, tant qu'il reste des
+                    // modifications non confirmées -- sans action de l'utilisateur.
+                    // BUGFIX (2026-09-17, suite) : jusqu'ici, cet échec (l'écriture
+                    // Firestore elle-même échoue 3 fois après que la sonde de
+                    // connexion a pourtant réussi) restait complètement invisible --
+                    // seule la petite icône "saving" clignotait, sans jamais
+                    // atteindre le bandeau orange affiché par checkConnectionBeforeSave().
+                    // Réutilise donc ce même bandeau ici : peu importe QUEL étage
+                    // échoue (la sonde ou l'écriture elle-même), l'utilisateur voit
+                    // le même signal "connexion instable, données sécurisées
+                    // localement" + bouton Réessayer. Ne se déclenche JAMAIS en
+                    // même temps que le bandeau ROUGE de mode hors ligne réel : ce
+                    // dernier (isOfflineMode) fait sortir saveUserData() bien avant
+                    // d'atteindre ce point (cf. le garde tout en haut de la fonction).
+                    showConnectionWarning();
+                    setSaveIndicator('saving');
+                    if (hasUnsavedChanges && !window._tpxLongRetryPending) {
+                        window._tpxLongRetryPending = true;
+                        setTimeout(() => {
+                            window._tpxLongRetryPending = false;
+                            if (hasUnsavedChanges && typeof saveUserData === 'function') {
+                                saveUserData(0); // cycle complet frais (3 tentatives, backoff 2/4/8s)
+                            }
+                        }, 30000);
+                    }
                 } catch (localError) {
                     console.error('❌ Impossible de sauvegarder même en local:', localError);
                     setSaveIndicator('error');
@@ -25929,7 +26257,11 @@ function debouncedSave() {
     // Sur iOS Safari, pagehide peut ne pas se déclencher si l'OS tue le processus.
     // On écrit donc en localStorage dès qu'une modification est enregistrée,
     // sans attendre le pagehide.
-    if (currentUser && userData) {
+    // (2026-09-19) Jamais depuis un état vide optimiste NON confirmé par le serveur
+    // (voir _tpxUnconfirmedOptimistic) : ce brouillon serait relu au prochain
+    // chargement comme plus récent que Firestore et réécrirait trophées, ressources,
+    // entraînements et réglages à leur valeur par défaut.
+    if (currentUser && userData && !_tpxUnconfirmedOptimistic) {
         try {
             const _safeTimestamp = new Date().toISOString();
             const _pendingPayload = JSON.stringify({
@@ -28125,7 +28457,16 @@ if (item) {
     const tourIndex = pendingTour.tour;
     
     selectedConfidence = d.tours[tourIndex];
-    selectedSupport = d.tourSupports ? d.tourSupports[tourIndex] : null;
+    // BUGFIX (2026-09-19, CRITIQUE) : trouvé par un test de bout en bout contre
+    // l'émulateur Firestore. Pour un tour situé AU-DELÀ de la longueur actuelle du
+    // tableau (T9-T14 en mode 14 tours : les tableaux restent à 8 cases tant qu'on
+    // n'a rien écrit plus loin), d.tourSupports[tourIndex] vaut `undefined` et non
+    // `null` comme pour T1-T8. Sans support choisi, `undefined` était écrit dans le
+    // tableau, et Firestore REFUSE cette valeur ("Unsupported field value:
+    // undefined") : la sauvegarde échouait en boucle, avec le bandeau "Connexion
+    // instable" à tort, et bloquait aussi toutes les autres modifications jusqu'au
+    // rechargement de la page.
+    selectedSupport = (d.tourSupports && d.tourSupports[tourIndex] != null) ? d.tourSupports[tourIndex] : null;
     
     // Reset UI
     document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected', 'current'));
@@ -28373,7 +28714,8 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     const minutesStr = minutes.toString().padStart(2, '0');
     d.tourDurations[tourIndex] = hoursStr + ':' + minutesStr;
     
-    d.tourSupports[tourIndex] = selectedSupport;
+    // Jamais `undefined` (refusé par Firestore) : voir BUGFIX (2026-09-19) à l'ouverture de la modale.
+    d.tourSupports[tourIndex] = (selectedSupport === undefined) ? null : selectedSupport;
     d.lastRevision = selectedDate;
     
 const _pendingTourSnap = pendingTour;
@@ -31857,16 +32199,42 @@ window.openTourModalFromChecklist = function(checklistItemId, itemKey) {
     // Stocker l'ID pour plus tard
     pendingChecklistItemId = checklistItemId;
     
-    // Trouver le prochain tour à faire
+    // BUGFIX (2026-09-18, CRITIQUE) : signalé par l'utilisateur -- depuis
+    // l'introduction du mode 14 tours, valider une tâche de la to-do liste
+    // pour un item ayant DÉJÀ plus de 8 tours enregistrés rouvrait le 8e
+    // tour (déjà rempli, modifiable/supprimable seulement) au lieu de
+    // proposer un tour réellement nouveau. Cause : cette boucle cherchait le
+    // PREMIER trou (null) du tableau -- correct pour un item vierge, mais
+    // pas pour un item dont le tableau a un ancien trou AVANT des tours plus
+    // récents déjà remplis (ex: tour 8 jamais rempli alors que 9+ l'ont été
+    // depuis, via la vue détaillée). Même symptôme pour le cas le plus
+    // simple, sans aucun trou : exactement 8 tours remplis, tableau resté à
+    // length=8 en stockage (jamais étendu tant qu'aucun 9e tour n'a été
+    // écrit) -- la boucle ne trouvait alors AUCUN null du tout et retombait
+    // sur son défaut 0 (tour 1), pas le 9e.
+    // CORRECTIF : cible systématiquement le tour juste APRÈS le DERNIER tour
+    // rempli (progression en avant), plafonné au maximum autorisé par le
+    // réglage 8/14 tours (tpxMaxToursAllowed, même source que la vue
+    // détaillée/compacte) -- jamais un ancien trou en cours de route.
+    // Repli sur le premier trou si "juste après le dernier" déborde du
+    // maximum autorisé (cas rare mais réel : des tours plus TARDIFS déjà
+    // remplis alors que des tours plus PRÉCOCES ne l'ont jamais été -- alors
+    // il reste de la place, juste pas après le dernier rempli).
     var itemData = getItemData(specialtyId, fc);
-    var nextTour = 0;
+    var _maxAllowed = (typeof window.tpxMaxToursAllowed === 'function') ? window.tpxMaxToursAllowed() : 8;
+    var _lastFilled = -1;
     for (var i = 0; i < itemData.tours.length; i++) {
-        if (itemData.tours[i] === null) {
-            nextTour = i;
-            break;
-        }
+        if (itemData.tours[i] !== null) _lastFilled = i;
     }
-    
+    var nextTour = _lastFilled + 1;
+    if (nextTour > _maxAllowed - 1) {
+        nextTour = -1;
+        for (var j = 0; j < _maxAllowed; j++) {
+            if (itemData.tours[j] == null) { nextTour = j; break; }
+        }
+        if (nextTour < 0) nextTour = _maxAllowed - 1; // vraiment complet : dernier slot
+    }
+
     // Créer un faux élément pour openConfidenceModal
     var fakeElement = document.createElement('span');
     fakeElement.dataset.specialty = specialtyId;
@@ -32111,6 +32479,10 @@ async function saveTrainNoteFromFirestore(trainId, html) {
         console.warn('[TrainNotes] Bloqué — currentUser:', !!currentUser, 'trainId:', trainId);
         return false;
     }
+    // (2026-09-19) Le contrat de retour reste inchangé (true/false). On mémorise
+    // seulement, pour l'appelant qui affiche le message (saveTrainNotes), si
+    // l'échec vient d'une note > 1 Mo (refus définitif, pas un souci réseau).
+    (window._tpxNoteTooLarge = window._tpxNoteTooLarge || {})['train:' + trainId] = false;
     try {
         const ref = doc(db, 'users', currentUser.uid, 'notesEntrainements', String(trainId));
         console.log('[TrainNotes] Écriture vers:', ref.path);
@@ -32119,6 +32491,7 @@ async function saveTrainNoteFromFirestore(trainId, html) {
         return true;
     } catch (err) {
         console.error('[TrainNotes] ❌ Erreur Firestore write:', err.code, err.message);
+        window._tpxNoteTooLarge['train:' + trainId] = !!(err && err.code === 'invalid-argument' && /longer than \d+ bytes/i.test(String(err.message || '')));
         return false;
     }
 }
@@ -32174,6 +32547,9 @@ async function saveSpeNoteFromFirestore(speId, html) {
         console.warn('[SpeErr] Bloque - currentUser:', !!currentUser, 'speId:', speId);
         return false;
     }
+    // (2026-09-19) Même mémorisation que saveTrainNoteFromFirestore : contrat de
+    // retour inchangé, l'appelant (saveSpeErr) choisit le message affiché.
+    (window._tpxNoteTooLarge = window._tpxNoteTooLarge || {})['spe:' + speId] = false;
     try {
         const ref = doc(db, 'users', currentUser.uid, TPXC('ErreurSpe'), String(speId));
         await setDoc(ref, { html: html, updatedAt: new Date() });
@@ -32181,6 +32557,7 @@ async function saveSpeNoteFromFirestore(speId, html) {
         return true;
     } catch (err) {
         console.error('[SpeErr] Erreur Firestore write:', err.code, err.message);
+        window._tpxNoteTooLarge['spe:' + speId] = !!(err && err.code === 'invalid-argument' && /longer than \d+ bytes/i.test(String(err.message || '')));
         return false;
     }
 }
@@ -32335,6 +32712,175 @@ function _notesFooterHide(ctx) {
 }
 
 function _notesPopupReposition() { /* no-op : position geree par CSS */ }
+
+// Lightbox : agrandit l'image active au milieu de l'écran, fond obscurci.
+// Un seul lightbox partagé par les 3 contextes (notes/train/spe) -- pas
+// besoin d'édition dedans, juste afficher l'image en grand, avec zoom
+// (boutons +/-, molette sur PC, pincement à deux doigts sur tactile).
+var NOTES_LIGHTBOX_MIN_ZOOM = 0.5;
+var NOTES_LIGHTBOX_MAX_ZOOM = 4;
+var _notesLightboxZoom = 1;
+var _notesLightboxBaseW = 0;
+var _notesLightboxBaseH = 0;
+
+// Taille "ajustée" à l'espace disponible (équivalent de object-fit:contain),
+// calculée une fois au chargement de l'image -- sert de référence (zoom=1)
+// pour tous les zooms ultérieurs.
+function _notesLightboxComputeBaseSize(img) {
+    var scrollWrap = document.getElementById('notesImgLightboxScroll');
+    var padX = 80, padY = 80; // ~2 x 2.5rem, marge de sécurité incluse
+    if (scrollWrap) {
+        var cs = getComputedStyle(scrollWrap);
+        padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    }
+    var availW = Math.max(50, window.innerWidth - padX);
+    var availH = Math.max(50, window.innerHeight - padY);
+    var natW = img.naturalWidth || availW;
+    var natH = img.naturalHeight || availH;
+    var ratio = Math.min(availW / natW, availH / natH, 1); // jamais agrandi au-delà de sa taille réelle par défaut
+    return { w: natW * ratio, h: natH * ratio };
+}
+
+function _notesLightboxApplyZoom() {
+    var img = document.getElementById('notesImgLightboxImg');
+    if (!img || !_notesLightboxBaseW) return;
+    img.style.width = (_notesLightboxBaseW * _notesLightboxZoom) + 'px';
+    img.style.height = (_notesLightboxBaseH * _notesLightboxZoom) + 'px';
+    var pctEl = document.getElementById('notesImgLightboxZoomPct');
+    if (pctEl) pctEl.textContent = Math.round(_notesLightboxZoom * 100) + '%';
+    var outBtn = document.getElementById('notesImgLightboxZoomOut');
+    var inBtn = document.getElementById('notesImgLightboxZoomIn');
+    if (outBtn) outBtn.disabled = _notesLightboxZoom <= NOTES_LIGHTBOX_MIN_ZOOM + 0.001;
+    if (inBtn) inBtn.disabled = _notesLightboxZoom >= NOTES_LIGHTBOX_MAX_ZOOM - 0.001;
+}
+
+function _notesLightboxSetZoom(newZoom) {
+    _notesLightboxZoom = Math.max(NOTES_LIGHTBOX_MIN_ZOOM, Math.min(NOTES_LIGHTBOX_MAX_ZOOM, newZoom));
+    _notesLightboxApplyZoom();
+}
+
+// Boutons loupe +/- (pas de fondu -- direction: -1 ou 1)
+window._notesImgLightboxZoomBtn = function(direction) {
+    _notesLightboxSetZoom(_notesLightboxZoom + direction * 0.25);
+};
+
+window._notesImgEnlarge = function(ctx) {
+    var wrapper = _notesActiveImg[ctx];
+    if (!wrapper) return;
+    var img = wrapper.querySelector('img');
+    if (!img || !img.src) return;
+    var lightbox = document.getElementById('notesImgLightbox');
+    var lbImg = document.getElementById('notesImgLightboxImg');
+    if (!lightbox || !lbImg) return;
+    _notesLightboxZoom = 1;
+    _notesLightboxBaseW = 0;
+    _notesLightboxBaseH = 0;
+    lbImg.style.width = '';
+    lbImg.style.height = '';
+    function onReady() {
+        var size = _notesLightboxComputeBaseSize(lbImg);
+        _notesLightboxBaseW = size.w;
+        _notesLightboxBaseH = size.h;
+        _notesLightboxApplyZoom();
+    }
+    lbImg.onload = onReady;
+    lbImg.src = img.src;
+    lbImg.alt = img.alt || '';
+    if (lbImg.complete && lbImg.naturalWidth) onReady(); // déjà en cache navigateur
+    lightbox.classList.add('active');
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() { lightbox.classList.add('visible'); });
+    });
+};
+
+window._notesImgLightboxClose = function() {
+    var lightbox = document.getElementById('notesImgLightbox');
+    if (!lightbox || !lightbox.classList.contains('active')) return;
+    lightbox.classList.remove('visible');
+    setTimeout(function() {
+        lightbox.classList.remove('active');
+        var lbImg = document.getElementById('notesImgLightboxImg');
+        if (lbImg) { lbImg.src = ''; lbImg.style.width = ''; lbImg.style.height = ''; }
+    }, 200);
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    var lightbox = document.getElementById('notesImgLightbox');
+    var scrollWrap = document.getElementById('notesImgLightboxScroll');
+    if (scrollWrap) {
+        // Clic sur le fond obscurci (pas sur l'image ni les contrôles) -> fermer.
+        scrollWrap.addEventListener('click', function(e) {
+            if (e.target === scrollWrap) window._notesImgLightboxClose();
+        });
+        // Molette (PC) : avant = zoom avant, arrière = zoom arrière. Pas de scroll
+        // de page pendant que le lightbox est ouvert.
+        scrollWrap.addEventListener('wheel', function(e) {
+            if (!lightbox || !lightbox.classList.contains('active')) return;
+            e.preventDefault();
+            _notesLightboxSetZoom(_notesLightboxZoom + (e.deltaY < 0 ? 0.12 : -0.12));
+        }, { passive: false });
+        // Pincement à deux doigts (tactile) : ratio de distance entre les deux
+        // points de contact appliqué au zoom de départ du geste.
+        var _pinchStartDist = 0, _pinchStartZoom = 1;
+        function _touchDist(touches) {
+            var dx = touches[0].clientX - touches[1].clientX;
+            var dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        scrollWrap.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 2) {
+                _pinchStartDist = _touchDist(e.touches);
+                _pinchStartZoom = _notesLightboxZoom;
+            }
+        }, { passive: true });
+        scrollWrap.addEventListener('touchmove', function(e) {
+            if (e.touches.length === 2 && _pinchStartDist > 0) {
+                e.preventDefault();
+                var ratio = _touchDist(e.touches) / _pinchStartDist;
+                _notesLightboxSetZoom(_pinchStartZoom * ratio);
+            }
+        }, { passive: false });
+        scrollWrap.addEventListener('touchend', function(e) {
+            if (e.touches.length < 2) _pinchStartDist = 0;
+        });
+        // Glisser-déplacer à la souris (PC) : le tactile pan déjà nativement
+        // via le scroll du conteneur (overflow:auto), seul le geste à deux
+        // doigts est intercepté ci-dessus (pincement). Ici : bouton gauche
+        // uniquement, ajuste scrollLeft/scrollTop du conteneur pendant le
+        // déplacement -- inutile de recalculer quoi que ce soit côté zoom,
+        // le navigateur gère le clamp du scroll aux limites du contenu.
+        var _dragActive = false, _dragStartX = 0, _dragStartY = 0, _dragStartScrollL = 0, _dragStartScrollT = 0;
+        var lbImgEl = document.getElementById('notesImgLightboxImg');
+        if (lbImgEl) {
+            lbImgEl.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return; // bouton gauche uniquement
+                e.preventDefault(); // évite la sélection de texte / le fantôme de glisser natif
+                _dragActive = true;
+                _dragStartX = e.clientX; _dragStartY = e.clientY;
+                _dragStartScrollL = scrollWrap.scrollLeft; _dragStartScrollT = scrollWrap.scrollTop;
+                lbImgEl.classList.add('notes-img-lightbox-dragging');
+            });
+        }
+        document.addEventListener('mousemove', function(e) {
+            if (!_dragActive) return;
+            scrollWrap.scrollLeft = _dragStartScrollL - (e.clientX - _dragStartX);
+            scrollWrap.scrollTop = _dragStartScrollT - (e.clientY - _dragStartY);
+        });
+        function _endDrag() {
+            if (!_dragActive) return;
+            _dragActive = false;
+            if (lbImgEl) lbImgEl.classList.remove('notes-img-lightbox-dragging');
+        }
+        document.addEventListener('mouseup', _endDrag);
+        // Si le bouton est relâché hors de la fenêtre (ex: hors de l'onglet),
+        // ne pas laisser le glisser actif indéfiniment.
+        window.addEventListener('blur', _endDrag);
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') window._notesImgLightboxClose();
+    });
+});
 
 window._notesImgFooterSlide = function(ctx, val) {
     var wrapper = _notesActiveImg[ctx];
@@ -35037,6 +35583,124 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     .notes-img-ctrl-panel .img-popup-sep { height: 24px; }
 }
+
+/* Lightbox image agrandie (bouton "Agrandir" du popup image ci-dessus) */
+.notes-img-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.9);
+    display: none;
+    z-index: 10500; /* au-dessus de .notes-modal-overlay (10000) */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.notes-img-lightbox.active { display: block; }
+.notes-img-lightbox.visible { opacity: 1; }
+.notes-img-lightbox-scroll {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    display: flex;
+    /* BUGFIX (2026-09-18) : signalé par l'utilisateur -- avec align-items/
+       justify-content:center "pur", le débordement situé AVANT le centre
+       (au-dessus / à gauche) n'est pas compté dans scrollHeight/scrollWidth
+       -- vérifié : pour une image de 2400px de haut, scrollHeight ne
+       reportait que ~1595px (le bas), le haut restait à jamais inaccessible
+       au défilement, quel que soit le sens du glisser. "safe center" (repli
+       navigateur natif) fait basculer sur un alignement "start" côté
+       débordant, tout en gardant le centrage pour la partie qui rentre --
+       débordement accessible dans TOUTES les directions. */
+    align-items: safe center;
+    justify-content: safe center;
+    padding: 2.5rem;
+    box-sizing: border-box;
+    /* touch-action géré en JS (pincement) -- laisser le scroll natif faire le
+       "pan" quand l'image zoomée dépasse l'espace visible. */
+}
+.notes-img-lightbox-scroll img {
+    display: block;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+    transform: scale(0.97);
+    transition: transform 0.2s ease;
+    /* Glisser-déplacer à la souris quand l'image dépasse l'espace visible
+       (zoom) -- désactive le "fantôme" de glisser-déposer natif du navigateur. */
+    cursor: grab;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.notes-img-lightbox.visible .notes-img-lightbox-scroll img { transform: scale(1); }
+.notes-img-lightbox-scroll img.notes-img-lightbox-dragging {
+    cursor: grabbing;
+    transition: none; /* pas de latence du fondu d'entrée pendant le glisser */
+}
+/* Bouton fermer : même code couleur que les fermetures de modal du site
+   (rouge, survol plein, appui réduit) -- cf. .friends-modal-close et
+   consorts, repris à l'identique. */
+.notes-img-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: all 0.28s ease;
+}
+.notes-img-lightbox-close:hover { background: var(--danger); color: #fff; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239,68,68,0.45); }
+.notes-img-lightbox-close:active { transform: scale(0.88); }
+[data-theme="dark"] .notes-img-lightbox-close { background: rgba(239,68,68,0.6); color: white; border: 1px solid rgba(239,68,68,0.8); }
+[data-theme="dark"] .notes-img-lightbox-close:hover { background: var(--danger); border-color: transparent; }
+/* Barre de zoom flottante, bas centre */
+.notes-img-lightbox-zoom {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* BUGFIX (2026-09-18) : signalé par l'utilisateur -- fond quasi
+       transparent (0.14) invisible quand l'image affichée est claire/blanche
+       en dessous. Fond sombre nettement plus opaque (même teinte que le
+       fond du lightbox) : contraste garanti quelle que soit l'image. */
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    border-radius: 999px;
+    padding: 5px;
+    z-index: 1;
+}
+.notes-img-lightbox-zoom button {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.16); color: #fff;
+    font-size: 0.95rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.15s, opacity 0.15s;
+}
+.notes-img-lightbox-zoom button:hover:not(:disabled) { background: rgba(255,255,255,0.3); }
+.notes-img-lightbox-zoom button:active:not(:disabled) { transform: scale(0.9); }
+.notes-img-lightbox-zoom button:disabled { opacity: 0.35; cursor: default; }
+.notes-img-lightbox-zoom-pct {
+    color: #fff; font-size: 0.8rem; font-weight: 600;
+    min-width: 42px; text-align: center; user-select: none;
+}
+@media (max-width: 768px) {
+    .notes-img-lightbox-scroll { padding: 1rem; }
+    .notes-img-lightbox-close { top: 12px; right: 12px; width: 38px; height: 38px; font-size: 1rem; }
+    .notes-img-lightbox-zoom { bottom: 14px; }
+}
 .notes-img-uploading {
     display: inline-flex;
     align-items: center;
@@ -35938,6 +36602,21 @@ body.tc-kb-open-phone .flash-expand-btn {
                         Réglable à tout moment dans <strong>Paramètres</strong>,
                         juste en dessous du barème de confiance — désactivé
                         par défaut.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon blue">
+                    <i class="fas fa-magnifying-glass-plus"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Agrandissement des images dans les notes 🔍</h4>
+                    <p>
+                        Cliquez sur une image dans vos notes puis sur
+                        <strong>Agrandir</strong> : elle s'affiche en grand,
+                        avec zoom (boutons +/-, molette ou pincement) et
+                        déplacement par glissement.
                     </p>
                 </div>
             </div>
@@ -37741,10 +38420,30 @@ async function saveNoteToFirestore(itemKey, html) {
     } catch (err) {
         console.error('[Notes] Erreur Firestore write :', err);
         window.TPXSafeStore.mark(lsKey, html);   // TPX : marqueur seulement, plus le contenu
-        if (!_pendingOk && itemKey === _notesKey && typeof window.TPXNotesState === 'function') {
-            // Ni Firestore ni le brouillon local n'ont pu être écrits : la modification
-            // n'existe qu'en mémoire. Prévenir plutôt que laisser croire que c'est sauvegardé.
-            window.TPXNotesState('save-error', document.getElementById('notesEditorArea'));
+        // BUGFIX (2026-09-18) : confirmé contre le vrai émulateur Firestore --
+        // une note dépassant 1 Mo (généralement plusieurs images en repli
+        // base64, cf. _notesInsertImageBase64) échoue avec e.code=
+        // "invalid-argument" et un message "longer than X bytes", DISTINCT du
+        // "doesn't exist" déjà géré ailleurs. Avant ce correctif : comme le
+        // brouillon LOCAL (limite ~5-10 Mo, bien au-delà d'1 Mo) réussit
+        // presque toujours, la condition `!_pendingOk` ci-dessous ne se
+        // déclenchait JAMAIS pour ce cas précis -- l'utilisateur ne voyait
+        // AUCUN avertissement alors que CHAQUE tentative future échouerait
+        // à l'identique, indéfiniment (pas un problème réseau passager qui
+        // se résout tout seul). Affiché systématiquement dans ce cas précis,
+        // avec un message qui explique la vraie cause plutôt que de parler
+        // à tort de connexion.
+        var _tooLarge = err && err.code === 'invalid-argument' && /longer than \d+ bytes/i.test(err.message || '');
+        if (typeof window.TPXNotesState === 'function' && itemKey === _notesKey) {
+            if (!_pendingOk) {
+                // Ni Firestore ni le brouillon local n'ont pu être écrits : la modification
+                // n'existe qu'en mémoire. Prévenir plutôt que laisser croire que c'est sauvegardé.
+                // (Testé AVANT "trop volumineuse" : ce dernier promet une copie en sécurité sur
+                // l'appareil, ce qui serait faux ici -- "Copiez votre texte" reste l'urgence.)
+                window.TPXNotesState('save-error', document.getElementById('notesEditorArea'));
+            } else if (_tooLarge) {
+                window.TPXNotesState('save-error-toolarge', document.getElementById('notesEditorArea'));
+            }
         }
         return false;
     }
@@ -38802,6 +39501,8 @@ function notesBuildOic(padded) {
 
         <!-- Footer -->
 <div id="notesImgFloatingPopup" class="notes-img-ctrl-panel">
+  <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgEnlarge('notes')" data-tooltip="Agrandir"><i class="fas fa-expand"></i></button>
+  <div class="img-popup-sep"></div>
   <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveUp('notes')" data-tooltip="Monter"><i class="fas fa-arrow-up"></i></button>
   <button class="img-popup-btn" onmousedown="event.preventDefault()" onclick="window._notesImgMoveDown('notes')" data-tooltip="Descendre"><i class="fas fa-arrow-down"></i></button>
   <div class="img-popup-sep"></div>
@@ -38841,6 +39542,19 @@ function notesBuildOic(padded) {
     </div><!-- /.notes-modal-body -->
   </div><!-- /.notes-modal -->
 </div><!-- /.notes-modal-overlay -->
+
+<!-- Lightbox image agrandie : partagé par les 3 éditeurs de notes (notes/train/spe) -->
+<div id="notesImgLightbox" class="notes-img-lightbox">
+  <button class="notes-img-lightbox-close" onclick="window._notesImgLightboxClose()" data-tooltip="Fermer" aria-label="Fermer"><i class="fas fa-times"></i></button>
+  <div class="notes-img-lightbox-scroll" id="notesImgLightboxScroll">
+    <img id="notesImgLightboxImg" src="" alt="">
+  </div>
+  <div class="notes-img-lightbox-zoom">
+    <button onclick="window._notesImgLightboxZoomBtn(-1)" data-tooltip="Zoom arrière" aria-label="Zoom arrière" id="notesImgLightboxZoomOut"><i class="fas fa-search-minus"></i></button>
+    <span class="notes-img-lightbox-zoom-pct" id="notesImgLightboxZoomPct">100%</span>
+    <button onclick="window._notesImgLightboxZoomBtn(1)" data-tooltip="Zoom avant" aria-label="Zoom avant" id="notesImgLightboxZoomIn"><i class="fas fa-search-plus"></i></button>
+  </div>
+</div>
 
 <!-- Confirmation effacer notes -->
 <div class="notes-confirm-overlay" id="notesConfirmOverlay" onclick="notesCloseConfirm()">
@@ -41855,7 +42569,14 @@ window.saveTrainNotes = function() {
     if (wrote && _cu) {
       try { localStorage.removeItem('trainnotes_pending_' + _cu.uid + '_' + String(noteId)); } catch(e) {}
     } else if (!wrote && window.showToastNotification) {
-      window.showToastNotification('Notes non synchronisées (hors-ligne). Elles seront renvoyées automatiquement.', 'warning');
+      // (2026-09-19) Une note > 1 Mo (souvent plusieurs images en repli base64)
+      // est refusée à l'identique à CHAQUE tentative : dire "renvoyées
+      // automatiquement" serait faux. Message dédié, plus long à lire.
+      if (window._tpxNoteTooLarge && window._tpxNoteTooLarge['train:' + noteId]) {
+        window.showToastNotification('Note trop volumineuse : synchronisation impossible. Supprimez une image ou réduisez le texte.', 'warning', false, 6000);
+      } else {
+        window.showToastNotification('Notes non synchronisées (hors-ligne). Elles seront renvoyées automatiquement.', 'warning');
+      }
     }
     // Bug2 fix : mettre à jour le flag notesExist sur l'objet training
     if (window.userData && window.userData.trainings) {
@@ -42620,7 +43341,13 @@ var _trainUserWatcher = setInterval(function() {
       if (wrote && _cu) {
         try { localStorage.removeItem('speerrnotes_pending_' + _cu.uid + '_' + String(speId)); } catch (e) {}
       } else if (!wrote && window.showToastNotification) {
-        window.showToastNotification('Cahier d\'erreurs non synchronisé (hors-ligne). Il sera renvoyé automatiquement.', 'warning');
+        // (2026-09-19) Même distinction que pour les notes d'entraînement :
+        // une note > 1 Mo n'est pas "renvoyée automatiquement", elle échoue à chaque fois.
+        if (window._tpxNoteTooLarge && window._tpxNoteTooLarge['spe:' + speId]) {
+          window.showToastNotification('Note trop volumineuse : synchronisation impossible. Supprimez une image ou réduisez le texte.', 'warning', false, 6000);
+        } else {
+          window.showToastNotification('Cahier d\'erreurs non synchronisé (hors-ligne). Il sera renvoyé automatiquement.', 'warning');
+        }
       }
     }).catch(function() {
       window.speErrCurrentId = speId;
@@ -47803,18 +48530,34 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     if (!d.tourDates) d.tourDates = [null,null,null,null,null,null,null,null];
     if (!d.tourDurations) d.tourDurations = [null,null,null,null,null,null,null,null];
     if (!d.tourSupports) d.tourSupports = [null,null,null,null,null,null,null,null];
-    // 🛡️ Trouver le premier emplacement réellement vide dans d.tours
-    // (et NON tourCount, qui pourrait pointer sur une case déjà occupée si le tableau est lacunaire)
+    // BUGFIX (2026-09-18, CRITIQUE) : miroir du correctif appliqué à
+    // openTourModalFromChecklist (même symptôme possible ici : un item avec
+    // un ancien trou -- ex. tour 8 jamais rempli -- alors que des tours plus
+    // tardifs (9+) sont déjà enregistrés se retrouvait à combler ce vieux
+    // trou avec la date du JOUR au lieu d'ajouter un tour réellement
+    // nouveau après le dernier existant -- incohérent une fois revu dans la
+    // vue détaillée (dates non croissantes). Préfère maintenant la position
+    // juste après le DERNIER tour rempli ; ne se replie sur le premier trou
+    // que si cette position déborde le maximum autorisé (cas rare : des
+    // tours tardifs déjà remplis alors que des tours précoces ne l'ont
+    // jamais été -- il reste alors de la place, juste pas après le dernier).
     // AJOUT (2026-09-13) : borne sur maxTours(d), PAS d.tours.length -- sinon
     // impossible d'ajouter un 9e tour tant que le tableau n'a pas déjà grandi
     // au-delà de 8 par un autre chemin (ex: vue détaillée). d.tours[i] pour un
     // index au-delà de la longueur actuelle du tableau vaut `undefined`, et
     // `undefined == null` (égalité non stricte) est vrai : aucune autre
     // adaptation nécessaire, la case est déjà correctement vue comme vide.
-    var idx = -1;
     var _maxT = maxTours(d);
+    var _lastFilledCompact = -1;
     for (var i = 0; i < _maxT; i++) {
-      if (d.tours[i] == null) { idx = i; break; }
+      if (d.tours[i] != null) _lastFilledCompact = i;
+    }
+    var idx = _lastFilledCompact + 1;
+    if (idx >= _maxT) {
+      idx = -1;
+      for (var k = 0; k < _maxT; k++) {
+        if (d.tours[k] == null) { idx = k; break; }
+      }
     }
     if (idx < 0) {
       // Toutes les cases pleines (cas lacunaire) — sortie silencieuse
@@ -60570,7 +61313,7 @@ function setTrainingsPageVisible(visible) {
         var old = document.getElementById('tpx-note-state');
         if (old) old.remove();
         if (editor) editor.contentEditable = 'true';
-        if (kind !== 'error' && kind !== 'pending' && kind !== 'save-error') return;
+        if (kind !== 'error' && kind !== 'pending' && kind !== 'save-error' && kind !== 'save-error-toolarge') return;
 
         var el = document.createElement('div');
         el.id = 'tpx-note-state';
@@ -60582,6 +61325,18 @@ function setTrainingsPageVisible(visible) {
                 '<span><strong>Cette note n\'a pas pu être chargée.</strong> Votre connexion semble ' +
                 'interrompue. L\'écriture est momentanément désactivée pour ne pas risquer d\'effacer ' +
                 'ce qui est enregistré en ligne. Fermez et rouvrez la note une fois la connexion revenue.</span>';
+        } else if (kind === 'save-error-toolarge') {
+            // BUGFIX (2026-09-18) : distinct de 'save-error' -- ici, réessayer
+            // ne changera RIEN (la note dépasse la limite de taille autorisée,
+            // indépendamment de la qualité de la connexion). Affiché même si
+            // le brouillon local a pu être écrit, car sans action de
+            // l'utilisateur, cette note ne pourra plus jamais se synchroniser.
+            el.innerHTML =
+                '<i class="fas fa-triangle-exclamation"></i>' +
+                '<span><strong>Note trop volumineuse.</strong> Cette note dépasse la taille autorisée ' +
+                '(probablement à cause de plusieurs images) et ne peut plus être synchronisée en ligne. ' +
+                'Vos modifications restent en sécurité sur cet appareil, mais supprimez une image ou ' +
+                'réduisez le texte pour pouvoir sauvegarder à nouveau.</span>';
         } else if (kind === 'save-error') {
             // Ni Firestore ni le brouillon local n'ont pu être écrits : ne pas verrouiller
             // (l'utilisateur doit pouvoir continuer/copier son texte), mais ne pas laisser
