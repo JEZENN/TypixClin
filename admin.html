@@ -831,7 +831,16 @@ a { color:var(--blue); text-decoration:none; }
                     <option value="cancelled">Annulé</option>
                     <option value="expired">Expiré</option>
                     <option value="trial">Essai</option>
+                    <option value="canceled">Résilié — accès jusqu'à la date de fin (Stripe : canceled)</option>
+                    <option value="trialing">Essai Stripe (trialing)</option>
+                    <option value="past_due">Paiement en échec (past_due)</option>
+                    <option value="unpaid">Impayé (unpaid)</option>
+                    <option value="incomplete">Paiement incomplet (incomplete)</option>
                 </select>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem">
+                    Accès offert (grâce / manuel) <strong>avec date de fin</strong> : l'accès s'arrête à cette date
+                    (enregistré « Résilié »). <strong>Sans date de fin</strong> et « Actif » : accès illimité.
+                </div>
             </div>
             <div class="form-group">
                 <label>ID Stripe (optionnel)</label>
@@ -995,6 +1004,86 @@ function formatDateTime(val) {
     return d.toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
+// ─── ABONNEMENT : champs à écrire depuis la modale « Gérer l'abonnement » ───
+// (bloc testé tel quel par emulator-tests/admin-subscription-fix.test.js : il ne
+//  doit dépendre que de Timestamp et serverTimestamp)
+// TPX-SUBSCRIPTION-HELPERS-BEGIN
+const TPX_FIXED_PLAN_TYPES = ['ecos2027', 'edn2027', 'edn2027_ecos2028', 'edn2028', 'edn2028_ecos2029'];
+/* Types d'abonnement écrits par les Cloud Functions Stripe (mensuel/annuel/formule fixe) :
+   la modale ne doit JAMAIS les remplacer par « stripe » (type générique de saisie manuelle). */
+const TPX_STRIPE_MANAGED_TYPES = ['monthly', 'annual'].concat(TPX_FIXED_PLAN_TYPES);
+
+function tpxToInputDate(val) {
+    if (!val) return '';
+    let d;
+    if (val?.toDate) d = val.toDate();
+    else if (val?.seconds) d = new Date(val.seconds * 1000);
+    else d = new Date(val);
+    return isNaN(d) ? '' : d.toISOString().split('T')[0];
+}
+
+function tpxBuildSubscriptionUpdate(f, existing) {
+    const ex = existing || {};
+    let isPremium = false, premiumType = null;
+
+    if (f.plan === 'grace') {
+        isPremium = true; premiumType = 'grace_period';
+    } else if (f.plan === 'premium_stripe') {
+        isPremium = true;
+        // CORRECTIF (2026-09-20) : un abonné géré par Stripe (mensuel, annuel, formule
+        // fixe) gardait « stripe » à la place de son vrai type dès qu'on enregistrait
+        // la modale : une formule fixe perdait sa date de fin comme règle d'accès (le
+        // statut 'active' suffisait alors, sans limite), et les contrôles anti-doublon
+        // des Cloud Functions (premiumType monthly/annual) ne le reconnaissaient plus.
+        premiumType = TPX_STRIPE_MANAGED_TYPES.indexOf(ex.premiumType) !== -1 ? ex.premiumType : 'stripe';
+    } else if (f.plan === 'premium_manual') {
+        isPremium = true; premiumType = 'manual';
+    }
+
+    let status = f.status;
+    // CORRECTIF (2026-09-20) : le statut 'active' donne un accès SANS date limite (règles
+    // Firestore + tpx-billing.js) : « Offrir 1 mois / 1 an / période de grâce » ne
+    // s'arrêtait donc jamais. 'canceled' (= « pas de renouvellement, accès jusqu'à la
+    // date de fin ») est le seul statut hors Stripe dont la date de fin est réellement
+    // respectée. Sans date de fin, 'active' reste un accès illimité, voulu.
+    if ((f.plan === 'grace' || f.plan === 'premium_manual') && status === 'active' && f.endDate) status = 'canceled';
+
+    const upd = {
+        isPremium,
+        premiumType,
+        subscriptionStatus: status,
+        stripeSubscriptionId: f.stripeId || null,
+        stripeCustomerId: f.stripeCustomer || null,
+        lastUpdated: serverTimestamp()
+    };
+    if (f.plan === 'grace' && f.endDate) {
+        if (f.endDate !== tpxToInputDate(ex.gracePeriodEnd)) upd.gracePeriodEnd = Timestamp.fromDate(new Date(f.endDate));
+    } else {
+        upd.gracePeriodEnd = null;
+    }
+    // CORRECTIF (2026-09-20) : la modale n'affiche que la DATE (jour, UTC) — enregistrer
+    // sans toucher aux dates réécrivait minuit UTC à la place de l'heure réelle
+    // (ex. fin de formule 2028-10-31T22:59:59Z → 2028-10-31T00:00:00Z : jusqu'à 24 h
+    // d'accès perdues). Une date inchangée n'est donc plus réécrite.
+    if ((f.startDate || '') !== tpxToInputDate(ex.subscriptionStartDate)) {
+        upd.subscriptionStartDate = f.startDate ? Timestamp.fromDate(new Date(f.startDate)) : null;
+    }
+    if ((f.endDate || '') !== tpxToInputDate(ex.subscriptionEndDate || ex.gracePeriodEnd)
+        || (f.endDate && !ex.subscriptionEndDate)) {
+        upd.subscriptionEndDate = f.endDate ? Timestamp.fromDate(new Date(f.endDate)) : null;
+    }
+    return upd;
+}
+
+/* Accès offert (manuel / grâce) enregistré AVANT ce correctif : statut 'active' + date de
+   fin renseignée = date ignorée, accès sans fin. Repère visuel dans le tableau. */
+function tpxIsOfferedWithIgnoredEnd(u) {
+    return (u.premiumType === 'manual' || u.premiumType === 'grace_period')
+        && u.subscriptionStatus === 'active'
+        && !!(u.subscriptionEndDate || u.gracePeriodEnd);
+}
+// TPX-SUBSCRIPTION-HELPERS-END
+
 function getPlanLabel(user) {
     if (user.isPremium) {
         if (user.premiumType === 'grace_period') return { label:'Grâce', cls:'badge-grace' };
@@ -1009,7 +1098,10 @@ function getStatusBadge(user) {
     if (!s || s === 'null') return '<span class="badge badge-free">—</span>';
     if (s === 'active') return '<span class="badge badge-active"><i class="fas fa-circle" style="font-size:6px"></i> Actif</span>';
     if (s === 'cancelled') return '<span class="badge badge-cancelled">Annulé</span>';
+    if (s === 'canceled') return '<span class="badge badge-cancelled">Résilié</span>';
     if (s === 'expired') return '<span class="badge badge-expired">Expiré</span>';
+    if (s === 'trialing') return '<span class="badge badge-free">Essai</span>';
+    if (s === 'past_due' || s === 'unpaid') return '<span class="badge badge-expired">Impayé</span>';
     return `<span class="badge badge-free">${s}</span>`;
 }
 
@@ -1178,7 +1270,7 @@ function renderSubsTable(users) {
             <td><span class="badge ${plan.cls}">${plan.label}</span></td>
             <td><code style="font-size:0.7rem;color:var(--text-muted)">${u.stripeSubscriptionId || '—'}</code></td>
             <td>${u.gracePeriodEnd ? '—' : formatDate(u.subscriptionStartDate)}</td>
-            <td>${formatDate(u.subscriptionEndDate || u.gracePeriodEnd)}</td>
+            <td>${formatDate(u.subscriptionEndDate || u.gracePeriodEnd)}${tpxIsOfferedWithIgnoredEnd(u) ? ' <i class="fas fa-triangle-exclamation" style="color:var(--amber)" title="Accès offert enregistré « Actif » : la date de fin est ignorée (accès sans fin). Ouvrez la fiche et enregistrez pour appliquer la date."></i>' : ''}</td>
             <td>${getStatusBadge(u)}</td>
             <td>
                 <button class="btn btn-ghost btn-sm" onclick="openSubModal('${u.uid}')"><i class="fas fa-edit"></i> Modifier</button>
@@ -1495,21 +1587,26 @@ window.openSubModal = function(uid) {
     }
     document.getElementById('sub-plan').value = plan;
 
-    document.getElementById('sub-status').value = user.subscriptionStatus || 'active';
+    // CORRECTIF (2026-09-20) : la liste ne contenait que Actif/Annulé/Expiré/Essai. Un
+    // abonné Stripe en 'trialing', 'canceled', 'past_due'... n'avait aucune option
+    // correspondante : la liste restait vide (valeur '') et l'enregistrement écrivait
+    // subscriptionStatus: '' — accès coupé pour un client qui a pourtant payé. Un statut
+    // inconnu de la liste (ex. 'paused') est maintenant ajouté à la volée, et conservé.
+    const statusSel = document.getElementById('sub-status');
+    statusSel.querySelectorAll('option[data-temp]').forEach(o => o.remove());
+    const curStatus = user.subscriptionStatus || 'active';
+    if (![...statusSel.options].some(o => o.value === curStatus)) {
+        const o = document.createElement('option');
+        o.value = curStatus; o.textContent = curStatus; o.setAttribute('data-temp', '1');
+        statusSel.appendChild(o);
+    }
+    statusSel.value = curStatus;
     document.getElementById('sub-stripe-id').value = user.stripeSubscriptionId || '';
     document.getElementById('sub-stripe-customer').value = user.stripeCustomerId || '';
 
     // Dates
-    function toInputDate(val) {
-        if (!val) return '';
-        let d;
-        if (val?.toDate) d = val.toDate();
-        else if (val?.seconds) d = new Date(val.seconds * 1000);
-        else d = new Date(val);
-        return isNaN(d) ? '' : d.toISOString().split('T')[0];
-    }
-    document.getElementById('sub-start-date').value = toInputDate(user.subscriptionStartDate);
-    document.getElementById('sub-end-date').value = toInputDate(user.subscriptionEndDate || user.gracePeriodEnd);
+    document.getElementById('sub-start-date').value = tpxToInputDate(user.subscriptionStartDate);
+    document.getElementById('sub-end-date').value = tpxToInputDate(user.subscriptionEndDate || user.gracePeriodEnd);
 
     openModal('sub-modal');
 };
@@ -1564,31 +1661,11 @@ window.saveSubscription = async function() {
     btn.innerHTML = '<div class="spinner"></div> Enregistrement…';
 
     try {
-        let isPremium = false, premiumType = null;
-        let gracePeriodEnd = null;
-
-        if (plan === 'grace') {
-            isPremium = true; premiumType = 'grace_period';
-            if (endDateStr) gracePeriodEnd = Timestamp.fromDate(new Date(endDateStr));
-        } else if (plan === 'premium_stripe') {
-            isPremium = true; premiumType = 'stripe';
-        } else if (plan === 'premium_manual') {
-            isPremium = true; premiumType = 'manual';
-        } else {
-            isPremium = false; premiumType = null; gracePeriodEnd = null;
-        }
-
-        const updateData = {
-            isPremium,
-            premiumType,
-            gracePeriodEnd,
-            subscriptionStatus: status,
-            subscriptionStartDate: startDateStr ? Timestamp.fromDate(new Date(startDateStr)) : null,
-            subscriptionEndDate: endDateStr ? Timestamp.fromDate(new Date(endDateStr)) : null,
-            stripeSubscriptionId: stripeId || null,
-            stripeCustomerId: stripeCustomer || null,
-            lastUpdated: serverTimestamp()
-        };
+        // Construction des champs : cf. tpxBuildSubscriptionUpdate (type Stripe conservé,
+        // accès offert avec date de fin réellement borné, dates inchangées non réécrites).
+        const updateData = tpxBuildSubscriptionUpdate({
+            plan, status, startDate: startDateStr, endDate: endDateStr, stripeId, stripeCustomer
+        }, allUsers.find(u => u.uid === uid));
 
         await updateDoc(doc(db, 'users', uid), updateData);
 

@@ -18734,7 +18734,13 @@ window.TPXNotesPending = {
 @media (max-width: 920px) {
   #speErrModalInner .notes-modal-body { flex-direction: column; }
   #speErrModalInner .notes-editor-panel { flex: 1; min-height: 0; border-right: none; border-bottom: 1px solid var(--gray-200); }
-  #speErrModalInner .spe-flash-info-panel { flex: none; max-height: 42vh; }
+  /* BUGFIX (2026-09-19) : signalé sur iPad mini tenu à la verticale (744-768px).
+     Le bloc "RESPONSIVE IPAD (641px – 1024px)" plus bas plafonne TOUT
+     .notes-info-panel à 280px de large (prévu pour la disposition CÔTE À CÔTE des
+     notes d'items) -- or ce panneau Flashcards est ici EMPILÉ sous l'éditeur : il
+     restait collé à gauche sur ~40% de la largeur, le reste du modal vide.
+     Empilé = pleine largeur, comme sur téléphone (et il s'adapte à la largeur). */
+  #speErrModalInner .spe-flash-info-panel { flex: none; max-height: 42vh; max-width: none; min-width: 0; }
 }
 
 /* Carte de la liste — version aeree */
@@ -28579,6 +28585,27 @@ window.tpxRenderConfidenceButtons = function () {
     var box = document.getElementById('confidence-buttons');
     if (!box) return;
     var scale = (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5;
+    // BUGFIX (2026-09-20) : cette fonction est aussi appelée à CHAQUE snapshot
+    // Firestore (loadUserData → onSnapshot : synchronisation du barème), donc
+    // pendant que le modal « Enregistrer un tour » est OUVERT (sauvegarde d'un
+    // tour validé juste avant, autre appareil, retour sur l'onglet...). Or
+    // innerHTML remplace tous les boutons par des neufs : l'anneau blanc « dernier
+    // niveau enregistré » (.current) et la sélection en cours (.selected)
+    // disparaissaient d'un coup, alors que selectedConfidence gardait sa valeur
+    // (un clic sur le bouton « désélectionné » visuellement le sélectionnait
+    // alors au lieu de le désélectionner). On mémorise l'état visuel AVANT de
+    // régénérer et on le réapplique APRÈS, tant que le barème n'a pas changé
+    // (un changement de barème réinterprète les niveaux : dans ce cas on repart
+    // de zéro, comme avant). À l'ouverture du modal, openConfidenceModal remet
+    // de toute façon ces classes à zéro puis les repose : comportement inchangé.
+    var keepState = (box.getAttribute('data-conf-scale') === String(scale));
+    var keptCurrent = null, keptSelected = null;
+    if (keepState) {
+        var _c = box.querySelector('.confidence-btn.current');
+        var _s = box.querySelector('.confidence-btn.selected');
+        if (_c) keptCurrent = _c.getAttribute('data-confidence');
+        if (_s) keptSelected = _s.getAttribute('data-confidence');
+    }
     box.setAttribute('data-conf-scale', String(scale));
     function btnHtml(v) { return '<button class="confidence-btn c' + v + '" data-confidence="' + v + '">' + v + '</button>'; }
     if (scale === 10) {
@@ -28591,6 +28618,14 @@ window.tpxRenderConfidenceButtons = function () {
         var html = '';
         for (var v = 1; v <= scale; v++) html += btnHtml(v);
         box.innerHTML = html;
+    }
+    if (keptCurrent != null) {
+        var _nc = box.querySelector('.confidence-btn[data-confidence="' + keptCurrent + '"]');
+        if (_nc) _nc.classList.add('current');
+    }
+    if (keptSelected != null) {
+        var _ns = box.querySelector('.confidence-btn[data-confidence="' + keptSelected + '"]');
+        if (_ns) _ns.classList.add('selected');
     }
 };
 
