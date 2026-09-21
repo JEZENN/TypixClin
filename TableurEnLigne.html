@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-
+<script>
+/* Ouverture du tableur : ne JAMAIS laisser le navigateur restaurer un ancien décalage de
+   défilement (signalé sur téléphone : page « un peu plus bas » à l'ouverture). Le retour en
+   haut de page est déjà géré plus bas (DOMContentLoaded / load) ; sans ceci, la restauration
+   automatique de Safari/iOS, plus tardive, se battait avec lui. */
+try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+</script>
 
 <script id="pastel-chart-palette">
 /* ═══════════════ COULEURS DES GRAPHIQUES EN MODE PASTEL ═══════════════
@@ -21166,6 +21172,15 @@ function initOfflineDetection() {
     
     window.addEventListener('online', () => {
         checkOfflineStatus();
+        // BUGFIX 2026-09-20 : « Connexion instable / Données sécurisées localement » sans
+        // mode hors ligne complet : rien ne relançait l'envoi au retour du réseau (seulement
+        // le clic sur « Réessayer » ou la modification suivante). Reprise automatique.
+        setTimeout(function () {
+            if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && !isOfflineMode
+                && typeof currentUser !== 'undefined' && currentUser && typeof saveUserData === 'function') {
+                saveUserData(0);
+            }
+        }, 1500);
     });
     
     offlineCheckInterval = setInterval(checkOfflineStatus, OFFLINE_CHECK_INTERVAL);
@@ -21253,6 +21268,14 @@ function handleOffline() {
         // Annuler le debounce
         clearTimeout(saveTimeout);
         saveTimeout = null;
+    }
+    // BUGFIX 2026-09-20 : les modifications non enregistrées n'étaient mémorisées (donc
+    // renvoyées au retour en ligne, cf. handleOnline) que si un débounce était encore en
+    // attente à cet instant. Or, sur une connexion qui se dégrade, l'envoi est le plus
+    // souvent DÉJÀ parti et en cours de nouvelles tentatives : hasUnsavedChanges était alors
+    // remis à false plus bas sans rien mémoriser -- ces modifications étaient oubliées et
+    // le snapshot suivant du serveur les écrasait. On les mémorise dans tous les cas.
+    if (hadUnsavedChanges) {
         
         // MÉMORISER qu'on avait des modifications non sauvegardées
         hadUnsavedChangesBeforeOffline = true;
@@ -23151,6 +23174,7 @@ window.addEventListener('pagehide', () => {
                 deletedDefaultIds: userData.deletedDefaultIds || [],
                 lastUpdated:       userData.lastUpdated
             },
+            baseRevision: _tpxServerRevision || null, // BUGFIX 2026-09-20 : révision serveur connue (userData.lastUpdated vient d'être réécrit à l'heure courante)
             savedAt: Date.now()
         });
         // TPXSafeStore.set() est synchrone (aucun appel réseau) : sûr dans un
@@ -23858,6 +23882,7 @@ let _tpxUnconfirmedOptimistic = false;
 function loadUserData(userId) {
     if (userId) {
         _tpxUnconfirmedOptimistic = false; // nouveau rattachement : repart d'un état sain
+        _tpxServerRevision = null;
 
         // ── CORRECTIF (audit sécurité/perte de données, section C) : nettoyage
         //    défensif, INCONDITIONNEL, avant tout rattachement à ce userId.
@@ -23981,23 +24006,46 @@ function loadUserData(userId) {
 							? userData.planningData : null;
 						const _localChecklistBeforeSnapshot = (!_newerRestoreDetected && hasUnsavedChanges && userData && userData.checklistData)
 							? userData.checklistData : null;
+						// BUGFIX 2026-09-20 (CRITIQUE) : modifications perdues pendant une
+						// connexion lente/instable. Trophées, ressources, entraînements et
+						// entraînements supprimés ne sont PAS fusionnés ci-dessous : le snapshot
+						// du serveur les remplaçait toujours en bloc. Or, dès qu'une sauvegarde
+						// aboutit, le serveur renvoie ce snapshot (l'« écho » de NOTRE propre
+						// écriture) -- et si l'utilisateur avait modifié quelque chose PENDANT
+						// l'envoi (quelques secondes sur une connexion lente, plus encore quand
+						// les tentatives s'enchaînent), l'écho écrasait sa modification en
+						// mémoire ; la sauvegarde suivante réécrivait alors la version écrasée
+						// et effaçait aussi la copie locale de secours (planning_pending_<uid>,
+						// jugée « plus ancienne que la dernière sauvegarde confirmée ») : perte
+						// définitive, sans aucun message. L'écho de notre propre sauvegarde ne
+						// peut jamais contenir quoi que ce soit de plus récent que notre état
+						// local : tant que des modifications non confirmées existent, on garde
+						// donc l'état local pour ces quatre champs. Un snapshot venant d'un
+						// AUTRE onglet/appareil (lastUpdated qui n'est pas le nôtre) garde le
+						// comportement historique, strictement inchangé.
+						const _isOwnSaveEcho = !_newerRestoreDetected && hasUnsavedChanges && !!userData
+							&& _tpxIsOwnSaveTimestamp(newData.lastUpdated);
 						userData = {
 							items: _localItemsBeforeSnapshot
 								? _tpxMergeItemsMaps(newData.items || {}, _localItemsBeforeSnapshot)
 								: (newData.items || {}),
-							trophies: newData.trophies || {},
+							trophies: (_isOwnSaveEcho && userData.trophies) ? userData.trophies : (newData.trophies || {}),
 							planningData: _localPlanningBeforeSnapshot
 								? _tpxMergePlanningData(newData.planningData || {}, _localPlanningBeforeSnapshot)
 								: (newData.planningData || {}),
 							checklistData: _localChecklistBeforeSnapshot
 								? _tpxMergeChecklistData(newData.checklistData || [], _localChecklistBeforeSnapshot)
 								: (newData.checklistData || []),
-							selectedResources: newData.selectedResources || [],
-							trainings: !_trainingsWereMissing ? newData.trainings : _tpxSafeDefaultTrainings(),
-							deletedDefaultIds: newData.deletedDefaultIds || [],
+							selectedResources: (_isOwnSaveEcho && userData.selectedResources) ? userData.selectedResources : (newData.selectedResources || []),
+							trainings: (_isOwnSaveEcho && userData.trainings) ? userData.trainings : (!_trainingsWereMissing ? newData.trainings : _tpxSafeDefaultTrainings()),
+							deletedDefaultIds: (_isOwnSaveEcho && userData.deletedDefaultIds) ? userData.deletedDefaultIds : (newData.deletedDefaultIds || []),
 							restoredAt: newData.restoredAt || (userData && userData.restoredAt) || null,
 							lastUpdated: newData.lastUpdated || new Date().toISOString()
 						};
+							// BUGFIX 2026-09-20 : le contenu de CE snapshot vient d'être intégré (tel quel ou fusionné
+							// avec les modifs locales) : sa révision est désormais connue de cet onglet. Un horodatage
+							// Timestamp Firestore (restauration admin) n'est pas comparable : révision inconnue.
+							_tpxServerRevision = (typeof newData.lastUpdated === 'string') ? newData.lastUpdated : null;
 						// Les modifs locales non confirmées viennent d'être abandonnées
 						// (adoption de l'état restauré) : ne pas laisser le debounce en
 						// cours les réécrire quand même juste après.
@@ -24056,7 +24104,10 @@ function loadUserData(userId) {
 							if (_pendingRaw) {
 								try {
 									const _pending = JSON.parse(_pendingRaw);
-									const _firebaseTime = new Date(newData.lastUpdated || 0).getTime();
+									// BUGFIX 2026-09-20 : après une restauration admin, newData.lastUpdated est un Timestamp Firestore
+										// (new Date(Timestamp) = date invalide -> comparaison toujours fausse -> la copie locale était
+										// supprimée même si elle était plus récente que la restauration). Lecture correcte des deux formats.
+										const _firebaseTime = _tpxRestoredAtMs(newData.lastUpdated);
 									const _pendingTime  = new Date(_pending.data?.lastUpdated || 0).getTime();
 									// Restaurer si les données locales sont plus récentes que Firebase.
 									// Pas de limite de durée : si le pendingSync existe encore, c'est que
@@ -24080,15 +24131,28 @@ function loadUserData(userId) {
 											});
 											_pendingItems = _convertedPendingItems;
 										}
+										// BUGFIX 2026-09-20 (CRITIQUE) : perte de tours à l'ajout/à la suppression suivis d'un rechargement.
+										// L'objet userData ci-dessous est reconstruit de zéro et NE reprenait PAS restoredAt. Sur un compte déjà
+										// restauré une fois par l'admin (champ restoredAt sur le document), la sauvegarde de resynchronisation
+										// croyait alors qu'une restauration admin plus RÉCENTE que sa connaissance venait d'avoir lieu et
+										// « adoptait l'état restauré » : elle réécrivait les tours du SERVEUR par-dessus la copie locale,
+										// puis supprimait cette copie -- alors que le message annonçait « modifications restaurées ».
+										var _restoredAtKeep = (userData && userData.restoredAt) || newData.restoredAt || null;
+										// Si le serveur n'a pas changé depuis que la copie locale a été écrite (même révision de base), la copie
+										// locale est le seul état à jour : la resynchronisation doit l'écrire TEL QUEL (suppressions
+										// comprises) au lieu de la fusionner avec le serveur, où « le serveur gagne quand le local est vide »
+										// (donc tout tour supprimé revenait). Sinon (autre appareil intervenu / copie ancienne) : fusion, comme avant.
+										var _pendingBaseMatchesServer = !!(_pending.baseRevision && typeof newData.lastUpdated === 'string' && _pending.baseRevision === newData.lastUpdated);
 										userData = {
-	items:             _pendingItems             || userData.items             || {},
+		items:             _pendingItems             || userData.items             || {},
 											trophies:          _pending.data.trophies          || userData.trophies          || {},
 											planningData:      _pending.data.planningData      || userData.planningData      || {},
 											checklistData:     _pending.data.checklistData     || userData.checklistData     || [],
 											selectedResources: _pending.data.selectedResources || userData.selectedResources || [],
 											trainings:         _pending.data.trainings !== undefined ? _pending.data.trainings : (userData.trainings || _tpxSafeDefaultTrainings()),
 											deletedDefaultIds: _pending.data.deletedDefaultIds || userData.deletedDefaultIds || [],
-											lastUpdated:       _pending.data.lastUpdated
+											restoredAt:        _restoredAtKeep,
+											lastUpdated:       _pendingBaseMatchesServer ? newData.lastUpdated : _pending.data.lastUpdated
 										};
 										// ✅ planning_pending_<uid> ne transporte pas notesErreurs : conserver
 										// celui déjà chargé depuis Firestore plutôt que de le perdre ici.
@@ -24097,17 +24161,24 @@ function loadUserData(userId) {
 										}
           window.userData = userData; // sync global
 										_pendingSyncRestored = true;
+										_tpxServerRevision = _pendingBaseMatchesServer ? newData.lastUpdated : null; // BUGFIX 2026-09-20 : le contenu du serveur n'est intégré que si la copie locale en est le prolongement
 										// ✅ Le pending N'EST PAS supprimé ici. Sa suppression légitime a lieu
 										// uniquement dans saveUserData(), une fois que Firestore a réellement
 										// confirmé l'écriture (updateDoc/setDoc réussis, voir plus bas dans ce
 										// fichier). Si l'app crashe, perd le réseau ou est fermée entre la
 										// restauration et cette resynchronisation, le pending reste disponible
 										// et sera à nouveau restauré au prochain lancement — aucune perte.
-										setTimeout(() => {
+										setTimeout(async () => {
 											hasUnsavedChanges = true;
-											if (typeof saveUserData === 'function') saveUserData();
+											// BUGFIX 2026-09-20 : le message « restaurées » s'affichait dès l'appel, avant même le résultat de
+											// l'envoi -- y compris quand celui-ci écartait les modifications. On attend maintenant le résultat.
+											try { if (typeof saveUserData === 'function') await saveUserData(); } catch (_e) {}
 											if (window.showToastNotification) {
-												showToastNotification('Fermeture avant sauvegarde, modifications restaurées.', 'success', false, 3500);
+												if (!hasUnsavedChanges) {
+													showToastNotification('Fermeture avant sauvegarde, modifications restaurées.', 'success', false, 3500);
+												} else {
+													showToastNotification('Modifications récupérées sur cet appareil — envoi au serveur en cours.', 'warning', false, 4500);
+												}
 											}
 										}, 1500);
 									} else {
@@ -24984,10 +25055,55 @@ function _tpxRestoredAtMs(v) {
     if (!v) return 0;
     if (typeof v.toMillis === 'function') return v.toMillis(); // Timestamp Firestore (cas normal, écrit par admin.html via serverTimestamp())
     if (v instanceof Date) return v.getTime();
+    // BUGFIX 2026-09-20 : Timestamp passé par du JSON ({ seconds, nanoseconds }) -- cf. TableurECOS.html.
+    if (typeof v === 'object' && typeof v.seconds === 'number') return v.seconds * 1000 + Math.floor((v.nanoseconds || 0) / 1e6);
     var t = Date.parse(v);
     return isNaN(t) ? 0 : t;
 }
 window._tpxRestoredAtMs = _tpxRestoredAtMs;
+
+// ── BUGFIX 2026-09-20 : horodatages (lastUpdated) des sauvegardes lancées par CET
+//    onglet. Servent à reconnaître (1) l'« écho » serveur de notre propre écriture
+//    dans le listener (cf. _isOwnSaveEcho, plus haut) et (2) une tentative
+//    d'envoi devenue périmée parce qu'une sauvegarde PLUS RÉCENTE de cet onglet
+//    est déjà enregistrée (cf. saveUserData). Fenêtre glissante : les échos qui
+//    comptent arrivent quelques secondes après l'envoi, jamais 30 sauvegardes plus tard. ──
+//    L'ordre « plus récente / plus ancienne » entre deux sauvegardes de cet onglet se lit sur un
+//    NUMÉRO D'ORDRE de lancement (croissant), jamais en comparant les horodatages : une horloge
+//    d'appareil corrigée en arrière pendant la session ne peut ainsi jamais faire passer une
+//    sauvegarde neuve pour « périmée ». ──
+const _tpxOwnSaveTimestamps = [];
+const _tpxOwnSaveSeq = {};        // horodatage -> numéro d'ordre de lancement
+let _tpxSaveSeqCounter = 0;
+let _tpxLastConfirmedSaveSeq = 0; // numéro d'ordre de la sauvegarde la plus récente CONFIRMÉE par Firestore
+// BUGFIX 2026-09-20 (CRITIQUE) : dernière révision serveur (lastUpdated ISO) dont le contenu est déjà
+// intégré à la mémoire de cet onglet -- sert (1) de révision de BASE des sauvegardes à la place de
+// userData.lastUpdated (que forceSave() / pagehide réécrivent à l'heure courante : chaque sauvegarde
+// forcée ressemblait alors à un « conflit » avec un autre appareil et passait par la fusion, qui
+// RESSUSCITE tout tour supprimé) et (2) de « révision de base » enregistrée dans la copie locale
+// (planning_pending_<uid>), pour savoir au prochain chargement si le serveur a changé depuis.
+let _tpxServerRevision = null;
+function _tpxRememberOwnSave(ts) {
+    if (!ts) return 0;
+    _tpxSaveSeqCounter++;
+    _tpxOwnSaveTimestamps.push(ts);
+    _tpxOwnSaveSeq[ts] = _tpxSaveSeqCounter;
+    if (_tpxOwnSaveTimestamps.length > 30) delete _tpxOwnSaveSeq[_tpxOwnSaveTimestamps.shift()];
+    return _tpxSaveSeqCounter;
+}
+function _tpxIsOwnSaveTimestamp(ts) {
+    return !!ts && typeof ts === 'string' && _tpxOwnSaveSeq[ts] !== undefined;
+}
+// Erreurs Firestore TRANSITOIRES (réseau coupé, serveur occupé, contention) : une nouvelle
+// tentative a un sens. Les erreurs définitives (permission-denied : lecture seule /
+// abonnement expiré, invalid-argument...) ne sont JAMAIS relancées en boucle.
+function _tpxIsTransientSaveError(e) {
+    var c = e && e.code;
+    if (c === 'unavailable' || c === 'deadline-exceeded' || c === 'aborted' || c === 'resource-exhausted'
+        || c === 'internal' || c === 'cancelled' || c === 'unknown') return true;
+    if (c === 'failed-precondition' && /does not match the required base version|contention/i.test(String((e && e.message) || ''))) return true;
+    return false;
+}
 
 async function saveUserData(retryCount = 0) {
     if (!currentUser || !userData) return;
@@ -25086,6 +25202,20 @@ window._tpxUnconfirmedWaitAttempts = 0;
             setTimeout(() => { saveUserData(retryCount); }, 4000);
         } else {
             window._tpxConnRetryAttempts = 0;
+            // BUGFIX 2026-09-20 : après ces 5 essais (20 s) plus RIEN n'était reprogrammé :
+            // le bandeau « Données sécurisées localement » restait affiché, mais la
+            // synchronisation ne repartait qu'au prochain clic sur « Réessayer » ou à la
+            // prochaine modification -- même une fois la connexion revenue. Même reprise
+            // automatique (30 s) que pour l'échec de l'écriture elle-même, plus bas.
+            if (hasUnsavedChanges && !window._tpxLongRetryPending) {
+                window._tpxLongRetryPending = true;
+                setTimeout(() => {
+                    window._tpxLongRetryPending = false;
+                    if (hasUnsavedChanges && typeof saveUserData === 'function') {
+                        saveUserData(0);
+                    }
+                }, 30000);
+            }
         }
         return;
     }
@@ -25108,11 +25238,23 @@ window._tpxUnconfirmedWaitAttempts = 0;
     // Afficher l'indicateur de sauvegarde
     setSaveIndicator('saving');
     
-    // ⚠️ TIMEOUT DE SÉCURITÉ - 10 secondes
-    const safetyTimeout = setTimeout(() => {
-        if (!saveCompleted && !saveCancelled) { // ✅ CORRECTION : Check aussi saveCancelled
-            saveTimedOut = true;
-            console.warn(`⏱️ Timeout tentative ${retryCount + 1}/${MAX_RETRIES}`);
+    // BUGFIX 2026-09-20 (CRITIQUE) : la suite du traitement d'une tentative ÉCHOUÉE
+    // (nouvelle tentative avec délai croissant, puis, après la 3e, copie locale de
+    // secours + bandeau « Connexion instable » + reprise automatique 30 s plus tard)
+    // n'était déclenchée QUE par le minuteur de sécurité de 10 s ci-dessous : une
+    // écriture qui échoue RAPIDEMENT (réseau coupé net, serveur indisponible :
+    // erreur « unavailable » en quelques secondes) l'annulait sans jamais rien
+    // relancer -- ni nouvelle tentative, ni bandeau, indicateur figé sur
+    // « Sauvegarde... » : les modifications restaient non enregistrées tant que
+    // l'utilisateur ne modifiait pas autre chose. Le traitement est donc isolé dans
+    // cette fonction, appelée par le minuteur (comportement inchangé) ET par
+    // l'échec rapide d'une erreur transitoire (cf. le bloc catch plus bas).
+    function _tpxSaveAttemptFailed() {
+        // Une sauvegarde lancée APRÈS celle-ci (donc cumulative : elle contient tout ce que
+        // celle-ci portait) est déjà confirmée -> ni nouvelle tentative, ni bandeau
+        // « Connexion instable » périmé (tentatives qui se chevauchent sur une connexion lente).
+        if (_tpxLastConfirmedSaveSeq >= _mySaveSeq) return;
+        if (true) {
             
             // 🔄 RETRY SI ENCORE DES TENTATIVES
             if (retryCount < MAX_RETRIES - 1) {
@@ -25180,6 +25322,15 @@ window._tpxUnconfirmedWaitAttempts = 0;
                 }
             }
         }
+    }
+
+    // ⚠️ TIMEOUT DE SÉCURITÉ - 10 secondes
+    const safetyTimeout = setTimeout(() => {
+        if (!saveCompleted && !saveCancelled) { // ✅ CORRECTION : Check aussi saveCancelled
+            saveTimedOut = true;
+            console.warn(`⏱️ Timeout tentative ${retryCount + 1}/${MAX_RETRIES}`);
+            _tpxSaveAttemptFailed();
+        }
     }, 10000);
     
     // ✅ CORRECTION : Fonction pour nettoyer proprement
@@ -25205,6 +25356,9 @@ window._tpxUnconfirmedWaitAttempts = 0;
         // cette modification plus récente reste l'état correct à montrer.
         if (_dataRevisionCounter === _savingRevision) {
             setSaveIndicator('saved');
+            // Tout est enregistré : un bandeau « Connexion instable » resté affiché par une
+            // tentative plus ancienne n'a plus lieu d'être (BUGFIX 2026-09-20).
+            hideConnectionWarning();
         }
     };
 
@@ -25212,13 +25366,14 @@ window._tpxUnconfirmedWaitAttempts = 0;
     // plus récente (celle qu'on a chargée/confirmée en dernier). Sert de jeton
     // de concurrence optimiste dans la transaction plus bas — si le serveur a
     // changé depuis, ce n'est PAS forcément cet onglet qui a raison.
-    const _baseRevision = (userData && userData.lastUpdated) || null;
+    const _baseRevision = _tpxServerRevision || (userData && userData.lastUpdated) || null; // BUGFIX 2026-09-20 : cf. _tpxServerRevision
     // BUGFIX 2026-09-13 : dernière restauration admin connue de CET onglet —
     // cf. _tpxRestoredAtMs ci-dessus.
     const _baseRestoredAtMs = _tpxRestoredAtMs(userData && userData.restoredAt);
 
     // ✅ CORRECTION : Créer un snapshot immuable des données AVANT la sauvegarde
     const timestamp = new Date().toISOString();
+    const _mySaveSeq = _tpxRememberOwnSave(timestamp); // BUGFIX 2026-09-20 : cf. _isOwnSaveEcho (listener) et tentative périmée (transaction)
     const dataToSave = {
         items: userData.items,
         trophies: userData.trophies,
@@ -25279,11 +25434,24 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
         var _ref = doc(db, 'planningRevision', currentUser.uid);
         var _finalDataToSave = dataToSave;
         var _serverRestoredAt = null; // capturé dans la transaction, utilisé après pour resynchroniser userData.restoredAt
+        var _skippedStaleSave = false; // BUGFIX 2026-09-20 : tentative périmée, rien n'a été écrit
         console.log('[Save] transaction lancée, items:', Object.keys(dataToSave.items||{}).length, 'trainings:', (dataToSave.trainings||[]).length);
         await runTransaction(db, async function (transaction) {
             var _serverSnap = await transaction.get(_ref);
             var _serverData = _serverSnap.exists() ? _serverSnap.data() : null;
-            if (_serverData && _baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== _baseRevision) {
+            // BUGFIX 2026-09-20 (CRITIQUE) : sur une connexion lente, les tentatives se
+            // chevauchent (nouvelle tentative lancée pendant que la précédente est encore
+            // en route). Une tentative ANCIENNE qui aboutit APRÈS une sauvegarde plus
+            // récente de CET onglet écrasait cette dernière (entraînements, trophées,
+            // planning...) avec un état périmé. Si le serveur contient déjà une sauvegarde
+            // de cet onglet plus récente que celle-ci, elle contient déjà tout ce que celle-ci
+            // apporte (l'état local est cumulatif) : on n'écrit rien.
+            if (_serverData && _tpxIsOwnSaveTimestamp(_serverData.lastUpdated)
+                && _tpxOwnSaveSeq[_serverData.lastUpdated] > _mySaveSeq) {
+                _skippedStaleSave = true;
+                return;
+            }
+            if (_serverData && _baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== _baseRevision && !_tpxIsOwnSaveTimestamp(_serverData.lastUpdated)) {
                 var _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
                 if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
                     // BUGFIX 2026-09-13 : une restauration admin plus récente que ce
@@ -25310,6 +25478,14 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
             }
             transaction.update(_ref, _finalDataToSave);
         });
+        if (_skippedStaleSave) {
+            // Rien n'a été écrit : une sauvegarde plus récente de cet onglet est déjà en base et
+            // c'est ELLE qui règle hasUnsavedChanges / le brouillon local (cf. plus haut).
+            console.log('[Save] tentative périmée ignorée : une sauvegarde plus récente de cet onglet est déjà enregistrée');
+            saveCompleted = true;
+            cleanupTimeout();
+            return;
+        }
         if (window.bumpMetric) window.bumpMetric('writes', 1);
         console.log('[Save] transaction ✅ OK', _finalDataToSave === dataToSave ? '(sans conflit)' : '(fusionnée)');
 
@@ -25320,9 +25496,15 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
             // userData resterait désynchronisé de Firestore jusqu'au prochain
             // rechargement complet.
             if (_finalDataToSave !== dataToSave) {
-                userData.items = _finalDataToSave.items;
-                userData.planningData = _finalDataToSave.planningData;
-                userData.checklistData = _finalDataToSave.checklistData;
+                // BUGFIX 2026-09-20 : si l'utilisateur a modifié PENDANT l'envoi (bien plus
+                // long sur une connexion lente), ses modifications les plus récentes ne sont
+                // pas dans le résultat de la fusion écrit en base : le remplacer tel quel les
+                // effaçait de la mémoire (donc aussi de la sauvegarde suivante). On refusionne
+                // alors le résultat avec l'état local courant au lieu de l'écraser.
+                var _newerLocalEdits = (_dataRevisionCounter !== _savingRevision);
+                userData.items = _newerLocalEdits ? _tpxMergeItemsMaps(_finalDataToSave.items, userData.items) : _finalDataToSave.items;
+                userData.planningData = _newerLocalEdits ? _tpxMergePlanningData(_finalDataToSave.planningData, userData.planningData) : _finalDataToSave.planningData;
+                userData.checklistData = _newerLocalEdits ? _tpxMergeChecklistData(_finalDataToSave.checklistData, userData.checklistData) : _finalDataToSave.checklistData;
             }
             // BUGFIX 2026-09-13 : si une restauration admin plus récente a été
             // détectée et adoptée ci-dessus, mémoriser son horodatage — sinon la
@@ -25330,6 +25512,7 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
             // (elle ne saurait toujours pas qu'une restauration a eu lieu).
             if (_serverRestoredAt) userData.restoredAt = _serverRestoredAt;
             userData.lastUpdated = timestamp; // ✅ Maintenant on peut modifier
+            if (_mySaveSeq > _tpxLastConfirmedSaveSeq) { _tpxLastConfirmedSaveSeq = _mySaveSeq; _tpxServerRevision = timestamp; } // BUGFIX 2026-09-20 : cf. _tpxSaveAttemptFailed
             lastSaveTime = Date.now();
             // Ne déclarer "tout sauvegardé" que si rien de plus récent n'est
             // arrivé depuis le snapshot envoyé (cf. _savingRevision plus haut) —
@@ -25426,6 +25609,7 @@ if (
                 // ✅ SUCCÈS setDoc
                 if (!saveTimedOut && !saveCancelled) {
                     userData.lastUpdated = timestamp; // ✅ Mutation après succès
+                    if (_mySaveSeq > _tpxLastConfirmedSaveSeq) { _tpxLastConfirmedSaveSeq = _mySaveSeq; _tpxServerRevision = timestamp; } // BUGFIX 2026-09-20 : cf. _tpxSaveAttemptFailed
                     lastSaveTime = Date.now();
                     if (_dataRevisionCounter === _savingRevision) {
                         hasUnsavedChanges = false;
@@ -25452,10 +25636,15 @@ if (
             catch (e2) {
                 console.error('❌ Erreur setDoc:', e2);
                 cleanupTimeout(); // ✅ CORRECTION
-                
+
                 // Déclencher le retry via timeout (si pas déjà timeout)
                 if (!saveTimedOut) {
                     saveTimedOut = true;
+                }
+                // BUGFIX 2026-09-20 : même reprise que pour la transaction (cf. plus bas).
+                if (_tpxIsTransientSaveError(e2)) {
+                    console.warn(`⚠️ Échec rapide tentative ${retryCount + 1}/${MAX_RETRIES} (${e2.code}) — reprise programmée`);
+                    _tpxSaveAttemptFailed();
                 }
             }
         } else {
@@ -25463,6 +25652,14 @@ if (
             cleanupTimeout();
             if (!saveTimedOut) {
                 saveTimedOut = true;
+            }
+            // BUGFIX 2026-09-20 (CRITIQUE) : cf. _tpxSaveAttemptFailed plus haut. Sans cette
+            // reprise, un échec RAPIDE (réseau coupé net) abandonnait la sauvegarde en silence.
+            // Erreur transitoire uniquement : permission-denied / invalid-argument... ne sont
+            // jamais relancés en boucle.
+            if (_tpxIsTransientSaveError(e)) {
+                console.warn(`⚠️ Échec rapide tentative ${retryCount + 1}/${MAX_RETRIES} (${e.code}) — reprise programmée`);
+                _tpxSaveAttemptFailed();
             }
         }
     }
@@ -26288,6 +26485,7 @@ function debouncedSave() {
                     deletedDefaultIds: userData.deletedDefaultIds || [],
                     lastUpdated:       _safeTimestamp
                 },
+                baseRevision: _tpxServerRevision || null, // BUGFIX 2026-09-20 : révision serveur connue au moment de l'écriture
                 savedAt: Date.now()
             });
             if (window.TPXSafeStore && typeof window.TPXSafeStore.set === 'function') {
@@ -36656,6 +36854,11 @@ body.tc-kb-open-phone .flash-expand-btn {
                 </div>
             </div>
 
+            <!-- ── Séparateur ── -->
+            <div class="whats-new-divider">
+                <span class="whats-new-divider-label"><i class="fas fa-history"></i> Mises à jour précédentes</span>
+            </div>
+
             <!-- ══════════════ AOÛT 2026 (bis) ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
 
@@ -36901,11 +37104,6 @@ body.tc-kb-open-phone .flash-expand-btn {
                     <h4>Réponses à vos retours</h4>
                     <p>Les réponses à vos retours sont désormais visibles directement dans l'onglet « Donner son avis ».</p>
                 </div>
-            </div>
-
-            <!-- ── Séparateur ── -->
-            <div class="whats-new-divider">
-                <span class="whats-new-divider-label"><i class="fas fa-history"></i> Mises à jour précédentes</span>
             </div>
 
             <!-- ── Mai 2026 ── -->

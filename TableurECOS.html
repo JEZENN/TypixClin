@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script>
+/* Opening the tableur: never let the browser restore an old scroll offset (reported on phones,
+   EDN side: page slightly scrolled down at opening). */
+try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+</script>
 <meta name="description" content="Tableur ECOS en ligne : suivez vos passages de stations, votre progression sur les SDD, votre niveau de confiance et organisez vos entraînements avec vos amis.">
 <title>Tableur de révision ECOS — SDD et stations | TypixClin</title>
 
@@ -26901,6 +26906,11 @@ window.TPXNotesPending = {
                 </div>
             </div>
 
+            <!-- ── Séparateur ── -->
+            <div class="whats-new-divider">
+                <span class="whats-new-divider-label"><i class="fas fa-history"></i> Mises à jour précédentes</span>
+            </div>
+
             <!-- ══════════════ AOÛT 2026 (bis) ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Août 2026</span>
 
@@ -28172,6 +28182,23 @@ window._onECOSDataLoaded = function (data) {
         if (typeof window._ecosClearUnsavedChanges === 'function') window._ecosClearUnsavedChanges();
     }
     var _hadUnsaved = !_newerRestoreDetected && (typeof window._ecosHasUnsavedChangesNow === 'function') && window._ecosHasUnsavedChangesNow();
+    // BUGFIX 2026-09-20 (CRITIQUE) : modifications perdues pendant une connexion
+    // lente/instable (miroir du correctif EDN, cf. _isOwnSaveEcho dans
+    // TableurEnLigne.html). Dès qu'une sauvegarde aboutit, le serveur renvoie ce
+    // snapshot (l'« écho » de NOTRE propre écriture). Si l'utilisateur avait
+    // modifié quelque chose PENDANT l'envoi (plusieurs secondes sur une connexion
+    // lente), l'écho remplaçait la mémoire par une version plus ancienne :
+    // ressources sélectionnées, taille de page, trophées et suppressions
+    // (passage retiré, to-do supprimée...) revenaient en arrière, et la sauvegarde
+    // suivante réécrivait cette version appauvrie. L'écho de notre propre
+    // sauvegarde ne peut jamais contenir quoi que ce soit de plus récent que notre
+    // état local : tant que des modifications non confirmées existent, on
+    // l'ignore. Un snapshot venant d'un AUTRE onglet/appareil (lastUpdated qui
+    // n'est pas le nôtre) garde le comportement historique, strictement inchangé.
+    if (_hadUnsaved && data && typeof window._tpxEcosIsOwnSaveTimestamp === 'function' && window._tpxEcosIsOwnSaveTimestamp(data.lastUpdated)) {
+        console.log('[ECOS] écho de notre propre sauvegarde ignoré (des modifications plus récentes sont en attente)');
+        return;
+    }
     var _localSddsBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.sdds) ? window.ecosData.sdds : null;
     var _localPlanningBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.planningData) ? window.ecosData.planningData : null;
     var _localChecklistBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.checklistData) ? window.ecosData.checklistData : null;
@@ -40262,12 +40289,17 @@ function loadECOSUserData(uid) {
     //    déclencherait avec currentUser déjà passé à B, écrivant les
     //    données de A dans ECOSRevision DE B. ──
     if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    _ecosServerRevision = null; // BUGFIX 2026-09-20 : révision connue = celle du COMPTE courant uniquement
     ecosUnsub = onSnapshot(doc(db, 'ECOSRevision', uid), snap => {
         if (window.bumpMetric) window.bumpMetric('reads', 1);
         _tpxEcosSnapshotSuccessGen++; // cf. BUGFIX 2026-09-18 sur _tpxEcosConfirmDoc
         // Distinguer : document inexistant / vide / présent
         const exists = snap.exists();
         let data = exists ? snap.data() : null;
+        // BUGFIX 2026-09-20 : révision (lastUpdated) portée par CE snapshot, lue AVANT
+        // que data ne soit éventuellement remplacé plus bas (pending restauré, cache...).
+        const _serverRevisionSeen = (exists && data && data.lastUpdated) ? data.lastUpdated : null;
+        const _serverRestoredAtSeen = (exists && data && data.restoredAt) ? data.restoredAt : null; // BUGFIX 2026-09-20 : cf. branche « copie locale plus récente » ci-dessous
 
         // PROTECTION ANTI-CORRUPTION : ne pas écraser des données existantes par du vide
         const incomingEmpty = !data || !data.sdds || Object.keys(data.sdds || {}).length === 0;
@@ -40330,6 +40362,22 @@ function loadECOSUserData(uid) {
                     window.tpxUpdateConfidenceScaleSwitchUI();
                 }
 
+                // BUGFIX 2026-09-20 : cas le plus courant -- la copie locale (écrite à chaque
+                // masquage de l'onglet, cf. ecosPersistLocalNow) porte EXACTEMENT la révision
+                // que le serveur a déjà (aucune modification locale non envoyée : toute
+                // modification réécrit lastUpdated ; personne d'autre n'a écrit depuis) :
+                // cette révision est alors connue, la première sauvegarde n'est pas un
+                // « conflit ». Sinon (modifs locales non envoyées, ou un autre appareil a
+                // écrit) : révision inconnue -> la première sauvegarde reste fusionnée avec
+                // le serveur, comme avant.
+                if (_serverRevisionSeen && data && data.lastUpdated === _serverRevisionSeen && !_ecosIsOwnSaveTimestamp(_serverRevisionSeen)) _ecosServerRevision = _serverRevisionSeen;
+                // BUGFIX 2026-09-20 (CRITIQUE) : la copie locale est du JSON -- son restoredAt (Timestamp Firestore
+                // d'une restauration admin PASSÉE) y est devenu un simple { seconds, nanoseconds } (ou manque),
+                // donc « inconnu » pour la suite : chaque snapshot / sauvegarde suivant prenait alors cette vieille
+                // restauration pour une restauration RÉCENTE et abandonnait les modifications locales non
+                // confirmées (perte du 2e ajout/retrait fait juste après un rechargement). On remet ici le
+                // restoredAt RÉEL du serveur : c'est un fait sur le document, pas une donnée de la copie locale.
+                if (_serverRestoredAtSeen) data = Object.assign({}, data, { restoredAt: _serverRestoredAtSeen });
                 if (window._onECOSDataLoaded) window._onECOSDataLoaded(data);
                 setTimeout(() => { if (!isOfflineMode && currentUser) flushPendingEcosData(); }, 1200);
                 // AJOUT (2026-09-11) : sauvegarde cloud ECOS auto — même délai
@@ -40367,6 +40415,13 @@ function loadECOSUserData(uid) {
             }
         }
         if (typeof window.tpxUpdateConfidenceScaleSwitchUI === 'function') window.tpxUpdateConfidenceScaleSwitchUI();
+        // BUGFIX 2026-09-20 : le contenu de ce snapshot va être intégré à la mémoire
+        // (tel quel, ou fusionné avec les modifs locales) : cette révision serveur est
+        // désormais « connue » -- sauf si c'est l'écho de NOTRE propre sauvegarde (déjà
+        // reconnu via _ecosOwnSaveTimestamps). Jamais atteint pour un pending restauré
+        // (return plus haut) : la première sauvegarde suivante reste fusionnée avec le
+        // serveur, comme avant.
+        if (_serverRevisionSeen && !_ecosIsOwnSaveTimestamp(_serverRevisionSeen)) _ecosServerRevision = _serverRevisionSeen;
         if (window._onECOSDataLoaded) window._onECOSDataLoaded(data);
     }, err => {
         // Erreur réseau / permission / timeout : NE PAS traiter comme une absence de données.
@@ -40437,8 +40492,12 @@ function ecosReadPending(uid) {
 /* Timestamp comparable depuis un objet de données ECOS. */
 function ecosDataTime(d) {
     if (!d) return 0;
-    const t = d.lastUpdated ? new Date(d.lastUpdated).getTime() : NaN;
-    return isNaN(t) ? 0 : t;
+    // BUGFIX 2026-09-20 (CRITIQUE) : après une restauration admin, lastUpdated est un Timestamp Firestore
+    // (serverTimestamp()), pas une chaîne ISO : new Date(Timestamp) est invalide -> ce document valait « 0 »
+    // et la moindre copie locale, même ANTÉRIEURE à la restauration, passait pour « plus récente » : elle
+    // était restaurée puis renvoyée au serveur, ANNULANT la restauration au prochain lancement de l'appareil.
+    // _tpxRestoredAtMs lit aussi bien un Timestamp qu'une chaîne ISO ou un Timestamp passé par du JSON.
+    return _tpxRestoredAtMs(d.lastUpdated);
 }
 
 /* Section 1.7 : choisit la version la plus récente sans écraser une version non vide.
@@ -40631,6 +40690,58 @@ let ecosSaveInFlight = null;
 //    sauvegarde-ci ne doit pas déclarer ecosHasUnsavedChanges = false — la
 //    modification plus récente reste due à sa propre sauvegarde. ──
 let _ecosDataRevisionCounter = 0;
+
+// ── BUGFIX 2026-09-20 (CRITIQUE) : miroir du correctif EDN « connexion
+//    lente/instable » (cf. _tpxOwnSaveTimestamps dans TableurEnLigne.html).
+//    Horodatages (lastUpdated) des sauvegardes lancées par CET onglet : ils
+//    servent à reconnaître (1) l'« écho » serveur de NOTRE propre écriture dans
+//    le listener (_onECOSDataLoaded), (2) une tentative d'envoi devenue
+//    périmée parce qu'une sauvegarde PLUS RÉCENTE de cet onglet est déjà
+//    enregistrée, (3) l'absence de vrai conflit : si la révision du serveur est
+//    l'une des nôtres, personne d'autre n'a écrit.
+//    Fenêtre glissante : les échos qui comptent arrivent quelques secondes après
+//    l'envoi, jamais 30 sauvegardes plus tard. ──
+//    L'ordre « plus récente / plus ancienne » entre deux sauvegardes de cet onglet se lit sur un
+//    NUMÉRO D'ORDRE de lancement (croissant), jamais en comparant les horodatages : une horloge
+//    d'appareil corrigée en arrière pendant la session ne peut ainsi jamais faire passer une
+//    sauvegarde neuve pour « périmée ». ──
+const _ecosOwnSaveTimestamps = [];
+const _ecosOwnSaveSeq = {};       // horodatage -> numéro d'ordre de lancement
+let _ecosSaveSeqCounter = 0;
+function _ecosRememberOwnSave(ts) {
+    if (!ts) return 0;
+    _ecosSaveSeqCounter++;
+    _ecosOwnSaveTimestamps.push(ts);
+    _ecosOwnSaveSeq[ts] = _ecosSaveSeqCounter;
+    if (_ecosOwnSaveTimestamps.length > 30) delete _ecosOwnSaveSeq[_ecosOwnSaveTimestamps.shift()];
+    return _ecosSaveSeqCounter;
+}
+function _ecosIsOwnSaveTimestamp(ts) {
+    return !!ts && typeof ts === 'string' && _ecosOwnSaveSeq[ts] !== undefined;
+}
+// Accesseur exposé pour _onECOSDataLoaded (défini dans un <script> classique :
+// ce <script type="module"> est un scope fermé, cf. _ecosHasUnsavedChangesNow).
+window._tpxEcosIsOwnSaveTimestamp = _ecosIsOwnSaveTimestamp;
+// Dernière révision serveur (lastUpdated) écrite par QUELQU'UN D'AUTRE (ou lue au
+// chargement) dont le contenu est déjà intégré à la mémoire de cet onglet.
+// BUGFIX 2026-09-20 : la révision de base d'une sauvegarde était
+// window.ecosData.lastUpdated -- or saveECOS() la réécrit à CHAQUE modification
+// (heure de la modif locale) : elle ne pouvait donc JAMAIS égaler la révision
+// du serveur, et CHAQUE sauvegarde passait à tort par la branche « conflit »
+// (fusion par union avec le serveur), qui ressuscitait tout ce que
+// l'utilisateur venait de retirer (passage retiré avec « − », to-do supprimée,
+// ressource décochée...). Reproduit sur la vraie page contre l'émulateur : le
+// « − » d'un passage n'était jamais conservé, même sur une connexion parfaite.
+let _ecosServerRevision = null;
+function _ecosBaseRevision() {
+    return _ecosServerRevision || (window.ecosData && window.ecosData.lastUpdated) || null;
+}
+// Vrai conflit = la révision actuellement sur le serveur n'est NI celle que cet
+// onglet connaît, NI l'une de ses propres sauvegardes (donc un autre onglet ou
+// appareil a écrit depuis). Sans révision de base : comportement historique.
+function _ecosIsForeignRevision(serverRevision, baseRevision) {
+    return !!serverRevision && !!baseRevision && serverRevision !== baseRevision && !_ecosIsOwnSaveTimestamp(serverRevision);
+}
 window._saveECOSData = function () {
     // Une modification métier est en attente de confirmation Firestore
     ecosHasUnsavedChanges = true;
@@ -40765,6 +40876,12 @@ function _tpxRestoredAtMs(v) {
     if (!v) return 0;
     if (typeof v.toMillis === 'function') return v.toMillis();
     if (v instanceof Date) return v.getTime();
+    // BUGFIX 2026-09-20 : un Timestamp Firestore relu depuis la copie locale (ecos_pending_<uid> est du
+    // JSON : Timestamp.toJSON() donne { seconds, nanoseconds }) n'a plus de toMillis() ni de format
+    // Date.parse() -> renvoyait 0 = « aucune restauration connue » -> la moindre sauvegarde ou le
+    // moindre snapshot suivant prenait la restauration admin PASSÉE pour une restauration récente et
+    // abandonnait les modifications locales non confirmées.
+    if (typeof v === 'object' && typeof v.seconds === 'number') return v.seconds * 1000 + Math.floor((v.nanoseconds || 0) / 1e6);
     var t = Date.parse(v);
     return isNaN(t) ? 0 : t;
 }
@@ -41061,11 +41178,14 @@ async function saveECOSUserData(retryCount = 0) {
 
     // BUGFIX 2026-09-11 : révision serveur que CETTE édition suppose être la
     // plus récente — jeton de concurrence optimiste pour la transaction plus bas.
-    const _baseRevision = (window.ecosData && window.ecosData.lastUpdated) || null;
+    // BUGFIX 2026-09-20 : cf. _ecosBaseRevision (window.ecosData.lastUpdated était
+    // réécrit à chaque modification, donc toujours « en conflit »).
+    const _baseRevision = _ecosBaseRevision();
     // BUGFIX 2026-09-13 : dernière restauration admin connue de CET onglet.
     const _baseRestoredAtMs = _tpxRestoredAtMs(window.ecosData && window.ecosData.restoredAt);
 
     const timestamp = new Date().toISOString();
+    const _mySaveSeq = _ecosRememberOwnSave(timestamp); // BUGFIX 2026-09-20 : cf. _onECOSDataLoaded (écho) et tentative périmée (transaction)
     const dataToSave = {
         sdds: window.ecosData.sdds || {},
         planningData: window.ecosData.planningData || {},
@@ -41093,10 +41213,24 @@ async function saveECOSUserData(retryCount = 0) {
         const _ecosRef = doc(db, 'ECOSRevision', currentUser.uid);
         let _finalDataToSave = dataToSave;
         let _serverRestoredAt = null;
+        let _skippedStaleSave = false; // BUGFIX 2026-09-20 : tentative périmée, rien n'a été écrit
         await runTransaction(db, async (transaction) => {
+            _finalDataToSave = dataToSave; // relance de la transaction par le SDK : repartir de zéro
+            _skippedStaleSave = false;
             const _serverSnap = await transaction.get(_ecosRef);
             const _serverData = _serverSnap.exists() ? _serverSnap.data() : null;
-            if (_serverData && _baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== _baseRevision) {
+            // BUGFIX 2026-09-20 (CRITIQUE) : tentative PÉRIMÉE. Sur connexion instable,
+            // plusieurs tentatives de cet onglet peuvent être en vol en même temps
+            // (réessais + nouveau debounce) et une ancienne, restée bloquée, peut
+            // aboutir APRÈS une plus récente. Si le serveur porte déjà une sauvegarde
+            // de cet onglet PLUS RÉCENTE que celle-ci, l'écrire ferait revenir en
+            // arrière tout ce qui a été modifié entre-temps : on n'écrit rien.
+            if (_serverData && _ecosIsOwnSaveTimestamp(_serverData.lastUpdated)
+                && _ecosOwnSaveSeq[_serverData.lastUpdated] > _mySaveSeq) {
+                _skippedStaleSave = true;
+                return;
+            }
+            if (_serverData && _ecosIsForeignRevision(_serverData.lastUpdated, _baseRevision)) {
                 const _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
                 if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
                     // BUGFIX 2026-09-13 : restauration admin plus récente que ce que cet
@@ -41120,11 +41254,29 @@ async function saveECOSUserData(retryCount = 0) {
             }
             transaction.update(_ecosRef, _finalDataToSave);
         });
+        if (_skippedStaleSave) {
+            // Rien n'a été écrit : une sauvegarde plus récente de cet onglet est déjà sur le
+            // serveur. Ne PAS toucher aux indicateurs -- c'est elle (ou son réessai) qui les
+            // remettra à jour.
+            console.log('[ECOS] tentative périmée ignorée : une sauvegarde plus récente de cet onglet est déjà enregistrée');
+            return;
+        }
         if (window.bumpMetric) window.bumpMetric('writes', 1);
         if (_finalDataToSave !== dataToSave) {
-            window.ecosData.sdds = _finalDataToSave.sdds;
-            window.ecosData.planningData = _finalDataToSave.planningData;
-            window.ecosData.checklistData = _finalDataToSave.checklistData;
+            if (!_serverRestoredAt && _ecosDataRevisionCounter !== _savingRevision) {
+                // BUGFIX 2026-09-20 (CRITIQUE) : l'utilisateur a modifié quelque chose PENDANT
+                // l'envoi (quelques secondes sur connexion lente). Remplacer la mémoire par le
+                // résultat fusionné, calculé AVANT cette modification, l'effaçait -- et la
+                // sauvegarde suivante réécrivait cette version appauvrie. On réintègre donc
+                // l'état local courant (union) dans le résultat fusionné.
+                window.ecosData.sdds = _tpxEcosMergeSddsMaps(_finalDataToSave.sdds, window.ecosData.sdds || {});
+                window.ecosData.planningData = _tpxMergePlanningData(_finalDataToSave.planningData, window.ecosData.planningData || {});
+                window.ecosData.checklistData = _tpxMergeChecklistData(_finalDataToSave.checklistData, window.ecosData.checklistData || []);
+            } else {
+                window.ecosData.sdds = _finalDataToSave.sdds;
+                window.ecosData.planningData = _finalDataToSave.planningData;
+                window.ecosData.checklistData = _finalDataToSave.checklistData;
+            }
         }
         // BUGFIX 2026-09-13 : mémoriser l'horodatage de restauration détecté,
         // sinon la prochaine sauvegarde de cet onglet répéterait le problème.
@@ -41260,9 +41412,12 @@ function forceSaveECOSAsync() {
             const _savingRevision = _ecosDataRevisionCounter;
             // BUGFIX 2026-09-11 : jeton de concurrence optimiste, transmis à
             // ecosWriteWithRetry (cf. son commentaire).
-            const _baseRevision = (window.ecosData && window.ecosData.lastUpdated) || null;
+            // BUGFIX 2026-09-20 : cf. _ecosBaseRevision (révision serveur connue, plus
+            // l'heure de la dernière modification locale).
+            const _baseRevision = _ecosBaseRevision();
             // 8. payload identique à la sauvegarde normale
             const timestamp = new Date().toISOString();
+            _ecosRememberOwnSave(timestamp); // BUGFIX 2026-09-20 : reconnaître l'écho serveur de cette sauvegarde
             const dataToSave = {
                 sdds: window.ecosData.sdds || {},
                 planningData: window.ecosData.planningData || {},
@@ -41332,7 +41487,7 @@ async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
             await runTransaction(db, async (transaction) => {
                 const _snap = await transaction.get(ref);
                 const _serverData = _snap.exists() ? _snap.data() : null;
-                if (_serverData && baseRevision && _serverData.lastUpdated && _serverData.lastUpdated !== baseRevision) {
+                if (_serverData && _ecosIsForeignRevision(_serverData.lastUpdated, baseRevision)) {
                     const _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
                     if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
                         // BUGFIX 2026-09-13 : même correctif que saveECOSUserData() — une
