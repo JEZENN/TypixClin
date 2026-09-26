@@ -657,6 +657,12 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .profile-menu-item.logout:hover {
     background-color: #fef2f2;
 }
+/* 2026-09-25 (retour Jean : « en mode dark le survol ça ne va pas ») : le fond
+   rose clair du survol de « Se déconnecter » restait TEL QUEL en mode sombre
+   (texte rouge sur rose pâle dans un menu sombre). Mêmes valeurs que dans
+   TableurEnLigne.html / TableurECOS.html. */
+[data-theme="dark"] .profile-menu-item.logout { color: #f87171; }
+[data-theme="dark"] .profile-menu-item.logout:hover { background-color: rgba(239, 68, 68, 0.12); color: #f87171; }
 
 .mobile-menu-btn {
     display: none;
@@ -899,6 +905,261 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 /* ═══════════════ SECTION « MON ABONNEMENT » (charte TypixClin) ═══════════════ */
 .subscription-section { margin-bottom: var(--space-14); }
 .subscription-section .section-subtitle { margin-bottom: var(--space-8); }
+
+/* ═══ PARRAINAGE (2026-09-22) ═══════════════════════════════════════════ */
+.referral-section { margin-bottom: var(--space-14); }
+.referral-section .section-subtitle { margin-bottom: var(--space-8); }
+.referral-card {
+    background: var(--white);
+    background: color-mix(in srgb, var(--white) 72%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid transparent;
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-8);
+}
+[data-theme="dark"] .referral-card { background: rgba(59,130,246,0.08); }
+
+.referral-progress-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+/* Pas de règle [data-theme="dark"] pour la couleur du texte ici (ni plus bas pour
+   referral-stat-value / referral-code-label / referral-copy-btn) : les tokens
+   --gray-N de ce site S'INVERSENT déjà tout seuls en mode sombre (vérifié : gray-900
+   devient #f9fafb, gray-800 devient #f3f4f6, etc. — même mécanisme que .status-card,
+   qui n'a lui non plus aucune règle dark dédiée). En ajouter une ENFONCE l'inversion
+   une 2e fois et redonne du texte sombre sur fond sombre — bug trouvé à l'inspection
+   (2026-09-22), corrigé en retirant ces overrides plutôt qu'en les ajoutant. */
+.referral-progress-label { font-weight: 700; color: var(--gray-800); }
+.referral-progress-label i { color: var(--accent); margin-right: 0.4rem; }
+.referral-progress-value { font-weight: 800; color: var(--accent); }
+.referral-progress-track {
+    margin-top: var(--space-3);
+    height: 10px;
+    border-radius: var(--border-radius-full);
+    background: var(--gray-200);
+    overflow: hidden;
+}
+[data-theme="dark"] .referral-progress-track { background: rgba(255,255,255,0.12); }
+.referral-progress-fill {
+    height: 100%;
+    border-radius: var(--border-radius-full);
+    background: var(--primary-gradient);
+    transition: width var(--transition-normal);
+}
+.referral-progress-caption { margin-top: var(--space-2); color: var(--gray-600); font-size: var(--text-sm); }
+
+.referral-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+    margin-top: var(--space-8);
+}
+.referral-stat {
+    text-align: center;
+    padding: var(--space-5);
+    border-radius: var(--border-radius-lg);
+    /* 2026-09-25 (retour Jean : « contraste des deux cases pas assez marqué en
+       mode normal ») : --gray-50 sur une carte quasi blanche = tuile presque
+       invisible. Fond bleu clair + fine bordure de la même teinte (celle de
+       l'icône et de la barre de progression) : la tuile ressort nettement. */
+    background: rgba(59,130,246,0.09);
+    border: 1px solid rgba(59,130,246,0.26);
+    box-shadow: 0 1px 2px rgba(59,130,246,0.10);
+}
+[data-theme="dark"] .referral-stat { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); box-shadow: none; }
+.referral-stat-icon { color: var(--primary); font-size: var(--text-xl); margin-bottom: var(--space-2); }
+.referral-stat-value { font-size: var(--text-4xl); font-weight: 800; color: var(--gray-900); }
+.referral-stat-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray-500); margin-top: var(--space-2); }
+
+/* ── Tuile « Comptes parrainés » CLIQUABLE (2026-09-25, demande de Jean : « un peu
+   comme les cases “Tours effectués aujourd'hui” de la page stats des tableurs »).
+   Même geste que .daily-stat-card.clickable (TableurEnLigne.html) : la tuile se
+   soulève au survol, une pastille « agrandir » reste dans le coin et un appel à
+   l'action « Voir la liste » est toujours visible. Tout est masqué tant que JS n'a
+   pas posé .clickable (aucun compte à lister -> tuile inerte, comme avant). ── */
+.referral-stat { position: relative; transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast); }
+.referral-stat-click-hint, .referral-stat-cta { display: none; }
+.referral-stat.clickable { cursor: pointer; }
+.referral-stat.clickable .referral-stat-click-hint {
+    display: flex; position: absolute; top: 0.6rem; right: 0.6rem;
+    width: 24px; height: 24px; border-radius: var(--border-radius-sm);
+    align-items: center; justify-content: center; font-size: 0.7rem;
+    color: #3b82f6; background: rgba(59,130,246,0.12); pointer-events: none;
+    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.referral-stat.clickable .referral-stat-cta {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: var(--space-3);
+    padding: 0.3rem 0.7rem; border-radius: var(--border-radius-full);
+    font-family: var(--font-display); font-size: 0.72rem; font-weight: 700;
+    color: #2563eb; background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(96,165,250,0.12));
+    border: 1px solid rgba(59,130,246,0.25); pointer-events: none; transition: all var(--transition-fast);
+}
+.referral-stat.clickable .referral-stat-cta i { font-size: 0.68rem; }
+.referral-stat-cta-arrow { transition: transform var(--transition-fast); }
+.referral-stat.clickable:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(59,130,246,0.55); }
+.referral-stat.clickable:active { transform: translateY(-1px); }
+.referral-stat.clickable:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.referral-stat.clickable:hover .referral-stat-click-hint,
+.referral-stat.clickable:focus-visible .referral-stat-click-hint { background: linear-gradient(135deg, #3b82f6, #60a5fa); color: #fff; transform: scale(1.08); box-shadow: 0 3px 10px rgba(59,130,246,0.35); }
+.referral-stat.clickable:hover .referral-stat-cta,
+.referral-stat.clickable:focus-visible .referral-stat-cta { background: linear-gradient(135deg, #3b82f6, #60a5fa); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(59,130,246,0.35); }
+.referral-stat.clickable:hover .referral-stat-cta-arrow { transform: translateX(3px); }
+[data-theme="dark"] .referral-stat.clickable .referral-stat-click-hint { color: #93c5fd; background: rgba(96,165,250,0.18); }
+[data-theme="dark"] .referral-stat.clickable .referral-stat-cta { color: #93c5fd; background: rgba(96,165,250,0.16); border-color: rgba(96,165,250,0.32); }
+[data-theme="dark"] .referral-stat.clickable:hover { border-color: rgba(96,165,250,0.55); }
+[data-theme="dark"] .referral-stat.clickable:hover .referral-stat-click-hint,
+[data-theme="dark"] .referral-stat.clickable:focus-visible .referral-stat-click-hint,
+[data-theme="dark"] .referral-stat.clickable:hover .referral-stat-cta,
+[data-theme="dark"] .referral-stat.clickable:focus-visible .referral-stat-cta { background: #3b82f6; color: #fff; border-color: transparent; }
+
+/* ── Modal « Comptes parrainés » (2026-09-25, demande de Jean) : mêmes classes
+   .help-modal-* que les autres modals de la page (CGV, consentement...) ; seules
+   les lignes de la liste sont propres à celui-ci. ── */
+.referral-list-summary { margin: 0 0 var(--space-4); font-size: var(--text-sm); color: var(--gray-600); }
+.referral-list-summary strong { color: var(--gray-800); }
+.referral-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+/* .modal-body ul / li (plus haut) imposent retrait, marges et taille de texte : on les neutralise ici. */
+.modal-body ul.referral-list { padding-left: 0; margin: 0; }
+.modal-body li.referral-list-row { margin-bottom: 0; }
+.referral-list-row {
+    display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+    padding: 0.75rem 0.9rem; border-radius: var(--border-radius-md);
+    background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2);
+}
+[data-theme="dark"] .referral-list-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+.referral-list-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: var(--text-sm); color: #fff; background: var(--primary-gradient);
+}
+.referral-list-who { flex: 1 1 9rem; min-width: 0; }
+.referral-list-name { font-weight: 700; color: var(--gray-800); overflow-wrap: anywhere; }
+.referral-list-name.unknown { font-weight: 500; font-style: italic; color: var(--gray-500); }
+.referral-list-date { font-size: var(--text-xs); color: var(--gray-500); }
+.referral-list-codecell { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.referral-list-code {
+    font-family: 'Courier New', monospace; font-weight: 800; font-size: var(--text-md);
+    letter-spacing: 0.12em; color: var(--primary-dark); background: var(--gray-100);
+    padding: 0.15rem 0.6rem; border-radius: var(--border-radius-sm); user-select: all;
+}
+[data-theme="dark"] .referral-list-code { color: var(--primary-light); }
+.referral-list-code.none { font-family: var(--font-body); font-weight: 500; font-style: italic; font-size: var(--text-xs); letter-spacing: 0; color: var(--gray-500); background: none; user-select: auto; }
+/* Largeur fixe : le bouton ne change pas de taille en passant de « Copier » à « Copié ! ». */
+.referral-list-copy { min-width: 6.8rem; padding: 0.45rem 0.8rem; font-size: var(--text-xs); }
+/* Colonne centrée : icône, message, puis (erreur) bouton « Réessayer » SOUS le message
+   (en bloc simple, le bouton inline-flex se collait à droite du texte — vu sur capture). */
+.referral-list-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-8) var(--space-4); color: var(--gray-500); font-size: var(--text-sm); }
+.referral-list-state > i { font-size: var(--text-2xl, 1.6rem); margin-bottom: var(--space-3); color: var(--primary); }
+.referral-list-state .referral-copy-btn { margin-top: var(--space-4); }
+.referral-list-more { margin: var(--space-4) 0 0; text-align: center; font-size: var(--text-xs); color: var(--gray-500); }
+@media (max-width: 480px) {
+    .referral-list-codecell { width: 100%; justify-content: space-between; }
+}
+/* Téléphone : la tuile est étroite (~150 px). La pastille « Voir la liste » restait sur 2 lignes
+   (constaté sur capture 390 px) : jamais de retour à la ligne, icône « liste » masquée (le texte
+   et la flèche suffisent) et marges latérales réduites pour la tuile cliquable. */
+@media (max-width: 640px) {
+    .referral-stat.clickable { padding-left: var(--space-3); padding-right: var(--space-3); }
+    .referral-stat.clickable .referral-stat-cta { white-space: nowrap; padding: 0.3rem 0.6rem; }
+    .referral-stat.clickable .referral-stat-cta > i:first-child { display: none; }
+}
+
+.referral-code-block { margin-top: var(--space-8); }
+.referral-code-label { display: block; font-weight: 700; color: var(--gray-800); margin-bottom: var(--space-3); }
+.referral-code-display { color: var(--gray-600); margin-bottom: var(--space-3); }
+.referral-code-value {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    color: var(--gray-500);
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--border-radius-sm);
+}
+/* Retour Jean (2026-09-24) : « Chargement… » héritait du style du CODE
+   (Courier New + espacement des lettres) — correct pour 6 caractères, moche
+   pour un mot entier. La police "code" (monospace) ne s'applique donc plus
+   qu'une fois le vrai code reçu (classe posée par JS, voir loadReferralPanel). */
+.referral-code-value.has-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: var(--text-lg);
+    letter-spacing: 0.12em;
+    color: var(--primary-dark);
+    background: var(--gray-100);
+}
+[data-theme="dark"] .referral-code-value.has-code { color: var(--primary-light); }
+.referral-code-row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.referral-code-input {
+    flex: 1 1 260px;
+    min-width: 0;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--gray-300);
+    background: var(--gray-50);
+    color: var(--gray-700);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+}
+[data-theme="dark"] .referral-code-input { background: rgba(255,255,255,0.05); border-color: var(--gray-600); }
+.referral-copy-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    /* Retour Jean (2026-09-24) : largeur fixe pour que le bouton ne rétrécisse
+       pas quand le texte passe à « Copié ! » (plus court que « Copier le
+       lien »/« Copier le code ») — sinon le bouton change visiblement de
+       taille pendant l'animation de confirmation. */
+    min-width: 10.5rem;
+    padding: 0.75rem 1.1rem;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--gray-300);
+    background: var(--white);
+    color: var(--gray-700);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    white-space: nowrap;
+}
+.referral-copy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.referral-copy-btn.primary { background: var(--primary-gradient); color: #fff; border-color: transparent; }
+.referral-copy-btn.copied,
+.referral-copy-btn.copied:hover:not(:disabled) { background: var(--success); color: #fff; border-color: transparent; transform: none; box-shadow: none; }
+/* Tant que le code n'est pas chargé (attribut disabled posé par défaut dans le HTML,
+   retiré par JS une fois referralEnsureCode revenu) : bouton visiblement inactif, sinon
+   il a l'air cliquable sans rien faire (retour Jean, 2026-09-24). */
+.referral-copy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+[data-theme="dark"] .referral-copy-btn { background: rgba(255,255,255,0.06); border-color: var(--gray-600); }
+/* Retour Jean (2026-09-24) : après un clic, le contour de focus par défaut
+   restait affiché ("ça reste avec les contours") même une fois la souris
+   partie — la règle globale button:focus-visible du fichier (~ligne 1291)
+   s'applique déjà en théorie seulement au clavier, mais rend ici un anneau
+   dur qui a l'air figé. Remplacé par un halo doux et cohérent avec le survol,
+   plus spécifique donc prioritaire sur la règle globale. Le champ lien est en
+   lecture seule (copie uniquement via les boutons dédiés) : aucun intérêt à y
+   laisser un contour de focus. */
+.referral-code-input:focus-visible { outline: none; }
+.referral-copy-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); }
+
+/* AJOUT (2026-09-24, retour Jean) : bloc "vous avez été invité ?" — un compte
+   déjà existant peut renseigner après-coup le code de la personne qui l'a
+   parrainé (functions/index.js : referralApplyCode). Même classes de statut
+   que #referral-check-status dans auth.html (checking/valid/invalid), pas
+   encore présentes ici. */
+.referral-apply-block { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
+.referral-check-status { margin-top: 0.5rem; font-size: 0.85rem; min-height: 1.1em; display: flex; align-items: center; gap: 0.35rem; }
+.referral-check-status.checking { color: var(--gray-400); }
+.referral-check-status.valid { color: #059669; }
+.referral-check-status.invalid { color: var(--gray-500); }
+[data-theme="dark"] .referral-check-status.valid { color: #34d399; }
+@media (max-width: 640px) {
+    .referral-stats { grid-template-columns: 1fr 1fr; }
+    /* flex-direction:column bascule l'axe principal du flex en vertical :
+       le flex-basis:260px de .referral-code-input (pensé pour une LARGEUR
+       minimale en ligne) s'appliquerait alors à sa HAUTEUR (~260px de haut,
+       constaté à l'inspection) si on ne le neutralise pas ici. */
+    .referral-code-row { flex-direction: column; }
+    .referral-code-input { flex: none; }
+}
 
 /* Carte principale : panneau latéral + corps en deux colonnes */
 .status-card {
@@ -2713,6 +2974,74 @@ textarea:focus-visible,
                 <div id="grace-alert" style="display: none;"></div>
             </section>
 
+            <!-- Parrainage -->
+            <section class="referral-section" id="referral-section">
+                <h2 class="section-title">Parrainage</h2>
+                <p class="section-subtitle">Partagez votre code : <strong>3 comptes parrainés</strong> (création d'un compte et validation de l'adresse mail) <strong>offrent 1 mois Premium</strong>, et <strong>6 comptes parrainés offrent 3 mois au total</strong>.</p>
+
+                <div class="referral-card">
+                    <div class="referral-progress">
+                        <div class="referral-progress-head">
+                            <span class="referral-progress-label"><i class="fas fa-gift"></i> <span id="referral-progress-label-text">3 comptes parrainés = 1 mois d'abonnement offert</span></span>
+                            <span class="referral-progress-value" id="referral-progress-fraction">0 / 3</span>
+                        </div>
+                        <div class="referral-progress-track">
+                            <div class="referral-progress-fill" id="referral-progress-fill" style="width:0%"></div>
+                        </div>
+                        <p class="referral-progress-caption" id="referral-progress-caption">Chargement…</p>
+                    </div>
+
+                    <div class="referral-stats">
+                        <!-- Tuile cliquable (2026-09-25, demande de Jean) : ouvre le modal
+                             « Comptes parrainés » (prénom + nom, code de chaque filleul à
+                             copier). Rendue interactive par loadReferralPanel() seulement
+                             quand il y a au moins un compte à lister (classe .clickable). -->
+                        <div class="referral-stat" id="referral-stat-referred">
+                            <span class="referral-stat-click-hint" aria-hidden="true"><i class="fas fa-expand"></i></span>
+                            <div class="referral-stat-icon"><i class="fas fa-user-group"></i></div>
+                            <div class="referral-stat-value" id="referral-stat-active">–</div>
+                            <div class="referral-stat-label">Comptes parrainés</div>
+                            <div class="referral-stat-cta" aria-hidden="true"><i class="fas fa-list-ul"></i><span>Voir la liste</span><i class="fas fa-chevron-right referral-stat-cta-arrow"></i></div>
+                        </div>
+                        <div class="referral-stat">
+                            <div class="referral-stat-icon"><i class="fas fa-trophy"></i></div>
+                            <div class="referral-stat-value" id="referral-stat-months">–</div>
+                            <div class="referral-stat-label">Mois gagnés</div>
+                        </div>
+                    </div>
+
+                    <div class="referral-code-block">
+                        <label class="referral-code-label" for="referral-link-input">Votre lien de parrainage</label>
+                        <p class="referral-code-display">Votre code : <span class="referral-code-value" id="referral-code-value">Chargement…</span></p>
+                        <div class="referral-code-row">
+                            <input type="text" id="referral-link-input" class="referral-code-input" readonly value="Chargement…">
+                            <button type="button" class="referral-copy-btn primary" id="referral-copy-link-btn" disabled>
+                                <i class="fas fa-link"></i> <span class="referral-copy-btn-label">Copier le lien</span>
+                            </button>
+                            <button type="button" class="referral-copy-btn" id="referral-copy-code-btn" disabled>
+                                <i class="fas fa-copy"></i> <span class="referral-copy-btn-label">Copier le code</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Saisie rétroactive du code d'une autre personne (compte déjà
+                         existant, créé avant le parrainage ou champ laissé vide à
+                         l'inscription) — masqué par défaut, affiché par loadReferralPanel()
+                         une fois qu'on sait si ce compte a déjà un parrain ou non. -->
+                    <div class="referral-apply-block" id="referral-apply-block" style="display:none;">
+                        <label class="referral-code-label" for="referral-apply-input">Vous avez découvert TypixClin grâce à quelqu'un ?</label>
+                        <p class="referral-code-display">Indiquez son code de parrainage : cela peut lui permettre de gagner plusieurs mois Premium offerts. Une fois validé, impossible d'en changer. Votre prénom et votre nom lui seront communiqués.</p>
+                        <div class="referral-code-row">
+                            <input type="text" id="referral-apply-input" class="referral-code-input" autocomplete="off" maxlength="6" placeholder="Ex. AB12CD" style="text-transform:uppercase;">
+                            <button type="button" class="referral-copy-btn primary" id="referral-apply-btn">
+                                <i class="fas fa-check"></i> <span class="referral-copy-btn-label">Valider le code</span>
+                            </button>
+                        </div>
+                        <div class="referral-check-status" id="referral-apply-status"></div>
+                    </div>
+                </div>
+            </section>
+
 			<!-- Features -->
         <section>
             <h2 class="section-title">Pourquoi passer Premium ?</h2>
@@ -3329,6 +3658,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app, 'europe-west1');
+const referralEnsureCode = httpsCallable(functions, 'referralEnsureCode');
+const referralApplyCodeCall = httpsCallable(functions, 'referralApplyCode');
+const referralListReferralsCall = httpsCallable(functions, 'referralListReferrals');
 
 const userAuth = document.getElementById('user-auth');
 const avatarInitials = document.getElementById('avatar-initials');
@@ -3458,6 +3790,7 @@ async function loadUserData() {
 
         userData = userDoc.data();
         displayUserStatus();
+        loadReferralPanel(); // non bloquant : ne retarde jamais l'affichage du reste de la page
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
@@ -3471,6 +3804,470 @@ async function loadUserData() {
     } catch (error) {
         console.error('Erreur chargement données:', error);
         showError('Erreur lors du chargement de vos données');
+    }
+}
+
+// Parrainage — voir functions/index.js (referralEnsureCode) et functions/referral.js
+// pour la règle métier. REFERRAL_TIERS_UI ci-dessous n'est qu'un miroir D'AFFICHAGE
+// (barre de progression) : la vraie règle, y compris la récompense, vit côté serveur
+// — garder identique à REFERRAL_TIERS dans functions/referral.js si ça change encore.
+// Le dernier palier de la liste EST le plafond (décision Jean 2026-09-24) : rien
+// au-delà, contrairement à la version du 2026-09-22 (répété, sans plafond).
+const REFERRAL_TIERS_UI = [
+    { threshold: 3, months: 1 },
+    { threshold: 6, months: 3 }
+];
+const REFERRAL_MAX_TIER_UI = REFERRAL_TIERS_UI[REFERRAL_TIERS_UI.length - 1];
+
+// ── Notification « nouveau compte parrainé » (2026-09-25, demande de Jean) ──
+// Le serveur (referralEnsureCode) renvoie les comptes parrainés pas encore
+// vus ({name, at}, plus récents d'abord, 5 max) ; les noms ne peuvent venir
+// que de là (referrals/{uid} est illisible côté client). Une seule annonce
+// par chargement de page : loadUserData()/loadReferralPanel() peuvent être
+// rappelées plusieurs fois (sondage après un paiement Stripe).
+let _referralAnnounced = false;
+// Retour de Stripe (?success / ?portal / ?canceled) : ces cas affichent déjà
+// LEURS toasts dans l'unique #toast-logout partagé — on ne s'y superpose pas.
+// Aucun accusé n'est alors écrit : l'annonce viendra à la visite suivante.
+const _openedFromPaymentFlow = ['success', 'portal', 'canceled']
+    .some((k) => new URLSearchParams(window.location.search).has(k));
+
+// ── « Une seule fois par nouveau parrainage » (2026-09-25, retour Jean : la
+//    notification réapparaissait à CHAQUE ouverture/rechargement). Le « déjà
+//    vu » ne doit dépendre de rien de fragile : on retient AUSSI, dans ce
+//    navigateur, le nombre de comptes parrainés déjà annoncés. Ainsi, même si
+//    la réponse du serveur ne fournit pas referralSeenCount (ancienne version de
+//    la fonction, pas encore déployée) ou si l'accusé Firestore n'a pas pu
+//    s'écrire (hors ligne, règle), la même annonce ne revient JAMAIS ; seul un
+//    NOUVEAU compte parrainé (compteur plus grand) en déclenche une autre. ──
+function _referralAnnouncedKey() { return currentUser ? 'referralAnnounced_' + currentUser.uid : null; }
+function readAnnouncedReferrals() {
+    try { const k = _referralAnnouncedKey(); return k ? (Number(localStorage.getItem(k)) || 0) : 0; } catch (e) { return 0; }
+}
+function writeAnnouncedReferrals(n) {
+    try { const k = _referralAnnouncedKey(); if (k) localStorage.setItem(k, String(n)); } catch (e) {}
+}
+
+function referralAnnouncementText(list, unseen) {
+    // La liste du serveur est triée du plus récent au plus ancien : on ne garde
+    // que les `unseen` premiers (elle peut en contenir davantage si ce navigateur
+    // en avait déjà annoncé certains).
+    const names = (Array.isArray(list) ? list : [])
+        .map((r) => r && r.name)
+        .filter((n) => typeof n === 'string' && n)
+        .slice(0, unseen);
+    if (!names.length) {
+        return unseen > 1
+            ? unseen + ' nouveaux comptes ont utilisé votre code de parrainage.'
+            : 'Un nouveau compte a utilisé votre code de parrainage.';
+    }
+    const shown = names.slice(0, 3);
+    const others = unseen - shown.length;
+    let who;
+    if (others > 0) who = shown.join(', ') + ' et ' + others + ' autre' + (others > 1 ? 's' : '');
+    else if (shown.length === 1) who = shown[0];
+    else who = shown.slice(0, -1).join(', ') + ' et ' + shown[shown.length - 1];
+    return who + (unseen > 1 ? ' ont' : ' a') + ' utilisé votre code de parrainage.';
+}
+
+function maybeAnnounceNewReferrals(list, activeCount, seenCount) {
+    const unseen = activeCount - Math.max(seenCount || 0, readAnnouncedReferrals());
+    if (_referralAnnounced || _openedFromPaymentFlow || unseen <= 0) return;
+    _referralAnnounced = true;
+    writeAnnouncedReferrals(activeCount); // AVANT tout le reste : jamais deux annonces pour le même compteur
+    // Texte brut uniquement (showToast utilise textContent) : les noms viennent
+    // d'autres utilisateurs, jamais d'insertion HTML.
+    showToast({
+        title: unseen > 1 ? 'Nouveaux comptes parrainés' : 'Nouveau compte parrainé',
+        message: referralAnnouncementText(list, unseen),
+        type: 'success',
+        icon: 'fa-user-plus',
+        duration: 6500
+    });
+    // Accusé de réception : fait disparaître la pastille rouge du menu Compte
+    // premium dans EDN/ECOS. Champ purement d'affichage, écrit par le client
+    // (les règles l'autorisent, cf. referral-rules.test.js) ; non bloquant.
+    if (currentUser) {
+        setDoc(doc(db, 'users', currentUser.uid), { referralSeenCount: activeCount }, { merge: true })
+            .catch((e) => console.warn('⚠ accusé de réception parrainage non enregistré :', e));
+    }
+}
+
+// ── Tuile « Comptes parrainés » cliquable + modal de la liste (2026-09-25, demande
+//    de Jean : voir prénom + nom de chaque compte parrainé avec SON code, à copier
+//    pour le saisir à son tour dans le champ de parrainage rétroactif) ──
+// La liste ne peut venir que du serveur (referralListReferrals : referrals/{uid} est
+// illisible côté client) et n'est appelée qu'au CLIC — aucune lecture de plus au
+// chargement de la page. Ce qui vient d'autres utilisateurs (noms, codes) n'est jamais
+// inséré comme HTML : uniquement textContent / setAttribute.
+let _referralAlreadyReferred = false;  // posé par loadReferralPanel : décide de la phrase d'aide du modal
+let _referralListSeq = 0;              // écarte la réponse d'un clic ancien (modal refermé / rouvert entre-temps)
+let _referralListOpener = null;        // élément qui a ouvert le modal : le focus lui est rendu à la fermeture
+
+function setReferralTileInteractive(on) {
+    const tile = document.getElementById('referral-stat-referred');
+    if (!tile) return;
+    tile.classList.toggle('clickable', !!on);
+    if (on) {
+        tile.setAttribute('role', 'button');
+        tile.setAttribute('tabindex', '0');
+        tile.setAttribute('aria-haspopup', 'dialog');
+        tile.setAttribute('aria-label', 'Voir la liste des comptes parrainés');
+    } else {
+        ['role', 'tabindex', 'aria-haspopup', 'aria-label'].forEach((a) => tile.removeAttribute(a));
+    }
+}
+
+// API moderne du presse-papiers d'abord ; repli execCommand (contexte non sécurisé, permission
+// refusée, navigateur ancien). Résout toujours (true = copié), ne rejette jamais.
+function copyTextToClipboard(text) {
+    const fallback = () => {
+        const previous = document.activeElement;
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, text.length);
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return ok;
+        } catch (e) {
+            return false;
+        } finally {
+            if (previous && typeof previous.focus === 'function') { try { previous.focus({ preventScroll: true }); } catch (e2) {} }
+        }
+    };
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).then(() => true, () => fallback());
+    }
+    return Promise.resolve(fallback());
+}
+
+function flashCopiedBtn(btn, ok) {
+    const icon = btn.querySelector('i');
+    const label = btn.querySelector('.referral-copy-btn-label');
+    clearTimeout(btn._flashTimer);
+    btn.classList.toggle('copied', !!ok);
+    if (icon) icon.className = ok ? 'fas fa-check' : 'fas fa-triangle-exclamation';
+    if (label) label.textContent = ok ? 'Copié !' : 'Copie impossible';
+    btn._flashTimer = setTimeout(() => {
+        btn.classList.remove('copied');
+        if (icon) icon.className = 'fas fa-copy';
+        if (label) label.textContent = 'Copier';
+    }, 1600);
+}
+
+function referralListEl(tag, cls, text) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined) el.textContent = text;
+    return el;
+}
+
+function referralInitials(name) {
+    const parts = String(name || '').split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    const first = Array.from(parts[0])[0] || '';
+    const last = parts.length > 1 ? (Array.from(parts[parts.length - 1])[0] || '') : '';
+    return (first + last).toUpperCase();
+}
+
+function formatReferralDate(ms) {
+    if (!Number.isFinite(ms) || ms <= 0) return '';
+    try { return new Date(ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return ''; }
+}
+
+function renderReferralListState(kind) {
+    const body = document.getElementById('referral-list-body');
+    if (!body) return;
+    body.textContent = '';
+    const box = referralListEl('div', 'referral-list-state');
+    const icon = document.createElement('i');
+    if (kind === 'loading') {
+        icon.className = 'fas fa-spinner fa-spin';
+        box.appendChild(icon);
+        box.appendChild(document.createTextNode('Chargement de la liste…'));
+    } else if (kind === 'error') {
+        icon.className = 'fas fa-circle-exclamation';
+        box.appendChild(icon);
+        box.appendChild(document.createTextNode('Impossible de charger la liste pour le moment.'));
+        const retry = referralListEl('button', 'referral-copy-btn primary');
+        retry.type = 'button';
+        retry.id = 'referral-list-retry';
+        retry.appendChild(referralListEl('i', 'fas fa-rotate-right'));
+        retry.appendChild(document.createTextNode(' '));
+        retry.appendChild(referralListEl('span', 'referral-copy-btn-label', 'Réessayer'));
+        retry.addEventListener('click', () => openReferralListModal());
+        box.appendChild(retry);
+    } else {
+        icon.className = 'fas fa-user-group';
+        box.appendChild(icon);
+        box.appendChild(document.createTextNode('Aucun compte parrainé pour l\'instant.'));
+    }
+    body.appendChild(box);
+}
+
+function renderReferralList(data) {
+    const body = document.getElementById('referral-list-body');
+    if (!body) return;
+    const list = Array.isArray(data && data.referrals) ? data.referrals : [];
+    const total = Math.max(Number(data && data.total) || 0, list.length);
+    if (!list.length) { renderReferralListState('empty'); return; }
+    body.textContent = '';
+
+    const summary = referralListEl('p', 'referral-list-summary');
+    summary.appendChild(referralListEl('strong', '', String(total)));
+    summary.appendChild(document.createTextNode(total > 1 ? ' comptes ont utilisé votre code de parrainage.' : ' compte a utilisé votre code de parrainage.'));
+    body.appendChild(summary);
+
+    // Phrase d'aide seulement si le champ de saisie rétroactive est proposé sur la page
+    // (compte sans parrain) : sinon elle renverrait vers un champ absent.
+    if (!_referralAlreadyReferred) {
+        const hint = referralListEl('div', 'modal-highlight');
+        hint.appendChild(referralListEl('p', '', 'Pour les parrainer à votre tour, copiez le code du compte de votre choix puis collez-le dans le champ « Vous avez découvert TypixClin grâce à quelqu\'un ? » de cette page. Un seul code peut être renseigné, et il est définitif.'));
+        body.appendChild(hint);
+    }
+
+    const ul = referralListEl('ul', 'referral-list');
+    list.forEach((r) => {
+        const name = (r && typeof r.name === 'string') ? r.name : '';
+        const code = (r && typeof r.code === 'string' && /^[A-Za-z0-9]{6}$/.test(r.code)) ? r.code.toUpperCase() : '';
+        const li = referralListEl('li', 'referral-list-row');
+
+        const avatar = referralListEl('span', 'referral-list-avatar');
+        avatar.setAttribute('aria-hidden', 'true');
+        if (name) avatar.textContent = referralInitials(name);
+        else avatar.appendChild(referralListEl('i', 'fas fa-user'));
+        li.appendChild(avatar);
+
+        const who = referralListEl('div', 'referral-list-who');
+        who.appendChild(referralListEl('div', 'referral-list-name' + (name ? '' : ' unknown'), name || 'Compte sans nom'));
+        const when = formatReferralDate(r && r.at);
+        if (when) who.appendChild(referralListEl('div', 'referral-list-date', 'Parrainé le ' + when));
+        li.appendChild(who);
+
+        const cell = referralListEl('div', 'referral-list-codecell');
+        if (code) {
+            cell.appendChild(referralListEl('span', 'referral-list-code', code));
+            const btn = referralListEl('button', 'referral-copy-btn referral-list-copy');
+            btn.type = 'button';
+            btn.setAttribute('aria-label', 'Copier le code' + (name ? ' de ' + name : ''));
+            btn.appendChild(referralListEl('i', 'fas fa-copy'));
+            btn.appendChild(document.createTextNode(' '));
+            btn.appendChild(referralListEl('span', 'referral-copy-btn-label', 'Copier'));
+            btn.addEventListener('click', () => { copyTextToClipboard(code).then((ok) => flashCopiedBtn(btn, ok)); });
+            cell.appendChild(btn);
+        } else {
+            cell.appendChild(referralListEl('span', 'referral-list-code none', 'Code indisponible'));
+        }
+        li.appendChild(cell);
+        ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    if (total > list.length) {
+        body.appendChild(referralListEl('p', 'referral-list-more', 'Affichage des ' + list.length + ' comptes les plus récents sur ' + total + '.'));
+    }
+}
+
+async function openReferralListModal() {
+    if (!currentUser) return;
+    const overlay = document.getElementById('referral-list-modal');
+    const alreadyOpen = !!(overlay && overlay.classList.contains('active'));
+    if (!alreadyOpen) _referralListOpener = document.activeElement;
+    const seq = ++_referralListSeq;
+    renderReferralListState('loading');
+    if (window.openHelpModal) window.openHelpModal('referral-list-modal');
+    if (!alreadyOpen && overlay) {
+        const closeBtn = overlay.querySelector('.help-modal-close');
+        if (closeBtn) { try { closeBtn.focus({ preventScroll: true }); } catch (e) {} }
+    }
+    try {
+        const res = await referralListReferralsCall();
+        if (seq !== _referralListSeq) return; // un clic plus récent (ou la fermeture) a pris le relais
+        renderReferralList((res && res.data) || {});
+    } catch (e) {
+        console.error('Erreur chargement liste parrainage:', e);
+        if (seq !== _referralListSeq) return;
+        renderReferralListState('error');
+    }
+}
+
+(function wireReferralListModal() {
+    const tile = document.getElementById('referral-stat-referred');
+    if (tile) {
+        tile.addEventListener('click', () => { if (tile.classList.contains('clickable')) openReferralListModal(); });
+        tile.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && tile.classList.contains('clickable')) { e.preventDefault(); openReferralListModal(); }
+        });
+    }
+    const overlay = document.getElementById('referral-list-modal');
+    if (overlay) {
+        // Événement émis par le script des modals de la page à la fin de la fermeture.
+        overlay.addEventListener('_closed', () => {
+            _referralListSeq++; // une réponse encore en vol ne s'affichera plus nulle part
+            const opener = _referralListOpener;
+            _referralListOpener = null;
+            if (opener && typeof opener.focus === 'function' && document.contains(opener)) {
+                try { opener.focus({ preventScroll: true }); } catch (e) {}
+            }
+        });
+    }
+})();
+
+async function loadReferralPanel() {
+    const fillEl = document.getElementById('referral-progress-fill');
+    const fractionEl = document.getElementById('referral-progress-fraction');
+    const labelTextEl = document.getElementById('referral-progress-label-text');
+    const captionEl = document.getElementById('referral-progress-caption');
+    const activeEl = document.getElementById('referral-stat-active');
+    const monthsEl = document.getElementById('referral-stat-months');
+    const linkInput = document.getElementById('referral-link-input');
+    if (!fillEl) return; // section absente de la page (sécurité, pas censé arriver)
+
+    try {
+        const res = await referralEnsureCode();
+        const referralCode = res.data.referralCode;
+        const activeCount = res.data.referralActiveCount || 0;
+        const monthsGranted = res.data.referralMonthsGranted || 0;
+        const alreadyReferred = !!res.data.alreadyReferred;
+        _referralAlreadyReferred = alreadyReferred;
+        // Déjà vu = le plus grand entre ce que dit le serveur et ce que dit NOTRE
+        // document utilisateur (relu ici, jamais dépendant de la version de la
+        // fonction déployée) ; maybeAnnounceNewReferrals y ajoute la mémoire locale.
+        const seenCount = Math.max(res.data.referralSeenCount || 0, Number(userData && userData.referralSeenCount) || 0);
+        const newReferrals = Array.isArray(res.data.newReferrals) ? res.data.newReferrals : [];
+
+        const atMax = activeCount >= REFERRAL_MAX_TIER_UI.threshold;
+        // Premier palier pas encore atteint (sinon le dernier, une fois au plafond).
+        const nextTier = REFERRAL_TIERS_UI.find((t) => activeCount < t.threshold) || REFERRAL_MAX_TIER_UI;
+        const shown = Math.min(activeCount, nextTier.threshold);
+        const pct = Math.round((shown / nextTier.threshold) * 100);
+        const remaining = nextTier.threshold - activeCount;
+
+        activeEl.textContent = activeCount;
+        setReferralTileInteractive(activeCount > 0); // rien à lister à 0 : tuile inerte comme avant
+        monthsEl.textContent = monthsGranted;
+        fillEl.style.width = pct + '%';
+        if (fractionEl) fractionEl.textContent = shown + ' / ' + nextTier.threshold;
+        if (labelTextEl) {
+            labelTextEl.textContent = atMax
+                ? `Palier maximum atteint (${REFERRAL_MAX_TIER_UI.months} mois)`
+                : `${nextTier.threshold} comptes parrainés = ${nextTier.months} mois d'abonnement offert${nextTier.months > 1 ? 's' : ''}`;
+        }
+        captionEl.textContent = atMax
+            ? `Vous avez débloqué ${REFERRAL_MAX_TIER_UI.months} mois d'abonnement Premium — merci d'avoir partagé !`
+            : (activeCount === 0
+                ? `Aucun compte parrainé pour l'instant : 3 comptes = 1 mois, 6 comptes = 3 mois au total.`
+                : (() => {
+                    // Retour Jean (2026-09-25) : « … pour débloquer 1 mois d'abonnement offert. »
+                    // « de plus » seulement quand des mois ont DÉJÀ été gagnés (2e palier :
+                    // on parle alors de mois supplémentaires, pas du total).
+                    const more = Math.max(nextTier.months - monthsGranted, 0);
+                    return `Il vous manque encore ${remaining} compte${remaining > 1 ? 's' : ''} parrainé${remaining > 1 ? 's' : ''} pour débloquer ${more} mois d'abonnement offert${more > 1 ? 's' : ''}${monthsGranted > 0 ? ' de plus' : ''}.`;
+                })());
+
+        const link = 'https://typixclin.fr/auth.html?ref=' + encodeURIComponent(referralCode);
+        linkInput.value = link;
+        const codeValueEl = document.getElementById('referral-code-value');
+        if (codeValueEl) { codeValueEl.textContent = referralCode; codeValueEl.classList.add('has-code'); }
+
+        const flashCopied = (btn) => {
+            const icon = btn.querySelector('i');
+            const label = btn.querySelector('.referral-copy-btn-label');
+            const originalIcon = icon ? icon.className : '';
+            const originalLabel = label ? label.textContent : '';
+            btn.classList.add('copied');
+            if (icon) icon.className = 'fas fa-check';
+            if (label) label.textContent = 'Copié !';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                if (icon) icon.className = originalIcon;
+                if (label) label.textContent = originalLabel;
+            }, 1600);
+        };
+        const copyLinkBtn = document.getElementById('referral-copy-link-btn');
+        const copyCodeBtn = document.getElementById('referral-copy-code-btn');
+        // Désactivés par défaut dans le HTML (pas de code tant que l'appel n'a pas
+        // réussi) : on ne les réactive qu'ici, une fois le lien/code réellement prêts.
+        if (copyLinkBtn) { copyLinkBtn.disabled = false; copyLinkBtn.onclick = () => { navigator.clipboard.writeText(link).then(() => flashCopied(copyLinkBtn)).catch(() => {}); }; }
+        if (copyCodeBtn) { copyCodeBtn.disabled = false; copyCodeBtn.onclick = () => { navigator.clipboard.writeText(referralCode).then(() => flashCopied(copyCodeBtn)).catch(() => {}); }; }
+
+        // ── AJOUT (2026-09-24, retour Jean) : bloc "vous avez été invité ?" —
+        //    masqué tant qu'on ne sait pas encore (style="display:none" dans le
+        //    HTML), affiché seulement ici, et SEULEMENT si le compte n'a pas
+        //    encore de parrain (alreadyReferred, calculé côté serveur, cf.
+        //    referralEnsureCode). Déjà lié -> le bloc reste masqué, sans aucun
+        //    message (retour Jean 2026-09-25 : la ligne « Vous avez déjà
+        //    renseigné un code » n'avait pas à s'afficher).
+        //    C'est le PROPRIÉTAIRE du code saisi qui sera crédité, jamais
+        //    l'utilisateur courant (retour explicite de Jean) — voir
+        //    functions/index.js : referralApplyCode. ──
+        const applyBlock = document.getElementById('referral-apply-block');
+        if (applyBlock) {
+            if (alreadyReferred) {
+                applyBlock.style.display = 'none';
+            } else {
+                applyBlock.style.display = '';
+                const applyBtn = document.getElementById('referral-apply-btn');
+                const applyInput = document.getElementById('referral-apply-input');
+                const applyStatus = document.getElementById('referral-apply-status');
+                if (applyBtn && applyInput) {
+                    // `onclick =` (et non addEventListener) : loadReferralPanel() peut être
+                    // rappelée plusieurs fois (sondage après un paiement Stripe) — chaque
+                    // rappel AJOUTAIT un écouteur, donc un clic lançait plusieurs appels
+                    // referralApplyCode dont les perdants affichaient « déjà renseigné »
+                    // par-dessus le succès. Une affectation est idempotente.
+                    applyBtn.onclick = async () => {
+                        const raw = applyInput.value.trim().toUpperCase();
+                        if (raw.length !== 6) {
+                            if (applyStatus) { applyStatus.className = 'referral-check-status invalid'; applyStatus.innerHTML = '<i class="fas fa-circle-info"></i> Entrez un code à 6 caractères.'; }
+                            return;
+                        }
+                        // Désactivés pendant l'appel : empêche un double-clic de
+                        // partir en double appel réseau (la garde serveur bloquerait
+                        // de toute façon le second, mais autant éviter l'aller-retour).
+                        applyBtn.disabled = true;
+                        applyInput.disabled = true;
+                        if (applyStatus) { applyStatus.className = 'referral-check-status checking'; applyStatus.textContent = 'Vérification…'; }
+                        try {
+                            await referralApplyCodeCall({ code: raw });
+                            _referralAlreadyReferred = true; // le champ est désormais verrouillé : le modal de la liste n'y renvoie plus
+                            if (applyStatus) { applyStatus.className = 'referral-check-status valid'; applyStatus.innerHTML = '<i class="fas fa-circle-check"></i> Code appliqué, merci !'; }
+                            applyBtn.style.display = 'none';
+                        } catch (err) {
+                            applyBtn.disabled = false;
+                            applyInput.disabled = false;
+                            const msg = (err && err.message) ? err.message : 'Code invalide.';
+                            // Message du serveur inséré en TEXTE (jamais en HTML).
+                            if (applyStatus) {
+                                applyStatus.className = 'referral-check-status invalid';
+                                applyStatus.textContent = '';
+                                const ic = document.createElement('i');
+                                ic.className = 'fas fa-circle-info';
+                                applyStatus.appendChild(ic);
+                                applyStatus.appendChild(document.createTextNode(' ' + msg));
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        // ── Notification « nouveau compte parrainé » (2026-09-25, demande de
+        //    Jean) : aussi bien pour un compte créé avec le code que pour une
+        //    saisie rétroactive — les deux passent par le même crédit serveur. ──
+        maybeAnnounceNewReferrals(newReferrals, activeCount, seenCount);
+    } catch (e) {
+        console.error('Erreur chargement parrainage:', e);
+        // Boutons laissés désactivés (valeur par défaut du HTML) : rien à copier.
+        if (linkInput) { linkInput.value = ''; linkInput.placeholder = 'Indisponible pour le moment'; }
+        const codeValueEl = document.getElementById('referral-code-value');
+        if (codeValueEl) codeValueEl.textContent = '—';
+        if (captionEl) captionEl.textContent = 'Indisponible pour le moment.';
     }
 }
 
@@ -4352,6 +5149,34 @@ if (urlParams.get('success') === 'true') {
                 la durée d'accès convenue.
             </p>
 
+            <h3><i class="fas fa-gift"></i> 4 bis. Programme de parrainage</h3>
+            <p>
+                TypixClin propose un programme de parrainage facultatif et gratuit : chaque utilisateur
+                dispose d'un code personnel qu'il peut communiquer à des tiers. Un <strong>compte
+                parrainé</strong> est un compte TypixClin créé en renseignant ce code, dont le titulaire
+                s'est en outre connecté au moins une fois avec une adresse email vérifiée. Le code peut
+                aussi être renseigné après la création du compte, une seule fois. Le prénom et le nom
+                d'un compte parrainé, ainsi que son code de parrainage personnel, sont communiqués à
+                son parrain, sous la forme d'une notification puis d'une liste consultable dans son
+                espace Compte Premium.
+            </p>
+            <p>
+                À partir de <strong>3 comptes parrainés</strong>, le parrain reçoit <strong>1 mois d'accès
+                Premium offert</strong> ; à partir de <strong>6 comptes parrainés</strong>, il reçoit
+                <strong>3 mois offerts au total</strong>. Six comptes parrainés est le maximum pris en
+                compte pour cette récompense. Cette récompense s'ajoute à l'accès déjà en cours (période
+                d'essai, abonnement mensuel ou formule à paiement unique) et ne le remplace jamais. Pour un
+                abonnement mensuel actif, les mois offerts prennent la forme d'un report du prélèvement
+                suivant : aucun paiement n'est dû pendant cette durée.
+            </p>
+            <p>
+                L'accès ainsi offert n'a aucune valeur monétaire et n'est ni remboursable, ni cessible,
+                ni convertible en espèces. TypixClin se réserve le droit de modifier les conditions de ce
+                programme ou d'y mettre fin à tout moment, ainsi que de refuser ou d'annuler une
+                récompense obtenue par fraude, création de comptes multiples ou tout autre usage abusif
+                du dispositif.
+            </p>
+
             <h3><i class="fas fa-cart-shopping"></i> 5. Souscription</h3>
             <p>
                 La souscription s'effectue en ligne depuis la présente page, après création d'un compte.
@@ -4607,6 +5432,29 @@ if (urlParams.get('success') === 'true') {
 
             <p class="modal-update"><i class="fas fa-calendar-alt"></i> Mise à jour : Septembre 2026</p>
         </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-primary modal-ok" data-close aria-label="Fermer"><i class="fas fa-check"></i></button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODAL « COMPTES PARRAINÉS » (2026-09-25, demande de Jean) ═══
+     Ouvert par un clic sur la tuile « Comptes parrainés » ; rempli par
+     openReferralListModal() (module Firebase). Placé AVANT le script des modals
+     ci-dessous : croix, bouton de validation, clic sur le fond et Échap sont
+     câblés automatiquement, comme pour les CGV. -->
+<div class="help-modal-overlay" id="referral-list-modal" role="dialog" aria-modal="true" aria-labelledby="referral-list-title">
+    <div class="help-modal" onclick="event.stopPropagation()">
+        <div class="help-modal-header">
+            <div class="help-modal-title">
+                <div class="help-modal-icon"><i class="fas fa-user-group"></i></div>
+                <h3 id="referral-list-title">Comptes parrainés</h3>
+            </div>
+            <button class="help-modal-close" data-close aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="help-modal-body modal-body" id="referral-list-body" aria-live="polite"></div>
 
         <div class="modal-footer">
             <button class="btn btn-primary modal-ok" data-close aria-label="Fermer"><i class="fas fa-check"></i></button>
@@ -5066,6 +5914,20 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
     box-shadow: 0 0 0 3px rgba(107, 140, 199, 0.14);
 }
 [data-theme="pastel"] ::placeholder { color: #a8a293; }
+
+/* ═══ 5 bis. PARRAINAGE — tuiles et liste (2026-09-25) ═══════════════════════
+   Les teintes bleues de ces éléments sont écrites en dur (rgba(59,130,246,…)) :
+   la couche générée plus haut ne les connaît pas, on les ramène ici au bleu
+   pastel de la page (rgba(99,136,197,…)). */
+[data-theme="pastel"] .referral-stat { background: rgba(99, 136, 197, 0.09); border-color: rgba(99, 136, 197, 0.26); box-shadow: 0 1px 2px rgba(99, 136, 197, 0.10); }
+[data-theme="pastel"] .referral-stat.clickable:hover { border-color: rgba(99, 136, 197, 0.55); box-shadow: 0 8px 24px rgba(99, 136, 197, 0.20); }
+[data-theme="pastel"] .referral-stat.clickable .referral-stat-click-hint { color: var(--pastel-blue-600); background: rgba(99, 136, 197, 0.14); }
+[data-theme="pastel"] .referral-stat.clickable .referral-stat-cta { color: var(--pastel-blue-600); background: rgba(99, 136, 197, 0.12); border-color: rgba(99, 136, 197, 0.28); }
+[data-theme="pastel"] .referral-stat.clickable:hover .referral-stat-click-hint,
+[data-theme="pastel"] .referral-stat.clickable:focus-visible .referral-stat-click-hint,
+[data-theme="pastel"] .referral-stat.clickable:hover .referral-stat-cta,
+[data-theme="pastel"] .referral-stat.clickable:focus-visible .referral-stat-cta { background: linear-gradient(135deg, #7d9bd0, #6b8cc7); color: #ffffff; border-color: transparent; box-shadow: 0 3px 10px rgba(107, 140, 199, 0.35); }
+[data-theme="pastel"] .referral-list-row { background: var(--pastel-blue-50); border-color: var(--pastel-blue-200); }
 
 /* ═══ 6. ASCENSEURS ════════════════════════════════════════════════════════
    Le rail de la barre principale est écrit en dur (#e5e7eb, gris froid) :

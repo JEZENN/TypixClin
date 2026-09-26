@@ -148,6 +148,15 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 .auth-form { display: none; }
 .auth-form.active { display: block; animation: fadeInUp var(--transition-normal) forwards; }
 .form-group { margin-bottom: 1.25rem; }
+/* AJOUT (2026-09-24, retour Jean) : retour en direct pendant la saisie du
+   code de parrainage — avant, aucune indication, valide ou non. */
+.referral-check-status { margin-top: 0.4rem; font-size: 0.8rem; min-height: 1.1em; display: flex; align-items: center; gap: 0.35rem; }
+.referral-check-status.checking { color: var(--gray-400); }
+.referral-check-status.valid { color: #059669; }
+.referral-check-status.invalid { color: var(--gray-500); }
+[data-theme="dark"] .referral-check-status.valid { color: #34d399; }
+/* 2026-09-25 : information de transparence — le nom du filleul est communiqué à son parrain. */
+.referral-privacy-hint { display: block; margin-top: 0.25rem; font-size: 0.72rem; line-height: 1.3; color: var(--gray-400); }
 .form-label { display: block; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem; font-size: 0.9rem; }
 .input-wrapper { position: relative; display: flex; align-items: center; }
 .input-wrapper .input-icon { position: absolute; left: 1rem; color: var(--gray-400); transition: color var(--transition-normal); pointer-events: none; font-size: 1rem; }
@@ -1437,6 +1446,15 @@ if (logoutBtn) {
                     <i class="fas fa-envelope input-icon"></i>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="form-label" for="register-referral">Code de parrainage (facultatif)</label>
+                <div class="input-wrapper">
+                    <input type="text" id="register-referral" name="referral" autocomplete="off" class="form-input" placeholder="Ex. AB12CD" maxlength="6" style="text-transform:uppercase;">
+                    <i class="fas fa-gift input-icon"></i>
+                </div>
+                <div class="referral-check-status" id="referral-check-status"></div>
+                <small class="referral-privacy-hint">Votre prénom et votre nom seront communiqués à la personne qui vous parraine.</small>
+            </div>
 				<div class="form-group">
 					<label class="form-label" for="register-password">Mot de passe</label>
 					<div class="input-wrapper">
@@ -1549,6 +1567,22 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+// ── PARRAINAGE : SDK « Functions » chargé À LA DEMANDE (import dynamique), volontairement PAS en
+//    import statique (correctif 2026-09-26). Un import statique fait dépendre le démarrage de TOUTE
+//    cette page — donc la connexion et l'inscription — d'un module de plus : si son téléchargement
+//    échoue (connexion instable, 1re visite après une mise à jour), rien ne démarre. Ici un échec de
+//    chargement ne touche que le parrainage, déjà conçu pour ne jamais bloquer (voir les appelants :
+//    checkReferralCode / referralInit / referralMarkActive attrapent tous l'erreur).
+//    Même région que comptepremium.html (createCheckoutSession) — voir functions/index.js. ──
+let _tpxFunctionsMod = null;
+async function tpxCallable(name, data) {
+    if (!_tpxFunctionsMod) _tpxFunctionsMod = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js");
+    const functions = _tpxFunctionsMod.getFunctions(app, 'europe-west1');
+    return _tpxFunctionsMod.httpsCallable(functions, name)(data);
+}
+const referralInitCall = (data) => tpxCallable('referralInit', data);
+const referralMarkActiveCall = (data) => tpxCallable('referralMarkActive', data);
+const referralCheckCodeCall = (data) => tpxCallable('referralCheckCode', data);
 
 
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1646,6 +1680,91 @@ tabBtns.forEach(btn => {
     });
 });
 
+// ── PARRAINAGE (2026-09-22) : lien "?ref=CODE" (partagé depuis Compte
+//    Premium) -> bascule directement sur l'onglet inscription, code
+//    pré-rempli. Doit s'exécuter APRÈS l'enregistrement des écouteurs
+//    tabBtns ci-dessus : .click() sur un bouton sans écouteur ne ferait
+//    rien. ──
+const referralCodeFromLink = urlParams.get('ref');
+if (referralCodeFromLink) {
+    const registerTabBtn = document.querySelector('[data-tab="register"]');
+    if (registerTabBtn) registerTabBtn.click();
+    const referralInput = document.getElementById('register-referral');
+    if (referralInput) referralInput.value = referralCodeFromLink.trim().toUpperCase().slice(0, 6);
+}
+
+// ── PARRAINAGE (2026-09-24, retour Jean) : vérification EN DIRECT pendant
+//    la saisie — avant, un code inconnu n'affichait rien, l'utilisateur ne
+//    savait jamais si ce qu'il avait tapé/collé « comptait ». Se déclenche
+//    dès que le champ contient 6 caractères (longueur fixe des codes) et à
+//    la perte de focus ; ne bloque jamais l'inscription (facultatif, et
+//    l'appel échoue toujours en silence côté serveur de toute façon). ──
+const referralStatusEl = document.getElementById('referral-check-status');
+let _referralCheckSeq = 0;
+// Valeur de retour (AJOUT 2026-09-24, retour Jean : blocage strict à la
+// soumission) : true = valide ou champ vide (jamais bloquant), false = code
+// non vide et confirmé invalide/incomplet (DOIT bloquer la création du
+// compte), null = échec réseau -> ne bloque jamais dans ce cas, comme avant.
+// CORRECTIF (2026-09-25, trouvé par le test de course R7c/R7d) : la valeur de
+// retour est TOUJOURS le verdict du code qui a été réellement interrogé, même
+// si une vérification plus récente (contrôle différé de 400 ms ou perte de
+// focus, déclenchés par la frappe/le clic lui-même) est partie entre-temps.
+// Avant, une réponse « dépassée » renvoyait null — donc « ne bloque pas » : un
+// code inconnu suivi d'un clic ou d'Entrée dans les 400 ms laissait créer le
+// compte. _referralCheckSeq ne sert plus qu'à l'AFFICHAGE (ne jamais écraser
+// le statut d'une vérification plus récente par une réponse tardive).
+async function checkReferralCode() {
+    const input = document.getElementById('register-referral');
+    if (!input || !referralStatusEl) return true;
+    const raw = input.value.trim().toUpperCase();
+    const mySeq = ++_referralCheckSeq;
+    const isLatest = () => mySeq === _referralCheckSeq; // affichage uniquement
+    if (raw.length === 0) {
+        referralStatusEl.className = 'referral-check-status';
+        referralStatusEl.textContent = '';
+        return true;
+    }
+    if (raw.length !== 6) {
+        referralStatusEl.className = 'referral-check-status';
+        referralStatusEl.textContent = '';
+        return false;
+    }
+    referralStatusEl.className = 'referral-check-status checking';
+    referralStatusEl.textContent = 'Vérification…';
+    try {
+        const res = await referralCheckCodeCall({ code: raw });
+        const valid = !!(res.data && res.data.valid);
+        if (isLatest()) {
+            if (valid) {
+                referralStatusEl.className = 'referral-check-status valid';
+                referralStatusEl.innerHTML = '<i class="fas fa-circle-check"></i> Code valide !';
+            } else {
+                referralStatusEl.className = 'referral-check-status invalid';
+                referralStatusEl.innerHTML = '<i class="fas fa-circle-info"></i> Code inconnu — vérifiez-le ou laissez le champ vide.';
+            }
+        }
+        return valid;
+    } catch (e) {
+        if (isLatest()) {
+            referralStatusEl.className = 'referral-check-status';
+            referralStatusEl.textContent = ''; // échec réseau : silencieux, jamais bloquant
+        }
+        console.warn('⚠ referralCheckCode :', e);
+        return null;
+    }
+}
+(() => {
+    const input = document.getElementById('register-referral');
+    if (!input) return;
+    let debounceTimer = null;
+    input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkReferralCode, 400);
+    });
+    input.addEventListener('blur', checkReferralCode);
+    if (input.value.trim()) checkReferralCode(); // déjà pré-rempli via ?ref=
+})();
+
 document.querySelectorAll('.password-toggle').forEach(toggle => {
     toggle.addEventListener('click', () => {
         const input = document.getElementById(toggle.dataset.target);
@@ -1671,6 +1790,12 @@ loginForm.addEventListener('submit', async (e) => {
 				await signOut(auth);
 				return;
 			}
+
+			// ── PARRAINAGE (2026-09-22) : comptabilise ce compte comme filleul
+			//    actif s'il a été créé avec un code de parrain (no-op silencieux
+			//    sinon, ou si déjà comptabilisé). Volontairement NON attendu :
+			//    ne doit jamais retarder la connexion. ──
+			referralMarkActiveCall().catch((e) => console.warn('⚠ referralMarkActive :', e));
 
 			showSuccess();
 
@@ -1728,9 +1853,44 @@ registerForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    // Bouton désactivé AVANT toute attente réseau (correctif 2026-09-25) : le
+    // contrôle du code de parrainage ci-dessous est asynchrone ; sans cela un
+    // double-clic / double Entrée dans ce laps de temps lançait deux inscriptions
+    // (la seconde échouant en « adresse déjà utilisée » après la réussite de la
+    // première). Le `finally` de fin de gestionnaire le réactive dans tous les
+    // cas, y compris quand le code est refusé.
     setLoading(registerBtn, true);
 
     try {
+        // AJOUT (2026-09-24, retour Jean) : blocage STRICT si un code de
+        // parrainage a été saisi mais n'est pas valide — re-vérifie au moment
+        // du clic (source de vérité, évite toute course avec le debounce/la
+        // frappe) plutôt que de se fier à un état déjà affiché qui pourrait être
+        // périmé. false = confirmé invalide/incomplet -> bloque. true/null
+        // (vide, valide, ou échec réseau) -> ne bloque jamais.
+        // La valeur vérifiée est mémorisée dans referredByCode : c'est ELLE (et
+        // non une relecture du champ, modifiable entre-temps) que referralInit
+        // recevra plus bas ; le champ est en lecture seule le temps du contrôle.
+        const referralFieldEl = document.getElementById('register-referral');
+        let referredByCode = '';
+        if (referralFieldEl) {
+            referredByCode = referralFieldEl.value.trim();
+            if (referredByCode) {
+                referralFieldEl.readOnly = true;
+                let referralOk;
+                try {
+                    referralOk = await checkReferralCode();
+                } finally {
+                    referralFieldEl.readOnly = false;
+                }
+                if (referralOk === false) {
+                    showMessage('Le code de parrainage saisi n\'est pas reconnu. Corrigez-le ou laissez le champ vide.');
+                    referralFieldEl.focus();
+                    return;
+                }
+            }
+        }
+
         console.log('🔵 Tentative création compte Firebase Auth...');
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
         console.log('✅ Compte Auth créé:', user.uid);
@@ -1773,6 +1933,21 @@ registerForm.addEventListener('submit', async (e) => {
             preferences: { theme: 'light' }
         }, { merge: true });
         console.log('✅ Document Firestore créé');
+
+        // ── PARRAINAGE (2026-09-22) : réserve le code du nouveau compte et
+        //    enregistre le code de parrain saisi (s'il y en a un). DOIT être
+        //    appelé ICI, avant signOut() : request.auth n'existe côté Cloud
+        //    Function que tant que ce compte est connecté. Ne doit JAMAIS
+        //    bloquer ni faire échouer l'inscription (échec réseau, etc. ->
+        //    l'utilisateur aura simplement son code généré plus tard, à la
+        //    1re ouverture de Compte Premium, via referralEnsureCode). ──
+        try {
+            // Le code vérifié au clic (referredByCode), pas une relecture du champ.
+            await referralInitCall({ referredBy: referredByCode || null });
+            console.log('✅ Parrainage initialisé');
+        } catch (e) {
+            console.warn('⚠ Parrainage non initialisé (sans conséquence) :', e);
+        }
 
         console.log('🔵 Déconnexion...');
         await signOut(auth);

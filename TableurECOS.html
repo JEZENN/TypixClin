@@ -694,11 +694,18 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 [data-theme="dark"] .profile-menu-item.logout:hover { background: rgba(239, 68, 68, 0.12); color: #f87171; }
 
 /* ===== PROFILE ID BADGE ===== */
+/* BUGFIX 2026-09-24 (retour Jean) : en ligne, le code de parrainage (6
+   caractères) est plus large que le shortId « Mon ID » (4 caractères) — à
+   largeur de menu identique, son libellé passait à la ligne au milieu d'un
+   mot alors que « Mon ID (amis) » restait sur une seule ligne : disposition
+   incohérente entre les deux lignes. Empilé verticalement : les deux ont
+   maintenant exactement le même rythme, quelle que soit la largeur du code. */
 .profile-id-row {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.35rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
 }
 .profile-id-label {
     font-size: 0.72rem;
@@ -2225,6 +2232,17 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     display: none;
 }
 .feedback-msg-notif-dot.show { display: block; }
+/* 2026-09-25 : pastille « nouveau compte parrainé » sur l'entrée Compte premium
+   (même rendu que la pastille des messages de retour). */
+.referral-notif-dot {
+    width: 8px; height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: none;
+}
+.referral-notif-dot.show { display: block; }
 
 .user-auth .auth-btn { display: flex; }
 .user-auth .avatar-wrapper { display: none; }
@@ -10341,7 +10359,8 @@ body.tours-compact .ranking-extra-stat.time-stat {
 .toast-notification {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    /* 2026-09-25 : compensation de la barre de défilement, miroir EDN. */
+    right: calc(20px + var(--scrollbar-w, 0px));
     transform: translateX(400px);
     background: linear-gradient(135deg, #059669, #10b981);
     color: white;
@@ -25232,9 +25251,15 @@ window.TPXNotesPending = {
                             <div class="profile-name" id="profile-name">Jean Dupont</div>
                             <div class="profile-email" id="profile-email">jean@example.com</div>
                             <div class="profile-id-row">
-                                <span class="profile-id-label">Mon ID&nbsp;:</span>
+                                <span class="profile-id-label">Mon ID (amis)&nbsp;:</span>
                                 <span class="profile-id-badge" id="profile-shortid" title="Cliquer pour copier">
                                     <i class="fas fa-fingerprint"></i><span id="profile-shortid-text">----</span>
+                                </span>
+                            </div>
+                            <div class="profile-id-row">
+                                <span class="profile-id-label">Code parrainage&nbsp;:</span>
+                                <span class="profile-id-badge" id="profile-referralcode" title="Cliquer pour copier">
+                                    <i class="fas fa-gift"></i><span id="profile-referralcode-text">----</span>
                                 </span>
                             </div>
                         </div>
@@ -25247,6 +25272,7 @@ window.TPXNotesPending = {
                             </button>
                             <button class="profile-menu-item premium-btn-menu" id="open-premium-btn" onclick="localStorage.setItem('premiumReturnTableur','ecos'); location.href='comptepremium.html?from=ecos';">
                                 <i class="fas fa-crown"></i><span>Compte premium</span>
+                                <span class="referral-notif-dot" id="referral-notif-dot"></span>
                             </button>
                             <button class="profile-menu-item whats-new-btn-menu" onclick="openWhatsNewModal()">
                                 <i class="fas fa-gift"></i><span>Nouveautés</span>
@@ -26902,6 +26928,23 @@ window.TPXNotesPending = {
                         <strong>Agrandir</strong> : elle s'affiche en grand,
                         avec zoom (boutons +/-, molette ou pincement) et
                         déplacement par glissement.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon green">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Programme de parrainage 🎁</h4>
+                    <p>
+                        Parrainez vos amis depuis <strong>Compte Premium</strong> : vous avez
+                        désormais votre propre code à partager. Dès que <strong>3 comptes
+                        parrainés</strong> sont créés avec votre code et se connectent,
+                        vous recevez <strong>1 mois Premium offert</strong> ; à
+                        <strong>6 comptes parrainés</strong>, vous en recevez
+                        <strong>3 au total</strong> — le maximum.
                     </p>
                 </div>
             </div>
@@ -36084,7 +36127,11 @@ function closeFbSentToast() {
 /* ----------------------------------------------------------------------------
    NOUVEAUTÉS & AIDE
    ---------------------------------------------------------------------------- */
-const ECOS_WHATSNEW_VERSION = 'ecos-v4';
+/* 2026-09-22 : ecos-v4 -> ecos-v5 — entrée « Programme de parrainage » ajoutée
+   dans le modal (section Septembre 2026) : sans ce changement, quiconque avait
+   déjà vu ecos-v4 ne recevrait jamais la pastille pour ce nouveau contenu
+   (même raisonnement que whatsNewSeen_v7 -> v8 côté EDN). */
+const ECOS_WHATSNEW_VERSION = 'ecos-v5';
 function openWhatsNewModal() {
     const overlay = document.getElementById('whatsNewModalOverlay');
 
@@ -39603,6 +39650,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// Fonction de parrainage (code affiché dans le menu profil). SDK « Functions » chargé À LA
+// DEMANDE (import dynamique), volontairement PAS en import statique (correctif 2026-09-26) :
+// voir le commentaire miroir dans TableurEnLigne.html. Un échec de chargement ne touche que ce
+// badge (l'appelant attrape l'erreur et réaffiche « — »). Même région que comptepremium.html/auth.html.
+let _tpxFunctionsMod = null;
+const referralEnsureCodeCall = async () => {
+    if (!_tpxFunctionsMod) _tpxFunctionsMod = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js");
+    const functions = _tpxFunctionsMod.getFunctions(app, 'europe-west1');
+    return _tpxFunctionsMod.httpsCallable(functions, 'referralEnsureCode')();
+};
 window._db = db;
 // TPX-PERSO : passerelle Firestore pour les scripts non-module (même
 // convention que le tableur EDN).
@@ -40231,9 +40288,31 @@ function applyUserSettings(data) {
     }
     if (window._checkWhatsNewNotif) window._checkWhatsNewNotif(data.ecosWhatsNewSeen);
 }
+// ── PARRAINAGE (2026-09-25, demande de Jean) : pastille rouge « nouveau compte
+//    parrainé » sur l'entrée Compte premium + sur l'avatar (miroir EDN). Calculée
+//    à partir du document utilisateur DÉJÀ écouté ci-dessous (aucune lecture en
+//    plus) : referralActiveCount (serveur) > referralSeenCount (Compte Premium).
+//    Mise à jour en direct, y compris pendant que le tableur est ouvert. ──
+window._tpxApplyReferralState = function (data) {
+    try {
+        const active = Number(data && data.referralActiveCount) || 0;
+        const seen = Number(data && data.referralSeenCount) || 0;
+        const unseen = active > seen ? active - seen : 0;
+        window._tpxReferralUnseen = unseen;
+        const menuDot = document.getElementById('referral-notif-dot');
+        if (menuDot) menuDot.classList.toggle('show', unseen > 0);
+        const refresh = window._tpxRefreshAvatarDot || window._fbRefreshAvatarDot;
+        if (typeof refresh === 'function') refresh();
+        else if (unseen > 0) {
+            const avatarDot = document.getElementById('avatar-notif-dot');
+            if (avatarDot) avatarDot.classList.add('show');
+        }
+    } catch (e) { console.warn('[Parrainage] pastille :', e); }
+};
+
 function startUserSettingsListener(uid) {
     if (userSettingsUnsub) userSettingsUnsub();
-    userSettingsUnsub = onSnapshot(doc(db, 'users', uid), snap => { if (snap.exists()) applyUserSettings(snap.data()); }, err => console.warn('[Settings]', err));
+    userSettingsUnsub = onSnapshot(doc(db, 'users', uid), snap => { if (snap.exists()) { applyUserSettings(snap.data()); window._tpxApplyReferralState(snap.data()); } }, err => console.warn('[Settings]', err));
 }
 
 /* ───────────── DONNÉES ECOS (ECOSRevision/{uid}) ───────────── */
@@ -41102,10 +41181,13 @@ function showEcosConnectionWarning() {
             </button>
         </div>
     `;
+    // BUGFIX (2026-09-25, signalé par Jean) : voir le correctif miroir dans
+    // TableurEnLigne.html (showConnectionWarning) — right compensé par
+    // --scrollbar-w pour ne plus glisser quand une modale masque la barre.
     ecosConnectionWarningToast.style.cssText = `
         position: fixed;
         bottom: 2rem;
-        right: 2rem;
+        right: calc(2rem + var(--scrollbar-w, 0px));
         background: var(--warning);
         color: white;
         padding: 1rem 1.25rem;
@@ -41825,7 +41907,9 @@ function _fbUpdateDots(count) {
     const avatarDot = document.getElementById('avatar-notif-dot');
     if (avatarDot) {
         const hasFriends = !!(_friendsData && _friendsData.requestsReceived && _friendsData.requestsReceived.length > 0);
-        avatarDot.classList.toggle('show', hasFriends || count > 0);
+        // + nouveau compte parrainé non vu (2026-09-25) : sans ce 3e terme, cette
+        // fonction éteindrait la pastille allumée par le parrainage.
+        avatarDot.classList.toggle('show', hasFriends || count > 0 || window._tpxReferralUnseen > 0);
     }
 }
 window._fbRefreshAvatarDot = function () { _fbUpdateDots(window._feedbackUnreadCount || 0); };
@@ -42463,6 +42547,18 @@ async function updateUserUI(user) {
             const badge = document.getElementById('profile-shortid');
             if (badge) badge.onclick = () => { navigator.clipboard.writeText(shortId); badge.classList.add('copied'); const ic = badge.querySelector('i'); if (ic) ic.className = 'fas fa-check'; setTimeout(() => { badge.classList.remove('copied'); if (ic) ic.className = 'fas fa-fingerprint'; }, 1400); };
 
+            // ── PARRAINAGE (2026-09-24) : code affiché ici (jamais le lien —
+            //    réservé à Compte Premium, cf. Jean). Affichage immédiat si
+            //    userInfo.referralCode existe déjà ; sinon « — » temporaire,
+            //    complété à la volée à l'OUVERTURE du menu profil (cf. avatar
+            //    click plus bas, retour Jean 2026-09-24 : ne s'affichait
+            //    jamais pour un compte créé avant le parrainage tant qu'il
+            //    n'avait pas ouvert Compte Premium au moins une fois). ──
+            const rcText = document.getElementById('profile-referralcode-text');
+            if (rcText) rcText.textContent = userInfo.referralCode || '—';
+            const rcBadge = document.getElementById('profile-referralcode');
+            if (rcBadge && userInfo.referralCode) rcBadge.onclick = () => { navigator.clipboard.writeText(userInfo.referralCode); rcBadge.classList.add('copied'); const ic = rcBadge.querySelector('i'); if (ic) ic.className = 'fas fa-check'; setTimeout(() => { rcBadge.classList.remove('copied'); if (ic) ic.className = 'fas fa-gift'; }, 1400); };
+
             // créer / compléter le document utilisateur (commun EDN/ECOS)
             if (!userDoc.exists()) {
                 const parts = (user.displayName || '').trim().split(' ');
@@ -42599,7 +42695,29 @@ if (logoutBtn) logoutBtn.addEventListener('click', async () => {
 /* ───────────── MENU PROFIL / MOBILE ───────────── */
 const avatar = document.getElementById('user-avatar');
 const profileDropdown = document.getElementById('profile-dropdown');
-if (avatar) avatar.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
+if (avatar) avatar.addEventListener('click', e => {
+    e.stopPropagation();
+    profileDropdown.classList.toggle('active');
+    // AJOUT (2026-09-24, retour Jean : le code ne s'affichait pas toujours
+    // ici) : génère le code à la volée SEULEMENT à l'ouverture du menu et
+    // SEULEMENT si le badge est encore vide — jamais à chaque chargement de
+    // page (coût réseau uniquement pour qui ouvre vraiment son profil).
+    if (profileDropdown.classList.contains('active')) {
+        const rcText = document.getElementById('profile-referralcode-text');
+        if (rcText && (rcText.textContent === '—' || rcText.textContent === '----')) {
+            rcText.textContent = '…';
+            referralEnsureCodeCall().then(res => {
+                const newCode = res.data.referralCode;
+                rcText.textContent = newCode;
+                const rcBadge = document.getElementById('profile-referralcode');
+                if (rcBadge) rcBadge.onclick = () => { navigator.clipboard.writeText(newCode); rcBadge.classList.add('copied'); const ic = rcBadge.querySelector('i'); if (ic) ic.className = 'fas fa-check'; setTimeout(() => { rcBadge.classList.remove('copied'); if (ic) ic.className = 'fas fa-gift'; }, 1400); };
+            }).catch(e => {
+                rcText.textContent = '—'; // permet de réessayer au prochain clic
+                console.warn('⚠ referralEnsureCode (profil) :', e);
+            });
+        }
+    }
+});
 document.addEventListener('click', e => { if (profileDropdown && !e.target.closest('.user-auth')) profileDropdown.classList.remove('active'); });
 const mobileBtn = document.getElementById('mobile-menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');

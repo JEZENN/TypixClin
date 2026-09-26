@@ -550,6 +550,9 @@ a { color:var(--blue); text-decoration:none; }
             <div class="nav-item" data-section="subscriptions" onclick="showSection('subscriptions', this)">
                 <i class="fas fa-crown"></i> Abonnements
             </div>
+            <div class="nav-item" data-section="referrals" onclick="showSection('referrals', this)">
+                <i class="fas fa-gift"></i> Parrainage
+            </div>
             <div class="nav-section-label">Données</div>
             <div class="nav-item" data-section="backups" onclick="showSection('backups', this)">
                 <i class="fas fa-database"></i> Sauvegardes
@@ -720,6 +723,45 @@ a { color:var(--blue); text-decoration:none; }
                         </thead>
                         <tbody id="subs-tbody">
                             <tr><td colspan="7"><div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Chargement…</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ PARRAINAGE (2026-09-24) ═══
+             Aucune lecture Firestore dédiée : referralCode/referralActiveCount/
+             referralMonthsGranted sont déjà dans allUsers (chargé par loadUsers()
+             pour la section Utilisateurs) puisque ce sont des champs ordinaires de
+             users/{uid} — on ne fait que filtrer/trier ce qui est déjà en mémoire. -->
+        <section id="section-referrals" class="section">
+            <div class="section-toolbar">
+                <div>
+                    <h1 class="page-title">Parrainage</h1>
+                    <p class="page-subtitle">Utilisateurs ayant au moins un compte parrainé actif, triés par nombre de comptes parrainés</p>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom:1.5rem">
+                <div id="referrals-summary" style="display:flex;gap:2rem;flex-wrap:wrap;padding:0.25rem 0">
+                    <div class="empty-state" style="padding:1rem 0"><div class="spinner blue"></div></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="table-toolbar">
+                    <input type="text" class="search-input" id="referrals-search" placeholder="Rechercher (nom, email, code)…" oninput="filterReferrals()">
+                </div>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Utilisateur <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="code">Code <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="active">Comptes parrainés <i class="fas fa-sort sort-icon"></i></th>
+                                <th data-sort="months">Mois offerts <i class="fas fa-sort sort-icon"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="referrals-tbody">
+                            <tr><td colspan="4"><div class="empty-state"><div class="spinner blue"></div><p style="margin-top:0.5rem">Chargement…</p></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -922,6 +964,8 @@ let usersSort = { field: 'createdAt', dir: 'desc' };
 let subsSort  = { field: 'name', dir: 'asc' };
 let usersView = [];
 let subsView  = [];
+let referralsSort = { field: 'active', dir: 'desc' };
+let referralsView = [];
 let currentAdmin = null;
 let onlineUnsubscribe = null;
 const USERS_CACHE_KEY = 'tc_admin_users_cache';
@@ -1115,6 +1159,7 @@ window.showSection = function(id, el) {
     // Lazy-load
     if (id === 'users' && allUsers.length > 0) renderUsersTable(allUsers);
     if (id === 'subscriptions' && allUsers.length > 0) renderSubsTable(allUsers);
+    if (id === 'referrals' && allUsers.length > 0) renderReferralsTable(allUsers);
     if (id === 'feedbacks') { renderFeedbacks(); setTimeout(() => { _fbNewIds.clear(); }, 1800); }
 };
 
@@ -1148,6 +1193,10 @@ function renderAllUserViews() {
     else renderSubsTable(allUsers);
     renderRecentUsers(allUsers.slice(0, 5));
     renderSubsSummary(allUsers);
+
+    const rSearch = document.getElementById('referrals-search');
+    if (rSearch && rSearch.value) filterReferrals();
+    else renderReferralsTable(allUsers);
 }
 
 window.loadUsers = async function(forceRefresh = false, silent = false) {
@@ -1280,6 +1329,74 @@ function renderSubsTable(users) {
     updateSortIndicators('#section-subscriptions', subsSort);
 }
 
+// ─── PARRAINAGE (2026-09-24) ───
+// referralCode / referralActiveCount / referralMonthsGranted sont des champs
+// ordinaires de users/{uid} (écrits par les Cloud Functions referralInit /
+// referralEnsureCode / referralMarkActive, cf. functions/index.js) : déjà
+// présents dans allUsers, aucune lecture Firestore supplémentaire ici.
+function renderReferralsTable(users) {
+    const tbody = document.getElementById('referrals-tbody');
+    const withReferrals = users.filter(u => (u.referralActiveCount || 0) > 0);
+    referralsView = withReferrals;
+    renderReferralsSummary(users);
+    if (!withReferrals.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-gift"></i><p>Aucun compte parrainé pour l’instant</p></div></td></tr>';
+        updateSortIndicators('#section-referrals', referralsSort);
+        return;
+    }
+    const sorted = [...withReferrals].sort((a, b) => sortCompare(referralSortValue(a, referralsSort.field), referralSortValue(b, referralsSort.field), referralsSort.dir));
+    tbody.innerHTML = sorted.map(u => `<tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar-sm" style="background:${avatarColor(u.uid)}">${getInitials(u.displayName||u.email)}</div>
+                    <div>
+                        <div class="user-name">${u.displayName || '—'}</div>
+                        <div class="user-email">${u.email || '—'}</div>
+                    </div>
+                </div>
+            </td>
+            <td><code style="font-size:0.8rem">${u.referralCode || '—'}</code></td>
+            <td>${u.referralActiveCount || 0}</td>
+            <td>${u.referralMonthsGranted || 0}</td>
+        </tr>`).join('');
+    updateSortIndicators('#section-referrals', referralsSort);
+}
+
+function renderReferralsSummary(users) {
+    const el = document.getElementById('referrals-summary');
+    if (!el) return;
+    const parrains = users.filter(u => (u.referralActiveCount || 0) > 0).length;
+    const totalActive = users.reduce((s, u) => s + (u.referralActiveCount || 0), 0);
+    const totalMonths = users.reduce((s, u) => s + (u.referralMonthsGranted || 0), 0);
+    el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem">
+            <i class="fas fa-user-group" style="color:var(--purple);width:16px;text-align:center"></i>
+            <span style="font-size:0.875rem;color:var(--text-muted)">Parrains actifs</span>
+            <strong style="color:var(--text)">${parrains}</strong>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+            <i class="fas fa-user-check" style="color:var(--blue);width:16px;text-align:center"></i>
+            <span style="font-size:0.875rem;color:var(--text-muted)">Comptes parrainés au total</span>
+            <strong style="color:var(--text)">${totalActive}</strong>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+            <i class="fas fa-gift" style="color:var(--amber);width:16px;text-align:center"></i>
+            <span style="font-size:0.875rem;color:var(--text-muted)">Mois Premium offerts au total (coût du programme)</span>
+            <strong style="color:var(--text)">${totalMonths}</strong>
+        </div>`;
+}
+
+// Filtre uniquement par recherche : renderReferralsTable applique déjà
+// elle-même le filtre referralActiveCount > 0, pas besoin de le refaire ici.
+window.filterReferrals = function() {
+    const search = document.getElementById('referrals-search').value.toLowerCase();
+    const filtered = !search ? allUsers : allUsers.filter(u =>
+        (u.displayName || '').toLowerCase().includes(search)
+        || (u.email || '').toLowerCase().includes(search)
+        || (u.referralCode || '').toLowerCase().includes(search));
+    renderReferralsTable(filtered);
+};
+
 // ─── TRI DES TABLEAUX ───
 function _toMsVal(v) {
     if (!v) return 0;
@@ -1314,6 +1431,15 @@ function subSortValue(u, field) {
         default:       return 0;
     }
 }
+function referralSortValue(u, field) {
+    switch (field) {
+        case 'name':   return (u.displayName || u.email || '').toLowerCase();
+        case 'code':   return (u.referralCode || '').toLowerCase();
+        case 'active': return u.referralActiveCount || 0;
+        case 'months': return u.referralMonthsGranted || 0;
+        default:       return 0;
+    }
+}
 function sortCompare(a, b, dir) {
     const d = dir === 'asc' ? 1 : -1;
     if (typeof a === 'string' || typeof b === 'string') return String(a).localeCompare(String(b), 'fr') * d;
@@ -1338,9 +1464,15 @@ window.setSubsSort = function(field) {
     else subsSort = { field, dir: (field === 'start' || field === 'end') ? 'desc' : 'asc' };
     renderSubsTable(subsView);
 };
+window.setReferralsSort = function(field) {
+    if (referralsSort.field === field) referralsSort.dir = referralsSort.dir === 'asc' ? 'desc' : 'asc';
+    else referralsSort = { field, dir: (field === 'active' || field === 'months') ? 'desc' : 'asc' };
+    renderReferralsTable(referralsView);
+};
 // Branchement des clics sur les en-têtes (les éléments existent dès le chargement)
 document.querySelectorAll('#section-users th[data-sort]').forEach(th => th.addEventListener('click', () => setUsersSort(th.dataset.sort)));
 document.querySelectorAll('#section-subscriptions th[data-sort]').forEach(th => th.addEventListener('click', () => setSubsSort(th.dataset.sort)));
+document.querySelectorAll('#section-referrals th[data-sort]').forEach(th => th.addEventListener('click', () => setReferralsSort(th.dataset.sort)));
 
 // ─── FEEDBACKS ───
 let allFeedbacks = [];
