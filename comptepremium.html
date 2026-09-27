@@ -1464,8 +1464,22 @@ textarea:focus-visible,
     animation: spin 0.7s linear infinite;
 }
 /* ===== CONTENT SECTION ===== */
+/* BUGFIX (2026-09-27) : cette classe est toujours posée EN PLUS de .container
+   sur le même élément (class="container content-section", un seul usage dans
+   tout le fichier). L'ancien raccourci `padding: var(--space-12) 0;` écrase
+   ENTIÈREMENT le padding (les 4 côtés), y compris le padding gauche/droite de
+   .container (0 1.5rem) déjà posé juste avant dans la feuille de style — à
+   spécificité égale (une seule classe chacune), c'est l'ordre dans le fichier
+   qui tranche, donc .content-section gagnait et ramenait le padding horizontal
+   à 0. Résultat en production : tout le contenu de Compte Premium (titre et
+   texte de « Mon abonnement », de « Parrainage », les onglets EDN/ECOS…)
+   touchait les bords réels de l'écran sur téléphone (mesuré : 3 à 9 px du
+   bord, au lieu des 24 px de .container) — signalé par Jean sur la section
+   Parrainage, mais présent partout dans #main-content depuis toujours.
+   Correctif : ne plus toucher qu'au haut/bas, jamais aux côtés. */
 .content-section {
-    padding: var(--space-12) 0;
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
 }
 
 .alert {
