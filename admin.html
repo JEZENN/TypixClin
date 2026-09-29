@@ -777,7 +777,7 @@ a { color:var(--blue); text-decoration:none; }
 
             <div class="alert alert-warning" style="margin-bottom:1.5rem">
                 <i class="fas fa-exclamation-triangle"></i>
-                <strong>Attention :</strong> La restauration écrase le planning de l'utilisateur — EDN (<code>planningRevision</code>) ou ECOS (<code>ECOSRevision</code>) selon la sauvegarde choisie. L'abonnement et le compte ne sont pas touchés.
+                <span><strong>Attention :</strong> La restauration écrase le planning de l'utilisateur — EDN (<code>planningRevision</code>) ou ECOS (<code>ECOSRevision</code>) selon la sauvegarde choisie : tours, planning, to-do (et entraînements pour EDN) reviennent à l'état de la version. Le programme sur-mesure, les notes et les cahiers d'erreurs contenus dans la sauvegarde sont seulement <strong>complétés</strong> : ce qui manque (ou est vide) revient, rien d'existant n'est modifié ni retiré. L'abonnement et le compte ne sont pas touchés.</span>
             </div>
 
             <div class="backup-search">
@@ -933,7 +933,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
     getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
-    serverTimestamp, Timestamp, query, orderBy, limit, onSnapshot
+    serverTimestamp, Timestamp, query, orderBy, limit, onSnapshot,
+    runTransaction, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     getDatabase, ref as rtdbRef, onValue
@@ -1830,14 +1831,269 @@ const BACKUP_PRODUCTS = {
     edn: {
         label: 'EDN', collection: 'planningBackups', targetDoc: 'planningRevision',
         itemsKey: 'items', itemsLabel: 'Items',
-        restoreFields: ['items', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'trainings', 'deletedDefaultIds']
+        restoreFields: ['items', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'trainings', 'deletedDefaultIds'],
+        // AJOUT (2026-09-29) : parties restaurées par UNION (cf. restoreExtras plus bas).
+        // `scoped` = collection différente en programme sur-mesure (suffixe « _perso »,
+        // comme TPXC() dans le tableur) → remise seulement si la sauvegarde indique son mode.
+        planningLabel: 'Tours, planning, to-do et entraînements',
+        notes: [
+            { key: 'notesEntrainements', coll: 'notesEntrainements', scoped: false, label: "Notes d'entraînement (cahier d'erreurs de chaque entraînement)" },
+            { key: 'notesSpecialites', coll: 'ErreurSpe', scoped: true, label: "Cahiers d'erreurs par matière" }
+        ]
     },
     ecos: {
         label: 'ECOS', collection: 'ECOSBackups', targetDoc: 'ECOSRevision',
         itemsKey: 'sdds', itemsLabel: 'SDD',
-        restoreFields: ['sdds', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'sddPageSize']
+        restoreFields: ['sdds', 'trophies', 'planningData', 'checklistData', 'selectedResources', 'sddPageSize'],
+        planningLabel: 'Passages des SDD, planning et to-do',
+        notes: [
+            { key: 'notesECOS', coll: 'notesECOS', scoped: true, label: 'Notes des SDD' },
+            { key: 'erreurECOS', coll: 'ErreurECOS', scoped: true, label: "Cahiers d'erreurs par matière" }
+        ]
     }
 };
+
+// ─── RESTAURATION : parties complétées par UNION (AJOUT 2026-09-29) ───
+// Programme sur-mesure (users/{uid}/content/{edn|ecos}), notes et cahiers d'erreurs
+// contenus dans la sauvegarde. Principe : ce qui MANQUE (ou est vide) revient ; rien
+// de ce qui existe n'est modifié ni retiré. Nécessite les règles Firestore du
+// 2026-09-29 (lecture/écriture admin sur ces sous-collections) ; sans elles, ces
+// parties échouent proprement et le bilan le dit — la restauration du planning, elle,
+// fonctionne comme avant.
+
+// Texte à afficher dans le bilan : échappé (les noms viennent de l'utilisateur).
+function tpxEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Une note a-t-elle un contenu ? Analyse par expressions régulières UNIQUEMENT : le
+// HTML vient de l'utilisateur, il ne doit jamais être interprété par cette page
+// (une image piégée <img onerror=…> s'exécuterait même dans un élément détaché).
+// Prudence : dans le doute, la note est considérée comme NON vide (donc conservée).
+function tpxNoteHasContent(n) {
+    if (!n || typeof n !== 'object') return false;
+    if (n.hasContent === true) return true;
+    const html = typeof n.html === 'string' ? n.html : '';
+    if (!html) return false;
+    if (/<(img|table|hr|svg|video|audio|iframe|canvas|object|embed|input|math)\b/i.test(html)) return true;
+    const text = html
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
+        .replace(/[\s ​﻿]+/g, '');
+    return text.length > 0;
+}
+
+// Union de la structure sur-mesure : `current` (document actuel) + ce que `saved`
+// (sauvegarde) contient en plus. Les éléments actuels restent tels quels. ECOS : une
+// SDD existante retrouve seulement ses liens vers les matières remises ici.
+function tpxUnionCustomContent(product, current, saved) {
+    const arr = (x) => Array.isArray(x) ? x : [];
+    const norm = (s) => String(s == null ? '' : s).trim().toLowerCase();
+    const cur = (current && typeof current === 'object') ? current : {};
+    const sv = (saved && typeof saved === 'object') ? saved : {};
+    const stats = { specialties: 0, items: 0, sdd: 0, links: 0, conflicts: 0 };
+    const restoredIds = [];
+
+    const curSpecs = arr(cur.specialties);
+    const haveSpec = new Set(curSpecs.filter(s => s && s.id != null).map(s => String(s.id)));
+    const addedSpecs = arr(sv.specialties).filter(s => s && s.id != null && !haveSpec.has(String(s.id)));
+    addedSpecs.forEach(s => { haveSpec.add(String(s.id)); restoredIds.push(String(s.id)); });
+    stats.specialties = addedSpecs.length;
+    const out = Object.assign({}, cur, {
+        schemaVersion: cur.schemaVersion || sv.schemaVersion || 1,
+        specialties: curSpecs.concat(addedSpecs)
+    });
+
+    if (product === 'edn') {
+        const key = (i) => String(i.specialtyId) + '|' + String(i.num);
+        const curItems = arr(cur.items);
+        const byKey = new Map();
+        curItems.forEach(i => { if (i && i.specialtyId != null && i.num != null) byKey.set(key(i), i); });
+        const added = [];
+        arr(sv.items).forEach(i => {
+            if (!i || i.specialtyId == null || i.num == null || !haveSpec.has(String(i.specialtyId))) return;
+            const k = key(i), c = byKey.get(k);
+            if (!c) { added.push(i); byKey.set(k, i); restoredIds.push(k); }
+            else if (norm(c.name) !== norm(i.name)) stats.conflicts++;   // numéro repris par un autre item
+        });
+        out.items = curItems.concat(added);
+        stats.items = added.length;
+    } else {
+        const addedSpecSet = new Set(addedSpecs.map(s => String(s.id)));
+        const svById = new Map();
+        arr(sv.sdd).forEach(d => { if (d && d.id != null) svById.set(String(d.id), d); });
+        const have = new Set();
+        const kept = arr(cur.sdd).map(d => {
+            if (!d || d.id == null) return d;
+            have.add(String(d.id));
+            const s = svById.get(String(d.id));
+            if (!s || !addedSpecSet.size) return d;
+            const links = arr(d.specialties).map(String);
+            const extra = arr(s.specialties).filter(x => addedSpecSet.has(String(x)) && links.indexOf(String(x)) === -1);
+            if (!extra.length) return d;
+            stats.links += extra.length;
+            return Object.assign({}, d, { specialties: arr(d.specialties).concat(extra) });
+        });
+        const added = [];
+        arr(sv.sdd).forEach(d => {
+            if (!d || d.id == null || have.has(String(d.id))) return;
+            const links = arr(d.specialties).filter(x => haveSpec.has(String(x)));
+            if (!links.length) return;                                    // SDD sans matière : invisible
+            added.push(Object.assign({}, d, { specialties: links }));
+            have.add(String(d.id)); restoredIds.push(String(d.id));
+        });
+        out.sdd = kept.concat(added);
+        stats.sdd = added.length;
+    }
+    return { doc: out, restoredIds, stats };
+}
+
+// Écrit l'union dans une transaction (un onglet de l'utilisateur qui écrirait au même
+// moment n'est pas écrasé : la transaction relit et recommence). Le tableur reconnaît
+// `restoredAt` / `restoredIds` et ne re-supprime pas ce qui a été remis.
+async function tpxRestoreCustomContent(uid, product, saved) {
+    const ref = doc(db, 'users', uid, 'content', product);
+    return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const current = snap.exists() ? snap.data() : null;
+        const u = tpxUnionCustomContent(product, current, saved);
+        const changed = u.stats.specialties + u.stats.items + u.stats.sdd + u.stats.links > 0;
+        if (!changed) return u.stats;
+        const stamp = new Date().toISOString();
+        const prevIds = Array.isArray(current && current.restoredIds) ? current.restoredIds.map(String) : [];
+        const docOut = Object.assign({}, u.doc, {
+            updatedAt: stamp,   // nouvel horodatage : les onglets ouverts FUSIONNENT au lieu d'écraser
+            restoredAt: stamp,
+            restoredIds: Array.from(new Set(prevIds.concat(u.restoredIds))).slice(-5000)
+        });
+        tx.set(ref, docOut);
+        return u.stats;
+    });
+}
+
+// Notes / cahiers : seuls les documents ABSENTS, ou présents mais vides alors que la
+// sauvegarde en a une version remplie, sont écrits. Tout le reste est conservé.
+async function tpxRestoreNotesMissingOnly(uid, collName, savedMap, allowId) {
+    const entries = Object.entries(savedMap || {}).filter(([id, v]) =>
+        v && typeof v === 'object' && tpxNoteHasContent(v) && (!allowId || allowId(id)));
+    if (!entries.length) return { restored: 0, kept: 0, total: 0 };
+    const snap = await getDocs(collection(db, 'users', uid, collName));
+    const current = new Map(snap.docs.map(d => [d.id, d.data()]));
+    const toWrite = entries.filter(([id]) => !current.has(id) || !tpxNoteHasContent(current.get(id)));
+    for (let i = 0; i < toWrite.length; i += 400) {
+        const batch = writeBatch(db);
+        toWrite.slice(i, i + 400).forEach(([id, v]) => batch.set(doc(db, 'users', uid, collName, id), v));
+        await batch.commit();
+    }
+    return { restored: toWrite.length, kept: entries.length - toWrite.length, total: entries.length };
+}
+
+// Parties complémentaires d'une restauration ; renvoie les lignes du bilan.
+// Chaque partie est indépendante : un échec n'empêche pas les autres.
+async function restoreExtras(uid, product, backupDocData, dataToRestore) {
+    const cfg = BACKUP_PRODUCTS[product];
+    const lines = [];
+    const b = backupDocData || null;
+    const failText = (e) => (e && (e.code === 'permission-denied' || /permission/i.test(e.message || '')))
+        ? 'accès refusé par les règles Firestore (les règles du 29/09/2026 sont-elles publiées ?)'
+        : ((e && e.message) || 'erreur inconnue');
+
+    // 1) Programme sur-mesure (structure)
+    const cc = b && b.customContent;
+    const ccHas = cc && typeof cc === 'object' &&
+        ((Array.isArray(cc.specialties) && cc.specialties.length) ||
+         (Array.isArray(cc.items) && cc.items.length) || (Array.isArray(cc.sdd) && cc.sdd.length));
+    if (!ccHas) {
+        lines.push({ level: 'info', text: 'Programme sur-mesure : absent de cette sauvegarde (compte sans programme sur-mesure, ou sauvegarde antérieure au 29/09/2026).' });
+    } else {
+        try {
+            const st = await tpxRestoreCustomContent(uid, product, cc);
+            const parts = [];
+            if (st.specialties) parts.push(st.specialties + ' matière(s)');
+            if (st.items) parts.push(st.items + ' item(s)');
+            if (st.sdd) parts.push(st.sdd + ' SDD');
+            if (st.links) parts.push(st.links + ' lien(s) SDD–matière');
+            if (parts.length) {
+                lines.push({ level: 'ok', text: 'Programme sur-mesure : ' + parts.join(', ') + ' remis(es), rien de l\'existant retiré. Si l\'utilisateur a la page ouverte, il doit la recharger pour voir les lignes remises.' });
+            } else {
+                lines.push({ level: 'info', text: 'Programme sur-mesure : rien ne manquait (tout ce que contient la sauvegarde est déjà présent).' });
+            }
+            if (st.conflicts) {
+                lines.push({ level: 'warn', text: 'Programme sur-mesure : ' + st.conflicts + ' item(s) non remis, leur numéro est aujourd\'hui pris par un autre item de la même matière.' });
+            }
+        } catch (e) {
+            console.error('[Restore] programme sur-mesure :', e);
+            lines.push({ level: 'error', text: 'Programme sur-mesure NON remis : ' + failText(e) + '.' });
+        }
+    }
+
+    // 2) Notes et cahiers d'erreurs
+    const mode = b && (b.contentMode === 'custom' || b.contentMode === 'official') ? b.contentMode : null;
+    const trainIds = (product === 'edn' && Array.isArray(dataToRestore && dataToRestore.trainings))
+        ? new Set(dataToRestore.trainings.filter(t => t && t.id != null).map(t => String(t.id)))
+        : null;
+    for (const n of cfg.notes) {
+        const map = b && b[n.key] && typeof b[n.key] === 'object' ? b[n.key] : null;
+        const count = map ? Object.keys(map).length : 0;
+        if (!count) {
+            lines.push({ level: 'info', text: n.label + ' : aucune dans cette sauvegarde.' });
+            continue;
+        }
+        if (n.scoped && !mode) {
+            lines.push({ level: 'warn', text: n.label + ' : non remis — cette sauvegarde n\'indique pas si elle a été faite en mode officiel ou sur-mesure (sauvegarde antérieure au 29/09/2026).' });
+            continue;
+        }
+        const coll = (n.scoped && mode === 'custom') ? n.coll + '_perso' : n.coll;
+        // Notes d'entraînement : seulement celles des entraînements présents dans la version.
+        const allow = (n.key === 'notesEntrainements' && trainIds) ? (id => trainIds.has(String(id))) : null;
+        try {
+            const r = await tpxRestoreNotesMissingOnly(uid, coll, map, allow);
+            lines.push({ level: 'ok', text: n.label + ' : ' + r.restored + ' remise(s), ' + r.kept + ' déjà présente(s) et conservée(s)' + (mode && n.scoped ? ' (mode ' + (mode === 'custom' ? 'sur-mesure' : 'officiel') + ')' : '') + '.' });
+        } catch (e) {
+            console.error('[Restore] ' + n.key + ' :', e);
+            lines.push({ level: 'error', text: n.label + ' NON remis : ' + failText(e) + '.' });
+        }
+    }
+    if (b && b.partial) {
+        lines.push({ level: 'warn', text: 'Sauvegarde marquée partielle (parties manquantes : ' + (Array.isArray(b.missingParts) ? b.missingParts.join(', ') : '?') + ').' });
+    }
+    return lines;
+}
+
+function showRestoreReport(product, lines) {
+    const cfg = BACKUP_PRODUCTS[product];
+    const area = document.getElementById('backup-result-area');
+    if (!area) return;
+    const old = document.getElementById('restore-report');
+    if (old) old.remove();
+    const box = document.createElement('div');
+    box.id = 'restore-report';
+    const bad = lines.some(l => l.level === 'error' || l.level === 'warn');
+    box.className = 'alert ' + (bad ? 'alert-warning' : 'alert-success');
+    box.style.display = 'block';
+    box.style.marginBottom = '1rem';
+    const icon = { ok: '✅', info: 'ℹ️', warn: '⚠️', error: '❌' };
+    box.innerHTML = `<div style="font-weight:700;margin-bottom:0.4rem"><i class="fas fa-clipboard-check"></i> Restauration ${tpxEsc(cfg.label)} — bilan</div>` +
+        lines.map(l => `<div class="restore-report-line" data-level="${l.level}" style="margin:0.2rem 0">${icon[l.level] || '•'} ${tpxEsc(l.text)}</div>`).join('');
+    area.prepend(box);
+    try { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+}
+
+// Ce que contient une sauvegarde, en plus du planning (badges sur la carte).
+function backupExtrasBadges(product, d) {
+    if (!d) return '';
+    const cfg = BACKUP_PRODUCTS[product];
+    const out = [];
+    const cc = d.customContent;
+    if (cc && ((Array.isArray(cc.specialties) && cc.specialties.length) || (Array.isArray(cc.items) && cc.items.length) || (Array.isArray(cc.sdd) && cc.sdd.length))) {
+        out.push('<span class="badge badge-active" style="font-size:0.65rem">Programme sur-mesure</span>');
+    }
+    const nNotes = cfg.notes.reduce((s, n) => s + (d[n.key] && typeof d[n.key] === 'object' ? Object.keys(d[n.key]).length : 0), 0);
+    if (nNotes) out.push(`<span class="badge badge-active" style="font-size:0.65rem">${nNotes} note(s)/cahier(s)</span>`);
+    if (d.contentMode === 'custom') out.push('<span class="badge badge-premium" style="font-size:0.65rem">Mode sur-mesure</span>');
+    else if (d.contentMode === 'official') out.push('<span class="badge badge-premium" style="font-size:0.65rem">Mode officiel</span>');
+    return out.length ? `<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin:-0.5rem 0 1rem">${out.join('')}</div>` : '';
+}
 
 window.searchBackup = async function() {
     const uid = document.getElementById('backup-uid-input').value.trim();
@@ -1908,7 +2164,8 @@ function renderBackupResult(uid, user, perProduct) {
                 itemsLabel: cfg.itemsLabel,
                 details: v.details,
                 hasData: !!data,
-                isManual: v.isManual
+                isManual: v.isManual,
+                extrasHtml: backupExtrasBadges(product, v)
             });
         });
 
@@ -1921,7 +2178,8 @@ function renderBackupResult(uid, user, perProduct) {
                 items: legacy.itemsCount,
                 itemsLabel: cfg.itemsLabel,
                 details: legacy.details,
-                hasData: !!legacy.data
+                hasData: !!legacy.data,
+                extrasHtml: backupExtrasBadges(product, legacy)
             });
         }
 
@@ -1955,7 +2213,7 @@ function renderBackupResult(uid, user, perProduct) {
     area.innerHTML = html;
 }
 
-function renderBackupCard({ uid, product, source, versionId, title, date, items, itemsLabel, details, hasData, isManual }) {
+function renderBackupCard({ uid, product, source, versionId, title, date, items, itemsLabel, details, hasData, isManual, extrasHtml }) {
     const itemsHtml = items != null
         ? `<div class="backup-meta-item"><div class="backup-meta-label">${itemsLabel || 'Éléments'}</div><div class="backup-meta-value blue">${items}</div></div>`
         : '';
@@ -1977,6 +2235,7 @@ function renderBackupCard({ uid, product, source, versionId, title, date, items,
             ${itemsHtml}
             ${details ? `<div class="backup-meta-item"><div class="backup-meta-label">Matières</div><div class="backup-meta-value blue">${details.specialties||'—'}</div></div>` : ''}
         </div>
+        ${extrasHtml || ''}
         ${hasData ? `<div class="backup-actions">
             <button class="btn btn-success" onclick="confirmRestore('${uid}', '${product}', '${source}'${vId})">
                 <i class="fas fa-undo-alt"></i> Restaurer cette version
@@ -1991,7 +2250,10 @@ window.confirmRestore = function(uid, product, source, versionId) {
     const cfg = BACKUP_PRODUCTS[product];
     confirmAction(
         '⚠️ Restaurer la sauvegarde',
-        `Restaurer le planning ${cfg.label} de <strong>${name}</strong> à partir de cette version ?<br><br>Les données de planning ${cfg.label} actuelles (collection <code>${cfg.targetDoc}</code>) seront remplacées. L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
+        `Restaurer le planning ${cfg.label} de <strong>${name}</strong> à partir de cette version ?<br><br>` +
+        `• <strong>Remplacés</strong> par la version : ${cfg.planningLabel.toLowerCase()} (collection <code>${cfg.targetDoc}</code>).<br>` +
+        `• <strong>Complétés seulement</strong>, s'ils sont dans la sauvegarde : programme sur-mesure, notes et cahiers d'erreurs — ce qui manque (ou est vide) revient, rien d'existant n'est modifié ni retiré.<br><br>` +
+        `L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
         async () => { await doRestore(uid, product, source, versionId); }
     );
 };
@@ -2000,17 +2262,23 @@ async function doRestore(uid, product, source, versionId) {
     const cfg = BACKUP_PRODUCTS[product];
     try {
         let dataToRestore = null;
+        // AJOUT (2026-09-29) : document de sauvegarde complet (structure sur-mesure, notes,
+        // mode), utilisé APRÈS la restauration du planning par restoreExtras().
+        let backupDocData = null;
 
         if (source === 'version') {
             const vSnap = await getDoc(doc(db, cfg.collection, uid, 'versions', versionId));
             if (!vSnap.exists()) throw new Error('Version introuvable');
             const v = vSnap.data();
             dataToRestore = v.data || v.cloudBackup;
+            backupDocData = v;
         } else {
             const backupSnap = await getDoc(doc(db, cfg.collection, uid));
             if (!backupSnap.exists()) throw new Error('Sauvegarde introuvable');
             const backup = backupSnap.data();
             dataToRestore = source === 'cloud' ? backup.cloudBackup : backup.data;
+            // L'ancienne « sauvegarde cloud » ne contient ni structure ni notes.
+            backupDocData = source === 'cloud' ? null : backup;
         }
         if (!dataToRestore) throw new Error('Données de sauvegarde vides');
 
@@ -2061,6 +2329,16 @@ async function doRestore(uid, product, source, versionId) {
         }).catch(()=>{});
 
         toast(`Planning ${cfg.label} restauré — l'utilisateur le verra en temps réel`, 'success');
+
+        // AJOUT (2026-09-29) : structure sur-mesure + notes / cahiers, par union, puis bilan.
+        const lines = [{ level: 'ok', text: cfg.planningLabel + ' : remis à l\'état de la version (visible en temps réel par l\'utilisateur).' }];
+        try {
+            lines.push(...await restoreExtras(uid, product, backupDocData, dataToRestore));
+        } catch (e) {
+            console.error('[Restore] parties complémentaires :', e);
+            lines.push({ level: 'error', text: 'Parties complémentaires non restaurées : ' + ((e && e.message) || 'erreur inconnue') + '.' });
+        }
+        showRestoreReport(product, lines);
     } catch (e) {
         toast('Erreur de restauration : ' + e.message, 'error');
     }
