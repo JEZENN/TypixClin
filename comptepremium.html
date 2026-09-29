@@ -4381,7 +4381,57 @@ function displayUserStatus() {
             && (userData.cancelAtPeriodEnd === true
                 || (userData.subscriptionStatus !== 'active' && userData.subscriptionStatus !== 'trialing'));
 
-        if (canceling) {
+        /* CORRECTIF (2026-09-29, vérification demandée par Jean) : accès OFFERT
+           sur un compte SANS abonnement — typiquement les mois gagnés par le
+           PARRAINAGE sur un compte en gratuité (le bonus pose subscriptionStatus
+           'trialing' + une date, cf. creditReferrerInTransaction). Sans ce cas,
+           la branche « Abonnement confirmé » ci-dessous annonçait « Premier
+           prélèvement … puis 3 €/mois automatiquement » à quelqu'un qui n'a
+           AUCUN abonnement et ne sera jamais prélevé, avec un bouton « Gérer mon
+           abonnement » qui échouait (aucun client Stripe) et sans les offres. */
+        const isRecurringPlanType = userData.premiumType === 'monthly' || userData.premiumType === 'annual';
+        const isGiftedNoSubscription = !isFixed && !isRecurringPlanType && userData.subscriptionStatus === 'trialing';
+        const referralMonths = Number(userData.referralMonthsGranted) || 0;
+
+        if (isGiftedNoSubscription) {
+            const fromReferral = referralMonths > 0;
+            const giftDaysLeft = endDate ? Math.max(0, Math.ceil((endDate - new Date()) / 86400000)) : 0;
+            if (statusCard) statusCard.classList.add('is-active');
+            badgeHTML = '<span class="status-badge status-active"><i class="fas fa-gift"></i> '
+                + (fromReferral ? 'Mois offerts' : 'Accès offert') + '</span>';
+            infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">Statut :</span>
+                    <span class="info-value">${fromReferral ? 'Premium offert (parrainage)' : 'Premium offert'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Accès Premium jusqu'au :</span>
+                    <span class="info-value"><span class="dot ${giftDaysLeft <= 15 ? 'dot-warn' : 'dot-ok'}"></span>${endStr}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Prélèvement :</span>
+                    <span class="info-value">Aucun</span>
+                </div>
+                <div class="info-note info-note-blue">
+                    <i class="fas fa-circle-info"></i>
+                    ${fromReferral
+                        ? `Grâce au parrainage, vous avez gagné ${referralMonths} mois Premium offert${referralMonths > 1 ? 's' : ''} : votre accès court jusqu'au ${endStr}. Aucun abonnement n'est en cours, rien ne vous sera prélevé. Pour continuer après cette date, choisissez une formule ci-dessous : vos jours offerts restants sont conservés (le Mensuel ne sera prélevé qu'à leur fin ; une formule en paiement unique les ajoute à sa date de fin).`
+                        : `Votre accès Premium offert court jusqu'au ${endStr}. Aucun abonnement n'est en cours, rien ne vous sera prélevé. Pour continuer après cette date, choisissez une formule ci-dessous.`}
+                </div>
+            `;
+            if (giftDaysLeft <= 15) {
+                graceAlert.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Attention !</strong> Votre accès Premium offert se termine dans ${giftDaysLeft} jour${giftDaysLeft > 1 ? 's' : ''}.
+                        Choisissez une formule pour continuer à utiliser TypixClin.
+                    </div>
+                `;
+                graceAlert.style.display = 'block';
+            } else {
+                graceAlert.style.display = 'none';
+            }
+            showPlans = true;
+        } else if (canceling) {
             if (statusCard) statusCard.classList.add('is-grace');
             badgeHTML = '<span class="status-badge status-grace"><i class="fas fa-hourglass-half"></i> Abonnement résilié</span>';
             infoHTML = `
@@ -4433,12 +4483,12 @@ function displayUserStatus() {
                     <span class="info-value">${planName}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Premier prélèvement :</span>
+                    <span class="info-label">Prochain prélèvement :</span>
                     <span class="info-value"><span class="dot dot-ok"></span>${endStr}</span>
                 </div>
                 <div class="info-note info-note-blue">
                     <i class="fas fa-circle-info"></i>
-                    Votre abonnement Mensuel est confirmé. Vous profitez de votre période gratuite jusqu'au ${endStr} : aucun prélèvement avant cette date, puis 3 €/mois automatiquement. Vous pouvez annuler à tout moment avant cette échéance depuis « Gérer mon abonnement », sans rien payer.
+                    Votre abonnement Mensuel est confirmé. Vous profitez de votre période gratuite${referralMonths > 0 ? ' (mois offerts grâce au parrainage inclus)' : ''} jusqu'au ${endStr} : aucun prélèvement avant cette date, puis 3 €/mois automatiquement. Vous pouvez annuler à tout moment avant cette échéance depuis « Gérer mon abonnement », sans rien payer.
                 </div>
             `;
         } else if (isFixed) {
@@ -4503,7 +4553,7 @@ function displayUserStatus() {
         /* Portail Stripe (résiliation, moyen de paiement...) : uniquement
            pertinent pour un abonnement récurrent réel (mensuel/annuel).
            Une formule fixe n'a aucun abonnement Stripe à y gérer. */
-        portalBtn.style.display = isFixed ? 'none' : 'inline-block';
+        portalBtn.style.display = (isFixed || isGiftedNoSubscription) ? 'none' : 'inline-block';
     }
     // Grace Period / Essai — uniquement si NON abonné (cf. ci-dessus).
     else if (userData.premiumType === 'grace_period') {
