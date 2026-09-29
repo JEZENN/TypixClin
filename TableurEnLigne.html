@@ -18006,7 +18006,7 @@ window.TPXNotesPending = {
     <!-- Intitulé -->
     <div class="modal-section">
       <label class="modal-label">Intitulé <span style="color:#ef4444">*</span></label>
-      <input type="text" id="train-title-input" class="modal-input" placeholder="Ex: Masterclass transversale N°1">
+      <input type="text" id="train-title-input" class="modal-input" placeholder="Ex: Masterclass transversale N°1" autocomplete="off">
       <div class="confidence-error" id="train-title-error">Veuillez saisir un intitulé</div>
     </div>
 
@@ -23442,9 +23442,14 @@ async function saveBackupToFirebase(userId, data) {
         }
 
         // -- Inclure le cahier d'erreurs par specialite (subcollection ErreurSpe) --
+        // AJOUT (2026-09-29) : nom de collection figé UNE fois — le mode enregistré dans la
+        // sauvegarde (contentMode) est ainsi celui où ce cahier a réellement été lu (la page
+        // admin s'en sert pour le remettre au bon endroit : ErreurSpe ou ErreurSpe_perso).
+        const _speCollName = TPXC('ErreurSpe');
+        const _backupContentMode = /_perso$/.test(_speCollName) ? 'custom' : 'official';
         const notesSpecialitesMap = {};
         try {
-            const speRef = collection(db, 'users', userId, TPXC('ErreurSpe'));
+            const speRef = collection(db, 'users', userId, _speCollName);
             const speSnap = await getDocs(speRef);
             speSnap.forEach(function(speDoc) {
                 notesSpecialitesMap[speDoc.id] = speDoc.data();
@@ -23453,6 +23458,21 @@ async function saveBackupToFirebase(userId, data) {
         } catch (speErr) {
             console.warn('[Backup] Impossible de lire ErreurSpe :', speErr);
             _backupMissingParts.push('notesSpecialites');
+        }
+
+        // ── CORRECTIF (2026-09-29, vérification « mode personnalisé ») : structure du
+        //    programme sur-mesure (matières + items, document users/{uid}/content/edn).
+        //    Sans elle, une restauration remettait les tours des items personnalisés
+        //    mais pas les lignes pour les afficher (prouvé : verify-perso.js PE5/PE6).
+        //    Petit document ; une lecture en échec ne fait pas échouer la sauvegarde
+        //    (marquée partielle, jamais silencieusement « complète »). ──
+        let customContent = null;
+        try {
+            const ccSnap = await getDoc(doc(db, 'users', userId, 'content', 'edn'));
+            if (ccSnap.exists()) customContent = ccSnap.data();
+        } catch (ccErr) {
+            console.warn('[Backup] Impossible de lire le programme sur-mesure :', ccErr);
+            _backupMissingParts.push('customContent');
         }
 
         let backupData = {
@@ -23464,6 +23484,8 @@ async function saveBackupToFirebase(userId, data) {
             data: cleanData,
             notesEntrainements: notesEntrainementsMap,
             notesSpecialites: notesSpecialitesMap,
+            customContent: customContent,
+            contentMode: _backupContentMode,   // AJOUT (2026-09-29) : cf. _speCollName ci-dessus
             // Backup marqué explicitement partiel si une des deux subcollections
             // ci-dessus n'a pas pu être lue — jamais silencieusement "complet".
             partial: _backupMissingParts.length > 0,
@@ -23531,9 +23553,18 @@ async function saveBackupToFirebase(userId, data) {
         // principale dans la page admin. pushBackupVersion() gère déjà ses
         // propres erreurs en interne (try/catch), donc l'attendre ici ne
         // risque pas de faire échouer cette fonction si la version échoue.
-        if (window.pushBackupVersion) await window.pushBackupVersion(userId, cleanData, content);
-        
-        
+        // AJOUT (2026-09-29) : la version horodatée embarque aussi les notes / cahiers (déjà
+        // passés par la protection de taille ci-dessus) et le mode — sinon seule la sauvegarde
+        // principale, remplacée tous les 3 jours, permettait de les restaurer.
+        if (window.pushBackupVersion) await window.pushBackupVersion(userId, cleanData, content, customContent, {
+            contentMode: backupData.contentMode,
+            notesEntrainements: backupData.notesEntrainements,
+            notesSpecialites: backupData.notesSpecialites,
+            partial: backupData.partial,
+            missingParts: backupData.missingParts
+        });
+
+
         return { success: true, content: content };
         
     } catch (e) {
@@ -26416,7 +26447,21 @@ async function performRestoreFirebase() {
                     console.warn('[Restore] Echec restauration ErreurSpe :', speRestoreErr);
                 }
             }
-            
+
+            // ── CORRECTIF (2026-09-29) : structure du programme sur-mesure contenue dans
+            //    la sauvegarde — remise par UNION (rien d'actuel n'est retiré), pour que les
+            //    tours restaurés des items personnalisés aient de nouveau leurs lignes.
+            //    Sauvegardes plus anciennes (sans ce champ) : inchangé. ──
+            if (backupDocData && backupDocData.customContent && window.TPXPerso &&
+                typeof window.TPXPerso._mergeRestoredContent === 'function') {
+                try {
+                    const _ccAdded = window.TPXPerso._mergeRestoredContent(backupDocData.customContent);
+                    console.log('[Restore] programme sur-mesure : ' + _ccAdded + ' élément(s) remis');
+                } catch (ccRestoreErr) {
+                    console.warn('[Restore] Échec restauration du programme sur-mesure :', ccRestoreErr);
+                }
+            }
+
             // Rafraîchir l'interface            // Fermer le modal backup
             closeBackupModal();
             
@@ -54311,17 +54356,41 @@ async function _flushMetrics() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _flushMetrics(); });
 
 // ── Historique des sauvegardes (5 dernières versions) ──
-window.pushBackupVersion = async function (uid, data, content) {
+window.pushBackupVersion = async function (uid, data, content, customContent, extras) {
   if (!db || !data) return;
   try {
     const id = new Date().toISOString().replace(/[:.]/g, '-');
-    await setDoc(doc(db, 'planningBackups', uid, 'versions', id), {
-      data, itemsCount: content && content.items, details: content || null, createdAt: serverTimestamp(),
+    const version = {
+      data, itemsCount: content && content.items, details: content || null,
+      // ── CORRECTIF (2026-09-29) : structure du programme sur-mesure, comme le backup principal. ──
+      customContent: customContent || null,
       // ── MISSION CORRECTIVE, point 10 : même barème que le backup principal. ──
       confidenceScale: (typeof window.getConfidenceScale === 'function') ? window.getConfidenceScale() : 5,
       // ── AJOUT (2026-09-13) : idem pour le nombre de tours. ──
       extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false
-    });
+    };
+    // ── AJOUT (2026-09-29) : notes d'entraînement, cahiers d'erreurs par matière et mode
+    //    (officiel / sur-mesure), comme la sauvegarde principale, pour que la page admin
+    //    puisse les restaurer depuis n'importe quelle version. Même protection de taille
+    //    que la sauvegarde principale : au-delà, la version part SANS les notes (marquée
+    //    partielle) plutôt que d'échouer entièrement. ──
+    if (extras) {
+      version.contentMode = extras.contentMode || null;
+      version.notesEntrainements = extras.notesEntrainements || {};
+      version.notesSpecialites = extras.notesSpecialites || {};
+      version.partial = !!extras.partial;
+      version.missingParts = Array.isArray(extras.missingParts) ? extras.missingParts : [];
+      let _vSize = 0;
+      try { _vSize = new TextEncoder().encode(JSON.stringify(version)).length; } catch (e) { _vSize = JSON.stringify(version).length; }
+      if (_vSize > 750 * 1024) {
+        version.notesEntrainements = {};
+        version.notesSpecialites = {};
+        version.partial = true;
+        version.missingParts = version.missingParts.concat(['notes (taille)']);
+      }
+    }
+    version.createdAt = serverTimestamp();
+    await setDoc(doc(db, 'planningBackups', uid, 'versions', id), version);
     const snap = await getDocs(query(collection(db, 'planningBackups', uid, 'versions'), orderBy('createdAt', 'desc')));
     const docs = snap.docs;
     for (let i = 5; i < docs.length; i++) await deleteDoc(docs[i].ref);
@@ -60253,6 +60322,9 @@ window._todoValidateAnim = function (itemId, apply) {
 var LS_MODE  = 'tpx_' + APP + '_contentMode';
 var LS_TMODE = 'tpx_' + APP + '_trainingsMode';
 var LS_DATA  = 'tpx_' + APP + '_content';
+/* Marqueur « modification de structure pas encore confirmée par le serveur »
+   (CORRECTIF 2026-09-29, voir markContentDirty plus bas). */
+var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
 
     var OFFICIAL = 'official';
     var CUSTOM   = 'custom';
@@ -60410,6 +60482,10 @@ var state = {
     loaded: false,
     saveEnabled: false,
     remoteStamp: null,
+    /* AJOUT (2026-09-29) : dernière restauration faite depuis la page admin (restoredAt)
+       et éléments qu'elle a remis (restoredIds), tels que lus sur le document. */
+    remoteRestoredAt: null,
+    remoteRestoredIds: [],
     deletedIds: {}
 };
 
@@ -60423,6 +60499,8 @@ function resetState() {
     state.loaded = false;
     state.saveEnabled = false;
     state.remoteStamp = null;
+    state.remoteRestoredAt = null;
+    state.remoteRestoredIds = [];
     state.deletedIds = {};
 }
 
@@ -60919,9 +60997,133 @@ function setTrainingsPageVisible(visible) {
         }));
     }
 
+    /* ── CORRECTIF (2026-09-29, vérification « mode personnalisé » demandée par Jean) ──
+       Une modification de la STRUCTURE (matière, item, SDD) dont l'écriture n'avait pas
+       abouti (coupure réseau, onglet fermé dans la seconde qui suit, erreur passagère)
+       était PERDUE au chargement suivant : l'état du serveur remplaçait le cache local
+       puis l'écrasait, et rien ne réessayait l'envoi (prouvé sur la vraie page :
+       verify-perso.js PE3 / PE3b / PE4). Désormais chaque modification pose un marqueur
+       durable (même compte, jeton unique, référence du dernier état serveur connu,
+       suppressions faites ici), retiré SEULEMENT quand le serveur a confirmé l'écriture
+       portant ce jeton. Tant qu'il existe : nouveaux essais automatiques (2 s, 4 s, 8 s
+       puis toutes les 30 s, et dès le retour du réseau), envoi immédiat à la fermeture
+       de l'onglet, et au chargement suivant les modifications non envoyées sont
+       FUSIONNÉES avec l'état du serveur puis envoyées — jamais effacées. ── */
+    var contentRetryTimer = null, contentRetryAttempt = 0, contentPendingNotified = false;
+    var contentWriteInFlight = false, contentWriteAgain = false;
+
+    function newToken() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+    function readDirty(uid) {
+        if (!uid) return null;
+        try { var o = JSON.parse(lsGet(LS_DIRTY, 'null')); return (o && o.uid === uid) ? o : null; }
+        catch (e) { return null; }
+    }
+    function clearDirty() { try { window.localStorage.removeItem(LS_DIRTY); } catch (e) {} }
+
+    function markContentDirty() {
+        if (!state.uid) return;
+        var prev = readDirty(state.uid);
+        var dels = {};
+        if (prev && prev.deletedIds) Object.keys(prev.deletedIds).forEach(function (k) { dels[k] = true; });
+        Object.keys(state.deletedIds || {}).forEach(function (k) { dels[k] = true; });
+        lsSet(LS_DIRTY, JSON.stringify({
+            uid: state.uid,
+            token: newToken(),
+            since: prev ? prev.since : Date.now(),
+            /* Référence = dernier état CONFIRMÉ par le serveur au moment de la première
+               modification non envoyée (conservée tant que le marqueur existe). */
+            baseStamp: prev ? (prev.baseStamp || null) : (state.remoteStamp || null),
+            base: prev ? (prev.base || null) : {
+                specialties: state.specialtiesAtLoad || null,
+                items: state.itemsAtLoad || null,
+                sdd: state.sddAtLoad || null
+            },
+            deletedIds: dels,
+            /* AJOUT (2026-09-29) : dernière restauration admin connue ici (cf. adoptRemoteRestore). */
+            restoredAtSeen: laterIso(prev ? prev.restoredAtSeen : null, state.remoteRestoredAt)
+        }));
+    }
+
+    /* ── AJOUT (2026-09-29) : restauration depuis la page admin ──
+       La page admin remet dans le document la structure contenue dans une sauvegarde
+       (matières, items, SDD manquants) et y note restoredAt + restoredIds. Un onglet ou
+       un appareil qui gardait la SUPPRESSION de ces éléments (faite avant la restauration,
+       pas encore envoyée, ou encore dans le marqueur) l'aurait réappliquée à sa prochaine
+       écriture : la restauration aurait été annulée sans bruit. Dès qu'on lit une
+       restauration qu'on ne connaissait pas, on oublie donc ces suppressions-là, en
+       mémoire et dans le marqueur. Sans restauration admin : rien ne change. */
+    function laterIso(a, b) {
+        if (!a) return b || null;
+        if (!b) return a;
+        return String(a) >= String(b) ? a : b;
+    }
+    function adoptRemoteRestore(d) {
+        var ra = (d && typeof d.restoredAt === 'string') ? d.restoredAt : null;
+        if (!ra || ra === state.remoteRestoredAt) return false;
+        var ids = (d && Array.isArray(d.restoredIds)) ? d.restoredIds : [];
+        state.remoteRestoredAt = ra;
+        state.remoteRestoredIds = ids;
+        ids.forEach(function (k) { delete state.deletedIds[String(k)]; });
+        var m = readDirty(state.uid);
+        if (m) {
+            var dels = m.deletedIds || {};
+            ids.forEach(function (k) { delete dels[String(k)]; });
+            m.deletedIds = dels;
+            m.restoredAtSeen = laterIso(m.restoredAtSeen, ra);
+            lsSet(LS_DIRTY, JSON.stringify(m));   // même jeton : la confirmation d'envoi est inchangée
+        }
+        console.warn('[TPXPerso] Restauration faite depuis la page admin : les éléments remis sont conservés.');
+        return true;
+    }
+
+    /* Cache local du compte `uid` (sans toucher à l'état), ou null. */
+    function readLocalCache(uid) {
+        var raw = lsGet(LS_DATA, null);
+        if (!raw || !uid) return null;
+        try {
+            var o = JSON.parse(raw);
+            if (!o || o.uid !== uid) return null;
+            return { specialties: o.specialties || [], items: o.items || [], sdd: o.sdd || [] };
+        } catch (e) { return null; }
+    }
+
+    function notifyContentPendingOnce() {
+        if (contentPendingNotified) return;
+        contentPendingNotified = true;
+        var msg = 'Votre dernière modification du programme n’est pas encore enregistrée sur le serveur. ' +
+                  'Elle est gardée sur cet appareil et sera envoyée automatiquement dès que la connexion le permet.';
+        try {
+            if (typeof window.showToastNotification === 'function') window.showToastNotification(msg, 'warning');
+            else if (typeof window.showEcosToast === 'function') window.showEcosToast(msg, 'warning');
+        } catch (e) {}
+    }
+
+    function scheduleContentRetry() {
+        if (contentRetryTimer || !state.uid || !readDirty(state.uid)) return;
+        var delays = [2000, 4000, 8000];
+        var d = contentRetryAttempt < delays.length ? delays[contentRetryAttempt] : 30000;
+        contentRetryAttempt++;
+        if (contentRetryAttempt >= 3) notifyContentPendingOnce();
+        contentRetryTimer = setTimeout(function () {
+            contentRetryTimer = null;
+            if (state.saveEnabled && state.uid && readDirty(state.uid)) writeContent();
+        }, d);
+    }
+
+    /* Envoi immédiat s'il reste une modification non confirmée (fermeture d'onglet,
+       passage en arrière-plan, retour du réseau). Sans effet sinon. */
+    function flushContentNow() {
+        if (!state.saveEnabled || !state.uid || !readDirty(state.uid)) return;
+        clearTimeout(saveTimer); saveTimer = null;
+        if (contentRetryTimer) { clearTimeout(contentRetryTimer); contentRetryTimer = null; }
+        writeContent();
+    }
+
     var saveTimer = null;
     function saveContent(immediate) {
         saveLocal();
+        markContentDirty();
         /* Garde-fou : aucune écriture tant que la lecture initiale n'a pas
            abouti. Une coupure réseau au démarrage ne peut donc pas écraser le
            contenu par une liste vide. */
@@ -60991,9 +61193,65 @@ function setTrainingsPageVisible(visible) {
         return out;
     }
 
+    /* CORRECTIF (2026-09-29) : deux appareils peuvent créer chacun de son côté un item
+       portant le MÊME numéro dans la même matière (l'un hors ligne, ou un onglet resté
+       ouvert longtemps). La clé étant matière + numéro, la fusion n'en gardait qu'UN :
+       l'autre disparaissait (prouvé : verify-perso.js PE7). Si l'item local ET l'item
+       distant sont tous deux nouveaux (absents de l'état de référence) avec des intitulés
+       différents, l'item LOCAL reçoit le prochain numéro libre : les deux sont conservés.
+       Sans état de référence (null), on ne renumérote rien (prudence). */
+    function renumberItemCollisions(remote, local, localAtLoad) {
+        if (!localAtLoad) return { local: local || [], renamed: [] };
+        var keyOf = function (x) { return x.specialtyId + '|' + x.num; };
+        var atLoad = {}, remoteByKey = {}, used = {};
+        localAtLoad.forEach(function (a) { atLoad[keyOf(a)] = true; });
+        (remote || []).forEach(function (r) { remoteByKey[keyOf(r)] = r; });
+        function mark(it) { (used[it.specialtyId] = used[it.specialtyId] || {})[String(it.num)] = true; }
+        (remote || []).forEach(mark); (local || []).forEach(mark); localAtLoad.forEach(mark);
+        var renamed = [];
+        var out = (local || []).map(function (l) {
+            var k = keyOf(l), r = remoteByKey[k];
+            if (!r || atLoad[k]) return l;
+            var same = String(r.name || '').trim().toLowerCase() === String(l.name || '').trim().toLowerCase();
+            if (same) return l;
+            var n = 1;
+            while (used[l.specialtyId] && used[l.specialtyId][String(n)]) n++;
+            var c = clone(l); c.num = String(n); mark(c);
+            renamed.push({ from: String(l.num), to: c.num, name: c.name });
+            return c;
+        });
+        return { local: out, renamed: renamed };
+    }
+    function announceRenumbered(renamed) {
+        if (!renamed || !renamed.length) return;
+        var r = renamed[0];
+        var msg = 'Deux items créés sur deux appareils portaient le numéro ' + r.from +
+                  ' : « ' + r.name + ' » a été renuméroté ' + r.to + ' pour que les deux soient conservés.' +
+                  (renamed.length > 1 ? ' (' + renamed.length + ' items concernés)' : '');
+        console.warn('[TPXPerso] ' + msg);
+        try { if (typeof window.showToastNotification === 'function') window.showToastNotification(msg, 'info'); } catch (e) {}
+    }
+
+    /* Une seule écriture à la fois (CORRECTIF 2026-09-29) : une demande arrivée pendant
+       une écriture en cours est rejouée juste après elle, jamais en parallèle — une
+       écriture plus ancienne ne peut donc pas se terminer après une plus récente. */
     async function writeContent() {
+        if (contentWriteInFlight) { contentWriteAgain = true; return; }
+        contentWriteInFlight = true;
+        try { await writeContentOnce(); }
+        finally {
+            contentWriteInFlight = false;
+            if (contentWriteAgain) { contentWriteAgain = false; setTimeout(writeContent, 0); }
+        }
+    }
+
+    async function writeContentOnce() {
         var ref = contentDocRef(), f = fs();
         if (!ref || !f.set || !state.saveEnabled) return;
+        /* Jeton de la modification que CETTE écriture envoie : le marqueur n'est retiré
+           que s'il n'y a eu aucune autre modification entre-temps. */
+        var dirtyAtStart = readDirty(state.uid);
+        var tokenAtStart = dirtyAtStart ? dirtyAtStart.token : null;
 
         var specialties = state.specialties;
         var items = state.items;
@@ -61004,11 +61262,14 @@ function setTrainingsPageVisible(visible) {
                 var snap = await f.get(ref);
                 var d = (snap && snap.exists()) ? (snap.data() || {}) : null;
                 var remoteStamp = d ? (d.updatedAt || null) : null;
+                adoptRemoteRestore(d);   // AJOUT (2026-09-29) : avant la fusion, cf. plus haut
                 if (d && remoteStamp && remoteStamp !== state.remoteStamp) {
                     console.warn('[TPXPerso] Contenu modifié ailleurs depuis le chargement : fusion au lieu d\'un écrasement.');
                     specialties = mergeById(d.specialties, state.specialties, state.specialtiesAtLoad, function (x) { return x.id; });
                     if (APP === 'edn') {
-                        items = mergeById(d.items, state.items, state.itemsAtLoad, function (x) { return x.specialtyId + '|' + x.num; });
+                        var _rn = renumberItemCollisions(d.items, state.items, state.itemsAtLoad);
+                        announceRenumbered(_rn.renamed);
+                        items = mergeById(d.items, _rn.local, state.itemsAtLoad, function (x) { return x.specialtyId + '|' + x.num; });
                         /* Un item dont la matière a disparu de la fusion serait
                            orphelin : on l'écarte. */
                         var known = {};
@@ -61024,8 +61285,10 @@ function setTrainingsPageVisible(visible) {
                     rerender();
                 }
             } catch (e) {
-                /* Relecture impossible : on n'écrase pas à l'aveugle. */
-                console.warn('[TPXPerso] Relecture avant sauvegarde impossible, écriture annulée :', e);
+                /* Relecture impossible : on n'écrase pas à l'aveugle — la modification
+                   reste marquée et sera renvoyée (CORRECTIF 2026-09-29). */
+                console.warn('[TPXPerso] Relecture avant sauvegarde impossible, écriture reportée :', e);
+                scheduleContentRetry();
                 return;
             }
         }
@@ -61033,11 +61296,24 @@ function setTrainingsPageVisible(visible) {
         var stamp = new Date().toISOString();
         var payload = { schemaVersion: 1, specialties: specialties, updatedAt: stamp };
         if (APP === 'edn') payload.items = items; else payload.sdd = sdd;
+        /* AJOUT (2026-09-29) : la trace d'une restauration admin est recopiée telle quelle —
+           l'écriture étant complète, elle l'effacerait sinon, et un autre appareil qui ne
+           l'a pas encore vue ne saurait plus qu'elle a eu lieu. */
+        if (state.remoteRestoredAt) {
+            payload.restoredAt = state.remoteRestoredAt;
+            payload.restoredIds = state.remoteRestoredIds || [];
+        }
 
         try {
             await f.set(ref, payload, { merge: false });
             state.remoteStamp = stamp;
             state.deletedIds = {};      // la suppression est actée côté serveur
+            /* Confirmé par le serveur : on retire le marqueur s'il porte toujours le jeton
+               de cette écriture (sinon une modification plus récente attend encore). */
+            var dirtyNow = readDirty(state.uid);
+            if (dirtyNow && dirtyNow.token === tokenAtStart) clearDirty();
+            contentRetryAttempt = 0;
+            contentPendingNotified = false;
             // ── CORRECTIF (audit, section D) : réaligner la référence "AtLoad"
             //    sur ce qui vient d'être réellement écrit. Sans ça, une
             //    modification déjà sauvegardée continuerait à paraître "encore
@@ -61051,7 +61327,8 @@ function setTrainingsPageVisible(visible) {
             } catch (e2) {}
             saveLocal();
         } catch (e) {
-            console.warn('[TPXPerso] Sauvegarde du contenu impossible :', e);
+            console.warn('[TPXPerso] Sauvegarde du contenu impossible, nouvel essai automatique :', e);
+            scheduleContentRetry();
         }
     }
 
@@ -61170,6 +61447,9 @@ function setTrainingsPageVisible(visible) {
                 : [];
 
             state.remoteStamp = d.updatedAt || null;
+            /* AJOUT (2026-09-29) : trace d'une éventuelle restauration admin (cf. adoptRemoteRestore). */
+            state.remoteRestoredAt = (typeof d.restoredAt === 'string') ? d.restoredAt : null;
+            state.remoteRestoredIds = Array.isArray(d.restoredIds) ? d.restoredIds : [];
 
         } else {
             /* Document absent : contenu sur-mesure jamais créé.
@@ -61204,6 +61484,48 @@ function setTrainingsPageVisible(visible) {
         );
     }
 
+    /* ── CORRECTIF (2026-09-29) : modifications de structure faites sur CET appareil
+       et jamais confirmées par le serveur (coupure, onglet fermé tout de suite,
+       erreur). Le cache local les contient encore : on les FUSIONNE avec l'état du
+       serveur (ajouts faits ailleurs conservés, suppressions faites ici respectées)
+       puis on les renvoie, au lieu de les écraser par l'état du serveur comme avant.
+       Serveur inchangé depuis la dernière synchronisation → le cache fait foi tel quel. ── */
+    var resyncLocal = false;
+    if (contentOk) {
+        var dirty = readDirty(uid);
+        var cached = dirty ? readLocalCache(uid) : null;
+        if (dirty && cached) {
+            state.deletedIds = Object.assign({}, dirty.deletedIds || {});
+            /* AJOUT (2026-09-29) : restauration admin faite APRÈS ces modifications locales →
+               les éléments qu'elle a remis ne sont pas re-supprimés (cf. adoptRemoteRestore). */
+            if (state.remoteRestoredAt && state.remoteRestoredAt !== (dirty.restoredAtSeen || null)) {
+                state.remoteRestoredIds.forEach(function (k) { delete state.deletedIds[String(k)]; });
+            }
+            var base = dirty.base || {};
+            var remoteMoved = (state.remoteStamp || null) !== (dirty.baseStamp || null);
+            if (!remoteMoved) {
+                state.specialties = cached.specialties;
+                state.items = cached.items;
+                state.sdd = cached.sdd;
+            } else {
+                var mSpecs = mergeById(state.specialties, cached.specialties, base.specialties || null, function (x) { return x.id; });
+                if (APP === 'edn') {
+                    var rnLoad = renumberItemCollisions(state.items, cached.items, base.items || null);
+                    announceRenumbered(rnLoad.renamed);
+                    var mItems = mergeById(state.items, rnLoad.local, base.items || null, function (x) { return x.specialtyId + '|' + x.num; });
+                    var knownSp = {};
+                    mSpecs.forEach(function (sp) { knownSp[sp.id] = true; });
+                    state.items = mItems.filter(function (i) { return knownSp[i.specialtyId]; });
+                } else {
+                    state.sdd = mergeById(state.sdd, cached.sdd, base.sdd || null, function (x) { return x.id; });
+                }
+                state.specialties = mSpecs;
+            }
+            resyncLocal = true;
+            console.warn('[TPXPerso] Modifications du programme non envoyées retrouvées sur cet appareil : fusion avec le serveur puis envoi.');
+        }
+    }
+
     housekeepLocalStorage(uid);
 
     state.loaded = prefsOk;
@@ -61211,6 +61533,13 @@ function setTrainingsPageVisible(visible) {
 
     if (contentOk) {
         saveLocal();
+    }
+
+    if (resyncLocal) {
+        /* Nouveau marqueur, référencé sur l'état serveur qui vient d'être lu. */
+        clearDirty();
+        markContentDirty();
+        writeContent();
     }
 
     applyToGlobals();
@@ -61447,6 +61776,49 @@ function setTrainingsPageVisible(visible) {
             });
         }
         saveContent(); applyToGlobals(); rerender();
+    }
+
+    /* CORRECTIF (2026-09-29) : restauration d'une sauvegarde — la STRUCTURE sur-mesure
+       qu'elle contient est remise par UNION : ce qui manque aujourd'hui revient (matière,
+       item ou SDD supprimé par erreur), rien de ce qui existe actuellement n'est retiré
+       ni modifié. Avant, une restauration remettait les tours d'items personnalisés sans
+       les lignes pour les afficher (verify-perso.js PE6). Renvoie le nombre d'éléments remis. */
+    function mergeRestoredContent(saved) {
+        if (!saved || typeof saved !== 'object' || !state.uid) return 0;
+        var added = 0;
+        var haveSpec = {};
+        state.specialties.forEach(function (s) { haveSpec[s.id] = true; });
+        (Array.isArray(saved.specialties) ? saved.specialties : []).forEach(function (s) {
+            if (s && s.id && !haveSpec[s.id]) {
+                state.specialties.push(clone(s)); haveSpec[s.id] = true;
+                delete state.deletedIds[String(s.id)]; added++;
+            }
+        });
+        if (APP === 'edn') {
+            var haveIt = {};
+            state.items.forEach(function (i) { haveIt[i.specialtyId + '|' + i.num] = true; });
+            (Array.isArray(saved.items) ? saved.items : []).forEach(function (i) {
+                var k = i ? (i.specialtyId + '|' + i.num) : null;
+                if (k && haveSpec[i.specialtyId] && !haveIt[k]) {
+                    state.items.push(clone(i)); haveIt[k] = true;
+                    delete state.deletedIds[k]; added++;
+                }
+            });
+        } else {
+            var haveSdd = {};
+            state.sdd.forEach(function (d) { haveSdd[d.id] = true; });
+            (Array.isArray(saved.sdd) ? saved.sdd : []).forEach(function (d) {
+                if (d && d.id && !haveSdd[d.id]) {
+                    state.sdd.push(clone(d)); haveSdd[d.id] = true;
+                    delete state.deletedIds[String(d.id)]; added++;
+                }
+            });
+        }
+        if (added) {
+            if (APP === 'ecos') injectBadgeCss();
+            saveContent(true); applyToGlobals(); rerender();
+        }
+        return added;
     }
 
     function nextItemNumber(specialtyId) {
@@ -62236,9 +62608,32 @@ function setTrainingsPageVisible(visible) {
         });
 
         yes.addEventListener('click', function () {
-            deleteSpecialty(id);
-            m.close();
-            if (typeof onDone === 'function') onDone();
+            if (yes.getAttribute('data-busy') === '1') return;
+            yes.setAttribute('data-busy', '1');
+            yes.disabled = true;
+            /* CORRECTIF (2026-09-29) : sauvegarde de sécurité (tours + structure sur-mesure)
+               juste AVANT la suppression en cascade, pour qu'une suppression faite par
+               erreur reste récupérable par « Restaurer ». Au mieux : 8 s au plus, jamais
+               bloquant — sans connexion, la suppression se fait comme avant. */
+            var backupJob = null;
+            try {
+                var cu = window.currentUser;
+                if (cu && cu.uid) {
+                    if (APP === 'edn' && typeof window.saveBackupToFirebase === 'function' && window.userData) {
+                        backupJob = window.saveBackupToFirebase(cu.uid, window.userData);
+                    } else if (APP === 'ecos' && typeof window.saveEcosBackupToFirebase === 'function' && window.ecosData) {
+                        backupJob = window.saveEcosBackupToFirebase(cu.uid, window.ecosData);
+                    }
+                }
+            } catch (e) { backupJob = null; }
+            Promise.race([
+                Promise.resolve(backupJob).catch(function () {}),
+                new Promise(function (r) { setTimeout(r, 8000); })
+            ]).then(function () {
+                deleteSpecialty(id);
+                m.close();
+                if (typeof onDone === 'function') onDone();
+            });
         });
     }
 
@@ -63882,6 +64277,18 @@ if (!state.uid) {
 }
         }, 400);
 
+        /* CORRECTIF (2026-09-29) : une modification de structure non confirmée est
+           renvoyée dès le retour du réseau, et envoyée tout de suite quand l'onglet est
+           fermé ou passe en arrière-plan (au lieu d'attendre la fin du délai de 0,9 s). */
+        window.addEventListener('online', function () {
+            if (state.uid && readDirty(state.uid)) { contentRetryAttempt = 0; flushContentNow(); }
+        });
+        window.addEventListener('pagehide', flushContentNow);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') flushContentNow();
+            else if (state.uid && readDirty(state.uid) && !contentRetryTimer) flushContentNow();
+        });
+
         if (APP === 'edn') watchNotesPanel();
         Onb.watch();
         log('module chargé (' + APP + ').');
@@ -63925,6 +64332,8 @@ if (!state.uid) {
             return { specialties: state.specialties.length, items: state.items.length, sdd: state.sdd.length };
         },
         _deleteSpecialty: deleteSpecialty,
+        _mergeRestoredContent: mergeRestoredContent,
+        _hasUnsentContent: function () { return !!readDirty(state.uid); },
         _forceSave: function () { saveContent(true); },
         _state: state,
         _official: function () { return official; },
