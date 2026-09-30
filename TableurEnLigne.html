@@ -17442,7 +17442,7 @@ window.TPXNotesPending = {
 				<div class="filter-bar">
 					<div class="search-box">
 						<i class="fas fa-search"></i>
-						<input type="text" id="search-item" placeholder="Rechercher un item..." autocomplete="off">
+						<input type="text" id="search-item" placeholder="Rechercher un item..." autocomplete="off" readonly>
 						<button class="search-clear-btn" id="clear-item" onclick="clearSearch('search-item')" style="display:none;" tabindex="-1" aria-label="Effacer">
 							<i class="fas fa-times"></i>
 						</button>
@@ -17740,7 +17740,7 @@ window.TPXNotesPending = {
     <!-- Recherche -->
     <div class="search-box train-search-inline">
       <i class="fas fa-search"></i>
-      <input type="text" id="search-train" placeholder="Rechercher un entrainement..." autocomplete="off" oninput="trainOnSearch(this.value)">
+      <input type="text" id="search-train" placeholder="Rechercher un entrainement..." autocomplete="off" readonly oninput="trainOnSearch(this.value)">
       <button class="search-clear-btn" id="clear-train" onclick="trainClearSearch()" style="display:none;" tabindex="-1" aria-label="Effacer">
         <i class="fas fa-times"></i>
       </button>
@@ -29375,44 +29375,47 @@ document.getElementById('search-specialty')?.addEventListener('input', renderDas
     });
 });
 
-// Empêcher l'autofill email du navigateur dans la recherche spécialité
+// Empêcher l'autofill email du navigateur dans les barres de recherche.
+// CORRECTIF (2026-09-30, signalé par Jean sur la liste des items) : Chrome/Edge ignorent
+// autocomplete="off" pour les identifiants enregistrés et prenaient une barre de recherche pour
+// le champ « identifiant » des champs mot de passe de la carte « Mon compte ». La parade de la
+// recherche des spécialités (champ en lecture seule tant que l'utilisateur ne l'a pas touché :
+// un navigateur ne remplit jamais un champ en lecture seule) est généralisée aux recherches
+// d'items et d'entraînements. Écouteurs PERMANENTS (l'ancienne version, en « once », laissait
+// le champ bloqué en lecture seule après un retour arrière/avant du navigateur).
 (function () {
-    const input = document.getElementById('search-specialty');
-    if (!input) return;
-
-    function clearBadAutofill() {
-        if (input.readOnly) {
-            input.value = '';
+    function guardSearch(id) {
+        const input = document.getElementById(id);
+        if (!input) return;
+        function lock() {
+            input.readOnly = true;
+            input.dataset.tpxAutofillGuard = '1';
         }
-    }
-
-    clearBadAutofill();
-    setTimeout(clearBadAutofill, 50);
-    setTimeout(clearBadAutofill, 250);
-    setTimeout(clearBadAutofill, 800);
-
-    window.addEventListener('pageshow', function () {
-        input.readOnly = true;
-        input.value = '';
-
-        setTimeout(clearBadAutofill, 50);
-        setTimeout(clearBadAutofill, 250);
-        setTimeout(clearBadAutofill, 800);
-    });
-
-    function unlockSearch() {
-        input.readOnly = false;
-        input.value = '';
-    }
-
-    input.addEventListener('pointerdown', unlockSearch, { once: true });
-
-    input.addEventListener('keydown', function () {
-        if (input.readOnly) {
+        function emptyValue() {
+            if (!input.value) return;
+            input.value = '';
+            try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        }
+        function clearBadAutofill() {
+            if (input.dataset.tpxAutofillGuard === '1') emptyValue();
+        }
+        function unlock() {
+            if (input.dataset.tpxAutofillGuard !== '1') return;
+            delete input.dataset.tpxAutofillGuard;
             input.readOnly = false;
-            input.value = '';
+            emptyValue();
         }
-    }, { once: true });
+        lock();
+        [0, 50, 250, 800, 2000].forEach(function (ms) { setTimeout(clearBadAutofill, ms); });
+        window.addEventListener('pageshow', function (e) {
+            if (!e.persisted) return;                  // chargement normal : déjà verrouillé ci-dessus
+            lock();
+            [0, 50, 250, 800].forEach(function (ms) { setTimeout(clearBadAutofill, ms); });
+        });
+        input.addEventListener('pointerdown', unlock);
+        input.addEventListener('keydown', unlock);
+    }
+    ['search-specialty', 'search-item', 'search-train'].forEach(guardSearch);
 })();
 
 
@@ -56103,7 +56106,8 @@ const CARD_HTML = `
                 <i class="fas fa-pen"></i> Modifier
             </button>
         </div>
-        <div class="tpx-acc-sub" id="tpx-acc-mail-sub">
+        <form class="tpx-acc-sub" id="tpx-acc-mail-sub" onsubmit="return false;" novalidate>
+            <input type="text" name="username" autocomplete="username" hidden tabindex="-1" aria-hidden="true">
             <div class="tpx-acc-warn">
                 <i class="fas fa-triangle-exclamation"></i>
                 La nouvelle adresse ne doit <strong>jamais</strong> avoir servi à créer un compte
@@ -56131,7 +56135,7 @@ const CARD_HTML = `
                 </button>
                 <button class="tpx-acc-btn ghost" id="tpx-acc-mail-cancel" type="button">Annuler</button>
             </div>
-        </div>
+        </form>
         <div class="tpx-acc-msg" id="tpx-acc-mail-msg"></div>
     </div>
 
@@ -56145,7 +56149,8 @@ const CARD_HTML = `
             </button>
         </div>
         <button class="tpx-acc-link" id="tpx-acc-pwd-forgot" type="button">Mot de passe oubli\u00e9 ?</button>
-        <div class="tpx-acc-sub" id="tpx-acc-pwd-sub">
+        <form class="tpx-acc-sub" id="tpx-acc-pwd-sub" onsubmit="return false;" novalidate>
+            <input type="text" name="username" autocomplete="username" hidden tabindex="-1" aria-hidden="true">
             <div class="tpx-acc-hint">
                 Confirmez votre mot de passe actuel, puis saisissez le nouveau
                 (6 caractères minimum). Le changement est immédiat : vos autres
@@ -56178,7 +56183,7 @@ const CARD_HTML = `
                 </button>
                 <button class="tpx-acc-btn ghost" id="tpx-acc-pwd-cancel" type="button">Annuler</button>
             </div>
-        </div>
+        </form>
         <div class="tpx-acc-msg" id="tpx-acc-pwd-msg"></div>
     </div>
 </div>`;

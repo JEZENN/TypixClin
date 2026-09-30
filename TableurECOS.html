@@ -25697,7 +25697,7 @@ window.TPXNotesPending = {
             <div class="filter-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="ecos-search-specialty" placeholder="Rechercher une spécialité…" autocomplete="off" oninput="ecosSpecialtySearchTerm=this.value;renderDashboardSpecialties();document.getElementById('ecos-clear-specialty').style.display=this.value?'flex':'none'">
+                    <input type="text" id="ecos-search-specialty" placeholder="Rechercher une spécialité…" autocomplete="off" readonly oninput="ecosSpecialtySearchTerm=this.value;renderDashboardSpecialties();document.getElementById('ecos-clear-specialty').style.display=this.value?'flex':'none'">
                     <button class="search-clear-btn" id="ecos-clear-specialty" onclick="ecosClearSearch('ecos-search-specialty','ecos-clear-specialty',function(){ecosSpecialtySearchTerm='';renderDashboardSpecialties();})" style="display:none;" tabindex="-1" aria-label="Effacer"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="custom-select" id="ecos-sort-specialty-dropdown">
@@ -25773,7 +25773,7 @@ window.TPXNotesPending = {
             <div class="filter-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="sdd-search" placeholder="Rechercher une SDD..." autocomplete="off" oninput="document.getElementById('ecos-clear-sdd').style.display=this.value?'flex':'none'">
+                    <input type="text" id="sdd-search" placeholder="Rechercher une SDD..." autocomplete="off" readonly oninput="document.getElementById('ecos-clear-sdd').style.display=this.value?'flex':'none'">
                     <button class="search-clear-btn" id="ecos-clear-sdd" onclick="ecosClearSearch('sdd-search','ecos-clear-sdd',function(){sddSearchTerm='';sddPage=1;renderSDDTable();})" style="display:none;" tabindex="-1" aria-label="Effacer"><i class="fas fa-times"></i></button>
                 </div>
 
@@ -30307,6 +30307,53 @@ function ecosClearSearch(inputId, clearBtnId, callback) {
     if (callback) callback();
     if (inp) inp.focus();
 }
+
+/* ── CORRECTIF (2026-09-30, signalé par Jean sur EDN, même cause ici) : empêcher l'autofill
+   de l'e-mail enregistré dans les barres de recherche. Chrome/Edge ignorent
+   autocomplete="off" pour les identifiants et prenaient la recherche pour le champ
+   « identifiant » des champs mot de passe de « Mon compte ». Champ en lecture seule tant que
+   l'utilisateur ne l'a pas touché (un navigateur ne remplit jamais un champ en lecture seule),
+   déverrouillé au premier geste réel, reverrouillé au retour arrière/avant du navigateur.
+   Respecte le verrouillage hors ligne (ecosDisableFields / ecosRestoreFields). ── */
+(function () {
+    function guardSearch(id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        function lock() {
+            input.readOnly = true;
+            input.dataset.tpxAutofillGuard = '1';
+            if (input.dataset.ecosOfflineDisabled === '1') input.dataset.ecosPrevReadonly = '1';
+        }
+        function emptyValue() {
+            if (!input.value) return;
+            input.value = '';
+            try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        }
+        function clearBadAutofill() {
+            if (input.dataset.tpxAutofillGuard === '1') emptyValue();
+        }
+        function unlock() {
+            if (input.dataset.tpxAutofillGuard !== '1') return;
+            delete input.dataset.tpxAutofillGuard;
+            if (input.dataset.ecosOfflineDisabled === '1') {
+                input.dataset.ecosPrevReadonly = '0';     // hors ligne : reste verrouillé, rendu éditable au retour
+            } else {
+                input.readOnly = false;
+            }
+            emptyValue();
+        }
+        lock();
+        [0, 50, 250, 800, 2000].forEach(function (ms) { setTimeout(clearBadAutofill, ms); });
+        window.addEventListener('pageshow', function (e) {
+            if (!e.persisted) return;                      // chargement normal : déjà verrouillé ci-dessus
+            lock();
+            [0, 50, 250, 800].forEach(function (ms) { setTimeout(clearBadAutofill, ms); });
+        });
+        input.addEventListener('pointerdown', unlock);
+        input.addEventListener('keydown', unlock);
+    }
+    ['ecos-search-specialty', 'sdd-search'].forEach(guardSearch);
+})();
 
 /* ── Animation check sur les boutons réinitialiser ── */
 function _quickActionSuccess(btn, resetFn) {
@@ -48195,7 +48242,8 @@ const CARD_HTML = `
                 <i class="fas fa-pen"></i> Modifier
             </button>
         </div>
-        <div class="tpx-acc-sub" id="tpx-acc-mail-sub">
+        <form class="tpx-acc-sub" id="tpx-acc-mail-sub" onsubmit="return false;" novalidate>
+            <input type="text" name="username" autocomplete="username" hidden tabindex="-1" aria-hidden="true">
             <div class="tpx-acc-warn">
                 <i class="fas fa-triangle-exclamation"></i>
                 La nouvelle adresse ne doit <strong>jamais</strong> avoir servi à créer un compte
@@ -48223,7 +48271,7 @@ const CARD_HTML = `
                 </button>
                 <button class="tpx-acc-btn ghost" id="tpx-acc-mail-cancel" type="button">Annuler</button>
             </div>
-        </div>
+        </form>
         <div class="tpx-acc-msg" id="tpx-acc-mail-msg"></div>
     </div>
 
@@ -48237,7 +48285,8 @@ const CARD_HTML = `
             </button>
         </div>
         <button class="tpx-acc-link" id="tpx-acc-pwd-forgot" type="button">Mot de passe oubli\u00e9 ?</button>
-        <div class="tpx-acc-sub" id="tpx-acc-pwd-sub">
+        <form class="tpx-acc-sub" id="tpx-acc-pwd-sub" onsubmit="return false;" novalidate>
+            <input type="text" name="username" autocomplete="username" hidden tabindex="-1" aria-hidden="true">
             <div class="tpx-acc-hint">
                 Confirmez votre mot de passe actuel, puis saisissez le nouveau
                 (6 caractères minimum). Le changement est immédiat : vos autres
@@ -48270,7 +48319,7 @@ const CARD_HTML = `
                 </button>
                 <button class="tpx-acc-btn ghost" id="tpx-acc-pwd-cancel" type="button">Annuler</button>
             </div>
-        </div>
+        </form>
         <div class="tpx-acc-msg" id="tpx-acc-pwd-msg"></div>
     </div>
 </div>`;
