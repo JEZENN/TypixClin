@@ -934,7 +934,7 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 import {
     getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
     serverTimestamp, Timestamp, query, orderBy, limit, onSnapshot,
-    runTransaction, writeBatch
+    runTransaction, writeBatch, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     getDatabase, ref as rtdbRef, onValue
@@ -1988,6 +1988,33 @@ async function tpxRestoreNotesMissingOnly(uid, collName, savedMap, allowId) {
     return { restored: toWrite.length, kept: entries.length - toWrite.length, total: entries.length };
 }
 
+// AJOUT (2026-09-30) : catalogues personnalisés (champ `catalogs` du document de données :
+// ressources, supports, types et plateformes). Les entrées de la sauvegarde sont AJOUTÉES
+// aux listes actuelles (arrayUnion), telles qu'elles étaient (supprimées/archivées
+// comprises, pour que les tours et entraînements qui les utilisent gardent leur nom) ;
+// rien n'est retiré. Sans lecture préalable : les règles ne donnent pas à l'admin la
+// lecture de planningRevision / ECOSRevision, et arrayUnion est atomique (un onglet de
+// l'utilisateur qui écrirait au même moment n'est pas écrasé). Si une entrée a changé
+// depuis la sauvegarde, les deux versions coexistent un instant : le tableur les fusionne
+// par identifiant et garde la plus RÉCENTE (horodatage `u`) — l'existant n'est pas modifié.
+async function tpxRestoreCatalogs(uid, targetDoc, saved) {
+    const upd = {};
+    let n = 0;
+    Object.keys(saved || {}).forEach(k => {
+        if (!Array.isArray(saved[k]) || !/^[A-Za-z][A-Za-z0-9]{0,39}$/.test(k)) return;
+        const entries = saved[k]
+            .filter(e => e && typeof e === 'object' && typeof e.id === 'string' && /^[a-z0-9][a-z0-9-]{0,39}$/.test(e.id))
+            .map(e => JSON.parse(JSON.stringify(e)));
+        if (!entries.length) return;
+        upd['catalogs.' + k] = arrayUnion(...entries);
+        n += entries.length;
+    });
+    if (!n) return 0;
+    upd['catalogs.v'] = 1;
+    await updateDoc(doc(db, targetDoc, uid), upd);
+    return n;
+}
+
 // Parties complémentaires d'une restauration ; renvoie les lignes du bilan.
 // Chaque partie est indépendante : un échec n'empêche pas les autres.
 async function restoreExtras(uid, product, backupDocData, dataToRestore) {
@@ -2024,6 +2051,21 @@ async function restoreExtras(uid, product, backupDocData, dataToRestore) {
         } catch (e) {
             console.error('[Restore] programme sur-mesure :', e);
             lines.push({ level: 'error', text: 'Programme sur-mesure NON remis : ' + failText(e) + '.' });
+        }
+    }
+
+    // 1 bis) Catalogues personnalisés (AJOUT 2026-09-30, cf. tpxUnionCatalogs)
+    const cat = dataToRestore && dataToRestore.catalogs && typeof dataToRestore.catalogs === 'object' ? dataToRestore.catalogs : null;
+    const catHas = cat && Object.keys(cat).some(k => Array.isArray(cat[k]) && cat[k].length);
+    if (catHas) {
+        try {
+            const nCat = await tpxRestoreCatalogs(uid, cfg.targetDoc, cat);
+            lines.push(nCat
+                ? { level: 'ok', text: 'Catalogues personnalisés (ressources, supports, types…) : complétés avec les ' + nCat + ' entrée(s) de la sauvegarde — ce qui manquait est revenu, rien de l\'existant retiré ni modifié.' }
+                : { level: 'info', text: 'Catalogues personnalisés : aucune entrée valide dans cette sauvegarde.' });
+        } catch (e) {
+            console.error('[Restore] catalogues :', e);
+            lines.push({ level: 'error', text: 'Catalogues personnalisés NON remis : ' + failText(e) + '.' });
         }
     }
 
@@ -2252,7 +2294,7 @@ window.confirmRestore = function(uid, product, source, versionId) {
         '⚠️ Restaurer la sauvegarde',
         `Restaurer le planning ${cfg.label} de <strong>${name}</strong> à partir de cette version ?<br><br>` +
         `• <strong>Remplacés</strong> par la version : ${cfg.planningLabel.toLowerCase()} (collection <code>${cfg.targetDoc}</code>).<br>` +
-        `• <strong>Complétés seulement</strong>, s'ils sont dans la sauvegarde : programme sur-mesure, notes et cahiers d'erreurs — ce qui manque (ou est vide) revient, rien d'existant n'est modifié ni retiré.<br><br>` +
+        `• <strong>Complétés seulement</strong>, s'ils sont dans la sauvegarde : programme sur-mesure, catalogues personnalisés (ressources, supports, types…), notes et cahiers d'erreurs — ce qui manque (ou est vide) revient, rien d'existant n'est modifié ni retiré.<br><br>` +
         `L'abonnement et le compte ne sont pas touchés. Action irréversible.`,
         async () => { await doRestore(uid, product, source, versionId); }
     );

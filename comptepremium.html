@@ -1128,6 +1128,10 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
    retiré par JS une fois referralEnsureCode revenu) : bouton visiblement inactif, sinon
    il a l'air cliquable sans rien faire (retour Jean, 2026-09-24). */
 .referral-copy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* COPIE (2026-09-30, demande de Jean) : pendant l'animation « Copié ! » d'un bouton, l'autre est bloqué
+   et prend l'aspect d'un bouton désactivé — jamais deux « Copié ! » en même temps. */
+.referral-copy-btn.is-copy-locked,
+.referral-copy-btn.is-copy-locked:hover:not(:disabled) { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 [data-theme="dark"] .referral-copy-btn { background: rgba(255,255,255,0.06); border-color: var(--gray-600); }
 /* Retour Jean (2026-09-24) : après un clic, le contour de focus par défaut
    restait affiché ("ça reste avec les contours") même une fois la souris
@@ -3960,6 +3964,10 @@ function copyTextToClipboard(text) {
     return Promise.resolve(fallback());
 }
 
+/* COPIE (2026-09-30, demande de Jean) : « Copier le lien » / « Copier le code » — une seule animation
+   « Copié ! » à la fois. Verrou au niveau du module : loadReferralPanel() peut être rappelée pendant
+   une animation, le verrou reste valable. */
+let _referralCopyBusy = false;
 function flashCopiedBtn(btn, ok) {
     const icon = btn.querySelector('i');
     const label = btn.querySelector('.referral-copy-btn-label');
@@ -4189,6 +4197,15 @@ async function loadReferralPanel() {
         const codeValueEl = document.getElementById('referral-code-value');
         if (codeValueEl) { codeValueEl.textContent = referralCode; codeValueEl.classList.add('has-code'); }
 
+        const copyLinkBtn = document.getElementById('referral-copy-link-btn');
+        const copyCodeBtn = document.getElementById('referral-copy-code-btn');
+        // COPIE (2026-09-30) : une seule animation « Copié ! » à la fois — l'autre bouton est
+        // bloqué et grisé pendant les 1,6 s (verrou _referralCopyBusy, niveau module).
+        const lockOthers = (btn, on) => [copyLinkBtn, copyCodeBtn].forEach((b) => {
+            if (!b || b === btn) return;
+            b.classList.toggle('is-copy-locked', on);
+            if (on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+        });
         const flashCopied = (btn) => {
             const icon = btn.querySelector('i');
             const label = btn.querySelector('.referral-copy-btn-label');
@@ -4201,14 +4218,23 @@ async function loadReferralPanel() {
                 btn.classList.remove('copied');
                 if (icon) icon.className = originalIcon;
                 if (label) label.textContent = originalLabel;
+                _referralCopyBusy = false;
+                lockOthers(btn, false);
             }, 1600);
         };
-        const copyLinkBtn = document.getElementById('referral-copy-link-btn');
-        const copyCodeBtn = document.getElementById('referral-copy-code-btn');
+        const copyWithLock = (btn, text) => {
+            if (_referralCopyBusy) return;
+            _referralCopyBusy = true;
+            lockOthers(btn, true);
+            const release = () => { _referralCopyBusy = false; lockOthers(btn, false); };
+            let p;
+            try { p = navigator.clipboard.writeText(text); } catch (e) { p = Promise.reject(e); }
+            Promise.resolve(p).then(() => flashCopied(btn), release);
+        };
         // Désactivés par défaut dans le HTML (pas de code tant que l'appel n'a pas
         // réussi) : on ne les réactive qu'ici, une fois le lien/code réellement prêts.
-        if (copyLinkBtn) { copyLinkBtn.disabled = false; copyLinkBtn.onclick = () => { navigator.clipboard.writeText(link).then(() => flashCopied(copyLinkBtn)).catch(() => {}); }; }
-        if (copyCodeBtn) { copyCodeBtn.disabled = false; copyCodeBtn.onclick = () => { navigator.clipboard.writeText(referralCode).then(() => flashCopied(copyCodeBtn)).catch(() => {}); }; }
+        if (copyLinkBtn) { copyLinkBtn.disabled = false; copyLinkBtn.onclick = () => copyWithLock(copyLinkBtn, link); }
+        if (copyCodeBtn) { copyCodeBtn.disabled = false; copyCodeBtn.onclick = () => copyWithLock(copyCodeBtn, referralCode); }
 
         // ── AJOUT (2026-09-24, retour Jean) : bloc "vous avez été invité ?" —
         //    masqué tant qu'on ne sait pas encore (style="display:none" dans le
