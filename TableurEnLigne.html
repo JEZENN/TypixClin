@@ -794,6 +794,9 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     transition: opacity 0.15s, background 0.3s;
 }
 .profile-id-badge:hover { opacity: 0.85; }
+/* COPIE (2026-09-30) : pendant l'animation « copié » d'une pastille, l'autre est bloquée et grisée. */
+.profile-id-badge.is-copy-locked,
+.profile-id-badge.is-copy-locked:hover { opacity: 0.45; cursor: not-allowed; }
 .profile-id-badge i { font-size: 0.65rem; }
 
 /* ===== FRIENDS BUTTON IN MENU ===== */
@@ -2030,6 +2033,26 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
 .settings-explain-txt { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .settings-explain-txt strong { font-size: 0.82rem; font-weight: 650; color: var(--gray-800); }
 .settings-explain-txt span { font-size: 0.78rem; color: var(--gray-500); line-height: 1.4; }
+/* Nombre de tours (2026-10-01, demande de Jean) : retour à 8 tours verrouillé tant que des items ont des tours
+   au-delà du 8e (ils seraient masqués) — option grisée + cadenas, encadré rouge qui explique pourquoi. */
+#settings-modal-overlay #extended-tours-switch .seg-opt-left.is-locked { opacity: 0.5; cursor: not-allowed; }
+#settings-modal-overlay #extended-tours-switch .seg-opt-left.is-locked:hover { color: inherit; }
+#settings-modal-overlay #extended-tours-switch .tpx-et-lock-ico { font-size: 0.68rem; }
+.tpx-et-lock {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 0.65rem 0.75rem; border-radius: var(--border-radius-md, 10px);
+    border: 1px solid rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.06);
+    color: #b91c1c; font-size: 0.78rem; line-height: 1.45;
+    animation: tpxEtIn 0.28s ease;
+}
+.tpx-et-lock > i { margin-top: 0.2rem; flex-shrink: 0; }
+.tpx-et-lock > div { min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.tpx-et-lock strong { font-weight: 700; }
+[data-theme="dark"] .tpx-et-lock { color: #fca5a5; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); }
+.tpx-et-lock.is-nudge { animation: tpxEtNudge 0.42s ease; }
+@keyframes tpxEtIn { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes tpxEtNudge { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .tpx-et-lock, .tpx-et-lock.is-nudge { animation: none; } }
 
 /* Entrée « Paramètres » du menu profil — même couleur/survol que les autres entrées */
 .profile-menu-item.settings-btn-menu { color: var(--primary); }
@@ -17981,7 +18004,7 @@ window.TPXNotesPending = {
 
     <!-- Type -->
     <div class="modal-section">
-      <label class="modal-label">Type <span style="color:#ef4444">*</span></label>
+      <div class="modal-label">Type <span style="color:#ef4444">*</span><button type="button" class="tpx-cat-pencil" id="tpx-cat-edit-train-types" onclick="event.preventDefault();if(window.TPXCat)window.TPXCat.openManager('trainTypes')" data-tpx-tip="Gérer les types" aria-label="Gérer les types"><i class="fas fa-pen"></i></button></div>
       <div class="train-modal-type-grid" id="train-type-btns">
         <button class="train-modal-type-btn" data-value="masterclass" data-color="#7c3aed" style="background:rgba(139,92,246,0.10);color:#7c3aed;border-color:rgba(139,92,246,0.3);border-radius:0.5rem !important;" onclick="trainSelectType(this)">Masterclass</button>
         <button class="train-modal-type-btn" data-value="spe360"      data-color="#2563eb" style="background:rgba(59,130,246,0.10);color:#2563eb;border-color:rgba(59,130,246,0.3);border-radius:0.5rem !important;" onclick="trainSelectType(this)">Spé 360°</button>
@@ -17994,7 +18017,7 @@ window.TPXNotesPending = {
 
     <!-- Plateforme -->
     <div class="modal-section">
-      <label class="modal-label">Plateforme</label>
+      <div class="modal-label">Plateforme<button type="button" class="tpx-cat-pencil" id="tpx-cat-edit-train-platforms" onclick="event.preventDefault();if(window.TPXCat)window.TPXCat.openManager('trainPlatforms')" data-tpx-tip="Gérer les plateformes" aria-label="Gérer les plateformes"><i class="fas fa-pen"></i></button></div>
       <div class="train-modal-type-grid" id="train-plateforme-btns">
         <button class="train-modal-type-btn" data-value="edni"       data-color="#0e7490" style="background:rgba(6,182,212,0.10);color:#0e7490;border-color:rgba(6,182,212,0.3);border-radius:0.5rem !important;" onclick="trainSelectPlateforme(this)">EDNi</button>
         <button class="train-modal-type-btn" data-value="asclepia"   data-color="#be185d" style="background:rgba(236,72,153,0.10);color:#be185d;border-color:rgba(236,72,153,0.3);border-radius:0.5rem !important;" onclick="trainSelectPlateforme(this)">Asclepia</button>
@@ -20206,7 +20229,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
         </div>
         
         <div class="modal-section" id="tour-section-support">
-            <label class="modal-label">Support</label>
+            <div class="modal-label">Support<button type="button" class="tpx-cat-pencil" id="tpx-cat-edit-supports" onclick="event.preventDefault();if(window.TPXCat)window.TPXCat.openManager('supports')" data-tpx-tip="Gérer mes supports" aria-label="Gérer mes supports"><i class="fas fa-pen"></i></button></div>
             <div class="support-buttons">
                 <button class="support-btn" data-support="qcm"><i class="fas fa-list-check"></i> QCM/DP</button>
                 <button class="support-btn" data-support="college"><i class="fas fa-book"></i> Collèges</button>
@@ -20217,11 +20240,14 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
             </div>
         </div>
         
-        <div class="modal-actions">
-            <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i></button>
-            <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i></button>
-        </div>
         </div><!-- /.confidence-modal-body -->
+        <!-- PIED FIXE (2026-09-30) : boutons valider / supprimer HORS du corps défilant, toujours visibles sans faire défiler -->
+        <div class="confidence-modal-footer">
+            <div class="modal-actions">
+                <button class="btn-validate" id="btn-save-tour"><i class="fas fa-check"></i></button>
+                <button class="btn-reset" id="btn-reset-tour"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -20237,6 +20263,7 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
         </div>
         <div class="resources-config-body">
         <p class="resources-config-subtitle">Sélectionnez jusqu’à 3 ressources à afficher pour chaque item, vous pourrez ensuite les valider en fonction de votre avancée.</p>
+        <div class="tpx-cat-open-row"><button type="button" class="tpx-cat-open-btn" id="tpx-cat-edit-resources" onclick="if(window.TPXCat)window.TPXCat.openManager('resources')"><i class="fas fa-pen"></i> Gérer mes ressources</button></div>
         <div class="resources-selected-count">
             <span id="resources-count">0</span> / 3 ressources sélectionnées
         </div>
@@ -20990,6 +21017,1527 @@ body.tours-compact #sort-specialty-dropdown .custom-select-option[data-value="ti
 </script>
 
 
+<script id="tpx-catalogs-core">
+/* ══════════════════════════════════════════════════════════════════════
+   TPX — CATALOGUES PERSONNALISABLES (2026-09-30)
+   Ressources, supports de tour, types et plateformes d'entraînement :
+   renommer, recolorer, ajouter (3 ajouts au plus par catalogue).
+   • Les entrées par défaut gardent EXACTEMENT leurs identifiants actuels
+     (déjà enregistrés chez les utilisateurs) et ne sont jamais supprimables.
+   • Supprimer une entrée ajoutée = l'ARCHIVER, jamais l'effacer : une donnée
+     déjà enregistrée avec cet identifiant garde son vrai nom et sa couleur.
+   • Stockage : champ `catalogs` du document de données du tableur
+     (planningRevision/{uid} en EDN, ECOSRevision/{uid} en ECOS) — sauvegardé
+     et restauré avec les données qui l'utilisent. Chaque entrée porte un
+     horodatage `u` : deux versions se fusionnent par UNION (la plus récente
+     l'emporte pour une même entrée) — jamais une entrée perdue.
+   • Script CLASSIQUE (pas un module) : window.TPXCat est visible depuis tous
+     les autres scripts du fichier, modules compris.
+   ══════════════════════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+    if (window.TPXCat) return;
+
+    var LABEL_MAX = 30;   // > plus long libellé par défaut (« Qi sur Hypocampus », 17)
+    var ABBR_MAX = 3;     // acronyme des supports (QCM, COL…)
+    var STORED_MAX = 40;  // entrées ajoutées CONSERVÉES par catalogue, archivées comprises
+    var EMPTY = [];
+    var OWN = Object.prototype.hasOwnProperty;
+
+    /* Palette restreinte : clé stockée → teintes par thème (clair / sombre / pastel). */
+    var PALETTE = [
+        { key: 'red',     name: 'Rouge',    solid: '#dc2626', rgb: '239,68,68',   light: ['#fee2e2', '#991b1b', '#fecaca'], dark: '#fca5a5', pastel: ['#f6e4e4', '#96565a', '#ecd0d0', '#c16767'] },
+        { key: 'orange',  name: 'Orange',   solid: '#ea580c', rgb: '249,115,22',  light: ['#ffedd5', '#c2410c', '#fed7aa'], dark: '#fdba74', pastel: ['#f7ead9', '#966741', '#eed9be', '#c48559'] },
+        { key: 'amber',   name: 'Ambre',    solid: '#d97706', rgb: '245,158,11',  light: ['#fef3c7', '#92400e', '#fde68a'], dark: '#fcd34d', pastel: ['#f7f0d9', '#8a6b34', '#ecdfb8', '#c19a58'] },
+        { key: 'green',   name: 'Vert',     solid: '#16a34a', rgb: '34,197,94',   light: ['#dcfce7', '#166534', '#bbf7d0'], dark: '#86efac', pastel: ['#e0f0e8', '#27725d', '#b5dcc9', '#51b896'] },
+        { key: 'teal',    name: 'Sarcelle', solid: '#0d9488', rgb: '20,184,166',  light: ['#ccfbf1', '#115e59', '#99f6e4'], dark: '#5eead4', pastel: ['#dff0ee', '#2f6f69', '#a8d5cf', '#4fa89e'] },
+        { key: 'cyan',    name: 'Cyan',     solid: '#0891b2', rgb: '6,182,212',   light: ['#cffafe', '#155e75', '#a5f3fc'], dark: '#67e8f9', pastel: ['#e0eff3', '#306d7e', '#a9d3dc', '#4eafc0'] },
+        { key: 'blue',    name: 'Bleu',     solid: '#2563eb', rgb: '59,130,246',  light: ['#dbeafe', '#1e40af', '#bfdbfe'], dark: '#93c5fd', pastel: ['#e2eaf7', '#4d6ba3', '#ccdaf0', '#6388c5'] },
+        { key: 'indigo',  name: 'Indigo',   solid: '#4f46e5', rgb: '99,102,241',  light: ['#e0e7ff', '#3730a3', '#c7d2fe'], dark: '#a5b4fc', pastel: ['#e6e6f5', '#534e97', '#cfcfee', '#6e70c4'] },
+        { key: 'violet',  name: 'Violet',   solid: '#7c3aed', rgb: '139,92,246',  light: ['#ede9fe', '#5b21b6', '#ddd6fe'], dark: '#c4b5fd', pastel: ['#e8e6f5', '#655d9c', '#d8d4ec', '#876bc6'] },
+        { key: 'fuchsia', name: 'Fuchsia',  solid: '#c026d3', rgb: '217,70,239',  light: ['#fae8ff', '#86198f', '#f5d0fe'], dark: '#f0abfc', pastel: ['#f2e4f4', '#86508f', '#e3cbe8', '#b36cc0'] },
+        { key: 'pink',    name: 'Rose',     solid: '#db2777', rgb: '236,72,153',  light: ['#fce7f3', '#9d174d', '#fbcfe8'], dark: '#f9a8d4', pastel: ['#f5e3ec', '#923b5f', '#e8c9d8', '#c06994'] },
+        { key: 'slate',   name: 'Gris',     solid: '#64748b', rgb: '100,116,139', light: ['#f1f5f9', '#334155', '#e2e8f0'], dark: '#cbd5e1', pastel: ['#eceef2', '#525c6b', '#d6dae1', '#7b8494'] }
+    ];
+    var PAL = {};
+    PALETTE.forEach(function (p) { PAL[p.key] = p; });
+
+    var KINDS = {};
+    var host = null;
+    var listeners = [];
+    var cache = {};
+    var lastSig = null;
+
+    /* ── Utilitaires ───────────────────────────────────────────────── */
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function chars(s) { return Array.from ? Array.from(s) : String(s).split(''); }
+    /* Nom : un seul espace entre les mots, aucun caractère de contrôle ni
+       d'inversion de sens d'écriture, LABEL_MAX caractères au plus. */
+    function cleanLabel(s) {
+        var t = String(s == null ? '' : s)
+            .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+        var c = chars(t);
+        if (c.length > LABEL_MAX) t = c.slice(0, LABEL_MAX).join('').trim();
+        return t;
+    }
+    function fold(s) {
+        var t = cleanLabel(s).toLowerCase();
+        try { t = t.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
+        return t;
+    }
+    function cleanAbbr(s) {
+        var t = String(s == null ? '' : s);
+        try { t = t.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
+        return t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, ABBR_MAX);
+    }
+    function abbrFrom(label) { return cleanAbbr(label) || 'SUP'; }
+    function validId(id) { return typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,39}$/.test(id); }
+    function num(x) { return (typeof x === 'number' && isFinite(x) && x > 0) ? x : 0; }
+    function palKey(c) { return (typeof c === 'string' && OWN.call(PAL, c)) ? c : null; }
+    function now() { return Date.now(); }
+    function hexToRgb(h) {
+        var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(h || ''));
+        return m ? (parseInt(m[1], 16) + ',' + parseInt(m[2], 16) + ',' + parseInt(m[3], 16)) : '100,116,139';
+    }
+
+    /* ── Configuration des catalogues (fournie par chaque tableur) ─── */
+    function register(kind, cfg) {
+        var defById = {};
+        (cfg.defaults || []).forEach(function (d) { defById[d.id] = d; });
+        cfg.defById = defById;
+        cfg.maxCustom = cfg.maxCustom || 3;
+        KINDS[kind] = cfg;
+        delete cache[kind];
+    }
+
+    function rawRoot() {
+        try {
+            var r = (host && typeof host.getRaw === 'function') ? host.getRaw() : null;
+            return (r && typeof r === 'object') ? r : null;
+        } catch (e) { return null; }
+    }
+    function rawList(kind) {
+        var r = rawRoot();
+        var a = r ? r[kind] : null;
+        return Array.isArray(a) ? a : EMPTY;
+    }
+
+    /* Entrée brute (Firestore / copie locale) → entrée brute PROPRE, ou null. */
+    function cleanRaw(kind, e) {
+        var cfg = KINDS[kind];
+        if (!cfg || !e || typeof e !== 'object' || !validId(e.id)) return null;
+        var isDef = OWN.call(cfg.defById, e.id);
+        var out = { id: e.id, u: num(e.u) };
+        var lab = cleanLabel(e.label);
+        if (lab) out.label = lab;
+        if (cfg.hasAbbr) { var ab = cleanAbbr(e.abbr); if (ab) out.abbr = ab; }
+        var col = palKey(e.color);
+        if (col) out.color = col;
+        if (!isDef) {
+            if (!out.label) out.label = 'Sans nom';
+            out.c = num(e.c);
+            if (e.archived === true) out.archived = true;
+        }
+        return out;
+    }
+    function cleanRawList(kind, arr) {
+        var byId = {}, order = [];
+        (Array.isArray(arr) ? arr : EMPTY).forEach(function (e) {
+            var ce = cleanRaw(kind, e);
+            if (!ce) return;
+            if (!OWN.call(byId, ce.id)) { order.push(ce.id); byId[ce.id] = ce; }
+            else if (ce.u >= byId[ce.id].u) byId[ce.id] = ce;
+        });
+        return order.map(function (id) { return byId[id]; });
+    }
+
+    function entryFor(kind, d, o) {
+        var cfg = KINDS[kind];
+        var isDef = !!d;
+        var e = {
+            id: isDef ? d.id : o.id,
+            isDefault: isDef,
+            archived: !isDef && o.archived === true,
+            label: o.label ? o.label : (isDef ? d.label : 'Sans nom'),
+            color: o.color || null,
+            c: isDef ? 0 : (o.c || 0),
+            u: o.u || 0
+        };
+        e.renamed = isDef && e.label !== d.label;
+        if (cfg.hasShort) e.short = (isDef && !e.renamed) ? (d.short || d.label) : e.label;
+        if (cfg.hasAbbr) e.abbr = o.abbr || (isDef ? d.abbr : abbrFrom(e.label));
+        e.icon = (isDef && d.icon) ? d.icon : (cfg.customIcon || null);
+        if (!isDef && !e.color) e.color = 'slate';
+        return e;
+    }
+
+    function build(kind, raw) {
+        var cfg = KINDS[kind];
+        var clean = cleanRawList(kind, raw);
+        var byRaw = {};
+        clean.forEach(function (e) { byRaw[e.id] = e; });
+        var list = [];
+        cfg.defaults.forEach(function (d) { list.push(entryFor(kind, d, OWN.call(byRaw, d.id) ? byRaw[d.id] : {})); });
+        var customs = clean.filter(function (e) { return !OWN.call(cfg.defById, e.id); });
+        customs.forEach(function (e, i) { e._i = i; });
+        customs.sort(function (a, b) { return (a.c - b.c) || (a._i - b._i); });
+        var activeCount = 0;
+        customs.forEach(function (o) {
+            var ent = entryFor(kind, null, o);
+            /* Plafond : au-delà de maxCustom entrées actives (fusion de deux appareils),
+               les suivantes ne sont plus proposées pour une NOUVELLE donnée —
+               l'affichage de ce qui est déjà enregistré, lui, reste intact. */
+            if (!ent.archived) { activeCount++; if (activeCount > cfg.maxCustom) ent.overCap = true; }
+            list.push(ent);
+        });
+        var byId = {};
+        list.forEach(function (e) { byId[e.id] = e; });
+        return { list: list, byId: byId };
+    }
+
+    function state(kind) {
+        if (!KINDS[kind]) return { list: EMPTY, byId: {} };
+        var raw = rawList(kind);
+        var c = cache[kind];
+        if (c && c.raw === raw) return c.st;
+        var st = build(kind, raw);
+        cache[kind] = { raw: raw, st: st };
+        return st;
+    }
+    function full(kind) { return state(kind).list; }
+    function active(kind) { return full(kind).filter(function (e) { return !e.archived && !e.overCap; }); }
+    function known(kind, id) { return id != null && OWN.call(state(kind).byId, String(id)); }
+    function fallback(kind, id) {
+        var cfg = KINDS[kind] || {};
+        var lab = (id == null || id === '') ? '—' : String(id);
+        var e = { id: id == null ? '' : String(id), isDefault: false, archived: true, unknown: true,
+                  label: lab, color: null, c: 0, u: 0, icon: cfg.customIcon || null };
+        if (cfg.hasShort) e.short = lab;
+        if (cfg.hasAbbr) e.abbr = abbrFrom(lab);
+        return e;
+    }
+    /* Ne renvoie JAMAIS null : entrée active, puis archivée, puis repli neutre. */
+    function meta(kind, id) {
+        var st = state(kind);
+        if (id != null && OWN.call(st.byId, String(id))) return st.byId[String(id)];
+        return fallback(kind, id);
+    }
+    function label(kind, id) { return meta(kind, id).label; }
+    /* Classe(s) CSS de couleur : classe historique pour un défaut non recoloré
+       (rendu identique à avant, dans les trois thèmes), palette sinon. */
+    function cls(kind, id) {
+        var e = meta(kind, id), cfg = KINDS[kind] || {};
+        if (e.color) return 'tpx-pal tpx-pal-' + e.color;
+        if (e.isDefault) { var d = cfg.defById[e.id]; return (d && d.cls != null) ? d.cls : ''; }
+        if (e.unknown) return (typeof cfg.unknownCls === 'function') ? cfg.unknownCls(e.id) : '';
+        return 'tpx-pal tpx-pal-slate';
+    }
+    /* Couleurs en clair (styles en ligne) : { solid, fg, rgb }. */
+    function hex(kind, id) {
+        var e = meta(kind, id), cfg = KINDS[kind] || {};
+        var p = e.color ? PAL[e.color] : null;
+        if (p) return { solid: p.solid, fg: p.solid, rgb: p.rgb, pal: p.key };
+        if (e.isDefault) {
+            var d = cfg.defById[e.id];
+            return { solid: d.solid, fg: d.fg || d.solid, rgb: d.rgb || hexToRgb(d.solid), pal: null };
+        }
+        var s = PAL.slate;
+        return { solid: s.solid, fg: s.solid, rgb: s.rgb, pal: 'slate' };
+    }
+
+    /* ── Fusion (union par identifiant, la version la plus récente gagne) ── */
+    function mergeKindArrays(kind, a, b) {
+        // OWN (01/10) : un nom de champ hérité du prototype JS (« constructor »… : donnée fabriquée à la main) n'est
+        // jamais pris pour un catalogue connu — sinon erreur ; il est traité comme un catalogue inconnu, conservé tel quel.
+        var known = OWN.call(KINDS, kind);
+        var A = known ? cleanRawList(kind, a) : looseList(a);
+        var B = known ? cleanRawList(kind, b) : looseList(b);
+        var byId = {}, order = [];
+        A.concat(B).forEach(function (e) {
+            if (!OWN.call(byId, e.id)) { order.push(e.id); byId[e.id] = e; }
+            else if (num(e.u) >= num(byId[e.id].u)) byId[e.id] = e;
+        });
+        return order.map(function (id) { return byId[id]; });
+    }
+    /* Catalogue inconnu de cette version (ajouté par une version future) : conservé tel quel. */
+    function looseList(arr) {
+        return (Array.isArray(arr) ? arr : EMPTY).filter(function (e) {
+            return e && typeof e === 'object' && typeof e.id === 'string' && e.id.length > 0 && e.id.length <= 40;
+        });
+    }
+    /* a, b : objets `catalogs` bruts (ou null). Renvoie leur union, ou null si les deux sont vides. */
+    function mergeAll(a, b) {
+        var kinds = {};
+        [a, b].forEach(function (x) {
+            if (x && typeof x === 'object') Object.keys(x).forEach(function (k) { if (Array.isArray(x[k])) kinds[k] = true; });
+        });
+        var out = null;
+        Object.keys(kinds).forEach(function (k) {
+            var arr = mergeKindArrays(k, a && a[k], b && b[k]);
+            if (arr.length) { out = out || { v: 1 }; out[k] = arr; }
+        });
+        return out;
+    }
+
+    /* ── Écritures ─────────────────────────────────────────────────── */
+    function sigNow() { try { return JSON.stringify(rawRoot()); } catch (e) { return String(now()); } }
+    function emit(kind, source) {
+        lastSig = sigNow();
+        listeners.slice().forEach(function (fn) {
+            try { fn(kind, source); } catch (e) { console.warn('[TPXCat] rafraîchissement', e); }
+        });
+        if (mgr.ov && source !== 'mgr') mgrExternalRefresh();
+    }
+    /* À appeler quand les données arrivent d'ailleurs (serveur, autre onglet) :
+       ne rafraîchit que si les catalogues ont réellement changé. */
+    function externalChange() {
+        var s = sigNow();
+        if (s === lastSig) return;
+        cache = {};
+        emit('*', 'remote');
+    }
+    function writeKind(kind, arr, source) {
+        var root = rawRoot() || {};
+        var next = {};
+        Object.keys(root).forEach(function (k) { next[k] = root[k]; });
+        next[kind] = arr;
+        next.v = 1;
+        host.setRaw(next);
+        delete cache[kind];
+        try { host.persist(kind); } catch (e) { console.warn('[TPXCat] enregistrement', e); }
+        emit(kind, source || 'local');
+    }
+    function upsert(arr, id, fn) {
+        var found = null;
+        for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) { found = arr[i]; break; } }
+        if (!found) { found = { id: id }; arr.push(found); }
+        fn(found);
+        found.u = Math.max(now(), num(found.u) + 1);
+        return found;
+    }
+    function editable(silent) {
+        if (!host) return false;
+        try { return typeof host.canEdit === 'function' ? !!host.canEdit(!!silent) : true; } catch (e) { return false; }
+    }
+    function dupLabel(kind, lab, exceptId) {
+        var f = fold(lab);
+        return active(kind).some(function (e) { return e.id !== exceptId && fold(e.label) === f; });
+    }
+    function customCounts(kind) {
+        var all = full(kind).filter(function (e) { return !e.isDefault; });
+        return { active: all.filter(function (e) { return !e.archived; }).length, stored: all.length };
+    }
+    function capInfo(kind) {
+        var cfg = KINDS[kind], n = customCounts(kind);
+        if (n.active >= cfg.maxCustom) return { ok: false, why: 'cap', used: n.active, max: cfg.maxCustom };
+        if (n.stored >= STORED_MAX) return { ok: false, why: 'stored', used: n.active, max: cfg.maxCustom };
+        return { ok: true, used: n.active, max: cfg.maxCustom };
+    }
+    function capMsg(kind) {
+        var cfg = KINDS[kind];
+        return 'Limite atteinte : ' + cfg.maxCustom + ' ajouts au maximum. Supprimez une entrée ajoutée pour en créer une autre.';
+    }
+    function newId(kind) {
+        var st = state(kind), id;
+        do { id = 'c' + now().toString(36) + Math.random().toString(36).slice(2, 6); } while (OWN.call(st.byId, id));
+        return id;
+    }
+    function firstFreeColor(kind) {
+        var cfg = KINDS[kind], used = {};
+        active(kind).forEach(function (e) {
+            var k = e.color || (e.isDefault && cfg.defById[e.id] && cfg.defById[e.id].pal) || null;
+            if (k) used[k] = true;
+        });
+        for (var i = 0; i < PALETTE.length; i++) { if (!used[PALETTE[i].key]) return PALETTE[i].key; }
+        return PALETTE[0].key;
+    }
+
+    function add(kind, input, source) {
+        var cfg = KINDS[kind];
+        if (!cfg || !host) return { ok: false, msg: 'Indisponible pour le moment.' };
+        if (!editable()) return { ok: false, silent: true };
+        var cap = capInfo(kind);
+        if (!cap.ok) return { ok: false, msg: cap.why === 'cap' ? capMsg(kind) : 'Limite technique atteinte pour ce catalogue.' };
+        var lab = cleanLabel(input && input.label);
+        if (!lab) return { ok: false, msg: 'Donnez un nom.', field: 'name' };
+        if (dupLabel(kind, lab)) return { ok: false, msg: 'Ce nom existe déjà dans la liste.', field: 'name' };
+        var t = now();
+        var entry = { id: newId(kind), label: lab, color: palKey(input && input.color) || firstFreeColor(kind), c: t, u: t };
+        if (cfg.hasAbbr) entry.abbr = cleanAbbr(input && input.abbr) || abbrFrom(lab);
+        var arr = cleanRawList(kind, rawList(kind));
+        arr.push(entry);
+        writeKind(kind, arr, source);
+        return { ok: true, id: entry.id };
+    }
+    function rename(kind, id, value, source) {
+        var cfg = KINDS[kind], e = meta(kind, id);
+        if (!cfg || e.unknown || e.archived) return { ok: false };
+        var lab = cleanLabel(value);
+        if (!lab) return { ok: false, msg: 'Le nom ne peut pas être vide.' };
+        if (lab === e.label) return { ok: true, same: true };
+        if (dupLabel(kind, lab, id)) return { ok: false, msg: 'Ce nom existe déjà dans la liste.' };
+        if (!editable()) return { ok: false, silent: true };
+        var d = cfg.defById[id];
+        var arr = cleanRawList(kind, rawList(kind));
+        upsert(arr, id, function (o) { if (d && lab === d.label) delete o.label; else o.label = lab; });
+        writeKind(kind, arr, source);
+        return { ok: true };
+    }
+    function setAbbr(kind, id, value, source) {
+        var cfg = KINDS[kind], e = meta(kind, id);
+        if (!cfg || !cfg.hasAbbr || e.unknown || e.archived) return { ok: false };
+        var ab = cleanAbbr(value);
+        if (!ab) return { ok: false, msg: 'L\'acronyme doit contenir au moins une lettre ou un chiffre.' };
+        if (ab === e.abbr) return { ok: true, same: true };
+        if (!editable()) return { ok: false, silent: true };
+        var d = cfg.defById[id];
+        var arr = cleanRawList(kind, rawList(kind));
+        upsert(arr, id, function (o) { if (d && ab === d.abbr) delete o.abbr; else o.abbr = ab; });
+        writeKind(kind, arr, source);
+        return { ok: true };
+    }
+    /* color : clé de palette, ou null pour revenir à la couleur d'origine (défauts seulement). */
+    function recolor(kind, id, color, source) {
+        var cfg = KINDS[kind], e = meta(kind, id);
+        if (!cfg || e.unknown || e.archived) return { ok: false };
+        var key = palKey(color);
+        var d = cfg.defById[id];
+        if (!key && !d) return { ok: false };
+        if ((key || null) === (e.color || null)) return { ok: true, same: true };
+        if (!editable()) return { ok: false, silent: true };
+        var arr = cleanRawList(kind, rawList(kind));
+        upsert(arr, id, function (o) { if (key) o.color = key; else delete o.color; });
+        writeKind(kind, arr, source);
+        return { ok: true };
+    }
+    /* Suppression = ARCHIVAGE. Un défaut n'est JAMAIS archivable, même par un appel direct. */
+    function archive(kind, id, source) {
+        var cfg = KINDS[kind];
+        if (!cfg) return { ok: false };
+        if (OWN.call(cfg.defById, String(id))) return { ok: false, protected: true, msg: 'Cette entrée est proposée par défaut : elle ne peut pas être supprimée.' };
+        var e = meta(kind, id);
+        if (e.unknown || e.archived) return { ok: false };
+        if (!editable()) return { ok: false, silent: true };
+        var arr = cleanRawList(kind, rawList(kind));
+        upsert(arr, id, function (o) { o.archived = true; });
+        try { if (typeof host.onArchive === 'function') host.onArchive(kind, id); } catch (err) { console.warn('[TPXCat] archivage', err); }
+        writeKind(kind, arr, source);
+        return { ok: true };
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       Gestionnaire (une seule fenêtre pour tous les catalogues)
+       Sa propre couche (#tpx-cat-overlay), posée PAR-DESSUS la fenêtre qui
+       l'a ouverte : celle-ci reste ouverte et se met à jour en direct.
+       ══════════════════════════════════════════════════════════════ */
+    var mgr = { ov: null, kind: null, newColor: null, openRow: null, stale: false, addTimer: null, onKey: null, palDone: null, palTimer: null, palEnter: null, palCloseTimer: null, pendingNew: null, reveal: null };
+
+    /* Verrou de défilement : si la fenêtre du dessous l'a DÉJÀ posé (certaines, comme
+       « Ajouter un entraînement », le posent sans propriétaire), le gestionnaire n'y
+       touche pas — le reprendre puis le rendre retirait la compensation de la barre
+       de défilement et faisait sauter la page sous les fenêtres. */
+    var didLock = false;
+    function lockScroll(on) {
+        try {
+            if (on) {
+                if (didLock) return;
+                if (document.body && document.body.style.overflow === 'hidden') return;
+                if (typeof window._ednScrollLock === 'function') window._ednScrollLock('tpxCatalog');
+                else if (typeof window._bodyLock === 'function') window._bodyLock('tpxCatalog');
+                didLock = true;
+            } else {
+                if (!didLock) return;
+                didLock = false;
+                if (typeof window._ednScrollUnlock === 'function') window._ednScrollUnlock('tpxCatalog');
+                else if (typeof window._bodyUnlock === 'function') window._bodyUnlock('tpxCatalog');
+            }
+        } catch (e) {}
+    }
+    /* Champs texte : de vrais <textarea rows="1"> (jamais deux <input type="text">
+       côte à côte, que Chrome/Edge prennent pour un formulaire d'identifiants),
+       en lecture seule jusqu'au premier geste réel. */
+    function fieldHtml(id, klass, max, placeholder, value, aria) {
+        return '<textarea rows="1" id="' + id + '" class="tpx-cat-field ' + klass + '" maxlength="' + max + '"' +
+            ' placeholder="' + esc(placeholder) + '" aria-label="' + esc(aria) + '" readonly data-tpx-cat-guard="1"' +
+            ' autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done"' +
+            ' name="' + id + '" data-lpignore="true" data-1p-ignore="true" data-bwignore="true"' +
+            ' data-form-type="other" data-protonpass-ignore="true">' + esc(value || '') + '</textarea>';
+    }
+    function swatchesHtml(selected, def) {
+        var h = '', n = 0;   // --i : rang de la case (apparition en cascade de la palette d'une ligne)
+        if (def) {
+            h += '<button type="button" class="tpx-cat-sw tpx-cat-sw-origin' + (!selected ? ' selected' : '') + '" data-color=""' +
+                 ' style="background:' + esc(def.solid) + ';--i:' + (n++) + '" data-tpx-tip="Couleur d\'origine" aria-label="Couleur d\'origine">' +
+                 '<i class="fas fa-rotate-left"></i></button>';
+        }
+        PALETTE.forEach(function (p) {
+            h += '<button type="button" class="tpx-cat-sw' + (selected === p.key ? ' selected' : '') + '" data-color="' + p.key + '"' +
+                 ' style="background:' + p.solid + ';--i:' + (n++) + '" data-tpx-tip="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"></button>';
+        });
+        return h;
+    }
+    function previewHtml(kind, e) {
+        var cfg = KINDS[kind];
+        try { if (typeof cfg.preview === 'function') return cfg.preview(e); } catch (err) {}
+        return '<span class="tpx-cat-prev-dot" style="background:' + esc(hex(kind, e.id).solid) + '"></span>';
+    }
+    /* Bouton palette (2026-09-30) : un vrai cadre, bien visible au survol ; coche verte 1,5 s
+       après un changement de couleur (même geste que « Ajouté »). */
+    function palBtnHtml(id) {
+        var done = !!(mgr.palDone && mgr.palDone.id === id && Date.now() < mgr.palDone.until);
+        return '<span class="tpx-cat-pal-btn' + (done ? ' is-done' : '') + '" aria-hidden="true"><i class="fas ' + (done ? 'fa-check' : 'fa-palette') + '"></i></span>';
+    }
+    function flashPalDone(id) {
+        if (mgr.palTimer) clearTimeout(mgr.palTimer);
+        mgr.palDone = { id: id, until: Date.now() + 1500 };
+        mgr.palTimer = setTimeout(function () {
+            mgr.palTimer = null;
+            var d = mgr.palDone;
+            mgr.palDone = null;
+            var row = d ? findRow(d.id) : null;
+            var b = row ? row.querySelector('.tpx-cat-pal-btn') : null;
+            if (b) { b.classList.remove('is-done'); b.innerHTML = '<i class="fas fa-palette"></i>'; }
+        }, 1500);
+    }
+    /* Palette d'une ligne (2026-09-30, retour de Jean : « c'est on / off ») : elle s'ouvre et se referme en
+       douceur (hauteur + fondu ~0,2 s, cases qui apparaissent en cascade) ; sans animation si le système
+       demande moins de mouvements. Ouvrir une autre ligne referme d'abord celle qui est ouverte. */
+    var PAL_CLOSE_MS = 180;
+    function lessMotion() {
+        try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; }
+    }
+    function openRowPal(id) {
+        if (mgr.openRow && mgr.openRow !== id) { closeRowPal(function () { if (mgr.ov) openRowPal(id); }); return; }
+        if (mgr.palCloseTimer) { clearTimeout(mgr.palCloseTimer); mgr.palCloseTimer = null; }
+        mgr.openRow = id;
+        mgr.palEnter = lessMotion() ? null : id;
+        renderList();
+    }
+    function closeRowPal(after) {
+        var el = mgr.ov ? mgr.ov.querySelector('.tpx-cat-row-pal:not(.is-closing):not(.is-leaving)') : null;
+        mgr.openRow = null;
+        if (mgr.palCloseTimer) { clearTimeout(mgr.palCloseTimer); mgr.palCloseTimer = null; }
+        var done = function () { mgr.palCloseTimer = null; renderList(); if (typeof after === 'function') after(); };
+        if (!el || lessMotion()) { done(); return; }
+        el.classList.remove('is-entering');
+        var row = el.previousElementSibling;
+        if (row && row.classList && row.classList.contains('tpx-cat-row')) {
+            row.classList.remove('pal-open');
+            var b = row.querySelector('.tpx-cat-row-color');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        }
+        el.classList.add('is-closing');
+        mgr.palCloseTimer = setTimeout(done, PAL_CLOSE_MS);
+    }
+    function rowHtml(kind, e, i) {
+        var cfg = KINDS[kind];
+        var open = mgr.openRow === e.id;
+        var h = '<div class="tpx-cat-row' + (e.isDefault ? ' is-default' : ' is-custom') + (open ? ' pal-open' : '') + '" data-id="' + esc(e.id) + '">' +
+            '<button type="button" class="tpx-cat-row-color" data-tpx-tip="Changer la couleur" aria-label="Changer la couleur" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+                previewHtml(kind, e) + palBtnHtml(e.id) + '</button>' +
+            '<div class="tpx-cat-row-fields">' +
+                fieldHtml('tpx-cat-rn-' + i, 'tpx-cat-row-name', LABEL_MAX, 'Nom', e.label, 'Nom') +
+                (cfg.hasAbbr ? fieldHtml('tpx-cat-ra-' + i, 'tpx-cat-row-abbr', ABBR_MAX, 'ABC', e.abbr, 'Acronyme') : '') +
+            '</div>' +
+            (e.isDefault
+                ? '<span class="tpx-cat-lock" role="img" aria-label="Proposé par défaut : ne peut pas être supprimé" data-tpx-tip="Proposé par défaut : ne peut pas être supprimé"><i class="fas fa-lock"></i></span>'
+                : '<button type="button" class="tpx-cat-del" data-tpx-tip="Supprimer" aria-label="Supprimer"><i class="fas fa-trash"></i></button>') +
+            '</div>';
+        // is-entering : seulement au rendu qui ouvre la palette (pas de nouvelle animation aux rendus suivants)
+        if (open) h += '<div class="tpx-cat-row-pal' + (mgr.palEnter === e.id ? ' is-entering' : '') + '" data-for="' + esc(e.id) + '">' +
+            '<div class="tpx-cat-row-pal-in"><div class="tpx-cat-row-pal-sw">' + swatchesHtml(e.color, e.isDefault ? cfg.defById[e.id] : null) + '</div></div></div>';
+        return h;
+    }
+    function q(id) { return mgr.ov ? mgr.ov.querySelector('#' + id) : null; }
+    function findRow(id) {
+        if (!mgr.ov) return null;
+        return Array.prototype.find.call(mgr.ov.querySelectorAll('.tpx-cat-row'), function (r) { return r.getAttribute('data-id') === String(id); }) || null;
+    }
+    /* Messages (2026-10-01, retour de Jean) : apparition / disparition discrètes — hauteur + fondu, comme les
+       erreurs du modal « Enregistrer un tour » ; le texte reste en place pendant qu'il disparaît. */
+    function setNote(el, text, cls) {
+        if (!el) return;
+        if (el._tpxHide) { clearTimeout(el._tpxHide); el._tpxHide = null; }
+        if (text) {
+            if (el.textContent !== text) el.textContent = text;
+            el.className = cls + ' is-shown';
+            return;
+        }
+        if (!el.classList.contains('is-shown')) { el.textContent = ''; return; }
+        el.classList.remove('is-shown');
+        el._tpxHide = setTimeout(function () { el._tpxHide = null; if (!el.classList.contains('is-shown')) el.textContent = ''; }, 320);
+    }
+    function showMsg(text, level) {
+        setNote(q('tpx-cat-msg'), text || '', 'tpx-cat-msg' + (level === 'error' ? ' is-error' : ''));
+    }
+    function updateAddState() {
+        if (!mgr.ov) return;
+        var kind = mgr.kind, cap = capInfo(kind);
+        var cnt = q('tpx-cat-count');
+        if (cnt) {
+            cnt.textContent = cap.used + ' / ' + cap.max + ' ajout' + (cap.max > 1 ? 's' : '');
+            cnt.classList.toggle('is-full', !cap.ok);
+        }
+        var capEl = q('tpx-cat-cap');
+        setNote(capEl, cap.ok ? '' : (cap.why === 'cap' ? capMsg(kind) : 'Limite technique atteinte pour ce catalogue.'), 'tpx-cat-cap');
+        var btn = q('tpx-cat-add-btn');
+        if (btn && !btn.classList.contains('is-done')) btn.disabled = !cap.ok;
+    }
+    function renderList() {
+        if (!mgr.ov) return;
+        hideTip();
+        var kind = mgr.kind;
+        var list = active(kind);
+        // entrée tout juste ajoutée : sa ligne n'est dessinée qu'une fois la fenêtre descendue tout en bas (revealAdded)
+        if (mgr.pendingNew) list = list.filter(function (e) { return e.id !== mgr.pendingNew; });
+        if (mgr.openRow && !list.some(function (e) { return e.id === mgr.openRow; })) mgr.openRow = null;
+        var el = q('tpx-cat-list');
+        if (el) el.innerHTML = list.map(function (e, i) { return rowHtml(kind, e, i); }).join('');
+        mgr.palEnter = null;
+        updateAddState();
+    }
+    function renderNewPalette() {
+        hideTip();
+        var el = q('tpx-cat-new-pal');
+        if (el) el.innerHTML = swatchesHtml(mgr.newColor, null);
+    }
+    function listHasFocus() {
+        var a = document.activeElement, el = q('tpx-cat-list');
+        return !!(a && el && el.contains(a) && a.classList && a.classList.contains('tpx-cat-field'));
+    }
+    function mgrExternalRefresh() {
+        if (!mgr.ov) return;
+        if (listHasFocus()) { mgr.stale = true; return; }
+        mgr.stale = false;
+        renderList();
+    }
+
+    function openManager(kind, opts) {
+        var cfg = KINDS[kind];
+        if (!cfg) return false;
+        if (!host) { console.warn('[TPXCat] données pas encore disponibles'); return false; }
+        if (!editable()) return false;
+        if (mgr.ov) closeManager(true);
+        mgr.kind = kind;
+        mgr.openRow = null;
+        mgr.stale = false;
+        mgr.pendingNew = null;
+        mgr.newColor = firstFreeColor(kind);
+
+        var ov = document.createElement('div');
+        ov.className = 'settings-modal-overlay tpx-cat-overlay tpx-cat-noanim';
+        ov.id = 'tpx-cat-overlay';
+        ov.setAttribute('data-kind', kind);
+        ov.innerHTML =
+            '<div class="settings-modal-inner tpx-cat-inner" role="dialog" aria-modal="true" aria-labelledby="tpx-cat-title" tabindex="-1">' +
+                '<div class="unified-modal-header">' +
+                    '<div class="unified-modal-title">' +
+                        '<div class="unified-modal-icon"><i class="fas ' + esc(cfg.icon || 'fa-palette') + '"></i></div>' +
+                        '<h3 class="unified-modal-heading" id="tpx-cat-title">' + esc(cfg.title) + '</h3>' +
+                    '</div>' +
+                    '<button class="notes-close-btn tpx-cat-close" type="button" aria-label="Fermer" data-tpx-tip="Fermer"><i class="fas fa-times"></i></button>' +
+                '</div>' +
+                '<div class="settings-modal-body tpx-cat-body">' +
+                    '<p class="tpx-cat-sub">' + esc(cfg.subtitle || '') + '</p>' +
+                    '<section class="tpx-cat-card tpx-cat-add">' +
+                        '<div class="tpx-cat-sec"><span><i class="fas fa-plus"></i>Ajouter</span><span class="tpx-cat-count" id="tpx-cat-count"></span></div>' +
+                        '<div class="tpx-cat-add-fields">' +
+                            '<label class="tpx-cat-lab" for="tpx-cat-new-name">Nom' +
+                                fieldHtml('tpx-cat-new-name', 'tpx-cat-new-name', LABEL_MAX, cfg.placeholder || 'Nom', '', 'Nom') + '</label>' +
+                            (cfg.hasAbbr ? '<label class="tpx-cat-lab tpx-cat-lab-abbr" for="tpx-cat-new-abbr">Acronyme' +
+                                fieldHtml('tpx-cat-new-abbr', 'tpx-cat-new-abbr', ABBR_MAX, 'ABC', '', 'Acronyme (3 lettres)') + '</label>' : '') +
+                        '</div>' +
+                        (cfg.hasAbbr ? '<p class="tpx-cat-hint">L\'acronyme (3 lettres au plus) s\'affiche sous le tour dans la liste des items.</p>' : '') +
+                        '<div class="tpx-cat-lab">Couleur</div>' +
+                        '<div class="tpx-cat-palette" id="tpx-cat-new-pal"></div>' +
+                        '<div class="tpx-cat-msg" id="tpx-cat-msg" role="status" aria-live="polite"></div>' +
+                        '<div class="tpx-cat-cap" id="tpx-cat-cap" aria-live="polite"></div>' +
+                        '<button type="button" class="tpx-cat-add-btn" id="tpx-cat-add-btn"><i class="fas fa-plus"></i><span>Ajouter</span></button>' +
+                    '</section>' +
+                    '<section class="tpx-cat-card tpx-cat-existing">' +
+                        '<div class="tpx-cat-sec"><span><i class="fas fa-list-ul"></i>' + esc(cfg.listTitle || 'Liste') + '</span></div>' +
+                        '<div class="tpx-cat-list" id="tpx-cat-list"></div>' +
+                        '<p class="tpx-cat-hint">' + esc(cfg.listHint || 'Les entrées proposées par défaut (cadenas) se renomment et se recolorent mais ne se suppriment pas. Supprimer une entrée ajoutée la retire des listes, sans rien effacer de ce qui est déjà enregistré.') + '</p>' +
+                    '</section>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(ov);
+        mgr.ov = ov;
+        mgr.onClose = (opts && typeof opts.onClose === 'function') ? opts.onClose : null;
+        renderNewPalette();
+        renderList();
+        bindManager(ov);
+
+        /* Verrou et apparition dans la même image (pas de saut de mise en page). */
+        void ov.offsetHeight;
+        lockScroll(true);
+        ov.classList.add('active');
+        /* Message déjà présent à l'ouverture (plafond atteint) : affiché d'emblée ; animations ensuite. */
+        rafFn(function () { rafFn(function () { ov.classList.remove('tpx-cat-noanim'); }); });
+        var inner = ov.querySelector('.tpx-cat-inner');
+        try { if (inner) inner.focus({ preventScroll: true }); } catch (e) {}
+        return true;
+    }
+
+    function closeManager(immediate) {
+        var ov = mgr.ov;
+        if (!ov) return;
+        hideTip();
+        var a = document.activeElement;
+        if (a && ov.contains(a) && typeof a.blur === 'function') a.blur(); // valide un nom en cours de saisie
+        if (mgr.onKey) window.removeEventListener('keydown', mgr.onKey, true);
+        mgr.onKey = null;
+        if (mgr.addTimer) { clearTimeout(mgr.addTimer); mgr.addTimer = null; }
+        if (mgr.palTimer) { clearTimeout(mgr.palTimer); mgr.palTimer = null; }
+        mgr.palDone = null;
+        if (mgr.palCloseTimer) { clearTimeout(mgr.palCloseTimer); mgr.palCloseTimer = null; }
+        mgr.palEnter = null;
+        stopReveal();
+        mgr.pendingNew = null;   // l'entrée est déjà enregistrée : seule son animation d'arrivée est abandonnée
+        var cb = mgr.onClose;
+        mgr.ov = null; mgr.kind = null; mgr.openRow = null; mgr.onClose = null;
+        if (immediate) {
+            if (ov.parentNode) ov.parentNode.removeChild(ov);
+        } else {
+            ov.classList.add('closing');
+            setTimeout(function () {
+                if (ov.parentNode) ov.parentNode.removeChild(ov);
+                if (!document.getElementById('tpx-cat-overlay')) lockScroll(false);
+            }, 200);
+        }
+        try { if (cb) cb(); } catch (e) {}
+    }
+
+    function unlockField(t) {
+        if (t && t.getAttribute && t.getAttribute('data-tpx-cat-guard') === '1') {
+            t.removeAttribute('data-tpx-cat-guard');
+            t.readOnly = false;
+        }
+    }
+    function doAdd() {
+        var kind = mgr.kind;
+        var nameEl = q('tpx-cat-new-name'), abbrEl = q('tpx-cat-new-abbr'), btn = q('tpx-cat-add-btn');
+        if (!kind || !nameEl || !btn || btn.disabled) return;
+        if (btn.classList.contains('is-done')) {
+            /* « Ajouté » affiché (1,5 s après un ajout) : un 2e geste sur le champ VIDÉ (double toucher, Entrée répétée)
+               ne fait rien ; un NOUVEAU nom déjà tapé (clavier tactile rapide, suggestion) est bien ajouté (2026-10-02). */
+            if (!String(nameEl.value || '').trim()) return;
+            if (mgr.addTimer) { clearTimeout(mgr.addTimer); mgr.addTimer = null; }
+            btn.classList.remove('is-done');
+            btn.innerHTML = '<i class="fas fa-plus"></i><span>Ajouter</span>';
+            updateAddState();
+            if (btn.disabled) return;
+        }
+        var r = add(kind, { label: nameEl.value, abbr: abbrEl ? abbrEl.value : '', color: mgr.newColor }, 'mgr');
+        if (!r.ok) {
+            if (r.msg) showMsg(r.msg, 'error');
+            if (r.field === 'name') { unlockField(nameEl); try { nameEl.focus(); } catch (e) {} }
+            return;
+        }
+        showMsg('');
+        nameEl.value = '';
+        if (abbrEl) abbrEl.value = '';
+        mgr.newColor = firstFreeColor(kind);
+        renderNewPalette();
+        mgr.pendingNew = r.id;   // déjà enregistrée ; sa ligne apparaîtra une fois la fenêtre descendue tout en bas
+        renderList();
+        /* Confirmation sur le bouton (même geste que la copie du code de parrainage). */
+        btn.classList.add('is-done');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i><span>Ajouté</span>';
+        if (mgr.addTimer) clearTimeout(mgr.addTimer);
+        mgr.addTimer = setTimeout(function () {
+            mgr.addTimer = null;
+            var b = q('tpx-cat-add-btn');
+            if (!b) return;
+            b.classList.remove('is-done');
+            b.innerHTML = '<i class="fas fa-plus"></i><span>Ajouter</span>';
+            updateAddState();
+        }, 1500);
+        revealAdded(r.id);
+    }
+    /* Arrivée d'une entrée ajoutée (2026-10-01, retour de Jean : « le défilement est brusque et ne va pas tout en
+       bas ») : la fenêtre descend EN DOUCEUR jusque tout en bas, PUIS la ligne apparaît (hauteur + fondu) pendant
+       que le bas reste à l'écran. Un geste de l'utilisateur (molette, doigt) arrête le défilement ; « réduire les
+       animations » (système) = tout s'affiche d'un coup. */
+    function rafFn(cb) {
+        return (typeof window.requestAnimationFrame === 'function') ? window.requestAnimationFrame(cb) : setTimeout(function () { cb(Date.now()); }, 16);
+    }
+    function stopReveal() {
+        var r = mgr.reveal;
+        mgr.reveal = null;
+        if (r) { try { r.stop(); } catch (e) {} }
+    }
+    function revealAdded(id) {
+        stopReveal();
+        var body = mgr.ov ? mgr.ov.querySelector('.tpx-cat-body') : null;
+        var shown = false;
+        var show = function (byUser) {
+            if (shown) return;
+            shown = true;
+            if (!mgr.ov || mgr.pendingNew !== id) return;
+            mgr.pendingNew = null;
+            // un nom de la liste en cours de saisie : ne rien redessiner sous les doigts — la ligne viendra à la fin de la saisie
+            if (listHasFocus()) { mgr.stale = true; return; }
+            renderList();
+            var row = findRow(id);
+            if (!row) return;
+            row.classList.add('is-new');
+            setTimeout(function () { row.classList.remove('is-new'); }, 1200);
+            growRow(row, byUser ? null : body);   // geste de l'utilisateur : on ne le contrarie pas en recollant le bas
+        };
+        if (!body || lessMotion()) { show(); if (body) body.scrollTop = body.scrollHeight; return; }
+        var start = body.scrollTop, dist = Math.max(0, body.scrollHeight - body.clientHeight) - start;
+        if (dist < 2) { show(); return; }
+        var dur = Math.max(280, Math.min(700, 240 + dist * 0.55)), t0 = null, alive = true, safety = null;
+        var onUser = function () { if (alive) { stop(); show(true); } };
+        // un champ pris en main pendant la descente (nom d'une ligne, nom à ajouter) : on s'arrête là, sans lutter
+        var onFocus = function (e) { if (e.target && e.target.classList && e.target.classList.contains('tpx-cat-field')) onUser(); };
+        var stop = function () {
+            alive = false;
+            if (safety) { clearTimeout(safety); safety = null; }
+            body.removeEventListener('wheel', onUser);
+            body.removeEventListener('touchstart', onUser);
+            body.removeEventListener('focusin', onFocus);
+            if (mgr.reveal && mgr.reveal.id === id) mgr.reveal = null;
+        };
+        body.addEventListener('wheel', onUser, { passive: true });
+        body.addEventListener('touchstart', onUser, { passive: true });
+        body.addEventListener('focusin', onFocus);
+        safety = setTimeout(function () { if (alive) { stop(); show(); } }, dur + 500);   // images suspendues (onglet caché)
+        mgr.reveal = { id: id, stop: stop };
+        rafFn(function step(ts) {
+            if (!alive) return;
+            if (!mgr.ov) { stop(); return; }
+            if (t0 === null) t0 = ts;
+            var p = Math.min(1, (ts - t0) / dur);
+            var k = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;   // lent → rapide → lent
+            // bas recalculé à chaque image : un message qui apparaît en haut (plafond atteint) allonge la fenêtre
+            var end = Math.max(0, body.scrollHeight - body.clientHeight);
+            body.scrollTop = start + (end - start) * k;
+            if (p < 1) rafFn(step); else { stop(); show(); }
+        });
+    }
+    /* La ligne « pousse » (hauteur 0 → réelle, fondu, léger glissé) ; le bas de la fenêtre reste à l'écran. */
+    function growRow(row, body) {
+        var pin = function () { if (body) body.scrollTop = body.scrollHeight; };
+        if (lessMotion() || typeof row.animate !== 'function') { pin(); return; }
+        var anim;
+        try {
+            var cs = window.getComputedStyle(row), gap = parseFloat(window.getComputedStyle(row.parentNode).rowGap) || 0;
+            var to = { height: cs.height, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, borderTopWidth: cs.borderTopWidth,
+                       borderBottomWidth: cs.borderBottomWidth, marginTop: '0px', opacity: 1, transform: 'translateY(0)' };
+            row.style.overflow = 'hidden';
+            anim = row.animate([
+                { height: '0px', paddingTop: '0px', paddingBottom: '0px', borderTopWidth: '0px', borderBottomWidth: '0px',
+                  marginTop: (-gap) + 'px', opacity: 0, transform: 'translateY(6px)' },
+                to
+            ], { duration: 280, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+        } catch (e) { row.style.overflow = ''; pin(); return; }
+        var alive = true;
+        var end = function () { if (!alive) return; alive = false; row.style.overflow = ''; pin(); };
+        anim.onfinish = end;
+        anim.oncancel = end;
+        setTimeout(end, 700);   // filet : la ligne n'est jamais laissée coupée si l'animation est interrompue
+        (function loop() { if (!alive) return; pin(); rafFn(loop); })();
+    }
+    function commitRow(t) {
+        var row = t.closest ? t.closest('.tpx-cat-row') : null;
+        if (!row || !mgr.kind) return;
+        var kind = mgr.kind, id = row.getAttribute('data-id'), e = meta(kind, id);
+        if (e.unknown) return;
+        var isAbbr = t.classList.contains('tpx-cat-row-abbr');
+        var cur = isAbbr ? e.abbr : e.label;
+        var next = isAbbr ? cleanAbbr(t.value) : cleanLabel(t.value);
+        if (next === cur) { t.value = cur; return; }
+        var r = isAbbr ? setAbbr(kind, id, t.value, 'mgr') : rename(kind, id, t.value, 'mgr');
+        if (!r.ok) {
+            t.value = cur;
+            if (r.msg) showMsg(r.msg, 'error');
+            return;
+        }
+        showMsg('');
+        var ne = meta(kind, id);
+        t.value = isAbbr ? ne.abbr : ne.label;
+        var btn = row.querySelector('.tpx-cat-row-color');
+        if (btn) btn.innerHTML = previewHtml(kind, ne) + palBtnHtml(id);
+    }
+    function doDelete(row) {
+        var kind = mgr.kind, id = row.getAttribute('data-id');
+        if (!kind || row._leaving) return;
+        if (OWN.call(KINDS[kind].defById, id)) return;
+        if (!editable()) return;
+        row._leaving = true;
+        var pal = row.nextElementSibling;
+        row.classList.add('is-leaving');
+        if (pal && pal.classList.contains('tpx-cat-row-pal')) pal.classList.add('is-leaving');
+        /* L'écriture n'a lieu qu'APRÈS le fondu : aucun rendu intermédiaire
+           (écoute Firestore, autre onglet) ne peut couper l'animation. */
+        setTimeout(function () {
+            /* Archivée même si la fenêtre a été refermée pendant le fondu. */
+            var r = archive(kind, id, 'mgr');
+            if (!mgr.ov || mgr.kind !== kind) return;
+            if (!r.ok && r.msg) showMsg(r.msg, 'error');
+            if (mgr.openRow === id) mgr.openRow = null;
+            renderList();
+        }, 200);
+    }
+
+    function bindManager(ov) {
+        var downInside = false;
+        ov.addEventListener('mousedown', function (e) {
+            downInside = !!(e.target.closest && e.target.closest('.tpx-cat-inner'));
+        });
+        ov.addEventListener('click', function (e) {
+            if (e.target === ov) { if (!downInside) closeManager(); return; }
+            var t = e.target;
+            if (t.closest('.tpx-cat-close')) { closeManager(); return; }
+            if (t.closest('#tpx-cat-add-btn')) { doAdd(); return; }
+            var sw = t.closest('.tpx-cat-sw');
+            if (sw) {
+                var color = sw.getAttribute('data-color') || null;
+                var palBox = sw.closest('.tpx-cat-row-pal');
+                if (palBox) {
+                    if (palBox.classList.contains('is-closing')) return;   // déjà en train de se refermer
+                    var id = palBox.getAttribute('data-for');
+                    var r = recolor(mgr.kind, id, color, 'mgr');
+                    if (!r.ok && r.msg) showMsg(r.msg, 'error');
+                    if (r.ok && !r.same) flashPalDone(id);
+                    /* La ligne montre TOUT DE SUITE sa nouvelle couleur (et la coche) pendant que la palette se referme. */
+                    if (r.ok) {
+                        try {
+                            Array.prototype.forEach.call(palBox.querySelectorAll('.tpx-cat-sw'), function (x) { x.classList.toggle('selected', x === sw); });
+                            var prow = findRow(id), pbtn = prow ? prow.querySelector('.tpx-cat-row-color') : null;
+                            if (pbtn) pbtn.innerHTML = previewHtml(mgr.kind, meta(mgr.kind, id)) + palBtnHtml(id);
+                        } catch (err) {}
+                    }
+                    closeRowPal();
+                } else if (color) {
+                    mgr.newColor = color;
+                    renderNewPalette();
+                }
+                return;
+            }
+            var colorBtn = t.closest('.tpx-cat-row-color');
+            if (colorBtn) {
+                var row = colorBtn.closest('.tpx-cat-row');
+                var rid = row ? row.getAttribute('data-id') : null;
+                if (rid && mgr.openRow === rid) closeRowPal(); else if (rid) openRowPal(rid);
+                return;
+            }
+            var del = t.closest('.tpx-cat-del');
+            if (del) { var drow = del.closest('.tpx-cat-row'); if (drow) doDelete(drow); return; }
+        });
+        /* Déverrouillage au premier geste réel (souris, doigt ou clavier). */
+        ov.addEventListener('pointerdown', function (e) {
+            if (!e.target.closest) return;
+            var t = e.target.closest('.tpx-cat-field');
+            if (!t) { var lab = e.target.closest('.tpx-cat-lab'); t = lab ? lab.querySelector('.tpx-cat-field') : null; }
+            if (t) unlockField(t);
+        }, true);
+        ov.addEventListener('keydown', function (e) {
+            var t = e.target;
+            if (!t.classList || !t.classList.contains('tpx-cat-field')) return;
+            unlockField(t);
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (t.id === 'tpx-cat-new-name' || t.id === 'tpx-cat-new-abbr') doAdd();
+                else t.blur();
+            }
+        });
+        ov.addEventListener('input', function (e) {
+            var t = e.target;
+            if (!t.classList || !t.classList.contains('tpx-cat-field')) return;
+            var nl = /[\r\n]/.test(t.value);
+            if (nl) t.value = t.value.replace(/[\r\n]+/g, ' ');
+            if (t.id === 'tpx-cat-new-name' || t.id === 'tpx-cat-new-abbr') showMsg('');
+            /* 2026-10-02 : certains claviers tactiles (Android, saisie en cours de composition) envoient « Entrée / OK »
+               comme un RETOUR À LA LIGNE, sans touche Entrée interceptable (cf. keydown ci-dessus) → même effet que la
+               touche : ajouter / valider le nom. Un COLLER sur plusieurs lignes reste un simple collage. */
+            if (nl && /^insert(LineBreak|Paragraph|Text|CompositionText)$/.test(e.inputType || '') && t.value.trim()) {
+                if (t.id === 'tpx-cat-new-name' || t.id === 'tpx-cat-new-abbr') doAdd();
+                else t.blur();
+            }
+        });
+        ov.addEventListener('focusout', function (e) {
+            var t = e.target;
+            if (!t.classList || !t.classList.contains('tpx-cat-field')) return;
+            if (t.closest('.tpx-cat-row')) commitRow(t);
+            if (mgr.stale) setTimeout(function () { if (mgr.ov && !listHasFocus()) { mgr.stale = false; renderList(); } }, 0);
+        });
+        mgr.onKey = function (e) {
+            if (!mgr.ov || e.key !== 'Escape') return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            if (mgr.openRow) { closeRowPal(); return; }
+            closeManager();
+        };
+        window.addEventListener('keydown', mgr.onKey, true);
+    }
+
+    /* ── Info-bulles (2026-10-01, demande de Jean) ───────────────────
+       Même bulle que celles du site (#tx-chip-tooltip) sur tout élément portant data-tpx-tip (boutons du
+       gestionnaire, cases de couleur, crayons) — à la place de la bulle native du navigateur (title).
+       Au-dessus de l'élément (en dessous s'il manque de place), flèche face au centre de l'élément ;
+       visible au survol de la souris et au clavier ; rien sur un écran tactile (pas de survol). */
+    var tip = { el: null, cur: null, bound: false, downAt: null };
+    function tipEl() {
+        if (!tip.el) {
+            tip.el = document.createElement('div');
+            tip.el.id = 'tpx-cat-tip';
+            tip.el.setAttribute('role', 'tooltip');
+            (document.body || document.documentElement).appendChild(tip.el);
+        }
+        return tip.el;
+    }
+    function showTip(target) {
+        var text = target && target.getAttribute ? target.getAttribute('data-tpx-tip') : '';
+        if (!text) return;
+        var el = tipEl();
+        tip.cur = target;
+        el.textContent = text;
+        el.classList.remove('is-below', 'is-wrap', 'visible');
+        el.style.left = '-9999px'; el.style.top = '-9999px';
+        if (el.offsetWidth >= 238) el.classList.add('is-wrap');
+        var r = target.getBoundingClientRect(), tw = el.offsetWidth, th = el.offsetHeight, gap = 8, arrow = 5;
+        var cx = r.left + r.width / 2;
+        var left = Math.max(gap, Math.min(cx - tw / 2, window.innerWidth - tw - gap));
+        var top = r.top - th - arrow - gap, below = false;
+        if (top < gap) { top = r.bottom + arrow + gap; below = true; }
+        if (below) el.classList.add('is-below');
+        el.style.setProperty('--tpx-tip-arrow', Math.max(10, Math.min(tw - 10, cx - left)) + 'px');
+        el.style.left = left + 'px'; el.style.top = top + 'px';
+        el.classList.add('visible');
+    }
+    function hideTip() {
+        tip.cur = null;
+        if (tip.el) tip.el.classList.remove('visible');
+    }
+    function tipTarget(node) { return node && node.closest ? node.closest('[data-tpx-tip]') : null; }
+    function bindTips() {
+        if (tip.bound) return;
+        if (typeof document === 'undefined' || typeof document.addEventListener !== 'function' || typeof window.addEventListener !== 'function') return;
+        tip.bound = true;
+        var canHover = true;
+        try { canHover = !window.matchMedia || window.matchMedia('(hover: hover)').matches; } catch (e) {}
+        document.addEventListener('mouseover', function (e) {
+            if (!canHover) return;
+            // après un clic : aucune bulle tant que la souris n'a pas bougé (« survol » renvoyé par le navigateur
+            // quand la liste se redessine sous une souris immobile)
+            if (tip.downAt && Math.abs(e.clientX - tip.downAt.x) < 4 && Math.abs(e.clientY - tip.downAt.y) < 4) return;
+            tip.downAt = null;
+            var t = tipTarget(e.target);
+            if (t === tip.cur) return;
+            if (!t) { if (tip.cur) hideTip(); return; }
+            showTip(t);
+        });
+        document.addEventListener('mouseout', function (e) {
+            var t = tipTarget(e.target);
+            if (t && t === tip.cur && !(e.relatedTarget && t.contains(e.relatedTarget))) hideTip();
+        });
+        document.addEventListener('focusin', function (e) {
+            var t = tipTarget(e.target);
+            try { if (t && t === e.target && t.matches(':focus-visible')) showTip(t); } catch (err) {}
+        });
+        document.addEventListener('focusout', function (e) { if (tip.cur && tip.cur === e.target) hideTip(); });
+        document.addEventListener('mousedown', function (e) { tip.downAt = { x: e.clientX, y: e.clientY }; hideTip(); }, true);
+        window.addEventListener('scroll', hideTip, true);
+        window.addEventListener('resize', hideTip);
+        window.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideTip(); }, true);
+    }
+
+    /* ── Paramètres (2026-10-01, demande de Jean) ──────────────────
+       Carte « Listes personnalisables » dans les Paramètres, juste sous « Entraînements » (EDN) / « Contenu du
+       tableur » (ECOS) : un bouton par catalogue, qui ouvre son gestionnaire PAR-DESSUS les Paramètres (le refermer
+       y ramène). Replacée à chaque ouverture : « Contenu du tableur » est ajouté plus tard par un autre script. */
+    var SET = { title: 'Listes personnalisables', sub: 'Renommez, recolorez ou complétez les listes proposées dans le tableur.' };
+    function settingsHtml() {
+        var h = '<div class="settings-card-head">' +
+                '<div class="settings-card-icon scope"><i class="fas fa-swatchbook"></i></div>' +
+                '<div class="settings-card-titles">' +
+                    '<div class="settings-card-title">' + esc(SET.title) + '</div>' +
+                    '<div class="settings-card-sub">' + esc(SET.sub) + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="tpx-cat-set-list">';
+        Object.keys(KINDS).forEach(function (k) {
+            var c = KINDS[k];
+            h += '<button type="button" class="tpx-cat-set-btn" data-kind="' + esc(k) + '">' +
+                    '<span class="tpx-cat-set-ico"><i class="fas ' + esc(c.icon || 'fa-palette') + '"></i></span>' +
+                    '<span class="tpx-cat-set-txt"><strong>' + esc(c.title) + '</strong>' + (c.settingsHint ? '<span>' + esc(c.settingsHint) + '</span>' : '') + '</span>' +
+                    '<i class="fas fa-chevron-right tpx-cat-set-go" aria-hidden="true"></i>' +
+                '</button>';
+        });
+        return h + '</div>';
+    }
+    function placeSettings() {
+        var body = document.querySelector('#settings-modal-overlay .settings-modal-body');
+        if (!body || !Object.keys(KINDS).length) return;
+        var card = document.getElementById('tpx-cat-settings');
+        if (!card) {
+            card = document.createElement('div');
+            card.className = 'settings-card tpx-cat-set';
+            card.id = 'tpx-cat-settings';
+            card.setAttribute('data-setting', 'tpx-catalogs');
+            card.innerHTML = settingsHtml();
+            card.addEventListener('click', function (e) {
+                var b = e.target && e.target.closest ? e.target.closest('.tpx-cat-set-btn') : null;
+                if (b) openManager(b.getAttribute('data-kind'));
+            });
+        }
+        var wrap = document.getElementById('tpx-settings-card');
+        var anchor = wrap ? (wrap.querySelector('[data-setting="tpx-trainings"]') || wrap.querySelector('[data-setting="tpx-content"]')) : null;
+        if (anchor) {
+            if (anchor.nextElementSibling !== card) anchor.parentNode.insertBefore(card, anchor.nextElementSibling);
+            return;
+        }
+        var acc = null;
+        for (var i = 0; i < body.children.length; i++) { if (body.children[i].classList.contains('tpx-acc-card')) acc = body.children[i]; }
+        if (acc) { if (acc.previousElementSibling !== card) body.insertBefore(card, acc); }
+        else if (body.lastElementChild !== card) body.appendChild(card);
+    }
+    function bindSettings() {
+        var ov = document.getElementById('settings-modal-overlay');
+        var body = ov ? ov.querySelector('.settings-modal-body') : null;
+        if (!body || typeof MutationObserver !== 'function') return;
+        placeSettings();
+        new MutationObserver(function () { if (ov.classList.contains('active')) placeSettings(); }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(function () { placeSettings(); }).observe(body, { childList: true });
+    }
+
+    /* ── CSS : palette (3 thèmes) + gestionnaire ───────────────────── */
+    function injectCss() {
+        if (document.getElementById('tpx-cat-css')) return;
+        var css = '';
+        PALETTE.forEach(function (p) {
+            var pr = hexToRgb(p.pastel[3]);
+            css += '.tpx-pal-' + p.key + '{--tpx-pal-solid:' + p.solid + ';--tpx-pal-chip-bg:' + p.light[0] + ';--tpx-pal-chip-fg:' + p.light[1] +
+                   ';--tpx-pal-chip-bd:' + p.light[2] + ';--tpx-pal-soft-bg:rgba(' + p.rgb + ',0.13);--tpx-pal-soft-fg:' + p.solid +
+                   ';--tpx-pal-soft-bd:rgba(' + p.rgb + ',0.25);}\n';
+            css += '[data-theme="dark"] .tpx-pal-' + p.key + '{--tpx-pal-chip-bg:rgba(' + p.rgb + ',0.2);--tpx-pal-chip-fg:' + p.dark +
+                   ';--tpx-pal-chip-bd:rgba(' + p.rgb + ',0.35);--tpx-pal-soft-bg:rgba(' + p.rgb + ',0.25);--tpx-pal-soft-fg:' + p.dark +
+                   ';--tpx-pal-soft-bd:rgba(' + p.rgb + ',0.45);}\n';
+            css += '[data-theme="pastel"] .tpx-pal-' + p.key + '{--tpx-pal-solid:' + p.pastel[3] + ';--tpx-pal-chip-bg:' + p.pastel[0] +
+                   ';--tpx-pal-chip-fg:' + p.pastel[1] + ';--tpx-pal-chip-bd:' + p.pastel[2] + ';--tpx-pal-soft-bg:rgba(' + pr + ',0.13);--tpx-pal-soft-fg:' +
+                   p.pastel[1] + ';--tpx-pal-soft-bd:rgba(' + pr + ',0.25);}\n';
+        });
+        var st = document.createElement('style');
+        st.id = 'tpx-cat-css';
+        st.textContent = css;
+        (document.head || document.documentElement).appendChild(st);
+    }
+    injectCss();
+    try { bindTips(); } catch (e) { /* bulles natives absentes : sans conséquence pour les catalogues */ }
+    try {
+        if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { try { bindSettings(); } catch (e) {} });
+            else bindSettings();
+        }
+    } catch (e) { /* pas de carte dans les Paramètres : les gestionnaires restent ouverts par leurs crayons / boutons */ }
+
+    window.TPXCat = {
+        LABEL_MAX: LABEL_MAX,
+        ABBR_MAX: ABBR_MAX,
+        PALETTE: PALETTE,
+        register: register,
+        setHost: function (h) { host = h || null; cache = {}; lastSig = sigNow(); },
+        onChange: function (fn) { if (typeof fn === 'function') listeners.push(fn); },
+        full: full,
+        active: active,
+        meta: meta,
+        known: known,
+        label: label,
+        cls: cls,
+        hex: hex,
+        esc: esc,
+        cleanLabel: cleanLabel,
+        cleanAbbr: cleanAbbr,
+        mergeAll: mergeAll,
+        externalChange: externalChange,
+        add: add,
+        rename: rename,
+        setAbbr: setAbbr,
+        recolor: recolor,
+        archive: archive,
+        capInfo: capInfo,
+        openManager: openManager,
+        closeManager: function () { closeManager(false); },
+        isManagerOpen: function () { return !!mgr.ov; },
+        setSettings: function (o) { if (o && o.title) SET.title = String(o.title); if (o && o.sub) SET.sub = String(o.sub); },
+        _placeSettings: placeSettings,
+        _injectCss: injectCss
+    };
+})();
+</script>
+<style id="tpx-catalogs-css">
+/* ══ CATALOGUES PERSONNALISABLES (2026-09-30) ══════════════════════════════
+   Couleurs d'une entrée ajoutée ou recolorée : classes .tpx-pal-<clé>
+   (variables par thème générées par TPXCat). Une entrée par défaut jamais
+   recolorée garde ses classes historiques : rendu strictement inchangé. */
+.resource-box.tpx-pal:not(.validated):not(.overflow-btn) {
+    background: var(--tpx-pal-chip-bg) !important;
+    color: var(--tpx-pal-chip-fg) !important;
+    border-color: var(--tpx-pal-chip-bd) !important;
+}
+.tour-support.tpx-pal { background: var(--tpx-pal-solid) !important; color: #fff !important; }
+.support-btn.tpx-pal { --support-color: var(--tpx-pal-solid) !important; }
+.train-type-badge.tpx-pal,
+.train-plateforme-badge.tpx-pal {
+    background: var(--tpx-pal-soft-bg) !important;
+    color: var(--tpx-pal-soft-fg) !important;
+    border: 1px solid var(--tpx-pal-soft-bd) !important;
+}
+.train-type-dot.tpx-pal,
+.train-plat-dot.tpx-pal { background: var(--tpx-pal-solid) !important; }
+
+/* ── Boutons d'accès (crayon) ── */
+.tpx-cat-pencil {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; margin-left: 0.4rem; padding: 0;
+    border: none; border-radius: 7px;
+    background: var(--gray-100); color: var(--gray-500);
+    font-size: 0.68rem; line-height: 1; cursor: pointer; vertical-align: middle;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.tpx-cat-pencil:hover { background: var(--primary); color: #fff; }
+.tpx-cat-pencil:active { transform: scale(0.9); }
+[data-theme="dark"] .tpx-cat-pencil { background: var(--gray-200); color: var(--gray-600); }
+[data-theme="dark"] .tpx-cat-pencil:hover { background: var(--primary); color: #fff; }
+/* « Gérer mes ressources » (2026-10-01, retour de Jean) : bien visible et sur TOUTE la largeur de la fenêtre,
+   comme le compteur « x / 3 ressources sélectionnées » juste en dessous (avant : petit bouton en pointillés). */
+.tpx-cat-open-row { display: flex; margin: 0.15rem 0 0.75rem; }
+.tpx-cat-open-btn {
+    flex: 1 1 auto; width: 100%; min-height: 42px;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.6rem 1rem; border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 10px;
+    background: rgba(59, 130, 246, 0.08); color: var(--primary);
+    font-size: 0.86rem; font-weight: 700; font-family: inherit; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.tpx-cat-open-btn i { font-size: 0.8rem; }
+.tpx-cat-open-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+.tpx-cat-open-btn:active { transform: scale(0.98); }
+.tpx-cat-open-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35); }
+[data-theme="dark"] .tpx-cat-open-btn { background: rgba(59, 130, 246, 0.16); border-color: rgba(96, 165, 250, 0.45); color: #93c5fd; }
+[data-theme="dark"] .tpx-cat-open-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+:where(html[data-theme="pastel"]) .tpx-cat-open-btn { background: rgba(107, 140, 199, 0.10); border-color: rgba(107, 140, 199, 0.38); }
+:where(html[data-theme="pastel"]) .tpx-cat-open-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(107, 140, 199, 0.28); }
+
+/* ── Paramètres : carte « Listes personnalisables » (2026-10-01) — lignes du même dessin que les explications
+   des autres cartes (fond blanc, bordure, pastille d'icône), mais cliquables : survol bleu, chevron. ── */
+.tpx-cat-set-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.tpx-cat-set-btn {
+    display: flex; align-items: center; gap: 0.65rem; width: 100%; box-sizing: border-box;
+    padding: 0.6rem 0.7rem; margin: 0;
+    border: 1px solid var(--gray-200); border-radius: var(--border-radius-md, 10px);
+    background: var(--white, #fff); color: inherit;
+    font-family: inherit; text-align: left; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.tpx-cat-set-btn:hover { border-color: rgba(59, 130, 246, 0.45); background: rgba(59, 130, 246, 0.06); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12); }
+.tpx-cat-set-btn:active { transform: scale(0.99); }
+.tpx-cat-set-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35); }
+.tpx-cat-set-ico {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; color: var(--primary); background: rgba(59, 130, 246, 0.12);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.tpx-cat-set-btn:hover .tpx-cat-set-ico { background: var(--primary); color: #fff; }
+.tpx-cat-set-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.tpx-cat-set-txt strong { font-size: 0.86rem; font-weight: 650; color: var(--gray-800); }
+.tpx-cat-set-txt span { font-size: 0.76rem; line-height: 1.4; color: var(--gray-500); }
+.tpx-cat-set-go { flex-shrink: 0; font-size: 0.72rem; color: var(--gray-400); transition: color 0.15s ease, transform 0.15s ease; }
+.tpx-cat-set-btn:hover .tpx-cat-set-go { color: var(--primary); transform: translateX(2px); }
+[data-theme="dark"] .tpx-cat-set-btn { background: var(--gray-50); }
+[data-theme="dark"] .tpx-cat-set-btn:hover { background: rgba(59, 130, 246, 0.12); border-color: rgba(96, 165, 250, 0.5); }
+[data-theme="dark"] .tpx-cat-set-ico { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+[data-theme="dark"] .tpx-cat-set-btn:hover .tpx-cat-set-ico { background: var(--primary); color: #fff; }
+:where(html[data-theme="pastel"]) .tpx-cat-set-btn:hover { border-color: rgba(107, 140, 199, 0.45); background: rgba(107, 140, 199, 0.08); box-shadow: 0 2px 8px rgba(107, 140, 199, 0.14); }
+:where(html[data-theme="pastel"]) .tpx-cat-set-ico { background: rgba(107, 140, 199, 0.14); }
+
+/* ── Info-bulles (2026-10-01) : même bulle que #tx-chip-tooltip (site), au-dessus de toutes les fenêtres ── */
+#tpx-cat-tip {
+    position: fixed; z-index: 100000; pointer-events: none;
+    background: linear-gradient(135deg, #1e2d45 0%, #111827 100%); color: #f8fafc;
+    padding: 0.32rem 0.7rem; border-radius: 8px;
+    font-size: 0.72rem; font-weight: 500; font-family: var(--font-body); letter-spacing: 0.01em;
+    white-space: nowrap; max-width: 240px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px rgba(59,130,246,0.12);
+    opacity: 0; visibility: hidden; transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+#tpx-cat-tip.is-wrap { white-space: normal; text-align: center; line-height: 1.35; }
+#tpx-cat-tip::after {
+    content: ''; position: absolute; top: 100%; left: var(--tpx-tip-arrow, 50%); transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: #111827; pointer-events: none;
+}
+#tpx-cat-tip.is-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #111827; }
+#tpx-cat-tip.visible { opacity: 1; visibility: visible; }
+:where(html[data-theme="pastel"]) #tpx-cat-tip { box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px rgba(122, 151, 199, 0.074); }
+
+/* ── Fenêtre de gestion : sa propre couche, au-dessus des autres fenêtres ── */
+.settings-modal-overlay.tpx-cat-overlay { z-index: 10350; }
+.tpx-cat-inner {
+    max-width: 540px;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100svh - 2rem);   /* svh : ne varie pas avec la barre d'adresse mobile */
+    outline: none;
+}
+.tpx-cat-body { gap: 0.85rem !important; }
+.tpx-cat-sub { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--gray-500); }
+.tpx-cat-card {
+    display: flex; flex-direction: column; gap: 0.6rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--gray-200); border-radius: 14px;
+    background: var(--gray-50);
+}
+[data-theme="dark"] .tpx-cat-card { background: var(--gray-100); }
+.tpx-cat-sec {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    font-size: 0.82rem; font-weight: 700; color: var(--gray-700);
+}
+.tpx-cat-sec i { margin-right: 0.4rem; color: var(--primary); }
+.tpx-cat-count {
+    padding: 0.15rem 0.55rem; border-radius: 999px;
+    background: var(--gray-100); color: var(--gray-600);
+    font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+}
+[data-theme="dark"] .tpx-cat-count { background: var(--gray-200); }
+.tpx-cat-count.is-full { background: #fee2e2; color: #b91c1c; }
+[data-theme="dark"] .tpx-cat-count.is-full { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.tpx-cat-add-fields { display: flex; gap: 0.5rem; }
+.tpx-cat-lab {
+    display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0;
+    font-size: 0.74rem; font-weight: 600; color: var(--gray-600);
+}
+.tpx-cat-lab-abbr { flex: 0 0 5.5rem; }
+.tpx-cat-field {
+    display: block; box-sizing: border-box; width: 100%;
+    height: 38px; min-height: 38px; max-height: 38px;
+    padding: 8px 10px; margin: 0;
+    border: 1px solid var(--gray-300); border-radius: 10px;
+    background: var(--white, #fff); color: var(--gray-900);
+    font-family: inherit; font-size: 0.86rem; font-weight: 500; line-height: 20px;
+    resize: none; overflow: hidden; white-space: nowrap;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+[data-theme="dark"] .tpx-cat-field { background: var(--gray-50); }
+.tpx-cat-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16); }
+.tpx-cat-field[readonly] { cursor: text; }
+.tpx-cat-new-abbr, .tpx-cat-row-abbr { text-transform: uppercase; text-align: center; letter-spacing: 0.04em; }
+.tpx-cat-hint { margin: 0; font-size: 0.72rem; line-height: 1.45; color: var(--gray-500); }
+.tpx-cat-palette, .tpx-cat-row-pal-sw { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tpx-cat-sw {
+    width: 28px; height: 28px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 2px solid transparent; border-radius: 8px;
+    color: #fff; font-size: 0.66rem; cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.tpx-cat-sw:hover { transform: scale(1.08); }
+.tpx-cat-sw.selected { border-color: var(--gray-900); box-shadow: inset 0 0 0 2px var(--white, #fff); transform: scale(1.08); }
+[data-theme="dark"] .tpx-cat-sw.selected { border-color: #fff; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35); }
+.tpx-cat-msg, .tpx-cat-cap { font-size: 0.76rem; font-weight: 600; line-height: 1.4; color: var(--gray-600); }
+/* Messages (2026-10-01, retour de Jean) : apparition / disparition discrètes, même geste que les erreurs du modal
+   « Enregistrer un tour » (hauteur + fondu, 0,28 s). Masqué : hauteur 0 et marge négative = l'écart de la carte
+   (0,6 rem) → au repos, mise en page identique à avant (message retiré par display: none). */
+.tpx-cat-msg, .tpx-cat-cap {
+    display: block; overflow: hidden; max-height: 0; opacity: 0; margin-top: -0.6rem;
+    transition: max-height 0.28s ease, opacity 0.28s ease, margin-top 0.28s ease;
+}
+.tpx-cat-msg.is-shown, .tpx-cat-cap.is-shown { max-height: 6rem; opacity: 1; margin-top: 0; }
+.tpx-cat-noanim .tpx-cat-msg, .tpx-cat-noanim .tpx-cat-cap { transition: none !important; }
+.tpx-cat-msg.is-error, .tpx-cat-cap { color: #b91c1c; }
+[data-theme="dark"] .tpx-cat-msg.is-error, [data-theme="dark"] .tpx-cat-cap { color: #fca5a5; }
+.tpx-cat-add-btn {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.55rem 1.1rem; border: none; border-radius: 10px;
+    background: var(--primary-gradient, var(--primary)); color: #fff;
+    font-family: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+    transition: background 0.2s ease, transform 0.12s ease, opacity 0.2s ease;
+}
+.tpx-cat-add-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.tpx-cat-add-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.tpx-cat-add-btn.is-done { background: linear-gradient(135deg, #10b981, #059669) !important; opacity: 1; cursor: default; }
+.tpx-cat-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.tpx-cat-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.45rem;
+    border: 1px solid var(--gray-200); border-radius: 12px;
+    background: var(--white, #fff);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.6s ease;
+}
+[data-theme="dark"] .tpx-cat-row { background: var(--gray-50); }
+.tpx-cat-row.is-leaving, .tpx-cat-row-pal.is-leaving { opacity: 0; transform: translateX(10px); transition: opacity 0.2s ease, transform 0.2s ease; }
+.tpx-cat-row.is-new { background: rgba(16, 185, 129, 0.12); }
+.tpx-cat-row-color {
+    flex: 0 0 8rem; width: 8rem; min-width: 0;
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 0.3rem;
+    padding: 3px 5px; border: 1px dashed transparent; border-radius: 9px;
+    background: transparent; color: var(--gray-400); cursor: pointer; font-family: inherit;
+}
+.tpx-cat-row-color:hover, .tpx-cat-row.pal-open .tpx-cat-row-color { border-color: var(--gray-300); color: var(--primary); }
+/* Bouton palette (2026-09-30) : un vrai cadre, survol bien visible ; coche verte après un changement de couleur. */
+.tpx-cat-pal-btn {
+    flex: 0 0 auto; width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--gray-200); border-radius: 8px;
+    background: var(--gray-100); color: var(--gray-500);
+    font-size: 0.78rem; line-height: 1;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+.tpx-cat-row-color:hover .tpx-cat-pal-btn,
+.tpx-cat-row-color:focus-visible .tpx-cat-pal-btn,
+.tpx-cat-row.pal-open .tpx-cat-pal-btn { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 3px 10px rgba(59, 130, 246, 0.35); transform: scale(1.06); }
+.tpx-cat-row-color:active .tpx-cat-pal-btn { transform: scale(0.88); }
+[data-theme="dark"] .tpx-cat-pal-btn { background: var(--gray-200); border-color: var(--gray-300); color: var(--gray-600); }
+[data-theme="dark"] .tpx-cat-row-color:hover .tpx-cat-pal-btn,
+[data-theme="dark"] .tpx-cat-row-color:focus-visible .tpx-cat-pal-btn,
+[data-theme="dark"] .tpx-cat-row.pal-open .tpx-cat-pal-btn { background: var(--primary); border-color: var(--primary); color: #fff; }
+:where(html[data-theme="pastel"]) .tpx-cat-row-color:hover .tpx-cat-pal-btn,
+:where(html[data-theme="pastel"]) .tpx-cat-row.pal-open .tpx-cat-pal-btn { box-shadow: 0 3px 10px rgba(107, 140, 199, 0.3); }
+.tpx-cat-pal-btn.is-done {
+    background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: #fff !important;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35) !important;
+    animation: tpxCatPalDone 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes tpxCatPalDone { 0% { transform: scale(0.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.tpx-cat-prev {
+    pointer-events: none; transform: none !important; box-shadow: none !important;
+    min-width: 0; max-width: calc(100% - 1rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tpx-cat-row-color .resource-box.tpx-cat-prev { display: block; min-height: 0; padding: 0.3rem 0.5rem; font-size: 0.7rem; line-height: 1.2; }
+.tpx-cat-row-color .tour-support.tpx-cat-prev { display: inline-block; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; }
+.tpx-cat-row-color .train-type-badge.tpx-cat-prev,
+.tpx-cat-row-color .train-plateforme-badge.tpx-cat-prev { display: inline-block; font-size: 0.72rem; }
+.tpx-cat-prev-dot { display: inline-block; width: 18px; height: 18px; border-radius: 6px; }
+.tpx-cat-row-fields { flex: 1; min-width: 0; display: flex; gap: 0.4rem; }
+.tpx-cat-row-fields .tpx-cat-row-abbr { flex: 0 0 4.2rem; }
+.tpx-cat-lock, .tpx-cat-del {
+    flex: 0 0 34px; width: 34px; height: 34px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9px; color: var(--gray-400);
+}
+/* Poubelle (2026-09-30) : cadre rouge clair ; survol et clic comme la croix de fermeture (.notes-close-btn). */
+.tpx-cat-del {
+    padding: 0; cursor: pointer;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    background: var(--danger-light, #fee2e2); color: var(--danger, #ef4444);
+    transition: all 0.28s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.tpx-cat-del:hover { background: var(--danger, #ef4444); border-color: transparent; color: #fff; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
+.tpx-cat-del:active { transform: scale(0.88); }
+[data-theme="dark"] .tpx-cat-del { background: rgba(239, 68, 68, 0.6); color: #fff; border-color: rgba(239, 68, 68, 0.8); }
+[data-theme="dark"] .tpx-cat-del:hover { background: var(--danger, #ef4444); border-color: transparent; }
+:where(html[data-theme="pastel"]) .tpx-cat-del:hover { box-shadow: 0 4px 12px rgba(197, 125, 125, 0.279); }
+/* Palette d'une ligne (2026-09-30) : apparition / disparition douces — grille à une rangée qui passe de 0fr à 1fr
+   (hauteur animée sans mesure), fondu, cases en cascade (--i = rang de la case). */
+.tpx-cat-row-pal { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.18s ease, opacity 0.18s ease; }
+.tpx-cat-row-pal-in { min-height: 0; overflow: hidden; }
+.tpx-cat-row-pal-sw { padding: 0.25rem 0.5rem 0.5rem; }
+.tpx-cat-row-pal.is-entering { animation: tpxCatPalOpen 0.22s ease-out; }
+.tpx-cat-row-pal.is-entering .tpx-cat-sw { animation: tpxCatSwIn 0.2s ease-out backwards; animation-delay: calc(var(--i, 0) * 12ms); }
+.tpx-cat-row-pal.is-closing { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.tpx-cat-row-pal.is-closing .tpx-cat-sw { opacity: 0; transform: scale(0.8); transition: opacity 0.14s ease, transform 0.14s ease; }
+@keyframes tpxCatPalOpen { from { grid-template-rows: 0fr; opacity: 0; } }
+@keyframes tpxCatSwIn { from { opacity: 0; transform: scale(0.6); } }
+@media (prefers-reduced-motion: reduce) {
+    .tpx-cat-row-pal, .tpx-cat-row-pal .tpx-cat-sw { animation: none !important; transition: none !important; }
+    .tpx-cat-msg, .tpx-cat-cap { transition: none !important; }
+}
+@media (max-width: 480px) {
+    .tpx-cat-card { padding: 0.8rem 0.75rem; }
+    .tpx-cat-row { gap: 0.35rem; padding: 0.35rem; }
+    .tpx-cat-row-color { flex-basis: 4.6rem; width: 4.6rem; padding: 3px 2px; gap: 0.2rem; }
+    .tpx-cat-pal-btn { width: 22px; height: 22px; border-radius: 6px; font-size: 0.62rem; }
+    .tpx-cat-prev { max-width: 100%; }
+    .tpx-cat-row-fields { gap: 0.3rem; }
+    .tpx-cat-row-fields .tpx-cat-row-abbr { flex-basis: 3.4rem; }
+    .tpx-cat-lock { flex-basis: 28px; width: 28px; }
+    .tpx-cat-del { flex-basis: 30px; width: 30px; height: 30px; }
+    .tpx-cat-lab-abbr { flex-basis: 4.6rem; }
+}
+</style>
+<script id="tpx-catalogs-edn">
+/* Catalogues EDN : les défauts reprennent EXACTEMENT les identifiants, libellés
+   et couleurs historiques (AVAILABLE_RESOURCES, supports du tour détaillé,
+   types et plateformes d'entraînement) — déjà enregistrés chez les utilisateurs. */
+(function () {
+    if (!window.TPXCat) return;
+    var C = window.TPXCat;
+    C.register('resources', {
+        title: 'Mes ressources', icon: 'fa-layer-group', listTitle: 'Liste des ressources', settingsHint: 'Les colonnes à cocher de la liste des items.',
+        subtitle: 'Renommez ou recolorez les ressources, ou ajoutez les vôtres (3 au maximum).',
+        placeholder: 'Ex. Anki perso', hasShort: true, maxCustom: 3,
+        defaults: [
+            { id: 'qi-edni',     label: 'Qi sur EDNi',       short: 'Qi EDNi',  cls: 'qi-edni',     solid: '#dc2626', pal: 'red' },
+            { id: 'dp-edni',     label: 'DP sur EDNi',       short: 'DP EDNi',  cls: 'dp-edni',     solid: '#dc2626', pal: 'red' },
+            { id: 'qi-hypo',     label: 'Qi sur Hypocampus', short: 'Qi Hypo',  cls: 'qi-hypo',     solid: '#2563eb', pal: 'blue' },
+            { id: 'dp-hypo',     label: 'DP Hypocampus',     short: 'DP Hypo',  cls: 'dp-hypo',     solid: '#2563eb', pal: 'blue' },
+            { id: 'qi-annales',  label: 'Qi Annales',        short: 'Qi Ann',   cls: 'qi-annales',  solid: '#ea580c', pal: 'orange' },
+            { id: 'dp-annales',  label: 'DP Annales',        short: 'DP Ann',   cls: 'dp-annales',  solid: '#ea580c', pal: 'orange' },
+            { id: 'qi-uness',    label: 'Qi sur UNESS',      short: 'Qi UNESS', cls: 'qi-uness',    solid: '#7c3aed', pal: 'violet' },
+            { id: 'dp-uness',    label: 'DP sur UNESS',      short: 'DP UNESS', cls: 'dp-uness',    solid: '#7c3aed', pal: 'violet' },
+            { id: 'fiche-perso', label: 'Fiche Perso',       short: 'Fiche',    cls: 'fiche-perso', solid: '#d97706', pal: 'amber' }
+        ],
+        unknownCls: function () { return ''; },
+        preview: function (e) { return '<span class="resource-box ' + C.cls('resources', e.id) + ' tpx-cat-prev">' + C.esc(e.short) + '</span>'; }
+    });
+    C.register('supports', {
+        title: 'Mes supports', icon: 'fa-book', listTitle: 'Liste des supports', settingsHint: 'Proposés dans la fenêtre du tour (nom et acronyme).',
+        subtitle: 'Le nom s\'affiche dans la fenêtre du tour, l\'acronyme sous le tour dans la liste des items. Ajoutez jusqu\'à 3 supports.',
+        placeholder: 'Ex. Anki', hasAbbr: true, maxCustom: 3, customIcon: 'fa-tag',
+        defaults: [
+            { id: 'qcm',     label: 'QCM/DP',      abbr: 'QCM', icon: 'fa-list-check',      cls: 'qcm',     solid: '#3b82f6', pal: 'blue' },
+            { id: 'college', label: 'Collèges',    abbr: 'COL', icon: 'fa-book',            cls: 'college', solid: '#8b5cf6', pal: 'violet' },
+            { id: 'anki',    label: 'Lisa',        abbr: 'LIS', icon: 'fa-book',            cls: 'anki',    solid: '#ef4444', pal: 'red' },
+            { id: 'perso',   label: 'Fiche perso', abbr: 'PER', icon: 'fa-pen',             cls: 'perso',   solid: '#f59e0b', pal: 'amber' },
+            { id: 'codex',   label: 'EDNi/Codex',  abbr: 'COD', icon: 'fa-file-lines',      cls: 'codex',   solid: '#10b981', pal: 'green' },
+            { id: 'conf',    label: 'Conf',        abbr: 'CNF', icon: 'fa-chalkboard-user', cls: 'conf',    solid: '#ec4899', pal: 'pink' }
+        ],
+        unknownCls: function (id) { return id; },
+        preview: function (e) { return '<span class="tour-support ' + C.cls('supports', e.id) + ' tpx-cat-prev">' + C.esc(e.abbr) + '</span>'; }
+    });
+    C.register('trainTypes', {
+        title: 'Types d\'entraînement', icon: 'fa-dumbbell', listTitle: 'Liste des types', settingsHint: 'Le type de chaque entraînement (Masterclass, Annale…).',
+        subtitle: 'Renommez ou recolorez les types, ou ajoutez les vôtres (3 au maximum).',
+        placeholder: 'Ex. Conférence', maxCustom: 3,
+        defaults: [
+            { id: 'masterclass', label: 'Masterclass',  cls: 'type-masterclass', solid: '#7c3aed', rgb: '139,92,246', pal: 'violet' },
+            { id: 'spe360',      label: 'Spé 360°',     cls: 'type-spe360',      solid: '#2563eb', rgb: '59,130,246', pal: 'blue' },
+            { id: 'annale',      label: 'Annale',       cls: 'type-annale',      solid: '#b45309', rgb: '245,158,11', pal: 'amber' },
+            { id: 'ccb',         label: 'CCB',          cls: 'type-ccb',         solid: '#059669', rgb: '16,185,129', pal: 'green' },
+            { id: 'r2c',         label: 'Concours R2C', cls: 'type-r2c',         solid: '#dc2626', rgb: '239,68,68',  pal: 'red' }
+        ],
+        unknownCls: function (id) { return 'type-' + id; },
+        preview: function (e) { return '<span class="train-type-badge ' + C.cls('trainTypes', e.id) + ' tpx-cat-prev">' + C.esc(e.label) + '</span>'; }
+    });
+    C.register('trainPlatforms', {
+        title: 'Plateformes d\'entraînement', icon: 'fa-desktop', listTitle: 'Liste des plateformes', settingsHint: 'La plateforme de chaque entraînement (EDNi, UNESS…).',
+        subtitle: 'Renommez ou recolorez les plateformes, ou ajoutez les vôtres (3 au maximum).',
+        placeholder: 'Ex. Annales Telegram', maxCustom: 3,
+        defaults: [
+            { id: 'edni',       label: 'EDNi',       cls: 'plat-edni',       solid: '#0e7490', rgb: '6,182,212',   pal: 'cyan' },
+            { id: 'asclepia',   label: 'Asclepia',   cls: 'plat-asclepia',   solid: '#be185d', rgb: '236,72,153',  pal: 'pink' },
+            { id: 'hypocampus', label: 'Hypocampus', cls: 'plat-hypocampus', solid: '#4338ca', rgb: '99,102,241',  pal: 'indigo' },
+            { id: 'uness',      label: 'UNESS',      cls: 'plat-uness',      solid: '#c2410c', rgb: '249,115,22',  pal: 'orange' }
+        ],
+        unknownCls: function (id) { return 'plat-' + id; },
+        preview: function (e) { return '<span class="train-plateforme-badge ' + C.cls('trainPlatforms', e.id) + ' tpx-cat-prev">' + C.esc(e.label) + '</span>'; }
+    });
+    C.setSettings({ sub: 'Renommez, recolorez ou complétez les ressources, les supports de tour et les types et plateformes d\'entraînement.' });
+})();
+</script>
 <script defer src="data.js?v=5"></script>
 <script type="module">
 
@@ -21066,6 +22614,26 @@ const AVAILABLE_RESOURCES = [
     { id: 'dp-uness', label: 'DP sur UNESS', shortLabel: 'DP UNESS', cssClass: 'dp-uness' },
     { id: 'fiche-perso', label: 'Fiche Perso', shortLabel: 'Fiche', cssClass: 'fiche-perso' }
 ];
+
+// ── CATALOGUES PERSONNALISABLES (2026-09-30) : la liste vient désormais de
+//    TPXCat (ces 9 défauts, identifiants inchangés, + les ajouts de l'utilisateur).
+//    Même forme que AVAILABLE_RESOURCES. `archived` : ressource supprimée par
+//    l'utilisateur — encore affichée là où elle est déjà cochée, plus proposée
+//    pour une nouvelle sélection. Repli sur la liste figée si TPXCat manque.
+let _tpxResMemo = { src: null, out: null };
+function tpxResourcesFull() {
+    if (!window.TPXCat) return AVAILABLE_RESOURCES;
+    const full = window.TPXCat.full('resources');
+    if (_tpxResMemo.src === full) return _tpxResMemo.out;
+    const out = full.map(function (e) {
+        return { id: e.id, label: e.label, shortLabel: e.short, cssClass: window.TPXCat.cls('resources', e.id), archived: !!(e.archived || e.overCap) };
+    });
+    _tpxResMemo = { src: full, out: out };
+    return out;
+}
+function tpxResourcesActive() { return tpxResourcesFull().filter(function (r) { return !r.archived; }); }
+// Les noms sont désormais saisis par l'utilisateur : toujours échappés à l'affichage.
+function tpxResEsc(s) { return window.TPXCat ? window.TPXCat.esc(s) : String(s == null ? '' : s); }
 
 // Ressources sélectionnées par défaut
 let selectedResources = [];
@@ -21176,18 +22744,18 @@ resourcesConfigModal?.addEventListener('click', function(e) {
 // Rendre les options de ressources
 function renderResourcesOptions() {
     const container = document.getElementById('resources-available-list');
-    container.innerHTML = AVAILABLE_RESOURCES.map(res => {
+    container.innerHTML = tpxResourcesActive().map(res => {
         const isSelected = tempSelectedResources.includes(res.id);
         const isDisabled = !isSelected && tempSelectedResources.length >= 3;
         return `
-            <div class="resource-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" 
-                 data-resource-id="${res.id}" 
+            <div class="resource-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}"
+                 data-resource-id="${res.id}"
                  onclick="toggleResourceOption('${res.id}')">
                 <div class="resource-option-checkbox">
                     ${isSelected ? '<i class="fas fa-check"></i>' : ''}
                 </div>
-                <div class="resource-option-preview resource-box ${res.cssClass}">${res.shortLabel}</div>
-                <span class="resource-option-name">${res.label}</span>
+                <div class="resource-option-preview resource-box ${res.cssClass}">${tpxResEsc(res.shortLabel)}</div>
+                <span class="resource-option-name">${tpxResEsc(res.label)}</span>
             </div>
         `;
     }).join('');
@@ -21897,13 +23465,14 @@ function refreshOverflowPopup(specialtyId, fc) {
     const popup = document.getElementById('resource-overflow-popup');
     const d = getItemData(specialtyId, fc);
     const res = d.resources || {};
-    const overflow = AVAILABLE_RESOURCES.filter(r => !selectedResources.slice(0, 3).includes(r.id));
+    // Ressource supprimée (archivée) : encore listée tant qu'elle est cochée pour cet item.
+    const overflow = tpxResourcesFull().filter(r => !selectedResources.slice(0, 3).includes(r.id) && (!r.archived || res[r.id] === true));
     if (overflow.length === 0) { popup.classList.remove('show'); return; }
     const _safeFc = (typeof tpxEscOnclickArg === 'function') ? tpxEscOnclickArg(fc) : fc;
     popup.innerHTML = overflow.map(r => {
         const isValidated = res[r.id] === true;
         return '<div class="resource-overflow-item" onclick="toggleResourceInOverflow(event,\'' + specialtyId + '\',\'' + _safeFc + '\',\'' + r.id + '\')">'
-            + '<div class="resource-box ' + r.cssClass + (isValidated ? ' validated' : '') + '">' + r.shortLabel + '</div>'
+            + '<div class="resource-box ' + r.cssClass + (isValidated ? ' validated' : '') + '">' + tpxResEsc(r.shortLabel) + '</div>'
             + '</div>';
     }).join('');
 }
@@ -22160,8 +23729,13 @@ const MAX_DAILY_BACKUPS = 3; // Garder 7 jours de backups quotidiens
 
 let currentUser = null;
 let userData = null;
-let firebaseDataLoaded = false;  
-let firebaseLoadingError = false; 
+let firebaseDataLoaded = false;
+let firebaseLoadingError = false;
+// CATALOGUES (2026-09-30) : compte auquel appartiennent les catalogues en mémoire
+// (userData.catalogs). Jamais fusionnés avec ceux d'un AUTRE compte : userData
+// n'est pas vidé à la déconnexion, un changement de compte sans rechargement
+// ne doit rien mélanger. Voir _tpxCatalogsMerge().
+let _tpxCatOwner = null;
 let cachedStats = null;
 let cachedStatsTime = null;
 const STATS_CACHE_DURATION = 30000;
@@ -22639,18 +24213,8 @@ async function updateUserUI(user) {
             // Badge cliquable pour copier
             const badge = document.getElementById('profile-shortid');
             if (badge) {
-                badge.onclick = () => {
-                    navigator.clipboard.writeText(shortId).then(() => {
-                        // Icône check + fond vert pendant 1.4s
-                        const iconEl = badge.querySelector('i');
-                        badge.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                        if (iconEl) { iconEl.className = 'fas fa-check'; }
-                        setTimeout(() => {
-                            badge.style.background = '';
-                            if (iconEl) { iconEl.className = 'fas fa-fingerprint'; }
-                        }, 1400);
-                    });
-                };
+                // Icône check + fond vert pendant 1.4s — une seule pastille à la fois (cf. _tpxProfileCopy)
+                badge.onclick = () => window._tpxProfileCopy(badge, shortId, 'fa-fingerprint');
             }
             // ── PARRAINAGE (2026-09-24) : code affiché ici (jamais le lien —
             //    le lien complet reste réservé à Compte Premium, cf. Jean).
@@ -22665,17 +24229,7 @@ async function updateUserUI(user) {
             if (referralCodeEl) referralCodeEl.textContent = userInfo.referralCode || '—';
             const referralBadge = document.getElementById('profile-referralcode');
             if (referralBadge && userInfo.referralCode) {
-                referralBadge.onclick = () => {
-                    navigator.clipboard.writeText(userInfo.referralCode).then(() => {
-                        const iconEl = referralBadge.querySelector('i');
-                        referralBadge.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                        if (iconEl) { iconEl.className = 'fas fa-check'; }
-                        setTimeout(() => {
-                            referralBadge.style.background = '';
-                            if (iconEl) { iconEl.className = 'fas fa-gift'; }
-                        }, 1400);
-                    });
-                };
+                referralBadge.onclick = () => window._tpxProfileCopy(referralBadge, userInfo.referralCode, 'fa-gift');
             }
             // ── Synchroniser les infos de base depuis Firebase Auth ──────
             // Crée le doc s'il n'existe pas, complète les champs manquants sinon.
@@ -22929,6 +24483,32 @@ function showPremiumRequiredMessage() {
 }
 
 
+/* COPIE (2026-09-30, demande de Jean) : une seule animation « copié » à la fois entre
+   « Mon ID (amis) » et « Code parrainage » — pendant les 1,4 s de l'une, l'autre (et elle-même)
+   ne copie rien et s'affiche grisée : jamais deux pastilles vertes en même temps. Animation
+   inchangée (fond vert + coche 1,4 s, seulement si la copie a réussi). */
+window._tpxProfileCopy = (function () {
+    let busy = false;
+    return function (badge, text, icon) {
+        if (!badge || !text || busy) return;
+        busy = true;
+        const others = Array.prototype.filter.call(document.querySelectorAll('.profile-id-badge'), (b) => b !== badge);
+        others.forEach((b) => { b.classList.add('is-copy-locked'); b.setAttribute('aria-disabled', 'true'); });
+        const release = () => { busy = false; others.forEach((b) => { b.classList.remove('is-copy-locked'); b.removeAttribute('aria-disabled'); }); };
+        let p;
+        try { p = navigator.clipboard.writeText(text); } catch (e) { p = Promise.reject(e); }
+        Promise.resolve(p).then(() => {
+            const iconEl = badge.querySelector('i');
+            badge.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+            if (iconEl) { iconEl.className = 'fas fa-check'; }
+            setTimeout(() => {
+                badge.style.background = '';
+                if (iconEl) { iconEl.className = 'fas ' + icon; }
+                release();
+            }, 1400);
+        }, release);
+    };
+})();
 userAvatar?.addEventListener('click', e => {
     e.stopPropagation();
     profileDropdown.classList.toggle('active');
@@ -22945,17 +24525,7 @@ userAvatar?.addEventListener('click', e => {
                 referralCodeEl.textContent = newCode;
                 const referralBadge = document.getElementById('profile-referralcode');
                 if (referralBadge) {
-                    referralBadge.onclick = () => {
-                        navigator.clipboard.writeText(newCode).then(() => {
-                            const iconEl = referralBadge.querySelector('i');
-                            referralBadge.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                            if (iconEl) { iconEl.className = 'fas fa-check'; }
-                            setTimeout(() => {
-                                referralBadge.style.background = '';
-                                if (iconEl) { iconEl.className = 'fas fa-gift'; }
-                            }, 1400);
-                        });
-                    };
+                    referralBadge.onclick = () => window._tpxProfileCopy(referralBadge, newCode, 'fa-gift');
                 }
             }).catch(e => {
                 referralCodeEl.textContent = '—'; // permet de réessayer au prochain clic
@@ -23312,6 +24882,7 @@ window.addEventListener('pagehide', () => {
                 selectedResources: userData.selectedResources || [],
                 trainings:         userData.trainings         || [],
                 deletedDefaultIds: userData.deletedDefaultIds || [],
+                catalogs:          _tpxCatalogsOf(currentUser.uid), // CATALOGUES (2026-09-30)
                 lastUpdated:       userData.lastUpdated
             },
             baseRevision: _tpxServerRevision || null, // BUGFIX 2026-09-20 : révision serveur connue (userData.lastUpdated vient d'être réécrit à l'heure courante)
@@ -24007,6 +25578,7 @@ async function _tpxConfirmDocMissingAndInit(userId) {
                         selectedResources: d.selectedResources || [],
                         trainings: d.trainings !== undefined ? d.trainings : _tpxSafeDefaultTrainings(),
                         deletedDefaultIds: d.deletedDefaultIds || [],
+                        catalogs: d.catalogs || null, // CATALOGUES (2026-09-30)
                         restoredAt: d.restoredAt || null,
                         notesErreurs: d.notesErreurs,
                         lastUpdated: d.lastUpdated || new Date().toISOString()
@@ -24216,9 +25788,13 @@ function loadUserData(userId) {
 							selectedResources: (_isOwnSaveEcho && userData.selectedResources) ? userData.selectedResources : (newData.selectedResources || []),
 							trainings: (_isOwnSaveEcho && userData.trainings) ? userData.trainings : (!_trainingsWereMissing ? newData.trainings : _tpxSafeDefaultTrainings()),
 							deletedDefaultIds: (_isOwnSaveEcho && userData.deletedDefaultIds) ? userData.deletedDefaultIds : (newData.deletedDefaultIds || []),
+							// CATALOGUES (2026-09-30) : union serveur + mémoire (même compte seulement) —
+							// une entrée ajoutée ici et pas encore envoyée n'est jamais écrasée par l'écho.
+							catalogs: _tpxCatalogsMerge(newData.catalogs, _tpxCatalogsOf(userId)),
 							restoredAt: newData.restoredAt || (userData && userData.restoredAt) || null,
 							lastUpdated: newData.lastUpdated || new Date().toISOString()
 						};
+						_tpxCatOwner = userId;
 							// BUGFIX 2026-09-20 : le contenu de CE snapshot vient d'être intégré (tel quel ou fusionné
 							// avec les modifs locales) : sa révision est désormais connue de cet onglet. Un horodatage
 							// Timestamp Firestore (restauration admin) n'est pas comparable : révision inconnue.
@@ -24328,6 +25904,8 @@ function loadUserData(userId) {
 											selectedResources: _pending.data.selectedResources || userData.selectedResources || [],
 											trainings:         _pending.data.trainings !== undefined ? _pending.data.trainings : (userData.trainings || _tpxSafeDefaultTrainings()),
 											deletedDefaultIds: _pending.data.deletedDefaultIds || userData.deletedDefaultIds || [],
+											// CATALOGUES (2026-09-30) : union copie locale + état qui vient d'être adopté (même compte : clé _<uid>).
+											catalogs:          _tpxCatalogsMerge(userData.catalogs, _pending.data.catalogs),
 											restoredAt:        _restoredAtKeep,
 											lastUpdated:       _pendingBaseMatchesServer ? newData.lastUpdated : _pending.data.lastUpdated
 										};
@@ -24426,6 +26004,9 @@ function loadUserData(userId) {
                     }
                     
                     renderAll();
+                    // CATALOGUES (2026-09-30) : catalogues modifiés ailleurs → filtres, boutons
+                    // et fenêtres déjà ouvertes mis à jour (aucun effet s'ils n'ont pas changé).
+                    try { if (window.TPXCat) window.TPXCat.externalChange(); } catch (_e) {}
 
                     // 🔵 FIX CONTOUR BLEU : précharger l'index des notes depuis Firestore
                     // Sans ça, _buildItemNotesExistSet() ne lit que le localStorage (vide au 1er chargement)
@@ -24542,6 +26123,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                         if (Object.keys(parsed?.items || {}).length > 0) {
                             console.warn('⚠️ Document Firebase absent mais cache avec données - RESTAURATION depuis cache');
                             userData = parsed;
+                            _tpxCatOwner = userId; // CATALOGUES : cache planning_cache_<uid> de CE compte
                             window.userData = userData; // sync global
                             // Recréer le document Firebase avec les données du cache
                             saveUserData();
@@ -24557,6 +26139,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                 
                 // Vraiment nouveau compte : initialiser avec données vides
                 userData = initializeUserData();
+                _tpxCatOwner = userId; // CATALOGUES (2026-09-30)
                 window.userData = userData; // sync global
                 saveUserData();
                 
@@ -24583,6 +26166,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                     if (Object.keys(parsed?.items || {}).length > 0) {
                         console.warn('⚠️ Erreur Firebase - Utilisation du cache local');
                         userData = parsed;
+                        _tpxCatOwner = userId; // CATALOGUES : cache planning_cache_<uid> de CE compte
                         window.userData = userData; // sync global
                         renderAll();
                         return;
@@ -24599,6 +26183,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
             // du correctif (2026-09-18, CRITIQUE).
             console.error('❌ Aucune donnée de secours disponible -- vérification ponctuelle en cours avant toute décision');
             userData = initializeUserData();
+            _tpxCatOwner = userId; // CATALOGUES (2026-09-30)
             window.userData = userData; // sync global
             _tpxUnconfirmedOptimistic = true; // cf. drapeau déclaré avant loadUserData() : rien n'est écrit tant que non confirmé
             renderAll();
@@ -24668,6 +26253,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                     selectedResources: result.data.selectedResources || [],
                     trainings: result.data.trainings,
                     deletedDefaultIds: result.data.deletedDefaultIds || [],
+                    catalogs: result.data.catalogs || null, // CATALOGUES (2026-09-30) : ceux du serveur (aucune modification possible avant cette confirmation)
                     restoredAt: result.data.restoredAt || null,
                     lastUpdated: result.data.lastUpdated
                 };
@@ -24676,6 +26262,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                 console.warn('✅ Vérification ponctuelle : le document existe réellement -- erreur onSnapshot transitoire, données réelles chargées (rien perdu).');
             }
             userData = _adopt;
+            _tpxCatOwner = userId; // CATALOGUES (2026-09-30)
             window.userData = userData;
             _tpxUnconfirmedOptimistic = false; // vrai état serveur adopté : les sauvegardes peuvent reprendre
             // BUGFIX (2026-09-19, CRITIQUE) : trouvé par un test de bout en bout contre
@@ -24715,6 +26302,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                 if (PlanningModule.renderChecklist) PlanningModule.renderChecklist();
             }
             renderAll();
+            try { if (window.TPXCat) window.TPXCat.externalChange(); } catch (_e) {}
         } else if (result.confirmed && !result.exists) {
             console.warn('✅ Vérification ponctuelle confirmée : compte réellement nouveau -- création du document.');
             _tpxUnconfirmedOptimistic = false; // absence du document CONFIRMÉE par le serveur : rien à écraser
@@ -25585,7 +27173,14 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
         // ── AJOUT (2026-09-13) : même principe pour le nombre de tours. ──
         extendedTours: (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false
     };
-    
+    // CATALOGUES (2026-09-30) : écrits À PART de dataToSave, fusionnés DANS la
+    // transaction avec ceux du serveur (union : une entrée ajoutée sur un autre
+    // appareil n'est jamais effacée par cette sauvegarde) — jamais ceux d'un
+    // autre compte. Sans catalogue nulle part : champ non écrit (inchangé).
+    const _catWrite = !!(window.TPXCat && _tpxCatOwner === currentUser.uid);
+    const _catLocal = _catWrite ? _tpxCatalogsOf(currentUser.uid) : null;
+    let _catWritten = null;
+
     try {
         // ✅ CORRECTION : Check unique au début du try
         if (saveTimedOut || saveCancelled) {
@@ -25659,7 +27254,13 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
                     });
                 }
             }
-            transaction.update(_ref, _finalDataToSave);
+            var _toWrite = _finalDataToSave;
+            _catWritten = null;
+            if (_catWrite) {
+                _catWritten = _tpxCatalogsMerge(_serverData ? _serverData.catalogs : null, _catLocal);
+                if (_catWritten) _toWrite = Object.assign({}, _finalDataToSave, { catalogs: _catWritten });
+            }
+            transaction.update(_ref, _toWrite);
         });
         if (_skippedStaleSave) {
             // Rien n'a été écrit : une sauvegarde plus récente de cet onglet est déjà en base et
@@ -25694,6 +27295,11 @@ if (isLegacyMigrationConfirmedForCurrentUser()) {
             // PROCHAINE sauvegarde de cet onglet répéterait le même problème
             // (elle ne saurait toujours pas qu'une restauration a eu lieu).
             if (_serverRestoredAt) userData.restoredAt = _serverRestoredAt;
+            // CATALOGUES : la mémoire reprend l'union écrite (+ ce qui a été ajouté pendant l'envoi).
+            if (_catWritten && _tpxCatOwner === currentUser.uid) {
+                userData.catalogs = _tpxCatalogsMerge(_catWritten, userData.catalogs);
+                try { if (window.TPXCat) window.TPXCat.externalChange(); } catch (_e) {}
+            }
             userData.lastUpdated = timestamp; // ✅ Maintenant on peut modifier
             if (_mySaveSeq > _tpxLastConfirmedSaveSeq) { _tpxLastConfirmedSaveSeq = _mySaveSeq; _tpxServerRevision = timestamp; } // BUGFIX 2026-09-20 : cf. _tpxSaveAttemptFailed
             lastSaveTime = Date.now();
@@ -25787,7 +27393,7 @@ if (
             
             try {
                 // 🛡️ Utiliser merge au lieu d'écraser
-                await setDoc(doc(db, 'planningRevision', currentUser.uid), dataToSave, { merge: true });
+                await setDoc(doc(db, 'planningRevision', currentUser.uid), _catLocal ? Object.assign({}, dataToSave, { catalogs: _catLocal }) : dataToSave, { merge: true });
                 
                 // ✅ SUCCÈS setDoc
                 if (!saveTimedOut && !saveCancelled) {
@@ -26680,6 +28286,7 @@ function debouncedSave() {
                     selectedResources: userData.selectedResources || [],
                     trainings:         userData.trainings         || [],
                     deletedDefaultIds: userData.deletedDefaultIds || [],
+                    catalogs:          _tpxCatalogsOf(currentUser.uid), // CATALOGUES (2026-09-30)
                     lastUpdated:       _safeTimestamp
                 },
                 baseRevision: _tpxServerRevision || null, // BUGFIX 2026-09-20 : révision serveur connue au moment de l'écriture
@@ -26698,9 +28305,74 @@ function debouncedSave() {
     
     // Attendre 5 secondes d'inactivité avant de sauvegarder Firebase
     saveTimeout = setTimeout(() => {
-        
+
         saveUserData();
     }, DEBOUNCE_DELAY);
+}
+
+// ═══ CATALOGUES PERSONNALISABLES (2026-09-30) — branchement EDN ═══════════
+// Union de deux versions de userData.catalogs (serveur / mémoire / copie locale) :
+// aucune entrée n'est jamais perdue (cf. TPXCat.mergeAll). Repli prudent si le
+// module des catalogues manque : la version serveur, telle quelle.
+function _tpxCatalogsMerge(serverCat, localCat) {
+    try { if (window.TPXCat) return window.TPXCat.mergeAll(serverCat || null, localCat || null); }
+    catch (e) { console.warn('[TPXCat] fusion', e); }
+    return serverCat || localCat || null;
+}
+// Catalogues de userData seulement s'ils appartiennent bien au compte `uid`.
+function _tpxCatalogsOf(uid) {
+    return (userData && uid && _tpxCatOwner === uid) ? (userData.catalogs || null) : null;
+}
+if (window.TPXCat) {
+    window.TPXCat.setHost({
+        app: 'edn',
+        getRaw: function () { return (userData && userData.catalogs) || null; },
+        setRaw: function (obj) { if (!userData) return; userData.catalogs = obj; window.userData = userData; },
+        canEdit: function (silent) {
+            if (!currentUser || !userData || !firebaseDataLoaded || _tpxUnconfirmedOptimistic || _tpxCatOwner !== currentUser.uid) {
+                if (!silent && window.showToastNotification) window.showToastNotification('Vos données sont en cours de chargement, réessayez dans un instant.', 'warning');
+                return false;
+            }
+            if (silent) return !(isOfflineMode || window.offlineActionsBlocked || window.tpxPremiumLocked);
+            return canPerformAction('config');
+        },
+        // Même circuit que toute autre modification : copie locale immédiate
+        // (planning_pending_<uid>) puis envoi Firestore.
+        persist: function () { debouncedSave(); },
+        // Ressource supprimée : retirée des 3 colonnes affichées (les cases déjà
+        // cochées sur les items restent intactes, et visibles dans « ··· »).
+        onArchive: function (kind, id) {
+            if (kind !== 'resources' || !userData) return;
+            const keep = function (r) { return r !== id; };
+            if (Array.isArray(userData.selectedResources) && userData.selectedResources.indexOf(id) !== -1) {
+                userData.selectedResources = userData.selectedResources.filter(keep);
+            }
+            selectedResources = Array.isArray(userData.selectedResources) ? userData.selectedResources : selectedResources.filter(keep);
+            tempSelectedResources = tempSelectedResources.filter(keep);
+        }
+    });
+    // Toute modification (ici ou sur un autre appareil) se voit aussitôt, y compris
+    // dans une fenêtre DÉJÀ OUVERTE (configuration des ressources, tour, popup « ··· »).
+    window.TPXCat.onChange(function (kind) {
+        const all = kind === '*';
+        if (all || kind === 'resources') {
+            const cfgModal = document.getElementById('resources-config-modal');
+            if (cfgModal && cfgModal.classList.contains('active')) {
+                const activeIds = tpxResourcesActive().map(function (r) { return r.id; });
+                tempSelectedResources = tempSelectedResources.filter(function (r) { return activeIds.indexOf(r) !== -1; });
+                renderResourcesOptions();
+                updateResourcesCount();
+            }
+            const pop = document.getElementById('resource-overflow-popup');
+            if (pop && pop.classList.contains('show') && pop._spec) refreshOverflowPopup(pop._spec, pop._fc);
+        }
+        if (all || kind === 'supports') {
+            const cm = document.getElementById('confidence-modal');
+            if (cm && cm.classList.contains('active')) tpxRenderSupportButtons(selectedSupport);
+        }
+        if ((all || kind === 'resources' || kind === 'supports') && userData) renderItemsTable();
+        if ((all || kind === 'trainTypes' || kind === 'trainPlatforms') && userData) renderChecklist();
+    });
 }
 
 function getItemKey(sId, fc) { return sId + '-' + fc; }
@@ -28176,8 +29848,12 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
                 }
                 var _supHtml = '';
                 if (rowHasSupport) {
+                    // CATALOGUES (2026-09-30) : acronyme et couleur du catalogue (d\u00E9faut non
+                    // modifi\u00E9 = m\u00EAme balise qu'avant) ; un support supprim\u00E9 garde les siens.
                     _supHtml = support
-                        ? '<span class="tour-support ' + support + '">' + supportLabels[support] + '</span>'
+                        ? (window.TPXCat
+                            ? '<span class="tour-support ' + window.TPXCat.esc(window.TPXCat.cls('supports', support)) + '">' + window.TPXCat.esc(window.TPXCat.meta('supports', support).abbr) + '</span>'
+                            : '<span class="tour-support ' + support + '">' + supportLabels[support] + '</span>')
                         : '<span class="tour-support ti-placeholder">\u00A0</span>';
                 }
                 info = (_durHtml || _supHtml) ? '<div class="tour-info">' + _durHtml + _supHtml + '</div>' : '';
@@ -28227,13 +29903,15 @@ const matchSpec = selectedSpecialties.length === 0 || selectedSpecialties.includ
 				resourcesHtml = '<div class="resources-empty-btn" onclick="openResourcesConfigModal()"><i class="fas fa-plus"></i><span>Configurer</span></div>';
 			} else {
 				const displayed = selectedResources.slice(0, 3);
+				const _tpxResAll = tpxResourcesFull();
 				let boxes = displayed.map(resId => {
-					const resourceConfig = AVAILABLE_RESOURCES.find(r => r.id === resId);
+					const resourceConfig = _tpxResAll.find(r => r.id === resId);
 					if (!resourceConfig) return '';
 					const isValidated = res[resId] === true;
-					return '<div class="resource-box ' + resourceConfig.cssClass + (isValidated ? ' validated' : '') + '" onclick="toggleResourceValidation(\'' + item.specialtyId + '\', \'' + tpxEscOnclickArg(item.fc) + '\', \'' + resId + '\')">' + resourceConfig.shortLabel + '</div>';
+					return '<div class="resource-box ' + resourceConfig.cssClass + (isValidated ? ' validated' : '') + '" onclick="toggleResourceValidation(\'' + item.specialtyId + '\', \'' + tpxEscOnclickArg(item.fc) + '\', \'' + resId + '\')">' + tpxResEsc(resourceConfig.shortLabel) + '</div>';
 				}).join('');
-const overflowResources = AVAILABLE_RESOURCES.filter(r => !selectedResources.slice(0, 3).includes(r.id));
+// Ressource supprimée (archivée) : comptée seulement si elle est encore cochée pour cet item.
+const overflowResources = _tpxResAll.filter(r => !selectedResources.slice(0, 3).includes(r.id) && (!r.archived || res[r.id] === true));
 const hasValidatedOverflow = overflowResources.some(r => res[r.id] === true);
 boxes += '<div class="resource-box overflow-btn' + (hasValidatedOverflow ? ' overflow-validated' : '') + '" onclick="openResourcesOverflow(event,\'' + item.specialtyId + '\',\'' + tpxEscOnclickArg(item.fc) + '\')">···</div>';
 				resourcesHtml = '<div class="resources-grid">' + boxes + '</div>';
@@ -28822,6 +30500,32 @@ function populateFilters() {
 let selectedConfidence = null;
 let selectedSupport = null;
 
+// ── CATALOGUES PERSONNALISABLES (2026-09-30) : boutons « Support » du tour
+//    générés depuis le catalogue (défauts : même classe, même icône, même libellé
+//    qu'avant ; ajouts de l'utilisateur ensuite). `includeId` : support déjà
+//    enregistré sur CE tour, affiché même s'il a été supprimé du catalogue depuis
+//    (le réenregistrer ne doit pas l'effacer). Les clics sont délégués au
+//    conteneur (plus bas) : ils survivent à la régénération des boutons.
+function tpxRenderSupportButtons(includeId) {
+    const wrap = document.querySelector('#tour-section-support .support-buttons');
+    if (!wrap || !window.TPXCat) return;
+    const C = window.TPXCat;
+    const list = C.active('supports').slice();
+    if (includeId && !list.some(function (e) { return e.id === includeId; }) && C.known('supports', includeId)) {
+        list.push(C.meta('supports', includeId));
+    }
+    wrap.innerHTML = list.map(function (e) {
+        const pal = e.color ? ' tpx-pal tpx-pal-' + e.color : '';
+        return '<button class="support-btn' + pal + '" data-support="' + C.esc(e.id) + '"><i class="fas ' + C.esc(e.icon || 'fa-tag') + '"></i> ' + C.esc(e.label) + '</button>';
+    }).join('');
+    if (selectedSupport) {
+        Array.prototype.forEach.call(wrap.querySelectorAll('.support-btn'), function (b) {
+            if (b.dataset.support === String(selectedSupport)) b.classList.add('selected');
+        });
+    }
+}
+window.tpxRenderSupportButtons = tpxRenderSupportButtons;
+
 window.openConfidenceModal = function(el) {
     // Régénère les boutons selon le barème courant (5 ou 10) AVANT toute
     // logique de présélection plus bas (qui cherche un bouton par
@@ -28868,7 +30572,9 @@ if (item) {
     // instable" à tort, et bloquait aussi toutes les autres modifications jusqu'au
     // rechargement de la page.
     selectedSupport = (d.tourSupports && d.tourSupports[tourIndex] != null) ? d.tourSupports[tourIndex] : null;
-    
+    // CATALOGUES (2026-09-30) : boutons régénérés depuis le catalogue courant.
+    try { tpxRenderSupportButtons(selectedSupport); } catch (e) { console.warn('[TPXCat] supports', e); }
+
     // Reset UI
     document.querySelectorAll('.confidence-btn').forEach(b => b.classList.remove('selected', 'current'));
     document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
@@ -28970,6 +30676,10 @@ if (selectedConfidence) {
 
     
     confidenceModal.classList.add('active');
+    // PIED FIXE (2026-09-30) : chaque ouverture repart du HAUT du corps. Le navigateur garde sinon la
+    // position de défilement de la fois précédente (élément masqué puis réaffiché) : on rouvrait sur les
+    // supports, le niveau de confiance caché en haut. Après « active » : le corps a alors une mise en page.
+    try { var _tpxTourBody = confidenceModal.querySelector('.confidence-modal-body'); if (_tpxTourBody) _tpxTourBody.scrollTop = 0; } catch (e) {}
 };
 
 // ── Barème de confiance : rendu dynamique 5 ou 10 niveaux ──────────────
@@ -29046,19 +30756,36 @@ window.tpxRenderConfidenceButtons = function () {
     });
 })();
 
-document.querySelectorAll('.support-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const wasSelected = this.classList.contains('selected');
-        document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
-        if (wasSelected) {
-            selectedSupport = null;
-        } else {
-            selectedSupport = this.dataset.support;
-            this.classList.add('selected');
-        }
-    });
+// CATALOGUES (2026-09-30) : clic délégué au conteneur — même logique qu'avant,
+// mais valable aussi pour les boutons régénérés par tpxRenderSupportButtons().
+document.querySelector('#tour-section-support .support-buttons')?.addEventListener('click', function(e) {
+    const btn = e.target && e.target.closest ? e.target.closest('.support-btn') : null;
+    if (!btn || !this.contains(btn)) return;
+    const wasSelected = btn.classList.contains('selected');
+    document.querySelectorAll('.support-btn').forEach(b => b.classList.remove('selected'));
+    if (wasSelected) {
+        selectedSupport = null;
+    } else {
+        selectedSupport = btn.dataset.support;
+        btn.classList.add('selected');
+    }
 });
 
+// PIED FIXE (2026-09-30) : ramène une section du corps défilant du modal de tour dans la zone
+// visible (défilement du corps seulement ; sans effet si le corps ne défile pas ou si elle est visible).
+function _tourRevealInBody(el) {
+    try {
+        var body = el && el.closest ? el.closest('.confidence-modal-body') : null;
+        if (!body || body.scrollHeight <= body.clientHeight + 1) return;
+        var sec = el.closest('.modal-section') || el;
+        var top = sec.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8;
+        if (top >= body.scrollTop) return;
+        top = Math.max(0, top);
+        var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (smooth && typeof body.scrollTo === 'function') body.scrollTo({ top: top, behavior: 'smooth' });
+        else body.scrollTop = top;
+    } catch (e) {}
+}
 document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     // 🔴 BLOQUER SI HORS LIGNE
     if (!canPerformAction('tour')) return;
@@ -29125,7 +30852,9 @@ document.getElementById('btn-save-tour')?.addEventListener('click', function() {
     }
     
     // Si erreur, on arrête
-    if (hasError) return;
+    // PIED FIXE (2026-09-30) : ✓ se clique quelle que soit la position de défilement du corps ;
+    // s'il manque le niveau de confiance, on ramène son message (en haut du corps) à l'écran.
+    if (hasError) { if (!selectedConfidence) _tourRevealInBody(errorEl); return; }
     
     const d = getItemData(pendingTour.specialtyId, pendingTour.fc);
     const tourIndex = pendingTour.tour;
@@ -31667,6 +33396,15 @@ function renderChecklist() {
             var PLAT_BG     = { edni:'rgba(6,182,212,0.13)', asclepia:'rgba(236,72,153,0.13)', hypocampus:'rgba(99,102,241,0.13)', uness:'rgba(249,115,22,0.13)' };
             var TRAIN_TYPE_LBL = { masterclass:'Masterclass', spe360:'Spé 360°', annale:'Annale', ccb:'CCB', r2c:'Concours R2C' };
             var PLAT_LBL = { edni:'EDNi', asclepia:'Asclepia', hypocampus:'Hypocampus', uness:'UNESS' };
+            // CATALOGUES (2026-09-30) : entrée connue du catalogue (ajoutée, renommée, recolorée
+            // ou supprimée depuis) → ses valeurs ; pour un défaut non modifié, les mêmes qu'au-dessus.
+            if (window.TPXCat) {
+                [['trainTypes', item.trainType, TYPE_COLORS, TYPE_BG, TRAIN_TYPE_LBL], ['trainPlatforms', item.trainPlateforme, PLAT_COLORS, PLAT_BG, PLAT_LBL]].forEach(function (c) {
+                    if (!c[1] || !window.TPXCat.known(c[0], c[1])) return;
+                    var h = window.TPXCat.hex(c[0], c[1]);
+                    c[2][c[1]] = h.fg; c[3][c[1]] = 'rgba(' + h.rgb + ',0.13)'; c[4][c[1]] = escapeHtml(window.TPXCat.label(c[0], c[1]));
+                });
+            }
             if (item.trainType && TYPE_COLORS[item.trainType]) {
                 trainBadges += '<span style="display:inline-block;margin-left:5px;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:' + TYPE_BG[item.trainType] + ';color:' + TYPE_COLORS[item.trainType] + ';border:1px solid ' + TYPE_COLORS[item.trainType] + '33;">' + (TRAIN_TYPE_LBL[item.trainType]||item.trainType) + '</span>';
             }
@@ -33116,6 +34854,19 @@ function _notesGetPopup(ctx) {
     return document.getElementById((_NOTES_CTX[ctx] || _NOTES_CTX.notes).popup);
 }
 
+// 2026-10-02 : barre agrandie sur iPad (CSS, bloc « tablettes tactiles ») — si elle déborde d'un éditeur étroit,
+// « Supprimer » passe en icône seule (classe is-tight, sans effet hors tablette tactile). Recalculé à chaque
+// affichage et à chaque redimensionnement / rotation de l'écran pendant qu'elle est affichée.
+function _notesImgBarFit(popup) {
+    try {
+        popup.classList.remove('is-tight');
+        if (popup.scrollWidth > popup.clientWidth + 1) popup.classList.add('is-tight');
+    } catch (e) {}
+}
+window.addEventListener('resize', function () {
+    document.querySelectorAll('.notes-img-ctrl-panel.active').forEach(_notesImgBarFit);
+});
+
 function _notesFooterShow(ctx, img) {
     var pctVal = img.style.width ? parseInt(img.style.width) || 100 : 100;
     window._imgPopupCtx = ctx;
@@ -33130,6 +34881,7 @@ function _notesFooterShow(ctx, img) {
         clearTimeout(popup._hideTimer);
         /* 1. display:flex via .active, puis 2. transition via .visible au frame suivant */
         popup.classList.add('active');
+        _notesImgBarFit(popup);
         requestAnimationFrame(function() {
             requestAnimationFrame(function() { popup.classList.add('visible'); });
         });
@@ -36016,6 +37768,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     .notes-img-ctrl-panel .img-popup-sep { height: 24px; }
 }
+/* iPad / tablettes tactiles (2026-10-02, demande de Jean : barre trop petite au doigt sur iPad) : même barre compacte
+   qu'à l'ordinateur (en bas à gauche de l'éditeur), agrandie pour le doigt — cibles de 44 px (recommandation Apple),
+   texte et curseur à la même échelle. Ordinateur (souris) et téléphone (≤ 768 px, bloc ci-dessus) inchangés. Seul le
+   curseur rétrécit si l'éditeur est étroit : la barre ne déborde jamais de l'éditeur. */
+@media (pointer: coarse) and (min-width: 769px) {
+    .notes-img-ctrl-panel {
+        padding: 5px 8px;
+        gap: 6px;
+        border-radius: 14px;
+        max-width: calc(100% - 24px);
+    }
+    .notes-img-ctrl-panel .img-popup-btn {
+        font-size: 0.95rem;
+        padding: 0 14px;
+        min-height: 44px;
+        min-width: 44px;
+        justify-content: center;
+        gap: 7px;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+    .notes-img-ctrl-panel .img-popup-sep { height: 28px; margin: 0 2px; }
+    .notes-img-ctrl-panel input[type="range"] { flex: 0 1 140px; width: 140px; min-width: 80px; height: 44px; margin: 0 4px; }
+    .notes-img-ctrl-panel .img-popup-pct { font-size: 0.85rem; min-width: 40px; flex-shrink: 0; }
+    /* Éditeur trop étroit pour la barre entière (ex. cahier d'erreurs ECOS, iPad 12,9″ portrait) : « Supprimer » en
+       icône seule — classe is-tight posée à l'affichage de la barre quand elle déborde. */
+    .notes-img-ctrl-panel.is-tight .img-popup-btn.danger { font-size: 0; gap: 0; padding: 0; }
+    .notes-img-ctrl-panel.is-tight .img-popup-btn.danger i { font-size: 0.95rem; }
+}
 
 /* Lightbox image agrandie (bouton "Agrandir" du popup image ci-dessus) */
 .notes-img-lightbox {
@@ -36971,6 +38752,22 @@ body.tc-kb-open-phone .flash-expand-btn {
 
             <!-- ══════════════ OCTOBRE 2026 ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon purple">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Ressources, supports et entraînements à votre façon ✏️</h4>
+                    <p>
+                        Renommez ou recolorez les <strong>ressources</strong>, les
+                        <strong>supports</strong> des tours et les <strong>types et
+                        plateformes</strong> d'entraînement, et ajoutez les vôtres
+                        (<strong>3 par liste</strong>) grâce au bouton crayon placé à côté
+                        de chaque liste.
+                    </p>
+                </div>
+            </div>
 
             <div class="whats-new-section">
                 <div class="whats-new-section-icon green">
@@ -40499,7 +42296,8 @@ document.addEventListener('touchend', function(e) {
    sur la modal "Ajouter un entrainement") : le corps devient alors le seul
    élément qui déborde, et devient donc scrollable, ce qui garde le header ET
    les boutons Enregistrer/Réinitialiser (dans .modal-actions, en fin de
-   .confidence-modal-body) toujours atteignables quelle que soit la hauteur
+   .confidence-modal-body — depuis le 2026-09-30 dans le pied fixe
+   .confidence-modal-footer) toujours atteignables quelle que soit la hauteur
    d'écran.
    ⚠️ !important sur max-height/overflow : une règle générique préexistante,
    @media screen and (max-height: 450px) .modal-content (cf. ligne ~5715),
@@ -40527,6 +42325,27 @@ document.addEventListener('touchend', function(e) {
     padding: 1.25rem 1.5rem 1.5rem;
     overflow-y: auto;
     flex: 1;
+}
+/* PIED FIXE (2026-09-30, demande de Jean) : ✓ / 🗑 sortis du corps défilant, dans un pied (même
+   principe que .feedback-modal-footer) → toujours visibles, même quand le corps défile (écran peu
+   haut, barème 10, supports sur plusieurs rangées). Fond transparent = fond du modal dans les 3
+   thèmes ; trait = couleur du trait de l'en-tête. Le corps perd son espace du bas (la marge de la
+   dernière section en tient lieu), le pied le reprend : hauteur quasi inchangée quand tout tient. */
+#confidence-modal .confidence-modal-body { padding-bottom: 0; }
+#confidence-modal .confidence-modal-footer {
+    flex-shrink: 0;
+    padding: 0.75rem 1.5rem 1.25rem;
+    border-top: 1px solid var(--gray-200);
+}
+[data-theme="dark"] #confidence-modal .confidence-modal-footer { border-top-color: #334155; }
+#confidence-modal .confidence-modal-footer .modal-actions { margin-top: 0 !important; }
+@media screen and (max-height: 450px) {
+    /* Ici le voile (.modal) a 5 px de marge intérieure et le modal 5 px de marge, en haut ET en bas
+       (règle « mode paysage téléphone ») : 96dvh dépassait de ~6 px et le voile entier défilait un
+       peu (le pied bougeait). Hauteur = écran − ces 20 px. */
+    #confidence-modal .confidence-modal-content { max-height: calc(100vh - 20px) !important; max-height: calc(100dvh - 20px) !important; }
+    #confidence-modal .confidence-modal-body { padding-bottom: 0.4rem; }
+    #confidence-modal .confidence-modal-footer { padding: 0.5rem 1.5rem 0.6rem; }
 }
 
 /* ===== HEADER UNIFIÉ — tous les modals (entraînement, tour) ===== */
@@ -41670,6 +43489,128 @@ var trainNotesDirty = false;
 var trainNotesCurrentId = null;
 var _trainStatutPopupId = null;
 
+// ---- CATALOGUES PERSONNALISABLES (2026-09-30) : types et plateformes ----
+// Défauts : identifiants, libellés, couleurs et classes historiques inchangés ;
+// ajouts de l'utilisateur ensuite. Un type / une plateforme supprimé(e) reste
+// affiché(e) avec son vrai nom sur les entraînements qui l'utilisent déjà.
+function _trainCatOn() { return !!window.TPXCat; }
+// Mêmes objets de libellés qu'avant (recherche, filtres, tableau…), remis à jour
+// EN PLACE depuis le catalogue (entrées archivées comprises).
+function _trainRefreshLabelMaps() {
+  if (!_trainCatOn()) return;
+  [['trainTypes', TRAIN_TYPE_LABELS], ['trainPlatforms', TRAIN_PLAT_LABELS]].forEach(function (p) {
+    var map = p[1];
+    var full = window.TPXCat.full(p[0]);
+    Object.keys(map).forEach(function (k) { delete map[k]; });
+    full.forEach(function (e) { map[e.id] = e.label; });
+  });
+}
+function _trainTypeCls(id) { return _trainCatOn() ? window.TPXCat.cls('trainTypes', id) : ('type-' + id); }
+function _trainPlatCls(id) { return _trainCatOn() ? window.TPXCat.cls('trainPlatforms', id) : ('plat-' + id); }
+// Options d'un filtre : entrées actives + archivées encore utilisées (ou filtrées).
+function _trainFilterEntries(kind) {
+  var isType = kind === 'trainTypes';
+  var arr = isType ? trainFilterTypes : trainFilterPlateformes;
+  var used = {};
+  ((window.userData && window.userData.trainings) || []).forEach(function (t) {
+    var v = t ? (isType ? t.type : t.plateforme) : null;
+    if (v) used[v] = true;
+  });
+  return window.TPXCat.full(kind).filter(function (e) {
+    return !(e.archived || e.overCap) || used[e.id] || arr.indexOf(e.id) !== -1;
+  });
+}
+function _trainFilterMax(kind) {
+  if (!_trainCatOn()) return kind === 'trainTypes' ? 5 : 4;
+  return Math.max(1, _trainFilterEntries(kind).length);
+}
+function _trainBuildFilterOptions(kind) {
+  if (!_trainCatOn()) return;
+  var isType = kind === 'trainTypes';
+  var listEl = document.getElementById(isType ? 'train-type-multi-list' : 'train-plateforme-multi-list');
+  if (!listEl) return;
+  var C = window.TPXCat;
+  var arr = isType ? trainFilterTypes : trainFilterPlateformes;
+  var entries = _trainFilterEntries(kind);
+  var ids = entries.map(function (e) { return e.id; });
+  for (var i = arr.length - 1; i >= 0; i--) { if (ids.indexOf(arr[i]) === -1) arr.splice(i, 1); }
+  Array.prototype.slice.call(listEl.querySelectorAll('.specialty-multi-option')).forEach(function (o) {
+    if (o.getAttribute('data-value') !== 'all') o.parentNode.removeChild(o);
+  });
+  var fn = isType ? 'trainToggleTypeFilter' : 'trainTogglePlateformeFilter';
+  var dotCls = isType ? 'train-type-dot' : 'train-plat-dot';
+  entries.forEach(function (e) {
+    var div = document.createElement('div');
+    div.className = 'specialty-multi-option' + (arr.indexOf(e.id) !== -1 ? ' selected' : '');
+    div.setAttribute('data-value', e.id);
+    div.setAttribute('onclick', fn + '(this.getAttribute(\'data-value\'),this)');
+    div.innerHTML = '<div class="specialty-multi-checkbox"><i class="fas fa-check"></i></div>' +
+      '<span class="' + dotCls + ' ' + C.esc(isType ? _trainTypeCls(e.id) : _trainPlatCls(e.id)) + '"></span>' +
+      '<span class="specialty-multi-option-text">' + C.esc(e.label) + '</span>';
+    listEl.appendChild(div);
+  });
+  var allOpt = listEl.querySelector('.specialty-multi-option[data-value="all"]');
+  if (allOpt) allOpt.classList.toggle('selected', arr.length === 0);
+  var ctr = document.getElementById(isType ? 'train-type-counter' : 'train-plateforme-counter');
+  if (ctr) {
+    ctr.textContent = arr.length;
+    if (ctr.nextElementSibling) ctr.nextElementSibling.textContent = '/ ' + entries.length;
+  }
+  _trainUpdatePlaceholder(isType ? 'train-type-placeholder' : 'train-plateforme-placeholder', arr,
+    isType ? TRAIN_TYPE_LABELS : TRAIN_PLAT_LABELS, isType ? 'Tous les types' : 'Toutes les plateformes');
+}
+// Boutons de la fenêtre d'ajout / de modification : mêmes styles en ligne qu'avant
+// pour les défauts ; `selectedId` (valeur de l'entraînement modifié) reste affiché
+// même s'il a été supprimé du catalogue depuis — le réenregistrer ne l'efface pas.
+function _trainRenderModalBtns(kind, selectedId) {
+  if (!_trainCatOn()) return false;
+  var isType = kind === 'trainTypes';
+  var grid = document.getElementById(isType ? 'train-type-btns' : 'train-plateforme-btns');
+  if (!grid) return false;
+  var C = window.TPXCat;
+  var list = C.active(kind).slice();
+  if (selectedId && !list.some(function (e) { return e.id === selectedId; }) && C.known(kind, selectedId)) list.push(C.meta(kind, selectedId));
+  var fn = isType ? 'trainSelectType' : 'trainSelectPlateforme';
+  grid.innerHTML = list.map(function (e) {
+    var h = C.hex(kind, e.id);
+    var sel = !!selectedId && e.id === selectedId;
+    return '<button class="train-modal-type-btn' + (sel ? ' selected' : '') + '" data-value="' + C.esc(e.id) + '" data-color="' + C.esc(h.fg) + '"' +
+      ' style="background:rgba(' + h.rgb + ',0.10);color:' + h.fg + ';border-color:rgba(' + h.rgb + ',0.3);border-radius:0.5rem !important;' + (sel ? '--_btn-color:' + h.fg + ';' : '') + '"' +
+      ' onclick="' + fn + '(this)">' + C.esc(e.label) + '</button>';
+  }).join('');
+  return true;
+}
+function _trainFillNotesBadges(t) {
+  var typeBadge = document.getElementById('trainNotesTypeBadge2');
+  if (typeBadge) { typeBadge.textContent = TRAIN_TYPE_LABELS[t.type]||t.type||''; typeBadge.className = 'train-type-badge ' + (t.type ? _trainTypeCls(t.type) : 'type-'); }
+  var platBadge = document.getElementById('trainNotesPlatBadge2');
+  if (platBadge) {
+    if (t.plateforme) { platBadge.textContent = TRAIN_PLAT_LABELS[t.plateforme]||t.plateforme; platBadge.className = 'train-plateforme-badge ' + _trainPlatCls(t.plateforme); platBadge.style.display=''; }
+    else { platBadge.textContent=''; platBadge.style.display='none'; }
+  }
+}
+_trainRefreshLabelMaps();
+if (window.TPXCat) window.TPXCat.onChange(function (kind) {
+  if (kind !== '*' && kind !== 'trainTypes' && kind !== 'trainPlatforms') return;
+  _trainRefreshLabelMaps();
+  _trainBuildFilterOptions('trainTypes');
+  _trainBuildFilterOptions('trainPlatforms');
+  // Fenêtre d'ajout DÉJÀ ouverte (sous le gestionnaire) : boutons régénérés, sélection gardée.
+  var modal = document.getElementById('train-modal');
+  if (modal && modal.classList.contains('active')) {
+    var tb = document.querySelector('#train-type-btns .train-modal-type-btn.selected');
+    var pb = document.querySelector('#train-plateforme-btns .train-modal-type-btn.selected');
+    _trainRenderModalBtns('trainTypes', tb ? tb.getAttribute('data-value') : null);
+    _trainRenderModalBtns('trainPlatforms', pb ? pb.getAttribute('data-value') : null);
+    _trainModalUpdateCtx();
+  }
+  if (trainNotesCurrentId != null && window.userData && window.userData.trainings) {
+    var _nt = window.userData.trainings.find(function (x) { return x.id === trainNotesCurrentId; });
+    if (_nt) _trainFillNotesBadges(_nt);
+  }
+  if (typeof window.renderTrainTable === 'function' && window.userData) window.renderTrainTable();
+});
+
 // ---- PAGINATION ----
 var trainCurrentPage = 1;
 var trainItemsPerPage = 50;
@@ -41880,7 +43821,7 @@ function _trainGenericToggle(val, el, filterArr, listSel, counterId, labelMap, d
 }
 
 window._trainToggleTypeFilter = window.trainToggleTypeFilter = function(val, el) {
-  _trainGenericToggle(val, el, trainFilterTypes, '#train-type-multi-list', 'train-type-counter', TRAIN_TYPE_LABELS, 'Tous les types', 'train-type-placeholder', 5, 'train-type-dropdown');
+  _trainGenericToggle(val, el, trainFilterTypes, '#train-type-multi-list', 'train-type-counter', TRAIN_TYPE_LABELS, 'Tous les types', 'train-type-placeholder', _trainFilterMax('trainTypes'), 'train-type-dropdown');
 };
 
 window.trainToggleStatutFilter = function(val, el) {
@@ -41888,7 +43829,7 @@ window.trainToggleStatutFilter = function(val, el) {
 };
 
 window.trainTogglePlateformeFilter = function(val, el) {
-  _trainGenericToggle(val, el, trainFilterPlateformes, '#train-plateforme-multi-list', 'train-plateforme-counter', TRAIN_PLAT_LABELS, 'Toutes les plateformes', 'train-plateforme-placeholder', 4, 'train-plateforme-dropdown');
+  _trainGenericToggle(val, el, trainFilterPlateformes, '#train-plateforme-multi-list', 'train-plateforme-counter', TRAIN_PLAT_LABELS, 'Toutes les plateformes', 'train-plateforme-placeholder', _trainFilterMax('trainPlatforms'), 'train-plateforme-dropdown');
 };
 
 var MAX_TRAIN_MATIERE = 4;
@@ -42052,6 +43993,11 @@ function trainInitDropdowns() {
       if (window.closeLegendModalAnimated) window.closeLegendModalAnimated();
       if (window.closeTimerModalAnimated) window.closeTimerModalAnimated();
       if (window.closePlanningLegendModalAnimated) window.closePlanningLegendModalAnimated();
+      // CATALOGUES (2026-09-30) : options Type / Plateforme reconstruites à l'ouverture.
+      if (!document.getElementById(ddId).classList.contains('open')) {
+        if (ddId === 'train-type-dropdown') _trainBuildFilterOptions('trainTypes');
+        else if (ddId === 'train-plateforme-dropdown') _trainBuildFilterOptions('trainPlatforms');
+      }
       document.getElementById(ddId).classList.toggle('open');
     });
     if (clearBtnEl) clearBtnEl.addEventListener('click', function(e) {
@@ -42129,6 +44075,7 @@ function _closeAllTrainDDs(except) {
 // ---- RENDU TABLEAU ----
 window.renderTrainTable = function() {
   initTrainingsData();
+  _trainRefreshLabelMaps(); // CATALOGUES (2026-09-30) : libellés à jour (recherche + tableau)
   var tbody   = document.getElementById('train-table-body');
   var emptyEl = document.getElementById('train-empty');
   var countEl = document.getElementById('train-count-badge');
@@ -42240,7 +44187,7 @@ window.renderTrainTable = function() {
       var td1 = document.createElement('td');
       var typSpan = document.createElement('span');
       if (t.type) {
-        typSpan.className = 'train-type-badge type-' + t.type;
+        typSpan.className = 'train-type-badge ' + _trainTypeCls(t.type); // défaut non recoloré : 'type-<id>' comme avant
         typSpan.textContent = typeLbl;
       } else {
         typSpan.className = 'train-type-badge type-none';
@@ -42282,7 +44229,7 @@ window.renderTrainTable = function() {
       // Col 4 : Plateforme
       var td4 = document.createElement('td');
       var platSpan = document.createElement('span');
-      platSpan.className = 'train-plateforme-badge' + (t.plateforme ? ' plat-' + t.plateforme : ' plat-none');
+      platSpan.className = 'train-plateforme-badge' + (t.plateforme ? ' ' + _trainPlatCls(t.plateforme) : ' plat-none');
       platSpan.textContent = platLbl;
       td4.appendChild(platSpan);
 
@@ -42384,6 +44331,17 @@ function _trainModalUpdateCtx() {
   var PLAT_COLORS = { edni:'#0e7490', asclepia:'#be185d', hypocampus:'#4338ca', uness:'#c2410c' };
   var PLAT_BG     = { edni:'rgba(6,182,212,0.13)', asclepia:'rgba(236,72,153,0.13)', hypocampus:'rgba(99,102,241,0.13)', uness:'rgba(249,115,22,0.13)' };
   var PLAT_BORDER = { edni:'rgba(6,182,212,0.3)', asclepia:'rgba(236,72,153,0.3)', hypocampus:'rgba(99,102,241,0.3)', uness:'rgba(249,115,22,0.3)' };
+  // CATALOGUES (2026-09-30) : valeurs du catalogue pour l'entrée choisie (pour un
+  // défaut non modifié, strictement les mêmes que dans les tables ci-dessus).
+  if (window.TPXCat) {
+    [[typeBtn, 'trainTypes', LABELS, TYPE_CLASSES, TYPE_COLORS, TYPE_BG, TYPE_BORDER, 0.25],
+     [platBtn, 'trainPlatforms', PLAT_LABELS, PLAT_CLASSES, PLAT_COLORS, PLAT_BG, PLAT_BORDER, 0.3]].forEach(function (c) {
+      if (!c[0]) return;
+      var id = c[0].dataset.value, C = window.TPXCat, h = C.hex(c[1], id);
+      c[2][id] = C.label(c[1], id); c[3][id] = C.cls(c[1], id); c[4][id] = h.fg;
+      c[5][id] = 'rgba(' + h.rgb + ',0.13)'; c[6][id] = 'rgba(' + h.rgb + ',' + c[7] + ')';
+    });
+  }
 
   var hasAnything = typeBtn || platBtn || (_trainModalMatieres && _trainModalMatieres.length > 0);
   if (placeholder) placeholder.style.display = hasAnything ? 'none' : '';
@@ -42515,6 +44473,11 @@ window.openAddTrainModal = function() {
   trainEditId = null;
   _trainModalMatieres = [];
   document.getElementById('train-modal-title').textContent = 'Ajouter un entrainement';
+  // CATALOGUES (2026-09-30) : boutons régénérés depuis le catalogue (mêmes styles en
+  // ligne pour les défauts) ; l'ancien code ne sert plus que de repli.
+  var _catBtns = _trainRenderModalBtns('trainTypes', null);
+  _catBtns = _trainRenderModalBtns('trainPlatforms', null) && _catBtns;
+  if (!_catBtns) {
   var TYPE_BG   = { masterclass:'rgba(139,92,246,0.10)', spe360:'rgba(59,130,246,0.10)', annale:'rgba(245,158,11,0.10)', ccb:'rgba(16,185,129,0.10)', r2c:'rgba(239,68,68,0.10)' };
   var TYPE_CLR  = { masterclass:'#7c3aed', spe360:'#2563eb', annale:'#b45309', ccb:'#059669', r2c:'#dc2626' };
   var TYPE_BDR  = { masterclass:'rgba(139,92,246,0.3)', spe360:'rgba(59,130,246,0.3)', annale:'rgba(245,158,11,0.3)', ccb:'rgba(16,185,129,0.3)', r2c:'rgba(239,68,68,0.3)' };
@@ -42529,6 +44492,7 @@ window.openAddTrainModal = function() {
     var v = b.dataset.value; b.classList.remove('selected');
     b.style.background = PLAT_BG[v]||''; b.style.color = PLAT_CLR[v]||''; b.style.borderColor = PLAT_BDR[v]||''; b.style.removeProperty('--_btn-color'); b.style.boxShadow='';
   });
+  }
   var def = null; // statut géré directement depuis le tableau
   document.getElementById('train-title-input').value = '';
   var search = document.getElementById('train-modal-matiere-search');
@@ -42551,6 +44515,11 @@ window._openTrainEdit = function(id) {
   _trainModalMatieres = (t.matieres && t.matieres.length) ? t.matieres.slice() : (t.matiere ? [t.matiere] : []);
 
   document.getElementById('train-modal-title').textContent = 'Modifier l\'entrainement';
+
+  // CATALOGUES (2026-09-30) : boutons du catalogue ; le type / la plateforme de CET
+  // entraînement reste proposé même s'il a été supprimé du catalogue depuis.
+  _trainRenderModalBtns('trainTypes', t.type || null);
+  _trainRenderModalBtns('trainPlatforms', t.plateforme || null);
 
   // Type
   document.querySelectorAll('#train-type-btns .train-modal-type-btn').forEach(function(b){
@@ -42596,6 +44565,10 @@ window.resetTrainModal = function() {
   }
   // Mode ajout → réinitialiser les champs sans fermer
   _trainModalMatieres = [];
+  // CATALOGUES (2026-09-30) : même régénération qu'à l'ouverture (repli : ancien code).
+  var _catBtns = _trainRenderModalBtns('trainTypes', null);
+  _catBtns = _trainRenderModalBtns('trainPlatforms', null) && _catBtns;
+  if (!_catBtns) {
   var TYPE_BG  = { masterclass:'rgba(139,92,246,0.10)', spe360:'rgba(59,130,246,0.10)', annale:'rgba(245,158,11,0.10)', ccb:'rgba(16,185,129,0.10)', r2c:'rgba(239,68,68,0.10)' };
   var TYPE_CLR = { masterclass:'#7c3aed', spe360:'#2563eb', annale:'#b45309', ccb:'#059669', r2c:'#dc2626' };
   var TYPE_BDR = { masterclass:'rgba(139,92,246,0.3)', spe360:'rgba(59,130,246,0.3)', annale:'rgba(245,158,11,0.3)', ccb:'rgba(16,185,129,0.3)', r2c:'rgba(239,68,68,0.3)' };
@@ -42610,6 +44583,7 @@ window.resetTrainModal = function() {
     var v = b.dataset.value; b.classList.remove('selected');
     b.style.background = PLAT_BG[v]||''; b.style.color = PLAT_CLR[v]||''; b.style.borderColor = PLAT_BDR[v]||''; b.style.removeProperty('--_btn-color'); b.style.boxShadow='';
   });
+  }
   document.getElementById('train-title-input').value = '';
   var search = document.getElementById('train-modal-matiere-search');
   if (search) search.value = '';
@@ -42825,16 +44799,9 @@ window._openTrainNotes = function(id) {
   if (!t) return;
   trainNotesCurrentId = id; trainNotesDirty = false;
 
-  // Type badge
-  var typeBadge = document.getElementById('trainNotesTypeBadge2');
-  if (typeBadge) { typeBadge.textContent = TRAIN_TYPE_LABELS[t.type]||t.type||''; typeBadge.className = 'train-type-badge type-'+(t.type||''); }
-
-  // Plateforme badge
-  var platBadge = document.getElementById('trainNotesPlatBadge2');
-  if (platBadge) {
-    if (t.plateforme) { platBadge.textContent = TRAIN_PLAT_LABELS[t.plateforme]||t.plateforme; platBadge.className = 'train-plateforme-badge plat-'+t.plateforme; platBadge.style.display=''; }
-    else { platBadge.textContent=''; platBadge.style.display='none'; }
-  }
+  // Badges type + plateforme (CATALOGUES 2026-09-30 : via le catalogue, cf. _trainFillNotesBadges)
+  _trainRefreshLabelMaps();
+  _trainFillNotesBadges(t);
 
   // Intitulé
   var titleEl = document.getElementById('trainNotesTitle2');
@@ -47746,8 +49713,10 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     // une nouvelle section « Octobre 2026 » tout en haut (Jean : mise en avant
     // au moment de la vraie mise en ligne de la fonctionnalité) ; ceux qui
     // avaient déjà vu v8 doivent revoir la pastille pour cette mise en avant.
-    var FS_FIELD      = 'whatsNewSeen_v9';
-    var LS_KEY        = 'whatsNew_seen_v9';
+    // 2026-09-30 : v9 -> v10 — entrée « Ressources, supports et entraînements à
+    // votre façon » (catalogues personnalisables) ajoutée en tête d'Octobre 2026.
+    var FS_FIELD      = 'whatsNewSeen_v10';
+    var LS_KEY        = 'whatsNew_seen_v10';
     var _seenResolved = false; // évite de re-montrer la pastille après résolution
 
     /* ── Animations ── */
@@ -48757,6 +50726,66 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   //    valeurs à faire (contrairement au barème de confiance), donc pas de
   //    modal de confirmation/migration nécessaire : bascule directe, puis
   //    sauvegarde et rafraîchissement de l'affichage. ──
+  // ── AJOUT (2026-10-01, demande de Jean) : retour à 8 tours VERROUILLÉ tant qu'au moins un item a un tour
+  //    enregistré au-delà du 8e — dans le programme TypixClin OU dans le programme sur-mesure (deux listes
+  //    distinctes, vérifiées chacune ; le réglage 8 / 14 est commun aux deux) : sinon ces tours seraient masqués.
+  //    Seuls les items des deux listes comptent (un item supprimé du sur-mesure n'a plus de tours, cf.
+  //    purgeProgress) : jamais un verrou impossible à lever. Lecture seule : aucune donnée n'est modifiée. ──
+  function tpxItemsBeyond8() {
+    var res = { official: [], custom: [], count: 0 };
+    try {
+      var items = (window.userData && window.userData.items) || {};
+      var beyond = function (key) {
+        var d = items[key];
+        if (!d || !Array.isArray(d.tours)) return false;
+        for (var i = 8; i < d.tours.length; i++) { if (d.tours[i] !== null && d.tours[i] !== undefined) return true; }
+        return false;
+      };
+      var P = window.TPXPerso;
+      var off = (P && typeof P._official === 'function') ? P._official() : null;
+      var specs = (off && Array.isArray(off.specialties) && off.specialties.length) ? off.specialties
+        : ((!P || typeof P.isCustom !== 'function' || !P.isCustom()) && typeof SPECIALTIES_DATA !== 'undefined' && Array.isArray(SPECIALTIES_DATA) ? SPECIALTIES_DATA : []);
+      specs.forEach(function (s) {
+        (s.items || []).forEach(function (it) {
+          if (it && beyond(s.id + '-' + it.fc)) res.official.push({ spec: s.name || s.id, num: it.num || it.fc, name: it.name || '' });
+        });
+      });
+      var st = P && P._state;
+      if (st && Array.isArray(st.items)) {
+        var spName = {};
+        (st.specialties || []).forEach(function (s) { if (s) spName[s.id] = s.name || s.id; });
+        st.items.forEach(function (it) {
+          if (it && beyond(it.specialtyId + '-' + it.num)) res.custom.push({ spec: spName[it.specialtyId] || '', num: it.num, name: it.name || '' });
+        });
+      }
+    } catch (e) { console.warn('[Tours] vérification avant retour à 8 tours :', e); }
+    res.count = res.official.length + res.custom.length;
+    return res;
+  }
+  window.tpxItemsBeyond8 = tpxItemsBeyond8;
+  // Encadré sous l'interrupteur : pourquoi « 8 tours » est indisponible — nombre d'items concernés et programme
+  // d'origine, sans la liste des items (01/10, Jean : « supprime le détail »).
+  function _tpxEtNote(sw, info, show) {
+    var row = sw.closest ? sw.closest('.settings-switch-row') : null;
+    var note = document.getElementById('tpx-et-lock');
+    if (!show || !row) { if (note && note.parentNode) note.parentNode.removeChild(note); return null; }
+    if (!note) {
+      note = document.createElement('div');
+      note.id = 'tpx-et-lock';
+      note.className = 'tpx-et-lock';
+      note.setAttribute('role', 'status');
+      row.parentNode.insertBefore(note, row.nextSibling);
+    }
+    var one = info.count === 1;
+    var where = (info.official.length > 0 && info.custom.length > 0) ? 'programmes TypixClin et sur-mesure'
+      : (info.custom.length > 0 ? 'programme sur-mesure' : 'programme TypixClin');
+    note.innerHTML = '<i class="fas fa-lock" aria-hidden="true"></i><div>' +
+      '<strong>Retour à 8 tours indisponible</strong>' +
+      '<span>' + (one ? '1 item a' : info.count + ' items ont') + ' des tours enregistrés au-delà du 8e (' + where + '). ' +
+      'Supprimez ' + (one ? 'ses' : 'leurs') + ' tours 9 à 14 pour pouvoir revenir à 8 tours : sinon, ces tours seraient masqués.</span></div>';
+    return note;
+  }
+
   window.tpxUpdateExtendedToursSwitchUI = function (instant) {
     var extended = (typeof window.getExtendedTours === 'function') ? window.getExtendedTours() : false;
     var sw = document.getElementById('extended-tours-switch');
@@ -48766,6 +50795,20 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
       var l = sw.querySelector('.seg-opt-left'), r = sw.querySelector('.seg-opt-right');
       if (l) l.classList.toggle('active', !extended);
       if (r) r.classList.toggle('active', extended);
+      // 2026-10-01 : « 8 tours » verrouillé tant que des tours au-delà du 8e existent. Affichage seulement, protégé :
+      // cette fonction est aussi appelée par l'écoute temps réel des données, qu'aucune erreur ici ne doit interrompre.
+      try {
+        var info = extended ? tpxItemsBeyond8() : { official: [], custom: [], count: 0 };
+        var locked = extended && info.count > 0;
+        if (l) {
+          l.classList.toggle('is-locked', locked);
+          if (locked) l.setAttribute('aria-disabled', 'true'); else l.removeAttribute('aria-disabled');
+          var ic = l.querySelector('.tpx-et-lock-ico');
+          if (locked && !ic) { ic = document.createElement('i'); ic.className = 'fas fa-lock tpx-et-lock-ico'; ic.setAttribute('aria-hidden', 'true'); l.insertBefore(ic, l.firstChild); }
+          else if (!locked && ic) l.removeChild(ic);
+        }
+        _tpxEtNote(sw, info, locked);
+      } catch (e) { console.warn('[Tours] affichage du verrou 14 → 8 :', e); }
       if (window._positionSegThumb) window._positionSegThumb(sw, !!instant);
     }
     document.querySelectorAll('#settings-modal-overlay .settings-card[data-setting="extended-tours"] .settings-explain-row')
@@ -48778,6 +50821,14 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
     sw.addEventListener('click', function (e) {
       var opt = e.target.closest && e.target.closest('.seg-opt');
       var want = opt ? (parseInt(opt.getAttribute('data-etours'), 10) === 14) : !window.getExtendedTours();
+      // 2026-10-01 : retour à 8 tours refusé tant que des tours au-delà du 8e existent (ils seraient masqués) —
+      // rien ne change, l'encadré explicatif est rafraîchi et attire l'œil.
+      if (!want && window.getExtendedTours() && tpxItemsBeyond8().count > 0) {
+        window.tpxUpdateExtendedToursSwitchUI();
+        var note = document.getElementById('tpx-et-lock');
+        if (note) { note.classList.remove('is-nudge'); void note.offsetWidth; note.classList.add('is-nudge'); }
+        return;
+      }
       if (typeof window.tpxSetExtendedToursRuntime === 'function') window.tpxSetExtendedToursRuntime(want);
       window.tpxUpdateExtendedToursSwitchUI();
       // Persiste immédiatement (même mécanisme que toute autre modification :
@@ -48833,14 +50884,18 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   // AJOUT (2026-09-13) : le mode compact doit lui aussi pouvoir aller au-delà
   // de 8 tours quand le réglage "14 tours" est actif (cf. renderItemsTable /
   // getExtendedTours plus haut) -- MÊME quand l'utilisateur n'a encore JAMAIS
-  // ouvert la vue détaillée (donc d.tours n'a pas encore grandi au-delà de 8
-  // réellement). Réglage désactivé => tpxMaxToursAllowed() renvoie 8, donc
-  // Math.max(real, 8) === real : comportement STRICTEMENT identique à avant
-  // pour tous les comptes déjà en place (real vaut toujours au moins 8).
+  // ouvert la vue détaillée (donc d.tours n'a pas encore grandi au-delà de 8).
+  // BUGFIX (2026-10-01, signalé par Jean : « en mode compact je peux mettre
+  // jusqu'à 9 tours et pas 8 max ») : le plafond valait Math.max(d.tours.length,
+  // réglage). Or supprimer un tour remet sa case à null SANS raccourcir le
+  // tableau : un item qui a eu un 9e tour (ou 14) en mode 14 tours gardait 9
+  // (ou 14) cases, et le compact laissait ensuite, en mode 8 tours, ajouter des
+  // tours au-delà du 8e -- invisibles dans la vue détaillée (8 colonnes).
+  // Plafond = le réglage SEUL (8 ou 14), comme la vue détaillée et la to-do
+  // (openTourModalFromChecklist). Aucune donnée n'est modifiée : seul le « + »
+  // s'arrête au bon endroit (le « − » retire toujours le dernier tour).
   function maxTours(d) {
-    var real = (d && d.tours) ? d.tours.length : 8;
-    var allowed = (typeof window.tpxMaxToursAllowed === 'function') ? window.tpxMaxToursAllowed() : 8;
-    return Math.max(real, allowed);
+    return (typeof window.tpxMaxToursAllowed === 'function') ? window.tpxMaxToursAllowed() : 8;
   }
 
   // Confiance "active" pour le prochain tour : override sinon dernier tour
@@ -49898,8 +51953,12 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
                 if (r.duration) {
                     meta += '<span class="tours-today-chip"><i class="fas fa-hourglass-half"></i> ' + esc(r.duration) + '</span>';
                 }
-                if (r.support && SUPPORT_MAP[r.support]) {
-                    var sup = SUPPORT_MAP[r.support];
+                // CATALOGUES (2026-09-30) : nom, icône et couleur du catalogue (défaut non modifié :
+                // mêmes valeurs que SUPPORT_MAP) ; un support supprimé depuis garde les siens.
+                var sup = (r.support && window.TPXCat && window.TPXCat.known('supports', r.support))
+                    ? { label: window.TPXCat.label('supports', r.support), icon: window.TPXCat.meta('supports', r.support).icon || 'fa-tag', color: window.TPXCat.hex('supports', r.support).solid }
+                    : (r.support ? SUPPORT_MAP[r.support] : null);
+                if (sup) {
                     var styleVars = '--sup-color:' + sup.color + ';' +
                                     '--sup-border:' + rgba(sup.color, 0.45) + ';' +
                                     '--sup-bg:' + rgba(sup.color, 0.10) + ';' +
@@ -50189,8 +52248,12 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
                 if (r.duration) {
                     meta += '<span class="tours-today-chip"><i class="fas fa-hourglass-half"></i> ' + esc(r.duration) + '</span>';
                 }
-                if (r.support && SUPPORT_MAP[r.support]) {
-                    var sup = SUPPORT_MAP[r.support];
+                // CATALOGUES (2026-09-30) : nom, icône et couleur du catalogue (défaut non modifié :
+                // mêmes valeurs que SUPPORT_MAP) ; un support supprimé depuis garde les siens.
+                var sup = (r.support && window.TPXCat && window.TPXCat.known('supports', r.support))
+                    ? { label: window.TPXCat.label('supports', r.support), icon: window.TPXCat.meta('supports', r.support).icon || 'fa-tag', color: window.TPXCat.hex('supports', r.support).solid }
+                    : (r.support ? SUPPORT_MAP[r.support] : null);
+                if (sup) {
                     var styleVars = '--sup-color:' + sup.color + ';' +
                                     '--sup-border:' + rgba(sup.color, 0.45) + ';' +
                                     '--sup-bg:' + rgba(sup.color, 0.10) + ';' +
@@ -62334,16 +64397,29 @@ function setTrainingsPageVisible(visible) {
        settings-modal-inner / unified-modal-header / help-modal-footer :
        mêmes animations d'ouverture et de fermeture (modalOverlayIn,
        modalContentIn, .closing), même en-tête, même rendu en thème sombre. */
+    /* CORRECTIF (2026-09-30) : une seule couche de modale (#tpx-modal-overlay).
+       Une fenêtre ouverte DEPUIS « Gérer mon programme » (confirmation de
+       suppression, modification, création) remplaçait le gestionnaire, qui ne
+       revenait jamais : l'action réussissait, mais l'utilisateur restait sans
+       fenêtre (le gestionnaire « rafraîchi » après coup n'était plus dans la
+       page). La fenêtre fille retient désormais d'y revenir (même onglet, même
+       recherche) et le rouvre à sa fermeture : validation, annulation, croix,
+       clic sur le voile ou Échap. */
+    var mgrPendingReturn = null;
     function buildModal(title, icon, bodyHtml, footHtml, opts) {
         opts = opts || {};
         /* Une modale qui en remplace une autre reprend le même verrou :
            le propriétaire étant nommé, la pose est idempotente. */
         var old = document.getElementById('tpx-modal-overlay');
+        var returnTo = opts.isManager ? null : (mgrPendingReturn || (old && old._tpxReturnTo) || null);
+        mgrPendingReturn = null;
+        if (old) old._tpxReturnTo = null;
         if (old && old.parentNode) old.parentNode.removeChild(old);
 
         var ov = document.createElement('div');
         ov.className = 'settings-modal-overlay tpx-modal-overlay' + (opts.wide ? ' tpx-modal-wide' : '');
         ov.id = 'tpx-modal-overlay';
+        ov._tpxReturnTo = returnTo;
         ov.innerHTML =
             '<div class="settings-modal-inner tpx-modal-inner" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
                 '<div class="unified-modal-header">' +
@@ -62379,7 +64455,13 @@ function setTrainingsPageVisible(visible) {
                saute sous les yeux de l'utilisateur. */
             setTimeout(function () {
                 if (ov.parentNode) ov.parentNode.removeChild(ov);
-                if (!document.getElementById('tpx-modal-overlay')) scrollUnlock(LOCK_OWNER);
+                var back = ov._tpxReturnTo;
+                ov._tpxReturnTo = null;
+                if (document.getElementById('tpx-modal-overlay')) return;
+                /* Retour au gestionnaire (cf. mgrPendingReturn) : rouvert aussitôt,
+                   sans rendre le verrou de défilement entre les deux (aucun saut). */
+                if (back && isCustom()) { try { reopenManager(back); return; } catch (e) {} }
+                scrollUnlock(LOCK_OWNER);
             }, 200);
         };
 
@@ -62966,7 +65048,7 @@ function setTrainingsPageVisible(visible) {
             '<button class="tpx-btn" id="tpx-mgr-close" type="button">Fermer</button>' +
             '<button class="tpx-btn tpx-btn-primary" id="tpx-mgr-add" type="button"><i class="fas fa-plus"></i> <span id="tpx-mgr-add-label"></span></button>';
 
-        var m = buildModal('Gérer mon programme', 'fa-sliders', body, foot, { wide: true });
+        var m = buildModal('Gérer mon programme', 'fa-sliders', body, foot, { wide: true, isManager: true });
         var root = m.overlay;
 
         root.querySelector('#tpx-mgr-close').addEventListener('click', m.close);
@@ -62991,12 +65073,23 @@ function setTrainingsPageVisible(visible) {
         q.addEventListener('input', refresh);
         clear.addEventListener('click', function () { q.value = ''; refresh(); q.focus(); });
         root.querySelector('#tpx-mgr-add').addEventListener('click', function () {
-            if (mgrTab === 'spec') openSpecialtyModal(null);
-            else APP === 'edn' ? openItemModal(null) : openSddModal(null);
+            mgrPendingReturn = { tab: mgrTab, filter: q.value };
+            try {
+                if (mgrTab === 'spec') openSpecialtyModal(null);
+                else APP === 'edn' ? openItemModal(null) : openSddModal(null);
+            } finally { mgrPendingReturn = null; }
         });
 
         renderManager(root, m);
         return m;
+    }
+
+    /* Réouverture après une fenêtre fille (cf. buildModal / mgrPendingReturn). */
+    function reopenManager(back) {
+        var m = openManager(back.tab);
+        if (!m || !back.filter) return;
+        var q = m.overlay.querySelector('#tpx-mgr-q');
+        if (q) { q.value = back.filter; try { q.dispatchEvent(makeInputEvent()); } catch (e) {} }
     }
 
     function renderManager(root, m) {
@@ -63106,7 +65199,11 @@ function setTrainingsPageVisible(visible) {
             b.addEventListener('click', function () {
                 var r = rows[parseInt(b.getAttribute('data-i'), 10)];
                 if (!r) return;
-                if (b.getAttribute('data-act') === 'edit') r.edit(); else r.del();
+                var qEl = root.querySelector('#tpx-mgr-q');
+                mgrPendingReturn = { tab: mgrTab, filter: qEl ? qEl.value : '' };
+                try {
+                    if (b.getAttribute('data-act') === 'edit') r.edit(); else r.del();
+                } finally { mgrPendingReturn = null; }
             });
         });
     }
