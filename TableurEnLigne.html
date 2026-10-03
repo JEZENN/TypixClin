@@ -48216,6 +48216,22 @@ function showShareToast(msg, isError = false) {
         var active = sw.querySelector('.notes-mode-btn.active');
         if (active) window._moveNotesPill(active, true);
     };
+    // 2026-10-03 : le fond blanc suit la LARGEUR du choix actif quand elle change sans clic — compteur rouge de
+    // « Reçues » qui apparaît / disparaît (suppression de la dernière note reçue : il dépassait du sélecteur),
+    // police chargée après coup. Fenêtre qui s'ouvre (taille 0 → réelle) : placement immédiat, sans glissement.
+    if (typeof ResizeObserver === 'function') {
+        var swObs = document.getElementById('notesModeSwitch');
+        if (swObs) {
+            var ro = new ResizeObserver(function() {
+                var active = swObs.querySelector('.notes-mode-btn.active');
+                if (!active || !active.offsetWidth) return;              // fenêtre fermée : rien à placer
+                var pill = swObs.querySelector('.notes-mode-pill');
+                var shown = !!pill && pill.offsetWidth > 0 && pill.style.opacity !== '0';
+                window._moveNotesPill(active, !shown);
+            });
+            swObs.querySelectorAll('.notes-mode-btn').forEach(function(b) { ro.observe(b); });
+        }
+    }
 })();
 
 window.switchNotesMode = function(mode) {
@@ -57510,6 +57526,80 @@ body.tc-phone.tc-phone-kb:not(.tcp-kb-pin) #trainNotesOverlay.active .notes-edit
         padding: 0 !important;
         z-index: 3;
     }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   2026-10-03 (demande de Jean) — sélecteur « Notes / Reçues » de la fenêtre des notes : MÊME rendu que les
+   Paramètres et « Tours du jour / de la semaine » (fond gris arrondi, choix actif sur fond blanc, texte bleu,
+   police des Paramètres) ; le fond blanc GLISSE d'un choix à l'autre avec la même courbe (0,28 s, sans rebond).
+   Taille identique ou plus petite partout (ordinateur / iPad : 146 px de large au lieu de 149, même hauteur ;
+   téléphone : identique) ; le compteur rouge de « Reçues » garde sa police. « Réduire les animations » = immédiat.
+   ═════════════════════════════════════════════════════════════ */
+#notesModeSwitch {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    box-shadow: none;
+}
+#notesModeSwitch .notes-mode-pill {
+    top: 3px;
+    bottom: 3px;
+    height: auto;
+    border-radius: 9px;
+    background: var(--white, #fff);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.1));
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1), width .28s cubic-bezier(.4, 0, .2, 1);
+}
+#notesModeSwitch .notes-mode-btn {
+    padding: 0 10px;
+    border-radius: 9px;
+    color: var(--gray-600);
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: color .18s ease;
+}
+@media (hover: hover) {
+    #notesModeSwitch .notes-mode-btn:hover { color: var(--gray-900); }
+}
+#notesModeSwitch .notes-mode-btn.active { color: var(--primary); }
+#notesSharedBadge { font-family: var(--font-display); font-weight: 700; }
+[data-theme="dark"] #notesModeSwitch { background: var(--gray-200); border-color: var(--gray-300); box-shadow: none; }
+[data-theme="dark"] #notesModeSwitch .notes-mode-pill { background: var(--gray-50); box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.1)); }
+[data-theme="dark"] #notesModeSwitch .notes-mode-btn { color: var(--gray-600); }
+@media (hover: hover) {
+    [data-theme="dark"] #notesModeSwitch .notes-mode-btn:hover { color: var(--gray-900); }
+}
+[data-theme="dark"] #notesModeSwitch .notes-mode-btn.active { color: var(--primary); }
+@media (prefers-reduced-motion: reduce) {
+    #notesModeSwitch .notes-mode-pill { transition: none; }
+}
+/* iPad (641–1024 px) : la réserve au bout de la barre d'outils (118 px) était plus courte que le sélecteur
+   (146 à 169 px selon le compteur) → « Effacer le formatage » restait caché dessous, même barre défilée à fond. */
+@media (min-width: 641px) and (max-width: 1024px) {
+    #notesModalOverlay .notes-toolbar { padding-right: 186px !important; }
+}
+/* iPad / téléphone (≤ 1024 px) — Jean, 03/10 : « pas assez de contraste entre le bouton et ce qu'il y a derrière ».
+   Ici le sélecteur flotte AU-DESSUS des outils qui défilent dessous, et son fond était le gris des groupes d'outils
+   (groupe plus haut qui dépassait dessous). → fond un cran plus soutenu + bord net, centré sur les groupes, liseré
+   de la couleur de la barre (les outils s'arrêtent net autour) + ombre douce. Taille inchangée. */
+@media (max-width: 1024px) {
+    #notesModalOverlay .notes-toolbar-switch-wrapper { top: 10px !important; }
+    #notesModeSwitch {
+        background: var(--gray-200);
+        border-color: var(--gray-300);
+        box-shadow: 0 0 0 6px var(--white), 0 2px 14px rgba(15, 23, 42, .10);
+    }
+    #notesModeSwitch .notes-mode-pill { box-shadow: 0 1px 3px rgba(15, 23, 42, .18), 0 0 0 1px rgba(15, 23, 42, .05); }
+    [data-theme="dark"] #notesModeSwitch {
+        background: var(--gray-300);
+        border-color: var(--gray-400);
+        box-shadow: 0 0 0 6px var(--gray-100), 0 2px 14px rgba(0, 0, 0, .45);
+    }
+}
+@media (max-width: 640px) {
+    #notesModalOverlay .notes-toolbar-switch-wrapper { top: 13px !important; }
+    #notesModeSwitch { box-shadow: 0 0 0 7px var(--white), 0 2px 15px rgba(15, 23, 42, .10); }
+    [data-theme="dark"] #notesModeSwitch { box-shadow: 0 0 0 7px var(--gray-100), 0 2px 15px rgba(0, 0, 0, .45); }
 }
 
 /* ── BUGFIX (2026-09-08) : modal flashcards sur TÉLÉPHONE — même souci que
