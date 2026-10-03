@@ -28599,6 +28599,54 @@ window.TPXNotesPending = {
         }, 200);
     }
 
+    /* Clavier tactile (2026-10-03, retour de Jean sur téléphone : « je touche "modifier" une ressource, le clavier
+       apparaît et ça remonte tout en haut, je ne peux pas modifier le champ »). À l'ouverture du clavier, la page colle
+       la fenêtre au-dessus du clavier et la RACCOURCIT (téléphone) ; rien ne ramenait alors le champ touché, plus bas
+       dans la liste, dans la partie visible : la fenêtre montrait son haut, le champ restait caché dessous.
+       → après chaque toucher sur un champ, et à chaque changement de la zone visible (clavier qui s'ouvre, barre de
+       suggestions…), la ligne du champ en cours de saisie est ramenée dans la partie visible de la fenêtre (au plus
+       près, 12 px de marge). Rien ne bouge pendant que le doigt fait défiler la fenêtre, ni pendant l'arrivée d'une
+       entrée tout juste ajoutée. */
+    function scrollBoxOf(el) {
+        var s = el ? el.parentElement : null;
+        while (s && s !== document.body && s !== document.documentElement) {
+            if (s.scrollHeight > s.clientHeight + 2) {
+                var oy = '';
+                try { oy = window.getComputedStyle(s).overflowY; } catch (e) {}
+                if (oy === 'auto' || oy === 'scroll') return s;
+            }
+            s = s.parentElement;
+        }
+        return null;
+    }
+    function keepFieldVisible() {
+        if (!mgr.ov || mgr.reveal || mgr.pendingNew) return;
+        var f = document.activeElement;
+        if (!f || !f.classList || !f.classList.contains('tpx-cat-field') || !mgr.ov.contains(f)) return;
+        if (Date.now() - (mgr.lastDrag || 0) < 500) return;   // le doigt fait défiler la fenêtre : on ne lutte pas
+        var box = scrollBoxOf(f);
+        if (!box) return;
+        var target = (f.closest && (f.closest('.tpx-cat-row') || f.closest('.tpx-cat-lab'))) || f;
+        var r = target.getBoundingClientRect(), b = box.getBoundingClientRect(), vv = window.visualViewport;
+        var top = Math.max(b.top, vv ? vv.offsetTop : 0) + 12;
+        var bottom = Math.min(b.bottom, vv ? vv.offsetTop + vv.height : (window.innerHeight || b.bottom)) - 12;
+        if (bottom - top < r.height) bottom = top + r.height;   // ligne plus haute que la zone visible : son haut d'abord
+        var d = r.bottom > bottom ? r.bottom - bottom : (r.top < top ? r.top - top : 0);
+        if (Math.abs(d) >= 2) box.scrollTop += d;
+    }
+    function scheduleKeepVisible() {
+        [60, 180, 320, 520, 800].forEach(function (ms) { setTimeout(keepFieldVisible, ms); });
+    }
+    (function () {
+        var onViewport = function () {
+            if (!mgr.ov) return;
+            setTimeout(keepFieldVisible, 30);
+            setTimeout(keepFieldVisible, 300);
+        };
+        try { if (window.visualViewport) window.visualViewport.addEventListener('resize', onViewport); } catch (e) {}
+        try { window.addEventListener('resize', onViewport); } catch (e) {}
+    })();
+
     function bindManager(ov) {
         var downInside = false;
         ov.addEventListener('mousedown', function (e) {
@@ -28651,6 +28699,12 @@ window.TPXNotesPending = {
             if (!t) { var lab = e.target.closest('.tpx-cat-lab'); t = lab ? lab.querySelector('.tpx-cat-field') : null; }
             if (t) unlockField(t);
         }, true);
+        /* Clavier tactile : la ligne du champ touché reste visible quand le clavier raccourcit la fenêtre (keepFieldVisible). */
+        ov.addEventListener('focusin', function (e) {
+            var t = e.target;
+            if (t && t.classList && t.classList.contains('tpx-cat-field')) scheduleKeepVisible();
+        });
+        ov.addEventListener('touchmove', function () { mgr.lastDrag = Date.now(); }, { passive: true });
         ov.addEventListener('keydown', function (e) {
             var t = e.target;
             if (!t.classList || !t.classList.contains('tpx-cat-field')) return;
@@ -58895,5 +58949,74 @@ window.TPXOnboarding = {
     <button onclick="window._notesImgLightboxZoomBtn(1)" data-tooltip="Zoom avant" aria-label="Zoom avant" id="notesImgLightboxZoomIn"><i class="fas fa-search-plus"></i></button>
   </div>
 </div>
+<!-- ═══ 2026-10-03 (demande de Jean) — Légendes et chrono : le bouton devient BLEU (icône blanche) tant que sa
+     fenêtre est ouverte ; EDN : légende « Supports disponibles » tenue à jour (supports ajoutés, renommés, recolorés,
+     supprimés). Bloc identique EDN / ECOS. ═══ -->
+<style id="tpx-pop-open-style">
+html body .legend-button.tpx-pop-open.tpx-pop-open.tpx-pop-open,
+html body .timer-button.tpx-pop-open.tpx-pop-open.tpx-pop-open,
+html body .planning-legend-btn.tpx-pop-open.tpx-pop-open.tpx-pop-open {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.30) !important;
+    animation: none !important;
+}
+html[data-theme="pastel"] body .legend-button.tpx-pop-open.tpx-pop-open.tpx-pop-open,
+html[data-theme="pastel"] body .timer-button.tpx-pop-open.tpx-pop-open.tpx-pop-open,
+html[data-theme="pastel"] body .planning-legend-btn.tpx-pop-open.tpx-pop-open.tpx-pop-open {
+    background: linear-gradient(135deg, var(--pastel-blue-500, #6b8cc7), var(--pastel-blue-600, #5877b0)) !important;
+    box-shadow: 0 2px 8px rgba(88, 119, 176, 0.30) !important;
+}
+html body .legend-button.tpx-pop-open.tpx-pop-open.tpx-pop-open i,
+html body .timer-button.tpx-pop-open.tpx-pop-open.tpx-pop-open i,
+html body .timer-button.tpx-pop-open.tpx-pop-open.tpx-pop-open span,
+html body .planning-legend-btn.tpx-pop-open.tpx-pop-open.tpx-pop-open i { color: #fff !important; }
+</style>
+<script id="tpx-pop-open">
+(function () {
+    'use strict';
+    var POP = /(^|\s)(legend-modal|timer-modal|planning-legend-modal)(\s|$)/;
+    /* Ouverte = classe « show » sans « closing » (posées par les fonctions d'ouverture / fermeture de chaque fenêtre). */
+    function sync(btn, m) {
+        var open = m.classList.contains('show') && !m.classList.contains('closing');
+        if (btn.classList.contains('tpx-pop-open') !== open) btn.classList.toggle('tpx-pop-open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && m.id === 'legendModal') renderSupportLegend();
+    }
+    /* EDN — légende des supports : la vraie liste (supports d'origine + ajoutés, noms, acronymes et couleurs à jour,
+       supprimés retirés). Un support d'origine jamais renommé garde le texte historique de la légende. */
+    var LEGACY = { qcm: 'QCM/DP disponibles', conf: 'Conférence' };
+    function renderSupportLegend() {
+        var box = document.querySelector('#legendModal .legend-items'), C = window.TPXCat;
+        if (!box || !C || typeof C.active !== 'function') return;
+        var list;
+        try { list = C.active('supports'); } catch (e) { return; }
+        if (!list || !list.length) return;
+        var html = list.map(function (e) {
+            var desc = (e.isDefault && !e.renamed && LEGACY[e.id]) ? LEGACY[e.id] : e.label;
+            return '<div class="legend-item"><span class="legend-badge" style="background: ' + C.esc(C.hex('supports', e.id).solid) +
+                   '; color: white;">' + C.esc(e.abbr) + '</span><span class="legend-description">' + C.esc(desc) + '</span></div>';
+        }).join('');
+        if (box.innerHTML !== html) box.innerHTML = html;
+    }
+    function init() {
+        var btns = document.querySelectorAll('.legend-button, .timer-button, .planning-legend-btn');
+        Array.prototype.forEach.call(btns, function (btn) {
+            var m = btn.nextElementSibling;
+            if (!m || !POP.test(m.className || '')) return;
+            sync(btn, m);
+            try { new MutationObserver(function () { sync(btn, m); }).observe(m, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+        });
+        renderSupportLegend();
+        try {
+            if (window.TPXCat && typeof window.TPXCat.onChange === 'function') {
+                window.TPXCat.onChange(function (kind) { if (kind === '*' || kind === 'supports') renderSupportLegend(); });
+            }
+        } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
 </body>
 </html>
