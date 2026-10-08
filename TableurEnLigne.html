@@ -66787,5 +66787,171 @@ html body .planning-legend-btn.tpx-pop-open.tpx-pop-open.tpx-pop-open i { color:
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
+<!-- ═══ 2026-10-07 (demande de Jean) — Fenêtre « Organisation de la journée » : les fenêtres « Type de journée »
+     et « Spécialités » apparaissent et disparaissent en douceur ; le bouton qui les ouvre se REMPLIT tant qu'elles sont
+     ouvertes ; la flèche du Statut fait un demi-tour animé. Bloc identique EDN / ECOS. ═══ -->
+<style id="tpx-pdd-open-style">
+/* 1) toujours « affichées » mais invisibles hors ouverture → l'opacité et le glissé jouent à l'ouverture ET à la fermeture */
+html body .pdd-status-menu,
+html body .pdd-spec-pop {
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: top right;
+    transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.22s;
+}
+html body .pdd-status-menu { transform: translateY(-6px) scale(0.97); }
+html body .pdd-spec-pop { transform: translateY(-8px) scale(0.97); }
+html body .pdd-status-menu.open,
+html body .pdd-spec-pop.active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0s;
+}
+/* 2) bouton rempli tant que sa fenêtre est ouverte (tailles inchangées : couleurs et ombre seulement) */
+html body .pdd-chip.pdd-spec-btn.tpx-pdd-open.tpx-pdd-open {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.30) !important;
+    filter: none !important;
+}
+html[data-theme="pastel"] body .pdd-chip.pdd-spec-btn.tpx-pdd-open.tpx-pdd-open {
+    background: linear-gradient(135deg, var(--pastel-blue-500, #6b8cc7), var(--pastel-blue-600, #5877b0)) !important;
+    box-shadow: 0 2px 8px rgba(88, 119, 176, 0.30) !important;
+}
+html body .pdd-chip.pdd-status-btn.tpx-pdd-open.tpx-pdd-open {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)), var(--pdd-accent, #2563eb) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.22) !important;
+    filter: none !important;
+}
+html body .pdd-chip.tpx-pdd-open .pdd-spec-add,
+html body .pdd-chip.tpx-pdd-open .pdd-spec-add i,
+html body .pdd-chip.tpx-pdd-open .pdd-pen,
+html body .pdd-chip.tpx-pdd-open .pdd-chip-pen,
+html body .pdd-chip.tpx-pdd-open #pdd-status-label,
+html body .pdd-chip.tpx-pdd-open .pdd-status-label,
+html body .pdd-chip.tpx-pdd-open .pdd-caret,
+html body .pdd-chip.tpx-pdd-open .pdd-chip-caret {
+    color: #ffffff !important;
+}
+html body .pdd-chip.tpx-pdd-open .pdd-dot,
+html body .pdd-chip.tpx-pdd-open .pdd-status-dot {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+}
+/* 3) flèche du Statut : demi-tour animé */
+html body .pdd-status-btn .pdd-caret,
+html body .pdd-status-btn .pdd-chip-caret {
+    display: inline-block;
+    transform-origin: 50% 50%;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+html body .pdd-status-btn.tpx-pdd-open .pdd-caret,
+html body .pdd-status-btn.tpx-pdd-open .pdd-chip-caret {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+    html body .pdd-status-menu,
+    html body .pdd-spec-pop,
+    html body .pdd-status-menu.open,
+    html body .pdd-spec-pop.active,
+    html body .pdd-status-btn .pdd-caret,
+    html body .pdd-status-btn .pdd-chip-caret {
+        transition: none !important;
+    }
+}
+</style>
+<script id="tpx-pdd-open">
+(function () {
+    'use strict';
+    /* fenêtre → bouton(s) qui l'ouvrent ; l'état est lu sur la fenêtre elle-même (classe « open » / « active ») */
+    var PAIRS = [
+        { pop: 'pdd-status-menu', on: 'open', btns: ['pdd-status-btn'] },
+        { pop: 'pdd-spec-pop', on: 'active', btns: ['pdd-spec-btn', 'planning-day-detail-specialty-edit'] }
+    ];
+    function sync(p, pop) {
+        var open = pop.classList.contains(p.on), v = open ? 'true' : 'false';
+        p.btns.forEach(function (id) {
+            var b = document.getElementById(id);
+            if (!b) return;
+            if (b.classList.contains('tpx-pdd-open') !== open) b.classList.toggle('tpx-pdd-open', open);
+            if (b.getAttribute('aria-expanded') !== v) b.setAttribute('aria-expanded', v);
+        });
+    }
+    /* Spécialités ouverte : le fond transparent de la page (clic dehors = fermeture) couvre aussi le bouton → au-dessus
+       du bouton, curseur « main » : un clic y referme la fenêtre, comme partout ailleurs sur ce fond */
+    function bindBackdrop() {
+        var bd = document.getElementById('pdd-spec-backdrop');
+        if (!bd) return false;
+        if (bd.__tpxPddCur) return true;
+        bd.__tpxPddCur = true;
+        bd.addEventListener('mousemove', function (e) {
+            var b = document.getElementById('pdd-spec-btn') || document.getElementById('planning-day-detail-specialty-edit');
+            var r = b ? b.getBoundingClientRect() : null;
+            var c = (r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) ? 'pointer' : '';
+            if (bd.style.cursor !== c) bd.style.cursor = c;
+        });
+        bd.addEventListener('mouseleave', function () { bd.style.cursor = ''; });
+        return true;
+    }
+    function bind() {
+        var found = 0;
+        bindBackdrop();
+        PAIRS.forEach(function (p) {
+            var pop = document.getElementById(p.pop);
+            if (!pop) return;
+            found++;
+            if (pop.__tpxPddObs) return;
+            pop.__tpxPddObs = new MutationObserver(function () { sync(p, pop); });
+            pop.__tpxPddObs.observe(pop, { attributes: true, attributeFilter: ['class'] });
+            sync(p, pop);
+        });
+        return found === PAIRS.length;
+    }
+    function start() {
+        try {
+            if (bind()) return;
+            /* EDN : la fenêtre de la journée est construite plus tard (quand le planning est prêt) */
+            var mo = new MutationObserver(function () { try { if (bind()) mo.disconnect(); } catch (e) {} });
+            mo.observe(document.body, { childList: true });
+        } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+</script>
+<!-- ═══ 2026-10-07 (demande de Jean) — EDN : « Type de journée » de la fenêtre de la journée, chaque case dans sa
+     couleur, en pastel discret (comme ECOS) ; la case choisie garde son contour et son texte de couleur. ═══ -->
+<style id="tpx-pdd-tiles-style">
+html body #pdd-status-grid .pdd-status-card {
+    background: var(--tpx-st-bg, #ffffff);
+    border-color: var(--tpx-st-bd, #e5e7eb);
+}
+html body #pdd-status-grid .pdd-status-card:hover { border-color: var(--tpx-st-hv, #cbd5e1); }
+html body #pdd-status-grid .pdd-status-card.active { background: var(--tpx-st-on, #ffffff); }
+html body #pdd-status-grid .pdd-status-card[data-status=""]         { --tpx-st-bg: #f9fafb; --tpx-st-bd: #e5e7eb; --tpx-st-hv: #cbd5e1; --tpx-st-on: #f3f4f6; }
+html body #pdd-status-grid .pdd-status-card[data-status="stage"]    { --tpx-st-bg: #ffedd5; --tpx-st-bd: #fed7aa; --tpx-st-hv: #fdba74; --tpx-st-on: #fed7aa; }
+html body #pdd-status-grid .pdd-status-card[data-status="revision"] { --tpx-st-bg: #dcfce7; --tpx-st-bd: #bbf7d0; --tpx-st-hv: #86efac; --tpx-st-on: #bbf7d0; }
+html body #pdd-status-grid .pdd-status-card[data-status="garde"]    { --tpx-st-bg: #fee2e2; --tpx-st-bd: #fecaca; --tpx-st-hv: #fca5a5; --tpx-st-on: #fecaca; }
+html body #pdd-status-grid .pdd-status-card[data-status="repos"]    { --tpx-st-bg: #f3e8ff; --tpx-st-bd: #ddd6fe; --tpx-st-hv: #c4b5fd; --tpx-st-on: #ddd6fe; }
+html body #pdd-status-grid .pdd-status-card[data-status="autre"]    { --tpx-st-bg: #fce7f3; --tpx-st-bd: #fbcfe8; --tpx-st-hv: #f9a8d4; --tpx-st-on: #fbcfe8; }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status=""]         { --tpx-st-bg: #0f172a; --tpx-st-bd: #334155; --tpx-st-hv: #475569; --tpx-st-on: #1e293b; }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status="stage"]    { --tpx-st-bg: rgba(249, 115, 22, 0.10); --tpx-st-bd: rgba(249, 115, 22, 0.30); --tpx-st-hv: rgba(249, 115, 22, 0.55); --tpx-st-on: rgba(249, 115, 22, 0.20); }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status="revision"] { --tpx-st-bg: rgba(34, 197, 94, 0.10); --tpx-st-bd: rgba(34, 197, 94, 0.30); --tpx-st-hv: rgba(34, 197, 94, 0.55); --tpx-st-on: rgba(34, 197, 94, 0.20); }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status="garde"]    { --tpx-st-bg: rgba(239, 68, 68, 0.10); --tpx-st-bd: rgba(239, 68, 68, 0.30); --tpx-st-hv: rgba(239, 68, 68, 0.55); --tpx-st-on: rgba(239, 68, 68, 0.20); }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status="repos"]    { --tpx-st-bg: rgba(139, 92, 246, 0.12); --tpx-st-bd: rgba(139, 92, 246, 0.32); --tpx-st-hv: rgba(139, 92, 246, 0.58); --tpx-st-on: rgba(139, 92, 246, 0.22); }
+html[data-theme="dark"] body #pdd-status-grid .pdd-status-card[data-status="autre"]    { --tpx-st-bg: rgba(236, 72, 153, 0.10); --tpx-st-bd: rgba(236, 72, 153, 0.30); --tpx-st-hv: rgba(236, 72, 153, 0.55); --tpx-st-on: rgba(236, 72, 153, 0.20); }
+html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="stage"]    { --tpx-st-bg: #f5eee4; --tpx-st-bd: #e8d8c5; --tpx-st-hv: #ca9b7b; --tpx-st-on: #e8d8c5; }
+html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="revision"] { --tpx-st-bg: #e8f5ed; --tpx-st-bd: #cfe8d8; --tpx-st-hv: #6ebea3; --tpx-st-on: #cfe8d8; }
+html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="garde"]    { --tpx-st-bg: #f8eded; --tpx-st-bd: #f1dcdc; --tpx-st-hv: #c98888; --tpx-st-on: #f1dcdc; }
+html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="repos"]    { --tpx-st-bg: #f6f2fa; --tpx-st-bd: #e7e5f4; --tpx-st-hv: #a18dcf; --tpx-st-on: #e7e5f4; }
+html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="autre"]    { --tpx-st-bg: #f8f0f5; --tpx-st-bd: #f0dfe9; --tpx-st-hv: #c889a8; --tpx-st-on: #f0dfe9; }
+</style>
 </body>
 </html>
