@@ -367,6 +367,29 @@ body { overflow-x: hidden; }
 .skeleton-card { height: 110px; border-radius: var(--border-radius-lg); }
 .offline-banner { display: none; align-items: center; gap: .6rem; background: rgba(245,158,11,.12); color: #b45309; border: 1px solid rgba(245,158,11,.35); padding: .6rem 1rem; border-radius: var(--border-radius-md); font-size: .85rem; font-weight: 600; margin-bottom: 1rem; }
 .offline-banner.show { display: flex; }
+/* Paramètres — Données & sauvegarde */
+.set-data { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--gray-200); display: flex; flex-direction: column; gap: .7rem; }
+.set-data-head { font-weight: 700; font-size: .92rem; color: var(--gray-800); display: flex; align-items: center; gap: .5rem; }
+.set-data-head i { color: var(--primary); }
+.set-sync { font-size: .84rem; font-weight: 600; padding: .55rem .8rem; border-radius: var(--border-radius-md); display: flex; gap: .5rem; align-items: flex-start; }
+.set-sync i { margin-top: .15rem; }
+.set-sync.ok { background: rgba(16,185,129,.1); color: #047857; }
+.set-sync.warn { background: rgba(245,158,11,.12); color: #b45309; }
+.set-sync.err { background: rgba(239,68,68,.1); color: #b91c1c; }
+[data-theme="dark"] .set-sync.ok { color: #6ee7b7; }
+[data-theme="dark"] .set-sync.warn { color: #fbbf24; }
+[data-theme="dark"] .set-sync.err { color: #fca5a5; }
+.set-data-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.set-data-sub { font-size: .8rem; font-weight: 700; color: var(--gray-600); margin-top: .3rem; }
+.set-data-sub span { font-weight: 500; color: var(--gray-400); }
+.set-trash, .set-q-list { display: flex; flex-direction: column; gap: .4rem; max-height: 220px; overflow-y: auto; }
+.set-q-list { max-height: none; }
+.set-row { display: flex; align-items: center; gap: .6rem; padding: .45rem .6rem; border: 1px solid var(--gray-200); border-radius: var(--border-radius-md); font-size: .84rem; }
+.set-row > i { color: var(--gray-400); width: 1rem; text-align: center; flex: 0 0 auto; }
+.set-row-txt { flex: 1 1 auto; min-width: 0; color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-row-txt small { display: block; color: var(--gray-400); font-size: .74rem; }
+.set-row .btn { flex: 0 0 auto; }
+.save-indicator-header.pending, .save-indicator-header.error { cursor: pointer; }
 [data-theme="dark"] .offline-banner { color: #fbbf24; }
 
 /* Avertissement données patient */
@@ -1892,6 +1915,17 @@ img, video, canvas, svg { max-width: 100%; }
                 </select>
             </div>
             <div class="form-group" id="set-pseudo-group" style="display:none"><label class="form-label" for="set-pseudo">Pseudonyme</label><input class="form-input" id="set-pseudo" placeholder="Ex : DrHouse2026"></div>
+            <div class="set-data" id="set-data">
+                <div class="set-data-head"><i class="fas fa-shield-halved"></i> Données &amp; sauvegarde</div>
+                <div class="set-sync" id="set-sync-status" role="status"></div>
+                <div id="set-quarantine"></div>
+                <div class="set-data-actions">
+                    <button type="button" class="btn btn-ghost btn-sm" id="set-sync-now"><i class="fas fa-rotate"></i> Synchroniser maintenant</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="set-export"><i class="fas fa-download"></i> Exporter mes données</button>
+                </div>
+                <div class="set-data-sub">Éléments supprimés <span>— restaurables 30 jours, sur cet appareil</span></div>
+                <div class="set-trash" id="set-trash"></div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-ghost" data-close>Annuler</button>
@@ -2065,9 +2099,9 @@ function setSaveIndicator(state){
     if(!el) return;
     el.className = 'save-indicator-header';
     if(state==='saving'){ el.classList.add('visible','saving'); el.innerHTML='<i class="fas fa-sync-alt fa-spin"></i>'; el.title='Sauvegarde…'; }
-    else if(state==='saved'){ el.classList.add('visible','saved'); el.innerHTML='<i class="fas fa-check"></i>'; el.title='Sauvegardé'; setTimeout(()=>{ const e=document.getElementById('save-indicator-header'); if(e){ e.className='save-indicator-header'; e.innerHTML=''; } },2000); }
-    else if(state==='pending'){ el.classList.add('visible','pending'); el.innerHTML='<i class="fas fa-cloud"></i>'; el.title='Hors ligne — en attente'; }
-    else if(state==='error'){ el.classList.add('visible','error'); el.innerHTML='<i class="fas fa-triangle-exclamation"></i>'; el.title='Erreur de sauvegarde'; }
+    else if(state==='saved'){ el.classList.add('visible','saved'); el.innerHTML='<i class="fas fa-check"></i>'; el.title='Sauvegardé'; setTimeout(()=>{ const e=document.getElementById('save-indicator-header'); if(e && e.classList.contains('saved')){ e.className='save-indicator-header'; e.innerHTML=''; } },2000); }   /* ne masque pas un état « en attente / erreur » survenu entre-temps */
+    else if(state==='pending'){ el.classList.add('visible','pending'); el.innerHTML='<i class="fas fa-cloud"></i>'; el.title='En attente d\'envoi — données gardées sur cet appareil. Cliquez pour réessayer.'; }
+    else if(state==='error'){ el.classList.add('visible','error'); el.innerHTML='<i class="fas fa-triangle-exclamation"></i>'; el.title='Envoi en échec — vos données sont gardées sur cet appareil. Cliquez pour réessayer.'; }
     else { el.className='save-indicator-header'; el.innerHTML=''; }
 }
 window.setSaveIndicator = setSaveIndicator;
@@ -2674,10 +2708,10 @@ window.STATUS_ORDER = ['not_seen','observed','performed_supervised','performed_a
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, addDoc, onSnapshot, serverTimestamp,
-  query, where, orderBy, getDocs, writeBatch, limit,
-  enableIndexedDbPersistence
+  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  doc, getDoc, setDoc, updateDoc, deleteDoc,
+  collection, addDoc, onSnapshot, serverTimestamp, Timestamp,
+  query, where, orderBy, getDocs, writeBatch, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
@@ -2693,7 +2727,17 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+/* Cache hors ligne persistant PARTAGÉ entre onglets : l'ancien
+   enableIndexedDbPersistence échouait dès le 2e onglet, qui tournait alors
+   sans aucun cache. ignoreUndefinedProperties : un champ undefined ne fait
+   plus échouer (définitivement) tout un lot d'écritures. */
+let db;
+try{
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    ignoreUndefinedProperties: true
+  });
+}catch(e){ console.warn('[Carnet] cache persistant indisponible :', e); db = getFirestore(app); }
 /* Firebase Storage (images des notes + PDF joints aux pages) */
 const _storage = getStorage(app);
 window._storage        = _storage;
@@ -2702,8 +2746,6 @@ window._uploadBytes    = uploadBytes;
 window._uploadBytesResumable = uploadBytesResumable;
 window._getDownloadURL = getDownloadURL;
 window._deleteObject   = deleteObject;
-/* Persistance hors ligne (multi-onglets non garanti : on tolère l'échec) */
-enableIndexedDbPersistence(db).catch(()=>{ /* déjà activé ailleurs ou non supporté */ });
 
 /* Raccourcis utilitaires globaux exposés par 09a */
 const esc = window.escapeHtml, toast = window.showToast, saveInd = window.setSaveIndicator;
@@ -2732,7 +2774,12 @@ const SAVE_DEBOUNCE_MS  = 1500;                 // temporisation avant écriture
 const SAVE_MAX_RETRIES  = 3;                    // tentatives supplémentaires après échec
 const SAVE_RETRY_DELAYS = [2000, 4000, 8000];   // délais entre tentatives
 const SAVE_BATCH_MAX    = 400;                  // marge sous la limite Firestore (500)
-const SAVE_LS_MAX_BYTES = 4 * 1024 * 1024;      // au-delà, on ne tente pas localStorage
+const SAVE_LS_MAX_BYTES = 4 * 1024 * 1024;      // au-delà, localStorage est laissé à IndexedDB
+const SAVE_TIMEOUT_MS   = 15000;                // écriture sans réponse → considérée hors ligne
+const SAVE_UI_WAIT_MS   = 6000;                 // un formulaire n'attend jamais plus le cloud
+const SAVE_RECOVER_DELAYS = [5000, 15000, 30000, 60000];   // relances automatiques
+const DOC_MAX_BYTES     = 1048000;              // limite Firestore : 1 Mio par document
+const TAB_STALE_MS      = 3 * 60 * 1000;        // onglet sans battement depuis 3 min = fermé
 const TS = '__SERVER_TS__';                     // marqueur sérialisable de serverTimestamp()
 
 let isOfflineMode   = !navigator.onLine;        // état hors ligne consolidé
@@ -2740,63 +2787,337 @@ let _saveTimer      = null;                     // timer du debounce
 let _flushing       = null;                     // écriture en cours (sérialise les appels)
 let _saveInFlight   = null;                     // promesse partagée de sauvegarde forcée
 let carnetDirty     = false;                    // des modifications attendent le cloud
-const _writeQueue   = new Map();                // clé = chemin '/' → { key, path, data, merge }
+let _recoverTimer   = null, _recoverStep = 0;   // relance automatique après échec / hors ligne
+let _errToastAt     = 0;                        // anti-répétition des avertissements
+const _writeQueue   = new Map();                // clé = chemin '/' → { key, path, data, merge, del, t, since, restored }
+let _quarantine     = [];                       // écritures refusées par Firestore : gardées jusqu'à décision de l'utilisateur
 
 window.isOfflineMode = isOfflineMode;
 
-const pendKey = uid => 'carnet_pending_' + uid;
+const sleep = ms => new Promise(r=> setTimeout(r, ms));
+function withTimeout(p, ms){
+  let t;
+  return Promise.race([p, new Promise((_, rej)=>{ t = setTimeout(()=>{ const e = new Error('timeout'); e.code = 'deadline-exceeded'; rej(e); }, ms); })])
+    .finally(()=> clearTimeout(t));
+}
 
-/* Remplace récursivement le marqueur TS par un vrai serverTimestamp().
+/* ---------- 0. Identité d'onglet ---------- */
+/* Chaque onglet a sa propre copie locale : auparavant un second onglet sans
+   modification effaçait la copie de secours du premier (clé partagée). */
+const PREV_TAB_ID = (()=>{ try{ return sessionStorage.getItem('carnet_tab_id'); }catch(e){ return null; } })();
+const TAB_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+try{ sessionStorage.setItem('carnet_tab_id', TAB_ID); }catch(e){}
+const beatKey = tab => 'carnet_beat__' + tab;
+function beat(){ try{ localStorage.setItem(beatKey(TAB_ID), String(Date.now())); }catch(e){} }
+beat(); setInterval(beat, 10000);
+const pendPrefix = uid => 'carnet_pending_' + uid;
+const pendKey    = uid => pendPrefix(uid) + '__' + TAB_ID;
+const quarKey    = uid => 'carnet_quarantine_' + uid;
+
+/* ---------- 0 bis. IndexedDB : second filet local ---------- */
+/* localStorage plafonne vers 5 Mo : une note avec des images insérées hors
+   ligne n'y tenait pas et n'était protégée par rien. IndexedDB n'a pas cette
+   limite pratique ; les deux copies sont écrites, la plus récente prime. */
+const _idb = (()=>{
+  let p = null;
+  function open(){
+    if(p) return p;
+    p = new Promise((res, rej)=>{
+      try{
+        const r = indexedDB.open('typixclin-carnet', 1);
+        r.onupgradeneeded = ()=> r.result.createObjectStore('kv');
+        r.onsuccess = ()=> res(r.result);
+        r.onerror = ()=> rej(r.error);
+      }catch(e){ rej(e); }
+    });
+    p.catch(()=>{ p = null; });
+    return p;
+  }
+  function tx(mode, fn){
+    return open().then(dbi=> new Promise((res, rej)=>{
+      const t = dbi.transaction('kv', mode); const req = fn(t.objectStore('kv'));
+      t.oncomplete = ()=> res(req ? req.result : true);
+      t.onerror = ()=> rej(t.error); t.onabort = ()=> rej(t.error);
+    }));
+  }
+  return {
+    set:  (k, v)=> tx('readwrite', st=>{ st.put(v, k); }).then(()=>true).catch(()=>false),
+    get:  (k)=> tx('readonly', st=> st.get(k)).catch(()=>null),
+    del:  (k)=> tx('readwrite', st=>{ st.delete(k); }).then(()=>true).catch(()=>false),
+    keys: ()=> tx('readonly', st=> st.getAllKeys()).catch(()=>[])
+  };
+})();
+
+/* ---------- Horodatages ---------- */
+/* Remplace récursivement le marqueur TS par un vrai serverTimestamp(), et
+   { __ts } (horodatage sauvegardé localement) par un Timestamp.
    Indispensable : les sentinelles Firestore ne survivent pas à JSON.stringify. */
 function hydrateTS(v){
   if(v === TS) return serverTimestamp();
   if(Array.isArray(v)) return v.map(hydrateTS);
   if(v && typeof v === 'object' && !(v instanceof Date)){
+    if(typeof v.__ts === 'number') return Timestamp.fromMillis(v.__ts);
+    if(v instanceof Timestamp) return v;
     const o = {}; for(const k in v) o[k] = hydrateTS(v[k]); return o;
   }
   return v;
 }
+/* Même chose pour l'affichage local (avant confirmation du serveur). */
+function localizeTS(v){
+  if(v === TS) return Timestamp.now();
+  if(Array.isArray(v)) return v.map(localizeTS);
+  if(v && typeof v === 'object' && !(v instanceof Date)){
+    if(typeof v.__ts === 'number') return Timestamp.fromMillis(v.__ts);
+    if(v instanceof Timestamp) return v;
+    const o = {}; for(const k in v) o[k] = localizeTS(v[k]); return o;
+  }
+  return v;
+}
+/* Rend une donnée Firestore sérialisable en JSON sans rien perdre. */
+function toLocalData(v){
+  if(v instanceof Timestamp) return { __ts: v.toMillis() };
+  if(v instanceof Date) return { __ts: v.getTime() };
+  if(Array.isArray(v)) return v.map(toLocalData);
+  if(v && typeof v === 'object'){ const o = {}; for(const k in v) if(typeof v[k] !== 'function') o[k] = toLocalData(v[k]); return o; }
+  return v;
+}
 
 /* ---------- 1. Filet local (équivalent writePendingECOS) ---------- */
-function persistLocalNow(){
-  if(!state.user) return;
+let _idbTimer = null, _idbLast = Promise.resolve(true);
+function serializeQueue(){
+  return { schemaVersion: 2, uid: state.user.uid, tab: TAB_ID, savedAt: Date.now(),
+    ops: [..._writeQueue.values()].map(o=>({ path:o.path, data:o.data, merge:o.merge, del:!!o.del, t:o.t, since:o.since })) };
+}
+/* Synchrone pour localStorage, IndexedDB regroupé (ou immédiat si opts.now).
+   Renvoie true si la copie localStorage est à jour. */
+function persistLocalNow(opts){
+  if(!state.user) return false;
+  const key = pendKey(state.user.uid);
+  clearTimeout(_idbTimer); _idbTimer = null;
+  if(!_writeQueue.size){
+    try{ localStorage.removeItem(key); }catch(e){}
+    _idbLast = _idb.del(key);
+    return true;
+  }
+  const snap = serializeQueue();
+  let lsOk = false;
   try{
-    if(!_writeQueue.size){ localStorage.removeItem(pendKey(state.user.uid)); return; }
-    const raw = JSON.stringify({
-      schemaVersion: 1, uid: state.user.uid, savedAt: Date.now(),
-      ops: [..._writeQueue.values()]
-    });
-    if(raw.length > SAVE_LS_MAX_BYTES) return;   // trop volumineux (images base64) : on s'abstient
-    localStorage.setItem(pendKey(state.user.uid), raw);
-  }catch(e){ /* quota dépassé ou stockage indisponible : la file mémoire reste la source */ }
+    const raw = JSON.stringify(snap);
+    if(raw.length <= SAVE_LS_MAX_BYTES){ localStorage.setItem(key, raw); lsOk = true; }
+  }catch(e){ /* quota dépassé ou stockage indisponible */ }
+  // Copie localStorage impossible : on retire l'ancienne, sinon une version
+  // périmée pourrait être rejouée plus tard. IndexedDB prend le relais.
+  if(!lsOk){ try{ localStorage.removeItem(key); }catch(e){} }
+  if(opts && opts.now){ _idbLast = _idb.set(key, snap); }
+  else{
+    _idbTimer = setTimeout(()=>{
+      _idbTimer = null;
+      if(!state.user) return;
+      _idbLast = _writeQueue.size ? _idb.set(key, serializeQueue()) : _idb.del(key);
+    }, lsOk ? 800 : 250);
+  }
+  return lsOk;
+}
+/* Attend que la copie locale soit réellement écrite (avant de quitter la page). */
+async function persistLocalDurable(){
+  if(!state.user || !_writeQueue.size) return true;
+  const lsOk = persistLocalNow({ now:true });
+  const idbOk = await _idbLast.catch(()=>false);
+  return lsOk || idbOk;
 }
 function clearPendingLocal(){
   if(!state.user) return;
-  try{ localStorage.removeItem(pendKey(state.user.uid)); }catch(e){}
-}
-function hasPendingLocal(){
-  if(!state.user) return false;
-  try{ return !!localStorage.getItem(pendKey(state.user.uid)); }catch(e){ return false; }
+  const key = pendKey(state.user.uid);
+  try{ localStorage.removeItem(key); }catch(e){}
+  clearTimeout(_idbTimer); _idbTimer = null; _idbLast = _idb.del(key);
 }
 
-/* Recharge en mémoire les écritures non confirmées d'une session précédente. */
-function restorePendingLocal(uid){
+/* Recharge en mémoire les écritures non confirmées : celles de cet onglet
+   (page rechargée), des onglets fermés, et l'ancien format à clé unique.
+   Pour chaque document, la version la plus récente l'emporte. */
+async function restorePendingLocal(uid){
+  const prefix = pendPrefix(uid), mine = pendKey(uid);
+  const adoptable = key=>{
+    if(key === mine || key === prefix) return true;
+    if(key.indexOf(prefix + '__') !== 0) return false;
+    const tab = key.slice(prefix.length + 2);
+    if(tab === PREV_TAB_ID) return true;
+    let b = 0; try{ b = +localStorage.getItem(beatKey(tab)) || 0; }catch(e){}
+    return Date.now() - b > TAB_STALE_MS;
+  };
+  const sources = [];
   try{
-    const raw = localStorage.getItem(pendKey(uid));
-    if(!raw) return 0;
-    const parsed = JSON.parse(raw);
-    const ops = Array.isArray(parsed?.ops) ? parsed.ops : [];
-    let n = 0;
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && adoptable(k)){ try{ sources.push({ key:k, snap: JSON.parse(localStorage.getItem(k)) }); }catch(e){} }
+    }
+  }catch(e){}
+  try{
+    const keys = await _idb.keys();
+    for(const k of (keys || [])){
+      if(typeof k === 'string' && adoptable(k)){ const s = await _idb.get(k); if(s) sources.push({ key:k, snap:s }); }
+    }
+  }catch(e){}
+  if(!state.user || state.user.uid !== uid) return 0;
+  let n = 0;
+  sources.forEach(({ snap })=>{
+    const ops = Array.isArray(snap && snap.ops) ? snap.ops : [];
+    const savedAt = +(snap && snap.savedAt) || 0;
     ops.forEach(o=>{
       if(!o || !Array.isArray(o.path) || !o.path.length) return;
-      const key = o.path.join('/');
-      if(_writeQueue.has(key)) return;           // une modification plus récente prime
-      _writeQueue.set(key, { key, path:o.path, data:o.data||{}, merge:o.merge!==false });
+      const key = o.path.join('/'), t = +o.t || savedAt;
+      const cur = _writeQueue.get(key);
+      if(cur && (cur.t || 0) >= t) return;          // une version plus récente prime
+      _writeQueue.set(key, { key, path:o.path, data:o.data || {}, merge:o.merge !== false,
+        del:!!o.del, t, since: +o.since || t, restored:true });
       n++;
     });
-    if(n){ carnetDirty = true; }
-    return n;
-  }catch(e){ return 0; }
+  });
+  if(sources.length){
+    carnetDirty = _writeQueue.size > 0;
+    persistLocalNow({ now:true });                // tout est désormais porté par la clé de cet onglet
+    sources.forEach(({ key })=>{ if(key !== mine){ try{ localStorage.removeItem(key); }catch(e){} _idb.del(key); } });
+  }
+  if(n) scheduleOverlayAll();
+  return n;
+}
+
+/* ---------- 1 bis. Quarantaine ---------- */
+/* Une écriture refusée définitivement (document > 1 Mo, donnée invalide)
+   bloquait auparavant TOUT le lot, à chaque tentative. Elle est désormais
+   isolée, conservée sur l'appareil, et reste visible à l'écran. */
+function persistQuarantine(){
+  if(!state.user) return;
+  const key = quarKey(state.user.uid);
+  if(!_quarantine.length){ try{ localStorage.removeItem(key); }catch(e){} _idb.del(key); return; }
+  try{ localStorage.setItem(key, JSON.stringify(_quarantine)); }catch(e){ try{ localStorage.removeItem(key); }catch(_){} }
+  _idb.set(key, _quarantine);
+}
+async function loadQuarantine(uid){
+  let list = await _idb.get(quarKey(uid));
+  if(!Array.isArray(list)){ try{ list = JSON.parse(localStorage.getItem(quarKey(uid)) || '[]'); }catch(e){ list = []; } }
+  if(!state.user || state.user.uid !== uid) return;
+  _quarantine = Array.isArray(list) ? list.filter(q=> q && Array.isArray(q.path)) : [];
+  if(_quarantine.length){ scheduleOverlayAll(); saveInd('error'); }
+}
+function quarantineOp(o, reason){
+  if(_writeQueue.get(o.key) === o) _writeQueue.delete(o.key);
+  _quarantine = _quarantine.filter(q=> q.key !== o.key);
+  _quarantine.push({ key:o.key, path:o.path, data:o.data, merge:o.merge, del:!!o.del, t:o.t, reason, at:Date.now() });
+  persistQuarantine();
+  scheduleOverlay(keyForPath(o.path));
+  const what = (o.path.length === 6 && o.data && o.data.title) ? `la note « ${o.data.title} »` : 'une modification';
+  toast(reason === 'size'
+    ? `Impossible d'envoyer ${what} : elle dépasse 1 Mo (trop d'images). Elle reste conservée sur cet appareil — retirez des images.`
+    : `Firestore a refusé ${what}. Elle reste conservée sur cet appareil (Profil → Données).`, 'error');
+}
+/* Une écriture réussie qui couvre tous les champs d'une entrée en quarantaine la remplace. */
+function releaseQuarantine(o){
+  const before = _quarantine.length;
+  _quarantine = _quarantine.filter(q=> q.key !== o.key || !(o.del || Object.keys(q.data || {}).every(k=> k in (o.data || {}))));
+  if(_quarantine.length !== before){ persistQuarantine(); scheduleOverlay(keyForPath(o.path)); }
+}
+function retryQuarantine(){
+  _quarantine.forEach(q=>{ if(!_writeQueue.has(q.key)) _writeQueue.set(q.key, { key:q.key, path:q.path, data:q.data, merge:q.merge !== false, del:!!q.del, t:q.t || Date.now(), since:q.t || Date.now() }); });
+  _quarantine = []; persistQuarantine(); carnetDirty = _writeQueue.size > 0; persistLocalNow();
+  _recoverStep = 0; return flushWrites();
+}
+function discardQuarantine(key){
+  const q = _quarantine.find(x=> x.key === key);
+  _quarantine = _quarantine.filter(x=> x.key !== key); persistQuarantine();
+  if(q) scheduleOverlay(keyForPath(q.path));
+}
+
+/* ---------- 1 ter. Affichage des écritures en attente ---------- */
+/* Les listeners Firestore remplaçaient l'état local par la version serveur :
+   hors ligne, une modification en attente disparaissait de l'écran (et une
+   note rouverte repartait de l'ancienne version, écrasant la nouvelle à la
+   sauvegarde suivante). On superpose donc la file sur les données reçues. */
+const _raw = { stages:[], gestures:[], notebooks:[], pages:[], progress:[], profile:{}, profileLoaded:false };
+const COL_OF   = { stages:'stages', gestures:'gestes', notebooks:'carnets-notes', progress:'checklist' };
+const ORDER_OF = { stages:'startDate', gestures:'date', notebooks:'order' };
+function pendingOps(){ return [..._quarantine, ..._writeQueue.values()]; }   // la file prime sur la quarantaine
+function overlayDocs(docs, colPath){
+  const n = colPath.length, map = new Map(docs.map(d=> [d.id, d]));
+  let touched = false;
+  for(const o of pendingOps()){
+    if(o.path.length !== n + 1) continue;
+    let same = true; for(let i = 0; i < n; i++) if(o.path[i] !== colPath[i]){ same = false; break; }
+    if(!same) continue;
+    const id = o.path[n]; touched = true;
+    if(o.del){ map.delete(id); continue; }
+    const base = o.merge === false ? {} : (map.get(id) || {});
+    map.set(id, { ...base, ...localizeTS(o.data), id });
+  }
+  return { docs:[...map.values()], touched };
+}
+function sortDescBy(arr, f){
+  arr.sort((a, b)=>{ const va = a[f], vb = b[f];
+    if(typeof va === 'number' && typeof vb === 'number') return vb - va;
+    return String(vb == null ? '' : vb).localeCompare(String(va == null ? '' : va)); });
+}
+function applyOverlay(key){
+  const uid = state.user && state.user.uid; if(!uid) return;
+  if(key === 'profile'){
+    let p = { ..._raw.profile };
+    pendingOps().forEach(o=>{ if(o.path.length === 2 && o.path[1] === uid && !o.del) p = { ...p, ...localizeTS(o.data) }; });
+    state.profile = p; return;
+  }
+  if(key === 'pages'){
+    if(!state.activeNotebookId){ state.pages = []; return; }
+    state.pages = overlayDocs(_raw.pages, ['carnets', uid, 'carnets-notes', state.activeNotebookId, 'pages']).docs;
+    return;
+  }
+  if(key === 'progress'){
+    const m = {}; overlayDocs(_raw.progress, ['carnets', uid, 'checklist']).docs.forEach(d=> m[d.id] = d);
+    state.progress = m; return;
+  }
+  if(!COL_OF[key]) return;
+  const r = overlayDocs(_raw[key], ['carnets', uid, COL_OF[key]]);
+  if(r.touched) sortDescBy(r.docs, ORDER_OF[key]);
+  state[key] = r.docs;
+}
+function keyForPath(path){
+  if(!path) return null;
+  if(path.length === 2) return 'profile';
+  if(path.length === 4) return Object.keys(COL_OF).find(k=> COL_OF[k] === path[2]) || null;
+  if(path.length === 6 && path[4] === 'pages') return 'pages';
+  return null;
+}
+function notifyOverlay(key){
+  if(key === 'profile') return;
+  if(key === 'progress'){
+    if(state.activeModule === 'checklist') syncChecklistFromState();
+    else if(state.activeModule === 'dashboard') renderDashboard();
+    return;
+  }
+  if(key === 'pages'){
+    invalidatePagesCache();
+    if(state.activeModule === 'notes' && notesFilter && notesFilter === state.activeNotebookId) renderNotes();
+    return;
+  }
+  onDataChanged(key);
+}
+let _ovKeys = null;
+function scheduleOverlay(key){
+  if(!key) return;
+  if(!_ovKeys){
+    _ovKeys = new Set();
+    queueMicrotask(()=>{ const ks = _ovKeys; _ovKeys = null;
+      ks.forEach(k=>{ try{ applyOverlay(k); notifyOverlay(k); }catch(e){ console.warn('[Carnet] overlay', k, e); } }); });
+  }
+  _ovKeys.add(key);
+}
+function scheduleOverlayAll(){ ['profile','stages','gestures','notebooks','progress','pages'].forEach(scheduleOverlay); }
+/* Version la plus récente d'un document précis (file + quarantaine comprises). */
+function withPending(path, obj){
+  const key = path.join('/'); let out = obj;
+  for(const o of pendingOps()){
+    if(o.key !== key) continue;
+    if(o.del) return null;
+    out = { ...(o.merge === false ? { id: obj && obj.id } : (out || {})), ...localizeTS(o.data) };
+  }
+  return out;
 }
 
 /* ---------- 2. Mise en file (équivalent _saveECOSData) ---------- */
@@ -2807,98 +3128,248 @@ function queueWrite(path, data, opts){
   if(!state.user) return Promise.resolve(false);
   const key  = path.join('/');
   const prev = _writeQueue.get(key);
+  const live = prev && !prev.del;
+  const now  = Date.now();
   _writeQueue.set(key, {
     key, path,
-    data:  prev ? { ...prev.data, ...data } : { ...data },
-    merge: opts.merge !== false
+    data:  live && opts.merge !== false ? { ...prev.data, ...data } : { ...data },
+    merge: (live && prev.merge === false) ? false : opts.merge !== false,
+    t: now, since: live ? (prev.since || prev.t || now) : now, restored: !!(live && prev.restored)
   });
   carnetDirty = true;
   // Filet local IMMÉDIAT : la sécurité des données ne dépend jamais
   // d'une seule écriture Firestore asynchrone (section 1.5 du tableur).
   persistLocalNow();
-  if(isOfflineMode){ saveInd('pending'); return Promise.resolve(false); }
+  scheduleOverlay(keyForPath(path));
+  return dispatchWrite(opts.now);
+}
+/* Suppression mise en file comme une écriture : elle remplace toute écriture
+   en attente du même document (aucune résurrection possible), fonctionne hors
+   ligne et est rejouée au besoin. */
+function queueDelete(path, opts){
+  if(!state.user) return Promise.resolve(false);
+  const key = path.join('/');
+  _writeQueue.set(key, { key, path, data:{}, merge:false, del:true, t:Date.now(), since:Date.now() });
+  carnetDirty = true;
+  persistLocalNow();
+  scheduleOverlay(keyForPath(path));
+  return dispatchWrite(!(opts && opts.batch));   // batch : regroupée avec les suivantes
+}
+function dispatchWrite(now){
+  if(isOfflineMode){ saveInd('pending'); scheduleRecover(); return Promise.resolve(false); }
   saveInd('saving');
-  if(opts.now){
+  if(now){
     if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer = null; }
-    return flushWrites();
+    // Le formulaire n'attend pas un réseau lent : la donnée est déjà en sécurité localement.
+    return Promise.race([flushWrites(), sleep(SAVE_UI_WAIT_MS).then(()=> false)]);
   }
   if(_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(()=> flushWrites(), SAVE_DEBOUNCE_MS);
   return Promise.resolve(true);
 }
 
-/* Retire un document de la file (avant une suppression, par exemple). */
+/* Retire un document de la file. */
 function cancelQueued(path){
   _writeQueue.delete(path.join('/'));
   carnetDirty = _writeQueue.size > 0;
   persistLocalNow();
+  scheduleOverlay(keyForPath(path));
 }
-
-/* Suppression sûre : on retire d'abord le document de la file et on laisse
-   retomber une écriture éventuellement en vol, sinon une écriture tardive
-   pourrait ressusciter le document supprimé. */
-async function deleteQueuedDoc(path){
-  cancelQueued(path);
-  if(_flushing){ try{ await _flushing; }catch(e){} }
-  await deleteDoc(doc(db, ...path));
-}
+async function deleteQueuedDoc(path){ return queueDelete(path); }
 
 /* ---------- 3. Écriture cloud avec retries attendus ---------- */
-async function commitOps(ops){
-  if(ops.length === 1){
-    const o = ops[0];
-    await setDoc(doc(db, ...o.path), hydrateTS(o.data), { merge:o.merge });
-    return;
+function opBytes(o){ try{ return new Blob([JSON.stringify(o.data || {})]).size; }catch(e){ return 0; } }
+async function commitOps(ops, onDone){
+  for(let i = 0; i < ops.length; i += SAVE_BATCH_MAX){
+    const chunk = ops.slice(i, i + SAVE_BATCH_MAX);
+    // Délai proportionnel au volume : un gros envoi lent n'est pas une coupure.
+    const ms = SAVE_TIMEOUT_MS + Math.round(chunk.reduce((s, o)=> s + opBytes(o), 0) / 50000) * 1000;
+    if(chunk.length === 1){
+      const o = chunk[0];
+      await withTimeout(o.del ? deleteDoc(doc(db, ...o.path))
+                              : setDoc(doc(db, ...o.path), hydrateTS(o.data), { merge:o.merge }), ms);
+    } else {
+      const batch = writeBatch(db);
+      chunk.forEach(o=> o.del ? batch.delete(doc(db, ...o.path))
+                              : batch.set(doc(db, ...o.path), hydrateTS(o.data), { merge:o.merge }));
+      await withTimeout(batch.commit(), ms);
+    }
+    onDone(chunk);                                // retrait progressif : un lot réussi n'est pas renvoyé
   }
-  for(let i=0; i<ops.length; i+=SAVE_BATCH_MAX){
-    const chunk = ops.slice(i, i+SAVE_BATCH_MAX);
-    const batch = writeBatch(db);
-    chunk.forEach(o=> batch.set(doc(db, ...o.path), hydrateTS(o.data), { merge:o.merge }));
-    await batch.commit();
+}
+/* Ne retirer que ce qui vient d'être écrit : une modification a pu
+   s'ajouter pendant l'attente réseau (l'identité de l'objet change). */
+function ackOps(chunk){
+  chunk.forEach(o=>{
+    if(_writeQueue.get(o.key) === o) _writeQueue.delete(o.key);
+    if(_quarantine.length) releaseQuarantine(o);
+  });
+}
+const PERMANENT_CODES = ['invalid-argument','out-of-range','failed-precondition','already-exists','data-loss'];
+function isPermanent(e){ return !!e && PERMANENT_CODES.includes(e.code); }
+/* Un lot refusé définitivement : on rejoue chaque écriture seule pour
+   n'isoler que la fautive, les autres passent. */
+async function isolateRejected(ops){
+  for(const o of ops){
+    if(_writeQueue.get(o.key) !== o) continue;
+    try{ await commitOps([o], ackOps); }
+    catch(e){
+      if(isPermanent(e)) quarantineOp(o, /size|maximum/i.test(e.message || '') ? 'size' : (e.code || 'refus'));
+      else{ noteFirestoreError(e); if(isOfflineMode) return; }
+    }
+  }
+}
+
+/* Images insérées hors ligne (base64) : envoyées vers Storage dès que possible,
+   sinon quelques photos suffisent à dépasser la limite de 1 Mo d'une note. */
+const _liftedImgs = new Map();                    // data URI → { url, path }
+async function liftInlineImages(o){
+  const uid = state.user && state.user.uid;
+  if(!uid || !window._storage || !window._uploadBytes) return;
+  const tpl = document.createElement('template'); tpl.innerHTML = o.data.html;
+  const imgs = [...tpl.content.querySelectorAll('img')].filter(im=> (im.getAttribute('src') || '').indexOf('data:image/') === 0);
+  if(!imgs.length) return;
+  let changed = false;
+  for(const im of imgs){
+    const src = im.getAttribute('src');
+    let up = _liftedImgs.get(src);
+    if(!up){
+      try{
+        const blob = await (await fetch(src)).blob();
+        const path = 'notesImages/' + uid + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.jpg';
+        const snap = await withTimeout(uploadBytes(storageRef(_storage, path), blob), 30000);
+        up = { url: await withTimeout(getDownloadURL(snap.ref), 15000), path };
+        _liftedImgs.set(src, up);
+      }catch(e){ continue; }                      // réessayé au prochain envoi
+    }
+    im.setAttribute('src', up.url);
+    const w = im.closest('.notes-img-wrapper'); if(w) w.setAttribute('data-storage-path', up.path);
+    changed = true;
+    // La note est peut-être encore ouverte : on corrige aussi l'éditeur,
+    // sinon la prochaine sauvegarde réécrirait le base64.
+    const ed = $('note-editor');
+    if(ed) ed.querySelectorAll('img').forEach(x=>{ if(x.getAttribute('src') === src){ x.setAttribute('src', up.url);
+      const ww = x.closest('.notes-img-wrapper'); if(ww){ ww.setAttribute('data-storage-path', up.path); ww.dataset.storagePath = up.path; } } });
+  }
+  if(changed && _writeQueue.get(o.key) === o){ o.data.html = tpl.innerHTML; persistLocalNow(); }
+}
+async function prepareOps(){
+  for(const o of [..._writeQueue.values()]){
+    if(o.del || !o.data) continue;
+    if(typeof o.data.html === 'string' && o.data.html.indexOf('data:image/') >= 0) await liftInlineImages(o);
+    if(_writeQueue.get(o.key) === o && opBytes(o) > DOC_MAX_BYTES) quarantineOp(o, 'size');
+  }
+}
+
+/* Écritures rejouées d'une session précédente : si la note a été modifiée
+   ailleurs entre-temps, on ne l'écrase pas — la version locale devient une
+   copie « (version hors ligne) ». Rien n'est perdu d'un côté ni de l'autre. */
+async function reconcileRestored(){
+  let conflicts = 0;
+  for(const o of [..._writeQueue.values()]){
+    if(!o.restored || _writeQueue.get(o.key) !== o) continue;
+    const isPage = o.path.length === 6 && o.path[4] === 'pages';
+    if(!isPage || o.del || typeof o.data.html !== 'string'){ o.restored = false; continue; }
+    const snap = await withTimeout(getDoc(doc(db, ...o.path)), 10000);   // échec → nouvelle tentative plus tard
+    const srv = snap.exists() ? snap.data() : null;
+    const srvT = srv && srv.updatedAt && typeof srv.updatedAt.toMillis === 'function' ? srv.updatedAt.toMillis() : 0;
+    if(srv && srvT > (o.since || o.t) && (srv.html || '') !== o.data.html){
+      const p = o.path, np = [p[0], p[1], p[2], p[3], 'pages', doc(collection(db, p[0], p[1], p[2], p[3], 'pages')).id];
+      const nk = np.join('/');
+      _writeQueue.delete(o.key);
+      _writeQueue.set(nk, { key:nk, path:np, t:Date.now(), since:Date.now(), merge:true,
+        data:{ ...o.data, title:(o.data.title || srv.title || 'Sans titre') + ' (version hors ligne)',
+               pinned:false, order:(typeof srv.order === 'number' ? srv.order : 0), createdAt:TS, updatedAt:TS } });
+      conflicts++;
+    } else o.restored = false;
+  }
+  if(conflicts){
+    persistLocalNow(); scheduleOverlay('pages');
+    toast(conflicts + ' note(s) modifiée(s) entre-temps sur un autre appareil : votre version hors ligne est conservée en copie.', 'warning');
   }
 }
 
 async function flushWrites(){
   if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer = null; }
   if(!state.user) return true;
+  // Écriture déjà en vol : on l'attend puis on envoie ce qui s'est ajouté
+  // entre-temps (auparavant ces modifications restaient bloquées en file).
+  if(_flushing){ const r = await _flushing; return r ? flushWrites() : false; }
   if(!_writeQueue.size){ carnetDirty = false; return true; }
-  if(isOfflineMode){ persistLocalNow(); saveInd('pending'); return false; }
-  if(_flushing) return _flushing;                // sérialise les écritures concurrentes
+  if(isOfflineMode){ persistLocalNow(); saveInd('pending'); scheduleRecover(); return false; }
+  const uid = state.user.uid;
   _flushing = (async ()=>{
-    const ops = [..._writeQueue.values()];
     saveInd('saving');
-    for(let attempt=0; attempt<=SAVE_MAX_RETRIES; attempt++){
+    let ok = false;
+    for(let attempt = 0; attempt <= SAVE_MAX_RETRIES; attempt++){
+      if(!state.user || state.user.uid !== uid) return false;
       try{
-        await commitOps(ops);
-        // Ne retirer que ce qui vient d'être écrit : une modification a pu
-        // s'ajouter pendant l'attente réseau (l'identité de l'objet change).
-        ops.forEach(o=>{ if(_writeQueue.get(o.key) === o) _writeQueue.delete(o.key); });
-        carnetDirty = _writeQueue.size > 0;
-        if(carnetDirty) persistLocalNow(); else clearPendingLocal();
-        saveInd(carnetDirty ? 'saving' : 'saved');
-        return true;
+        await reconcileRestored();
+        await prepareOps();
+        const ops = [..._writeQueue.values()];
+        if(ops.length) await commitOps(ops, ackOps);
+        ok = true; break;
       }catch(e){
-        noteFirestoreError(e);
-        if(attempt < SAVE_MAX_RETRIES){
-          saveInd('saving');
-          await new Promise(r=> setTimeout(r, SAVE_RETRY_DELAYS[attempt] || 8000));
+        if(isPermanent(e)){
+          await isolateRejected([..._writeQueue.values()]);
+          if(!_writeQueue.size){ ok = true; break; }
+          if(isOfflineMode) break;
+          continue;
         }
+        noteFirestoreError(e);
+        if(isOfflineMode) break;                  // inutile d'insister : relance automatique
+        if(attempt < SAVE_MAX_RETRIES){ saveInd('saving'); await sleep(SAVE_RETRY_DELAYS[attempt] || 8000); }
       }
     }
-    persistLocalNow();                            // échec : la copie locale reste le secours
-    saveInd('error');
-    return false;
+    if(!state.user || state.user.uid !== uid) return false;
+    carnetDirty = _writeQueue.size > 0;
+    persistLocalNow();                            // vide → copies locales effacées ; sinon mises à jour
+    if($('modal-settings')?.classList.contains('active')) renderDataPanel();
+    if(ok){
+      _recoverStep = 0; _errToastAt = 0;
+      if(navigator.onLine){ const b = $('offline-banner'); if(b) b.classList.remove('show'); }
+      saveInd(_quarantine.length ? 'error' : (carnetDirty ? 'saving' : 'saved'));
+      if(carnetDirty && !_saveTimer) _saveTimer = setTimeout(()=> flushWrites(), SAVE_DEBOUNCE_MS);
+    } else {
+      saveInd(isOfflineMode ? 'pending' : 'error');
+      if(!isOfflineMode) warnSyncError();
+      scheduleRecover();
+    }
+    return ok;
   })();
   try{ return await _flushing; } finally{ _flushing = null; }
+}
+function warnSyncError(){
+  if(Date.now() - _errToastAt < 120000) return;
+  _errToastAt = Date.now();
+  toast('Synchronisation impossible pour l\'instant — vos modifications sont gardées sur cet appareil et seront renvoyées automatiquement.', 'warning');
 }
 
 /* Une erreur réseau Firestore bascule en mode hors ligne. */
 function noteFirestoreError(err){
   if(!err) return;
   const code = err.code || '';
-  if(code === 'unavailable' || code === 'deadline-exceeded' || /network|timeout/i.test(err.message||'')){
+  if(code === 'unavailable' || code === 'deadline-exceeded' || /network|timeout|offline/i.test(err.message || '')){
     handleCarnetOffline();
   }
+}
+
+/* ---------- 3 bis. Relance automatique ---------- */
+/* Auparavant, après un échec ou une coupure détectée par Firestore alors que
+   le navigateur se croyait en ligne, plus rien n'était renvoyé jusqu'au
+   rechargement (l'événement « online » ne survenait jamais). */
+function scheduleRecover(){
+  if(_recoverTimer || !state.user || !_writeQueue.size) return;
+  const d = SAVE_RECOVER_DELAYS[Math.min(_recoverStep, SAVE_RECOVER_DELAYS.length - 1)];
+  _recoverStep++;
+  _recoverTimer = setTimeout(()=>{ _recoverTimer = null; tryRecover(); }, d);
+}
+async function tryRecover(){
+  if(_recoverTimer){ clearTimeout(_recoverTimer); _recoverTimer = null; }
+  if(!state.user || !_writeQueue.size) return true;
+  if(!navigator.onLine){ scheduleRecover(); return false; }   // l'événement « online » prendra le relais
+  if(isOfflineMode){ isOfflineMode = false; window.isOfflineMode = false; }   // sonde
+  return flushWrites();
 }
 
 /* ---------- 4. Sauvegarde forcée (fermeture, déconnexion, navigation) ---------- */
@@ -2908,13 +3379,13 @@ function forceSaveCarnetAsync(){
     try{
       if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer = null; }   // 1. annuler le debounce
       queueNoteSave();                                                 // 2. verser l'éditeur ouvert dans la file
-      persistLocalNow();                                               // 3. sécuriser localement
+      persistLocalNow({ now:true });                                   // 3. sécuriser localement
       if(!state.user) return true;                                     // 4. pré-requis
       if(!_writeQueue.size) return true;                               // 5. rien à sauvegarder
       if(isOfflineMode) return false;                                  // 6. cloud inaccessible
       return await flushWrites();                                      // 7. écriture + retries attendus
     }catch(e){
-      persistLocalNow(); saveInd('error'); return false;
+      persistLocalNow({ now:true }); saveInd('error'); return false;
     }finally{
       _saveInFlight = null;                                            // réinitialisation systématique
     }
@@ -2928,18 +3399,18 @@ function handleCarnetOffline(){
   if(isOfflineMode) return;
   isOfflineMode = true; window.isOfflineMode = true;
   if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer = null; }
-  persistLocalNow();
+  persistLocalNow({ now:true });
   const b = $('offline-banner'); if(b) b.classList.add('show');
-  saveInd(carnetDirty || hasPendingLocal() ? 'pending' : 'hidden');
+  saveInd(_writeQueue.size ? 'pending' : 'hidden');
+  scheduleRecover();
 }
 async function handleCarnetOnline(){
-  if(!isOfflineMode && !carnetDirty) return;
   if(!navigator.onLine) return;
   isOfflineMode = false; window.isOfflineMode = false;
   const b = $('offline-banner'); if(b) b.classList.remove('show');
   if(state.user){
-    restorePendingLocal(state.user.uid);
-    if(_writeQueue.size){ saveInd('saving'); await flushWrites(); }
+    await restorePendingLocal(state.user.uid);   // onglets fermés entre-temps
+    if(_writeQueue.size){ _recoverStep = 0; saveInd('saving'); await flushWrites(); }
   }
 }
 
@@ -2958,7 +3429,7 @@ function initCarnetNavigationGuard(){
     const isInternalLink = a.matches('.dropdown-item, .mobile-menu-link, .footer-nav-link, .back-home-btn, .logo')
       || /\.html(?:[#?].*)?$/i.test(href);
     if(!isInternalLink) return;
-    if(!carnetDirty && !_writeQueue.size && !state.noteDirty && !_saveInFlight) return; // rien à protéger
+    if(!carnetDirty && !_writeQueue.size && !state.noteDirty && !_saveInFlight && !pendingUploads()) return; // rien à protéger
     e.preventDefault(); e.stopPropagation();
     if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     navigateAfterCarnetSave(a.href);
@@ -2966,16 +3437,29 @@ function initCarnetNavigationGuard(){
 }
 async function navigateAfterCarnetSave(url){
   if(!url || window._carnetNavigating) return;
+  if(pendingUploads()){ toast('Un fichier est en cours d\'envoi — patientez avant de quitter.', 'warning'); return; }
   window._carnetNavigating = true;
   saveInd('saving');
   let ok = true;
   try{ ok = await forceSaveCarnetAsync(); }catch(e){ ok = false; }
-  if(ok){ window.location.href = url; }
-  else{
-    window._carnetNavigating = false;
-    toast('Navigation annulée — sauvegarde impossible. Vos données sont conservées localement.','error');
+  if(ok){ window.location.href = url; return; }
+  // Cloud injoignable : si la copie locale est bien écrite, l'utilisateur peut
+  // partir sans rien perdre (elle sera renvoyée à son retour sur le carnet).
+  const safe = await persistLocalDurable();
+  window._carnetNavigating = false;
+  if(safe && await confirmAction({ title:'Synchronisation en attente', variant:'warning', confirmText:'Quitter quand même',
+      message:'Vos dernières modifications ne sont pas encore envoyées. Elles sont enregistrées sur cet appareil et seront synchronisées à votre prochaine visite du carnet (avec ce navigateur).' })){
+    window.location.href = url;
+  } else if(!safe){
+    toast('Navigation annulée — sauvegarde impossible. Vos données sont conservées dans cet onglet.', 'error');
   }
 }
+
+/* Envois de fichiers en cours (PDF, images) : la page ne doit pas être quittée. */
+let _uploadsInFlight = 0;
+function pendingUploads(){ return _uploadsInFlight > 0; }
+window._carnetUploadStart = ()=>{ _uploadsInFlight++; };
+window._carnetUploadEnd   = ()=>{ _uploadsInFlight = Math.max(0, _uploadsInFlight - 1); };
 
 /* ============================================================= */
 /* DIAGNOSTIC — taper carnetDiag() dans la console du navigateur  */
@@ -3008,6 +3492,8 @@ window.carnetDiag = async function(){
   }catch(e){ res['carnets-notes/*/pages'] = 'ERREUR ' + (e.code||e.message); }
 
   res['écritures en attente (non confirmées)'] = _writeQueue.size;
+  res['écritures en quarantaine (refusées)'] = _quarantine.length;
+  res['onglet'] = TAB_ID;
   res['hors ligne'] = isOfflineMode;
   console.table(res);
   return res;
@@ -3017,7 +3503,9 @@ let unsubs = [];             // listeners par-utilisateur
 let pagesUnsub = null;       // listener pages du carnet actif
 let hofUnsub = null;
 
+let _listenGen = 0;          // invalide les relances de listeners d'une session close
 function clearUserListeners(){
+  _listenGen++;
   unsubs.forEach(u=>{ try{u();}catch(e){} }); unsubs = [];
   if(pagesUnsub){ try{pagesUnsub();}catch(e){} pagesUnsub=null; }
   if(hofUnsub){ try{hofUnsub();}catch(e){} hofUnsub=null; }
@@ -3114,42 +3602,55 @@ async function updateUserUI(user){
   const userAuth=$('user-auth'), loginReq=$('login-required'), appEl=$('app');
   const bottomNav=$('bottom-nav');
   if(user){
+    if(state.user && state.user.uid !== user.uid){ _writeQueue.clear(); _quarantine = []; }   // changement de compte
     state.user = user;
     window.currentUser = user;
     userAuth.classList.add('logged-in');
     loginReq.style.display='none';
     appEl.classList.add('active');
     if(bottomNav) bottomNav.style.display='';
+    _raw.profileLoaded = false;
     try{
-      const uref = doc(db,'carnets',user.uid);
-      const snap = await getDoc(uref);
-      state.profile = snap.exists()? snap.data() : {};
-    }catch(e){ state.profile = {}; }
-    // En-tête
-    const dn = state.profile.displayName || user.displayName || 'Utilisateur';
-    const photo = state.profile.photoURL || user.photoURL || '';
-    $('avatar-initials').innerHTML = photo ? `<img src="${esc(photo)}" alt="Profil">` : esc(getInitials(dn));
-    $('profile-name').textContent = dn;
+      // Délai borné : hors ligne sans cache, getDoc ne doit pas figer le carnet.
+      const snap = await withTimeout(getDoc(doc(db,'carnets',user.uid)), 8000);
+      _raw.profile = snap.exists()? snap.data() : {};
+      _raw.profileLoaded = snap.exists() || !snap.metadata.fromCache;
+    }catch(e){ _raw.profile = {}; }
+    if(state.user !== user) return;               // déconnexion pendant le chargement
+    // Écritures non confirmées lors d'une session précédente (onglet fermé,
+    // réseau coupé) : rechargées AVANT les listeners pour être affichées
+    // d'emblée, puis rejouées.
+    const replayed = await restorePendingLocal(user.uid);
+    await loadQuarantine(user.uid);
+    applyOverlay('profile');
+    renderProfileHeader();
     $('profile-email').textContent = user.email || '';
-    // Migration puis écoute des données
-    await runMigrationV2(user.uid).catch(e=>console.warn('Migration v2:',e));
-    await runMigration(user.uid).catch(e=>console.warn('Migration:',e));
+    // Migration puis écoute des données (bornées : une migration bloquée hors
+    // ligne empêchait auparavant tout affichage).
+    await withTimeout(runMigrationV2(user.uid), 20000).catch(e=>console.warn('Migration v2:',e));
+    await withTimeout(runMigration(user.uid), 20000).catch(e=>console.warn('Migration:',e));
+    if(state.user !== user) return;
     startListeners(user.uid);
     restoreModuleFromHash();
-    // Écritures non confirmées lors d'une session précédente (onglet fermé,
-    // réseau coupé) : on les recharge et on les rejoue.
-    const replayed = restorePendingLocal(user.uid);
-    if(replayed && !isOfflineMode){
-      saveInd('saving');
-      flushWrites().then(ok=>{ if(ok) toast('Modifications en attente synchronisées.','success'); });
+    if(replayed){
+      if(!isOfflineMode){
+        saveInd('saving');
+        flushWrites().then(ok=>{ if(ok) toast(replayed+' modification(s) en attente synchronisée(s).','success'); });
+      } else {
+        saveInd('pending');
+        toast(replayed+' modification(s) en attente : elles seront envoyées au retour du réseau.','info');
+      }
     }
   } else {
-    // La file non vide est conservée en localStorage : elle sera rejouée à la
-    // prochaine connexion du même compte plutôt que perdue.
+    // La file non vide est conservée localement (localStorage + IndexedDB) :
+    // elle sera rejouée à la prochaine connexion du même compte plutôt que perdue.
     if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer=null; }
-    persistLocalNow();
-    _writeQueue.clear(); carnetDirty=false;
+    if(_recoverTimer){ clearTimeout(_recoverTimer); _recoverTimer=null; }
+    persistLocalNow({ now:true });
+    _writeQueue.clear(); _quarantine=[]; carnetDirty=false;
+    Object.assign(_raw, { stages:[], gestures:[], notebooks:[], pages:[], progress:[], profile:{}, profileLoaded:false });
     state.user=null; state.profile={};
+    state.stages=[]; state.gestures=[]; state.notebooks=[]; state.pages=[]; state.progress={};
     window.currentUser = null;
     userAuth.classList.remove('logged-in');
     $('profile-dropdown')?.classList.remove('active');
@@ -3158,6 +3659,13 @@ async function updateUserUI(user){
     if(bottomNav) bottomNav.style.display='none';
     clearUserListeners();
   }
+}
+function renderProfileHeader(){
+  if(!state.user) return;
+  const dn = state.profile.displayName || state.user.displayName || 'Utilisateur';
+  const photo = state.profile.photoURL || state.user.photoURL || '';
+  $('avatar-initials').innerHTML = photo ? `<img src="${esc(photo)}" alt="Profil">` : esc(getInitials(dn));
+  $('profile-name').textContent = dn;
 }
 onAuthStateChanged(auth, (user)=> updateUserUI(user));
 
@@ -3174,6 +3682,9 @@ onAuthStateChanged(auth, (user)=> updateUserUI(user));
     const btn = ev.currentTarget;
     if(btn.disabled) return;                                   // double clic
     if(isOfflineMode){ toast('Déconnexion impossible hors ligne.','error'); return; }
+    if(pendingUploads()){ toast('Un fichier est en cours d\'envoi — patientez avant de vous déconnecter.','warning'); return; }
+    if(_quarantine.length && !(await confirmAction({ title:'Données non envoyées', variant:'warning', confirmText:'Se déconnecter',
+        message:'Certaines modifications ont été refusées par le serveur et ne sont conservées que sur cet appareil (Profil → Données). Elles y resteront après la déconnexion. Continuer ?' }))) return;
     btn.disabled = true;
     dd?.classList.remove('active');
     saveInd('saving');
@@ -3250,22 +3761,42 @@ document.addEventListener('click', e=>{
 /* ============================================================= */
 function startListeners(uid){
   clearUserListeners();
-  const mkSub = (col, key, order) => {
-    let qy = collection(db,'carnets',uid,col);
+  const gen = _listenGen;
+  /* Un listener Firestore qui reçoit une erreur est définitivement arrêté :
+     sans relance, l'écran restait figé sur des données périmées (et une note
+     rouverte pouvait écraser une version plus récente). */
+  const sub = (label, start) => {
+    let unsub = null, tries = 0;
+    const run = ()=>{
+      unsub = start(()=>{ tries = 0; }, err=>{
+        console.warn(label, err);
+        if(gen !== _listenGen || !state.user || state.user.uid !== uid) return;
+        if(tries === 0) toast('Synchronisation interrompue ('+label+') — reconnexion…','warning');
+        const d = Math.min(60000, 3000 * Math.pow(2, tries++));
+        setTimeout(()=>{ if(gen === _listenGen && state.user && state.user.uid === uid) run(); }, d);
+      });
+    };
+    run();
+    unsubs.push(()=>{ try{ unsub && unsub(); }catch(e){} });
+  };
+  const col = (c, key, order) => sub(c, (ok, ko)=>{
+    let qy = collection(db,'carnets',uid,c);
     try{ qy = order ? query(qy, orderBy(order,'desc')) : qy; }catch(e){}
     return onSnapshot(qy, snap=>{
-      state[key] = snap.docs.map(d=>({id:d.id, ...d.data()}));
-      onDataChanged(key);
-    }, err=>{ console.warn(col,err); toast('Erreur de synchronisation ('+col+').','error'); });
-  };
-  unsubs.push(mkSub('stages','stages','startDate'));
-  unsubs.push(mkSub('gestes','gestures','date'));
-  unsubs.push(mkSub('carnets-notes','notebooks','order'));   // collection, clé de state, tri
-  // clinicalProgress -> map indexée par itemId
-  unsubs.push(onSnapshot(collection(db,'carnets',uid,'checklist'), snap=>{
-    const m={}; snap.docs.forEach(d=> m[d.id]={id:d.id,...d.data()});
-    state.progress = m; onDataChanged('progress');
-  }, err=>console.warn('progress',err)));
+      ok(); _raw[key] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      applyOverlay(key); onDataChanged(key);
+    }, ko);
+  });
+  col('stages','stages','startDate');
+  col('gestes','gestures','date');
+  col('carnets-notes','notebooks','order');
+  col('checklist','progress',null);              // map indexée par itemId (voir applyOverlay)
+  // Profil : tenu à jour (le formulaire Paramètres ne doit jamais partir d'un profil vide)
+  sub('profil', (ok, ko)=> onSnapshot(doc(db,'carnets',uid), snap=>{
+    ok(); _raw.profile = snap.exists() ? snap.data() : {};
+    if(snap.exists() || !snap.metadata.fromCache) _raw.profileLoaded = true;
+    applyOverlay('profile'); renderProfileHeader();
+  }, ko));
 }
 function onDataChanged(key){
   // Rafraîchir le module actif + les sélecteurs de stage
@@ -3473,8 +4004,11 @@ function stageOptionsHtml(selectedId, includeNone){
   return html;
 }
 function refreshStageSelectors(){
-  ['ge-stage','pa-stage'].forEach(id=>{ const el=$(id); if(el){ el.innerHTML=stageOptionsHtml(null,false); window.refreshSelect&&window.refreshSelect(el); } });
-  const ns=$('note-stage'); if(ns){ ns.innerHTML='<option value="">Aucun</option>'+stageOptionsHtml('__none__',false); window.refreshSelect&&window.refreshSelect(ns); }
+  // Chaque mise à jour Firestore reconstruit ces listes : on conserve le choix
+  // en cours, sinon un formulaire ouvert repartait sur le stage par défaut.
+  const keep=(el,v)=>{ if(v && [...el.options].some(o=>o.value===v)) el.value=v; };
+  ['ge-stage','pa-stage'].forEach(id=>{ const el=$(id); if(el){ const v=el.value; el.innerHTML=stageOptionsHtml(null,false); keep(el,v); window.refreshSelect&&window.refreshSelect(el); } });
+  const ns=$('note-stage'); if(ns){ const v=ns.value; ns.innerHTML='<option value="">Aucun</option>'+stageOptionsHtml('__none__',false); keep(ns,v); if(!v) ns.value=''; window.refreshSelect&&window.refreshSelect(ns); }
   const cf=$('checklist-stage-filter');
   if(cf){ const v=cf.value; cf.innerHTML='<option value="">Tous les stages</option>'+
     state.stages.map(s=>`<option value="${esc(s.id)}">${esc(s.hospitalName)} — ${esc(s.serviceName)}</option>`).join(''); cf.value=v; window.refreshSelect&&window.refreshSelect(cf); }
@@ -3801,7 +4335,8 @@ function openGeste(entry){
   $('ge-name').value = entry?(entry.customName||(window.GESTURE_MAP[entry.gestureTemplateId]||{}).name||''):'';
   $('ge-date').value = entry?.date || todayMonth();
   $('ge-note').value = entry?.note||'';
-  refreshStageSelectors(); if(entry?.stageId) $('ge-stage').value=entry.stageId;
+  refreshStageSelectors();
+  { const sid=entry?.stageId||currentStage()?.id; if(sid && [...$('ge-stage').options].some(o=>o.value===sid)) $('ge-stage').value=sid; }
   setSegment('ge-role', entry?.role||'supervised');
   setConfStars(entry?.confidence||0);
   $('ge-delete').style.display = entry?'':'none';
@@ -3963,13 +4498,14 @@ async function deleteStage(){
   const s=state.editing.stage; if(!s||!state.user) return;
   const refs=state.gestures.filter(g=>g.stageId===s.id).length;
   const ok=await confirmAction({title:'Supprimer le stage',
-    message: refs?`Ce stage est lié à ${refs} entrée(s) (gestes/pathologies), qui ne seront pas supprimées mais perdront ce rattachement. Continuer ?`:'Cette action est définitive.',
+    message: (refs?`Ce stage est lié à ${refs} entrée(s) (gestes/pathologies), qui ne seront pas supprimées mais perdront ce rattachement.`:'Ce stage sera supprimé.')+' Il reste restaurable 30 jours depuis Profil → Données (sur cet appareil).',
     confirmText:'Supprimer'});
   if(!ok) return;
-  saveInd('saving');
   try{
-    await deleteQueuedDoc(['carnets',state.user.uid,'stages',s.id]);
-    saveInd('saved'); toast('Stage supprimé.','info'); closeModal('modal-stage');
+    const path=['carnets',state.user.uid,'stages',s.id];
+    await trashBackup('stage', [s.hospitalName,s.serviceName].filter(Boolean).join(' — ')||'Stage', [{path, data:withPending(path,s)||s}]);
+    await deleteQueuedDoc(path);
+    toast('Stage supprimé.','info'); closeModal('modal-stage');
   }catch(e){ saveInd('error'); toast('Échec de la suppression.','error'); }
 }
 /* Vue badge + publication HoF */
@@ -4204,10 +4740,25 @@ const NB_COLORS=['#3b82f6','#6366f1','#8b5cf6','#ec4899','#ef4444','#f59e0b','#1
 function ensureActiveNotebook(){ /* vue grille par défaut : pas d'auto-sélection */ }
 function listenPages(){
   if(pagesUnsub){ pagesUnsub(); pagesUnsub=null; }
+  _raw.pages=[];
   if(!state.user||!state.activeNotebookId){ state.pages=[]; return; }
-  const qy=collection(db,'carnets',state.user.uid,'carnets-notes',state.activeNotebookId,'pages');
-  pagesUnsub=onSnapshot(qy, snap=>{ state.pages=snap.docs.map(d=>({id:d.id,...d.data()})); nbCounts[state.activeNotebookId]=snap.size; invalidatePagesCache(); if(state.activeModule==='notes' && notesFilter===state.activeNotebookId) renderNotes(); },
-    err=>console.warn('pages',err));
+  applyOverlay('pages');                     // pages en attente visibles avant la 1re réponse
+  const uid=state.user.uid, nbId=state.activeNotebookId, gen=_listenGen;
+  let tries=0, unsub=null, stopped=false;
+  const run=()=>{
+    unsub=onSnapshot(collection(db,'carnets',uid,'carnets-notes',nbId,'pages'), snap=>{
+      tries=0; if(state.activeNotebookId!==nbId) return;
+      _raw.pages=snap.docs.map(d=>({id:d.id,...d.data()})); applyOverlay('pages');
+      nbCounts[nbId]=state.pages.length; invalidatePagesCache();
+      if(state.activeModule==='notes' && notesFilter===nbId) renderNotes();
+    }, err=>{
+      console.warn('pages',err);
+      // Listener arrêté par l'erreur : relance tant que ce carnet est ouvert
+      setTimeout(()=>{ if(!stopped && gen===_listenGen && state.activeNotebookId===nbId) run(); }, Math.min(60000, 3000*Math.pow(2,tries++)));
+    });
+  };
+  run();
+  pagesUnsub=()=>{ stopped=true; try{ unsub&&unsub(); }catch(e){} };
 }
 function renderNotes(){
   const c=$('notes-content'); if(!c) return;
@@ -4346,16 +4897,24 @@ function editNotebook(id){
 }
 async function deleteNotebook(id){
   const n=state.notebooks.find(x=>x.id===id); if(!n||!state.user) return;
-  const ok=await confirmAction({title:'Supprimer le carnet',message:`« ${esc(n.title)} » et toutes ses pages seront définitivement supprimés.`,confirmText:'Supprimer'});
+  const ok=await confirmAction({title:'Supprimer le carnet',message:`« ${n.title} » et toutes ses pages seront supprimés. Une copie reste restaurable 30 jours depuis Profil → Données (sur cet appareil).`,confirmText:'Supprimer'});
   if(!ok) return;
-  saveInd('saving');
   try{
-    const snap=await getDocs(collection(db,'carnets',state.user.uid,'carnets-notes',id,'pages'));
-    if(snap.size){ const batch=writeBatch(db); snap.forEach(d=> batch.delete(d.ref)); await batch.commit().catch(()=>{}); }
-    await deleteQueuedDoc(['carnets',state.user.uid,'carnets-notes',id]);
+    const base=['carnets',state.user.uid,'carnets-notes',id];
+    let pages;
+    try{
+      const snap=await withTimeout(getDocs(collection(db,...base,'pages')), 10000);
+      pages=snap.docs.map(d=>({id:d.id,...d.data()}));
+    }catch(e){ toast('Pages du carnet inaccessibles pour le moment — suppression annulée, rien n\'a été effacé.','error'); return; }
+    // Pages encore en file (créées hors ligne) comprises : sinon elles
+    // réapparaîtraient orphelines après la suppression du carnet.
+    pages=overlayDocs(pages,[...base,'pages']).docs;
+    await trashBackup('notebook', n.title||'Carnet', [{path:base, data:withPending(base,n)||n}, ...pages.map(p=>({path:[...base,'pages',p.id], data:p}))]);
+    pages.forEach(p=> queueDelete([...base,'pages',p.id], {batch:true}));
+    await deleteQueuedDoc(base);
     delete nbCounts[id];
     if(notesFilter===id){ notesFilter=''; state.activeNotebookId=null; if(pagesUnsub){ pagesUnsub(); pagesUnsub=null; } }
-    saveInd('saved'); toast('Carnet supprimé.','info'); closeModal('modal-notebook');
+    toast('Carnet supprimé.','info'); closeModal('modal-notebook');
   }catch(e){ saveInd('error'); toast('Échec.','error'); }
 }
 async function saveNotebook(){
@@ -4376,6 +4935,15 @@ async function saveNotebook(){
 }
 function openPage(page){
   if(!state.activeNotebookId){ toast('Créez d\'abord un carnet.','info'); return addNotebook(); }
+  // Toujours partir de la version la plus récente (modifications en attente
+  // comprises) : rouvrir une ancienne version puis la sauvegarder écrasait
+  // les dernières modifications non encore envoyées.
+  if(page && state.user){
+    const fresh=withPending(['carnets',state.user.uid,'carnets-notes',state.activeNotebookId,'pages',page.id], page);
+    if(!fresh){ toast('Cette page a été supprimée.','info'); return; }
+    page=fresh;
+  }
+  state.noteNbId = state.activeNotebookId;   // carnet de la page ouverte, figé pendant l'édition
   state.currentNotePage = page||null; state.noteDirty=false;
   $('note-title').value=page?.title||'';
   $('note-stage').value=page?.stageId||'';
@@ -4387,8 +4955,12 @@ function openPage(page){
   updateCharCount();
   $('note-pin').innerHTML = page?.pinned? '<i class="fas fa-star"></i> Épinglé' : '<i class="far fa-star"></i> Épingler';
   $('note-delete').style.display = page?'':'none';
-  // hook de fermeture : sauvegarde forcée
-  $('modal-note')._beforeClose=()=>{ forceSaveNote(); return true; };
+  // hook de fermeture : sauvegarde forcée (refusée tant qu'un fichier est en cours d'envoi,
+  // sinon il atterrissait dans la page suivante ou était perdu)
+  $('modal-note')._beforeClose=()=>{
+    if(pendingUploads()){ toast('Envoi de fichier en cours — patientez avant de fermer la note.','warning'); return false; }
+    closeNoteSaving(); return true;
+  };
   $('modal-note').classList.remove('rt-expanded');
   if(typeof _rtExpandSync==='function') _rtExpandSync();
   openModal('modal-note');
@@ -4409,21 +4981,30 @@ function scheduleNoteSave(){
 /* Verse le contenu courant de l'éditeur dans la file d'écriture.
    Aucune requête réseau ici : queueWrite sécurise localStorage puis temporise. */
 function queueNoteSave(){
-  if(!state.user || !state.activeNotebookId || !state.noteDirty) return false;
+  const nb = state.noteNbId || state.activeNotebookId;
+  if(!state.user || !nb || !state.noteDirty) return false;
   const editor=$('note-editor'); if(!editor) return false;
-  const uid=state.user.uid, nb=state.activeNotebookId;
+  const uid=state.user.uid;
   const isNew = !state.currentNotePage;
   if(isNew){
     // Identifiant généré côté client (aucune écriture) : la création d'une page
     // devient une écriture ordinaire, donc temporisable et rejouable.
     state.currentNotePage = { id: doc(collection(db,'carnets',uid,'carnets-notes',nb,'pages')).id };
   }
-  const clean = DOMPurify.sanitize(editor.innerHTML, sanitizeCfg());
+  // L'indicateur « Téléchargement en cours… » d'une image ne doit jamais être enregistré
+  const clean = DOMPurify.sanitize(editor.innerHTML, sanitizeCfg()).replace(/<div class="notes-img-uploading">[\s\S]*?<\/div>/g, '');
   const payload = {
     title: $('note-title').value.trim()||'Sans titre', html:clean, plainText: editor.innerText||'',
     stageId: $('note-stage').value||null,
-    pdfs: Array.isArray(state.notePdfs)?state.notePdfs:[], updatedAt: TS
+    pdfs: Array.isArray(state.notePdfs)?state.notePdfs.map(p=>({...p})):[], updatedAt: TS
   };
+  // Firestore refuse les documents de plus de 1 Mo : prévenir avant le refus
+  if(clean.length > 900000 && state._noteSizeWarned !== state.currentNotePage.id){
+    state._noteSizeWarned = state.currentNotePage.id;
+    toast(clean.indexOf('data:image/')>=0
+      ? 'Note très lourde : ses images seront envoyées vers le stockage dès que la connexion le permet.'
+      : 'Note proche de la taille maximale (1 Mo) — pensez à la scinder ou à retirer des images.', 'warning');
+  }
   if(isNew){ payload.createdAt=TS; payload.pinned=false; payload.order=state.pages.length; }
   // reflet local immédiat (l'écran ne doit pas attendre l'aller-retour Firestore)
   state.currentNotePage = { ...state.currentNotePage, title:payload.title, html:clean,
@@ -4436,6 +5017,20 @@ function queueNoteSave(){
 async function forceSaveNote(){
   queueNoteSave();
   return await forceSaveCarnetAsync();
+}
+/* Fichiers retirés d'une note (images, PDF) : effacés du stockage seulement
+   à la fermeture, et seulement s'ils ne sont plus référencés — un Ctrl+Z
+   ou une sauvegarde échouée ne laisse plus de lien cassé. */
+const _noteFileTrash = new Set();
+window._notesTrashFile = path=>{ if(path) _noteFileTrash.add(path); };
+function closeNoteSaving(){
+  const ed=$('note-editor');
+  const refs=(ed?ed.innerHTML:'')+JSON.stringify(state.notePdfs||[]);
+  const paths=[..._noteFileTrash]; _noteFileTrash.clear();
+  return forceSaveNote().then(ok=>{
+    if(ok) paths.forEach(p=>{ if(refs.indexOf(p)<0){ try{ deleteObject(storageRef(_storage,p)).catch(()=>{}); }catch(e){} } });
+    return ok;
+  });
 }
 
 /* ============ PDF joints aux pages de notes ============ */
@@ -4478,6 +5073,7 @@ function closePdfViewer(){ commitPdfRename(); state.currentPdfIdx=null; closeMod
 async function handlePdfFiles(files){
   if(!state.user){ toast('Connectez-vous pour joindre un PDF.','info'); return; }
   if(!state.activeNotebookId){ toast('Ouvrez une page pour joindre un PDF.','info'); return; }
+  if(!navigator.onLine || isOfflineMode){ toast('Joindre un PDF nécessite une connexion internet.','warning'); return; }
   state.notePdfs = state.notePdfs||[];
   for(const file of files){
     if(state.notePdfs.length >= NOTE_PDF_MAX){ toast(`Maximum ${NOTE_PDF_MAX} PDF par page.`,'warning'); break; }
@@ -4489,6 +5085,7 @@ async function handlePdfFiles(files){
   renderNotePdfs(); scheduleNoteSave();
 }
 function uploadOnePdf(file){
+  window._carnetUploadStart();
   return new Promise(resolve=>{
     const list=$('note-pdf-list');
     const chip=document.createElement('div');
@@ -4500,17 +5097,24 @@ function uploadOnePdf(file){
     const path=`notesPdf/${uid}/${Date.now()}_${Math.random().toString(36).slice(2)}_${safe}`;
     const sRef=window._storageRef(window._storage, path);
     const canResumable = !!window._uploadBytesResumable;
-    const finish=(url)=>{ state.notePdfs.push({ name:file.name||'Document.pdf', url, path, size:file.size||0 }); chip.remove(); renderNotePdfs(); resolve(); };
-    const fail=(e)=>{ console.warn('PDF upload',e); chip.remove(); toast(`Échec de l'envoi de « ${file.name} ».`,'error'); resolve(); };
+    const pdfs=state.notePdfs;                 // liste de CETTE page (la fermeture est bloquée pendant l'envoi)
+    let settled=false, watchdog=null;
+    const done=()=>{ if(settled) return false; settled=true; clearTimeout(watchdog); window._carnetUploadEnd(); return true; };
+    const finish=(url)=>{ if(!done()) return; pdfs.push({ name:file.name||'Document.pdf', url, path, size:file.size||0 }); chip.remove(); renderNotePdfs(); scheduleNoteSave(); resolve(); };
+    const fail=(e)=>{ if(!done()) return; console.warn('PDF upload',e); chip.remove(); toast(`Échec de l'envoi de « ${file.name} ».`,'error'); resolve(); };
+    // Sans progression pendant 60 s (réseau coupé) : abandon, la note n'est pas bloquée
+    const arm=(task)=>{ clearTimeout(watchdog); watchdog=setTimeout(()=>{ try{ task&&task.cancel(); }catch(e){} fail(new Error('upload stalled')); }, 60000); };
     try{
       if(canResumable){
         const task=window._uploadBytesResumable(sRef, file, { contentType:'application/pdf' });
+        arm(task);
         task.on('state_changed',
-          snap=>{ const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100); const el=chip.querySelector('[data-pct]'); if(el) el.textContent=pct+'%'; },
+          snap=>{ arm(task); const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100); const el=chip.querySelector('[data-pct]'); if(el) el.textContent=pct+'%'; },
           fail,
           ()=> window._getDownloadURL(task.snapshot.ref).then(finish).catch(fail)
         );
       } else {
+        arm(null);
         window._uploadBytes(sRef, file, { contentType:'application/pdf' })
           .then(snap=> window._getDownloadURL(snap.ref)).then(finish).catch(fail);
       }
@@ -4521,7 +5125,7 @@ async function removeNotePdf(idx){
   const pdfs=state.notePdfs||[]; const p=pdfs[idx]; if(!p) return;
   const ok=await confirmAction({title:'Retirer ce PDF',message:`« ${esc(p.name)} » sera retiré de cette page.`,confirmText:'Retirer'});
   if(!ok) return;
-  try{ if(p.path && window._deleteObject) window._deleteObject(window._storageRef(window._storage,p.path)).catch(()=>{}); }catch(_){}
+  if(p.path) _noteFileTrash.add(p.path);      // effacé du stockage à la fermeture de la note
   pdfs.splice(idx,1); renderNotePdfs(); scheduleNoteSave();
 }
 /* Câblage des contrôles PDF (délégation) */
@@ -4542,15 +5146,25 @@ $('note-image-input')?.addEventListener('change', e=>{ const files=e.target.file
 
 async function deletePage(){
   if(!state.currentNotePage||!state.user) return;
-  const ok=await confirmAction({title:'Supprimer la page',message:'Cette page sera définitivement supprimée.',confirmText:'Supprimer'});
+  if(pendingUploads()){ toast('Envoi de fichier en cours — patientez.','warning'); return; }
+  const ok=await confirmAction({title:'Supprimer la page',message:'Cette page sera supprimée. Elle reste restaurable 30 jours depuis Profil → Données (sur cet appareil).',confirmText:'Supprimer'});
   if(!ok) return;
   try{
-    // Nettoyage Storage : PDF joints + images de la note
-    try{
-      (state.notePdfs||[]).forEach(p=>{ if(p.path && window._deleteObject) window._deleteObject(window._storageRef(window._storage,p.path)).catch(()=>{}); });
-      if(window._deleteEditorImagesFromHtml && state.currentNotePage?.html) window._deleteEditorImagesFromHtml(state.currentNotePage.html);
-    }catch(_){}
-    await deleteQueuedDoc(['carnets',state.user.uid,'carnets-notes',state.activeNotebookId,'pages',state.currentNotePage.id]);
+    const path=['carnets',state.user.uid,'carnets-notes',state.noteNbId||state.activeNotebookId,'pages',state.currentNotePage.id];
+    // Copie de secours avec le contenu de l'éditeur, même non encore envoyé
+    state.noteDirty=true; queueNoteSave();
+    const data=withPending(path, state.currentNotePage)||state.currentNotePage;
+    const backed=await trashBackup('page', data.title||'Sans titre', [{path, data}]);
+    _noteFileTrash.clear();
+    // Fichiers liés : conservés tant que la page est restaurable (effacés à
+    // l'expiration de la corbeille) ; sans copie de secours, nettoyage immédiat.
+    if(!backed){
+      try{
+        (data.pdfs||[]).forEach(p=>{ if(p.path) deleteObject(storageRef(_storage,p.path)).catch(()=>{}); });
+        if(window._deleteEditorImagesFromHtml && data.html) window._deleteEditorImagesFromHtml(data.html);
+      }catch(_){}
+    }
+    await deleteQueuedDoc(path);
     state.currentNotePage=null; state.noteDirty=false; $('modal-note')._beforeClose=null;
     toast('Page supprimée.','info'); closeModal('modal-note');
   }catch(e){ toast('Échec de la suppression.','error'); }
@@ -4559,12 +5173,11 @@ async function togglePin(){
   if(!state.currentNotePage) queueNoteSave();
   if(!state.currentNotePage) return;
   const np=!state.currentNotePage.pinned;
-  try{
-    await queueWrite(['carnets',state.user.uid,'carnets-notes',state.activeNotebookId,'pages',state.currentNotePage.id],
-                     {pinned:np, updatedAt:TS}, {now:true});
-    state.currentNotePage.pinned=np;
-    $('note-pin').innerHTML = np? '<i class="fas fa-star"></i> Épinglé' : '<i class="far fa-star"></i> Épingler';
-  }catch(e){ toast('Échec.','error'); }
+  // Mise en file (sécurisée localement) puis affichage immédiat : pas d'attente réseau
+  queueWrite(['carnets',state.user.uid,'carnets-notes',state.noteNbId||state.activeNotebookId,'pages',state.currentNotePage.id],
+             {pinned:np, updatedAt:TS}, {now:true});
+  state.currentNotePage.pinned=np;
+  $('note-pin').innerHTML = np? '<i class="fas fa-star"></i> Épinglé' : '<i class="far fa-star"></i> Épingler';
 }
 
 /* ----- Éditeur riche (execCommand + délégation, style ECOS) ----- */
@@ -4619,10 +5232,14 @@ function openSettings(){
   $('set-pseudo').value=state.profile.pseudo||'';
   $('set-pseudo-group').style.display = $('set-hof-mode').value==='pseudo'?'':'none';
   window.refreshSelectsIn&&window.refreshSelectsIn($('modal-settings')); openModal('modal-settings');
+  renderDataPanel();
 }
 $('set-hof-mode')?.addEventListener('change', e=>{ $('set-pseudo-group').style.display = e.target.value==='pseudo'?'':'none'; });
 async function saveSettings(){
   if(!state.user) return;
+  // Profil jamais chargé (hors ligne sans cache) : le formulaire contenait des
+  // valeurs par défaut qui auraient écrasé le vrai profil.
+  if(!_raw.profileLoaded){ toast('Profil pas encore chargé depuis le serveur — réessayez une fois connecté.','warning'); return; }
   const payload={
     displayName:$('set-displayname').value.trim()||'Utilisateur',
     studyLevelCode:$('set-level').value,
@@ -4633,14 +5250,156 @@ async function saveSettings(){
   const btn=$('set-save'); btn.disabled=true; btn.classList.add('btn-loading'); saveInd('saving');
   try{
     const ok = await queueWrite(['carnets',state.user.uid], payload, {now:true});
-    if(!ok) toast('Profil conservé localement — synchronisation en attente.','info');
-    state.profile={...state.profile,...payload, updatedAt:state.profile.updatedAt};
-    $('profile-name').textContent=payload.displayName;
-    if(!(state.profile.photoURL||state.user.photoURL)) $('avatar-initials').textContent=getInitials(payload.displayName);
-    saveInd('saved'); toast('Profil mis à jour.','success'); closeModal('modal-settings');
+    applyOverlay('profile'); renderProfileHeader();
+    toast(ok ? 'Profil mis à jour.' : 'Profil conservé localement — synchronisation en attente.', ok?'success':'info');
+    closeModal('modal-settings');
     renderModule(state.activeModule);
   }catch(e){ saveInd('error'); toast('Échec.','error'); }
   finally{ btn.disabled=false; btn.classList.remove('btn-loading'); }
+}
+
+/* ============================================================= */
+/* CORBEILLE LOCALE — 30 jours, sur cet appareil                  */
+/* Toute suppression garde d'abord une copie complète (IndexedDB),*/
+/* restaurable depuis Profil → Données. Les fichiers liés (images,*/
+/* PDF) ne sont effacés du stockage qu'à l'expiration.            */
+/* ============================================================= */
+const TRASH_DAYS = 30, TRASH_MAX = 60;
+const trashKey = uid => 'carnet_trash_' + uid;
+function trashData(d){
+  const o = { ...d };
+  ['id','notebookId','notebookTitle','notebookColor','notebookIcon'].forEach(k=> delete o[k]);
+  return toLocalData(o);
+}
+async function trashRead(){
+  if(!state.user) return [];
+  const l = await _idb.get(trashKey(state.user.uid));
+  return Array.isArray(l) ? l : [];
+}
+function purgeTrashFiles(entry){
+  (entry.docs||[]).forEach(d=>{
+    const data = d.data||{};
+    if(Array.isArray(data.pdfs)) data.pdfs.forEach(p=>{ if(p && p.path){ try{ deleteObject(storageRef(_storage,p.path)).catch(()=>{}); }catch(e){} } });
+    if(typeof data.html==='string' && window._deleteEditorImagesFromHtml) window._deleteEditorImagesFromHtml(data.html);
+  });
+}
+async function trashSave(list){
+  const keep=[], expired=[];
+  list.forEach((e,i)=> (i < TRASH_MAX && Date.now()-e.at < TRASH_DAYS*864e5 ? keep : expired).push(e));
+  const ok = await _idb.set(trashKey(state.user.uid), keep);
+  if(ok) expired.forEach(purgeTrashFiles);
+  return ok;
+}
+/* docs : [{ path, data }] — renvoie false si la copie n'a pas pu être écrite */
+async function trashBackup(kind, label, docs){
+  if(!state.user) return false;
+  const list = await trashRead();
+  list.unshift({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), kind, label, at: Date.now(),
+    docs: docs.map(d=>({ path:d.path, data:trashData(d.data||{}) })) });
+  return trashSave(list);
+}
+async function trashRestore(id){
+  if(!state.user) return;
+  const list = await trashRead(); const e = list.find(x=>x.id===id); if(!e) return;
+  const uid = state.user.uid;
+  if(e.docs.some(d=> d.path[1]!==uid)){ toast('Cet élément appartient à un autre compte.','error'); return; }
+  // Une page seule ne peut revenir que dans un carnet existant
+  if(e.kind==='page'){
+    const nb = e.docs[0].path[3];
+    if(!state.notebooks.some(n=>n.id===nb)){ toast('Son carnet a été supprimé : restaurez d\'abord le carnet.','warning'); renderDataPanel(); return; }
+  }
+  e.docs.forEach(d=> queueWrite(d.path, { ...d.data, updatedAt:TS }, { merge:false }));
+  await trashSave(list.filter(x=>x.id!==id));
+  if(e.kind==='notebook' || e.kind==='page') delete nbCounts[e.docs[0].path[3]];
+  toast('« '+e.label+' » restauré.','success');
+  renderDataPanel();
+}
+
+/* ============================================================= */
+/* DONNÉES & SAUVEGARDE (panneau des paramètres)                  */
+/* ============================================================= */
+const TRASH_ICONS = { stage:'fa-hospital', geste:'fa-syringe', notebook:'fa-book', page:'fa-file-lines' };
+const TRASH_KINDS = { stage:'Stage', geste:'Geste', notebook:'Carnet', page:'Note' };
+async function renderDataPanel(){
+  const st=$('set-sync-status'); if(!st || !state.user) return;
+  const n=_writeQueue.size, q=_quarantine.length;
+  st.className='set-sync '+(q?'err':n?'warn':'ok');
+  st.innerHTML = q ? `<i class="fas fa-triangle-exclamation"></i> ${q} modification(s) refusée(s) par le serveur, conservée(s) sur cet appareil.`
+    : n ? `<i class="fas fa-cloud-arrow-up"></i> ${n} modification(s) en attente d'envoi${isOfflineMode?' (hors ligne)':''} — enregistrée(s) sur cet appareil.`
+    : '<i class="fas fa-circle-check"></i> Toutes vos données sont synchronisées.';
+  const qb=$('set-quarantine');
+  if(qb) qb.innerHTML = q ? `<div class="set-q-list">${_quarantine.map(x=>`
+      <div class="set-row"><i class="fas fa-file-circle-exclamation"></i>
+        <span class="set-row-txt">${esc((x.data&&x.data.title)||x.path.slice(2).join(' / '))}<small>${x.reason==='size'?'Trop volumineux (plus de 1 Mo)':'Refusé : '+esc(x.reason||'')}</small></span>
+        <button class="btn btn-ghost btn-sm" data-q-discard="${esc(x.key)}">Abandonner</button></div>`).join('')}
+      <button class="btn btn-ghost btn-sm" id="set-q-retry"><i class="fas fa-rotate"></i> Réessayer l'envoi</button></div>` : '';
+  const tb=$('set-trash'); if(!tb) return;
+  const live=(await trashRead()).filter(e=> Date.now()-e.at < TRASH_DAYS*864e5);
+  tb.innerHTML = live.length ? live.map(e=>`
+    <div class="set-row"><i class="fas ${TRASH_ICONS[e.kind]||'fa-file'}"></i>
+      <span class="set-row-txt">${esc(e.label)}<small>${TRASH_KINDS[e.kind]||'Élément'}${e.kind==='notebook'?' · '+(e.docs.length-1)+' page(s)':''} · supprimé le ${new Date(e.at).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}</small></span>
+      <button class="btn btn-ghost btn-sm" data-trash-restore="${esc(e.id)}"><i class="fas fa-rotate-left"></i> Restaurer</button></div>`).join('')
+    : '<div class="form-hint" style="margin:0">Aucun élément supprimé récemment.</div>';
+}
+$('modal-settings')?.addEventListener('click', async e=>{
+  const r=e.target.closest('[data-trash-restore]'); if(r){ r.disabled=true; await trashRestore(r.dataset.trashRestore); return; }
+  const d=e.target.closest('[data-q-discard]');
+  if(d){
+    const ok=await confirmAction({title:'Abandonner cette modification',message:'Elle ne sera jamais envoyée et sera effacée de cet appareil. Exportez vos données avant si vous voulez la garder.',confirmText:'Abandonner'});
+    if(ok){ discardQuarantine(d.dataset.qDiscard); renderDataPanel(); }
+    return;
+  }
+  if(e.target.closest('#set-q-retry')){ toast('Nouvel envoi…','info'); await retryQuarantine(); renderDataPanel(); return; }
+  if(e.target.closest('#set-sync-now')){ await syncNow(); renderDataPanel(); return; }
+  if(e.target.closest('#set-export')) exportCarnet();
+});
+async function syncNow(){
+  if(!state.user) return;
+  if(!_writeQueue.size){ toast(_quarantine.length?'Les modifications refusées se renvoient avec « Réessayer l\'envoi ».':'Tout est déjà synchronisé.','info'); return; }
+  if(!navigator.onLine){ toast('Pas de connexion internet.','warning'); return; }
+  _recoverStep=0; saveInd('saving');
+  const ok=await tryRecover();
+  toast(ok?'Synchronisation terminée.':'Synchronisation impossible pour l\'instant — nouvel essai automatique.', ok?'success':'warning');
+}
+/* Export complet en JSON : une copie que l'utilisateur garde où il veut. */
+function toPlain(v){
+  if(v instanceof Timestamp) return v.toDate().toISOString();
+  if(v instanceof Date) return v.toISOString();
+  if(v === TS) return new Date().toISOString();
+  if(Array.isArray(v)) return v.map(toPlain);
+  if(v && typeof v==='object'){ if(typeof v.__ts==='number') return new Date(v.__ts).toISOString(); const o={}; for(const k in v) o[k]=toPlain(v[k]); return o; }
+  return v;
+}
+async function exportCarnet(){
+  if(!state.user) return;
+  const btn=$('set-export'); if(btn){ btn.disabled=true; btn.classList.add('btn-loading'); }
+  try{
+    queueNoteSave();
+    const uid=state.user.uid, partial=[];
+    const read=async (...p)=>{
+      try{ return overlayDocs((await withTimeout(getDocs(collection(db,...p)),15000)).docs.map(d=>({id:d.id,...d.data()})), p).docs; }
+      catch(e){ partial.push(p.slice(2).join('/')); return null; }
+    };
+    const out={ format:'typixclin-carnet-de-stage', version:1, exportedAt:new Date().toISOString(), uid, email:state.user.email||'' };
+    out.profil = state.profile;
+    out.stages = await read('carnets',uid,'stages') || state.stages;
+    out.gestes = await read('carnets',uid,'gestes') || state.gestures;
+    out.checklist = await read('carnets',uid,'checklist') || Object.values(state.progress);
+    const nbs = await read('carnets',uid,'carnets-notes') || state.notebooks;
+    out.carnetsNotes = [];
+    for(const nb of nbs){ out.carnetsNotes.push({ ...nb, pages: await read('carnets',uid,'carnets-notes',nb.id,'pages') || [] }); }
+    out.enAttente = [..._writeQueue.values()].map(o=>({ chemin:o.path.join('/'), suppression:!!o.del, donnees:o.data }));
+    out.quarantaine = _quarantine.map(o=>({ chemin:o.path.join('/'), raison:o.reason, donnees:o.data }));
+    out.corbeille = await trashRead();
+    if(partial.length) out.incomplet = partial;
+    const blob=new Blob([JSON.stringify(toPlain(out),null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='carnet-de-stage-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
+    toast(partial.length?'Export réalisé (partiel : certaines parties étaient inaccessibles).':'Export réalisé.', partial.length?'warning':'success');
+  }catch(e){ console.warn('export',e); toast('Échec de l\'export.','error'); }
+  finally{ if(btn){ btn.disabled=false; btn.classList.remove('btn-loading'); } }
 }
 
 /* ============================================================= */
@@ -4714,12 +5473,15 @@ $('st-delete')?.addEventListener('click',deleteStage);
 $('st-type')?.addEventListener('change',updateStagePreview);
 $('st-hospital')?.addEventListener('input',updateStagePreview);
 $('ge-save')?.addEventListener('click',saveGeste);
-$('ge-delete')?.addEventListener('click', async ()=>{ const e=state.editing.geste; if(!e) return; const ok=await confirmAction({title:'Supprimer le geste',message:'Cette réalisation sera supprimée.',confirmText:'Supprimer'}); if(ok){ try{ await deleteQueuedDoc(['carnets',state.user.uid,'gestes',e.id]); toast('Geste supprimé.','info'); closeModal('modal-geste'); }catch(x){ toast('Échec.','error'); } } });
+$('ge-delete')?.addEventListener('click', async ()=>{ const e=state.editing.geste; if(!e||!state.user) return; const ok=await confirmAction({title:'Supprimer le geste',message:'Cette réalisation sera supprimée (restaurable 30 jours depuis Profil → Données, sur cet appareil).',confirmText:'Supprimer'}); if(ok){ try{ const path=['carnets',state.user.uid,'gestes',e.id]; await trashBackup('geste', e.customName||(window.GESTURE_MAP[e.gestureTemplateId]||{}).name||'Geste', [{path, data:withPending(path,e)||e}]); await deleteQueuedDoc(path); toast('Geste supprimé.','info'); closeModal('modal-geste'); }catch(x){ toast('Échec.','error'); } } });
 $('checklist-content')?.addEventListener('click', onChecklistClick);
 $('nb-save')?.addEventListener('click',saveNotebook);
 $('note-delete')?.addEventListener('click',deletePage);
 $('note-pin')?.addEventListener('click',togglePin);
-$('note-close-save')?.addEventListener('click', async ()=>{ await forceSaveNote(); $('modal-note')._beforeClose=null; closeModal('modal-note'); });
+$('note-close-save')?.addEventListener('click', async ()=>{
+  if(pendingUploads()){ toast('Envoi de fichier en cours — patientez avant de fermer la note.','warning'); return; }
+  await closeNoteSaving(); $('modal-note')._beforeClose=null; closeModal('modal-note');
+});
 $('set-save')?.addEventListener('click',saveSettings);
 $('notebook-select')?.addEventListener('change', e=>{ notesFilter=e.target.value; if(notesFilter){ state.activeNotebookId=notesFilter; listenPages(); } renderNotes(); });
 $('nb-delete')?.addEventListener('click',()=>{ if(state.editing.notebook) deleteNotebook(state.editing.notebook); });
@@ -4771,15 +5533,24 @@ $('hof-search')?.addEventListener('input', window.debounce(renderHof,200));
 /* Sortie de page : filet local synchrone, puis avertissement si des écritures
    n'ont pas encore été confirmées par Firestore. */
 window.addEventListener('beforeunload', (e)=>{
-  queueNoteSave();       // synchrone : verse l'éditeur ouvert dans la file
-  persistLocalNow();     // synchrone : localStorage
-  if(_writeQueue.size){ e.preventDefault(); e.returnValue = ''; return ''; }
+  queueNoteSave();               // synchrone : verse l'éditeur ouvert dans la file
+  persistLocalNow({ now:true }); // localStorage (synchrone) + IndexedDB
+  if(_writeQueue.size || pendingUploads()){ e.preventDefault(); e.returnValue = ''; return ''; }
 });
-/* Mise en arrière-plan (surtout mobile) : on n'attend pas la fin du debounce. */
+/* Mise en arrière-plan (surtout mobile, où la page peut être tuée sans
+   autre avertissement) : on n'attend pas la fin du debounce. Au retour au
+   premier plan, on relance tout envoi resté en échec. */
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'hidden'){ queueNoteSave(); persistLocalNow(); flushWrites(); }
+  if(document.visibilityState === 'hidden'){ queueNoteSave(); persistLocalNow({ now:true }); flushWrites(); }
+  else if(_writeQueue.size && navigator.onLine){ _recoverStep = 0; tryRecover(); }
 });
-window.addEventListener('pagehide', ()=>{ queueNoteSave(); persistLocalNow(); });
+window.addEventListener('pagehide', ()=>{ queueNoteSave(); persistLocalNow({ now:true }); });
+/* Indicateur de sauvegarde : un clic relance l'envoi ou ouvre le détail. */
+$('save-indicator-header')?.addEventListener('click', ()=>{
+  if(!state.user) return;
+  if(_quarantine.length) openSettings();
+  else if(_writeQueue.size) syncNow();
+});
 
 /* Bannière hors ligne */
 function updateOnline(){ const b=$('offline-banner'); if(b) b.classList.toggle('show', !navigator.onLine); }
@@ -4858,7 +5629,8 @@ if(window.enhanceAllPickers) window.enhanceAllPickers();
     var p=document.getElementById(_CFG.pct); if(p) p.textContent=val+'%'; _notifyDirty(); };
   window._notesImgFooterDelete=function(){ if(!_active||_active._removing) return; _active._removing=true;
     var wrapper=_active, path=wrapper.dataset.storagePath;
-    if(path && window._deleteObject && window._storageRef && window._storage){ try{ window._deleteObject(window._storageRef(window._storage,path)).catch(function(){}); }catch(x){} }
+    /* Effacement du stockage différé à la fermeture de la note (annulation possible) */
+    if(path && window._notesTrashFile) window._notesTrashFile(path);
     var editor=document.getElementById(_CFG.editor); _active=null; _footerHide();
     wrapper.style.animation='_notesImgDisappear 0.28s cubic-bezier(0.4,0,0.6,1) both'; wrapper.style.pointerEvents='none';
     setTimeout(function(){ if(editor) editor._allowImgRemove=true; var nx=wrapper.nextSibling; wrapper.remove();
@@ -4901,9 +5673,10 @@ if(window.enhanceAllPickers) window.enhanceAllPickers();
       try{ var nr=document.createRange(); nr.setStartAfter(br); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr); }catch(ex){}
     } else { editor.appendChild(wrapper); editor.appendChild(document.createElement('br')); }
   }
-  function _insertBase64(file, editor){
+  function _insertBase64(file, editor, done){
     _compressImage(file,1200,1200,0.78,function(blob){ var r=new FileReader();
-      r.onload=function(ev){ var w=_makeWrapper(ev.target.result,''); w.classList.add('do-appear'); _insertWrapper(w,editor); _notifyDirty(); };
+      r.onload=function(ev){ var w=_makeWrapper(ev.target.result,''); w.classList.add('do-appear'); _insertWrapper(w,editor); _notifyDirty(); if(done) done(); };
+      r.onerror=function(){ if(done) done(); if(window.showToast) window.showToast("Impossible de lire cette image.","error"); };
       r.readAsDataURL(blob||file); });
   }
   window._notesInsertImage=function(file){
@@ -4918,16 +5691,25 @@ if(window.enhanceAllPickers) window.enhanceAllPickers();
     if(range && editor.contains(range.commonAncestorContainer)){ range.collapse(false); range.insertNode(placeholder);
       range.setStartAfter(placeholder); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); }
     else editor.appendChild(placeholder);
+    /* Envoi suivi : la note ne peut pas être fermée tant qu'il n'est pas terminé.
+       Hors ligne ou réseau lent (> 20 s) : image gardée dans la note (base64),
+       envoyée vers le stockage automatiquement au retour du réseau. */
+    if(window._carnetUploadStart) window._carnetUploadStart();
+    var ended=false;
+    function end(){ if(ended) return; ended=true; if(window._carnetUploadEnd) window._carnetUploadEnd(); }
+    function fallback(){ placeholder.remove(); _insertBase64(file,editor,end); }
     _compressImage(file,1400,1400,0.82,function(blob){
-      if(!blob){ placeholder.remove(); if(window.showToast) window.showToast("Impossible de lire cette image.","error"); return; }
+      if(!blob){ placeholder.remove(); end(); if(window.showToast) window.showToast("Impossible de lire cette image.","error"); return; }
       var uid=window.currentUser?window.currentUser.uid:null;
       var canStorage = uid && window._storage && window._storageRef && window._uploadBytes && window._getDownloadURL;
-      if(!canStorage){ placeholder.remove(); _insertBase64(file,editor); return; }
+      if(!canStorage || !navigator.onLine || window.isOfflineMode){ fallback(); return; }
       var path=_CFG.folder+'/'+uid+'/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg';
       var sRef=window._storageRef(window._storage,path);
+      var timedOut=false, timer=setTimeout(function(){ timedOut=true; console.warn('[ImgNotes] envoi trop lent, fallback base64'); fallback(); }, 20000);
       window._uploadBytes(sRef,blob).then(function(snap){ return window._getDownloadURL(snap.ref); })
-        .then(function(url){ placeholder.remove(); var w=_makeWrapper(url,path); w.classList.add('do-appear'); _insertWrapper(w,editor); _notifyDirty(); })
-        .catch(function(err){ console.warn('[ImgNotes] fallback base64:',err); placeholder.remove(); _insertBase64(file,editor); });
+        .then(function(url){ clearTimeout(timer); if(timedOut){ try{ window._deleteObject(sRef).catch(function(){}); }catch(e){} return; }
+          placeholder.remove(); var w=_makeWrapper(url,path); w.classList.add('do-appear'); _insertWrapper(w,editor); _notifyDirty(); end(); })
+        .catch(function(err){ clearTimeout(timer); if(timedOut) return; console.warn('[ImgNotes] fallback base64:',err); fallback(); });
     });
   };
   window._notesRewrapImages=function(editor){
