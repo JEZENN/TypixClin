@@ -2249,5 +2249,314 @@ document.getElementById('register-password-confirm').addEventListener('keydown',
     </div>
 </div>
 
+<!-- ═══ 2026-10-08 (demande de Jean) — Connexion / inscription : mise en page plus sobre et soignée, messages clairs
+     sous chaque champ (à la place de la bulle du navigateur), champ concerné signalé lors d'une erreur du serveur.
+     Aucun changement de fonctionnement : mêmes champs, mêmes contrôles, même blocage des envois. ═══ -->
+<style id="tpx-auth-ux-style">
+/* ── En-tête de page plus compact ── */
+.page-header { padding-top: calc(var(--header-height) + 2.25rem); padding-bottom: 1.75rem; }   /* fond d'origine (bandeau) conservé */
+.page-title { font-size: 2.1rem; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
+.page-subtitle { font-size: 0.95rem; color: var(--gray-500); margin-bottom: 1rem; }
+.back-home-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; background: var(--white); color: var(--gray-600); border: 1px solid var(--gray-200); box-shadow: none; }
+.back-home-btn:hover { transform: none; color: var(--primary); border-color: var(--gray-300); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06); }
+.back-home-btn i { font-size: 0.8rem; }
+
+/* ── Carte ── */
+.main-content { padding: 2rem 1rem 4rem; }
+.auth-card { max-width: 440px; padding: 2rem 2rem 2.25rem; border-radius: 20px; border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -8px rgba(16, 24, 40, 0.12); }
+.auth-card::before { display: none; }
+[data-theme="dark"] .auth-card { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -12px rgba(0, 0, 0, 0.55); }
+.auth-header { margin-bottom: 1.5rem; }
+.auth-icon { width: 48px; height: 48px; border-radius: 14px; font-size: 1.3rem; margin-bottom: 0.85rem; box-shadow: none; }
+.auth-title { font-size: 1.5rem; letter-spacing: -0.01em; }
+.auth-subtitle { font-size: 0.9rem; }
+
+/* ── Onglets : curseur blanc qui glisse (comme les Paramètres des tableurs) ── */
+.auth-tabs { border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; border: 1px solid var(--gray-200); }
+.tab-btn { border-radius: 9px; padding: 0.6rem 1rem; font-size: 0.9rem; }
+.tab-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@supports selector(:has(*)) {
+    .auth-tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; }
+    .auth-tabs::before { content: ''; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 9px;
+        background: var(--white); box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12), 0 1px 2px rgba(16, 24, 40, 0.06);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+    .auth-tabs:has(.tab-btn[data-tab="register"].active)::before { transform: translateX(100%); }
+    .tab-btn { position: relative; z-index: 1; }
+    .tab-btn.active { background: transparent; box-shadow: none; }
+    [data-theme="dark"] .auth-tabs::before { background: var(--gray-200); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+}
+
+/* ── Champs ── */
+.form-group { margin-bottom: 1.1rem; }
+.form-label { font-size: 0.875rem; margin-bottom: 0.4rem; }
+.form-input { min-height: 48px; padding: 0.7rem 2.9rem 0.7rem 2.7rem; border: 1.5px solid var(--gray-300); border-radius: 12px; font-size: 1rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+.form-input:hover { border-color: var(--gray-400); }
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18); }
+.input-wrapper .input-icon { left: 0.95rem; font-size: 0.95rem; }
+.password-toggle { right: 0.6rem; width: 2.25rem; height: 2.25rem; border-radius: 8px; }
+.password-toggle:hover { background: var(--gray-100); }
+.password-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+/* remplissage automatique du navigateur : même fond que les autres champs (au lieu du bleu pâle) */
+html:not([data-theme="dark"]) .form-input:-webkit-autofill,
+html:not([data-theme="dark"]) .form-input:-webkit-autofill:hover { -webkit-box-shadow: 0 0 0 1000px #ffffff inset; -webkit-text-fill-color: #1f2937; transition: background-color 5000s ease-in-out 0s; }
+html:not([data-theme="dark"]) .form-input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 3px rgba(59, 130, 246, 0.18); -webkit-text-fill-color: #1f2937; }
+
+/* champ en erreur (message sous le champ, contour + icône rouges ; jamais la couleur seule) */
+.form-input.tpx-invalid { border-color: #dc2626; background-color: #fef6f6; }
+.form-input.tpx-invalid:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); }
+.form-input.tpx-invalid ~ .input-icon { color: #dc2626; }
+[data-theme="dark"] .form-input.tpx-invalid { border-color: #f87171; background-color: rgba(248, 113, 113, 0.08); }
+[data-theme="dark"] .form-input.tpx-invalid ~ .input-icon { color: #f87171; }
+.tpx-field-error { display: flex; align-items: flex-start; gap: 0.4rem; margin-top: 0.45rem; font-size: 0.8125rem; line-height: 1.35; font-weight: 500; color: #b91c1c; }
+.tpx-field-error[hidden] { display: none; }
+.tpx-field-error i { margin-top: 0.15rem; font-size: 0.8rem; flex-shrink: 0; }
+.tpx-field-error.tpx-in { animation: tpxErrIn 0.2s ease-out; }
+[data-theme="dark"] .tpx-field-error { color: #fca5a5; }
+@keyframes tpxErrIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+
+/* aide « 6 caractères minimum » + alerte « Majuscules activées » */
+.tpx-field-hint { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.45rem; font-size: 0.8125rem; color: var(--gray-500); }
+.tpx-field-hint i { font-size: 0.8rem; }
+.tpx-field-hint[hidden] { display: none; }
+.tpx-field-hint.tpx-ok { color: #15803d; }
+[data-theme="dark"] .tpx-field-hint.tpx-ok { color: #4ade80; }
+.tpx-caps { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.45rem; font-size: 0.8125rem; font-weight: 500; color: #b45309; }
+.tpx-caps[hidden] { display: none; }
+[data-theme="dark"] .tpx-caps { color: #fbbf24; }
+#password-match-hint { font-weight: 500; }
+
+/* case « J'accepte… » */
+.checkbox-group { align-items: center; gap: 0.6rem; margin: 0.25rem 0 0.25rem; }
+.checkbox-input { width: 1.15rem; height: 1.15rem; margin-top: 0; }
+.checkbox-label { font-size: 0.875rem; padding: 0.35rem 0; }
+.checkbox-input.tpx-invalid { outline: 2px solid #dc2626; outline-offset: 2px; border-radius: 3px; }
+.tpx-terms-error { margin: 0 0 0.75rem; }
+
+/* ── Boutons ── */
+.auth-form .btn { min-height: 48px; border-radius: 12px; }
+.auth-form .btn-primary { background: #2563eb; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08); margin-top: 1rem; }
+.auth-form .btn-primary:hover { transform: none; background: #1d4ed8; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25); }
+.auth-form .btn-primary:active { transform: scale(0.99); }
+.auth-form .btn-primary:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.auth-form .btn-primary:disabled { opacity: 0.75; }
+[data-theme="dark"] .auth-form .btn-primary { background: #3b82f6; }
+[data-theme="dark"] .auth-form .btn-primary:hover { background: #2563eb; }
+.forgot-password { margin: -0.35rem 0 0.25rem; }
+.forgot-password a { font-size: 0.85rem; font-weight: 600; }
+#login-form .btn-primary { margin-top: 0.75rem; }
+
+/* ── Bandeau de message (erreur / succès) ── */
+.message { align-items: flex-start; gap: 0.65rem; padding: 0.8rem 0.95rem; border-radius: 12px; font-size: 0.875rem; line-height: 1.45; font-weight: 500; }
+.message i { margin-top: 0.15rem; flex-shrink: 0; }
+.message.show { animation: tpxErrIn 0.22s ease-out; }
+.message.error { color: #b91c1c; }
+.message.success { color: #15803d; }
+[data-theme="dark"] .message.error { color: #fca5a5; }
+[data-theme="dark"] .message.success { color: #86efac; }
+
+/* ── Téléphone ── */
+@media (max-width: 576px) {
+    .page-header { padding-top: calc(var(--header-height) + 1.25rem); }
+    .page-title { font-size: 1.65rem; }
+    .page-subtitle { font-size: 0.875rem; margin-bottom: 0.75rem; }
+    .page-header { padding-bottom: 1.25rem; }
+    .main-content { padding: 1.25rem 1rem 3rem; }
+    .auth-card { padding: 1.5rem 1.25rem 1.75rem; margin: 0; border-radius: 18px; }
+    .auth-header { margin-bottom: 1.25rem; }
+    .auth-icon { width: 44px; height: 44px; font-size: 1.15rem; }
+    .auth-title { font-size: 1.35rem; }
+}
+@media (pointer: coarse) {
+    .form-input { min-height: 50px; }
+    .auth-form .btn { min-height: 50px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .auth-tabs::before, .tpx-field-error.tpx-in, .message.show { transition: none !important; animation: none !important; }
+}
+</style>
+<script id="tpx-auth-ux">
+(function () {
+    'use strict';
+    try {
+        var MSG = {
+            'login-email':    { missing: 'Saisissez votre adresse e-mail.', type: 'Adresse e-mail incomplète : vérifiez le « @ » et la fin de l\u2019adresse (ex. prenom.nom@gmail.com).' },
+            'login-password': { missing: 'Saisissez votre mot de passe.' },
+            'register-firstname': { missing: 'Indiquez votre prénom.' },
+            'register-lastname':  { missing: 'Indiquez votre nom de famille.' },
+            'register-email':     { missing: 'Indiquez votre adresse e-mail.', type: 'Adresse e-mail incomplète : vérifiez le « @ » et la fin de l\u2019adresse (ex. prenom.nom@gmail.com).' },
+            'register-password':  { missing: 'Choisissez un mot de passe.', short: true },
+            'register-password-confirm': { missing: 'Retapez votre mot de passe pour le confirmer.', short: true },
+            'terms': { missing: 'Cochez la case pour accepter les conditions d\u2019utilisation.' }
+        };
+        function byId(id) { return document.getElementById(id); }
+        function errBox(input) {
+            var id = 'tpx-err-' + input.id, box = byId(id);
+            if (box) return box;
+            box = document.createElement('div');
+            box.id = id; box.className = 'tpx-field-error'; box.hidden = true;
+            box.setAttribute('aria-live', 'polite');
+            if (input.id === 'terms') {
+                box.className += ' tpx-terms-error';
+                var grp = input.closest('.checkbox-group');
+                grp.parentNode.insertBefore(box, grp.nextSibling);
+            } else {
+                var wrap = input.closest('.input-wrapper');
+                wrap.parentNode.insertBefore(box, wrap.nextSibling);
+            }
+            var d = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+            if (d.indexOf(id) === -1) { d.push(id); input.setAttribute('aria-describedby', d.join(' ')); }
+            return box;
+        }
+        function messageFor(input) {
+            var v = input.validity, m = MSG[input.id] || {};
+            if (!v || v.valid) return '';
+            if (v.valueMissing) return m.missing || 'Ce champ est obligatoire.';
+            if (v.typeMismatch) return m.type || 'Valeur non valide.';
+            if (v.tooShort) {
+                var left = (input.minLength || 6) - input.value.length;
+                return 'Encore ' + left + ' caractère' + (left > 1 ? 's' : '') + ' : ' + (input.minLength || 6) + ' minimum.';
+            }
+            if (v.tooLong) return 'Ce champ est trop long.';
+            return input.validationMessage || 'Valeur non valide.';
+        }
+        function show(input, text) {
+            var box = errBox(input), was = !box.hidden;
+            box.innerHTML = '<i class="fas fa-circle-exclamation" aria-hidden="true"></i><span></span>';
+            box.querySelector('span').textContent = text;
+            box.hidden = false;
+            if (!was) { box.classList.remove('tpx-in'); void box.offsetWidth; box.classList.add('tpx-in'); }
+            input.classList.add('tpx-invalid');
+            input.setAttribute('aria-invalid', 'true');
+            if (input.id === 'register-password' && hint) hint.hidden = true;   /* pas deux fois « 6 caractères » */
+        }
+        function clear(input) {
+            var box = byId('tpx-err-' + input.id);
+            if (box) { box.hidden = true; box.textContent = ''; }
+            input.classList.remove('tpx-invalid');
+            input.removeAttribute('aria-invalid');
+            if (input.id === 'register-password' && hint) hint.hidden = false;
+        }
+        function refresh(input) { var t = messageFor(input); if (t) show(input, t); else clear(input); }
+
+        ['login-form', 'register-form'].forEach(function (fid) {
+            var form = byId(fid);
+            if (!form) return;
+            var focusPending = false;
+            /* le navigateur bloque l'envoi (required / type / minlength) : on garde ce blocage, on remplace SA bulle
+               par un message clair sous chaque champ concerné, puis on place le curseur dans le premier */
+            form.addEventListener('invalid', function (e) {
+                var input = e.target;
+                if (!input || !input.id || !MSG[input.id]) return;
+                e.preventDefault();
+                show(input, messageFor(input));
+                if (!focusPending) {
+                    focusPending = true;
+                    setTimeout(function () {
+                        focusPending = false;
+                        var first = form.querySelector('.tpx-invalid');
+                        if (first) { try { first.focus({ preventScroll: true }); } catch (x) { first.focus(); }
+                            try { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) {} }
+                    }, 0);
+                }
+            }, true);
+            /* pendant la frappe : on efface l'erreur dès qu'elle est corrigée (jamais de nouvelle erreur en cours de frappe) */
+            form.addEventListener('input', function (e) {
+                var input = e.target;
+                if (input && input.classList && input.classList.contains('tpx-server')) { input.classList.remove('tpx-server', 'tpx-invalid'); input.removeAttribute('aria-invalid'); }
+                if (input && input.id && MSG[input.id] && input.classList.contains('tpx-invalid')) refresh(input);
+            });
+            form.addEventListener('change', function (e) {
+                var input = e.target;
+                if (input && input.id === 'terms' && input.classList.contains('tpx-invalid')) refresh(input);
+            });
+            /* en quittant un champ déjà rempli : contrôle (adresse e-mail incomplète, mot de passe trop court…) */
+            form.addEventListener('blur', function (e) {
+                var input = e.target;
+                if (!input || !input.id || !MSG[input.id] || input.type === 'checkbox') return;
+                if (input.value !== '' || input.classList.contains('tpx-invalid')) refresh(input);
+            }, true);
+            form.addEventListener('reset', function () {
+                setTimeout(function () { form.querySelectorAll('.tpx-invalid').forEach(function (i) { clear(i); i.classList.remove('tpx-server'); }); updateHint(); }, 0);
+            });
+        });
+
+        /* aide permanente « 6 caractères minimum » (se coche quand c'est bon) */
+        var pw = byId('register-password'), hint = null;
+        function updateHint() {
+            if (!hint || !pw) return;
+            var ok = pw.value.length >= 6;
+            hint.classList.toggle('tpx-ok', ok);
+            hint.innerHTML = '<i class="fas ' + (ok ? 'fa-circle-check' : 'fa-circle-info') + '" aria-hidden="true"></i><span>6 caractères minimum</span>';
+        }
+        if (pw) {
+            pw.setAttribute('autocomplete', 'new-password');   /* le gestionnaire de mots de passe propose un NOUVEAU mot de passe au lieu de remplir l'actuel */
+            hint = document.createElement('div');
+            hint.id = 'tpx-pw-hint'; hint.className = 'tpx-field-hint';
+            var w = pw.closest('.input-wrapper'); w.parentNode.insertBefore(hint, w.nextSibling);
+            pw.setAttribute('aria-describedby', ((pw.getAttribute('aria-describedby') || '') + ' tpx-pw-hint').trim());
+            pw.addEventListener('input', updateHint);
+            updateHint();
+        }
+        var pwc = byId('register-password-confirm');
+        if (pwc) pwc.setAttribute('autocomplete', 'new-password');
+        ['login-email', 'register-email', 'register-referral'].forEach(function (id) {
+            var el = byId(id); if (!el) return;
+            el.setAttribute('autocapitalize', 'off'); el.setAttribute('spellcheck', 'false'); el.setAttribute('autocorrect', 'off');
+        });
+
+        /* « Majuscules activées » dans les champs de mot de passe */
+        ['login-password', 'register-password', 'register-password-confirm'].forEach(function (id) {
+            var el = byId(id); if (!el) return;
+            var caps = document.createElement('div');
+            caps.className = 'tpx-caps'; caps.hidden = true; caps.id = 'tpx-caps-' + id;
+            caps.innerHTML = '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span>Majuscules activées</span>';
+            var w = el.closest('.input-wrapper'); w.parentNode.insertBefore(caps, w.nextSibling);
+            function check(e) { if (e && typeof e.getModifierState === 'function') caps.hidden = !e.getModifierState('CapsLock'); }
+            el.addEventListener('keydown', check); el.addEventListener('keyup', check);
+            el.addEventListener('blur', function () { caps.hidden = true; });
+        });
+
+        /* titre de la page = onglet affiché */
+        var title = document.querySelector('.page-title');
+        document.querySelectorAll('.tab-btn').forEach(function (b) {
+            b.addEventListener('click', function () { if (title) title.textContent = b.getAttribute('data-tab') === 'register' ? 'Inscription' : 'Connexion'; });
+        });
+
+        /* bandeau d'erreur du serveur : on le fait voir, et on signale le champ concerné (texte du bandeau inchangé) */
+        var box = byId('auth-message');
+        if (box) {
+            box.setAttribute('role', 'status');
+            box.setAttribute('aria-live', 'polite');
+            var MAP = [
+                [/déjà utilisée/i, ['register-email']],
+                [/Email ou mot de passe incorrect|Mot de passe incorrect/i, ['login-password']],
+                [/Aucun compte associé/i, ['login-email']],
+                [/Adresse email invalide/i, ['login-email', 'register-email']],
+                [/ne correspondent pas/i, ['register-password-confirm']],
+                [/code de parrainage/i, ['register-referral']],
+                [/Entre ton email/i, ['login-email']]
+            ];
+            new MutationObserver(function () {
+                if (!box.classList.contains('show')) return;
+                var r = box.getBoundingClientRect();
+                if (r.top < 70 || r.bottom > window.innerHeight) { try { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) {} }
+                if (!box.classList.contains('error')) return;
+                var t = box.textContent || '';
+                MAP.forEach(function (m) {
+                    if (!m[0].test(t)) return;
+                    m[1].forEach(function (id) {
+                        var el = byId(id);
+                        if (!el || !el.offsetParent) return;   /* seulement dans le formulaire affiché */
+                        el.classList.add('tpx-invalid', 'tpx-server');
+                        el.setAttribute('aria-invalid', 'true');
+                    });
+                });
+            }).observe(box, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true, characterData: true });
+        }
+    } catch (e) { /* jamais bloquant : la page fonctionne comme avant */ }
+})();
+</script>
 </body>
 </html>
