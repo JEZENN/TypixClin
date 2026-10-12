@@ -26633,7 +26633,7 @@ window.TPXNotesPending = {
                             <button type="button" onclick="rsChangeCount('self',1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
-                    <div class="rstation-split" id="rs-self-split">
+                    <div class="rstation-split" id="rs-self-split"><div class="rstation-split-in">
                         <div class="rstation-split-box">
                             <span class="rstation-split-label"><i class="fas fa-user-doctor" style="color:var(--accent);"></i> Avec PS/PSS</span>
                             <div class="rstation-stepper rstation-stepper-sm">
@@ -26650,7 +26650,7 @@ window.TPXNotesPending = {
                                 <button type="button" onclick="rsChangePS('self',-1)"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <div class="rstation-section">
@@ -26716,7 +26716,7 @@ window.TPXNotesPending = {
                             <button type="button" onclick="rsChangeCount('friend',1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
-                    <div class="rstation-split" id="rs-friend-split">
+                    <div class="rstation-split" id="rs-friend-split"><div class="rstation-split-in">
                         <div class="rstation-split-box">
                             <span class="rstation-split-label"><i class="fas fa-user-doctor" style="color:var(--accent);"></i> Avec PS/PSS</span>
                             <div class="rstation-stepper rstation-stepper-sm">
@@ -26733,7 +26733,7 @@ window.TPXNotesPending = {
                                 <button type="button" onclick="rsChangePS('friend',-1)"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
-                    </div>
+                    </div></div>
                 </div>
 
                 <div class="rstation-section">
@@ -26778,7 +26778,7 @@ window.TPXNotesPending = {
     <div class="friends-modal-inner" id="friends-modal-inner">
         <div class="friends-modal-header">
             <div class="friends-modal-title"><div class="friends-modal-icon"><i class="fas fa-user-group"></i></div><h3 class="friends-modal-heading">Mes amis</h3></div>
-            <button class="friends-modal-close" onclick="closeFriendsModal()" title="Fermer"><i class="fas fa-times"></i></button>
+            <button class="friends-modal-close" onclick="closeFriendsModal()" aria-label="Fermer"><i class="fas fa-times"></i></button>
         </div>
         <div class="friends-tabs">
             <button class="friends-tab active" id="ftab-add" onclick="switchFriendsTab('add')"><i class="fas fa-user-plus"></i> Ajouter</button>
@@ -26956,6 +26956,20 @@ window.TPXNotesPending = {
 
             <!-- ══════════════ OCTOBRE 2026 ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon flame">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Flammes 🔥</h4>
+                    <p>
+                        Chaque jour de connexion d'affilée vous rapporte une <strong>flamme</strong> (carte « Flammes »
+                        des Statistiques, sur EDN comme sur ECOS). Absent un jour ou plusieurs ? À votre retour, <strong>une seule vie ❤</strong>
+                        est utilisée et vos flammes sont gardées. Une vie offerte chaque semaine, <strong>5 au maximum</strong>.
+                    </p>
+                </div>
+            </div>
 
             <div class="whats-new-section">
                 <div class="whats-new-section-icon purple">
@@ -28351,7 +28365,7 @@ window.TPXNotesPending = {
                         '<div class="unified-modal-icon"><i class="fas ' + esc(cfg.icon || 'fa-palette') + '"></i></div>' +
                         '<h3 class="unified-modal-heading" id="tpx-cat-title">' + esc(cfg.title) + '</h3>' +
                     '</div>' +
-                    '<button class="notes-close-btn tpx-cat-close" type="button" aria-label="Fermer" data-tpx-tip="Fermer"><i class="fas fa-times"></i></button>' +
+                    '<button class="notes-close-btn tpx-cat-close" type="button" aria-label="Fermer"><i class="fas fa-times"></i></button>' +
                 '</div>' +
                 '<div class="settings-modal-body tpx-cat-body">' +
                     '<p class="tpx-cat-sub">' + esc(cfg.subtitle || '') + '</p>' +
@@ -29870,6 +29884,14 @@ window._onECOSDataLoaded = function (data) {
         return;
     }
     var _localSddsBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.sdds) ? window.ecosData.sdds : null;
+    // 2026-10-13 : barème changé ailleurs pendant une modification non envoyée → SDD locales converties AVANT la fusion
+    var _snapScaleE = data && (data.confidenceScale === 5 || data.confidenceScale === 10) ? data.confidenceScale : null;
+    var _memScaleE = (window.ecosData && (window.ecosData.confidenceScale === 5 || window.ecosData.confidenceScale === 10)) ? window.ecosData.confidenceScale
+        : ((window._confidenceScaleECOSRuntime === 5 || window._confidenceScaleECOSRuntime === 10) ? window._confidenceScaleECOSRuntime : null);   /* barème des SDD EN MÉMOIRE */
+    if (_localSddsBeforeSnapshot && _snapScaleE && _memScaleE && _snapScaleE !== _memScaleE && typeof window._tpxEcosConvertSddsScale === 'function') {
+        _localSddsBeforeSnapshot = window._tpxEcosConvertSddsScale(_localSddsBeforeSnapshot, _memScaleE, _snapScaleE);
+        console.warn('⚠️ ECOS : barème changé ailleurs (' + _memScaleE + ' → ' + _snapScaleE + ') : SDD non envoyées converties avant fusion');
+    }
     var _localPlanningBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.planningData) ? window.ecosData.planningData : null;
     var _localChecklistBeforeSnapshot = (_hadUnsaved && window.ecosData && window.ecosData.checklistData) ? window.ecosData.checklistData : null;
     // CATALOGUES (2026-09-30) : catalogues en mémoire, s'ils appartiennent bien au compte connecté.
@@ -35585,14 +35607,17 @@ function _planningDetailNotesInput() {
     if (_planningOffline()) return;
     // Si plus aucun texte réel (contenteditable laisse souvent un <br>/<div> résiduel),
     // vider pour réafficher le placeholder et remettre le compteur à 0.
-    if (!editor.textContent.trim() && !editor.querySelector('img')) editor.innerHTML = '';
-    var dateKey = currentPlanningDetailDate;
+    // 2026-10-13 (Jean) : SAUF une liste à puces / numérotée encore vide — sinon le bouton « liste » ne marchait pas
+    // sur un éditeur vide (la puce créée était aussitôt effacée ici). Rien n'est enregistré tant qu'elle est vide.
+    var _noText = !editor.textContent.trim() && !editor.querySelector('img');
+    if (_noText && !editor.querySelector('ul, ol')) editor.innerHTML = '';
+    var dateKey = currentPlanningDetailDate, _html = _noText ? '' : editor.innerHTML;
     updatePddCounter();
     if (getEditablePlainTextLength(editor) <= _pddEffectiveLimit) _pddLastValidHTML = editor.innerHTML;
-    api.setPlanningDayNotesInMemory(dateKey, editor.innerHTML);
+    api.setPlanningDayNotesInMemory(dateKey, _html);
     api.updateDayNotesCell(dateKey);
     if (_planningDetailSaveTimer) clearTimeout(_planningDetailSaveTimer);
-    _planningDetailSaveTimer = setTimeout(function () { api.saveDayNotes(dateKey, editor.innerHTML); }, 500);
+    _planningDetailSaveTimer = setTimeout(function () { api.saveDayNotes(dateKey, _html); }, 500);
 }
 function _planningExec(cmd, value, useCSS) {
     var editor = document.getElementById('planning-day-detail-editor'); if (!editor) return;
@@ -37176,6 +37201,33 @@ function rsChangeCount(p, delta) {
     rsUpdateCounts(p);
     rsPersistPrefs();
 }
+function rsSetVal(el, v) {
+    if (!el) return; v = String(v);
+    if (el.textContent === v) return;
+    el.textContent = v;
+    el.classList.remove('is-bump'); void el.offsetWidth; el.classList.add('is-bump');
+}
+/* « Votre sélection » (2026-10-13, Jean) : apparition / nouveau tirage / suppression animés — la hauteur glisse de l'ancienne
+   à la nouvelle (0 = masquée). show : true / false ; fill() remplace le contenu ; done() à la fin. */
+function rsZoneAnim(zone, show, fill, done) {
+    if (!zone) { if (fill) fill(); if (done) done(); return; }
+    var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (zone._rsAnim) { try { zone._rsAnim.cancel(); } catch (e) {} zone._rsAnim = null; }
+    var wasShown = zone.style.display !== 'none' && zone.offsetParent !== null;
+    var h0 = wasShown ? zone.offsetHeight : 0;
+    if (fill) fill();
+    if (show) zone.style.display = 'block';
+    if (reduce || !zone.animate || (!wasShown && !show)) { if (!show) zone.style.display = 'none'; if (done) done(); return; }
+    var h1 = show ? zone.offsetHeight : 0, mt = show ? getComputedStyle(zone).marginTop : '0px';
+    if (wasShown && show && Math.abs(h1 - h0) < 2) { if (done) done(); return; }
+    var from = { height: h0 + 'px', opacity: wasShown ? 1 : 0, marginTop: wasShown ? getComputedStyle(zone).marginTop : '0px', transform: wasShown ? 'none' : 'translateY(-8px)' };
+    var to = { height: h1 + 'px', opacity: show ? 1 : 0, marginTop: mt, transform: show ? 'none' : 'translateY(-6px)' };
+    if (!show) { to.marginTop = '0px'; }
+    zone.style.display = 'block';
+    var a = zone.animate([from, to], { duration: show ? (wasShown ? 320 : 400) : 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    zone._rsAnim = a;
+    a.onfinish = function () { if (zone._rsAnim !== a) return; zone._rsAnim = null; if (!show) zone.style.display = 'none'; if (done) done(); };
+}
 function rsChangePS(p, delta) {
     var st = rstationState[p];
     st.ps = Math.min(st.count, Math.max(0, st.ps + delta));
@@ -37188,10 +37240,18 @@ function rsUpdateCounts(p) {
     var ps = document.getElementById('rs-' + p + '-ps');
     var sans = document.getElementById('rs-' + p + '-sans');
     var split = document.getElementById('rs-' + p + '-split');
-    if (c) c.textContent = st.count;
-    if (ps) ps.textContent = st.ps;
-    if (sans) sans.textContent = st.count - st.ps;
-    if (split) split.style.display = st.count > 1 ? 'flex' : 'none';
+    /* 2026-10-13 (Jean) : la valeur qui change « rebondit » ; la répartition PS / sans PS glisse (classe is-open, plus de display) */
+    rsSetVal(c, st.count); rsSetVal(ps, st.ps); rsSetVal(sans, st.count - st.ps);
+    if (split) { var _open = st.count > 1; split.classList.toggle('is-open', _open); split.setAttribute('aria-hidden', _open ? 'false' : 'true'); split.inert = !_open; }
+    /* 2026-10-13 (Jean) : « − » / « + » éteints aux butées */
+    var _cb = c && c.parentNode ? c.parentNode.querySelectorAll('button') : [];
+    if (_cb.length === 2) { _cb[0].disabled = st.count <= 1; _cb[1].disabled = st.count >= 10; }
+    var _bx = split ? split.querySelectorAll('.rstation-split-box') : [];
+    if (_bx.length === 2) {
+        var _pb = _bx[0].querySelectorAll('button'), _sb = _bx[1].querySelectorAll('button'), _sans = st.count - st.ps;
+        if (_pb.length === 2) { _pb[0].disabled = st.ps <= 0; _pb[1].disabled = st.ps >= st.count; }
+        if (_sb.length === 2) { _sb[0].disabled = _sans <= 0; _sb[1].disabled = _sans >= st.count; }
+    }
     var label = document.getElementById('rs-' + p + '-launch-label');
     if (label) {
         label.textContent = (p === 'self' ? 'Lancer le tirage' : 'Générer & envoyer') +
@@ -37382,6 +37442,7 @@ function rsGenerateSelf() {
     var icon = btn ? btn.querySelector('i') : null;
     if (btn) btn.disabled = true;
     if (icon) { icon.classList.remove('rolling'); void icon.offsetWidth; icon.classList.add('rolling'); }
+    var _rl = document.getElementById('rs-self-results'); if (_rl && _rl.children.length) _rl.classList.add('is-rolling');   /* l'ancien tirage s'estompe pendant le brassage */
     setTimeout(function () {
         var st = rstationState.self;
         var picked = rstationPick({
@@ -37400,8 +37461,10 @@ function rsGenerateSelf() {
         if (count) count.textContent = picked.length + ' / ' + st.count;
         var _allBtn = document.getElementById('rs-self-all-todo');
         if (_allBtn) { _allBtn.classList.remove('done'); _allBtn.disabled = false; _allBtn.style.width = ''; _allBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Tout ajouter à la To-do'; }
-        if (zone) zone.style.display = 'block';
-        if (list) {
+        var _wasShown = !!(zone && zone.style.display !== 'none');
+        rsZoneAnim(zone, true, function () {
+            if (!list) return;
+            list.classList.remove('is-rolling');
             if (!picked.length) {
                 list.innerHTML = '<div class="rstation-empty"><i class="fa-regular fa-folder-open"></i>Aucune station ne correspond à ces filtres.</div>';
             } else {
@@ -37409,10 +37472,10 @@ function rsGenerateSelf() {
                     return rstationCardHTML(x.sdd.id, { mode: x.mode, anim: true, delay: i * 80 });
                 }).join('');
             }
-        }
+        });
         if (btn) btn.disabled = false;
         if (icon) icon.classList.remove('rolling');
-        if (zone) { try { zone.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+        if (zone) setTimeout(function () { try { zone.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, _wasShown ? 0 : 380);
     }, 650);
 }
 function rsAddCardToTodo(btn, sddId, mode) {
@@ -37453,8 +37516,8 @@ function rsClearSelfResults() {
     _rstationLastSelf = [];
     var zone = document.getElementById('rs-self-results-zone');
     var list = document.getElementById('rs-self-results');
-    if (list) list.innerHTML = '';
-    if (zone) zone.style.display = 'none';
+    /* 2026-10-13 (Jean) : la sélection se replie en s'effaçant au lieu de disparaître d'un coup */
+    rsZoneAnim(zone, false, null, function () { if (list && !_rstationLastSelf.length) { list.innerHTML = ''; list.classList.remove('is-rolling'); } });
     var allBtn = document.getElementById('rs-self-all-todo');
     if (allBtn) { allBtn.classList.remove('done'); allBtn.disabled = false; allBtn.style.width = ''; allBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Tout ajouter à la To-do'; }
 }
@@ -37877,8 +37940,9 @@ function closeFbSentToast() {
    mise en avant au moment de la vraie mise en ligne) ; ceux qui avaient déjà
    vu ecos-v5 doivent revoir la pastille pour cette mise en avant.
    2026-09-30 : ecos-v6 -> ecos-v7 — entrée « Ressources à votre façon »
-   (ressources personnalisables) ajoutée en tête d'Octobre 2026. */
-const ECOS_WHATSNEW_VERSION = 'ecos-v7';
+   (ressources personnalisables) ajoutée en tête d'Octobre 2026.
+   2026-10-12 : ecos-v7 -> ecos-v8 — entrée « Flammes » ajoutée en tête d'Octobre 2026. */
+const ECOS_WHATSNEW_VERSION = 'ecos-v8';
 function openWhatsNewModal() {
     const overlay = document.getElementById('whatsNewModalOverlay');
 
@@ -38025,6 +38089,15 @@ const ECOS_HELP = {
                     <strong>Confiance moyenne</strong> :
                     votre niveau de confiance moyen (1-5)
                     sur les stations du jour.
+                </li>
+
+                <li>
+                    <strong>Flammes</strong> :
+                    vos jours de connexion d'affilée (sur ECOS comme sur EDN,
+                    depuis n'importe quel appareil) et votre record. Après une
+                    absence (un jour ou plus), <strong>une seule vie</strong> ❤
+                    est utilisée à votre retour et vos flammes sont gardées ;
+                    vous recevez une vie par semaine (<strong>5 au maximum</strong>).
                 </li>
             </ul>
         </div>
@@ -43150,12 +43223,15 @@ async function saveECOSUserData(retryCount = 0) {
         let _finalDataToSave = dataToSave;
         let _serverRestoredAt = null;
         let _skippedStaleSave = false; // BUGFIX 2026-09-20 : tentative périmée, rien n'a été écrit
+        let _scaleAdopted = null;      // 2026-10-13 : barème du serveur adopté (cf. _ecosScaleBase)
         await runTransaction(db, async (transaction) => {
             _finalDataToSave = dataToSave; // relance de la transaction par le SDK : repartir de zéro
             _skippedStaleSave = false;
             _catWritten = null;
             const _serverSnap = await transaction.get(_ecosRef);
             const _serverData = _serverSnap.exists() ? _serverSnap.data() : null;
+            const _sb = _ecosScaleBase(dataToSave, _serverData); const _base = _sb.base; _scaleAdopted = _sb.scale;
+            _finalDataToSave = _base;
             // BUGFIX 2026-09-20 (CRITIQUE) : tentative PÉRIMÉE. Sur connexion instable,
             // plusieurs tentatives de cet onglet peuvent être en vol en même temps
             // (réessais + nouveau debounce) et une ancienne, restée bloquée, peut
@@ -43174,7 +43250,7 @@ async function saveECOSUserData(retryCount = 0) {
                     // onglet connaissait — adopter l'état restauré tel quel plutôt que
                     // de fusionner (qui réinjecterait ce que la restauration a effacé).
                     console.warn('⚠️ Restauration admin ECOS plus récente détectée — état restauré adopté au lieu d\'une fusion');
-                    _finalDataToSave = Object.assign({}, dataToSave, {
+                    _finalDataToSave = Object.assign({}, _base, {
                         sdds: _serverData.sdds || {},
                         planningData: _serverData.planningData || {},
                         checklistData: _serverData.checklistData || []
@@ -43182,8 +43258,8 @@ async function saveECOSUserData(retryCount = 0) {
                     _serverRestoredAt = _serverData.restoredAt;
                 } else {
                     console.warn('⚠️ Conflit ECOS détecté (autre onglet/appareil) — fusion des SDD/planning/checklist au lieu d\'écrasement');
-                    _finalDataToSave = Object.assign({}, dataToSave, {
-                        sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, dataToSave.sdds || {}),
+                    _finalDataToSave = Object.assign({}, _base, {
+                        sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, _base.sdds || {}),
                         planningData: _tpxMergePlanningData(_serverData.planningData || {}, dataToSave.planningData || {}),
                         checklistData: _tpxMergeChecklistData(_serverData.checklistData || [], dataToSave.checklistData || [])
                     });
@@ -43200,6 +43276,7 @@ async function saveECOSUserData(retryCount = 0) {
             return;
         }
         if (window.bumpMetric) window.bumpMetric('writes', 1);
+        if (_scaleAdopted) _ecosAdoptScale(dataToSave.confidenceScale, _scaleAdopted);   // 2026-10-13 : mémoire convertie AVANT l'alignement
         if (_finalDataToSave !== dataToSave) {
             if (!_serverRestoredAt && _ecosDataRevisionCounter !== _savingRevision) {
                 // BUGFIX 2026-09-20 (CRITIQUE) : l'utilisateur a modifié quelque chose PENDANT
@@ -43260,6 +43337,34 @@ async function saveECOSUserData(retryCount = 0) {
             } catch (e2) { if (window._ecosNoteFirestoreError) window._ecosNoteFirestoreError(e2); retrySave(retryCount, MAX, DELAYS); }
         } else { retrySave(retryCount, MAX, DELAYS); }
     }
+}
+// 2026-10-13 : conversion des SDD (confiance + historique) d'un barème à l'autre — table officielle, copies non destructives.
+window._tpxEcosConvertSddsScale = function (sdds, fromScale, toScale) {
+    if (!sdds || fromScale === toScale || (fromScale !== 5 && fromScale !== 10) || (toScale !== 5 && toScale !== 10) || typeof window.convertConfidenceValue !== 'function') return sdds;
+    var out = {};
+    Object.keys(sdds).forEach(function (id) {
+        var x = sdds[id];
+        if (!x) { out[id] = x; return; }
+        var n = Object.assign({}, x);
+        if (x.confidence != null) n.confidence = window.convertConfidenceValue(x.confidence, fromScale, toScale);
+        if (Array.isArray(x.history)) n.history = x.history.map(function (h) { return (!h || h.confidence == null) ? h : Object.assign({}, h, { confidence: window.convertConfidenceValue(h.confidence, fromScale, toScale) }); });
+        out[id] = n;
+    });
+    return out;
+};
+// barème du serveur prioritaire : renvoie { base, scale } (scale = barème adopté, ou null si identique / inconnu)
+function _ecosScaleBase(dataToSave, serverData) {
+    var srv = serverData && (serverData.confidenceScale === 5 || serverData.confidenceScale === 10) ? serverData.confidenceScale : null;
+    var loc = dataToSave.confidenceScale;
+    if (!srv || (loc !== 5 && loc !== 10) || srv === loc) return { base: dataToSave, scale: null };
+    console.warn('⚠️ ECOS : barème du serveur (' + srv + ') ≠ cet onglet (' + loc + ') : SDD converties avant écriture, barème du serveur conservé');
+    return { base: Object.assign({}, dataToSave, { sdds: window._tpxEcosConvertSddsScale(dataToSave.sdds || {}, loc, srv), confidenceScale: srv }), scale: srv };
+}
+function _ecosAdoptScale(oldScale, newScale) {
+    if (!newScale || !window.ecosData) return;
+    window.ecosData.sdds = window._tpxEcosConvertSddsScale(window.ecosData.sdds || {}, oldScale, newScale);
+    window.ecosData.confidenceScale = newScale;
+    if (typeof window.tpxSetConfidenceScaleECOSRuntime === 'function') window.tpxSetConfidenceScaleECOSRuntime(newScale);
 }
 function retrySave(retryCount, MAX, DELAYS) {
     if (retryCount < MAX - 1) { setSaveIndicator('saving'); setTimeout(() => saveECOSUserData(retryCount + 1), DELAYS[retryCount]); }
@@ -43424,17 +43529,20 @@ async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
             // risque si un autre onglet a aussi sauvegardé entre-temps.
             let _final = dataToSave;
             let _serverRestoredAt = null;
+            let _scaleAdopted = null;   // 2026-10-13 : cf. _ecosScaleBase
             const _baseRestoredAtMs = _tpxRestoredAtMs(window.ecosData && window.ecosData.restoredAt);
             await runTransaction(db, async (transaction) => {
                 const _snap = await transaction.get(ref);
                 const _serverData = _snap.exists() ? _snap.data() : null;
+                const _sb = _ecosScaleBase(dataToSave, _serverData); const _base = _sb.base; _scaleAdopted = _sb.scale;
+                _final = _base; _serverRestoredAt = null;
                 if (_serverData && _ecosIsForeignRevision(_serverData.lastUpdated, baseRevision)) {
                     const _serverRestoredAtMs = _tpxRestoredAtMs(_serverData.restoredAt);
                     if (_serverRestoredAtMs > 0 && _serverRestoredAtMs > _baseRestoredAtMs) {
                         // BUGFIX 2026-09-13 : même correctif que saveECOSUserData() — une
                         // restauration admin plus récente prime sur la sauvegarde forcée.
                         console.warn('⚠️ Restauration admin ECOS plus récente détectée (sauvegarde forcée) — état restauré adopté');
-                        _final = Object.assign({}, dataToSave, {
+                        _final = Object.assign({}, _base, {
                             sdds: _serverData.sdds || {},
                             planningData: _serverData.planningData || {},
                             checklistData: _serverData.checklistData || []
@@ -43442,8 +43550,8 @@ async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
                         _serverRestoredAt = _serverData.restoredAt;
                     } else {
                         console.warn('⚠️ Conflit ECOS détecté (sauvegarde forcée) — fusion des SDD/planning/checklist au lieu d\'écrasement');
-                        _final = Object.assign({}, dataToSave, {
-                            sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, dataToSave.sdds || {}),
+                        _final = Object.assign({}, _base, {
+                            sdds: _tpxEcosMergeSddsMaps(_serverData.sdds || {}, _base.sdds || {}),
                             planningData: _tpxMergePlanningData(_serverData.planningData || {}, dataToSave.planningData || {}),
                             checklistData: _tpxMergeChecklistData(_serverData.checklistData || [], dataToSave.checklistData || [])
                         });
@@ -43452,6 +43560,7 @@ async function ecosWriteWithRetry(dataToSave, maxRetries, baseRevision) {
                 _catW = _ecosCatalogsMerge(_serverData ? _serverData.catalogs : null, _catLocal);
                 transaction.update(ref, _catW ? Object.assign({}, _final, { catalogs: _catW }) : _final);
             });
+            if (_scaleAdopted) _ecosAdoptScale(dataToSave.confidenceScale, _scaleAdopted);   // 2026-10-13
             if (_final !== dataToSave && window.ecosData) {
                 window.ecosData.sdds = _final.sdds;
                 window.ecosData.planningData = _final.planningData;
@@ -55026,7 +55135,7 @@ window._todoValidateAnim = function (itemId, apply) {
                 <div class="fn-title">Votre avis compte ✨</div>
                 <div class="fn-desc">Partagez vos idées, signalez un bug ou donnez votre avis depuis votre <strong>pastille de profil</strong> <i class="fas fa-circle-user" style="color:var(--primary);font-size:0.8em;"></i> en <strong>haut à droite</strong> — c'est rapide !</div>
             </div>
-            <button class="fn-close" onclick="feedbackNudgeDismiss()" title="Fermer" aria-label="Fermer">
+            <button class="fn-close" onclick="feedbackNudgeDismiss()" aria-label="Fermer">
                 <i class="fas fa-xmark"></i>
             </button>
         </div>
@@ -58939,7 +59048,7 @@ window.TPXOnboarding = {
 </script>
 <!-- Lightbox image agrandie : partagé par les éditeurs de notes (notes/spe) -->
 <div id="notesImgLightbox" class="notes-img-lightbox">
-  <button class="notes-img-lightbox-close" onclick="window._notesImgLightboxClose()" data-tooltip="Fermer" aria-label="Fermer"><i class="fas fa-times"></i></button>
+  <button class="notes-img-lightbox-close" onclick="window._notesImgLightboxClose()" aria-label="Fermer"><i class="fas fa-times"></i></button>
   <div class="notes-img-lightbox-scroll" id="notesImgLightboxScroll">
     <img id="notesImgLightboxImg" src="" alt="">
   </div>
@@ -59179,5 +59288,369 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
 }
 </style>
+<style id="tpx-flash-top">
+/* 2026-10-11 (demande de Jean) — barre du haut des sessions Flashcards : la bascule « Mélangé / Par matière » prend le
+   dessin des sélecteurs des Paramètres (« Tous les items / Items de référence ») : fond gris, choix actif sur fond blanc
+   et texte bleu, deux moitiés égales ; le fond blanc GLISSE d'un choix à l'autre (0,28 s, même courbe qu'avant).
+   CSS seul : le bouton, son onclick et le script de la session sont inchangés. + pastille du numéro d'item plus contrastée. */
+.seg-switch.flash-shuffle-seg {
+  gap: 3px; padding: 3px; flex-shrink: 0;
+  background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 12px;
+  box-shadow: none;
+}
+/* deux moitiés égales : grille dès que la session affiche la bascule (le script pose display en ligne : « inline-flex » / « none ») */
+.seg-switch.flash-shuffle-seg:not([style*="none"]) { display: inline-grid !important; grid-template-columns: 1fr 1fr; }
+.seg-switch.flash-shuffle-seg .seg-thumb {
+  top: 3px; bottom: 3px;
+  background: var(--white, #fff); border-radius: 9px;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.1));
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1), width .28s cubic-bezier(.4, 0, .2, 1);
+}
+/* position du fond blanc portée par le choix actif (comme les Paramètres) : prime sur la position posée en ligne par le script */
+@supports selector(:has(*)) {
+  .seg-switch.flash-shuffle-seg .seg-thumb { left: 3px; width: calc((100% - 9px) / 2) !important; transform: translateX(0) !important; }
+  .seg-switch.flash-shuffle-seg:has(> .seg-opt-right.active) .seg-thumb { transform: translateX(calc(100% + 3px)) !important; }
+}
+.seg-switch.flash-shuffle-seg .seg-opt {
+  justify-content: center; gap: 0.3rem;
+  padding: 0.4rem 0.55rem; border-radius: 9px;
+  color: var(--gray-600); font-size: 0.72rem; font-weight: 600; letter-spacing: 0;
+  transition: color .18s ease;
+}
+.seg-switch.flash-shuffle-seg .seg-opt i { font-size: 0.68rem; }
+/* PC : fenêtre un peu plus large (600 → 620 px) pour que la pastille de matière la plus longue (« Cardiologie - Chir Vasc. »)
+   reste entière à côté d'un numéro d'item à 3 chiffres et de la bascule aux moitiés égales */
+@media (min-width: 769px) { .flash-session-modal { max-width: 620px; } }
+.seg-switch.flash-shuffle-seg .seg-opt:hover { color: var(--gray-900); }
+.seg-switch.flash-shuffle-seg .seg-opt.active { color: var(--primary); }
+[data-theme="dark"] .seg-switch.flash-shuffle-seg { background: var(--gray-200); border-color: var(--gray-300); }
+[data-theme="dark"] .seg-switch.flash-shuffle-seg .seg-thumb { background: var(--gray-50); }
+[data-theme="dark"] .seg-switch.flash-shuffle-seg .seg-opt { color: var(--gray-600); }
+[data-theme="dark"] .seg-switch.flash-shuffle-seg .seg-opt:hover { color: var(--gray-900); }
+[data-theme="dark"] .seg-switch.flash-shuffle-seg .seg-opt.active { color: var(--primary); }
+@media (prefers-reduced-motion: reduce) { .seg-switch.flash-shuffle-seg .seg-thumb { transition: none; } }
+/* téléphone : bascule resserrée (même encombrement qu'avant malgré les moitiés égales) ; très petit écran (< 375 px) :
+   icônes seules, comme ECOS sur téléphone — sinon la croix de fermeture sortait de la barre (déjà le cas avant, à 360 px) */
+@media (max-width: 480px) {
+  .seg-switch.flash-shuffle-seg .seg-opt { padding: 0.4rem 0.45rem; gap: 0.28rem; font-size: 0.7rem; }
+  .seg-switch.flash-shuffle-seg .seg-opt i { font-size: 0.68rem; }
+}
+@media (max-width: 374px) {
+  .seg-switch.flash-shuffle-seg .seg-opt span { display: none; }
+  .seg-switch.flash-shuffle-seg .seg-opt { padding: 0.4rem 0.7rem; gap: 0; }
+  .seg-switch.flash-shuffle-seg .seg-opt i { font-size: 0.78rem; }
+}
+
+/* pastille du numéro d'item : se détache nettement du fond de la barre */
+.flash-item-chip { color: var(--gray-800); background: var(--gray-200); border-color: var(--gray-300); }
+[data-theme="dark"] .flash-item-chip { color: #e2e8f0; background: rgba(148, 163, 184, 0.28); border-color: #475569; }
+</style>
+<style id="tpx-rstation-fx">
+/* ══ 2026-10-13 (Jean) — modal « Choisir une ou plusieurs stations aléatoires » (ECOS) ══
+   1) « Avec PS/PSS » / « Sans PS » apparaissent et disparaissent en glissant (plus d'apparition brutale) ;
+   2) la place de la barre de défilement est réservée : plus de décalage quand elle apparaît / disparaît ;
+   3) « Votre sélection » : apparition, nouveau tirage et suppression animés (cf. rsZoneAnim) ;
+   4) survol ET appui marqués sur tous les boutons du modal (survol seulement sur un écran à souris). */
+.rstation-modal .help-modal-body.rstation-body { scrollbar-gutter: stable; }
+.rstation-modal .rstation-body::-webkit-scrollbar { width: 8px; }
+.rstation-modal .rstation-body::-webkit-scrollbar-track { background: transparent; }
+.rstation-modal .rstation-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+.rstation-modal .rstation-body::-webkit-scrollbar-thumb:hover { background: var(--gray-400); background-clip: content-box; }
+[data-theme="dark"] .rstation-modal .rstation-body::-webkit-scrollbar-thumb { background: #475569; background-clip: content-box; }
+
+.rstation-split { display: grid; grid-template-rows: 0fr; margin-top: 0; opacity: 0; visibility: hidden;
+    transition: grid-template-rows 0.36s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.36s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.24s ease, visibility 0s linear 0.36s; }
+.rstation-split.is-open { grid-template-rows: 1fr; margin-top: 0.75rem; opacity: 1; visibility: visible;
+    transition: grid-template-rows 0.36s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.36s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.06s, visibility 0s; }
+.rstation-split-in { min-height: 0; overflow: hidden; display: flex; gap: 0.8rem; flex-wrap: wrap; }
+.rstation-split .rstation-split-box { transform: translateY(-8px); transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1); }
+.rstation-split.is-open .rstation-split-box { transform: none; }
+@media (max-width: 560px) { .rstation-split-in { flex-direction: column; } .rstation-split-in .rstation-split-box { flex: 0 0 auto; } }
+
+#rs-self-results { transition: opacity 0.25s ease, filter 0.25s ease; }
+#rs-self-results.is-rolling { opacity: 0.35; filter: blur(1px); }
+.rst-val.is-bump { animation: rsValBump 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes rsValBump { 0% { transform: scale(1); } 45% { transform: scale(1.28); color: var(--primary); } 100% { transform: scale(1); } }
+
+#fstation-overlay button { -webkit-tap-highlight-color: transparent; }
+#fstation-overlay .rstation-stepper button i { display: inline-block; transition: transform 0.15s ease; }
+#fstation-overlay .rstation-chip, #fstation-overlay .rstation-tab,
+#fstation-overlay .rstation-clear-btn, #fstation-overlay .rstation-all-todo-btn, #fstation-overlay .rstation-todo-btn, #fstation-overlay .rstation-anon-btn,
+#fstation-overlay .rstation-group-del, #fstation-overlay .rstation-empty-addfriend, #fstation-overlay .rstation-toggle {
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.18s ease, transform 0.16s ease, filter 0.16s ease; }
+@media (hover: hover) {
+    #fstation-overlay .rstation-tab:not(.active):hover { background: rgba(59, 130, 246, 0.07); background: color-mix(in srgb, var(--primary) 8%, transparent); }
+    #fstation-overlay .rstation-stepper button:not(:disabled):hover { background: rgba(59, 130, 246, 0.16); background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); }
+    #fstation-overlay .rstation-stepper button:not(:disabled):hover i { transform: scale(1.25); }
+    #fstation-overlay .rstation-stepper:hover { border-color: rgba(59, 130, 246, 0.45); border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+    #fstation-overlay .rstation-chip:not(.active):hover { transform: translateY(-2px); border-color: rgba(59, 130, 246, 0.6); border-color: color-mix(in srgb, var(--primary) 60%, transparent); color: var(--primary);
+        background: rgba(59, 130, 246, 0.07); background: color-mix(in srgb, var(--primary) 7%, transparent);
+        box-shadow: 0 6px 14px rgba(59, 130, 246, 0.16); box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 18%, transparent); }
+    #fstation-overlay .rstation-chip.active:hover { box-shadow: 0 6px 16px rgba(59, 130, 246, 0.24); box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 26%, transparent); }
+    #fstation-overlay .rstation-launch-btn:not(:disabled):not(.rstation-sent-ok):hover { transform: translateY(-2px); filter: brightness(1.07); }
+    #fstation-overlay .rstation-clear-btn:hover, #fstation-overlay .rstation-all-todo-btn:not(.done):hover, #fstation-overlay .rstation-todo-btn:hover,
+    #fstation-overlay .rstation-anon-btn:not(.done):hover, #fstation-overlay .rstation-group-del:hover { transform: translateY(-2px); }
+    #fstation-overlay .rstation-toggle:hover { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
+}
+#fstation-overlay .rstation-stepper button:not(:disabled):active { background: rgba(59, 130, 246, 0.26); background: color-mix(in srgb, var(--primary) 26%, transparent); color: var(--primary); }
+#fstation-overlay .rstation-stepper button:not(:disabled):active i { transform: scale(0.8); }
+/* butée atteinte : bouton éteint, rien au survol ni à l'appui */
+#fstation-overlay .rstation-stepper button:disabled, #fstation-overlay .rstation-stepper button:disabled:hover { background: var(--gray-50); color: var(--gray-500); opacity: 0.35; cursor: not-allowed; }
+[data-theme="dark"] #fstation-overlay .rstation-stepper button:disabled, [data-theme="dark"] #fstation-overlay .rstation-stepper button:disabled:hover { background: #0f172a; color: #64748b; }
+/* appui : classe doublée pour passer devant le survol (qui a :not(...) en plus) */
+#fstation-overlay .rstation-chip.rstation-chip.rstation-chip:active, #fstation-overlay .rstation-tab.rstation-tab.rstation-tab:active,
+#fstation-overlay .rstation-clear-btn.rstation-clear-btn:active, #fstation-overlay .rstation-all-todo-btn.rstation-all-todo-btn:not(.done):active, #fstation-overlay .rstation-todo-btn.rstation-todo-btn:active,
+#fstation-overlay .rstation-anon-btn.rstation-anon-btn:not(.done):active, #fstation-overlay .rstation-group-del.rstation-group-del:active, #fstation-overlay .rstation-empty-addfriend.rstation-empty-addfriend:active,
+#fstation-overlay .rstation-toggle.rstation-toggle:active { transform: scale(0.94); transition-duration: 0.08s; }
+#fstation-overlay .rstation-launch-btn.rstation-launch-btn:not(:disabled):not(.rstation-sent-ok):active { transform: scale(0.98); filter: brightness(0.96); transition-duration: 0.08s; }
+@media (prefers-reduced-motion: reduce) {
+    .rstation-split, .rstation-split.is-open, .rstation-split .rstation-split-box, #rs-self-results { transition: none; }
+    .rst-val.is-bump { animation: none; }
+}
+</style>
+<style id="tpx-streak-css">
+/* 2026-10-12 — « Flammes » : jours de connexion d'affilée (Stats du jour, EDN et ECOS) — même dessin que les autres cases */
+.daily-stat-card.tpx-streak::before { background: linear-gradient(90deg, #f97316, #ef4444); }
+.daily-stat-card.tpx-streak .daily-stat-icon { background: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(239, 68, 68, 0.14)); color: #f97316; position: relative; }
+.daily-stat-card.tpx-streak .daily-stat-value { background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; background-clip: text; position: relative; }
+.tpx-streak-n { display: inline-block; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-variant-numeric: tabular-nums; transform-origin: center bottom; }
+.tpx-streak-sub { margin-top: 0.15rem; font-size: 0.78rem; font-weight: 500; color: var(--gray-500); }
+.tpx-streak-sub b { color: var(--gray-700); font-weight: 700; }
+[data-theme="dark"] .tpx-streak-sub { color: #94a3b8; }
+[data-theme="dark"] .tpx-streak-sub b { color: #e2e8f0; }
+.daily-stat-card.tpx-streak.is-zero .daily-stat-icon { color: var(--gray-400); background: var(--gray-100); }
+/* animation du jour : la flamme s'embrase, le nombre passe à n, « +1 » s'envole, une lueur traverse la case */
+.tpx-streak.is-lit .daily-stat-icon i { animation: tpxFlame 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes tpxFlame { 0% { transform: scale(1) rotate(0); } 25% { transform: scale(1.45) rotate(-10deg); } 45% { transform: scale(0.92) rotate(7deg); } 65% { transform: scale(1.18) rotate(-4deg); } 100% { transform: scale(1) rotate(0); } }
+.tpx-streak.is-lit .daily-stat-icon { animation: tpxFlameGlow 1.4s ease-out; }
+@keyframes tpxFlameGlow { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55); } 40% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0.18), 0 0 22px 6px rgba(239, 68, 68, 0.35); } 100% { box-shadow: 0 0 0 16px rgba(249, 115, 22, 0); } }
+.tpx-streak-n.is-out { animation: tpxStreakOut 0.28s ease-in forwards; }
+@keyframes tpxStreakOut { to { transform: translateY(-60%); opacity: 0; } }
+.tpx-streak-n.is-in { animation: tpxStreakIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes tpxStreakIn { 0% { transform: translateY(70%) scale(0.6); opacity: 0; } 60% { transform: translateY(-6%) scale(1.25); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.tpx-streak-plus { position: absolute; left: 0.1rem; top: -0.2rem; font-size: 0.95rem; font-weight: 800; color: #f97316; -webkit-text-fill-color: #f97316; pointer-events: none;
+    animation: tpxStreakPlus 1.1s ease-out forwards; white-space: nowrap; }
+@keyframes tpxStreakPlus { 0% { transform: translate(1.6rem, 0.4rem) scale(0.6); opacity: 0; } 25% { opacity: 1; transform: translate(1.9rem, -0.3rem) scale(1.1); } 100% { transform: translate(2.2rem, -1.6rem) scale(1); opacity: 0; } }
+.tpx-streak-ember { position: absolute; left: 50%; bottom: 20%; width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle, #fde68a, #f97316); pointer-events: none; opacity: 0;
+    animation: tpxEmber 1s ease-out forwards; }
+@keyframes tpxEmber { 0% { opacity: 0; transform: translate(-50%, 0) scale(1); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -26px) scale(0.4); } }
+.tpx-streak.is-lit::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: radial-gradient(circle at 18% 30%, rgba(249, 115, 22, 0.18), transparent 60%); animation: tpxStreakWash 1.4s ease-out forwards; }
+@keyframes tpxStreakWash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tpx-streak.is-lit .daily-stat-icon, .tpx-streak.is-lit .daily-stat-icon i, .tpx-streak-n.is-out, .tpx-streak-n.is-in, .tpx-streak.is-lit::after { animation: none; } .tpx-streak-plus, .tpx-streak-ember { display: none; } }
+/* Nouveautés : icône de l'entrée « Flammes » */
+.whats-new-section-icon.flame { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3); }
+/* vies : 3 cœurs en haut à droite de la case */
+.tpx-lives { margin-left: auto; display: inline-flex; gap: 3px; font-size: 0.8rem; flex-shrink: 0; }
+.tpx-lives[hidden] { display: none; }
+.tpx-lives i { color: var(--gray-300); transition: color 0.3s ease, transform 0.3s ease; }
+.tpx-lives i.is-on { color: #ef4444; }
+[data-theme="dark"] .tpx-lives i { color: #475569; }
+[data-theme="dark"] .tpx-lives i.is-on { color: #f87171; }
+/* vie utilisée (13/10, Jean : « on ne comprend pas ce qu'il se passe ») — une chose à la fois : 1) le cœur grossit et bat deux fois ;
+   2) il se FEND en deux moitiés qui s'écartent puis tombent, « −1 » s'envole, sa place reste grise et « Série sauvée » s'allume ;
+   3) seulement ensuite la flamme s'embrase (cf. maybePlay) */
+.daily-stat-card.tpx-streak .daily-stat-header { position: relative; }
+.tpx-lives i.is-break { position: relative; z-index: 2; animation: tpxHeartWarn 0.8s ease-in-out forwards; }
+@keyframes tpxHeartWarn { 0% { transform: scale(1); } 22% { transform: scale(2.1); filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.75)); } 38% { transform: scale(1.75); } 56% { transform: scale(2.2); filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.85)); } 72% { transform: scale(2.1) rotate(-7deg); } 86% { transform: scale(2.1) rotate(7deg); } 100% { transform: scale(2.1); filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.85)); } }
+.tpx-heart-shard { position: absolute; z-index: 3; pointer-events: none; display: grid; place-items: center; line-height: 1; font-size: 0.8rem; color: #ef4444; transform: scale(2.1); }
+[data-theme="dark"] .tpx-heart-shard { color: #f87171; }
+.tpx-heart-shard.l { clip-path: polygon(0 0, 54% 0, 44% 30%, 58% 52%, 45% 76%, 52% 100%, 0 100%); animation: tpxShardL 1.25s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+.tpx-heart-shard.r { clip-path: polygon(54% 0, 100% 0, 100% 100%, 52% 100%, 45% 76%, 58% 52%, 44% 30%); animation: tpxShardR 1.25s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+@keyframes tpxShardL { 0% { transform: scale(2.1); } 26% { transform: translateX(-4px) scale(2.1) rotate(-12deg); } 40% { transform: translateX(-5px) scale(2.05) rotate(-14deg); opacity: 1; } 100% { transform: translate(-16px, 30px) scale(1.3) rotate(-48deg); opacity: 0; } }
+@keyframes tpxShardR { 0% { transform: scale(2.1); } 26% { transform: translateX(4px) scale(2.1) rotate(12deg); } 40% { transform: translateX(5px) scale(2.05) rotate(14deg); opacity: 1; } 100% { transform: translate(16px, 30px) scale(1.3) rotate(48deg); opacity: 0; } }
+.tpx-heart-minus { position: absolute; z-index: 4; pointer-events: none; transform: translate(-50%, 0); font-size: 0.9rem; font-weight: 800; color: #e11d48; white-space: nowrap; animation: tpxHeartMinus 1.5s ease-out forwards; }
+[data-theme="dark"] .tpx-heart-minus { color: #fb7185; }
+@keyframes tpxHeartMinus { 0% { opacity: 0; transform: translate(-50%, 4px) scale(0.6); } 18% { opacity: 1; transform: translate(-50%, -8px) scale(1.15); } 70% { opacity: 1; transform: translate(-50%, -16px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -24px) scale(1); } }
+.tpx-streak-saved.is-new { display: inline-block; animation: tpxSavedIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes tpxSavedIn { 0% { opacity: 0; transform: translateY(6px) scale(0.92); } 60% { opacity: 1; transform: translateY(-1px) scale(1.05); } 100% { opacity: 1; transform: none; } }
+.tpx-streak-saved.is-new i { display: inline-block; animation: tpxSavedBeat 0.4s ease-in-out 0.35s 2; }
+@keyframes tpxSavedBeat { 50% { transform: scale(1.35); } }
+.tpx-lives i { opacity: 1; }
+.tpx-lives i.is-gift { animation: tpxHeartGift 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes tpxHeartGift { 0% { transform: scale(0.3); } 60% { transform: scale(1.4); } 100% { transform: scale(1); } }
+.tpx-streak-saved { color: #e11d48; font-weight: 600; }
+.tpx-streak-saved i { font-size: 0.7rem; }
+[data-theme="dark"] .tpx-streak-saved { color: #fb7185; }
+/* ECOS : la 5e case va sous les autres, à gauche (4 par ligne au plus) */
+.ecos-daily-grid.tpx-has-streak { grid-template-columns: repeat(auto-fit, minmax(max(200px, calc((100% - 3rem) / 4)), 1fr)); }
+@media (prefers-reduced-motion: reduce) { .tpx-lives i.is-break, .tpx-lives i.is-gift, .tpx-streak-saved.is-new, .tpx-streak-saved.is-new i { animation: none; } .tpx-heart-shard, .tpx-heart-minus { display: none; } }
+</style>
+<script id="tpx-streak">
+/* 2026-10-12 (demandes de Jean) — « Flammes » : jours de connexion d'affilée, avec VIES (5 au plus, 1 offerte par semaine ;
+   une absence — d'un jour ou de dix — en utilise UNE SEULE et garde les flammes). Compte toute connexion : EDN ET ECOS, tous appareils — une seule série
+   par compte (même code dans les deux pages). Champ users/{uid}.tpxStreak (champ libre du profil, autorisé par les règles
+   actuelles ; aucun lien avec la sauvegarde des données de travail). AUCUNE donnée de ce système n'est gardée sur l'appareil. */
+(function () {
+    'use strict';
+    var FIELD = 'tpxStreak';
+    /* ── cœur commun EDN + ECOS (même code dans les deux pages) ──
+       users/{uid}.tpxStreak = { last: 'AAAA-MM-JJ' (date LOCALE du dernier jour compté), count, best,
+         lives (0–5), week (lundi de la semaine du dernier don de vie), used: { day, n } | null (vies utilisées ce jour-là),
+         gift: 'AAAA-MM-JJ' | null (vie offerte ce jour-là), anim: 'AAAA-MM-JJ' | null (animation du jour déjà jouée) }
+       Tout est sur le SERVEUR (rien sur l'appareil) ; calcul IDEMPOTENT depuis l'état du serveur : deux appareils (ou EDN et
+       ECOS) le même jour donnent le même résultat — jamais +2, jamais 2 vies utilisées pour le même trou. */
+    var MAXL = 5;
+    function dkey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function isKey(k) { return typeof k === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k); }
+    function parse(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function days(a, b) { return Math.round((parse(b) - parse(a)) / 864e5); }
+    function shift(k, n) { var d = parse(k); return dkey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)); }
+    function monday(k) { var d = parse(k); return dkey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7)); }
+    function int(v, lo, hi, def) { v = Math.round(+v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def; }
+    function ok(s) { return !!s && isKey(s.last) && int(s.count, 0, 1e6, 0) >= 1; }
+    /* état suivant pour « aujourd'hui » (null = déjà compté aujourd'hui, rien à écrire) */
+    function step(s, today) {
+        var wk = monday(today), best = s ? int(s.best, 0, 1e6, 0) : 0, anim = s && s.anim === today ? today : null;
+        if (!ok(s)) return { last: today, count: 1, best: Math.max(1, best), lives: MAXL, week: wk, used: null, gift: null, anim: anim };
+        if (s.last >= today) return null;   /* déjà compté (ou horloge d'un appareil en avance : on ne casse rien) */
+        var lives = int(s.lives, 0, MAXL, MAXL), week = isKey(s.week) ? s.week : wk, gift = null, count = int(s.count, 1, 1e6, 1), used = null;
+        var w = Math.floor(days(week, wk) / 7);
+        if (w > 0) { var nl = Math.min(MAXL, lives + w); if (nl > lives) gift = today; lives = nl; week = wk; }   /* 1 vie offerte par semaine, 3 au plus */
+        var missed = days(s.last, today) - 1;
+        if (missed <= 0) count += 1;
+        else if (lives >= 1) { lives -= 1; count += 1; used = { day: today, n: 1 }; }   /* une absence (1 jour ou 10) = UNE vie : flammes gardées */
+        else count = 1;                                                                               /* pas assez de vies : nouvelle série */
+        return { last: today, count: count, best: Math.max(count, best), lives: lives, week: week, used: used, gift: gift, anim: anim };
+    }
+    /* flammes « vivantes » vues d'aujourd'hui (avant la synchro du jour : en sursis tant que les vies couvrent le trou) */
+    function alive(s, today) {
+        if (!ok(s)) return 0;
+        if (s.last >= shift(today, -1)) return int(s.count, 1, 1e6, 1);
+        return int(s.lives, 0, MAXL, MAXL) >= 1 ? int(s.count, 1, 1e6, 1) : 0;   /* une vie couvre toute l'absence */
+    }
+    var st = null, uid = null, busy = false, pending = false;
+    async function syncCore(after) {
+        var u = window.currentUser, today = dkey(new Date());
+        if (!u) { if (uid) { uid = null; st = null; pending = false; if (after) after(); } return; }
+        if (u.uid !== uid) { uid = u.uid; st = null; pending = false; if (after) after(); }
+        if (busy || !window._fsDb || !window._fsDoc || !window._fsGetDoc || !window._fsUpdateDoc) return;
+        if (st && st.last === today && !pending) { if (after) after(); return; }
+        busy = true;
+        try {
+            var ref = window._fsDoc(window._fsDb, 'users', u.uid), cur = null, read = false;
+            try { var snap = await window._fsGetDoc(ref); read = snap.exists(); cur = read ? (snap.data()[FIELD] || null) : null; } catch (e) {}
+            if (u.uid !== (window.currentUser && window.currentUser.uid)) return;
+            if (!read) { pending = true; return; }   /* serveur illisible : RIEN n'est écrit ni calculé de mémoire — réessai plus tard */
+            var n = step(cur, today);
+            if (!n) { st = cur; pending = false; return; }
+            st = n;
+            var patch = {}; patch[FIELD] = n;
+            try { await window._fsUpdateDoc(ref, patch); pending = false; } catch (e) { pending = true; }
+        } finally { busy = false; if (after) after(); }
+    }
+    /* ── case « Flammes » (Stats du jour, EDN et ECOS) ── */
+    function $(id) { return document.getElementById(id); }
+    function lessMotion() { try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
+    function plural(n, a, b) { return n > 1 ? b : a; }
+    var seen = false, played = false;
+    function ensureCard() {
+        var c = $('tpxStreakCard'); if (c) return c;
+        var dg = document.querySelector('#page-stats .daily-stats-grid'); if (!dg) return null;
+        c = document.createElement('div');
+        c.className = 'daily-stat-card tpx-streak is-zero'; c.id = 'tpxStreakCard';
+        c.innerHTML = '<div class="daily-stat-header"><div class="daily-stat-icon"><i class="fas fa-fire" aria-hidden="true"></i></div><div class="daily-stat-label">Flammes</div>' +
+            '<div class="tpx-lives" id="tpxLives" aria-hidden="true"><i class="fas fa-heart"></i><i class="fas fa-heart"></i><i class="fas fa-heart"></i><i class="fas fa-heart"></i><i class="fas fa-heart"></i></div></div>' +
+            '<div class="daily-stat-value" id="tpxStreakValue"><span class="tpx-streak-n" id="tpxStreakN">–</span><span class="daily-stat-unit" id="tpxStreakUnit"></span></div>' +
+            '<div class="tpx-streak-sub" id="tpxStreakSub">de connexion d’affilée</div>';
+        var tr = $('tpxTrCard');
+        if (tr && tr.parentNode === dg) dg.insertBefore(c, tr.nextSibling); else dg.appendChild(c);
+        dg.classList.add('tpx-has-streak');
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (es) { es.forEach(function (e) { seen = e.isIntersecting && e.intersectionRatio >= 0.5; if (seen) maybePlay(); }); }, { threshold: [0, 0.5, 1] }).observe(c);
+        }
+        render();
+        return c;
+    }
+    var animUntil = 0;   /* fin de l'animation du jour en cours (ms) : la synchro ne redessine pas la case avant */
+    function render(nOverride, livesOverride, hideSaved) {
+        var c = $('tpxStreakCard'); if (!c) return;
+        if (nOverride == null && livesOverride == null && Date.now() < animUntil) return;
+        var today = dkey(new Date()), has = ok(st);
+        var n = nOverride != null ? nOverride : (has ? alive(st, today) : null);
+        var lives = livesOverride != null ? livesOverride : (has ? int(st.lives, 0, MAXL, MAXL) : null);
+        var best = has ? Math.max(int(st.best, 0, 1e6, 0), n || 0) : 0;
+        $('tpxStreakN').textContent = n == null ? '–' : n;
+        $('tpxStreakUnit').textContent = n == null ? '' : plural(n, 'jour', 'jours');
+        var saved = !hideSaved && has && st.used && st.used.day === today && st.last === today;
+        $('tpxStreakSub').innerHTML = saved ? '<span class="tpx-streak-saved"><i class="fas fa-heart" aria-hidden="true"></i> Série sauvée · ' + st.used.n + ' ' + plural(st.used.n, 'vie utilisée', 'vies utilisées') + '</span>'
+            : 'de connexion d’affilée' + (best > 1 ? ' · record <b>' + best + '</b>' : '');
+        var hearts = $('tpxLives').children;
+        for (var i = 0; i < hearts.length; i++) hearts[i].classList.toggle('is-on', lives != null && i < lives);
+        $('tpxLives').hidden = lives == null;
+        c.classList.toggle('is-zero', !n);
+        c.setAttribute('aria-label', n == null ? 'Flammes : chargement' : 'Flammes : ' + n + ' ' + plural(n, 'jour', 'jours') + ' de connexion d’affilée' + (best > 1 ? ', record ' + best : '') + ', ' + lives + ' ' + plural(lives, 'vie', 'vies') + ' sur ' + MAXL + (saved ? ', série sauvée aujourd’hui' : ''));
+    }
+    /* un cœur se brise : il bat (0,8 s, classe is-break), puis il est remplacé par deux moitiés qui s'écartent et tombent
+       (1,25 s) avec « −1 » ; sa place, dessous, redevient grise. Les moitiés sont posées dans l'en-tête de la case (pas dans
+       #tpxLives, dont les enfants sont les 5 cœurs). */
+    function breakHeart(c, h, onSplit) {
+        var hd = c && c.querySelector('.daily-stat-header'); if (!h || !hd) { if (onSplit) onSplit(); return; }
+        var hr = h.getBoundingClientRect(), br = hd.getBoundingClientRect();
+        var x = hr.left - br.left, y = hr.top - br.top, w = hr.width, ht = hr.height;
+        h.classList.add('is-break');
+        setTimeout(function () {
+            h.classList.remove('is-break', 'is-on');
+            ['l', 'r'].forEach(function (side) {
+                var s = document.createElement('span'); s.className = 'tpx-heart-shard ' + side; s.setAttribute('aria-hidden', 'true');
+                s.style.left = x + 'px'; s.style.top = y + 'px'; s.style.width = w + 'px'; s.style.height = ht + 'px';
+                s.innerHTML = '<i class="fas fa-heart"></i>'; hd.appendChild(s); setTimeout(function () { s.remove(); }, 1350);
+            });
+            var m = document.createElement('span'); m.className = 'tpx-heart-minus'; m.setAttribute('aria-hidden', 'true'); m.textContent = '−1';
+            m.style.left = (x + w / 2) + 'px'; m.style.top = (y - 16) + 'px'; hd.appendChild(m); setTimeout(function () { m.remove(); }, 1600);
+            if (onSplit) onSplit();
+        }, 800);
+    }
+    function maybePlay() {
+        var c = $('tpxStreakCard'), today = dkey(new Date());
+        if (!c || !seen || played || !uid || !st || st.last !== today || pending) return;
+        var page = $('page-stats'); if (page && getComputedStyle(page).display === 'none') return;
+        played = true;
+        if (st.anim === today) { render(); return; }   /* déjà jouée aujourd'hui (sur cet appareil ou un autre) */
+        st.anim = today;
+        try { var p = {}; p[FIELD + '.anim'] = today; window._fsUpdateDoc(window._fsDoc(window._fsDb, 'users', uid), p).catch(function () {}); } catch (e) {}
+        if (lessMotion()) { render(); return; }
+        var n = int(st.count, 1, 1e6, 1), lives = int(st.lives, 0, MAXL, MAXL), used = st.used && st.used.day === today ? st.used.n : 0, gift = st.gift === today;
+        var before = n === 1 ? 0 : n - 1, livesBefore = Math.max(0, Math.min(MAXL, lives + used - (gift ? 1 : 0)));
+        animUntil = Date.now() + 6000;   /* filet de sécurité ; remis à 0 à la fin de l'animation */
+        render(before, livesBefore, !!used);
+        var el = $('tpxStreakN'), hearts = $('tpxLives').children, t = 0;
+        c.classList.remove('is-lit'); void c.offsetWidth;
+        if (used) {   /* vie utilisée : le cœur se brise (≈ 2 s, une chose à la fois), PUIS la flamme s'embrase */
+            for (var k = 0; k < used; k++) (function (i, d, last) {
+                setTimeout(function () {
+                    breakHeart(c, hearts[i], function () {
+                        if (!last) return;
+                        render(before, livesBefore - used);   /* « Série sauvée · 1 vie utilisée » s'allume au moment où le cœur se fend */
+                        var sv = c.querySelector('.tpx-streak-saved'); if (sv) sv.classList.add('is-new');
+                    });
+                }, d);
+            })(livesBefore - 1 - k, 300 + k * 1500, k === used - 1);
+            t = 300 + (used - 1) * 1500 + 800 + 750;
+            setTimeout(function () { c.classList.add('is-lit'); }, t);
+        } else c.classList.add('is-lit');
+        setTimeout(function () { el.classList.add('is-out'); }, t + 260);
+        setTimeout(function () {
+            el.classList.remove('is-out'); render(n, livesBefore - used); el.classList.add('is-in');   /* le cœur offert n'apparaît qu'avec son animation */
+            var v = $('tpxStreakValue'), pl = document.createElement('span'); pl.className = 'tpx-streak-plus'; pl.textContent = n === 1 && before === 0 ? '' : '+1'; if (pl.textContent) v.appendChild(pl);
+            var ic = c.querySelector('.daily-stat-icon');
+            [-9, 0, 8].forEach(function (dx, i) { var e = document.createElement('span'); e.className = 'tpx-streak-ember'; e.style.setProperty('--dx', dx + 'px'); e.style.animationDelay = (i * 90) + 'ms'; ic.appendChild(e); setTimeout(function () { e.remove(); }, 1300); });
+            setTimeout(function () { pl.remove(); }, 1200);
+        }, t + 540);
+        if (gift) setTimeout(function () { render(n, lives); var h = hearts[lives - 1]; if (h) { h.classList.add('is-gift'); setTimeout(function () { h.classList.remove('is-gift'); }, 700); } }, t + 1300);
+        setTimeout(function () { el.classList.remove('is-in'); c.classList.remove('is-lit'); animUntil = 0; render(); }, t + 2100);
+    }
+    var lastKey = null;
+    function sync() { var k = (window.currentUser ? window.currentUser.uid : '') + '|' + dkey(new Date()); if (k !== lastKey) { lastKey = k; played = false; } ensureCard(); return syncCore(function () { render(); maybePlay(); }); }
+    window.tpxStreakSync = sync;
+    window.tpxStreakState = function () { return st ? JSON.parse(JSON.stringify(Object.assign({}, st, { shown: alive(st, dkey(new Date())), pending: !!pending }))) : null; };
+    document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.app-nav-btn[data-page="stats"]')) setTimeout(function () { ensureCard(); maybePlay(); }, 60); }, true);
+    var tries = 0, boot = setInterval(function () { sync(); if (++tries > 40) clearInterval(boot); }, 750);
+    setInterval(sync, 30000);   /* changement de jour page ouverte, changement de compte, réessai */
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) sync(); });
+    window.addEventListener('focus', sync);
+    window.addEventListener('online', sync);
+})();
+</script>
 </body>
 </html>
