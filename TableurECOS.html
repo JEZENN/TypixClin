@@ -1219,6 +1219,15 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     border-radius: var(--border-radius-full);
 }
 .friends-tab-badge.hidden { display: none; }
+/* 2026-10-13 : transition entre les onglets (comme Stations aléatoires) — soulignement qui glisse + contenu en fondu */
+.friends-tabs { position: relative; }
+.friends-tabs::after { content: ''; position: absolute; left: 0; bottom: 0; width: calc(100% / 3); height: 2px; background: var(--accent); pointer-events: none; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+:root:not([data-theme="dark"]) .friends-tabs::after { background: var(--primary); }
+.friends-tabs:has(#ftab-requests.active)::after { transform: translateX(100%); }
+.friends-tabs:has(#ftab-list.active)::after { transform: translateX(200%); }
+.friends-tabs:has(.friends-tab.active) .friends-tab.active { border-bottom-color: transparent; }
+@keyframes friendsPanelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .friends-tabs::after { transition: none; } }
 
 /* Body scrollable */
 .friends-modal-body {
@@ -1240,6 +1249,8 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     /* display block pour que la hauteur soit contrainte par le parent flex */
     display: block;
 }
+.friends-panel.active { animation: friendsPanelIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .friends-panel.active { animation: none; } }
 /* Panel list : besoin de flex pour étirer le compartiment jusqu'en bas */
 #fpanel-list.active {
     display: flex;
@@ -29822,11 +29833,22 @@ function ecosTodayKey() {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
+// 2026-10-13 : numéro de JOUR CALENDAIRE LOCAL (« AAAA-MM-JJ » ou « AAAA-MM-JJT00:00:00.000Z » = ce jour-là ; autre horodatage = son jour local).
+function _ecosLocalDayNum(v) {
+    if (v == null || v === '') return null;
+    var m = (typeof v === 'string') && /^(\d{4})-(\d{2})-(\d{2})(?:T00:00:00(?:\.000)?Z)?$/.exec(v);
+    if (m) return Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000);
+    var d = (v instanceof Date) ? v : new Date(v);
+    if (isNaN(d.getTime())) return null;
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+}
 function ecosDaysSince(iso) {
     if (!iso) return null;
-    const then = new Date(iso).getTime();
-    if (isNaN(then)) return null;
-    return Math.floor((Date.now() - then) / 86400000);
+    /* 2026-10-13 : jours CALENDAIRES locaux. Avant : heures écoulées depuis minuit UTC / 24
+       → entre minuit et 2 h, un passage de la veille comptait « 0 j ». */
+    const n = _ecosLocalDayNum(iso);
+    if (n == null) return null;
+    return _ecosLocalDayNum(new Date()) - n;
 }
 function ecosFormatDate(iso) {
     if (!iso) return '—';
@@ -48699,6 +48721,14 @@ body.tpx-offline-notif-showing .tpx-trial-fab,
 body.tpx-logout-toast-showing .tpx-premium-fab,
 body.tpx-logout-toast-showing .tpx-trial-fab {
     display: none !important;
+}
+/* 2026-10-13 : TÉLÉPHONE — le bouton violet (cadeau / couronne, z-index 1300) ne recouvre plus les fenêtres ouvertes.
+   Exception : la couronne pendant son avertissement (.tpx-nudge, après une action bloquée en lecture seule). */
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+    body[style*="overflow: hidden"] .tpx-trial-fab,
+    body[style*="overflow: hidden"] .tpx-premium-fab:not(.tpx-nudge),
+    body:has(.notes-modal-overlay.active, .pdd-overlay.active, .planning-day-detail-overlay.active, .planning-spec-submodal-overlay.active, .flash-edit-overlay.active, .flash-drawer-overlay.active, .flash-session-overlay.active, .settings-modal-overlay.active, .help-modal-overlay.active, .tours-today-modal-overlay.active, .whats-new-modal-overlay.active, .global-todo-overlay.active, .tpx-modal-overlay.active, .notes-confirm-overlay.active, .friends-modal-overlay.active, .feedback-modal-overlay.active, .fb-sent-overlay.active, .custom-modal-overlay.active, .ecos-stats-detail-overlay.active, .ecos-conf-overlay.active, .modal.active, .timer-modal.show, .tour-success-overlay.show) .tpx-trial-fab,
+    body:has(.notes-modal-overlay.active, .pdd-overlay.active, .planning-day-detail-overlay.active, .planning-spec-submodal-overlay.active, .flash-edit-overlay.active, .flash-drawer-overlay.active, .flash-session-overlay.active, .settings-modal-overlay.active, .help-modal-overlay.active, .tours-today-modal-overlay.active, .whats-new-modal-overlay.active, .global-todo-overlay.active, .tpx-modal-overlay.active, .notes-confirm-overlay.active, .friends-modal-overlay.active, .feedback-modal-overlay.active, .fb-sent-overlay.active, .custom-modal-overlay.active, .ecos-stats-detail-overlay.active, .ecos-conf-overlay.active, .modal.active, .timer-modal.show, .tour-success-overlay.show) .tpx-premium-fab:not(.tpx-nudge) { display: none !important; }
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }

@@ -1231,6 +1231,15 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     border-radius: var(--border-radius-full);
 }
 .friends-tab-badge.hidden { display: none; }
+/* 2026-10-13 : transition entre les onglets (comme Stations aléatoires) — soulignement qui glisse + contenu en fondu */
+.friends-tabs { position: relative; }
+.friends-tabs::after { content: ''; position: absolute; left: 0; bottom: 0; width: calc(100% / 3); height: 2px; background: var(--accent); pointer-events: none; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+:root:not([data-theme="dark"]) .friends-tabs::after { background: var(--primary); }
+.friends-tabs:has(#ftab-requests.active)::after { transform: translateX(100%); }
+.friends-tabs:has(#ftab-list.active)::after { transform: translateX(200%); }
+.friends-tabs:has(.friends-tab.active) .friends-tab.active { border-bottom-color: transparent; }
+@keyframes friendsPanelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .friends-tabs::after { transition: none; } }
 
 /* Body scrollable */
 .friends-modal-body {
@@ -1252,6 +1261,8 @@ html[data-theme="dark"]::-webkit-scrollbar-thumb:hover { background: linear-grad
     /* display block pour que la hauteur soit contrainte par le parent flex */
     display: block;
 }
+.friends-panel.active { animation: friendsPanelIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .friends-panel.active { animation: none; } }
 /* Panel list : besoin de flex pour étirer le compartiment jusqu'en bas */
 #fpanel-list.active {
     display: flex;
@@ -28898,9 +28909,22 @@ return {
 };
 }
 
+// 2026-10-13 : numéro de JOUR CALENDAIRE LOCAL (« AAAA-MM-JJ » ou « AAAA-MM-JJT00:00:00.000Z » = ce jour-là ; autre horodatage = son jour local).
+function _tpxLocalDayNum(v) {
+    if (v == null || v === '') return null;
+    var m = (typeof v === 'string') && /^(\d{4})-(\d{2})-(\d{2})(?:T00:00:00(?:\.000)?Z)?$/.exec(v);
+    if (m) return Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000);
+    var d = (v instanceof Date) ? v : new Date(v);
+    if (isNaN(d.getTime())) return null;
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+}
 function getDaysSince(dateStr) {
     if (!dateStr) return null;
-    return Math.floor(Math.abs(new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
+    /* 2026-10-13 : jours CALENDAIRES locaux. Avant : heures écoulées depuis minuit UTC / 24
+       → entre minuit et 2 h, un tour de la veille affichait « 0j » au lieu de « 1j ». */
+    const n = _tpxLocalDayNum(dateStr);
+    if (n == null) return null;
+    return Math.abs(_tpxLocalDayNum(new Date()) - n);
 }
 
 function formatDate(dateStr) {
@@ -29124,7 +29148,7 @@ function renderPriorityItems() {
             if (!lastDateStr) return;
             const lastDate = new Date(lastDateStr);
 				lastDate.setHours(0, 0, 0, 0);
-				const daysSince = Math.max(0, Math.floor((today - lastDate) / (1000 * 60 * 60 * 24)));
+				const daysSince = Math.max(0, Math.round((today - lastDate) / (1000 * 60 * 60 * 24)));   // 2026-10-13 : round (jour de 23 h au changement d'heure)
 
             allItems.push({
                 ...item,
@@ -37166,6 +37190,12 @@ document.addEventListener('DOMContentLoaded', function() {
 .notes-action-btn.btn-share.share-active { background: #ec4899; color: white; box-shadow: 0 4px 12px rgba(236,72,153,0.45); max-width: 130px; padding: 0 10px 0 8px; }
 .notes-action-btn.btn-share.share-active .notes-btn-label { opacity: 1; max-width: 100px; margin-left: 5px; }
 .notes-action-btn.btn-share:active { background: #be185d; color: white; transform: scale(0.92); box-shadow: none; }
+/* 2026-10-13 : mode sur-mesure — pas d'envoi ni de réception de notes (fiches personnelles) */
+body.tpx-content-custom #notesShareBtn,
+body.tpx-content-custom #notesSharePanel,
+body.tpx-content-custom #notesModalOverlay .notes-toolbar-switch-wrapper,
+body.tpx-content-custom #notesSharedPanel,
+body.tpx-content-custom .open-notes-btn .notes-shared-dot { display: none !important; }
 [data-theme="dark"] .notes-action-btn.btn-share { background: rgba(236,72,153,0.2); color: #f9a8d4; }
 [data-theme="dark"] .notes-action-btn.btn-share:hover,
 [data-theme="dark"] .notes-action-btn.btn-share.share-active { background: #ec4899; color: white; }
@@ -50614,11 +50644,21 @@ window._applyItemPriority = function(priority, specialtyId, fc) {
   }
 
   // Nombre de jours depuis une date ISO (null si pas de date)
+  // 2026-10-13 : numéro de JOUR CALENDAIRE LOCAL (« AAAA-MM-JJ » ou « AAAA-MM-JJT00:00:00.000Z » = ce jour-là ; autre horodatage = son jour local).
+  function _tpxDayNum(v) {
+      if (v == null || v === '') return null;
+      var m = (typeof v === 'string') && /^(\d{4})-(\d{2})-(\d{2})(?:T00:00:00(?:\.000)?Z)?$/.exec(v);
+      if (m) return Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000);
+      var d = (v instanceof Date) ? v : new Date(v);
+      if (isNaN(d.getTime())) return null;
+      return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+  // 2026-10-13 : jours CALENDAIRES locaux (même calcul que getDaysSince du tableau)
   function _daysSince(iso) {
     if (!iso) return null;
     try {
-      var dt = new Date(iso); if (isNaN(dt.getTime())) return null;
-      return Math.floor(Math.abs(new Date() - dt) / 86400000);
+      var n = _tpxDayNum(iso); if (n == null) return null;
+      return Math.abs(_tpxDayNum(new Date()) - n);
     } catch (e) { return null; }
   }
 
@@ -57039,6 +57079,14 @@ body.tpx-offline-notif-showing .tpx-trial-fab,
 body.tpx-logout-toast-showing .tpx-premium-fab,
 body.tpx-logout-toast-showing .tpx-trial-fab {
     display: none !important;
+}
+/* 2026-10-13 : TÉLÉPHONE — le bouton violet (cadeau / couronne, z-index 1300) ne recouvre plus les fenêtres ouvertes.
+   Exception : la couronne pendant son avertissement (.tpx-nudge, après une action bloquée en lecture seule). */
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+    body[style*="overflow: hidden"] .tpx-trial-fab,
+    body[style*="overflow: hidden"] .tpx-premium-fab:not(.tpx-nudge),
+    body:has(.notes-modal-overlay.active, .pdd-overlay.active, .planning-day-detail-overlay.active, .planning-spec-submodal-overlay.active, .flash-edit-overlay.active, .flash-drawer-overlay.active, .flash-session-overlay.active, .settings-modal-overlay.active, .help-modal-overlay.active, .tours-today-modal-overlay.active, .whats-new-modal-overlay.active, .global-todo-overlay.active, .tpx-modal-overlay.active, .notes-confirm-overlay.active, .friends-modal-overlay.active, .feedback-modal-overlay.active, .fb-sent-overlay.active, .custom-modal-overlay.active, .ecos-stats-detail-overlay.active, .ecos-conf-overlay.active, .modal.active, .timer-modal.show, .tour-success-overlay.show) .tpx-trial-fab,
+    body:has(.notes-modal-overlay.active, .pdd-overlay.active, .planning-day-detail-overlay.active, .planning-spec-submodal-overlay.active, .flash-edit-overlay.active, .flash-drawer-overlay.active, .flash-session-overlay.active, .settings-modal-overlay.active, .help-modal-overlay.active, .tours-today-modal-overlay.active, .whats-new-modal-overlay.active, .global-todo-overlay.active, .tpx-modal-overlay.active, .notes-confirm-overlay.active, .friends-modal-overlay.active, .feedback-modal-overlay.active, .fb-sent-overlay.active, .custom-modal-overlay.active, .ecos-stats-detail-overlay.active, .ecos-conf-overlay.active, .modal.active, .timer-modal.show, .tour-success-overlay.show) .tpx-premium-fab:not(.tpx-nudge) { display: none !important; }
 }
 .tpx-premium-fab:hover .tpx-fab-label,
 .tpx-premium-fab.tpx-nudge .tpx-fab-label { max-width: 250px; opacity: 1; margin-left: 11px; }
@@ -67274,6 +67322,17 @@ html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="au
 }
 @media (prefers-reduced-motion: reduce) { .tpx-ws-add.tpx-ws-flash, .tpx-ws-addbtn.is-done, .tpx-ws-addbtn.is-done i, .tpx-ws-empty.is-in { animation: none; } .tpx-ws-row { transition: none; } }
 @media (max-width: 560px) { .tpx-ws-box { padding: 0.8rem 0.75rem; } }
+/* 2026-10-13 : téléphone — rien ne transparaît sous la fenêtre, derrière la barre flottante du navigateur (cf. modal Notes) :
+   le voile déborde de 420 px en haut et en bas (fenêtre au même endroit, collée au bas de l'écran), la bande sous la fenêtre
+   prend la couleur de son pied. Hors saisie au clavier (vvFit pose alors top/height en ligne) et hors tc-kb-open. */
+@media (max-width: 560px) {
+    body:not(.tc-kb-open) #tpxWsOverlay.active:not([style*="height"]),
+    body:not(.tc-kb-open) #tpxTrOverlay.active:not([style*="height"]) { top: -420px; bottom: -420px; padding: calc(420px + 0.5rem) 0.5rem 420px !important; }
+    body:not(.tc-kb-open) #tpxWsOverlay.active:not([style*="height"])::after,
+    body:not(.tc-kb-open) #tpxTrOverlay.active:not([style*="height"])::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 420px; background: #f8fafc; pointer-events: none; }
+    [data-theme="dark"] body:not(.tc-kb-open) #tpxWsOverlay.active:not([style*="height"])::after,
+    [data-theme="dark"] body:not(.tc-kb-open) #tpxTrOverlay.active:not([style*="height"])::after { background: #1e293b; }
+}
 
 /* ── Entraînement : QI · KFP · DP · TCS ── */
 .tpx-ws-part-d { font-size: 0.74rem; font-weight: 600; color: var(--gray-500); margin-left: 0.35rem; }
