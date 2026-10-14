@@ -21300,6 +21300,9 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 .ecos-conf-actions button { flex: 1; padding: 0.6rem; border-radius: var(--border-radius-md); font-weight: 700; font-size: 0.85rem; }
 .ecos-conf-actions .cancel { background: var(--gray-100); color: var(--gray-600); }
 .ecos-conf-actions .cancel:hover { background: var(--gray-200); }
+/* 2026-10-14 : effet d'appui sur « Annuler » / « Fermer » */
+.ecos-conf-actions .cancel { transition: background 0.15s ease, transform 0.12s ease; }
+.ecos-conf-actions .cancel:active { background: var(--gray-300); transform: scale(0.97); }
 
 /* ---- Modal Notes ECOS : panneau objectifs à droite ---- */
 .sdd-notes-body { display: flex; gap: 0; flex: 1; min-height: 0; }
@@ -22528,6 +22531,7 @@ body.tc-kb-open-phone .flash-expand-btn {
 .ecos-stats-detail-subtitle { font-size: 0.78rem; color: var(--gray-500); font-weight: 500; }
 .ecos-stats-detail-close { width: 30px; height: 30px; border-radius: 50%; background: var(--danger-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--danger); transition: all 0.15s ease; flex-shrink: 0; }
 .ecos-stats-detail-close:hover { background: var(--danger); color: white; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239,68,68,0.45); }
+.ecos-stats-detail-close:active { transform: scale(0.88); }   /* 2026-10-14 : appui, comme les croix d'EDN */
 [data-theme="dark"] .ecos-stats-detail-close { background: rgba(239,68,68,0.6); color: white; border: 1px solid rgba(239,68,68,0.8); }
 [data-theme="dark"] .ecos-stats-detail-close:hover { background: var(--danger); border-color: transparent; }
 .ecos-stats-detail-body { padding: 1.25rem 1.5rem 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
@@ -32951,7 +32955,7 @@ function renderStats() {
     const today = ecosTodayKey();
     // borne semaine = 7 derniers jours
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
-    const weekKey = weekAgo.toISOString().slice(0, 10);
+    const weekKey = weekAgo.getFullYear() + '-' + String(weekAgo.getMonth() + 1).padStart(2, '0') + '-' + String(weekAgo.getDate()).padStart(2, '0');   // 2026-10-14 : date LOCALE (UTC = J-7 entre minuit et 2 h)
 
     let dPs = 0, dSans = 0, dPass = 0, dConfSum = 0, dConfN = 0;
     let wPs = 0, wSans = 0, wPass = 0, wConfSum = 0, wConfN = 0;
@@ -33007,7 +33011,7 @@ function renderECOSWeeklyCharts(weekKey) {
     var wSansTot = 0, wPsTot = 0, wPassTot = 0, wConfSum = 0, wConfN = 0;
     for (var i = 6; i >= 0; i--) {
         var d = new Date(); d.setDate(d.getDate() - i);
-        var key = d.toISOString().slice(0, 10);
+        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');   // 2026-10-14 : date LOCALE, comme les passages (UTC = la veille entre minuit et 2 h)
         var dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
         labels.push(dayLabel);
         var sans = 0, ps = 0, pass = 0, cSum = 0, cN = 0;
@@ -33066,7 +33070,7 @@ function renderECOSWeeklyCharts(weekKey) {
                     x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '500' } } },
                     y: { beginAtZero: true, min: opts.min !== undefined ? opts.min : undefined,
                         max: opts.max !== undefined ? opts.max : undefined,
-                        grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 }, padding: 6,
+                        grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 }, padding: 6, precision: 0,   /* 2026-10-14 : graduations entières (nombres de stations, barème) */
                         callback: function(v) { return v + (opts.unit || ''); } } }
                 }
             }
@@ -33716,7 +33720,7 @@ function getEcosStationDetails(period) {
     if (!window.ecosData) return { ps: [], sans: [], pass: [] };
     const today = ecosTodayKey();
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
-    const weekKey = weekAgo.toISOString().slice(0, 10);
+    const weekKey = weekAgo.getFullYear() + '-' + String(weekAgo.getMonth() + 1).padStart(2, '0') + '-' + String(weekAgo.getDate()).padStart(2, '0');   // 2026-10-14 : date LOCALE (UTC = J-7 entre minuit et 2 h)
     const ps = [], sans = [], pass = [];
 
     ECOS_SDD_DATA.forEach(sdd => {
@@ -36573,7 +36577,7 @@ window.ECOSPlanningModule = (function () {
             return '<div class="checklist-item ' + (item.completed ? 'completed' : '') + '" data-todo-id="' + item.id + '">' +
                     '<div class="checklist-checkbox ' + (item.completed ? 'checked' : '') + '" onclick="' + checkboxClick + '">' + (item.completed ? '<i class="fas fa-check"></i>' : '') + '</div>' +
                     '<span class="checklist-item-text">' + titleHtml + ' ' + checklistBadges(item) + (item.suggestedMode ? ' <span class="fstation-mode-badge ' + item.suggestedMode + '">' + (item.suggestedMode === 'sans_ps' ? 'Sans PS' : 'PS/PSS') + '</span>' : '') + '</span>' +
-                    '<button class="checklist-delete" onclick="ECOSPlanningModule.remove(\'' + item.id + '\')"><i class="fas fa-trash"></i></button>' +
+                    '<button class="checklist-delete" onclick="(window._todoDeleteAnim||function(i,f){f()})(\'' + item.id + '\',function(){ECOSPlanningModule.remove(\'' + item.id + '\')})"><i class="fas fa-trash"></i></button>' +
                 '</div>';
         }).join('');
     }
@@ -47850,6 +47854,8 @@ textarea::-moz-selection {
     transform: none !important;
     align-self: center !important;
 }
+/* 2026-10-14 : l'appui rétrécit à nouveau le bouton « envoyer vers la To-do », comme sur EDN */
+.priority-item-pills .priority-send-btn:active { transform: scale(0.92) !important; }
 .priority-item-pills .added-to-checklist-badge {
     height: 26px !important;
     width: 26px !important;
@@ -55149,6 +55155,64 @@ window._todoValidateAnim = function (itemId, apply) {
         visible.forEach(function (el) { el.classList.add('leaving'); });
         setTimeout(apply, 190);
     }, 620);
+};
+</script>
+<style id="todo-delete-anim-css">
+/* 2026-10-14 : suppression d'une tâche — glisse + s'efface + se replie (≈ 0,3 s), puis suppression réelle. */
+.checklist-item.todo-deleting {
+    opacity: 0;
+    transform: translateX(-14px);
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: calc(-1 * var(--todo-del-gap, 0px)) !important;
+    border-top-width: 0 !important;
+    border-bottom-width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease, transform 0.22s ease, max-height 0.26s ease 0.04s, padding 0.26s ease 0.04s,
+                margin 0.26s ease 0.04s, border-width 0.26s ease 0.04s !important;
+}
+</style>
+<script id="todo-delete-anim-js">
+/* Joue l'animation de suppression sur la tâche <itemId>, PUIS exécute `apply` (la suppression existante, qui enregistre
+   et redessine). Tâche non visible ou mouvement réduit : `apply` immédiatement. Si, après `apply`, la tâche est toujours
+   là (suppression refusée, liste non redessinée), elle réapparaît. */
+window._todoDeleteAnim = function (itemId, apply) {
+    if (typeof apply !== 'function') return;
+    var nodes;
+    try {
+        nodes = document.querySelectorAll(
+            '.checklist-item[data-todo-id="' + String(itemId).replace(/["\\]/g, '') + '"]');
+    } catch (e) { nodes = []; }
+    var visible = [];
+    for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].offsetParent !== null) visible.push(nodes[i]);
+    }
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (!visible.length || reduce) { apply(); return; }
+    for (var j = 0; j < visible.length; j++) { if (visible[j].classList.contains('todo-deleting')) return; }   /* double clic */
+    visible.forEach(function (el) {
+        var gap = 0;
+        try { gap = parseFloat(getComputedStyle(el.parentElement).rowGap) || 0; } catch (e) {}
+        if (!el.nextElementSibling) gap = 0;   /* dernière tâche : l'espace la précède, il part avec elle */
+        el.style.setProperty('--todo-del-gap', gap + 'px');
+        el.style.maxHeight = el.offsetHeight + 'px';
+        void el.offsetHeight;   /* point de départ de la transition */
+        el.classList.add('todo-deleting');
+    });
+    setTimeout(function () {
+        try { apply(); }
+        finally {
+            visible.forEach(function (el) {
+                if (!el.isConnected) return;   /* liste redessinée : la tâche est bien partie */
+                el.classList.remove('todo-deleting');
+                el.style.removeProperty('max-height');
+                el.style.removeProperty('--todo-del-gap');
+            });
+        }
+    }, 300);
 };
 </script>
 <!-- ===== NUDGE FEEDBACK (systeme de campagnes one-shot) =====

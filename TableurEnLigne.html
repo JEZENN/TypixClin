@@ -33734,7 +33734,7 @@ function renderChecklist() {
                     ${item.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
                 <span class="checklist-item-text">${escapeHtml(item.text)}${trainBadges}${dotHtml}</span>
-                <button class="checklist-delete" onclick="PlanningModule.deleteChecklistItem(${item.id})"><i class="fas fa-trash"></i></button>
+                <button class="checklist-delete" onclick="(window._todoDeleteAnim||function(i,f){f()})(${item.id},function(){PlanningModule.deleteChecklistItem(${item.id})})"><i class="fas fa-trash"></i></button>
             </div>
         `;
     }).join('');
@@ -62800,6 +62800,64 @@ window._todoValidateAnim = function (itemId, apply) {
         visible.forEach(function (el) { el.classList.add('leaving'); });
         setTimeout(apply, 190);
     }, 620);
+};
+</script>
+<style id="todo-delete-anim-css">
+/* 2026-10-14 : suppression d'une tâche — glisse + s'efface + se replie (≈ 0,3 s), puis suppression réelle. */
+.checklist-item.todo-deleting {
+    opacity: 0;
+    transform: translateX(-14px);
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: calc(-1 * var(--todo-del-gap, 0px)) !important;
+    border-top-width: 0 !important;
+    border-bottom-width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease, transform 0.22s ease, max-height 0.26s ease 0.04s, padding 0.26s ease 0.04s,
+                margin 0.26s ease 0.04s, border-width 0.26s ease 0.04s !important;
+}
+</style>
+<script id="todo-delete-anim-js">
+/* Joue l'animation de suppression sur la tâche <itemId>, PUIS exécute `apply` (la suppression existante, qui enregistre
+   et redessine). Tâche non visible ou mouvement réduit : `apply` immédiatement. Si, après `apply`, la tâche est toujours
+   là (suppression refusée, liste non redessinée), elle réapparaît. */
+window._todoDeleteAnim = function (itemId, apply) {
+    if (typeof apply !== 'function') return;
+    var nodes;
+    try {
+        nodes = document.querySelectorAll(
+            '.checklist-item[data-todo-id="' + String(itemId).replace(/["\\]/g, '') + '"]');
+    } catch (e) { nodes = []; }
+    var visible = [];
+    for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].offsetParent !== null) visible.push(nodes[i]);
+    }
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (!visible.length || reduce) { apply(); return; }
+    for (var j = 0; j < visible.length; j++) { if (visible[j].classList.contains('todo-deleting')) return; }   /* double clic */
+    visible.forEach(function (el) {
+        var gap = 0;
+        try { gap = parseFloat(getComputedStyle(el.parentElement).rowGap) || 0; } catch (e) {}
+        if (!el.nextElementSibling) gap = 0;   /* dernière tâche : l'espace la précède, il part avec elle */
+        el.style.setProperty('--todo-del-gap', gap + 'px');
+        el.style.maxHeight = el.offsetHeight + 'px';
+        void el.offsetHeight;   /* point de départ de la transition */
+        el.classList.add('todo-deleting');
+    });
+    setTimeout(function () {
+        try { apply(); }
+        finally {
+            visible.forEach(function (el) {
+                if (!el.isConnected) return;   /* liste redessinée : la tâche est bien partie */
+                el.classList.remove('todo-deleting');
+                el.style.removeProperty('max-height');
+                el.style.removeProperty('--todo-del-gap');
+            });
+        }
+    }, 300);
 };
 </script>
 
