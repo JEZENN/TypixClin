@@ -23123,6 +23123,9 @@ body.tc-kb-open-phone .flash-expand-btn {
 }
 .planning-day-detail-close:hover { background: var(--danger, #ef4444); color: #fff; transform: scale(1.1); }
 .planning-day-detail-close:active { transform: scale(0.9); }
+/* 2026-10-15 : survol ET appui = rouge plein, tous thèmes */
+html body .planning-day-detail-close:hover,
+html body .planning-day-detail-close:active { background: var(--danger, #ef4444); color: #fff; }
 .planning-day-detail-close:focus-visible { outline: 2px solid var(--primary, #2563eb); outline-offset: 2px; }
 [data-theme="dark"] .planning-day-detail-close { background: rgba(239,68,68,0.55); color: #fff; }
 
@@ -26190,6 +26193,7 @@ window.TPXNotesPending = {
                 </div>
                 <div class="pdt-group">
                     <button type="button" class="pdt-btn" data-cmd="bullet" aria-label="Liste à puces" data-tooltip="Liste à puces"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" class="pdt-btn" data-cmd="check" aria-label="Liste à cocher" data-tooltip="Liste à cocher"><i class="fas fa-list-check"></i></button>
                     <button type="button" class="pdt-btn" data-cmd="clear" aria-label="Effacer la mise en forme" data-tooltip="Effacer la mise en forme"><i class="fas fa-eraser"></i></button>
                 </div>
             </div>
@@ -26971,6 +26975,19 @@ window.TPXNotesPending = {
 
             <!-- ══════════════ OCTOBRE 2026 ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon green">
+                    <i class="fas fa-list-check"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Liste à cocher dans le planning ✅</h4>
+                    <p>
+                        Dans les notes de la journée, le bouton <strong>Liste à cocher</strong> crée une liste de tâches
+                        à cocher au fil de la journée, <strong>directement dans la case du planning</strong>.
+                    </p>
+                </div>
+            </div>
 
             <div class="whats-new-section">
                 <div class="whats-new-section-icon flame">
@@ -35356,6 +35373,7 @@ function sanitizePlanningNoteHTML(html) {
             var keep = [];
             el.classList.forEach(function (c) {
                 if (c === 'planning-note-red' || c === 'planning-note-blue' || c === 'planning-note-green') keep.push(c);
+                else if ((c === 'planning-note-check' && el.tagName === 'UL') || (c === 'planning-note-done' && el.tagName === 'LI')) keep.push(c);   // 2026-10-15 : liste à cocher
             });
             el.className = keep.join(' ');
             if (!el.className) el.removeAttribute('class');
@@ -35411,7 +35429,24 @@ function planningNoteToPlainText(notes) {
 function normalizePlanningNoteForStorage(html) {
     var clean = sanitizePlanningNoteHTML(html || '');
     if (!planningNoteHasContent(clean)) return '';
-    return '<div data-planning-rich="1">' + clean + '</div>';
+    return '<div data-planning-rich="1">' + unwrapPlanningRichNote(clean) + '</div>';
+}
+
+/* 2026-10-15 : retire les enveloppes <div data-planning-rich> de tête (déjà présentes dans l'éditeur) pour n'en garder
+   qu'UNE au stockage. Seulement si la note n'est faite que d'une enveloppe nue ; sinon rien ne change. */
+function unwrapPlanningRichNote(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    for (var guard = 0; guard < 2000; guard++) {
+        var only = null, other = false;
+        for (var n = tmp.firstChild; n; n = n.nextSibling) {
+            if (n.nodeType === 1) { if (only) { other = true; break; } only = n; }
+            else if (n.nodeType === 3 && n.nodeValue.replace(/[\s\u00a0]+/g, '') !== '') { other = true; break; }
+        }
+        if (other || !only || only.tagName !== 'DIV' || only.attributes.length !== 1 || !only.hasAttribute('data-planning-rich')) break;
+        tmp.innerHTML = only.innerHTML;
+    }
+    return tmp.innerHTML;
 }
 
 function getPlanningNoteTextLength(editor) {
@@ -35902,6 +35937,7 @@ function initPlanningDayDetailModal() {
             else if (cmd === 'italic') _planningExec('italic', null, false);
             else if (cmd === 'underline') _planningExec('underline', null, false);
             else if (cmd === 'bullet') _planningExec('insertUnorderedList', null, false);
+            else if (cmd === 'check') { if (window.tpxNoteChecklist) window.tpxNoteChecklist(document.getElementById('planning-day-detail-editor'), function (c) { _planningExec(c, null, false); }); }   // 2026-10-15
             else if (cmd === 'clear') { _planningExec('removeFormat', null, false); }
         });
     });
@@ -52610,6 +52646,51 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
 :where(html[data-theme="pastel"]) .stats-section-title.ranking i {
     color:#ab8138;
 }
+/* 2026-10-15 : titres de section de la page Statistiques — tuile d'icône + trait dégradé (proposition A, Jean). */
+.stats-section-title {
+    --sec: #64748b;
+    position: relative;
+    border-bottom: none;
+    padding-bottom: 0.7rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--gray-900);
+    gap: 0.65rem;
+}
+.stats-section-title.daily { --sec: #f59e0b; }
+.stats-section-title.weekly { --sec: #8b5cf6; }
+.stats-section-title.general { --sec: var(--primary); }
+.stats-section-title.priority-section { --sec: #ef4444; }
+.stats-section-title.ranking { --sec: #f59e0b; }
+:where(html[data-theme="pastel"]) .stats-section-title.daily,
+:where(html[data-theme="pastel"]) .stats-section-title.ranking { --sec: #ab8138; }
+:where(html[data-theme="pastel"]) .stats-section-title.weekly { --sec: #9b86cc; }
+:where(html[data-theme="pastel"]) .stats-section-title.priority-section { --sec: #bb4545; }
+/* tuile : teintée de la couleur de l'icône elle-même (règles de couleur existantes inchangées) */
+.stats-section-title > i:first-child {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    background: rgba(148, 163, 184, 0.16);
+    background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.stats-section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--sec) 0%, transparent 70%);
+    background: linear-gradient(90deg, var(--sec) 0%, color-mix(in srgb, var(--sec) 35%, transparent) 22%, color-mix(in srgb, var(--gray-300) 60%, transparent) 60%, transparent 100%);
+}
 :where(html[data-theme="pastel"]) .ranking-podium-item.rank-1 .ranking-rank-label {
     background:linear-gradient(135deg, #c08b4f, #c6a85c);
 }
@@ -55174,6 +55255,155 @@ window._todoValidateAnim = function (itemId, apply) {
                 margin 0.26s ease 0.04s, border-width 0.26s ease 0.04s !important;
 }
 </style>
+<style id="tpx-page-header-tiles">
+/* 2026-10-15 : titres de page — icône dans une tuile en dégradé, icône blanche (proposition B) */
+h2.section-title { font-family: var(--font-display); letter-spacing: -0.01em; gap: 0.8rem; }
+h2.planning-month-title { gap: 0.75rem; }
+h2.section-title > i:first-child:not(#tpx-h), h2.planning-month-title > i:first-child:not(#tpx-h) {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; line-height: 1;
+    color: #fff !important; background: var(--primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb)); box-shadow: none;
+}
+@media (max-width: 768px) {
+    h2.section-title { gap: 0.6rem; }
+    h2.planning-month-title { gap: 0.55rem; }
+    h2.section-title > i:first-child:not(#tpx-h), h2.planning-month-title > i:first-child:not(#tpx-h) { width: 34px; height: 34px; border-radius: 10px; font-size: 0.92rem; }
+}
+/* clic sur l'icône = remonter à la barre d'onglets (comme un changement d'onglet) */
+h2.section-title > i:first-child:not(#tpx-h), h2.planning-month-title > i:first-child:not(#tpx-h) {
+    cursor: pointer; transition: transform 0.18s ease, filter 0.18s ease; -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+    h2.section-title > i:first-child:not(#tpx-h):hover, h2.planning-month-title > i:first-child:not(#tpx-h):hover { transform: scale(1.06); filter: brightness(1.06); }
+}
+h2.section-title > i:first-child:not(#tpx-h):active, h2.planning-month-title > i:first-child:not(#tpx-h):active { transform: scale(0.94); }
+@media (prefers-reduced-motion: reduce) { h2.section-title > i:first-child, h2.planning-month-title > i:first-child { transition: none; } }
+/* changement d'onglet : on garde le léger glissement, SANS fondu — la page (titres compris) ne passe plus par la
+   transparence (le calcul de la nouvelle page fige l'écran un instant, puis le fondu partait de 0) */
+@keyframes tpxPageSlideIn { from { transform: translateY(12px); } to { transform: translateY(0); } }
+.app-page.page-entering { animation-name: tpxPageSlideIn; }
+/* pages lourdes (100 lignes possibles) : le calcul fige l'écran pendant l'animation → affichage direct, sans saccade */
+#page-items.app-page.page-entering, #page-sdd.app-page.page-entering { animation: none; }
+</style>
+<script id="tpx-page-header-top">
+(function () {
+    'use strict';
+    /* même point d'arrivée qu'un clic d'onglet : haut de la barre d'onglets − 80 px ; rien si on est déjà au-dessus */
+    document.addEventListener('click', function (e) {
+        var i = e.target && e.target.closest ? e.target.closest('h2.section-title > i:first-child, h2.planning-month-title > i:first-child') : null;
+        if (!i) return;
+        var nav = document.querySelector('.app-nav'); if (!nav) return;
+        var top = Math.max(0, nav.getBoundingClientRect().top + window.pageYOffset - 80);
+        if (window.pageYOffset > top + 4) window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+})();
+</script>
+<style id="tpx-note-checklist-css">
+/* 2026-10-15 : liste à cocher dans les notes de la journée (fenêtre + case du planning). */
+ul.planning-note-check { list-style: none; }   /* même retrait que la liste à puces : la case remplace la puce */
+ul.planning-note-check > li { --ck: 1.3em; position: relative; transition: color 0.2s ease, text-decoration-color 0.2s ease; text-decoration: line-through; text-decoration-color: transparent; }
+.day-notes-input ul.planning-note-check > li { --ck: max(1.35em, 15px); }   /* case du planning : petite police → case plus grande */
+ul.planning-note-check > li::before {
+    content: ''; position: absolute; left: calc(-1 * var(--ck) - 0.3em); top: calc(0.7em - var(--ck) / 2); width: var(--ck); height: var(--ck); box-sizing: border-box;
+    border-radius: 50%; border: 1.8px solid #94a3b8; background-color: transparent; cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+ul.planning-note-check > li::after {
+    content: ''; position: absolute; left: calc(-0.64 * var(--ck) - 0.3em); top: calc(0.7em - 0.32 * var(--ck)); width: calc(0.28 * var(--ck)); height: calc(0.52 * var(--ck)); box-sizing: border-box;
+    border: solid #fff; border-width: 0 calc(0.13 * var(--ck)) calc(0.13 * var(--ck)) 0; pointer-events: none; opacity: 0;
+    transform: rotate(45deg) scale(0.3); transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+}
+ul.planning-note-check > li.planning-note-done { color: var(--gray-500); text-decoration-color: rgba(100, 116, 139, 0.75); }
+ul.planning-note-check > li.planning-note-done::before { background-color: #10b981; border-color: #10b981; }
+ul.planning-note-check > li.planning-note-done::after { opacity: 1; transform: rotate(45deg) scale(1); }
+[data-theme="dark"] ul.planning-note-check > li::before { border-color: #64748b; }
+[data-theme="dark"] ul.planning-note-check > li.planning-note-done::before { background-color: #10b981; border-color: #10b981; }
+[data-theme="dark"] ul.planning-note-check > li.planning-note-done { color: #94a3b8; }
+@media (prefers-reduced-motion: reduce) { ul.planning-note-check > li, ul.planning-note-check > li::before, ul.planning-note-check > li::after { transition: none; } }
+</style>
+<script id="tpx-note-checklist-js">
+(function () {
+    'use strict';
+    var EDITORS = '.day-notes-input, #pdd-editor, #planning-day-detail-editor';
+    var LIS = '.day-notes-input ul.planning-note-check > li, #pdd-editor ul.planning-note-check > li, #planning-day-detail-editor ul.planning-note-check > li';
+    /* Hors ligne / lecture seule : mêmes gardes que l'édition des notes du planning */
+    function blocked() {
+        if (window.tpxPremiumLocked) { if (window.tpxPremiumNudge) window.tpxPremiumNudge(); return true; }
+        if (typeof window.canPerformEcosAction === 'function') return !window.canPerformEcosAction('planning');
+        if (typeof window.canPerformAction === 'function') return !window.canPerformAction('planning-text');
+        return false;
+    }
+    function fire(ed) { try { ed.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} }
+    function closestUL(node, ed) { while (node && node !== ed) { if (node.nodeType === 1 && node.tagName === 'UL') return node; node = node.parentNode; } return null; }
+    function caretUL(ed) { var s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return null; var n = s.getRangeAt(0).startContainer; return ed.contains(n) ? closestUL(n, ed) : null; }
+    /* Bouton « Liste à cocher » : run(cmd) = exécution de commande de la fenêtre (focus + execCommand + enregistrement) */
+    window.tpxNoteChecklist = function (ed, run) {
+        if (!ed || typeof run !== 'function') return;
+        try { ed.focus(); } catch (e) {}
+        var ul = caretUL(ed);
+        if (ul && ul.classList.contains('planning-note-check')) { run('insertUnorderedList'); return; }   /* re-clic : retire la liste */
+        if (ul) { ul.classList.add('planning-note-check'); fire(ed); return; }                            /* liste à puces → à cocher */
+        var before = Array.prototype.slice.call(ed.querySelectorAll('ul'));
+        run('insertUnorderedList');
+        ul = caretUL(ed);
+        if (!ul) {   /* note vide : la sélection reste sur l'éditeur lui-même → la liste qui vient d'être créée */
+            var fresh = Array.prototype.filter.call(ed.querySelectorAll('ul'), function (u) { return before.indexOf(u) === -1; });
+            if (fresh.length === 1) ul = fresh[0];
+        }
+        if (ul) { ul.classList.add('planning-note-check'); fire(ed); }
+    };
+    /* Zone de la case : à gauche du texte de la ligne (marge comprise), autour de sa première ligne ; hauteur ≥ 28 px ;
+       si deux zones se touchent, la ligne la plus proche l'emporte */
+    function hit(e) {
+        var t = e.target; if (!t || !t.closest) return null;
+        var ed = t.closest(EDITORS), lis;
+        if (ed) lis = ed.querySelectorAll('ul.planning-note-check > li');
+        else if (t !== document.body && t !== document.documentElement && t.querySelectorAll) lis = t.querySelectorAll(LIS);   /* conteneur de l'éditeur (marge) */
+        if (!lis || !lis.length) return null;
+        var p = (e.changedTouches && e.changedTouches[0]) || e; var x = p.clientX, y = p.clientY;
+        if (typeof x !== 'number' || typeof y !== 'number') return null;
+        var best = null, bd = Infinity;
+        for (var i = 0; i < lis.length; i++) {
+            var li = lis[i], r = li.getBoundingClientRect(); if (!r.width && !r.height) continue;
+            var fs = parseFloat(getComputedStyle(li).fontSize) || 14;
+            var ck = parseFloat(getComputedStyle(li, '::before').width) || 1.3 * fs;
+            if (x > r.left + Math.max(0.25 * fs, 3) || x < r.left - ck - 0.3 * fs - Math.max(0.6 * fs, 8)) continue;
+            var cy = r.top + 0.7 * fs, hh = Math.max(ck / 2 + 0.35 * fs, 14), d = Math.abs(y - cy);
+            if (d <= hh && d < bd) { bd = d; best = li; }
+        }
+        return best ? { li: best, ed: ed || best.closest(EDITORS) } : null;
+    }
+    function toggle(h) {
+        if (blocked()) return;
+        h.li.classList.toggle('planning-note-done');
+        if (!h.li.className) h.li.removeAttribute('class');
+        fire(h.ed);   /* enregistrement par le chemin existant (case : mémoire + sauvegarde 0,5 s ; fenêtre : idem) */
+    }
+    var _tx = 0, _ty = 0, _tMoved = false, _lastTouch = 0;
+    document.addEventListener('touchstart', function (e) { var t = e.touches && e.touches[0]; if (!t) return; _tx = t.clientX; _ty = t.clientY; _tMoved = false; }, { capture: true, passive: true });
+    document.addEventListener('touchmove', function (e) { var t = e.touches && e.touches[0]; if (t && (Math.abs(t.clientX - _tx) > 8 || Math.abs(t.clientY - _ty) > 8)) _tMoved = true; }, { capture: true, passive: true });
+    document.addEventListener('touchend', function (e) {
+        if (_tMoved) return; var h = hit(e); if (!h) return;
+        e.preventDefault(); e.stopPropagation(); _lastTouch = Date.now(); toggle(h);
+    }, true);
+    document.addEventListener('mousedown', function (e) { if (hit(e)) { e.preventDefault(); e.stopPropagation(); } }, true);   /* ni curseur ni focus */
+    document.addEventListener('click', function (e) {
+        var h = hit(e); if (!h) return;
+        e.preventDefault(); e.stopPropagation();
+        if (Date.now() - _lastTouch < 700) return;   /* déjà traité au toucher */
+        toggle(h);
+    }, true);
+    /* Entrée sur une ligne cochée : la nouvelle ligne part décochée */
+    document.addEventListener('input', function (e) {
+        if (e.inputType !== 'insertParagraph') return;
+        var ed = e.target && e.target.closest ? e.target.closest(EDITORS) : null; if (!ed) return;
+        var s = window.getSelection && window.getSelection(); if (!s || !s.rangeCount) return;
+        var n = s.getRangeAt(0).startContainer; var li = n && (n.nodeType === 1 ? n : n.parentNode);
+        li = li && li.closest ? li.closest('ul.planning-note-check > li') : null;
+        if (li && ed.contains(li) && li.classList.contains('planning-note-done') && !(li.textContent || '').replace(/\u200B/g, '').trim()) li.classList.remove('planning-note-done');
+    }, true);
+})();
+</script>
 <script id="todo-delete-anim-js">
 /* Joue l'animation de suppression sur la tâche <itemId>, PUIS exécute `apply` (la suppression existante, qui enregistre
    et redessine). Tâche non visible ou mouvement réduit : `apply` immédiatement. Si, après `apply`, la tâche est toujours
@@ -59311,6 +59541,7 @@ html body .pdd-status-btn.tpx-pdd-open .pdd-chip-caret {
     ];
     function sync(p, pop) {
         var open = pop.classList.contains(p.on), v = open ? 'true' : 'false';
+        if (open && p.pop === 'pdd-spec-pop') cursorAt(document.getElementById('pdd-spec-backdrop'), _mx, _my);
         p.btns.forEach(function (id) {
             var b = document.getElementById(id);
             if (!b) return;
@@ -59320,17 +59551,23 @@ html body .pdd-status-btn.tpx-pdd-open .pdd-chip-caret {
     }
     /* Spécialités ouverte : le fond transparent de la page (clic dehors = fermeture) couvre aussi le bouton → au-dessus
        du bouton, curseur « main » : un clic y referme la fenêtre, comme partout ailleurs sur ce fond */
+    /* 2026-10-15 : dernière position connue de la souris → curseur juste DÈS l'ouverture, sans attendre un mouvement */
+    var _mx = null, _my = null;
+    document.addEventListener('mousemove', function (e) { _mx = e.clientX; _my = e.clientY; }, { capture: true, passive: true });
+    document.addEventListener('mousedown', function (e) { _mx = e.clientX; _my = e.clientY; }, { capture: true, passive: true });
+    function cursorAt(bd, x, y) {
+        if (!bd || x == null) return;
+        var b = document.getElementById('pdd-spec-btn') || document.getElementById('planning-day-detail-specialty-edit');
+        var r = b ? b.getBoundingClientRect() : null;
+        var c = (r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) ? 'pointer' : '';
+        if (bd.style.cursor !== c) bd.style.cursor = c;
+    }
     function bindBackdrop() {
         var bd = document.getElementById('pdd-spec-backdrop');
         if (!bd) return false;
         if (bd.__tpxPddCur) return true;
         bd.__tpxPddCur = true;
-        bd.addEventListener('mousemove', function (e) {
-            var b = document.getElementById('pdd-spec-btn') || document.getElementById('planning-day-detail-specialty-edit');
-            var r = b ? b.getBoundingClientRect() : null;
-            var c = (r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) ? 'pointer' : '';
-            if (bd.style.cursor !== c) bd.style.cursor = c;
-        });
+        bd.addEventListener('mousemove', function (e) { cursorAt(bd, e.clientX, e.clientY); });
         bd.addEventListener('mouseleave', function () { bd.style.cursor = ''; });
         return true;
     }
