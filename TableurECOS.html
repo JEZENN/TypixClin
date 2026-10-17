@@ -35085,13 +35085,11 @@ function notesAddToTodo() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-check"></i>';
         btn.style.cssText = 'background:#10b981!important;color:#fff!important;border-color:#10b981!important;transition:all .18s ease;';
-        setTimeout(function() {
-            btn.style.transition = 'opacity .25s ease';
-            btn.style.opacity = '0';
-            setTimeout(function() {
-                renderSDDNotesTodoButton(currentSDDId);
-            }, 220);
-        }, 750);
+        setTimeout(function() {   // 2026-10-17 : échange direct + punaise animée (plus de vide entre les deux)
+            renderSDDNotesTodoButton(currentSDDId);
+            var z = document.getElementById('sdd-notes-todo-zone'), el = z && z.firstElementChild;
+            if (el) el.classList.add('tpx-pin-in');
+        }, 900);
     } else {
         renderSDDNotesTodoButton(currentSDDId);
     }
@@ -35210,12 +35208,12 @@ function _animateCheckThenPin(btn, onReplace) {
     btn.style.color = '#fff';
     btn.innerHTML = '<i class="fas fa-check" style="pointer-events:none;"></i>';
     // Phase 2 : après 650ms, replacer par le badge pin
-    setTimeout(function() {
-        btn.style.opacity = '0';
-        setTimeout(function() {
-            onReplace && onReplace();
-        }, 180);
-    }, 620);
+    setTimeout(function() {   // 2026-10-17 : échange direct + punaise animée (plus de vide entre les deux)
+        var parent = btn.parentNode, next = btn.nextSibling;
+        onReplace && onReplace();
+        var el = parent ? (next && next.parentNode === parent ? next.previousSibling : parent.lastChild) : null;
+        if (el && el !== btn && el.nodeType === 1 && el.classList) el.classList.add('tpx-pin-in');
+    }, 760);
 }
 
 function addSDDToTodo(btnOrSddId, sddId) {
@@ -42756,7 +42754,8 @@ window._saveECOSData = function () {
     if (isOfflineMode) { setSaveIndicator('pending'); return; }
     // debounce léger pour la sauvegarde cloud
     if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(() => saveECOSUserData(0), 5000);
+    if (window.tpxSaveBar) window.tpxSaveBar('edit', 3000);   // 2026-10-17 : barre qui avance jusqu'à l'envoi
+    _saveTimer = setTimeout(() => saveECOSUserData(0), 3000);   // 2026-10-16 (Jean) : 5 → 3 s
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -43704,6 +43703,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else initEcosNavigationGuard();
 
 function setSaveIndicator(state) {
+    if (window.tpxSaveBar) window.tpxSaveBar(state);   // 2026-10-16 : barre de progression sous l'en-tête
     const el = document.getElementById('save-indicator-header');
     if (!el) return;
     el.className = 'save-indicator-header';
@@ -55255,6 +55255,68 @@ window._todoValidateAnim = function (itemId, apply) {
                 margin 0.26s ease 0.04s, border-width 0.26s ease 0.04s !important;
 }
 </style>
+<style id="tpx-pin-in-css">
+/* 2026-10-17 : envoi vers la To-do — la punaise remplace la coche verte sans « trou » (plus de fondu à vide) */
+@keyframes tpxPinIn { 0% { opacity: 0.35; scale: 0.7; } 100% { opacity: 1; scale: 1; } }   /* scale seul : garde le centrage (translateY) des tableaux */
+html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+@media (prefers-reduced-motion: reduce) { html body .tpx-pin-in { animation: none; } }
+</style>
+<style id="tpx-save-bar-css">
+/* 2026-10-16 : indicateur de sauvegarde = ligne fine en bas de l'en-tête (remplace le rond / la coche) ; 17/10 : seulement une ligne verte quand c'est sauvegardé */
+.save-indicator-header { visibility: hidden !important; }   /* garde sa place : en-tête inchangé */
+#tpx-save-bar { position: absolute; left: 0; width: 100vw; bottom: 0; height: 2px;   /* 100vw : ne bouge pas quand la barre de défilement apparaît / disparaît */ pointer-events: none; opacity: 0; transition: opacity 0.35s ease; z-index: 2; overflow: hidden; }
+#tpx-save-bar.on { opacity: 1; }
+#tpx-save-bar .tpx-sb-fill { position: relative; height: 100%; width: 100%; background: transparent; }   /* toujours pleine largeur : la couleur vient de ::after */
+#tpx-save-bar .tpx-sb-fill::after { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity 0.3s ease, background-color 0.3s ease; background: #10b981; }
+#tpx-save-bar.saved .tpx-sb-fill::after { opacity: 1; background: linear-gradient(90deg, #34d399, #10b981); box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+#tpx-save-bar.pending .tpx-sb-fill::after { opacity: 1; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+#tpx-save-bar.pending .tpx-sb-fill { animation: tpxSaveBarPulse 1.6s ease-in-out infinite; }
+#tpx-save-bar.error .tpx-sb-fill::after { opacity: 1; background: #ef4444; }
+@keyframes tpxSaveBarPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+[data-theme="pastel"] #tpx-save-bar { bottom: -1px; }   /* l'en-tête pastel a une bordure basse de 1 px : la barre la recouvre */
+:where(html[data-theme="pastel"]) #tpx-save-bar.saved .tpx-sb-fill::after { background: linear-gradient(90deg, #9fd8bd, #6bbf9b); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { #tpx-save-bar .tpx-sb-fill { animation: none !important; } }
+</style>
+<script id="tpx-save-bar-js">
+(function () {
+    'use strict';
+    var ERR_MS = 0;   /* durée d'affichage d'une erreur (0 = jusqu'au prochain état) */
+    var bar = null, fill = null, phase = 'idle', tHide = 0, tReset = 0, editEnd = 0;   /* editEnd : fin de la temporisation de la dernière modification */
+    function ensure() {
+        if (bar && bar.isConnected) return true;
+        var h = document.getElementById('header'); if (!h) return false;
+        bar = document.createElement('div'); bar.id = 'tpx-save-bar'; bar.setAttribute('aria-hidden', 'true');
+        fill = document.createElement('div'); fill.className = 'tpx-sb-fill'; bar.appendChild(fill); h.appendChild(bar);
+        return true;
+    }
+    function fadeOut(delay) {
+        clearTimeout(tHide); clearTimeout(tReset);
+        tHide = setTimeout(function () { bar.classList.remove('on'); phase = 'idle';
+            tReset = setTimeout(function () { if (phase === 'idle') bar.className = ''; }, 450); }, delay);
+    }
+    function show(cls) { clearTimeout(tHide); clearTimeout(tReset); phase = cls; bar.className = 'on ' + cls; }
+    window.tpxSaveBar = function (state) {
+        try {
+            if (state === 'loading' || state === 'loaded') return;   /* chargement des données : pas une sauvegarde — ne touche à rien */
+            if (!ensure()) return;
+            if (state === 'edit') {   /* modification : rien d'affiché, on retient la fin de la temporisation */
+                editEnd = Date.now() + Math.max(300, +arguments[1] || 3000);
+            } else if (state === 'saving') {
+                /* envoi en cours : rien d'affiché (17/10, Jean : seulement la ligne verte à la fin) */
+            } else if (state === 'saved') {
+                if (Date.now() < editEnd - 100) return;   /* sauvegarde plus ancienne : la dernière modification n'est pas encore envoyée */
+                show('saved'); fadeOut(1200);   /* ligne verte pleine largeur, puis elle disparaît */
+            } else if (state === 'pending') {
+                show('pending');
+            } else if (state === 'error') {
+                show('error'); if (ERR_MS) fadeOut(ERR_MS);
+            } else {
+                if (phase === 'pending' || phase === 'error') fadeOut(0);   /* « hidden » : n'écourte pas la ligne verte */
+            }
+        } catch (e) {}
+    };
+})();
+</script>
 <style id="tpx-page-header-tiles">
 /* 2026-10-15 : titres de page — icône dans une tuile en dégradé, icône blanche (proposition B) */
 h2.section-title { font-family: var(--font-display); letter-spacing: -0.01em; gap: 0.8rem; }
@@ -55378,6 +55440,10 @@ ul.planning-note-check > li.planning-note-done::after { opacity: 1; transform: r
         h.li.classList.toggle('planning-note-done');
         if (!h.li.className) h.li.removeAttribute('class');
         fire(h.ed);   /* enregistrement par le chemin existant (case : mémoire + sauvegarde 0,5 s ; fenêtre : idem) */
+        /* ECOS, case du planning : marquer TOUT DE SUITE la note « à envoyer » (même fonction que la case 0,5 s plus tard),
+           sinon l'écho d'une sauvegarde précédente arrivant entre-temps réaffiche l'état d'avant la coche */
+        try { var api = window._ecosPlanningAPI, dk = h.ed.getAttribute && h.ed.getAttribute('data-date');
+            if (api && typeof api.saveDayNotes === 'function' && dk && h.ed.classList.contains('day-notes-input')) api.saveDayNotes(dk, h.ed.innerHTML); } catch (e) {}
     }
     var _tx = 0, _ty = 0, _tMoved = false, _lastTouch = 0;
     document.addEventListener('touchstart', function (e) { var t = e.touches && e.touches[0]; if (!t) return; _tx = t.clientX; _ty = t.clientY; _tMoved = false; }, { capture: true, passive: true });
