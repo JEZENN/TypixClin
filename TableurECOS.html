@@ -77,6 +77,9 @@ window._pastelChart = (function () {
 <!-- Interrupteur global de la facturation (doit être chargé en premier) -->
 <script src="tpx-billing.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- 2026-10-19 : polices au choix (Paramètres) — les fichiers ne se téléchargent que si la police est choisie -->
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>try { var tpxF = localStorage.getItem('tpx-font'); if (tpxF === 'serif' || tpxF === 'round') document.documentElement.setAttribute('data-font', tpxF); } catch (e) {}</script>
 <style>
 /* ===== CSS BLOCK 44-13092 ===== */
 :root {
@@ -26977,11 +26980,23 @@ window.TPXNotesPending = {
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
 
             <div class="whats-new-section">
+                <div class="whats-new-section-icon purple">
+                    <i class="fas fa-font"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Choisissez votre police d’écriture</h4>
+                    <p>
+                        Dans Paramètres, choisis ta police d'écriture (Classique, Journal ou Arrondie) et ton thème (clair, sombre ou pastel).
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
                 <div class="whats-new-section-icon green">
                     <i class="fas fa-list-check"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Liste à cocher dans le planning ✅</h4>
+                    <h4>Liste à cocher dans le planning</h4>
                     <p>
                         Dans les notes de la journée, le bouton <strong>Liste à cocher</strong> crée une liste de tâches
                         à cocher au fil de la journée, <strong>directement dans la case du planning</strong>.
@@ -26994,7 +27009,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-fire"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Flammes 🔥</h4>
+                    <h4>Flammes</h4>
                     <p>
                         Chaque jour de connexion d'affilée vous rapporte une <strong>flamme</strong> (carte « Flammes »
                         des Statistiques, sur EDN comme sur ECOS). Absent un jour ou plusieurs ? À votre retour, <strong>une seule vie ❤</strong>
@@ -27008,7 +27023,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-pen"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Ressources à votre façon ✏️</h4>
+                    <h4>Ressources à votre façon</h4>
                     <p>
                         Renommez ou recolorez les <strong>ressources</strong> et ajoutez
                         les vôtres (<strong>3 au maximum</strong>) avec le bouton
@@ -27023,7 +27038,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-gift"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Programme de parrainage 🎁</h4>
+                    <h4>Programme de parrainage</h4>
                     <p>
                         Parrainez vos amis depuis <strong>Compte Premium</strong> : vous avez
                         désormais votre propre code à partager. Dès que <strong>3 comptes
@@ -27048,7 +27063,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-gauge-high"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Barème de confiance sur 10 niveaux 🎯</h4>
+                    <h4>Barème de confiance sur 10 niveaux</h4>
                     <p>
                         Évaluez vos stations avec plus de nuance grâce au nouveau
                         <strong>barème sur 10 niveaux</strong>, en plus du barème par défaut
@@ -27064,7 +27079,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-magnifying-glass-plus"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Agrandissement des images dans les notes 🔍</h4>
+                    <h4>Agrandissement des images dans les notes</h4>
                     <p>
                         Cliquez sur une image dans vos notes puis sur
                         <strong>Agrandir</strong> : elle s'affiche en grand,
@@ -27082,7 +27097,7 @@ window.TPXNotesPending = {
                     <i class="fas fa-bolt"></i>
                 </div>
                 <div class="whats-new-section-text">
-                    <h4>Flashcards améliorées 🃏</h4>
+                    <h4>Flashcards améliorées</h4>
                     <p>
                         Les flashcards peuvent désormais être associées à une <strong>SDD</strong>
                         et sont automatiquement regroupées par SDD dans le
@@ -28910,8 +28925,9 @@ window.TPXNotesPending = {
         }
         var acc = null;
         for (var i = 0; i < body.children.length; i++) { if (body.children[i].classList.contains('tpx-acc-card')) acc = body.children[i]; }
-        if (acc) { if (acc.previousElementSibling !== card) body.insertBefore(card, acc); }
-        else if (body.lastElementChild !== card) body.appendChild(card);
+        var prev = function (x) { while (x && (x.id === 'tpx-theme-settings' || x.id === 'tpx-font-settings')) x = x.previousElementSibling; return x; };   /* 2026-10-19 : les cartes « Thème » et « Police » suivent celle-ci */
+        if (acc) { if (prev(acc.previousElementSibling) !== card) body.insertBefore(card, acc); }
+        else if (prev(body.lastElementChild) !== card) body.appendChild(card);
     }
     function bindSettings() {
         var ov = document.getElementById('settings-modal-overlay');
@@ -33103,6 +33119,7 @@ function renderECOSWeeklyCharts(weekKey) {
     if (themeBtn && !themeBtn._ecosChartListener) {
         themeBtn._ecosChartListener = true;
         themeBtn.addEventListener('click', function() { setTimeout(function() { renderECOSWeeklyCharts(weekKey); }, 120); });
+        document.addEventListener('tpx:theme', function() { setTimeout(function() { renderECOSWeeklyCharts(weekKey); }, 120); });   // 2026-10-19 : thème choisi dans les Paramètres
     }
 }
 
@@ -33804,7 +33821,13 @@ function openEcosStatsDetailModal(period, type) {
         </div>`;
     }
 
-    document.getElementById('ecosStatsDetailBody').innerHTML =
+    /* 2026-10-19 : aucune station sur la période → écran vide moderne + bouton vers la liste des SDD */
+    const allEmpty = !ps.length && !sans.length && !pass.length && typeof window.tpxEmptyState === 'function';
+    document.getElementById('ecosStatsDetailBody').innerHTML = allEmpty ? window.tpxEmptyState({
+            icon: 'fa-user-doctor', title: isDay ? 'Aucune station aujourd’hui' : 'Aucune station cette semaine',
+            text: isDay ? 'Enregistrez une station (PS/PSS, sans PS ou fait passer) dans la liste des SDD : elle s’affichera ici automatiquement.'
+                        : 'Aucune station sur les 7 derniers jours. Enregistrez-en une dans la liste des SDD : elle s’affichera ici.',
+            cta: 'Liste des SDD', ctaIcon: 'fa-list-check', page: 'sdd', close: 'closeEcosStatsDetailModal' }) :
         '<div class="ecos-stats-detail-sections" style="display:flex;flex-direction:column;gap:1rem;">' +
         renderSection(ps,   'PS/PSS',      'fa-user-doctor', '#3b82f6', 'ps_pss',       true)  +
         renderSection(sans, 'SANS PS',     'fa-flag',        '#f59e0b', 'sans_ps',      true)  +
@@ -42164,6 +42187,8 @@ if (themeToggle) themeToggle.addEventListener('click', () => {
     const next = cur === 'dark' ? 'pastel' : (cur === 'pastel' ? 'light' : 'dark');
     setTheme(next, true);
 });
+// 2026-10-19 : le thème se choisit dans les Paramètres (carte « Thème ») — le bouton de l'en-tête est masqué
+window.tpxSetTheme = function (t) { if (['light', 'dark', 'pastel'].indexOf(t) < 0) return; setTheme(t, true); try { document.dispatchEvent(new CustomEvent('tpx:theme', { detail: t })); } catch (e) {} };
 
 async function saveUserSettings(settings) {
     if (!currentUser) return;
@@ -42177,6 +42202,7 @@ function applyUserSettings(data) {
     if (data.theme && ['dark', 'light', 'pastel'].includes(data.theme)) {
         if (document.documentElement.getAttribute('data-theme') !== data.theme) setTheme(data.theme, false);
     }
+    if (data.font && typeof window.tpxApplyFont === 'function') window.tpxApplyFont(data.font, false);   // 2026-10-19 : police d'écriture
     if (data.ecosRStationPrefs && window._setRStationPrefs) {
         window._setRStationPrefs(data.ecosRStationPrefs);
     }
@@ -55261,6 +55287,305 @@ window._todoValidateAnim = function (itemId, apply) {
 html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
 @media (prefers-reduced-motion: reduce) { html body .tpx-pin-in { animation: none; } }
 </style>
+<style id="tpx-empty-css">
+/* 2026-10-19 : écran vide des récapitulatifs (tours / stations du jour et de la semaine) */
+.tpx-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.4rem 1.25rem 2.2rem; animation: tpxEmptyIn 0.35s ease both; }
+@keyframes tpxEmptyIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tpx-empty-art { position: relative; width: 88px; height: 88px; margin-bottom: 1.05rem; display: flex; align-items: center; justify-content: center; }
+.tpx-empty-ring { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0) 70%); animation: tpxEmptyPulse 2.6s ease-in-out infinite; }
+@keyframes tpxEmptyPulse { 0%, 100% { transform: scale(0.9); opacity: 0.75; } 50% { transform: scale(1.1); opacity: 1; } }
+.tpx-empty-ico { position: relative; width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff;
+    background: var(--primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb)); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.28); transform: rotate(-6deg); }
+.tpx-empty-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; line-height: 1.25; color: var(--gray-800); margin-bottom: 0.4rem; }
+.tpx-empty-text { font-size: 0.88rem; line-height: 1.55; color: var(--gray-500); max-width: 340px; margin: 0 0 1.3rem; }
+.tpx-empty-cta { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.72rem 1.15rem; border: none; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; font-weight: 650; color: #fff; background: var(--primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3); transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.tpx-empty-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(59, 130, 246, 0.36); filter: brightness(1.05); }
+.tpx-empty-cta:active { transform: scale(0.97); }
+.tpx-empty-cta:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+.tpx-empty-arrow { font-size: 0.78rem; transition: transform 0.15s ease; }
+.tpx-empty-cta:hover .tpx-empty-arrow { transform: translateX(3px); }
+[data-theme="dark"] .tpx-empty-ring { background: radial-gradient(circle, rgba(139, 92, 246, 0.24) 0%, rgba(139, 92, 246, 0) 70%); }
+[data-theme="dark"] .tpx-empty-ico, [data-theme="dark"] .tpx-empty-cta { box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3); }
+:where(html[data-theme="pastel"]) .tpx-empty-ring { background: radial-gradient(circle, rgba(107, 140, 199, 0.22) 0%, rgba(107, 140, 199, 0) 70%); }
+:where(html[data-theme="pastel"]) .tpx-empty-ico, :where(html[data-theme="pastel"]) .tpx-empty-cta { box-shadow: 0 6px 16px rgba(107, 140, 199, 0.28); }
+@media (max-width: 480px) { .tpx-empty { padding: 2rem 1rem 1.9rem; } .tpx-empty-cta { width: 100%; max-width: 320px; justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { .tpx-empty, .tpx-empty-ring { animation: none; } .tpx-empty-cta, .tpx-empty-arrow { transition: none; } }
+</style>
+<script id="tpx-empty-js">
+(function () {
+    'use strict';
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    /* o = { icon, title, text, cta, ctaIcon, page, close } */
+    window.tpxEmptyState = function (o) {
+        return '<div class="tpx-empty">' +
+            '<div class="tpx-empty-art" aria-hidden="true"><span class="tpx-empty-ring"></span><span class="tpx-empty-ico"><i class="fas ' + esc(o.icon) + '"></i></span></div>' +
+            '<div class="tpx-empty-title">' + esc(o.title) + '</div>' +
+            '<p class="tpx-empty-text">' + esc(o.text) + '</p>' +
+            '<button type="button" class="tpx-empty-cta" data-go-page="' + esc(o.page) + '" data-go-close="' + esc(o.close) + '">' +
+                '<i class="fas ' + esc(o.ctaIcon) + '" aria-hidden="true"></i><span>' + esc(o.cta) + '</span><i class="fas fa-arrow-right tpx-empty-arrow" aria-hidden="true"></i>' +
+            '</button>' +
+        '</div>';
+    };
+    /* bouton : ferme la fenêtre, puis ouvre l'onglet (même chemin qu'un clic sur l'onglet) */
+    document.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('.tpx-empty-cta') : null;
+        if (!b) return;
+        var page = b.getAttribute('data-go-page'), close = b.getAttribute('data-go-close');
+        try { if (close && typeof window[close] === 'function') window[close](); } catch (err) {}
+        setTimeout(function () { var nav = document.querySelector('.app-nav-btn[data-page="' + page + '"]'); if (nav) nav.click(); }, 240);
+    }, true);   /* capture : les fenêtres bloquent la remontée des clics (stopPropagation) */
+})();
+</script>
+<style id="tpx-font-settings-css">
+/* 2026-10-19 : police d'écriture choisie dans les Paramètres (carte « Police d'écriture », même dessin que « Thème ») */
+html[data-font="serif"] { --font-display: 'Lora', Georgia, serif; --font-body: 'Lora', Georgia, serif; }
+html[data-font="round"] { --font-display: 'Comfortaa', sans-serif; --font-body: 'Comfortaa', sans-serif; }
+html[data-font] :is(.flash-end-title, .flash-drawer-header, .spe-flash-info-panel .notes-info-section-title, .flash-edit-title, .spe-flash-panel-title) { font-family: var(--font-display); }   /* écrits en dur « Outfit » */
+html[data-font] #header .logo { font-family: 'Outfit', sans-serif; }   /* le logo garde toujours sa police */
+/* police Arrondie (plus large) : la fenêtre « Session Flash » garde ses boutons sur une ligne, comme avec les autres polices */
+html[data-font="round"] .flash-drawer-actions button { font-size: 0.7rem; letter-spacing: -0.02em; padding-left: 0.45rem; padding-right: 0.45rem; }
+html[data-font="round"] .flash-drawer-mode-btn { font-size: 0.66rem; letter-spacing: -0.02em; padding-left: 0.55rem; padding-right: 0.55rem; }
+.tpx-font-prev { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.45rem; height: 54px; border-radius: 7px;
+    background: var(--gray-50); border: 1px solid var(--gray-200); color: var(--gray-800); overflow: hidden; }
+.tpx-font-prev b { font-size: 1.5rem; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+.tpx-font-prev span { font-size: 0.78rem; font-weight: 500; color: var(--gray-500); line-height: 1; }
+.tpx-font-opt.is-on .tpx-font-prev { border-color: rgba(59, 130, 246, 0.35); }
+[data-theme="dark"] .tpx-font-prev { background: rgba(255, 255, 255, 0.04); }
+.tpx-font-opt .tpx-theme-name { font-family: inherit; }
+.tpx-font-opt .tpx-theme-name { padding-bottom: 0.05rem; }
+@media (max-width: 560px) {
+    .tpx-font-opt .tpx-theme-name { grid-row: 1 / span 2; align-self: center; }   /* pas de phrase : nom centré à côté de l'aperçu */
+    .tpx-font-prev { grid-row: 1 / span 2; height: 46px; }
+    .tpx-font-prev span { display: none; }
+}
+</style>
+<script id="tpx-font-settings-js">
+(function () {
+    'use strict';
+    var FONTS = [
+        { key: 'default', name: 'Classique', ff: "'Space Grotesk', sans-serif", fd: "'Outfit', sans-serif", desc: 'La police d’origine, moderne et géométrique.' },
+        { key: 'serif', name: 'Journal', ff: "'Lora', Georgia, serif", fd: "'Lora', Georgia, serif", desc: 'Élégante, comme dans un livre.' },
+        { key: 'round', name: 'Arrondie', ff: "'Comfortaa', sans-serif", fd: "'Comfortaa', sans-serif", desc: 'Toute en rondeurs, plus ludique.' }
+    ];
+    function valid(k) { return k === 'serif' || k === 'round' ? k : 'default'; }
+    function cur() { return valid(document.documentElement.getAttribute('data-font')); }
+    /* applique une police ; save = choix de l'utilisateur → gardé sur le compte */
+    window.tpxApplyFont = function (k, save) {
+        k = valid(k);
+        if (k === 'default') document.documentElement.removeAttribute('data-font'); else document.documentElement.setAttribute('data-font', k);
+        try { localStorage.setItem('tpx-font', k); } catch (e) {}
+        if (save && typeof window._saveUserSettings === 'function') { try { window._saveUserSettings({ font: k }); } catch (e) {} }
+        sync();
+    };
+    function build() {
+        var card = document.createElement('div');
+        card.className = 'settings-card tpx-font-set'; card.id = 'tpx-font-settings'; card.setAttribute('data-setting', 'tpx-font');
+        var h = '<div class="settings-card-head">' +
+                '<div class="settings-card-icon scope"><i class="fas fa-font"></i></div>' +
+                '<div class="settings-card-titles">' +
+                    '<div class="settings-card-title">Police d’écriture</div>' +
+                    '<div class="settings-card-sub">Choisissez la police du tableur. Votre choix est gardé sur votre compte, sur EDN comme sur ECOS.</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="tpx-theme-grid" role="radiogroup" aria-label="Police d’écriture">';
+        FONTS.forEach(function (f) {
+            h += '<button type="button" class="tpx-theme-opt tpx-font-opt" role="radio" aria-checked="false" data-font-opt="' + f.key + '">' +
+                    '<span class="tpx-font-prev" aria-hidden="true"><b style="font-family:' + f.fd + '">Aa</b><span style="font-family:' + f.ff + '">123</span></span>' +
+                    '<span class="tpx-theme-name" style="font-family:' + f.fd + '">' + f.name + '</span>' +
+                    '<span class="tpx-theme-check" aria-hidden="true"><i class="fas fa-check"></i></span>' +
+                '</button>';
+        });
+        card.innerHTML = h + '</div>';
+        card.addEventListener('click', function (e) {
+            var b = e.target && e.target.closest ? e.target.closest('.tpx-font-opt') : null;
+            if (!b) return;
+            var k = b.getAttribute('data-font-opt');
+            if (k === cur()) { sync(); return; }
+            window.tpxApplyFont(k, true);
+        });
+        return card;
+    }
+    function sync() {
+        var card = document.getElementById('tpx-font-settings'); if (!card) return;
+        var c = cur();
+        card.querySelectorAll('.tpx-font-opt').forEach(function (b) {
+            var on = b.getAttribute('data-font-opt') === c;
+            b.classList.toggle('is-on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    }
+    /* juste sous « Thème » (à défaut sous « Listes personnalisables », sinon avant « Mon compte ») ; garde-fou anti-boucle */
+    var nPlace = 0, tPlace = 0, pausedUntil = 0;
+    function place() {
+        var now = Date.now();
+        if (now < pausedUntil) return;
+        if (now - tPlace > 1000) { tPlace = now; nPlace = 0; }
+        if (++nPlace > 40) { pausedUntil = now + 1000; return; }
+        var body = document.querySelector('#settings-modal-overlay .settings-modal-body');
+        if (!body) return;
+        var card = document.getElementById('tpx-font-settings') || build();
+        var ref = document.getElementById('tpx-theme-settings') || document.getElementById('tpx-cat-settings');
+        if (ref && ref.parentNode && body.contains(ref)) {
+            if (ref.nextElementSibling !== card) ref.parentNode.insertBefore(card, ref.nextElementSibling);
+        } else {
+            var acc = null;
+            for (var i = 0; i < body.children.length; i++) { if (body.children[i].classList.contains('tpx-acc-card')) acc = body.children[i]; }
+            if (acc) { if (acc.previousElementSibling !== card) body.insertBefore(card, acc); }
+            else if (body.lastElementChild !== card) body.appendChild(card);
+        }
+        sync();
+    }
+    function bind() {
+        var ov = document.getElementById('settings-modal-overlay');
+        var body = ov ? ov.querySelector('.settings-modal-body') : null;
+        if (!body || typeof MutationObserver !== 'function') return false;
+        place();
+        new MutationObserver(function () { if (ov.classList.contains('active')) { place(); setTimeout(place, 0); setTimeout(place, 250); } }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(function () { place(); }).observe(body, { childList: true, subtree: true });
+        new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-font'] });
+        return true;
+    }
+    function start() { if (!bind()) { var n = 0, iv = setInterval(function () { if (bind() || ++n > 40) clearInterval(iv); }, 250); } }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+<style id="tpx-theme-settings-css">
+/* 2026-10-19 : thème choisi dans les Paramètres (carte « Thème ») — bouton de l'en-tête masqué */
+#theme-toggle { display: none !important; }
+@media (min-width: 993px) { #header .header-actions { margin-left: 1rem; } }   /* « Ressources » → avatar : 2rem, comme entre les menus */
+.tpx-theme-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
+.tpx-theme-opt {
+    position: relative; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; box-sizing: border-box; margin: 0;
+    padding: 0.5rem 0.5rem 0.65rem; border: 1px solid var(--gray-200); border-radius: var(--border-radius-md, 10px);
+    background: var(--white, #fff); color: inherit; font-family: inherit; text-align: left; cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.tpx-theme-opt:hover { border-color: rgba(59, 130, 246, 0.45); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12); }
+.tpx-theme-opt:active { transform: scale(0.98); }
+.tpx-theme-opt:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35); }
+.tpx-theme-opt.is-on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+/* aperçu : mini fenêtre aux couleurs du thème (fixes, quel que soit le thème affiché) */
+.tpx-theme-prev { position: relative; display: block; height: 54px; border-radius: 7px; overflow: hidden; background: var(--pv-bg); border: 1px solid var(--pv-bd); }
+.tpx-theme-prev i { position: absolute; display: block; font-style: normal; }
+.tpx-theme-prev .pv-bar { left: 0; right: 0; top: 0; height: 12px; background: var(--pv-head); border-bottom: 1px solid var(--pv-bd); }
+.tpx-theme-prev .pv-dot { left: 6px; top: 4px; width: 14px; height: 4px; border-radius: 2px; background: var(--pv-acc); }
+.tpx-theme-prev .pv-card { left: 6px; right: 6px; top: 17px; bottom: 6px; border-radius: 4px; background: var(--pv-card); border: 1px solid var(--pv-bd); }
+.tpx-theme-prev .pv-l1 { left: 11px; top: 23px; width: 46%; height: 4px; border-radius: 2px; background: var(--pv-txt); }
+.tpx-theme-prev .pv-l2 { left: 11px; top: 31px; width: 30%; height: 4px; border-radius: 2px; background: var(--pv-line); }
+.tpx-theme-prev .pv-pill { right: 11px; top: 26px; width: 22%; height: 9px; border-radius: 5px; background: var(--pv-acc); }
+.tpx-theme-prev.pv-light { --pv-bg: #f1f5f9; --pv-head: #ffffff; --pv-card: #ffffff; --pv-bd: #e2e8f0; --pv-txt: #334155; --pv-line: #cbd5e1; --pv-acc: #3b82f6; }
+.tpx-theme-prev.pv-dark { --pv-bg: #0b1220; --pv-head: #111827; --pv-card: #1e293b; --pv-bd: #273449; --pv-txt: #e2e8f0; --pv-line: #475569; --pv-acc: #8b5cf6; }
+.tpx-theme-prev.pv-pastel { --pv-bg: #f1eee7; --pv-head: #fbf9f4; --pv-card: #fbf9f4; --pv-bd: #ddd8cd; --pv-txt: #5c574d; --pv-line: #d3cdc0; --pv-acc: #7d9bd0; }
+.tpx-theme-name { display: flex; align-items: center; gap: 0.4rem; font-size: 0.86rem; font-weight: 650; color: var(--gray-800); padding: 0 0.15rem; }
+.tpx-theme-name .fas { font-size: 0.78rem; color: var(--gray-500); width: 1em; text-align: center; }
+.tpx-theme-opt.is-on .tpx-theme-name .fas { color: var(--primary); }
+.tpx-theme-desc { display: block; font-size: 0.74rem; line-height: 1.35; color: var(--gray-500); padding: 0 0.15rem; margin-top: -0.3rem; }
+.tpx-theme-check {
+    position: absolute; top: 0.3rem; right: 0.3rem; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 0.62rem; color: #fff; background: var(--primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); opacity: 0; transform: scale(0.5); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tpx-theme-opt.is-on .tpx-theme-check { opacity: 1; transform: scale(1); }
+[data-theme="dark"] .tpx-theme-opt { background: var(--gray-50); }
+[data-theme="dark"] .tpx-theme-opt:hover { border-color: rgba(96, 165, 250, 0.5); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.16); }
+[data-theme="dark"] .tpx-theme-opt.is-on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+:where(html[data-theme="pastel"]) .tpx-theme-opt:hover { border-color: rgba(107, 140, 199, 0.45); box-shadow: 0 2px 8px rgba(107, 140, 199, 0.14); }
+:where(html[data-theme="pastel"]) .tpx-theme-opt.is-on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+@media (max-width: 560px) {   /* téléphone : lignes empilées (aperçu à gauche, texte à droite, coche à droite) */
+    .tpx-theme-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+    .tpx-theme-opt { display: grid; grid-template-columns: 74px minmax(0, 1fr); column-gap: 0.75rem; row-gap: 0.15rem; align-items: center; padding: 0.5rem 2.4rem 0.5rem 0.55rem; }
+    .tpx-theme-prev { grid-row: 1 / span 2; height: 46px; }
+    .tpx-theme-name { align-self: end; padding: 0; }
+    .tpx-theme-desc { align-self: start; margin-top: 0; padding: 0; }
+    .tpx-theme-check { top: 50%; right: 0.65rem; margin-top: -10px; }
+}
+@media (prefers-reduced-motion: reduce) { .tpx-theme-opt, .tpx-theme-check { transition: none; } }
+</style>
+<script id="tpx-theme-settings-js">
+(function () {
+    'use strict';
+    var THEMES = [
+        { key: 'light', name: 'Clair', icon: 'fa-sun', desc: 'Lumineux et contrasté, idéal en journée.' },
+        { key: 'dark', name: 'Sombre', icon: 'fa-moon', desc: 'Repose les yeux le soir.' },
+        { key: 'pastel', name: 'Pastel', icon: 'fa-cloud-sun', desc: 'Des couleurs douces et chaleureuses.' }
+    ];
+    function cur() { var t = document.documentElement.getAttribute('data-theme'); return t === 'dark' || t === 'pastel' ? t : 'light'; }
+    function build() {
+        var card = document.createElement('div');
+        card.className = 'settings-card tpx-theme-set'; card.id = 'tpx-theme-settings'; card.setAttribute('data-setting', 'tpx-theme');
+        var h = '<div class="settings-card-head">' +
+                '<div class="settings-card-icon scope"><i class="fas fa-palette"></i></div>' +
+                '<div class="settings-card-titles">' +
+                    '<div class="settings-card-title">Thème</div>' +
+                    '<div class="settings-card-sub">Choisissez l’apparence du tableur. Votre choix est gardé sur votre compte, sur EDN comme sur ECOS.</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="tpx-theme-grid" role="radiogroup" aria-label="Thème">';
+        THEMES.forEach(function (t) {
+            h += '<button type="button" class="tpx-theme-opt" role="radio" aria-checked="false" data-theme-opt="' + t.key + '">' +
+                    '<span class="tpx-theme-prev pv-' + t.key + '" aria-hidden="true"><i class="pv-bar"></i><i class="pv-dot"></i><i class="pv-card"></i><i class="pv-l1"></i><i class="pv-l2"></i><i class="pv-pill"></i></span>' +
+                    '<span class="tpx-theme-name"><i class="fas ' + t.icon + '" aria-hidden="true"></i>' + t.name + '</span>' +
+                    '<span class="tpx-theme-desc">' + t.desc + '</span>' +
+                    '<span class="tpx-theme-check" aria-hidden="true"><i class="fas fa-check"></i></span>' +
+                '</button>';
+        });
+        card.innerHTML = h + '</div>';
+        card.addEventListener('click', function (e) {
+            var b = e.target && e.target.closest ? e.target.closest('.tpx-theme-opt') : null;
+            if (!b) return;
+            var k = b.getAttribute('data-theme-opt');
+            if (k === cur()) { sync(); return; }
+            if (typeof window.tpxSetTheme === 'function') window.tpxSetTheme(k);
+            sync();
+        });
+        return card;
+    }
+    function sync() {
+        var card = document.getElementById('tpx-theme-settings'); if (!card) return;
+        var c = cur();
+        card.querySelectorAll('.tpx-theme-opt').forEach(function (b) {
+            var on = b.getAttribute('data-theme-opt') === c;
+            b.classList.toggle('is-on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    }
+    /* juste sous « Listes personnalisables » (elle-même replacée à chaque ouverture par son module) ; à défaut, avant « Mon compte » */
+    var nPlace = 0, tPlace = 0, pausedUntil = 0;
+    function place() {
+        var now = Date.now();   /* garde-fou : jamais de boucle sans fin avec un autre module qui replace ses cartes */
+        if (now < pausedUntil) return;
+        if (now - tPlace > 1000) { tPlace = now; nPlace = 0; }
+        if (++nPlace > 40) { pausedUntil = now + 1000; return; }
+        var body = document.querySelector('#settings-modal-overlay .settings-modal-body');
+        if (!body) return;
+        var card = document.getElementById('tpx-theme-settings') || build();
+        var cat = document.getElementById('tpx-cat-settings');
+        if (cat && cat.parentNode && body.contains(cat)) {
+            if (cat.nextElementSibling !== card) cat.parentNode.insertBefore(card, cat.nextElementSibling);
+        } else {
+            var acc = null;
+            for (var i = 0; i < body.children.length; i++) { if (body.children[i].classList.contains('tpx-acc-card')) acc = body.children[i]; }
+            var pv = acc ? acc.previousElementSibling : body.lastElementChild; if (pv && pv.id === 'tpx-font-settings') pv = pv.previousElementSibling;   /* la carte « Police » suit celle-ci */
+            if (acc) { if (pv !== card) body.insertBefore(card, acc); }
+            else if (pv !== card) body.appendChild(card);
+        }
+        sync();
+    }
+    function bind() {
+        var ov = document.getElementById('settings-modal-overlay');
+        var body = ov ? ov.querySelector('.settings-modal-body') : null;
+        if (!body || typeof MutationObserver !== 'function') return false;
+        place();
+        new MutationObserver(function () { if (ov.classList.contains('active')) { place(); setTimeout(place, 0); setTimeout(place, 250); } }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(function () { place(); }).observe(body, { childList: true, subtree: true });
+        new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });   /* thème changé ailleurs (compte, autre onglet) */
+        return true;
+    }
+    function start() { if (!bind()) { var n = 0, iv = setInterval(function () { if (bind() || ++n > 40) clearInterval(iv); }, 250); } }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
 <style id="tpx-save-bar-css">
 /* 2026-10-16 : indicateur de sauvegarde = ligne fine en bas de l'en-tête (remplace le rond / la coche) ; 17/10 : seulement une ligne verte quand c'est sauvegardé */
 .save-indicator-header { visibility: hidden !important; }   /* garde sa place : en-tête inchangé */
