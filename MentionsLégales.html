@@ -1383,6 +1383,35 @@ button {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- ═══════════ fin bloc SEO ═══════════ -->
+<style id="tpx-skel-css">
+/* 2026-10-25 : chargement en squelette (comme les tableurs) à la place de l'écran « TypixClin + rond » */
+#tpx-skel { display: none; }
+html.tpx-skel { scrollbar-gutter: stable; }   /* place de la barre de défilement réservée : pas de décalage de l'en-tête quand la vraie page (plus longue) apparaît */
+html.tpx-skel #loader, html.tpx-noloader #loader { display: none !important; }   /* tpx-noloader : jamais retirée */
+html.tpx-skel body > section.legal-content, html.tpx-skel body > footer { display: none !important; }
+html.tpx-skel #tpx-skel { display: block; transition: opacity 0.2s ease; pointer-events: none; user-select: none; -webkit-user-select: none; }
+html.tpx-skel.tpx-skel-out #tpx-skel { opacity: 0; }
+html.tpx-skel-in body > section.legal-content { animation: tpxSkelIn 0.35s ease both; }
+@keyframes tpxSkelIn { from { opacity: 0; } to { opacity: 1; } }
+.tpx-sk { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+@keyframes tpxSkBg { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+html.tpx-skel .user-auth { position: relative; }
+html.tpx-skel .user-auth:not(.logged-in) .auth-btn { visibility: hidden; }
+html.tpx-skel .user-auth:not(.logged-in)::after { content: ''; position: absolute; right: 0; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+html.tpx-skel .user-auth .user-avatar { color: transparent !important; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%) !important; background-size: 400% 100% !important; animation: tpxSkBg 1.4s ease infinite; box-shadow: none !important; }
+html.tpx-skel .user-auth .user-avatar img { visibility: hidden; }
+.tpx-skl-line { display: flex; align-items: center; }
+.tpx-skl-line > .tpx-sk { height: 0.62em; border-radius: 0.31em; }
+.tpx-sk-legal .tpx-sk-lt { display: flex; align-items: center; gap: 10px; margin-bottom: 1.1rem; }
+.tpx-sk-legal .tpx-sk-lt .tpx-sk { height: 22px; border-radius: 7px; }
+.tpx-sk-legal .tpx-sk-lt .tpx-sk:first-child { width: 22px; height: 22px; border-radius: 6px; }
+.tpx-sk-legal .tpx-skl-p { font-size: 1rem; height: 1.7em; }
+.tpx-sk-legal .tpx-sk-call { height: 136px; border-radius: 12px; margin: 1.1rem 0 2rem; }
+.tpx-sk-legal .tpx-sk-sep { height: 3px; border-radius: 3px; margin: 0 0 2.6rem; opacity: 0.7; }
+@media (max-width: 768px) { .tpx-sk-legal .tpx-sk-call { height: 190px; } }
+@media (prefers-reduced-motion: reduce) { .tpx-sk, html.tpx-skel .user-auth:not(.logged-in)::after, html.tpx-skel .user-auth .user-avatar { animation: none !important; } html.tpx-skel-in body > section.legal-content { animation: none; } }
+</style>
+<script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* 2026-10-25 : squelette à chaque ouverture (plus jamais l'ancien écran) */</script>
 </head>
 
 
@@ -1465,7 +1494,7 @@ async function updateUserUI(user) {
     }
 }
 
-onAuthStateChanged(auth, (user) => { updateUserUI(user); });
+onAuthStateChanged(auth, (user) => { updateUserUI(user); if (window.tpxSkelReady) window.tpxSkelReady('auth'); });   /* 2026-10-25 : squelette */
 
 if (userAvatar) {
     userAvatar.addEventListener('click', (e) => {
@@ -1613,6 +1642,49 @@ if (logoutBtn) {
     </div>
 </section>
 
+<!-- 2026-10-25 : squelette de chargement (remplacé par la vraie page dès qu'elle est prête) -->
+<div id="tpx-skel" aria-hidden="true"><div class="legal-content tpx-sk-legal"><div class="container"><div class="legal-container"><div class="tpx-sk-lt"><span class="tpx-sk"></span><span class="tpx-sk" style="width:170px"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:97%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:40%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:78%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:70%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:82%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:46%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:58%"></span></div><span class="tpx-sk tpx-sk-call"></span><span class="tpx-sk tpx-sk-sep"></span><div class="tpx-sk-lt"><span class="tpx-sk"></span><span class="tpx-sk" style="width:210px"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:36%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:88%"></span></div><div class="tpx-skl-line tpx-skl-p"><span class="tpx-sk" style="width:74%"></span></div></div></div></div></div>
+<script id="tpx-skel-js">
+/* 2026-10-25 : fin du squelette de chargement. Rien d'autre n'est modifié : le chargement reste celui d'avant. */
+(function () {
+    'use strict';
+    var html = document.documentElement, done = false, st = {}, NEED = ["dom","auth"];
+    function drop() { var sk = document.getElementById('tpx-skel'); if (sk && sk.parentNode) sk.parentNode.removeChild(sk); }
+    /* contenu de nouveau affiché : ce qui s'est mesuré pendant qu'il était masqué se recale */
+    function relayout() {
+        try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+        try { window.dispatchEvent(new Event('scroll')); } catch (e) {}
+    }
+    function afterReveal() {
+
+    }
+    function finish() {
+        if (done) return; done = true;
+        if (!html.classList.contains('tpx-skel')) { drop(); return; }
+        html.classList.add('tpx-skel-out');
+        setTimeout(function () {
+            html.classList.remove('tpx-skel', 'tpx-skel-out'); html.classList.add('tpx-skel-in'); drop();
+            try { afterReveal(); } catch (e) {}
+            relayout(); requestAnimationFrame(relayout); setTimeout(relayout, 120);
+            setTimeout(function () { html.classList.remove('tpx-skel-in'); }, 400);
+        }, 200);
+    }
+    window.tpxSkelReady = function (what) {
+        try {
+            if (what === 'out') { st.auth = true; }
+            else st[what] = true;
+            if (!done && NEED.every(function (k) { return st[k]; })) requestAnimationFrame(function () { setTimeout(finish, 60); });
+        } catch (e) { finish(); }
+    };
+    /* page et polices prêtes (polices : au plus 1,5 s) */
+    function domReady() {
+        var f = document.fonts && document.fonts.ready;
+        (f ? Promise.race([f, new Promise(function (r) { setTimeout(r, 1500); })]) : Promise.resolve()).then(function () { window.tpxSkelReady('dom'); }, function () { window.tpxSkelReady('dom'); });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', domReady); else domReady();
+    setTimeout(function () { if (!done) finish(); }, 4000);
+})();
+</script>
 <!-- Legal Content -->
 <section class="legal-content">
     <div class="container">
