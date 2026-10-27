@@ -902,6 +902,42 @@ button { cursor: pointer; font-family: var(--font-body); border: none; backgroun
 }
 
 
+/* 2026-10-25 : squelette de chargement (remplace le rond) — mêmes reflets que les tableurs EDN / ECOS */
+.tpx-sk { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+@keyframes tpxSkBg { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+#loading:has(.tpx-cps) { padding: 0; text-align: left; }
+.tpx-cps { pointer-events: none; user-select: none; -webkit-user-select: none; }
+.tpx-cps-h { height: 38px; display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); }
+.tpx-cps-h .tpx-sk { width: 290px; max-width: 80%; height: 30px; border-radius: 10px; }
+.tpx-cps-p { height: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; margin-bottom: var(--space-8); }
+.tpx-cps-p .tpx-sk { width: 620px; max-width: 92%; height: 14px; }
+.tpx-cps-p .tpx-sk + .tpx-sk { display: none; width: 420px; max-width: 70%; }
+.tpx-cps .status-side .tpx-cps-ico { width: 60px; height: 60px; border-radius: var(--border-radius-lg); }
+.tpx-cps .status-side .tpx-cps-badge { width: 200px; max-width: 100%; height: 42px; border-radius: 999px; }
+.tpx-cps .status-side .tpx-cps-cap { width: 180px; max-width: 90%; height: 12px; }
+.tpx-cps .status-side .tpx-cps-cap + .tpx-cps-cap { width: 60px; margin-top: -0.6rem; }
+.tpx-cps-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: var(--space-4); }   /* = #status-info */
+.tpx-cps .info-row { gap: 12px; min-height: 80px; }
+.tpx-cps .info-row .tpx-sk:first-child { width: 45%; height: 10px; }
+.tpx-cps .info-row .tpx-sk + .tpx-sk { width: 75%; height: 18px; }
+.tpx-cps-ref { margin-top: var(--space-14); }
+.tpx-cps-panel { background: var(--white); background: color-mix(in srgb, var(--white) 72%, transparent); border-radius: var(--border-radius-xl); box-shadow: var(--shadow-lg); padding: var(--space-8) 2.25rem; display: flex; flex-direction: column; gap: 14px; }
+.tpx-cps-panel .tpx-sk { height: 14px; }
+.tpx-cps-panel .tpx-cps-bar { height: 12px; border-radius: 999px; }
+.tpx-cps-panel .tpx-cps-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: 10px; }
+.tpx-cps-panel .tpx-cps-tiles .tpx-sk { height: 110px; border-radius: var(--border-radius-lg); }
+.tpx-sk.tpx-cps-inline { display: inline-block; vertical-align: middle; height: 14px; width: 72px; }
+p .tpx-sk.tpx-cps-inline { width: 70%; max-width: 420px; }
+.referral-code-block:has(.tpx-sk) .referral-code-input { background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+@media (max-width: 768px) {
+    .tpx-cps-h { height: 30px; margin-bottom: var(--space-2); } .tpx-cps-h .tpx-sk { height: 22px; width: 210px; }
+    .tpx-cps-p { height: 46px; margin-bottom: var(--space-6); } .tpx-cps-p .tpx-sk + .tpx-sk { display: block; }
+    .tpx-cps-panel { padding: var(--space-6); }
+    .tpx-cps-panel .tpx-cps-tiles .tpx-sk { height: 96px; }
+}
+@media (max-width: 480px) { .tpx-cps-h { height: 27px; } .tpx-cps-h .tpx-sk { height: 20px; width: 190px; } }
+@media (prefers-reduced-motion: reduce) { .tpx-sk, .referral-code-block:has(.tpx-sk) .referral-code-input { animation: none; } }
+
 /* ═══════════════ SECTION « MON ABONNEMENT » (charte TypixClin) ═══════════════ */
 .subscription-section { margin-bottom: var(--space-14); }
 .subscription-section .section-subtitle { margin-bottom: var(--space-8); }
@@ -1456,7 +1492,8 @@ textarea:focus-visible,
     cursor: wait;
 }
 .btn.is-loading > *, .btn-manage.is-loading > * { visibility: hidden; }
-.btn.is-loading::after, .btn-manage.is-loading::after {
+.btn.is-loading::after, .btn-manage.is-loading::after,
+.btn.is-loading:hover::after, .btn.is-loading:focus-visible::after {
     content: '';
     position: absolute;
     top: 50%; left: 50%;
@@ -1465,6 +1502,9 @@ textarea:focus-visible,
     border: 2.5px solid rgba(255, 255, 255, 0.45);
     border-top-color: #ffffff;
     border-radius: 50%;
+    /* 2026-10-26 : le balayage lumineux de .btn::after (même pseudo-élément) ne doit ni remplir le cercle ni l'incliner */
+    background: none;
+    transform: none;
     animation: spin 0.7s linear infinite;
 }
 /* ===== CONTENT SECTION ===== */
@@ -2958,8 +2998,20 @@ textarea:focus-visible,
 
     <!-- Loading -->
     <div id="loading" class="loading">
-        <div class="loading-spinner"></div>
-        <p>Chargement de vos informations...</p>
+        <!-- 2026-10-25 : squelette (remplace le rond) — remplacé par la vraie page dès que les données arrivent -->
+        <div class="container content-section tpx-cps" aria-busy="true" aria-label="Chargement de vos informations">
+            <div class="tpx-cps-h"><span class="tpx-sk"></span></div>
+            <div class="tpx-cps-p"><span class="tpx-sk"></span><span class="tpx-sk"></span></div>
+            <div class="status-card">
+                <div class="status-side"><span class="tpx-sk tpx-cps-ico"></span><span class="tpx-sk tpx-cps-badge"></span><span class="tpx-sk tpx-cps-cap"></span><span class="tpx-sk tpx-cps-cap"></span></div>
+                <div class="status-body"><div class="tpx-cps-info"><div class="info-row"><span class="tpx-sk"></span><span class="tpx-sk"></span></div><div class="info-row"><span class="tpx-sk"></span><span class="tpx-sk"></span></div><div class="info-row"><span class="tpx-sk"></span><span class="tpx-sk"></span></div></div></div>
+            </div>
+            <div class="tpx-cps-ref">
+                <div class="tpx-cps-h"><span class="tpx-sk"></span></div>
+                <div class="tpx-cps-p"><span class="tpx-sk"></span><span class="tpx-sk"></span></div>
+                <div class="tpx-cps-panel"><span class="tpx-sk" style="width:55%"></span><span class="tpx-sk tpx-cps-bar"></span><span class="tpx-sk" style="width:70%"></span><div class="tpx-cps-tiles"><span class="tpx-sk"></span><span class="tpx-sk"></span></div></div>
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -3006,7 +3058,7 @@ textarea:focus-visible,
                         <div class="referral-progress-track">
                             <div class="referral-progress-fill" id="referral-progress-fill" style="width:0%"></div>
                         </div>
-                        <p class="referral-progress-caption" id="referral-progress-caption">Chargement…</p>
+                        <p class="referral-progress-caption" id="referral-progress-caption"><span class="tpx-sk tpx-cps-inline"></span></p>
                     </div>
 
                     <div class="referral-stats">
@@ -3030,9 +3082,9 @@ textarea:focus-visible,
 
                     <div class="referral-code-block">
                         <label class="referral-code-label" for="referral-link-input">Votre lien de parrainage</label>
-                        <p class="referral-code-display">Votre code : <span class="referral-code-value" id="referral-code-value">Chargement…</span></p>
+                        <p class="referral-code-display">Votre code : <span class="referral-code-value" id="referral-code-value"><span class="tpx-sk tpx-cps-inline"></span></span></p>
                         <div class="referral-code-row">
-                            <input type="text" id="referral-link-input" class="referral-code-input" readonly value="Chargement…">
+                            <input type="text" id="referral-link-input" class="referral-code-input" readonly value="" aria-label="Lien de parrainage (chargement)">
                             <button type="button" class="referral-copy-btn primary" id="referral-copy-link-btn" disabled>
                                 <i class="fas fa-link"></i> <span class="referral-copy-btn-label">Copier le lien</span>
                             </button>

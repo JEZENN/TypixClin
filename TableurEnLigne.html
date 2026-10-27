@@ -7503,6 +7503,10 @@ input[type="date"].modal-input {
     font-size: 0.95rem;
 }
 
+/* 2026-10-26 : une entrée par ligne, quelle que soit la police (Arrondie, plus large) */
+.nav-dropdown-content .dropdown-item { white-space: nowrap; }
+.nav-items > .nav-dropdown:last-child .nav-dropdown-content { left: auto; right: -10px; }   /* Ressources : s'ouvre vers la gauche, jamais coupé par le bord droit */
+
 [data-theme="dark"] .dropdown-item {
     color: white;
 }
@@ -16372,6 +16376,81 @@ window.TPXNotesPending = {
 }
 
 </style>
+<style id="tpx-skel-css">
+/* 2026-10-25 : chargement en squelette (en-tête tout de suite, contenu grisé animé jusqu'aux données) */
+#tpx-skel { display: none; }
+html.tpx-skel #loader, html.tpx-noloader #loader { display: none !important; }   /* tpx-noloader : jamais retirée (l'ancien écran ne réapparaît pas à la fin du squelette) */
+html.tpx-skel #main-content, html.tpx-skel #presentation-section { display: none !important; }
+html.tpx-skel #tpx-skel { display: block; padding: 1.5rem; transition: opacity 0.2s ease; }
+html.tpx-skel.tpx-skel-out #tpx-skel { opacity: 0; }
+html.tpx-skel-in #main-content { animation: tpxSkelIn 0.35s ease both; }
+@keyframes tpxSkelIn { from { opacity: 0; } to { opacity: 1; } }
+.tpx-sk { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+@keyframes tpxSkBg { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+html.tpx-skel #welcome-message:empty { display: block; position: relative; }
+html.tpx-skel #welcome-message:empty::before { content: '\00a0'; }   /* une ligne de texte de haut, comme le vrai message */
+html.tpx-skel #welcome-message:empty::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 230px; max-width: 70%; height: 18px; border-radius: 8px;
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+html.tpx-skel .user-auth:not(.logged-in) .auth-btn { visibility: hidden; }
+html.tpx-skel .user-auth .user-avatar { color: transparent !important; background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%) !important; background-size: 400% 100% !important; animation: tpxSkBg 1.4s ease infinite; box-shadow: none !important; }
+html.tpx-skel .user-auth .avatar-notif-dot, html.tpx-skel .user-auth .avatar-whatsnew-dot { display: none !important; }
+html.tpx-skel .user-auth:not(.logged-in)::after { content: ''; position: absolute; right: 0; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%;
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%); background-size: 400% 100%; animation: tpxSkBg 1.4s ease infinite; }
+.tpx-sk-nav { display: flex; gap: 12px; margin-bottom: 1.5rem; }
+.tpx-sk-navbar { flex: 1; height: 62px; border-radius: 999px; background: var(--white); border: 1px solid var(--gray-200); box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05); display: flex; align-items: center; justify-content: space-around; padding: 0 10px; gap: 8px; }
+.tpx-sk-navbar .tpx-sk { height: 44px; flex: 1; max-width: 220px; border-radius: 999px; }
+.tpx-sk-navbar .tpx-sk:not(.on) { height: 18px; max-width: 120px; }   /* .on = onglet actif (pastille) */
+#tpx-skel:has(.tpx-sk-ecos) .tpx-sk-todo { width: 150px; }   /* ECOS : bouton To-Do avec son texte (grille : même règle effective qu'EDN) */
+.tpx-sk-todo { width: 104px; height: 62px; border-radius: 18px; flex: none; }
+.tpx-sk-tools { display: flex; gap: 16px; margin-bottom: 1.5rem; }
+.tpx-sk-tools .tpx-sk { height: 40px; border-radius: 10px; }
+@media (max-width: 1024px) { .tpx-sk-tools { flex-wrap: wrap; gap: 9.6px; } .tpx-sk-tools .tpx-sk { height: 46px; } .tpx-sk-tools .tpx-sk.tpx-sk-search { flex: 1 1 100%; } .tpx-sk-tools .tpx-sk.tpx-sk-select { flex: 1 1 0; width: auto; } }
+.tpx-sk-search { flex: 1; } .tpx-sk-select { width: 180px; flex: none; }
+.tpx-sk-section { background: var(--white); border: 1px solid var(--gray-200); border-radius: 20px; overflow: hidden; }
+.tpx-sk-head { display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-bottom: 1px solid var(--gray-200); }
+.tpx-sk-ico { width: 42px; height: 42px; border-radius: 12px; flex: none; }
+.tpx-sk-ico.sm { width: 32px; height: 32px; border-radius: 9px; }
+.tpx-sk-title { width: 190px; height: 20px; }
+.tpx-sk-sp { flex: 1; }
+.tpx-sk-btn { width: 134px; height: 34px; border-radius: 9px; flex: none; } .tpx-sk-btn.sm { width: 52px; }
+.tpx-sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; padding: 1.5rem; }   /* = .specialties-grid */
+.tpx-sk-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-height: 176px; }
+.tpx-sk-row { display: flex; align-items: center; gap: 12px; }
+.tpx-sk-line { height: 14px; } .tpx-sk-line.l { height: 18px; }
+.tpx-sk-w20 { width: 20%; } .tpx-sk-w25 { width: 25%; } .tpx-sk-w30 { width: 30%; } .tpx-sk-w40 { width: 40%; } .tpx-sk-w55 { width: 55%; } .tpx-sk-w60 { width: 60%; }
+.tpx-sk-chip { width: 64px; height: 26px; border-radius: 999px; }
+.tpx-sk-bar { height: 7px; border-radius: 999px; margin-top: auto; }
+.tpx-sk-big { width: 34px; height: 30px; }
+.tpx-sk-stitle { display: flex; align-items: center; gap: 14px; padding: 0 0 12px; margin: 0 0 18px; border-bottom: 2px solid var(--gray-200); }
+.tpx-sk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }   /* = .ecos-daily-grid */
+.tpx-sk-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }   /* = .weekly-stats-grid */
+.tpx-sk-charts .tpx-sk-card { min-height: 230px; }
+.tpx-sk-chart { flex: 1; min-height: 120px; border-radius: 10px; }
+@media (max-width: 768px) {
+    html.tpx-skel #tpx-skel { padding: 12px 4px; }
+    .tpx-sk-tools .tpx-sk { height: 40px; }
+    #tpx-skel:has(.tpx-sk-ecos) .tpx-sk-todo { width: 58px; }
+    .tpx-sk-navbar { height: 64px; border-radius: 18px; } .tpx-sk-navbar .tpx-sk { max-width: 52px; height: 40px; border-radius: 12px; } .tpx-sk-navbar .tpx-sk:not(.on) { height: 22px; max-width: 26px; }
+    .tpx-sk-todo { width: 64px; height: 64px; }
+    .tpx-sk-head { padding: 16px; } .tpx-sk-btn { width: 44px; } .tpx-sk-title { width: 140px; }
+    .tpx-sk-grid { grid-template-columns: 1fr; padding: 8px; gap: 14px; } .tpx-sk-grid .tpx-sk-card:nth-child(n+4) { display: none; }
+    .tpx-sk-stats { grid-template-columns: 1fr 1fr; gap: 12px; } .tpx-sk-charts { grid-template-columns: 1fr; } .tpx-sk-charts .tpx-sk-card:nth-child(n+2) { display: none; }
+}
+/* 2026-10-25 : chargements locaux (notes, cahier d'erreurs, entraînements, flashcards, listes) — window.tpxSkelHTML */
+.tpx-skl { display: flex; flex-direction: column; gap: 12px; padding: 6px 2px; pointer-events: none; user-select: none; -webkit-user-select: none; width: 100%; box-sizing: border-box; }
+.tpx-skl-line { height: 13px; border-radius: 7px; }
+.tpx-skl-editor .tpx-skl-line { height: 14px; }
+.tpx-skl-editor .tpx-skl-gap { height: 6px; }
+.tpx-skl-row { display: flex; align-items: center; gap: 12px; }
+.tpx-skl-col { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tpx-skl-av { width: 36px; height: 36px; border-radius: 50%; flex: none; }
+.tpx-skl-box { width: 20px; height: 20px; border-radius: 6px; flex: none; }
+.tpx-skl-pill { width: 56px; height: 22px; border-radius: 999px; flex: none; }
+.tpx-skl-flash .tpx-skl-row { padding: 10px 12px; border: 1px solid var(--gray-200); border-radius: 12px; }
+.tpx-skl-list .tpx-skl-row { padding: 6px 4px; }
+@media (prefers-reduced-motion: reduce) { .tpx-sk, html.tpx-skel #welcome-message:empty::after, html.tpx-skel .user-auth:not(.logged-in)::after { animation: none; } html.tpx-skel-in #main-content { animation: none; } }
+</style>
+<script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* 2026-10-25 : squelette à chaque ouverture (plus jamais l'ancien écran) */</script>
 </head>
 
 
@@ -16981,10 +17060,64 @@ window.TPXNotesPending = {
 </section>
 
 
+<div id="tpx-skel" aria-hidden="true"><div class="container"><div class="tpx-sk-nav"><div class="tpx-sk-navbar"><span class="tpx-sk"></span><span class="tpx-sk on"></span><span class="tpx-sk"></span><span class="tpx-sk"></span><span class="tpx-sk"></span></div><span class="tpx-sk tpx-sk-todo"></span></div><div class="tpx-sk-tools"><span class="tpx-sk tpx-sk-search"></span><span class="tpx-sk tpx-sk-select"></span><span class="tpx-sk tpx-sk-select"></span></div><div class="tpx-sk-section"><div class="tpx-sk-head"><span class="tpx-sk tpx-sk-ico"></span><span class="tpx-sk tpx-sk-title"></span><span class="tpx-sk-sp"></span><span class="tpx-sk tpx-sk-btn"></span><span class="tpx-sk tpx-sk-btn sm"></span></div><div class="tpx-sk-grid"><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div></div></div></div></div>
+<script id="tpx-skel-js">
+/* 2026-10-25 : fin du squelette de chargement — utilisateur chargé (statut appliqué) ET données arrivées ; déconnecté →
+   tout de suite ; filet 15 s. Rien d'autre n'est modifié : le chargement et les sauvegardes restent ceux d'avant. */
+(function () {
+    'use strict';
+    var html = document.documentElement, st = { user: false, data: false }, done = false;
+    try { localStorage.removeItem('tpx_session_hint'); } catch (e) {}   /* ancien repère (première version), plus utilisé */
+    /* contenu de nouveau affiché : tout ce qui s'est mesuré pendant qu'il était masqué se recale (pastille de la barre de
+       navigation, graphiques…) */
+    function relayout() {
+        try { if (typeof window._syncNavPill === 'function') window._syncNavPill(true); } catch (e) {}
+        try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+    }
+    function drop() { var sk = document.getElementById('tpx-skel'); if (sk && sk.parentNode) sk.parentNode.removeChild(sk); }
+    function finish() {
+        if (done) return; done = true;
+        if (!html.classList.contains('tpx-skel')) { drop(); return; }
+        html.classList.add('tpx-skel-out');
+        setTimeout(function () {
+            html.classList.remove('tpx-skel', 'tpx-skel-out'); html.classList.add('tpx-skel-in'); drop();
+            relayout(); requestAnimationFrame(relayout); setTimeout(relayout, 120);
+            setTimeout(function () { html.classList.remove('tpx-skel-in'); }, 400);
+        }, 200);
+    }
+    window.tpxSkelReady = function (what) {
+        try {
+            if (what === 'out') {
+                if (!done) { done = true; html.classList.remove('tpx-skel'); drop(); }
+                return;
+            }
+            st[what] = true;
+            if (st.user && st.data && !done) requestAnimationFrame(function () { setTimeout(finish, 60); });   /* le rendu des données est fait dans la même tâche */
+        } catch (e) { finish(); }
+    };
+    setTimeout(function () { if (!done) finish(); }, 15000);
+})();
+/* 2026-10-25 : contenu provisoire « squelette » pour les chargements locaux (remplacé ensuite par le vrai contenu) */
+window.tpxSkelHTML = function (kind) {
+    var sk = function (cls, w) { return '<span class="tpx-sk ' + cls + '"' + (w ? ' style="width:' + w + '"' : '') + '></span>'; };
+    var row = function (inner) { return '<div class="tpx-skl-row">' + inner + '</div>'; };
+    var out = '';
+    if (kind === 'editor') {
+        ['92%', '84%', '88%', '46%', 'gap', '90%', '72%', '80%', '38%'].forEach(function (w) { out += w === 'gap' ? '<span class="tpx-skl-gap"></span>' : sk('tpx-skl-line', w); });
+    } else if (kind === 'list') {
+        ['58%', '44%', '52%'].forEach(function (w) { out += row(sk('tpx-skl-av') + '<div class="tpx-skl-col">' + sk('tpx-skl-line', w) + sk('tpx-skl-line', '30%') + '</div>'); });
+    } else if (kind === 'flash') {
+        ['62%', '48%', '70%', '54%'].forEach(function (w) { out += row(sk('tpx-skl-box') + '<div class="tpx-skl-col">' + sk('tpx-skl-line', w) + '</div>' + sk('tpx-skl-pill')); });
+    } else {   /* 'oic' */
+        ['86%', '70%', '78%', '60%'].forEach(function (w) { out += sk('tpx-skl-line', w); });
+    }
+    return '<div class="tpx-skl tpx-skl-' + kind + '" contenteditable="false" aria-busy="true" aria-label="Chargement">' + out + '</div>';
+};
+</script>
 <section class="main-content" id="main-content">
     <div class="container">
 <nav class="app-nav">
-    <button class="app-nav-btn" data-page="stats"><i class="fas fa-chart-pie"></i><span>Statistiques</span></button>
+    <button class="app-nav-btn" data-page="stats"><i class="fas fa-chart-pie"></i><span>Tableau de bord</span></button>
     <button class="app-nav-btn active" data-page="dashboard"><i class="fas fa-hospital"></i><span>Liste des spécialités</span></button>
     <button class="app-nav-btn" data-page="items"><i class="fas fa-list-check"></i><span>Liste des Items</span></button>
     <button class="app-nav-btn" data-page="entrainements"><i class="fas fa-dumbbell"></i><span>Entrainements</span></button>
@@ -16997,7 +17130,7 @@ window.TPXNotesPending = {
 	
     <!-- Titre Section Quotidienne -->
     <div class="stats-section-title daily">
-        <i class="fas fa-calendar-day"></i> Stats du Jour
+        <i class="fas fa-calendar-day"></i> Ma journée de travail
 		<span class="help-icon" onclick="openHelpModal('stats-daily')">?</span>
 
     </div>
@@ -17057,7 +17190,7 @@ window.TPXNotesPending = {
 
 	<!-- Titre Section Hebdomadaire -->
 <div class="stats-section-title weekly">
-    <i class="fas fa-calendar-week"></i> Stats des 7 derniers jours
+    <i class="fas fa-calendar-week"></i> Ma semaine de travail
 	<span class="help-icon" onclick="openHelpModal('stats-weekly')">?</span>
 
 </div>
@@ -17117,7 +17250,7 @@ window.TPXNotesPending = {
 
     <!-- Titre Section Générale -->
     <div class="stats-section-title general">
-        <i class="fas fa-chart-pie"></i> Stats générales
+        <i class="fas fa-chart-pie"></i> Mon externat en chiffres
 		                <span class="help-icon" onclick="openHelpModal('stats-general')">?</span>
 
     </div>
@@ -24549,6 +24682,7 @@ async function updateUserUI(user) {
         // tpxApplyPremiumState() a déjà été appelé plus haut (étape 2) : verrou,
         // couronne et pastille d'essai sont donc à jour, sans aucun appel réseau.
         
+        if (window.tpxSkelReady) window.tpxSkelReady('user');   /* 2026-10-25 : squelette de chargement */
         setTimeout(hideLoader, 500);
         
     } else {
@@ -24581,6 +24715,7 @@ window._legacyMigrationConfirmedUid = null;
 
 
         if (cloudSaveTimeout) { clearTimeout(cloudSaveTimeout); cloudSaveTimeout = null; }
+        if (window.tpxSkelReady) window.tpxSkelReady('out');   /* 2026-10-25 : déconnecté → présentation tout de suite */
         hideLoader();
     }
 }
@@ -25870,7 +26005,7 @@ function loadUserData(userId) {
 				if (docSnap.exists()) {
 					const newData = docSnap.data();
 					
-					    firebaseDataLoaded = true;
+					    firebaseDataLoaded = true; if (window.tpxSkelReady) window.tpxSkelReady('data');
 							setSaveIndicator('loaded');   // 2026-10-16 : fin de chargement (pas une sauvegarde)
 	
 					
@@ -26336,7 +26471,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
                     } catch (e) {}
                 }
 				
-				    firebaseDataLoaded = true;
+				    firebaseDataLoaded = true; if (window.tpxSkelReady) window.tpxSkelReady('data');
 						setSaveIndicator('loaded');   // 2026-10-16 : fin de chargement (pas une sauvegarde)
                 
                 
@@ -26394,7 +26529,7 @@ if (_legacyMigrationAttemptedUid !== userId) {
             _tpxUnconfirmedOptimistic = true; // cf. drapeau déclaré avant loadUserData() : rien n'est écrit tant que non confirmé
             renderAll();
 
-			    firebaseDataLoaded = true;
+			    firebaseDataLoaded = true; if (window.tpxSkelReady) window.tpxSkelReady('data');
     setSaveIndicator('loaded');   // 2026-10-16 : fin de chargement (pas une sauvegarde)
 
     const _genAtError = _tpxSnapshotSuccessGen;
@@ -34825,7 +34960,7 @@ setTimeout(() => {
             try {
                 userData = JSON.parse(cachedData);
                 window.userData = userData; // sync global
-                firebaseDataLoaded = true;
+                firebaseDataLoaded = true; if (window.tpxSkelReady) window.tpxSkelReady('data');
                 setSaveIndicator('loaded');   // 2026-10-16 : fin de chargement (pas une sauvegarde)
                 renderAll();
             } catch (e) {
@@ -36098,6 +36233,9 @@ document.addEventListener('DOMContentLoaded', function() {
     white-space: nowrap;
 }
 [data-theme="dark"] .help-modal-title h3 { color: var(--gray-800); }
+@media (max-width: 480px) {   /* 2026-10-25 : titre long sur 2 lignes au lieu d'être coupé par « … » */
+    .help-modal-title h3 { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; overflow-wrap: break-word; }
+}
 
 .help-modal-close {
     width: 30px;
@@ -39100,6 +39238,19 @@ body.tc-kb-open-phone .flash-expand-btn {
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
 
             <div class="whats-new-section">
+                <div class="whats-new-section-icon pomo">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Méthode Pomodoro</h4>
+                    <p>
+                        Travaillez par périodes de concentration entrecoupées de courtes pauses. Dans le Tableau de bord, la case
+                        <strong>Méthode Pomodoro</strong> lance une concentration en un clic ; ouvrez-la pour régler les durées, la séance et la sonnerie.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
                 <div class="whats-new-section-icon purple">
                     <i class="fas fa-font"></i>
                 </div>
@@ -39489,7 +39640,7 @@ body.tc-kb-open-phone .flash-expand-btn {
                 </div>
                 <div class="whats-new-section-text">
                     <h4>Détail des tours de la semaine</h4>
-                    <p>Dans le même esprit, la carte « Tours effectués » des stats des 7 derniers jours devient elle aussi cliquable : retrouvez tous vos tours de la semaine, regroupés par collège, avec la date, le support et la note de chaque tour.</p>
+                    <p>Dans le même esprit, la carte « Tours effectués » de « Ma semaine de travail » devient elle aussi cliquable : retrouvez tous vos tours de la semaine, regroupés par collège, avec la date, le support et la note de chaque tour.</p>
                 </div>
             </div>
 
@@ -39736,7 +39887,7 @@ body.tc-kb-open-phone .flash-expand-btn {
 const helpContent = {
     'stats-daily': {
         icon: 'fa-calendar-day',
-        title: 'Statistiques Quotidiennes',
+        title: 'Ma journée de travail',
         content: `
             <div class="help-description">
                 <p>Votre <strong>tableau de bord quotidien</strong> affiche vos statistiques du jour en temps réel.</p>
@@ -39750,6 +39901,7 @@ const helpContent = {
                     <li><strong>Ressenti moyen</strong> : votre niveau de confiance (1-5) moyen sur la journée.</li>
                     <li><strong>Entraînements du jour</strong> : vos QI, KFP, DP et TCS du jour, avec le temps passé. <em>Cliquez sur la carte pour le détail, ou sur « + » pour en ajouter en un clic.</em></li>
                     <li><strong>Flammes</strong> : vos jours de connexion d'affilée (sur EDN comme sur ECOS, depuis n'importe quel appareil) et votre record. Après une absence (un jour ou plus), <strong>une seule vie</strong> ❤ est utilisée à votre retour et vos flammes sont gardées ; vous recevez une vie par semaine (<strong>5 au maximum</strong>).</li>
+                    <li><strong>Méthode Pomodoro</strong> : des périodes de concentration entrecoupées de pauses (par exemple 45 min de concentration, 15 min de pause). <em>« + » lance une concentration ; cliquez sur la carte pour choisir les durées, le nombre de concentrations de la séance, la pause longue, l’enchaînement et la sonnerie, ou pour afficher le chronomètre en plein écran.</em></li>
                 </ul>
             </div>
             <div class="help-tip">
@@ -39770,7 +39922,7 @@ const helpContent = {
     },
     'stats-weekly': {
         icon: 'fa-calendar-week',
-        title: 'Statistiques hebdomadaires',
+        title: 'Ma semaine de travail',
         content: `
             <div class="help-description">
                 <p>Visualisez <strong>l'évolution de votre travail sur les 7 derniers jours</strong> sur des graphiques.</p>
@@ -39802,7 +39954,7 @@ const helpContent = {
     },
     'stats-general': {
         icon: 'fa-chart-pie',
-        title: 'Statistiques Générales',
+        title: 'Mon externat en chiffres',
         content: `
             <div class="help-description">
                 <p>Votre <strong>vue d'ensemble</strong> : toutes vos révisions cumulées.</p>
@@ -41210,7 +41362,7 @@ if (refBadge) {
     window._setScrollbarComp(sw);
 
     var editor = document.getElementById('notesEditorArea');
-    editor.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;opacity:0.35;pointer-events:none;"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem;margin-bottom:0.6rem;"></i><span style="font-size:0.82rem;">Chargement des notes…</span></div>';
+    editor.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('editor') : '…') + '';   /* 2026-10-25 : squelette au lieu du rond */
     editor._notesLoadReady = false;
     editor._importing = false; // ✅ Réinitialiser le flag d'import à chaque ouverture
     // 🔒 Verrouiller l'édition tant que la version à afficher (Firestore/pending)
@@ -41222,7 +41374,7 @@ if (refBadge) {
     // Afficher un spinner dans la liste OIC pendant le chargement
     var _oicListEl = document.getElementById('oicList');
     if (_oicListEl) {
-        _oicListEl.innerHTML = '<div class="oic-empty" style="padding:1.5rem 0;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:0.4;display:block;margin-bottom:0.5rem;"></i><span style="font-size:0.8rem;opacity:0.5;">Chargement…</span></div>';
+        _oicListEl.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('oic') : '…') + '';
     }
 
     var savedKey = _notesKey;
@@ -45235,7 +45387,7 @@ window._openTrainNotes = function(id) {
 
   // ── Vider l'éditeur + indicateur chargement ──
   var editor = document.getElementById('trainNotesEditor');
-  editor.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;opacity:0.4;pointer-events:none;"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem;margin-bottom:0.6rem;"></i><span style="font-size:0.82rem;">Chargement des notes…</span></div>';
+  editor.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('editor') : '…') + '';   /* 2026-10-25 : squelette au lieu du rond */
   trainNotesSetAutosaveDot('loading');
   ['tnBtnBold','tnBtnItalic','tnBtnUnderline','tnBtnStrike'].forEach(function(btnId){
     var b = document.getElementById(btnId); if(b) b.classList.remove('active');
@@ -46049,7 +46201,7 @@ var _trainUserWatcher = setInterval(function() {
 
     // Vider l'editeur + indicateur chargement
     var editor = document.getElementById('speNotesEditor');
-    editor.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;opacity:0.4;pointer-events:none;"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem;margin-bottom:0.6rem;"></i><span style="font-size:0.82rem;">Chargement du cahier d\'erreurs...</span></div>';
+    editor.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('editor') : '…') + '';   /* 2026-10-25 : squelette au lieu du rond */
     speErrSetAutosaveDot('loading');
     ['seBtnBold','seBtnItalic','seBtnUnderline','seBtnStrike'].forEach(function(btnId) {
       var b = document.getElementById(btnId); if (b) b.classList.remove('active');
@@ -47215,7 +47367,7 @@ async function renderFriendsList(data) {
     }
 
     // Fetch les infos de chaque ami
-    container.innerHTML = '<div class="friends-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</div>';
+    container.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('list') : '…') + '';
     const infos = await fetchUsersInfo(friends);
     container.innerHTML = '';
     friends.forEach(uid => {
@@ -47245,7 +47397,7 @@ async function renderRequestsPanels(data) {
         if (received.length === 0) {
             recContainer.innerHTML = '<div class="friends-empty"><i class="fas fa-inbox"></i>Aucune demande reçue</div>';
         } else {
-            recContainer.innerHTML = '<div class="friends-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</div>';
+            recContainer.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('list') : '…') + '';
             const infos = await fetchUsersInfo(received);
             recContainer.innerHTML = '';
             received.forEach(uid => {
@@ -47265,7 +47417,7 @@ async function renderRequestsPanels(data) {
         if (sent.length === 0) {
             sentContainer.innerHTML = '<div class="friends-empty"><i class="fas fa-paper-plane"></i>Aucune demande envoyée</div>';
         } else {
-            sentContainer.innerHTML = '<div class="friends-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</div>';
+            sentContainer.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('list') : '…') + '';
             const infos = await fetchUsersInfo(sent);
             sentContainer.innerHTML = '';
             sent.forEach(uid => {
@@ -48269,7 +48421,7 @@ async function loadShareFriendsList() {
     const user = window.currentUser;
     if (!user) return;
 
-    list.innerHTML = '<div class="notes-share-empty"><i class="fas fa-spinner fa-spin"></i></div>';
+    list.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('list') : '…') + '';
 
     try {
         const snap = await getDoc(doc(db, 'users', user.uid));
@@ -48611,7 +48763,7 @@ async function loadSharedNotesForItem() {
     listEl.innerHTML = '';
     if (emptyEl) {
         emptyEl.style.display = 'flex';
-        emptyEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:0.4;margin-bottom:0.5rem;"></i><p>Chargement des notes reçues…</p>';
+        emptyEl.innerHTML = '' + (window.tpxSkelHTML ? window.tpxSkelHTML('list') : '…') + '';
     }
 
     try {
@@ -54227,7 +54379,7 @@ window._flashEditOverlayClick = _flashEditOverlayClick;
   function renderFlashDrawerList() {
     var list = document.getElementById('flashDrawerList'); if (!list) return;
     if (!isOnline()) { list.innerHTML='<div class="flash-offline-note"><i class="fas fa-wifi"></i>Disponible en ligne uniquement.</div>'; updateFlashDrawerCount(); return; }
-    list.innerHTML='<div class="flash-empty"><i class="fas fa-spinner fa-spin"></i>Chargement…</div>';
+    list.innerHTML='' + (window.tpxSkelHTML ? window.tpxSkelHTML('flash') : '…') + '';
     loadAllFlashCards().then(function(all){
       var byspe={}; all.forEach(function(c){ (byspe[c.speId]=byspe[c.speId]||[]).push(c); });
       _flashAllCache = byspe;
@@ -67082,7 +67234,7 @@ function updateSettingsUi() {
         var PAGES = [
             {
                 id: 'stats',
-                title: 'Statistiques',
+                title: 'Tableau de bord',
                 icon: 'fa-chart-line',
                 since: 1,
                 heading: 'Votre progression, en un coup d\'œil',
@@ -68294,9 +68446,11 @@ html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="au
 .tpx-ws-box { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border: 1px solid var(--gray-200); border-radius: 14px; background: var(--gray-50); }
 [data-theme="dark"] .tpx-ws-box { background: var(--gray-100); border-color: #334155; }
 .tpx-ws-sec { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 24px; }
-.tpx-ws-sec-t { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-display); font-size: 0.92rem; font-weight: 700; color: var(--gray-800); }
+.tpx-ws-sec-t { display: inline-flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--gray-800); }
 [data-theme="dark"] .tpx-ws-sec-t { color: #f1f5f9; }
-.tpx-ws-sec-t i { color: #f59e0b; font-size: 0.82rem; }
+/* 2026-10-26 : icône du titre dans une petite case, comme les titres du minuteur Pomodoro */
+.tpx-ws-sec-t i { width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.88rem; color: #d97706; background: rgba(245, 158, 11, 0.14); }
+[data-theme="dark"] .tpx-ws-sec-t i { color: #fbbf24; background: rgba(251, 191, 36, 0.16); }
 .tpx-ws-count { padding: 0.15rem 0.6rem; border-radius: 999px; background: rgba(245, 158, 11, 0.14); color: #b45309; font-size: 0.72rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tpx-ws-count[hidden] { display: none; }
 [data-theme="dark"] .tpx-ws-count { background: rgba(251, 191, 36, 0.16); color: #fbbf24; }
@@ -68475,7 +68629,9 @@ html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="au
 [data-theme="dark"] .tpx-tr-modal .tpx-ws-summary { background: rgba(139, 92, 246, 0.10); border-color: rgba(167, 139, 250, 0.25); }
 .tpx-tr-modal .tpx-ws-total { grid-row: span 2; color: #7c3aed; }
 [data-theme="dark"] .tpx-tr-modal .tpx-ws-total { color: #a78bfa; }
-.tpx-tr-modal .tpx-ws-part i, .tpx-tr-modal .tpx-ws-sec-t i { color: #8b5cf6; }
+.tpx-tr-modal .tpx-ws-part i { color: #8b5cf6; }
+.tpx-tr-modal .tpx-ws-sec-t i { color: #8b5cf6; background: rgba(139, 92, 246, 0.12); }
+[data-theme="dark"] .tpx-tr-modal .tpx-ws-sec-t i { color: #c4b5fd; background: rgba(167, 139, 250, 0.16); }
 .tpx-tr-modal .tpx-ws-count { background: rgba(139, 92, 246, 0.14); color: #6d28d9; }
 [data-theme="dark"] .tpx-tr-modal .tpx-ws-count { background: rgba(167, 139, 250, 0.18); color: #c4b5fd; }
 .tpx-tr-modal .tpx-ws-daybtn:hover:not(:disabled) { color: #7c3aed; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 3px 10px rgba(139, 92, 246, 0.25); }
@@ -70257,6 +70413,841 @@ html[data-theme="pastel"] body #pdd-status-grid .pdd-status-card[data-status="au
             return true;
         } catch (e) { return false; }
     };
+})();
+</script>
+<!-- ═══ 2026-10-25 (demande de Jean) — MINUTEUR POMODORO : case « Minuteur Pomodoro » après « Flammes » dans « Ma journée de
+     travail » ; « + » lance une concentration ; la case ouvre une grande fenêtre (chronomètre agrandissable en plein écran,
+     séance de N concentrations, formules, durées, pause longue, enchaînement, sonneries et volume). Tout est LOCAL à
+     l'appareil (localStorage « tpx_pomo_v1 » sur EDN, « tpx_pomo_ecos_v1 » sur ECOS : un minuteur par application, partagé entre ses onglets) : aucune donnée de compte n'est lue
+     ni écrite. Heure de fin mémorisée → juste même onglet en arrière-plan, rechargé ou fermé puis rouvert. ═══ -->
+<style id="tpx-pomo-style">
+/* ── case ── */
+.daily-stat-card.tpx-pomo-card::before { background: linear-gradient(90deg, #e11d48, #fb7185); }
+.daily-stat-card.tpx-pomo-card .daily-stat-icon { background: linear-gradient(135deg, rgba(225, 29, 72, 0.14), rgba(251, 113, 133, 0.14)); color: #e11d48; }
+.daily-stat-card.tpx-pomo-card .daily-stat-value { background: linear-gradient(135deg, #e11d48, #fb7185); -webkit-background-clip: text; background-clip: text; font-variant-numeric: tabular-nums; }
+.daily-stat-card.tpx-pomo-card.is-break .daily-stat-value { background: linear-gradient(135deg, #059669, #34d399); -webkit-background-clip: text; background-clip: text; }
+.daily-stat-card.tpx-pomo-card.clickable:hover { border-color: rgba(225, 29, 72, 0.5); }
+.daily-stat-card.tpx-pomo-card.clickable:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+.tpx-pomo-card .daily-stat-header { padding-right: 2.6rem; }
+.tpx-pomo-card .daily-stat-cta { color: #be123c; background: rgba(225, 29, 72, 0.1); border-color: rgba(225, 29, 72, 0.28); }
+.daily-stat-card.clickable.tpx-pomo-card:hover .daily-stat-cta { background: linear-gradient(135deg, #e11d48, #fb7185); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3); }
+[data-theme="dark"] .tpx-pomo-card .daily-stat-cta { color: #fda4af; background: rgba(251, 113, 133, 0.14); border-color: rgba(251, 113, 133, 0.3); }
+.tpx-pomo-tag { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+    background: rgba(225, 29, 72, 0.1); color: #be123c; }
+.tpx-pomo-card.is-break .tpx-pomo-tag { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.tpx-pomo-card.is-idle .tpx-pomo-tag { background: var(--gray-100); color: var(--gray-600); }
+[data-theme="dark"] .tpx-pomo-tag { color: #fda4af; background: rgba(251, 113, 133, 0.14); }
+[data-theme="dark"] .tpx-pomo-card.is-break .tpx-pomo-tag { color: #6ee7b7; background: rgba(16, 185, 129, 0.16); }
+[data-theme="dark"] .tpx-pomo-card.is-idle .tpx-pomo-tag { color: #cbd5e1; background: #334155; }
+.tpx-pomo-sub { display: block; margin-top: 0.3rem; font-size: 0.74rem; font-weight: 500; color: var(--gray-500); line-height: 1.35; }
+.tpx-pomo-sub b { color: var(--gray-700); font-weight: 700; }
+[data-theme="dark"] .tpx-pomo-sub { color: #94a3b8; }
+[data-theme="dark"] .tpx-pomo-sub b { color: #e2e8f0; }
+.tpx-pomo-cardbar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(225, 29, 72, 0.12); }
+.tpx-pomo-cardbar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #e11d48, #fb7185); transition: width 0.6s linear; }
+.tpx-pomo-card.is-break .tpx-pomo-cardbar { background: rgba(16, 185, 129, 0.12); }
+.tpx-pomo-card.is-break .tpx-pomo-cardbar > i { background: linear-gradient(90deg, #10b981, #34d399); }
+.tpx-pomo-card.is-idle .tpx-pomo-cardbar { display: none; }
+.tpx-pomo-btn { position: absolute; top: 0.7rem; right: 0.7rem; width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(225, 29, 72, 0.3);
+    background: rgba(225, 29, 72, 0.1); color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; z-index: 1;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.tpx-pomo-btn:hover { background: linear-gradient(135deg, #e11d48, #fb7185); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(225, 29, 72, 0.35); transform: scale(1.06); }
+.tpx-pomo-btn:active { transform: scale(0.94); }
+.tpx-pomo-btn:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-btn { color: #fb7185; background: rgba(251, 113, 133, 0.14); border-color: rgba(251, 113, 133, 0.32); }
+[data-theme="dark"] .tpx-pomo-btn:hover { background: linear-gradient(135deg, #e11d48, #fb7185); color: #fff; border-color: transparent; }
+@media (hover: none) { .tpx-pomo-btn:hover { transform: none; box-shadow: none; } }
+/* Nouveautés : icône de l'entrée « Méthode Pomodoro » */
+.whats-new-section-icon.pomo { background: linear-gradient(135deg, #e11d48, #fb7185); box-shadow: 0 2px 6px rgba(225, 29, 72, 0.3); }
+
+/* ── fenêtre (mêmes bases que les autres fenêtres du site : en-tête, corps défilant, pied fixe avec la coche) ── */
+.tpx-pomo-overlay { display: none; position: fixed; inset: 0; z-index: var(--z-modal, 10000); background: rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 1rem; }
+.tpx-pomo-overlay.active { display: flex; animation: tpxPomoFadeIn 0.22s ease forwards; }
+.tpx-pomo-overlay.closing { animation: tpxPomoFadeOut 0.18s ease forwards; }
+.tpx-pomo-overlay.closing .tpx-pomo-modal { animation: tpxPomoOut 0.18s ease forwards; }
+@keyframes tpxPomoFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tpxPomoFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tpxPomoIn { from { opacity: 0; transform: scale(0.94) translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes tpxPomoOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.96); } }
+.tpx-pomo-modal { background: var(--white); border-radius: var(--border-radius-xl, 20px); box-shadow: var(--shadow-xl, 0 20px 40px rgba(0,0,0,.2)); width: 100%; max-width: 980px;
+    height: 92vh; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; animation: tpxPomoIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+[data-theme="dark"] .tpx-pomo-modal { background: #1e293b; }
+.tpx-pomo-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+[data-theme="dark"] .tpx-pomo-head { border-bottom-color: #334155; }
+.tpx-pomo-title { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.tpx-pomo-ic { width: 38px; height: 38px; border-radius: var(--border-radius-md, 10px); background: linear-gradient(135deg, #e11d48, #fb7185); box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; flex-shrink: 0; }
+.tpx-pomo-tt { display: flex; flex-direction: column; min-width: 0; }
+.tpx-pomo-h { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--gray-900); line-height: 1.25; margin: 0; }
+[data-theme="dark"] .tpx-pomo-h { color: #f1f5f9; }
+.tpx-pomo-st { font-size: 0.78rem; color: var(--gray-500); font-weight: 500; }
+.tpx-pomo-x { width: 30px; height: 30px; border-radius: 50%; background: var(--danger-light, #fee2e2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: var(--danger, #ef4444); transition: all 0.15s ease; flex-shrink: 0; }
+.tpx-pomo-x:hover { background: var(--danger, #ef4444); color: #fff; transform: scale(1.12); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45); }
+.tpx-pomo-x:active { transform: scale(0.88); }
+[data-theme="dark"] .tpx-pomo-x { background: rgba(239, 68, 68, 0.6); color: #fff; border: 1px solid rgba(239, 68, 68, 0.8); }
+/* corps : la barre de défilement a sa place réservée → rien ne bouge quand elle apparaît */
+.tpx-pomo-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent;
+    padding: 1.5rem 1.5rem 1.75rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-content: start; overscroll-behavior: contain; }
+.tpx-pomo-body::-webkit-scrollbar { width: 8px; }
+.tpx-pomo-body::-webkit-scrollbar-track { background: transparent; }
+.tpx-pomo-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+.tpx-pomo-foot { padding: 16px 28px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0; }
+[data-theme="dark"] .tpx-pomo-foot { background: #1e293b; border-top-color: #334155; }
+.tpx-pomo-ok { padding: 10px 24px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; font-size: 1rem; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.tpx-pomo-ok:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+.tpx-pomo-ok:active { transform: scale(0.96); }
+.tpx-pomo-ok:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+
+/* compartiments ; titres avec l'icône dans une petite tuile, comme les titres « Ma journée de travail »… */
+.tpx-pomo-box { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border: 1px solid var(--gray-200); border-radius: 16px; background: var(--gray-50); min-width: 0; }
+[data-theme="dark"] .tpx-pomo-box { background: var(--gray-100); border-color: #334155; }
+.tpx-pomo-bhead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tpx-pomo-sec { display: inline-flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--gray-800); }
+[data-theme="dark"] .tpx-pomo-sec { color: #f1f5f9; }
+.tpx-pomo-sec > i { width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.88rem;
+    color: #e11d48; background: rgba(225, 29, 72, 0.12); }
+.tpx-pomo-sec.is-blue > i { color: var(--primary, #3b82f6); background: rgba(59, 130, 246, 0.12); }
+.tpx-pomo-sec.is-violet > i { color: #8b5cf6; background: rgba(139, 92, 246, 0.12); }
+.tpx-pomo-sec.is-amber > i { color: #d97706; background: rgba(245, 158, 11, 0.14); }
+[data-theme="dark"] .tpx-pomo-sec > i { background: rgba(251, 113, 133, 0.16); color: #fb7185; }
+[data-theme="dark"] .tpx-pomo-sec.is-blue > i { background: rgba(96, 165, 250, 0.16); color: #93c5fd; }
+[data-theme="dark"] .tpx-pomo-sec.is-violet > i { background: rgba(167, 139, 250, 0.16); color: #c4b5fd; }
+[data-theme="dark"] .tpx-pomo-sec.is-amber > i { background: rgba(251, 191, 36, 0.16); color: #fbbf24; }
+.tpx-pomo-zoom { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600); cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.15s ease; flex-shrink: 0; }
+.tpx-pomo-zoom:hover { color: #e11d48; border-color: rgba(225, 29, 72, 0.5); transform: scale(1.06); }
+.tpx-pomo-zoom:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-zoom { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+.tpx-pomo-col { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+@media (min-width: 861px) { .tpx-pomo-overlay:not(.is-zen) .tpx-pomo-col > .tpx-pomo-box:last-child { flex: 1 1 auto; } }   /* deux colonnes : la dernière case s'allonge, les deux colonnes finissent au même niveau */
+.tpx-pomo-timer { align-items: stretch; text-align: center; }
+.tpx-pomo-ring { position: relative; width: min(270px, 72vw); aspect-ratio: 1; margin: 0.25rem auto 0; container-type: inline-size; }
+.tpx-pomo-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.tpx-pomo-ring .bg { fill: none; stroke: var(--gray-200); stroke-width: 10; }
+[data-theme="dark"] .tpx-pomo-ring .bg { stroke: #334155; }
+.tpx-pomo-ring .fg { fill: none; stroke: url(#tpxPomoGrad); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.6s linear; }
+.tpx-pomo-ring.is-break .fg { stroke: url(#tpxPomoGradB); }
+.tpx-pomo-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; }
+.tpx-pomo-phase { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(225, 29, 72, 0.12); color: #be123c; }
+.tpx-pomo-phase.is-break { background: rgba(16, 185, 129, 0.14); color: #047857; }
+.tpx-pomo-phase.is-idle { background: var(--gray-200); color: var(--gray-600); }
+[data-theme="dark"] .tpx-pomo-phase { color: #fda4af; }
+[data-theme="dark"] .tpx-pomo-phase.is-break { color: #6ee7b7; }
+[data-theme="dark"] .tpx-pomo-phase.is-idle { background: #334155; color: #cbd5e1; }
+.tpx-pomo-time { font-family: var(--font-display); font-size: min(21cqw, 3.5rem); font-weight: 800; line-height: 1; color: var(--gray-900); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+[data-theme="dark"] .tpx-pomo-time { color: #f8fafc; }
+.tpx-pomo-ring.is-hours .tpx-pomo-time { font-size: min(15cqw, 2.6rem); }   /* h:mm:ss : plus long, plus petit pour rester dans le cercle */
+.tpx-pomo-end { font-size: 0.8rem; color: var(--gray-500); font-weight: 600; min-height: 1.2em; }
+/* séance : une pastille par concentration prévue + « il en reste … » */
+/* frise de la séance : une case par concentration (rose) et par pause (vert), largeur = durée */
+.tpx-pomo-tl { width: 100%; display: flex; flex-direction: column; gap: 0.35rem; }
+.tpx-pomo-tl-top { position: relative; height: 24px; }
+.tpx-pomo-tl-mk { position: absolute; bottom: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; white-space: nowrap; pointer-events: none; transition: left 0.6s linear; }
+.tpx-pomo-tl-mk.at-l { transform: translateX(-12px); align-items: flex-start; }
+.tpx-pomo-tl-mk.at-r { transform: translateX(calc(-100% + 12px)); align-items: flex-end; }
+.tpx-pomo-tl-mk span { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; background: var(--gray-800); color: #fff; font-variant-numeric: tabular-nums; }
+.tpx-pomo-tl-mk.is-brk span { background: #059669; }
+.tpx-pomo-tl-mk.is-foc span { background: #e11d48; }
+.tpx-pomo-tl-mk::after { content: ''; width: 2px; height: 5px; background: currentColor; opacity: 0.5; }
+.tpx-pomo-tl-mk.at-l::after { margin-left: 11px; } .tpx-pomo-tl-mk.at-r::after { margin-right: 11px; }
+[data-theme="dark"] .tpx-pomo-tl-mk span { background: #e2e8f0; color: #0f172a; }
+[data-theme="dark"] .tpx-pomo-tl-mk.is-brk span { background: #10b981; color: #022c22; }
+[data-theme="dark"] .tpx-pomo-tl-mk.is-foc span { background: #fb7185; color: #4c0519; }
+.tpx-pomo-tl-bar { display: flex; gap: 3px; height: 34px; width: 100%; }
+.tpx-pomo-tl-seg { position: relative; flex: 1 1 0; min-width: 5px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+    background: rgba(225, 29, 72, 0.13); color: #be123c; font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tpx-pomo-tl-seg.is-brk { background: rgba(16, 185, 129, 0.16); color: #047857; }
+.tpx-pomo-tl-seg.is-done { background: linear-gradient(135deg, #e11d48, #fb7185); color: #fff; }
+.tpx-pomo-tl-seg.is-brk.is-done { background: linear-gradient(135deg, #059669, #34d399); color: #fff; }
+.tpx-pomo-tl-seg.is-cur { box-shadow: inset 0 0 0 2px #e11d48; min-width: 38px; flex-shrink: 0; }
+.tpx-pomo-tl-seg b:empty { display: none; }
+.tpx-pomo-tl-seg.is-brk.is-cur { box-shadow: inset 0 0 0 2px #10b981; }
+.tpx-pomo-tl-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(135deg, #e11d48, #fb7185); transition: width 0.6s linear; }
+.tpx-pomo-tl-seg.is-brk .tpx-pomo-tl-fill { background: linear-gradient(135deg, #059669, #34d399); }
+.tpx-pomo-tl-seg b { position: relative; z-index: 1; font-weight: 800; }
+.tpx-pomo-tl-seg.is-cur b { padding: 0.05rem 0.3rem; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: #be123c; }
+.tpx-pomo-tl-seg.is-brk.is-cur b { color: #047857; }
+[data-theme="dark"] .tpx-pomo-tl-seg { background: rgba(251, 113, 133, 0.16); color: #fda4af; }
+[data-theme="dark"] .tpx-pomo-tl-seg.is-brk { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .tpx-pomo-tl-seg.is-done { color: #fff; }
+[data-theme="dark"] .tpx-pomo-tl-seg.is-cur b { background: rgba(15, 23, 42, 0.85); color: #fda4af; }
+[data-theme="dark"] .tpx-pomo-tl-seg.is-brk.is-cur b { color: #6ee7b7; }
+.tpx-pomo-tl-cap { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.76rem; font-weight: 600; color: var(--gray-500); font-variant-numeric: tabular-nums; }
+.tpx-pomo-tl-cap b { color: var(--gray-800); font-weight: 800; }
+[data-theme="dark"] .tpx-pomo-tl-cap { color: #94a3b8; }
+[data-theme="dark"] .tpx-pomo-tl-cap b { color: #f1f5f9; }
+.tpx-pomo-tl-seg.is-long { background: rgba(4, 120, 87, 0.2); }
+.tpx-pomo-tl-seg.is-long.is-done { background: linear-gradient(135deg, #047857, #10b981); }
+@media (prefers-reduced-motion: reduce) { .tpx-pomo-tl-fill, .tpx-pomo-tl-mk { transition: none; } }
+/* boutons : grille fixe (le bouton principal sur toute la largeur, les deux autres côte à côte) → aucun retour à la ligne quand le texte change */
+.tpx-pomo-ctrls { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; max-width: 420px; margin: 0 auto; }
+.tpx-pomo-main { grid-column: 1 / -1; height: 50px; padding: 0 1rem; border: none; border-radius: 12px; background: linear-gradient(135deg, #e11d48, #f43f5e); color: #fff; font: inherit;
+    font-weight: 700; font-size: 0.98rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.55rem; white-space: nowrap; min-width: 0;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3); transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease; touch-action: manipulation; }
+.tpx-pomo-main:hover { box-shadow: 0 6px 18px rgba(225, 29, 72, 0.4); transform: translateY(-1px); }
+.tpx-pomo-main:active { transform: scale(0.98); }
+.tpx-pomo-main:focus-visible { outline: 2px solid #e11d48; outline-offset: 3px; }
+.tpx-pomo-main.is-break { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+.tpx-pomo-sec2 { height: 44px; padding: 0 0.75rem; border-radius: 12px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-700); font: inherit; font-weight: 600;
+    font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.45rem; white-space: nowrap; min-width: 0; transition: all 0.15s ease; touch-action: manipulation; }
+.tpx-pomo-sec2:hover:not(:disabled) { border-color: rgba(225, 29, 72, 0.45); color: #be123c; }
+.tpx-pomo-sec2:disabled { opacity: 0.4; cursor: default; }
+.tpx-pomo-sec2:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-sec2 { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .tpx-pomo-sec2:hover:not(:disabled) { color: #fda4af; }
+.tpx-pomo-today { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.tpx-pomo-kpi { padding: 0.65rem 0.75rem; border-radius: 12px; background: var(--white); border: 1px solid var(--gray-200); text-align: left; min-width: 0; }
+[data-theme="dark"] .tpx-pomo-kpi { background: #0f172a; border-color: #334155; }
+.tpx-pomo-kpi b { display: block; font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: #e11d48; font-variant-numeric: tabular-nums; }
+[data-theme="dark"] .tpx-pomo-kpi b { color: #fb7185; }
+.tpx-pomo-kpi span { font-size: 0.75rem; font-weight: 600; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.tpx-pomo-lbl { font-size: 0.8rem; font-weight: 700; color: var(--gray-600); }
+[data-theme="dark"] .tpx-pomo-lbl { color: #cbd5e1; }
+.tpx-pomo-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tpx-pomo-chips.is-row { flex-wrap: nowrap; gap: 0.35rem; }   /* une seule ligne : cases qui se partagent la largeur */
+.tpx-pomo-chips.is-row .tpx-pomo-chip { flex: 1 1 auto; min-width: 0; justify-content: center; padding-left: 0.4rem; padding-right: 0.4rem; white-space: nowrap; }
+@media (max-width: 480px) { .tpx-pomo-chips.is-row .tpx-pomo-chip { padding-left: 0.25rem; padding-right: 0.25rem; font-size: 0.78rem; } #tpxPomoToneChips .tpx-pomo-chip > i { display: none; } }
+.tpx-pomo-chip { padding: 0.4rem 0.75rem; min-height: 36px; border-radius: 999px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-700); font: inherit;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; font-variant-numeric: tabular-nums; touch-action: manipulation; display: inline-flex; align-items: center; gap: 0.35rem; }
+.tpx-pomo-chip:hover { border-color: rgba(225, 29, 72, 0.5); color: #be123c; }
+.tpx-pomo-chip.on { background: #e11d48; border-color: #e11d48; color: #fff; }
+.tpx-pomo-chip:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+.tpx-pomo-chip.is-break.on { background: #10b981; border-color: #10b981; }
+[data-theme="dark"] .tpx-pomo-chip { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .tpx-pomo-chip.on { background: #e11d48; border-color: #e11d48; color: #fff; }
+[data-theme="dark"] .tpx-pomo-chip.is-break.on { background: #10b981; border-color: #10b981; color: #0f172a; }
+.tpx-pomo-dur { display: flex; align-items: center; gap: 0.5rem; }
+.tpx-pomo-step { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-700); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.15s ease; touch-action: manipulation; flex-shrink: 0; }
+.tpx-pomo-step:hover:not(:disabled) { color: #e11d48; border-color: rgba(225, 29, 72, 0.5); }
+.tpx-pomo-step:disabled { opacity: 0.35; cursor: default; }
+.tpx-pomo-step { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.tpx-pomo-step:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-step { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+.tpx-pomo-val { min-width: 4.6rem; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--gray-800); font-variant-numeric: tabular-nums; }
+[data-theme="dark"] .tpx-pomo-val { color: #f1f5f9; }
+.tpx-pomo-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0; border-top: 1px dashed var(--gray-200); }
+[data-theme="dark"] .tpx-pomo-row { border-top-color: #334155; }
+.tpx-pomo-row.first { border-top: none; padding-top: 0; }
+.tpx-pomo-row-t { display: flex; flex-direction: column; min-width: 0; }
+.tpx-pomo-row-t b { font-size: 0.88rem; color: var(--gray-800); font-weight: 700; }
+.tpx-pomo-row-t span { font-size: 0.76rem; color: var(--gray-500); line-height: 1.35; }
+[data-theme="dark"] .tpx-pomo-row-t b { color: #f1f5f9; }
+.tpx-pomo-tg { position: relative; width: 48px; height: 28px; flex: 0 0 48px; border-radius: 999px; border: none; padding: 0; cursor: pointer; background: var(--gray-300); transition: background 0.2s ease; }
+.tpx-pomo-tg::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s cubic-bezier(0.34, 1.45, 0.64, 1); }
+.tpx-pomo-tg[aria-checked="true"] { background: #e11d48; }
+.tpx-pomo-tg[aria-checked="true"]::after { transform: translateX(20px); }
+.tpx-pomo-tg:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-tg { background: #475569; }
+[data-theme="dark"] .tpx-pomo-tg[aria-checked="true"] { background: #e11d48; }
+.tpx-pomo-sub2 { display: flex; flex-direction: column; gap: 0.5rem; }
+.tpx-pomo-sub2[hidden] { display: none; }
+.tpx-pomo-vol { display: flex; align-items: center; gap: 0.6rem; }
+.tpx-pomo-volb { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 10px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600); cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.15s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.tpx-pomo-volb:hover:not(:disabled) { color: #fff; background: linear-gradient(135deg, #e11d48, #fb7185); border-color: transparent; transform: scale(1.08); box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3); }
+.tpx-pomo-volb:active:not(:disabled) { transform: scale(0.9); box-shadow: none; }
+.tpx-pomo-volb:disabled { opacity: 0.35; cursor: default; }
+.tpx-pomo-volb:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+[data-theme="dark"] .tpx-pomo-volb { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+.tpx-pomo-range { flex: 1; min-width: 0; height: 28px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; accent-color: #e11d48; }
+.tpx-pomo-range::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, #e11d48 var(--p, 60%), var(--gray-200) var(--p, 60%)); }
+.tpx-pomo-range::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid #e11d48; margin-top: -7px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); }
+.tpx-pomo-range::-moz-range-track { height: 6px; border-radius: 999px; background: var(--gray-200); }
+.tpx-pomo-range::-moz-range-progress { height: 6px; border-radius: 999px; background: #e11d48; }
+.tpx-pomo-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #e11d48; }
+.tpx-pomo-range:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; border-radius: 6px; }
+[data-theme="dark"] .tpx-pomo-range::-webkit-slider-runnable-track { background: linear-gradient(90deg, #e11d48 var(--p, 60%), #334155 var(--p, 60%)); }
+.tpx-pomo-volv { flex: 0 0 auto; min-width: 3.4rem; height: 36px; padding: 0 0.5rem; border-radius: 10px; border: 1px solid var(--gray-200); background: var(--white); display: inline-flex; align-items: center;
+    justify-content: center; font-size: 0.82rem; font-weight: 800; color: var(--gray-700); font-variant-numeric: tabular-nums; }
+[data-theme="dark"] .tpx-pomo-volv { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+.tpx-pomo-note { font-size: 0.76rem; color: var(--gray-500); line-height: 1.45; margin: 0; }
+.tpx-pomo-note i { color: #e11d48; margin-right: 0.3rem; }
+.tpx-pomo-note[hidden] { display: none; }
+.tpx-pomo-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* ── survol / clic : chaque bouton réagit (grossit au survol, s'enfonce au clic), comme les autres boutons du site ── */
+.tpx-pomo-chip { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+.tpx-pomo-chip:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(225, 29, 72, 0.18); }
+.tpx-pomo-chip:active { transform: scale(0.94); box-shadow: none; }
+.tpx-pomo-chip.on:hover { box-shadow: 0 3px 10px rgba(225, 29, 72, 0.35); }
+.tpx-pomo-chip.is-break.on:hover { box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35); }
+.tpx-pomo-step:hover:not(:disabled) { color: #fff; background: linear-gradient(135deg, #e11d48, #fb7185); border-color: transparent; transform: scale(1.08); box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3); }
+.tpx-pomo-step:active:not(:disabled) { transform: scale(0.9); box-shadow: none; }
+.tpx-pomo-sec2:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(225, 29, 72, 0.15); background: rgba(225, 29, 72, 0.06); }
+.tpx-pomo-sec2:active:not(:disabled) { transform: scale(0.96); box-shadow: none; }
+.tpx-pomo-zoom:hover { color: #fff; background: linear-gradient(135deg, #e11d48, #fb7185); border-color: transparent; transform: scale(1.08); box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3); }
+.tpx-pomo-zoom:active { transform: scale(0.9); box-shadow: none; }
+.tpx-pomo-tg:hover { box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12); }
+.tpx-pomo-tg:active::after { width: 26px; }
+.tpx-pomo-tg[aria-checked="true"]:active::after { transform: translateX(16px); }
+.tpx-pomo-main:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3); }
+.tpx-pomo-ok:active { transform: scale(0.94); }
+@media (hover: none) { .tpx-pomo-chip:hover, .tpx-pomo-step:hover:not(:disabled), .tpx-pomo-sec2:hover:not(:disabled), .tpx-pomo-zoom:hover, .tpx-pomo-volb:hover:not(:disabled) { transform: none; box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .tpx-pomo-chip, .tpx-pomo-step, .tpx-pomo-sec2, .tpx-pomo-zoom, .tpx-pomo-volb, .tpx-pomo-main { transition: none; } }
+/* ── plein écran : seul le chronomètre, sur toute la page. Grille sur toute la hauteur : le cercle prend la place qui reste
+   (jamais coupé en haut ni en bas), le reste garde sa taille ── */
+.tpx-pomo-modal.tpx-zen-out { animation: tpxZenOut 0.15s ease-in forwards; }
+.tpx-pomo-modal.tpx-zen-in-big { animation: tpxZenInBig 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.tpx-pomo-modal.tpx-zen-in-small { animation: tpxZenInSmall 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes tpxZenOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.97); } }
+@keyframes tpxZenInBig { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes tpxZenInSmall { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+.tpx-pomo-overlay.is-zen { padding: 0; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-modal { max-width: none; width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-head, .tpx-pomo-overlay.is-zen .tpx-pomo-foot, .tpx-pomo-overlay.is-zen .tpx-pomo-col-b, .tpx-pomo-overlay.is-zen .tpx-pomo-box:not(.tpx-pomo-timer) { display: none; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-col-a { flex: 1; min-height: 0; display: flex; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-body { display: flex; padding: 0; overflow: hidden; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-timer { flex: 1; min-height: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; justify-items: center; align-items: center;
+    gap: clamp(0.4rem, 1.6vh, 1rem); border: none; border-radius: 0; background: var(--white);
+    padding: max(1rem, env(safe-area-inset-top, 0px)) 1rem max(1rem, env(safe-area-inset-bottom, 0px)); }
+[data-theme="dark"] .tpx-pomo-overlay.is-zen .tpx-pomo-timer { background: #1e293b; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-bhead { width: 100%; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-ring { justify-self: stretch; align-self: stretch; width: auto; height: auto; aspect-ratio: auto; min-height: 0; margin: 0; container-type: size; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-ring svg, .tpx-pomo-overlay.is-zen .tpx-pomo-center { position: absolute; left: 50%; top: 50%; inset: auto; left: 50%; top: 50%; width: min(100cqw, 100cqh, 640px); height: min(100cqw, 100cqh, 640px); }
+.tpx-pomo-overlay.is-zen .tpx-pomo-ring svg { transform: translate(-50%, -50%) rotate(-90deg); }
+.tpx-pomo-overlay.is-zen .tpx-pomo-center { transform: translate(-50%, -50%); }
+.tpx-pomo-overlay.is-zen .tpx-pomo-time { font-size: min(21cqw, 21cqh, 8.4rem); }
+.tpx-pomo-overlay.is-zen .tpx-pomo-ring.is-hours .tpx-pomo-time { font-size: min(15cqw, 15cqh, 6rem); }
+.tpx-pomo-overlay.is-zen .tpx-pomo-phase { font-size: clamp(0.75rem, 3.4cqmin, 1rem); padding: 0.3rem 0.9rem; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-end { font-size: clamp(0.78rem, 3.4cqmin, 1.05rem); }
+/* téléphone couché : cercle à gauche, frise et boutons à droite */
+@media (orientation: landscape) and (max-height: 520px) {
+    .tpx-pomo-overlay.is-zen .tpx-pomo-timer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "h h" "r t" "r c"; column-gap: 1.25rem;
+        padding-left: max(1rem, env(safe-area-inset-left, 0px)); padding-right: max(1rem, env(safe-area-inset-right, 0px)); }
+    .tpx-pomo-overlay.is-zen .tpx-pomo-bhead { grid-area: h; }
+    .tpx-pomo-overlay.is-zen .tpx-pomo-ring { grid-area: r; }
+    .tpx-pomo-overlay.is-zen .tpx-pomo-tl { grid-area: t; align-self: end; }
+    .tpx-pomo-overlay.is-zen .tpx-pomo-ctrls { grid-area: c; align-self: start; }
+}
+.tpx-pomo-overlay.is-zen .tpx-pomo-ctrls { width: 100%; max-width: 440px; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-tl { max-width: 900px; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-tl-bar { height: 42px; }
+.tpx-pomo-overlay.is-zen .tpx-pomo-tl-seg { font-size: 0.8rem; }
+@media (prefers-reduced-motion: reduce) {   /* mouvement réduit : simple fondu, sans zoom */
+    @keyframes tpxZenOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes tpxZenInBig { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tpxZenInSmall { from { opacity: 0; } to { opacity: 1; } }
+}
+@media (max-width: 860px) {
+    .tpx-pomo-body { grid-template-columns: minmax(0, 1fr); }
+}
+/* téléphone : plein écran, comme les autres fenêtres du tableau de bord */
+@media (max-width: 560px) {
+    .tpx-pomo-overlay { padding: 0; align-items: stretch; }
+    .tpx-pomo-modal { height: 100%; max-height: 100%; border-radius: 0; }
+    .tpx-pomo-head { padding: 1rem 1.1rem; }
+    .tpx-pomo-body { padding: 1rem 0.9rem 1.25rem; gap: 1rem; }
+    .tpx-pomo-col { gap: 1rem; }
+    .tpx-pomo-foot { padding: 12px 1.1rem calc(12px + env(safe-area-inset-bottom, 0px)); }
+    .tpx-pomo-box { padding: 0.85rem 0.8rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tpx-pomo-overlay.active, .tpx-pomo-overlay.closing, .tpx-pomo-modal, .tpx-pomo-overlay.closing .tpx-pomo-modal { animation: none; }
+    .tpx-pomo-ring .fg, .tpx-pomo-cardbar > i, .tpx-pomo-tg::after { transition: none; }
+}
+</style>
+<div class="tpx-pomo-overlay" id="tpxPomoOverlay">
+    <div class="tpx-pomo-modal" id="tpxPomoModal" role="dialog" aria-modal="true" aria-labelledby="tpxPomoHeading" tabindex="-1">
+        <div class="tpx-pomo-head">
+            <div class="tpx-pomo-title">
+                <div class="tpx-pomo-ic"><i class="fas fa-stopwatch"></i></div>
+                <div class="tpx-pomo-tt"><h3 class="tpx-pomo-h" id="tpxPomoHeading">Méthode Pomodoro</h3><span class="tpx-pomo-st">Des périodes de concentration entrecoupées de pauses</span></div>
+            </div>
+            <button type="button" class="tpx-pomo-x" id="tpxPomoClose" aria-label="Fermer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="tpx-pomo-body" id="tpxPomoBody">
+          <div class="tpx-pomo-col tpx-pomo-col-a">
+            <section class="tpx-pomo-box tpx-pomo-timer" aria-labelledby="tpxPomoTimerT">
+                <div class="tpx-pomo-bhead">
+                    <span class="tpx-pomo-sec" id="tpxPomoTimerT"><i class="fas fa-stopwatch"></i>Chronomètre</span>
+                    <button type="button" class="tpx-pomo-zoom" id="tpxPomoZoom" aria-label="Agrandir le chronomètre en plein écran" data-tpx-tip="Plein écran"><i class="fas fa-expand"></i></button>
+                </div>
+                <div class="tpx-pomo-ring" id="tpxPomoRing">
+                    <svg viewBox="0 0 120 120" aria-hidden="true"><defs>
+                        <linearGradient id="tpxPomoGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e11d48"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+                        <linearGradient id="tpxPomoGradB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#059669"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>
+                        <circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" id="tpxPomoArc" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="0"/></svg>
+                    <div class="tpx-pomo-center">
+                        <span class="tpx-pomo-phase is-idle" id="tpxPomoPhase">Prêt</span>
+                        <span class="tpx-pomo-time" id="tpxPomoTime" role="timer" aria-live="off">25:00</span>
+                        <span class="tpx-pomo-end" id="tpxPomoEnd"></span>
+                    </div>
+                </div>
+                <div class="tpx-pomo-tl" id="tpxPomoTl" role="img" aria-label="Frise de la séance">
+                    <div class="tpx-pomo-tl-top" id="tpxPomoTlTop" aria-hidden="true"></div>
+                    <div class="tpx-pomo-tl-bar" id="tpxPomoTlBar" aria-hidden="true"></div>
+                    <div class="tpx-pomo-tl-cap" id="tpxPomoTlCap"></div>
+                </div>
+                <div class="tpx-pomo-ctrls">
+                    <button type="button" class="tpx-pomo-main" id="tpxPomoMain"><i class="fas fa-play"></i><span>Lancer la concentration</span></button>
+                    <button type="button" class="tpx-pomo-sec2" id="tpxPomoSkip"><i class="fas fa-forward-step"></i><span>Passer</span></button>
+                    <button type="button" class="tpx-pomo-sec2" id="tpxPomoStop"><i class="fas fa-rotate-left"></i><span>Arrêter</span></button>
+                </div>
+                <span class="tpx-pomo-sr" id="tpxPomoLive" aria-live="polite"></span>
+            </section>
+            <section class="tpx-pomo-box" aria-labelledby="tpxPomoSoundT">
+                <span class="tpx-pomo-sec is-amber" id="tpxPomoSoundT"><i class="fas fa-bell"></i>Sonnerie</span>
+                <div class="tpx-pomo-row first">
+                    <div class="tpx-pomo-row-t"><b>Son à la fin de chaque période</b><span>Et vibration sur téléphone.</span></div>
+                    <button type="button" class="tpx-pomo-tg" id="tpxPomoSoundTg" role="switch" aria-checked="true" aria-label="Son à la fin de chaque période"></button>
+                </div>
+                <div class="tpx-pomo-sub2" id="tpxPomoSoundBox">
+                    <span class="tpx-pomo-lbl">Sonnerie (touchez pour l’écouter)</span>
+                    <div class="tpx-pomo-chips is-row" id="tpxPomoToneChips"></div>
+                    <span class="tpx-pomo-lbl" id="tpxPomoVolLbl">Volume</span>
+                    <div class="tpx-pomo-vol">
+                        <button type="button" class="tpx-pomo-volb" id="tpxPomoVolDown" aria-label="Baisser le volume" data-tpx-tip="Moins fort"><i class="fas fa-volume-low"></i></button>
+                        <input type="range" class="tpx-pomo-range" id="tpxPomoVol" min="5" max="100" step="5" value="60" aria-labelledby="tpxPomoVolLbl">
+                        <button type="button" class="tpx-pomo-volb" id="tpxPomoVolUp" aria-label="Monter le volume" data-tpx-tip="Plus fort"><i class="fas fa-volume-high"></i></button>
+                        <span class="tpx-pomo-volv" id="tpxPomoVolV">60 %</span>
+                    </div>
+                </div>
+            </section>
+          </div>
+          <div class="tpx-pomo-col tpx-pomo-col-b">
+            <section class="tpx-pomo-box" aria-labelledby="tpxPomoPresetT">
+                <span class="tpx-pomo-sec is-blue" id="tpxPomoPresetT"><i class="fas fa-sliders"></i>Durées</span>
+                <span class="tpx-pomo-lbl">Formules rapides (minutes de concentration / pause)</span>
+                <div class="tpx-pomo-chips is-row" id="tpxPomoPresets"></div>
+                <span class="tpx-pomo-lbl">Concentration</span>
+                <div class="tpx-pomo-chips" id="tpxPomoFocusChips"></div>
+                <div class="tpx-pomo-dur" role="group" aria-label="Durée de concentration">
+                    <button type="button" class="tpx-pomo-step" id="tpxPomoFocusMinus" aria-label="Concentration : moins 5 minutes"><i class="fas fa-minus"></i></button>
+                    <span class="tpx-pomo-val" id="tpxPomoFocusVal">25 min</span>
+                    <button type="button" class="tpx-pomo-step" id="tpxPomoFocusPlus" aria-label="Concentration : plus 5 minutes"><i class="fas fa-plus"></i></button>
+                </div>
+                <span class="tpx-pomo-lbl">Pause</span>
+                <div class="tpx-pomo-chips" id="tpxPomoBreakChips"></div>
+                <div class="tpx-pomo-dur" role="group" aria-label="Durée de pause">
+                    <button type="button" class="tpx-pomo-step" id="tpxPomoBreakMinus" aria-label="Pause : moins 1 minute"><i class="fas fa-minus"></i></button>
+                    <span class="tpx-pomo-val" id="tpxPomoBreakVal">5 min</span>
+                    <button type="button" class="tpx-pomo-step" id="tpxPomoBreakPlus" aria-label="Pause : plus 1 minute"><i class="fas fa-plus"></i></button>
+                </div>
+                <p class="tpx-pomo-note" id="tpxPomoApplyNote" hidden><i class="fas fa-circle-info"></i>La période en cours garde sa durée ; les nouveaux réglages s’appliquent à la suivante.</p>
+            </section>
+            <section class="tpx-pomo-box" aria-labelledby="tpxPomoGoalT">
+                <span class="tpx-pomo-sec is-violet" id="tpxPomoGoalT"><i class="fas fa-flag-checkered"></i>Séance</span>
+                <span class="tpx-pomo-lbl">Nombre de concentrations</span>
+                <div class="tpx-pomo-chips" id="tpxPomoGoalChips"></div>
+                <div class="tpx-pomo-row">
+                    <div class="tpx-pomo-row-t"><b>Pause longue</b><span id="tpxPomoLongInfo">Après plusieurs concentrations, une pause plus longue.</span></div>
+                    <button type="button" class="tpx-pomo-tg" id="tpxPomoLongTg" role="switch" aria-checked="true" aria-label="Pause longue"></button>
+                </div>
+                <div class="tpx-pomo-sub2" id="tpxPomoLongBox">
+                    <span class="tpx-pomo-lbl">Durée de la pause longue</span>
+                    <div class="tpx-pomo-chips" id="tpxPomoLongChips"></div>
+                    <span class="tpx-pomo-lbl">Toutes les</span>
+                    <div class="tpx-pomo-chips" id="tpxPomoEveryChips"></div>
+                </div>
+                <div class="tpx-pomo-row">
+                    <div class="tpx-pomo-row-t"><b>Enchaîner automatiquement</b><span>La pause démarre seule à la fin de la concentration, et inversement.</span></div>
+                    <button type="button" class="tpx-pomo-tg" id="tpxPomoAutoTg" role="switch" aria-checked="true" aria-label="Enchaîner automatiquement"></button>
+                </div>
+            </section>
+          </div>
+        </div>
+        <div class="tpx-pomo-foot">
+            <button type="button" class="tpx-pomo-ok" id="tpxPomoDone" aria-label="Fermer"><i class="fas fa-check"></i></button>
+        </div>
+    </div>
+</div>
+<script id="tpx-pomo">
+(function () {
+    'use strict';
+    var KEY = 'tpx_pomo_v1', CIRC = 326.73;   /* ECOS : 'tpx_pomo_ecos_v1' (posé par apply172) */
+    var FOCUS = [25, 30, 45, 60, 90], BREAK = [5, 10, 15, 20], LONG = [15, 20, 30, 60, 90], EVERY = [3, 4], GOALS = [2, 4, 6, 8, 10, 12, 0];
+    var PRESETS = [[25, 5], [45, 15], [50, 10], [90, 20]];
+    var TONES = [['cloche', 'Cloche'], ['carillon', 'Carillon'], ['douce', 'Douce'], ['bip', 'Bip'], ['reveil', 'Réveil']];
+    var DEF = { focus: 25, brk: 5, longOn: true, long: 15, every: 4, auto: true, sound: true, goal: 4, tone: 'cloche', vol: 60 };
+    function $(id) { return document.getElementById(id); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function clamp(v, a, b, d) { v = Math.round(+v); return isFinite(v) ? Math.min(b, Math.max(a, v)) : d; }
+    function hm(min) { min = Math.max(0, Math.round(min || 0)); return Math.floor(min / 60) + 'h' + pad(min % 60); }
+    function clock(ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+    function mmss(ms) { var s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return (h ? h + ':' + pad(m) : pad(m)) + ':' + pad(s % 60); }
+    function plural(n, a, b) { return n > 1 ? b : a; }
+    function fmtMin(m) { m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + pad(m % 60) : '') : m + ' min'; }
+
+    /* ── état (local à l'appareil) ── */
+    function fresh() { return { v: 1, cfg: Object.assign({}, DEF), phase: 'idle', running: false, endsAt: 0, remain: 0, total: 0, seq: 0, done: 0, sess: 0, stats: { day: dkey(new Date()), n: 0, min: 0 } }; }
+    function sane(s) {
+        var f = fresh(); if (!s || typeof s !== 'object' || s.v !== 1) return f;
+        var c = s.cfg || {};
+        f.cfg = { focus: clamp(c.focus, 5, 180, 25), brk: clamp(c.brk, 1, 60, 5), longOn: c.longOn !== false, long: clamp(c.long, 5, 120, 15), every: clamp(c.every, 2, 8, 4),
+            auto: c.auto !== false, sound: c.sound !== false, goal: c.goal === 0 ? 0 : clamp(c.goal, 1, 24, 4), vol: clamp(c.vol, 5, 100, 60),
+            tone: TONES.some(function (t) { return t[0] === c.tone; }) ? c.tone : 'cloche' };
+        f.phase = ['idle', 'focus', 'break', 'long'].indexOf(s.phase) >= 0 ? s.phase : 'idle';
+        f.running = !!s.running && f.phase !== 'idle'; f.endsAt = +s.endsAt || 0; f.remain = Math.max(0, +s.remain || 0); f.total = Math.max(0, +s.total || 0);
+        f.seq = +s.seq || 0; f.done = clamp(s.done, 0, 999, 0); f.sess = clamp(s.sess, 0, 999, 0);
+        var st = s.stats || {}; f.stats = { day: typeof st.day === 'string' ? st.day : f.stats.day, n: clamp(st.n, 0, 999, 0), min: clamp(st.min, 0, 24 * 60, 0) };
+        if (f.running && !f.endsAt) f.running = false;
+        return f;
+    }
+    function load() { try { return sane(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { return fresh(); } }
+    var S = load();
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+    function rollDay() { var k = dkey(new Date()); if (S.stats.day !== k) S.stats = { day: k, n: 0, min: 0 }; }
+    function durOf(ph) { return (ph === 'focus' ? S.cfg.focus : ph === 'long' ? S.cfg.long : S.cfg.brk) * 60000; }
+    function nextAfter(ph, done) { return ph === 'focus' ? ((S.cfg.longOn && done > 0 && done % S.cfg.every === 0) ? 'long' : 'break') : 'focus'; }
+    function remaining(now) { return S.phase === 'idle' ? durOf('focus') : S.running ? Math.max(0, S.endsAt - now) : S.remain; }
+    function isBreak(ph) { return ph === 'break' || ph === 'long'; }
+    /* séance : numéro de la concentration en cours / prochaine */
+    function curNo() { return S.sess + 1; }
+
+    /* ── sonneries (Web Audio, créé au premier geste de l'utilisateur, exigence des navigateurs) ── */
+    var AC = null;
+    function audio() { try { if (!AC) { var C = window.AudioContext || window.webkitAudioContext; if (C) AC = new C(); } if (AC && AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; }
+    function note(ac, out, f, t0, dur, type, peak) {
+        var o = ac.createOscillator(), g = ac.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        o.connect(g); g.connect(out); o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+    function play(tone, vol, kind) {
+        var ac = audio(); if (!ac) return;
+        try {
+            var out = ac.createGain(); out.gain.value = Math.max(0.02, (vol || 60) / 100); out.connect(ac.destination);
+            var t = ac.currentTime + 0.03, up = kind !== 'break';
+            if (tone === 'carillon') { (up ? [784, 988, 1175, 1568] : [1568, 1175, 988, 784]).forEach(function (f, i) { note(ac, out, f, t + i * 0.18, 0.9, 'triangle', 0.32); }); }
+            else if (tone === 'douce') { [523, 659, 784].forEach(function (f, i) { note(ac, out, up ? f : f * 0.75, t + i * 0.32, 1.4, 'sine', 0.22); }); }
+            else if (tone === 'bip') { for (var i = 0; i < 3; i++) note(ac, out, up ? 1046 : 880, t + i * 0.25, 0.14, 'square', 0.09); }
+            else if (tone === 'reveil') { for (var j = 0; j < 8; j++) note(ac, out, j % 2 ? 784 : 1046, t + j * 0.13, 0.11, 'square', 0.08); }
+            else { [0, 0.9].forEach(function (d) { note(ac, out, up ? 880 : 660, t + d, 1.6, 'sine', 0.35); note(ac, out, (up ? 880 : 660) * 2.76, t + d, 0.6, 'sine', 0.06); }); }   /* cloche */
+        } catch (e) {}
+    }
+    function signal(nextPhase) {
+        if (S.cfg.sound) play(S.cfg.tone, S.cfg.vol, nextPhase === 'focus' ? 'focus' : 'break');
+        try { if (navigator.vibrate) navigator.vibrate([180, 90, 180]); } catch (e) {}
+        var msg = nextPhase === 'idle' ? 'Séance terminée : ' + S.cfg.goal + ' ' + plural(S.cfg.goal, 'concentration', 'concentrations') + ', bravo !'
+            : nextPhase === 'focus' ? 'Fin de la pause : place à la concentration ' + curNo() + (S.cfg.goal ? ' sur ' + S.cfg.goal : '') + '.'
+            : nextPhase === 'long' ? 'Concentration terminée : pause longue de ' + S.cfg.long + ' min.' : 'Concentration terminée : pause de ' + S.cfg.brk + ' min.';
+        live(msg);   /* annonce pour lecteur d'écran seulement : pas de notification à l'écran (demande de Jean) */
+    }
+    function live(m) { var l = $('tpxPomoLive'); if (l) { l.textContent = ''; setTimeout(function () { l.textContent = m; }, 30); } }
+
+    /* ── transitions ── */
+    function startPhase(ph, at) { S.phase = ph; S.total = durOf(ph); S.running = true; S.endsAt = at + S.total; S.remain = S.total; S.seq++; }
+    function readyPhase(ph) { S.phase = ph; S.total = durOf(ph); S.running = false; S.endsAt = 0; S.remain = S.total; S.seq++; }
+    function toIdle() { S.phase = 'idle'; S.running = false; S.endsAt = 0; S.remain = 0; S.total = 0; S.done = 0; S.sess = 0; S.seq++; }
+    function completePhase(at) {
+        rollDay();
+        var ph = S.phase;
+        if (ph === 'focus') {
+            S.done++; S.sess++;
+            if (dkey(new Date(at)) === S.stats.day) { S.stats.n++; S.stats.min = Math.min(24 * 60, S.stats.min + Math.round(S.total / 60000)); }
+            if (S.cfg.goal && S.sess >= S.cfg.goal) { toIdle(); return 'idle'; }   /* séance terminée */
+        }
+        var nx = nextAfter(ph, S.done);
+        if (ph === 'long') S.done = 0;
+        if (S.cfg.auto) startPhase(nx, at); else readyPhase(nx);
+        return nx;
+    }
+    /* rattrapage (onglet en arrière-plan, page fermée) : les périodes écoulées s'enchaînent depuis leurs vraies heures de fin */
+    function catchUp(now, withSignal) {
+        if (!S.running || S.endsAt > now) return false;
+        var cur = load(); if (cur.seq !== S.seq) { S = cur; return true; }   /* un autre onglet a déjà fait la transition */
+        var nx = null, late = now - S.endsAt, guard = 0;
+        while (S.running && S.endsAt <= now && guard++ < 50) nx = completePhase(S.endsAt);
+        save();
+        if (withSignal && late < 5000 && nx) signal(nx);
+        return true;
+    }
+
+    /* ── actions ── */
+    function act(what) {
+        audio();
+        var now = Date.now(); S = load(); rollDay();
+        if (what === 'main' || what === 'start') {
+            if (S.phase === 'idle') startPhase('focus', now);
+            else if (S.running) { if (what === 'main') { S.remain = Math.max(0, S.endsAt - now); S.running = false; S.endsAt = 0; } }
+            else { S.running = true; if (!S.total) S.total = durOf(S.phase); S.endsAt = now + (S.remain || S.total); }
+        } else if (what === 'skip') {
+            if (S.phase === 'idle') return;
+            if (S.phase === 'focus') { S.done++; S.sess++; }   /* concentration passée : la séance avance (case suivante), mais rien n'est compté dans les statistiques */
+            if (S.phase === 'focus' && S.cfg.goal && S.sess >= S.cfg.goal) toIdle();   /* c'était la dernière : séance terminée */
+            else {
+                var nx = nextAfter(S.phase, S.done);
+                if (S.phase === 'long') S.done = 0;
+                if (S.cfg.auto) startPhase(nx, now); else readyPhase(nx);
+            }
+        } else if (what === 'stop') toIdle();
+        save(); paint();
+    }
+    function setCfg(k, v) {
+        S = load(); var patch = typeof k === 'object' ? k : {}; if (typeof k !== 'object') patch[k] = v;
+        Object.keys(patch).forEach(function (p) { S.cfg[p] = patch[p]; }); S.cfg = sane({ v: 1, cfg: S.cfg }).cfg;
+        if (S.phase !== 'idle' && !S.running && S.remain === S.total) { S.total = durOf(S.phase); S.remain = S.total; }   /* période pas encore commencée : prend la nouvelle durée */
+        if (S.cfg.goal && S.sess >= S.cfg.goal && S.phase !== 'focus') toIdle();   /* objectif abaissé sous ce qui est déjà fait */
+        save(); paint();
+    }
+
+    /* maintien appuyé = répétition (comme le choix du temps des tours) : un pas tout de suite, puis toutes les 150 ms après 400 ms ;
+       clavier (Entrée / Espace) : un pas par appui. Arrêt au relâchement, même si le bouton s'est désactivé en butée. */
+    var _holdT = null, _holdI = null, _holdBtn = null;
+    function holdStop() { clearTimeout(_holdT); clearInterval(_holdI); _holdT = _holdI = null; }
+    function hold(btn, step) {
+        if (!btn) return;
+        btn.addEventListener('pointerdown', function (e) {
+            if (e.button !== 0 || btn.disabled) return;
+            e.preventDefault(); holdStop(); _holdBtn = btn; step();
+            _holdT = setTimeout(function () { _holdI = setInterval(function () { if (btn.disabled) holdStop(); else step(); }, 150); }, 400);
+        });
+        btn.addEventListener('click', function (e) { if (e.detail && _holdBtn === btn) { _holdBtn = null; return; } step(); });   /* clic issu du pointeur : déjà compté */
+        btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    }
+    ['pointerup', 'pointercancel'].forEach(function (t) { window.addEventListener(t, holdStop, true); });
+    window.addEventListener('blur', holdStop);
+    document.addEventListener('visibilitychange', holdStop);
+
+    /* ── écritures DOM seulement si le contenu change ── */
+    function setH(el, h) { if (el && el.__h !== h) { el.__h = h; el.innerHTML = h; } }
+    function setT(el, t) { if (el && el.textContent !== t) el.textContent = t; }
+    function phaseName(ph) { return ph === 'focus' ? 'Concentration' : ph === 'long' ? 'Pause longue' : ph === 'break' ? 'Pause' : 'Prêt'; }
+    function phaseTag() {
+        if (S.phase === 'idle') return 'Prêt';
+        var n = S.cfg.goal ? ' ' + curNo() + '/' + S.cfg.goal : ' ' + curNo();
+        return S.phase === 'focus' ? 'Concentration' + n : phaseName(S.phase) + (S.running || S.remain < S.total ? '' : ' prête');
+    }
+    /* ── case du tableau de bord ── */
+    function grid() { return document.querySelector('#page-stats .daily-stats-grid'); }
+    function ensureCard() {
+        var dg = grid(); if (!dg) return null;
+        var c = $('tpxPomoCard');
+        if (!c) {
+            c = document.createElement('div');
+            c.className = 'daily-stat-card tpx-pomo-card clickable is-idle'; c.id = 'tpxPomoCard';
+            c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0'); c.setAttribute('aria-haspopup', 'dialog');
+            c.innerHTML = '<div class="daily-stat-header"><div class="daily-stat-icon"><i class="fas fa-stopwatch" aria-hidden="true"></i></div><div class="daily-stat-label">Méthode Pomodoro</div></div>' +
+                '<div class="daily-stat-value-row"><div class="daily-stat-value" id="tpxPomoCardVal">25:00</div>' +
+                '<div class="daily-stat-cta" aria-hidden="true"><i class="fas fa-sliders"></i><span>Voir le détail</span><i class="fas fa-chevron-right daily-stat-cta-arrow"></i></div></div>' +
+                '<span class="tpx-pomo-tag" id="tpxPomoCardTag">Prêt</span><span class="tpx-pomo-cardbar" aria-hidden="true"><i id="tpxPomoCardBar"></i></span>';
+            var b = document.createElement('button');
+            b.type = 'button'; b.className = 'tpx-pomo-btn'; b.id = 'tpxPomoCardBtn';
+            b.addEventListener('click', function (e) { e.stopPropagation(); S = load(); act(S.phase === 'idle' ? 'start' : 'main'); });
+            b.addEventListener('keydown', function (e) { e.stopPropagation(); });
+            c.appendChild(b);
+            c.addEventListener('click', function () { open(); });
+            c.addEventListener('keydown', function (e) { if (e.target !== c) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+        }
+        /* place : juste après « Flammes » (qui peut arriver après), sinon en dernier */
+        var fl = $('tpxStreakCard');
+        if (fl && fl.parentNode === dg) { if (fl.nextSibling !== c) dg.insertBefore(c, fl.nextSibling); }
+        else if (c.parentNode !== dg || (c.nextSibling && c.nextSibling.id !== 'tpxEcostCard')) dg.appendChild(c);
+        return c;
+    }
+    function paintCard(now) {
+        var c = ensureCard(); if (!c) return;
+        var rem = remaining(now), idle = S.phase === 'idle';
+        c.classList.toggle('is-idle', idle); c.classList.toggle('is-break', isBreak(S.phase));
+        setT($('tpxPomoCardVal'), mmss(rem));
+        setH($('tpxPomoCardTag'), '<i class="fas ' + (idle ? 'fa-circle-pause' : isBreak(S.phase) ? 'fa-mug-hot' : 'fa-brain') + '" aria-hidden="true"></i>' + phaseTag());
+        $('tpxPomoCardBar').style.width = idle || !S.total ? '0%' : Math.max(0, Math.min(100, rem / S.total * 100)).toFixed(2) + '%';   /* temps restant : elle se vide, comme le cercle */
+        var b = $('tpxPomoCardBtn'), lab = idle ? 'Lancer une concentration' : S.running ? 'Mettre le minuteur en pause' : 'Reprendre le minuteur';
+        var ic = idle ? 'fa-plus' : S.running ? 'fa-pause' : 'fa-play';
+        if (b.getAttribute('data-ic') !== ic) { b.innerHTML = '<i class="fas ' + ic + '"></i>'; b.setAttribute('data-ic', ic); }
+        b.setAttribute('aria-label', lab); b.setAttribute('data-tpx-tip', lab);
+        c.setAttribute('aria-label', 'Méthode Pomodoro : ' + (idle ? 'prêt, ' + S.cfg.focus + ' minutes de concentration et ' + S.cfg.brk + ' de pause' : phaseTag() + ', ' + mmss(rem) + ' restantes') + '. Ouvrir le détail et les réglages');
+    }
+
+    /* ── fenêtre ── */
+    function isOpen() { var o = $('tpxPomoOverlay'); return !!o && o.classList.contains('active'); }
+    function chips(box, list, cur, fmtFn, cls, onPick) {
+        if (!box) return;
+        var sig = list.join(',') + '|' + cur;
+        if (box.getAttribute('data-sig') === sig) return;
+        box.setAttribute('data-sig', sig);
+        box.innerHTML = list.map(function (v) { var on = String(v) === String(cur); return '<button type="button" class="tpx-pomo-chip' + (cls ? ' ' + cls : '') + (on ? ' on' : '') + '" data-v="' + v + '" aria-pressed="' + on + '">' + fmtFn(v) + '</button>'; }).join('');
+        box.onclick = function (e) { var t = e.target.closest('.tpx-pomo-chip'); if (t) onPick(t.getAttribute('data-v')); };
+    }
+    function paintModal(now) {
+        if (!isOpen()) return;
+        var rem = remaining(now), idle = S.phase === 'idle', br = isBreak(S.phase), total = idle ? durOf('focus') : (S.total || durOf(S.phase));
+        setT($('tpxPomoTime'), mmss(rem));
+        $('tpxPomoRing').classList.toggle('is-hours', rem > 3599000);
+        var ph = $('tpxPomoPhase'); setT(ph, phaseTag()); ph.className = 'tpx-pomo-phase' + (idle ? ' is-idle' : br ? ' is-break' : '');
+        $('tpxPomoRing').classList.toggle('is-break', br);
+        $('tpxPomoArc').setAttribute('stroke-dashoffset', (idle ? 0 : CIRC * (1 - Math.max(0, Math.min(1, rem / total)))).toFixed(2));   /* anneau = temps restant : plein au départ, il se vide */
+        setT($('tpxPomoEnd'), S.running ? 'Fin à ' + clock(S.endsAt) : (!idle && S.remain < S.total ? 'En pause' : ''));
+        paintTimeline(now);
+        var m = $('tpxPomoMain'), lab, ic;
+        if (idle) { lab = 'Lancer la séance'; ic = 'fa-play'; }
+        else if (S.running) { lab = 'Mettre en pause'; ic = 'fa-pause'; }
+        else if (S.remain < S.total) { lab = 'Reprendre'; ic = 'fa-play'; }
+        else { lab = S.phase === 'focus' ? 'Lancer la concentration' : S.phase === 'long' ? 'Lancer la pause longue' : 'Lancer la pause'; ic = 'fa-play'; }
+        if (m.getAttribute('data-l') !== lab) { m.innerHTML = '<i class="fas ' + ic + '"></i><span>' + lab + '</span>'; m.setAttribute('data-l', lab); }
+        m.classList.toggle('is-break', br);
+        $('tpxPomoSkip').disabled = idle; $('tpxPomoStop').disabled = idle;
+        $('tpxPomoSkip').setAttribute('aria-label', br ? 'Passer la pause' : 'Passer cette concentration (non comptée)');
+        /* réglages */
+        var fc = S.cfg.focus, bk = S.cfg.brk;
+        chips($('tpxPomoPresets'), PRESETS.map(function (p) { return p[0] + '-' + p[1]; }), fc + '-' + bk, function (v) { var p = v.split('-'); return p[0] + ' / ' + p[1]; }, '', function (v) { var p = v.split('-'); setCfg({ focus: +p[0], brk: +p[1] }); });
+        chips($('tpxPomoFocusChips'), FOCUS, fc, function (v) { return v + ' min'; }, '', function (v) { setCfg('focus', +v); });
+        chips($('tpxPomoBreakChips'), BREAK, bk, function (v) { return v + ' min'; }, 'is-break', function (v) { setCfg('brk', +v); });
+        chips($('tpxPomoGoalChips'), GOALS, S.cfg.goal, function (v) { return +v ? v : 'Sans limite'; }, '', function (v) { setCfg('goal', +v); });
+        chips($('tpxPomoLongChips'), LONG, S.cfg.long, function (v) { return fmtMin(+v); }, 'is-break', function (v) { setCfg('long', +v); });
+        chips($('tpxPomoEveryChips'), EVERY, S.cfg.every, function (v) { return v + ' concentrations'; }, '', function (v) { setCfg('every', +v); });
+        chips($('tpxPomoToneChips'), TONES.map(function (t) { return t[0]; }), S.cfg.tone, function (v) { var t = TONES.filter(function (x) { return x[0] === v; })[0]; return '<i class="fas fa-music" aria-hidden="true"></i>' + t[1]; }, '',
+            function (v) { setCfg('tone', v); play(v, S.cfg.vol, 'focus'); });
+        setT($('tpxPomoFocusVal'), fc + ' min'); setT($('tpxPomoBreakVal'), bk + ' min');
+        $('tpxPomoFocusMinus').disabled = fc <= 5; $('tpxPomoFocusPlus').disabled = fc >= 180;
+        $('tpxPomoBreakMinus').disabled = bk <= 1; $('tpxPomoBreakPlus').disabled = bk >= 60;
+        $('tpxPomoApplyNote').hidden = idle || (!S.running && S.remain === S.total);
+        $('tpxPomoLongTg').setAttribute('aria-checked', String(S.cfg.longOn)); $('tpxPomoLongBox').hidden = !S.cfg.longOn;
+        setT($('tpxPomoLongInfo'), S.cfg.longOn ? 'Pause de ' + S.cfg.long + ' min toutes les ' + S.cfg.every + ' concentrations.' : 'Après plusieurs concentrations, une pause plus longue.');
+        $('tpxPomoAutoTg').setAttribute('aria-checked', String(S.cfg.auto));
+        $('tpxPomoSoundTg').setAttribute('aria-checked', String(S.cfg.sound)); $('tpxPomoSoundBox').hidden = !S.cfg.sound;
+        var vol = $('tpxPomoVol'); if (document.activeElement !== vol && +vol.value !== S.cfg.vol) vol.value = S.cfg.vol;
+        vol.style.setProperty('--p', ((+vol.value - 5) / 95 * 100).toFixed(1) + '%'); setT($('tpxPomoVolV'), vol.value + ' %');
+        $('tpxPomoVolDown').disabled = S.cfg.vol <= 5; $('tpxPomoVolUp').disabled = S.cfg.vol >= 100;
+    }
+    /* ── frise de la séance ── */
+    function plan(now) {
+        var g = S.cfg.goal, ev = S.cfg.longOn ? S.cfg.every : 0;
+        var N = g || (ev ? Math.max(S.sess + 1, Math.ceil((S.sess + 1) / ev) * ev) : S.sess + 4);   /* sans limite : jusqu'à la pause longue */
+        var list = [], k;
+        for (k = 1; k <= N; k++) {
+            list.push({ ph: 'focus', min: S.cfg.focus });
+            if (k < N) { var lg = !!ev && k % ev === 0; list.push({ ph: lg ? 'long' : 'break', min: lg ? S.cfg.long : S.cfg.brk }); }
+        }
+        var cur = S.phase === 'focus' ? 2 * S.sess : isBreak(S.phase) ? 2 * Math.max(1, S.sess) - 1 : -1;
+        if (cur >= list.length) cur = list.length - 1;
+        var rem = remaining(now), t = now;
+        list.forEach(function (x, i) { x.state = cur < 0 ? 'todo' : i < cur ? 'done' : i === cur ? 'cur' : 'todo'; });
+        if (cur >= 0) { var c = list[cur]; c.ph = S.phase; c.min = Math.max(1, Math.round((S.total || durOf(S.phase)) / 60000)); c.left = rem; c.elapsed = 1 - rem / (S.total || durOf(S.phase)); t = now + rem; c.end = t; }
+        for (var i = cur + 1; i < list.length; i++) { list[i].start = t; t += list[i].min * 60000; list[i].end = t; }
+        var focusLeft = 0; list.forEach(function (x) { if (x.ph === 'focus') focusLeft += x.state === 'cur' ? x.left / 60000 : x.state === 'todo' ? x.min : 0; });
+        return { list: list, cur: cur, end: t, focusLeft: Math.round(focusLeft), unlimited: !g };
+    }
+    function paintTimeline(now) {
+        var P = plan(now), L = P.list, tot = L.reduce(function (a, x) { return a + x.min; }, 0) || 1, idle = S.phase === 'idle';
+        var bar = $('tpxPomoTlBar'); if (!bar) return;
+        var sig = L.map(function (x) { return x.ph + x.min + x.state; }).join(',');
+        if (bar.getAttribute('data-sig') !== sig) {
+            bar.setAttribute('data-sig', sig);
+            bar.innerHTML = L.map(function (x, i) {
+                var brk = x.ph !== 'focus', pct = x.min / tot * 100;
+                var lab = x.state === 'done' ? (brk ? '' : '<i class="fas fa-check" aria-hidden="true"></i>') : x.state === 'cur' ? '' : String(x.min);
+                return '<div class="tpx-pomo-tl-seg' + (brk ? ' is-brk' : '') + (x.ph === 'long' ? ' is-long' : '') + ' is-' + x.state + '" style="flex-grow:' + x.min + '" data-i="' + i + '">' +
+                    (x.state === 'cur' ? '<span class="tpx-pomo-tl-fill"></span>' : '') + '<b' + (x.state === 'todo' ? ' data-n="' + x.min + '"' : '') + '>' + lab + '</b></div>';
+            }).join('');
+            bar.removeAttribute('data-w');
+        }
+        /* nombre (minutes) seulement dans les cases assez larges : jamais coupé */
+        var bw = Math.round(bar.getBoundingClientRect().width);
+        if (bar.getAttribute('data-w') !== String(bw)) {
+            bar.setAttribute('data-w', bw);
+            [].forEach.call(bar.querySelectorAll('b[data-n]'), function (b) { var n = b.getAttribute('data-n'); setT(b, b.parentNode.getBoundingClientRect().width >= n.length * 8 + 8 ? n : ''); });
+        }
+        /* case en cours : partie écoulée remplie + minutes restantes */
+        var curEl = P.cur >= 0 ? bar.querySelector('[data-i="' + P.cur + '"]') : null;
+        if (curEl) {
+            var c = L[P.cur], f = curEl.querySelector('.tpx-pomo-tl-fill'), lb = curEl.querySelector('b'), mins = Math.max(1, Math.ceil(c.left / 60000));
+            if (f) f.style.width = Math.max(0, Math.min(100, c.elapsed * 100)).toFixed(2) + '%';
+            var w = curEl.getBoundingClientRect().width;
+            setT(lb, w >= String(mins).length * 8 + 14 ? String(mins) : '');
+        }
+        /* repère : heure de la prochaine pause (ou de la reprise / de la fin) au bout de la case en cours */
+        var top = $('tpxPomoTlTop'), mk = '';
+        if (!idle && P.cur >= 0) {
+            var acc = 0; for (var i = 0; i <= P.cur; i++) acc += L[i].min;
+            var pos = acc / tot * 100, last = P.cur === L.length - 1, cph = L[P.cur].ph;
+            if (curEl) { var br = bar.getBoundingClientRect(), cr = curEl.getBoundingClientRect(); if (br.width) pos = (cr.right - br.left) / br.width * 100; }   /* la case en cours peut être élargie (largeur minimale) */
+            var txt = !S.running ? (S.remain < S.total ? 'En pause' : 'En attente') : last ? 'Fin ' + clock(L[P.cur].end) : cph === 'focus' ? 'Pause ' + clock(L[P.cur].end) : 'Reprise ' + clock(L[P.cur].end);
+            mk = '<div class="tpx-pomo-tl-mk ' + (cph === 'focus' ? 'is-brk' : 'is-foc') + (pos < 14 ? ' at-l' : pos > 86 ? ' at-r' : '') + '" style="left:' + pos.toFixed(2) + '%"><span>' + txt + '</span></div>';
+        }
+        setH(top, mk);
+        /* sous la frise : concentration restante / fin de séance */
+        var leftTxt = idle ? (P.unlimited ? 'Séance sans limite' : '<b>' + (S.cfg.goal) + '</b> ' + plural(S.cfg.goal, 'concentration', 'concentrations'))
+            : '<b>' + fmtMin(P.focusLeft) + '</b> de concentration' + (P.unlimited ? ' avant la pause longue' : ' restante');
+        var rightTxt = P.unlimited ? '' : (idle ? 'Fin vers ' : 'Fin de séance ') + '<b>' + clock(idle ? now + tot * 60000 : P.end) + '</b>';
+        setH($('tpxPomoTlCap'), '<span>' + leftTxt + '</span><span>' + rightTxt + '</span>');
+        var tl = $('tpxPomoTl');
+        if (tl) tl.setAttribute('aria-label', 'Séance : ' + L.filter(function (x) { return x.ph === 'focus'; }).length + ' concentrations' + (idle ? '' : ', ' + fmtMin(P.focusLeft) + ' de concentration restante') + (P.unlimited ? '' : ', fin vers ' + clock(idle ? now + tot * 60000 : P.end)));
+    }
+    var _lastFocus = null, _closing = false;
+    var _zenT = null;
+    function zen(on, instant) {
+        var o = $('tpxPomoOverlay'), md = $('tpxPomoModal'); if (!o) return;
+        if (!instant && md && isOpen()) {
+            clearTimeout(_zenT); md.classList.remove('tpx-zen-in-big', 'tpx-zen-in-small'); md.classList.add('tpx-zen-out');   /* fondu sortant, bascule, entrée zoomée */
+            _zenT = setTimeout(function () { zenApply(o, on); md.classList.remove('tpx-zen-out'); void md.offsetWidth; md.classList.add(on ? 'tpx-zen-in-big' : 'tpx-zen-in-small'); }, 150);
+            return;
+        }
+        zenApply(o, on);
+    }
+    function zenApply(o, on) {
+        o.classList.toggle('is-zen', !!on);
+        var z = $('tpxPomoZoom'), lab = on ? 'Réduire le chronomètre' : 'Agrandir le chronomètre en plein écran';
+        z.innerHTML = '<i class="fas ' + (on ? 'fa-compress' : 'fa-expand') + '"></i>'; z.setAttribute('aria-label', lab); z.setAttribute('data-tpx-tip', on ? 'Réduire' : 'Plein écran');
+        var bd = $('tpxPomoBody'); if (bd) bd.scrollTop = 0;
+    }
+    function open(zenMode) {
+        var o = $('tpxPomoOverlay'); if (!o || isOpen()) return;
+        _lastFocus = document.activeElement;
+        var md0 = $('tpxPomoModal'); if (md0) md0.classList.remove('tpx-zen-out', 'tpx-zen-in-big', 'tpx-zen-in-small');   /* l'animation d'ouverture rejoue */
+        zen(!!zenMode, true);
+        o.classList.remove('closing'); o.classList.add('active');
+        var bd = $('tpxPomoBody'); if (bd) bd.scrollTop = 0;
+        if (typeof window._getScrollbarWidth === 'function' && typeof window._setScrollbarComp === 'function') { var sw = window._getScrollbarWidth(); if (sw > 0) window._setScrollbarComp(sw); }
+        document.body.style.overflow = 'hidden';
+        paint();
+        setTimeout(function () { try { $('tpxPomoModal').focus({ preventScroll: true }); } catch (e) {} }, 60);
+    }
+    function close() {
+        var o = $('tpxPomoOverlay'); if (!o || _closing || !isOpen()) return;
+        _closing = true; o.classList.add('closing');
+        setTimeout(function () {
+            o.classList.remove('active', 'closing', 'is-zen');
+            document.body.style.overflow = '';
+            if (typeof window._setScrollbarComp === 'function') window._setScrollbarComp(0);
+            _closing = false;
+            try { if (_lastFocus && _lastFocus.focus) _lastFocus.focus({ preventScroll: true }); } catch (e) {}
+        }, 200);
+    }
+
+    /* ── boucle ── */
+    function paint() { var now = Date.now(); catchUp(now, true); paintCard(now); paintModal(now); }
+    function wire() {
+        var o = $('tpxPomoOverlay'); if (!o || o.__tpx) return; o.__tpx = true;
+        o.addEventListener('click', function (e) { if (e.target === o) close(); });
+        $('tpxPomoClose').addEventListener('click', close);
+        $('tpxPomoDone').addEventListener('click', close);
+        $('tpxPomoZoom').addEventListener('click', function () { zen(!o.classList.contains('is-zen')); });
+        /* Échap : réduit d'abord le plein écran, puis ferme */
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { e.stopPropagation(); if (o.classList.contains('is-zen')) zen(false); else close(); } }, true);
+        $('tpxPomoMain').addEventListener('click', function () { act('main'); });
+        $('tpxPomoSkip').addEventListener('click', function () { act('skip'); });
+        $('tpxPomoStop').addEventListener('click', function () { act('stop'); });
+        hold($('tpxPomoFocusMinus'), function () { setCfg('focus', S.cfg.focus - 5); });
+        hold($('tpxPomoFocusPlus'), function () { setCfg('focus', S.cfg.focus + 5); });
+        hold($('tpxPomoBreakMinus'), function () { setCfg('brk', S.cfg.brk - 1); });
+        hold($('tpxPomoBreakPlus'), function () { setCfg('brk', S.cfg.brk + 1); });
+        $('tpxPomoLongTg').addEventListener('click', function () { setCfg('longOn', !S.cfg.longOn); });
+        $('tpxPomoAutoTg').addEventListener('click', function () { setCfg('auto', !S.cfg.auto); });
+        $('tpxPomoSoundTg').addEventListener('click', function () { setCfg('sound', !S.cfg.sound); });
+        var vol = $('tpxPomoVol');
+        vol.addEventListener('input', function () { vol.style.setProperty('--p', ((+vol.value - 5) / 95 * 100).toFixed(1) + '%'); setT($('tpxPomoVolV'), vol.value + ' %'); });
+        vol.addEventListener('change', function () { setCfg('vol', +vol.value); play(S.cfg.tone, +vol.value, 'focus'); });
+        var volStep = function (d) { var v = clamp((S.cfg.vol || 60) + d, 5, 100, 60); vol.value = v; setCfg('vol', v); play(S.cfg.tone, v, 'focus'); };
+        $('tpxPomoVolDown').addEventListener('click', function () { volStep(-10); });
+        $('tpxPomoVolUp').addEventListener('click', function () { volStep(10); });
+    }
+    /* autre onglet de la même application : même minuteur (EDN et ECOS ont chacun le leur) */
+    window.addEventListener('storage', function (e) { if (e.key === KEY) { S = load(); paint(); } });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { S = load(); paint(); } });
+    function boot() { wire(); paint(); setInterval(paint, 500); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+    /* la case suit l'arrivée de la grille et de « Flammes » (créées après le chargement) */
+    try {
+        new MutationObserver(function () { var dg = grid(); if (dg) { var c = $('tpxPomoCard'), fl = $('tpxStreakCard'); if (!c || (fl && fl.nextSibling !== c) || c.parentNode !== dg) paintCard(Date.now()); } })
+            .observe(document.body, { childList: true, subtree: true });
+    } catch (e) {}
+    window.tpxPomodoro = { open: open, key: KEY, state: function () { return load(); } };   /* tests */
+    window.tpxPomoSound = { play: play, unlock: audio, tones: TONES };   /* sonneries, reprises par le chronomètre ECOS */
 })();
 </script>
 </body>
