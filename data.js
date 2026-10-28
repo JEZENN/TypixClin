@@ -1290,7 +1290,9 @@ var SPECIALTIES_DATA=[
 {"fc":"FC26","num":"340","name":"Accident vasculaire cérébral"},
 {"fc":"FC27","num":"341","name":"Hémorragie méningée"},
 {"fc":"FC28","num":"342","name":"Malaise, perte de connaissance et crise comitiale"},
-{"fc":"FC29","num":"95","name":"Radiculalgies et syndromes canalaires, neuropathies périphériques aiguës et PRNV (+ITEM 96 et 97 LISA)"}
+{"fc":"FC29","num":"95","name":"Radiculalgies et syndromes canalaires, neuropathies périphériques aiguës et PRNV (+ITEM 96 et 97 LISA)"},
+{"fc":"FC30","num":"96","name":"Neuropathies périphériques"},
+{"fc":"FC31","num":"97","name":"Polyradiculonévrite aiguë inflammatoire (syndrome de Guillain-Barré)"}
 ]},
 
 {"id":"psychiatrie","name":"Psychiatrie","items":[

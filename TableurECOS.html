@@ -24326,6 +24326,10 @@ window.TPXNotesPending = {
     transition: border-color .14s ease, background .14s ease;
 }
 [data-theme="dark"] .tpx-mgr-row { background: var(--gray-50); }
+/* 2026-10-28 : suppression en cours (attente de la base) */
+.tpx-mgr-row.is-deleting { opacity: 0.55; }
+.tpx-mgr-row.is-deleting .tpx-mgr-sub { font-style: italic; }
+.tpx-mgr-row.is-deleting .tpx-mgr-act { cursor: default; pointer-events: none; }
 .tpx-mgr-row:hover { border-color: var(--gray-300); background: var(--gray-50); }
 [data-theme="dark"] .tpx-mgr-row:hover { background: var(--gray-100); }
 
@@ -55829,7 +55833,7 @@ html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64,
                                 var tmp = document.createElement('div'); tmp.innerHTML = mgrSnap.html; row = tmp.firstElementChild;
                                 if (row) { row.querySelectorAll('button').forEach(function (b) { b.disabled = true; }); var ref = list.children[mgrSnap.index] || null; list.insertBefore(row, ref); }
                             }
-                            if (row) playRowOut(row, type, 10200);
+                            if (row) { var rowOut = row; setTimeout(function () { if (rowOut.isConnected) playRowOut(rowOut, type, 10200); }, bringIntoView(rowOut)); }   /* 2026-10-28 : ligne d'abord visible */
                             mgrSnap = null; return;
                         }
                         if (!row) { setTimeout(tryPlay, 120); return; }
@@ -58436,6 +58440,17 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
        recherche) et le rouvre à sa fermeture : validation, annulation, croix,
        clic sur le voile ou Échap. */
     var mgrPendingReturn = null;
+    /* 2026-10-28 : suppression en cours (item / SDD). La déliaison des flashcards attend la base : la ligne reste affichée
+       grisée « Suppression… » et le gestionnaire ouvert se met à jour dès que c'est fini (ou annulé). */
+    var mgrDeleting = {}, mgrCur = null;
+    function mgrRefreshOpen() {
+        try { if (mgrCur && mgrCur.root.parentNode && mgrCur.root.querySelector('#tpx-mgr-list')) renderManager(mgrCur.root, mgrCur.m); } catch (e) {}
+    }
+    function mgrTrackDelete(key, p) {
+        mgrDeleting[key] = true;
+        var done = function () { delete mgrDeleting[key]; mgrRefreshOpen(); };
+        Promise.resolve(p).then(done, done);
+    }
     function buildModal(title, icon, bodyHtml, footHtml, opts) {
         opts = opts || {};
         /* Une modale qui en remplace une autre reprend le même verrou :
@@ -59071,6 +59086,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
             } finally { mgrPendingReturn = null; }
         });
 
+        mgrCur = { root: root, m: m };
         renderManager(root, m);
         return m;
     }
@@ -59078,9 +59094,14 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
     /* Réouverture après une fenêtre fille (cf. buildModal / mgrPendingReturn). */
     function reopenManager(back) {
         var m = openManager(back.tab);
-        if (!m || !back.filter) return;
-        var q = m.overlay.querySelector('#tpx-mgr-q');
-        if (q) { q.value = back.filter; try { q.dispatchEvent(makeInputEvent()); } catch (e) {} }
+        if (!m) return;
+        if (back.filter) {
+            var q = m.overlay.querySelector('#tpx-mgr-q');
+            if (q) { q.value = back.filter; try { q.dispatchEvent(makeInputEvent()); } catch (e) {} }
+        }
+        /* 2026-10-28 : même hauteur de liste qu'avant la fenêtre de confirmation / modification — l'animation de
+           suppression (ou de modification) se joue sous les yeux de l'utilisateur */
+        if (back.top) { var lst = m.overlay.querySelector('#tpx-mgr-list'); if (lst) lst.scrollTop = back.top; }
     }
 
     function renderManager(root, m) {
@@ -59140,7 +59161,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                     del: function () {
                         confirmModal('Supprimer cet item ?',
                             'L\'item « ' + i.name + ' », ses tours enregistrés et sa note sur-mesure seront supprimés. Vos données du programme officiel ne sont pas concernées.',
-                            function () { deleteItem(key); renderManager(root, m); });
+                            function () { mgrTrackDelete(key, deleteItem(key)); renderManager(root, m); });
                     }
                 });
             });
@@ -59160,7 +59181,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                     del: function () {
                         confirmModal('Supprimer cette SDD ?',
                             'La situation « ' + d.title + ' », ses stations enregistrées et sa note sur-mesure seront supprimées. Vos données du programme officiel ne sont pas concernées.',
-                            function () { deleteSdd(d.id); renderManager(root, m); });
+                            function () { mgrTrackDelete(d.id, deleteSdd(d.id)); renderManager(root, m); });
                     }
                 });
             });
@@ -59175,14 +59196,15 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         }
 
         list.innerHTML = rows.map(function (r, i) {
-            return '<div class="tpx-mgr-row" data-i="' + i + '" data-key="' + esc(r.key) + '">' +
+            var busy = !!mgrDeleting[r.key];   /* suppression en cours : grisée, boutons désactivés */
+            return '<div class="tpx-mgr-row' + (busy ? ' is-deleting' : '') + '" data-i="' + i + '" data-key="' + esc(r.key) + '">' +
                 '<span class="tpx-mgr-dot" style="background:' + r.color + '"><i class="fas ' + r.icon + '"></i></span>' +
                 '<span class="tpx-mgr-txt">' +
                     '<span class="tpx-mgr-title">' + esc(r.title) + '</span>' +
-                    '<span class="tpx-mgr-sub">' + esc(r.sub) + '</span>' +
+                    '<span class="tpx-mgr-sub">' + esc(busy ? 'Suppression…' : r.sub) + '</span>' +
                 '</span>' +
-                '<button type="button" class="tpx-mgr-act" data-act="edit" data-i="' + i + '" aria-label="Modifier"><i class="fas fa-pen"></i></button>' +
-                '<button type="button" class="tpx-mgr-act danger" data-act="del" data-i="' + i + '" aria-label="Supprimer"><i class="fas fa-trash"></i></button>' +
+                '<button type="button" class="tpx-mgr-act" data-act="edit" data-i="' + i + '" aria-label="Modifier"' + (busy ? ' disabled' : '') + '><i class="fas fa-pen"></i></button>' +
+                '<button type="button" class="tpx-mgr-act danger" data-act="del" data-i="' + i + '" aria-label="Supprimer"' + (busy ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>' +
             '</div>';
         }).join('');
         try { if (window.tpxPersoFx && window.tpxPersoFx.listShown) window.tpxPersoFx.listShown(list); } catch (e) {}   /* 2026-10-21 : apparition douce */
@@ -59192,7 +59214,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 var r = rows[parseInt(b.getAttribute('data-i'), 10)];
                 if (!r) return;
                 var qEl = root.querySelector('#tpx-mgr-q');
-                mgrPendingReturn = { tab: mgrTab, filter: qEl ? qEl.value : '' };
+                mgrPendingReturn = { tab: mgrTab, filter: qEl ? qEl.value : '', top: list.scrollTop };   /* 2026-10-28 : on revient à la même hauteur */
                 try {
                     try { if (window.tpxPersoFx) window.tpxPersoFx.rowClick(b.closest('.tpx-mgr-row')); } catch (e) {}   /* 2026-10-19 : fantôme de suppression */
                     if (b.getAttribute('data-act') === 'edit') r.edit(); else r.del();
