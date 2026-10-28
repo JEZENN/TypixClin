@@ -17993,8 +17993,9 @@ body.ecos-offline-locked .send-to-checklist-btn {
     pointer-events: none;
 }
 
-/* Bouton surligné quand sa palette est ouverte */
-.notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn {
+/* Bouton surligné quand sa palette est ouverte (is-pal-open : palette sortie de la barre, cf. 2026-10-27) */
+.notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn,
+.notes-color-picker-wrapper.is-pal-open > .notes-tool-btn {
     background: var(--primary);
     color: white;
     box-shadow: 0 1px 4px rgba(59,130,246,0.35);
@@ -18550,7 +18551,7 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 [data-theme="dark"] #ecosErrOverlay #ecosErrImageBtn[data-tooltip]::after { background:#0f172a; }
 [data-theme="dark"] #sdd-notes-overlay #sddNotesImageBtn[data-tooltip]::before,
 [data-theme="dark"] #ecosErrOverlay #ecosErrImageBtn[data-tooltip]::before { border-top-color:#0f172a; }
-/* === Tooltips personnalisés sur les boutons de la toolbar (notes + cahier), affichés EN DESSOUS === */
+/* === Tooltips personnalisés sur les boutons de la toolbar (notes + cahier), affichés AU-DESSUS (2026-10-27 : en dessous, la palette de couleurs ouverte les cachait ; comme sur l'EDN) === */
 #sdd-notes-overlay .notes-tool-btn[data-tooltip],
 #ecosErrOverlay .notes-tool-btn[data-tooltip] { position: relative; }
 #sdd-notes-overlay .notes-tool-btn[data-tooltip]::after,
@@ -18558,9 +18559,9 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     content: attr(data-tooltip) !important;
     display: block !important;
     position: absolute;
-    top: calc(100% + 9px);
+    bottom: calc(100% + 9px);
     left: 50%;
-    transform: translateX(-50%) translateY(-4px);
+    transform: translateX(-50%) translateY(4px);
     background: #1e293b;
     color: #fff;
     padding: 6px 10px;
@@ -18580,11 +18581,11 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
     content: "" !important;
     display: block !important;
     position: absolute;
-    top: calc(100% + 3px);
+    bottom: calc(100% + 3px);
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-bottom-color: #1e293b;
+    border-top-color: #1e293b;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.22s ease 0.06s;
@@ -18597,7 +18598,13 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 [data-theme="dark"] #sdd-notes-overlay .notes-tool-btn[data-tooltip]::after,
 [data-theme="dark"] #ecosErrOverlay .notes-tool-btn[data-tooltip]::after { background:#0f172a; }
 [data-theme="dark"] #sdd-notes-overlay .notes-tool-btn[data-tooltip]::before,
-[data-theme="dark"] #ecosErrOverlay .notes-tool-btn[data-tooltip]::before { border-bottom-color:#0f172a; }
+[data-theme="dark"] #ecosErrOverlay .notes-tool-btn[data-tooltip]::before { border-top-color:#0f172a; }
+/* 2026-10-27 : bulles CSS coupées par l'en-tête de la fenêtre → remplacées par la bulle flottante du site (#tpx-cat-tip,
+   data-tpx-tip posé au chargement), comme sur l'EDN */
+#sdd-notes-overlay .notes-toolbar [data-tooltip][data-tpx-tip]::after, #sdd-notes-overlay .notes-toolbar [data-tooltip][data-tpx-tip]::before,
+#ecosErrOverlay .notes-toolbar [data-tooltip][data-tpx-tip]::after, #ecosErrOverlay .notes-toolbar [data-tooltip][data-tpx-tip]::before,
+#sdd-notes-overlay #sddNotesImageBtn[data-tooltip][data-tpx-tip]::after, #sdd-notes-overlay #sddNotesImageBtn[data-tooltip][data-tpx-tip]::before,
+#ecosErrOverlay #ecosErrImageBtn[data-tooltip][data-tpx-tip]::after, #ecosErrOverlay #ecosErrImageBtn[data-tooltip][data-tpx-tip]::before { content: none !important; display: none !important; }
 /* Panneau OIC */
 .notes-info-panel {
     flex: 1;
@@ -35237,6 +35244,26 @@ document.addEventListener('touchstart', function (e) {
         ecosCloseAllPalettes();
     }
 }, { passive: true });
+/* 2026-10-27 : bouton couleur en bleu tant que sa palette est ouverte, même sortie de la barre (voir _ecosRepositionPalette) ;
+   info-bulles des barres d'outils des notes / du cahier d'erreurs sur la bulle flottante du site.
+   Chaque conteneur retient SA palette au chargement (elles sont encore dedans) ; un observateur des classes des palettes
+   tient « is-pal-open » à jour, quel que soit le code qui ouvre ou ferme la palette. */
+(function () {
+    function sync() {
+        document.querySelectorAll('.notes-color-picker-wrapper').forEach(function (w) {
+            if (!w._ecosPal) w._ecosPal = w.querySelector('.notes-color-palette');
+            var p = w._ecosPal;
+            w.classList.toggle('is-pal-open', !!(p && p.classList.contains('open')));
+        });
+    }
+    function boot() {
+        sync();
+        /* info-bulles des barres d'outils : bulle flottante du site (data-tpx-tip), jamais coupée par l'en-tête */
+        document.querySelectorAll('#sdd-notes-overlay .notes-toolbar [data-tooltip], #ecosErrOverlay .notes-toolbar [data-tooltip]').forEach(function (b) { if (!b.hasAttribute('data-tpx-tip')) b.setAttribute('data-tpx-tip', b.getAttribute('data-tooltip')); });
+        try { var mo = new MutationObserver(sync); document.querySelectorAll('.notes-color-palette').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['class'] }); }); } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
 
 function notesClear() {
     var editor = document.getElementById('sdd-notes-editor');
@@ -53421,7 +53448,8 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
     background:#51b896 !important;
     box-shadow:0 1px 4px rgba(103, 187, 159, 0.248) !important;
 }
-:where(html[data-theme="pastel"]) .notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn {
+:where(html[data-theme="pastel"]) .notes-color-picker-wrapper:has(.notes-color-palette.open) > .notes-tool-btn,
+:where(html[data-theme="pastel"]) .notes-color-picker-wrapper.is-pal-open > .notes-tool-btn {
     box-shadow:0 1px 4px rgba(122, 151, 199, 0.217);
 }
 :where(html[data-theme="pastel"]) .notes-img-wrapper:hover img {
