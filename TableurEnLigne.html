@@ -18339,9 +18339,14 @@ window.tpxSkelHTML = function (kind) {
           <i id="trainNotesAutosaveIcon" class="fas fa-sync-alt"></i>
         </span>
         <span id="trainNotesTodoZone"></span>
-        <button class="notes-action-btn btn-train-statut" id="trainNotesStatutBtn" onclick="trainNotesOpenStatut(event)" title="Changer le statut">
+        <button class="notes-action-btn btn-train-statut" id="trainNotesStatutBtn" onclick="trainNotesOpenStatut(event)" aria-label="Changer le statut">
           <i class="fas fa-flag"></i>
           <span class="notes-btn-label">Statut</span>
+        </button>
+        <button class="notes-action-btn btn-train-score" id="trainNotesScoreBtn" onclick="trainNotesEditScore(event)" aria-label="Noter sur 20">
+          <i class="fas fa-star-half-stroke"></i>
+          <span class="tn-score-val"></span>
+          <span class="notes-btn-label">Note /20</span>
         </button>
         <button class="notes-close-btn" onclick="closeTrainNotesModal()">
           <i class="fas fa-times"></i>
@@ -23563,6 +23568,15 @@ function _disableOpenTrainNotesModal() {
         statutBtn.style.opacity = '0.4';
         statutBtn.style.cursor = 'not-allowed';
         statutBtn.style.pointerEvents = 'none';
+    }
+    // Bouton Note /20 (2026-10-29)
+    const scoreBtn = document.getElementById('trainNotesScoreBtn');
+    if (scoreBtn) {
+        scoreBtn.disabled = true;
+        scoreBtn.dataset.offlineDisabled = 'true';
+        scoreBtn.style.opacity = '0.4';
+        scoreBtn.style.cursor = 'not-allowed';
+        scoreBtn.style.pointerEvents = 'none';
     }
     // Bouton Effacer tout
     const trainNotesModal = document.getElementById('trainNotesModalInner');
@@ -43677,6 +43691,28 @@ html[data-theme="pastel"] { --tpx-score-1: #ad5555; --tpx-score-2: #b66159; --tp
 .train-score-badge.s4 { background: var(--tpx-score-4); } .train-score-badge.s5 { background: var(--tpx-score-5); } .train-score-badge.s6 { background: var(--tpx-score-6); }
 .train-score-badge.s7 { background: var(--tpx-score-7); } .train-score-badge.s8 { background: var(--tpx-score-8); } .train-score-badge.s9 { background: var(--tpx-score-9); }
 .train-score-badge.s10 { background: var(--tpx-score-10); }
+/* 2026-10-29 : note /20 dans l'en-tête du cahier d'erreurs (à droite de Statut) */
+.notes-action-btn.btn-train-score { background: #e5e7eb; color: #4b5563; }
+.notes-action-btn.btn-train-score .tn-score-val { display: none; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; font-family: var(--font-body); }
+.notes-action-btn.btn-train-score.has-score { min-width: 44px; max-width: 64px; padding: 0 9px; background: var(--tn-score-c); color: #fff; }
+.notes-action-btn.btn-train-score.has-score i { display: none; }
+.notes-action-btn.btn-train-score.has-score .tn-score-val { display: inline; }
+.btn-train-score.s1 { --tn-score-c: var(--tpx-score-1); } .btn-train-score.s2 { --tn-score-c: var(--tpx-score-2); } .btn-train-score.s3 { --tn-score-c: var(--tpx-score-3); }
+.btn-train-score.s4 { --tn-score-c: var(--tpx-score-4); } .btn-train-score.s5 { --tn-score-c: var(--tpx-score-5); } .btn-train-score.s6 { --tn-score-c: var(--tpx-score-6); }
+.btn-train-score.s7 { --tn-score-c: var(--tpx-score-7); } .btn-train-score.s8 { --tn-score-c: var(--tpx-score-8); } .btn-train-score.s9 { --tn-score-c: var(--tpx-score-9); }
+.btn-train-score.s10 { --tn-score-c: var(--tpx-score-10); }
+@media (hover: hover) {
+  .notes-action-btn.btn-train-score:hover { background: #4b5563; color: #fff; box-shadow: 0 4px 12px rgba(55, 65, 81, 0.35); }
+  .notes-action-btn.btn-train-score.has-score:hover { max-width: 130px; padding: 0 10px; background: var(--tn-score-c); filter: brightness(0.94); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); }
+}
+.notes-action-btn.btn-train-score:active { opacity: 0.75; transform: scale(0.92); box-shadow: none; }
+[data-theme="dark"] .notes-action-btn.btn-train-score { background: rgba(107, 114, 128, 0.4); color: #d1d5db; }
+[data-theme="dark"] .notes-action-btn.btn-train-score.has-score { background: var(--tn-score-c); color: #fff; }
+[data-theme="dark"] .notes-action-btn.btn-train-score:hover { background: #6b7280; color: #fff; }
+[data-theme="dark"] .notes-action-btn.btn-train-score.has-score:hover { background: var(--tn-score-c); }
+.notes-header-right .train-score-edit { flex-shrink: 0; }
+.notes-action-btn.btn-train-score.is-settling { padding: 0 10px 0 8px; }
+.notes-action-btn.btn-train-score.is-settling .notes-btn-label { opacity: 1; max-width: 100px; margin-left: 5px; }
 .train-score-edit { display: inline-flex; align-items: center; justify-content: center; gap: 1px; height: 30px; box-sizing: border-box; padding: 0 0.5rem 0 0.4rem; border: 2px solid var(--primary);
     border-radius: var(--border-radius-full, 999px); background: var(--white); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); cursor: text; }
 [data-theme="dark"] .train-score-edit { background: #0f172a; }
@@ -45403,7 +45439,7 @@ window._trainScoreBadge = function (t) {
   b.setAttribute('onclick', 'window._editTrainScore(' + t.id + ',this)');
   return b;
 };
-window._editTrainScore = function (id, btn) {
+window._editTrainScore = function (id, btn, opts) {   /* opts : en-tête du cahier d'erreurs (onClose) */
   if (window.canPerformAction && !window.canPerformAction('train-note')) return;
   initTrainingsData();
   var t = window.userData.trainings.find(function (x) { return x.id === id; });
@@ -45431,11 +45467,11 @@ window._editTrainScore = function (id, btn) {
   lastOk = inp.value;
   inp.focus(); inp.select();
   inp.setAttribute('data-train-id', String(id));
-  window._trainScoreEditing = { id: id, input: inp };
+  if (!opts) window._trainScoreEditing = { id: id, input: inp };   /* recréation après rendu : tableau seulement */
   var done = false;
   /* l'entraînement À JOUR : la liste a pu être remplacée pendant la saisie (synchronisation) — sinon la note irait sur une copie orpheline */
   function cur() { var a = (window.userData && window.userData.trainings) || []; for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return t; }
-  function restore() { if (wrap.parentNode) wrap.parentNode.replaceChild(window._trainScoreBadge(cur()), wrap); }
+  function restore() { var w0 = wrap.getBoundingClientRect().width; if (wrap.parentNode) wrap.parentNode.replaceChild(opts ? btn : window._trainScoreBadge(cur()), wrap); if (opts && opts.onClose) opts.onClose(cur(), w0); }
   function finish(save) {
     if (done || inp._tpxGone) return;
     t = cur();
@@ -45443,7 +45479,7 @@ window._editTrainScore = function (id, btn) {
     var raw = inp.value.trim().replace(',', '.').replace(/\.$/, '');   /* « 14, » = 14 */
     if (raw === '') {
       done = true; window._trainScoreEditing = null;
-      if (typeof t.score === 'number') { delete t.score; saveTrainings(); renderTrainTable(); } else restore();
+      if (typeof t.score === 'number') { delete t.score; saveTrainings(); renderTrainTable(); if (opts) restore(); } else restore();
       return;
     }
     var v = Number(raw);
@@ -45453,7 +45489,7 @@ window._editTrainScore = function (id, btn) {
     }
     done = true; window._trainScoreEditing = null;
     v = Math.round(v * 100) / 100;
-    if (t.score !== v) { t.score = v; saveTrainings(); renderTrainTable(); } else restore();
+    if (t.score !== v) { t.score = v; saveTrainings(); renderTrainTable(); if (opts) restore(); } else restore();
   }
   inp.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); finish(true); }
@@ -45580,6 +45616,7 @@ window._openTrainNotes = function(id) {
   if (tnStatutBtn) {
     tnStatutBtn.className = 'notes-action-btn btn-train-statut statut-' + (t.statut || 'non-fait');
   }
+  if (typeof window._trainNotesScoreRefresh === 'function') window._trainNotesScoreRefresh(t);   /* 2026-10-29 : note /20 dans l'en-tête */
 
   // 🔒 Verrouiller l'édition tant que la version à afficher n'est pas
   // déterminée : une saisie démarrée pendant le chargement ne doit jamais
@@ -46081,6 +46118,36 @@ window.trainNotesTodo = function() {
     });
   }
 };
+
+/* 2026-10-29 (Jean) : note /20 aussi dans l'en-tête du cahier d'erreurs, comme le statut */
+window._trainNotesScoreRefresh = function (t) {
+  var b = document.getElementById('trainNotesScoreBtn'); if (!b) return;
+  var has = !!t && typeof t.score === 'number' && isFinite(t.score);
+  b.className = 'notes-action-btn btn-train-score' + (has ? ' has-score s' + _trainScoreLevel(t.score) : '');
+  var v = b.querySelector('.tn-score-val'); if (v) v.textContent = has ? _trainScoreText(t.score) : '';
+  var l = b.querySelector('.notes-btn-label'); if (l) l.textContent = has ? '/20' : 'Note /20';
+  b.removeAttribute('title'); b.setAttribute('aria-label', has ? 'Note : ' + _trainScoreText(t.score) + '/20 — modifier' : 'Noter sur 20');   /* pas d'infobulle (Jean) */
+};
+window.trainNotesEditScore = function (event) {
+  if (event) event.stopPropagation();
+  var btn = document.getElementById('trainNotesScoreBtn');
+  if (!btn || !btn.parentNode || trainNotesCurrentId == null) return;
+  window._editTrainScore(trainNotesCurrentId, btn, { onClose: function (t, w0) { window._trainNotesScoreRefresh(t); _trainNotesScoreSettle(btn, w0); } });
+};
+/* 2026-10-29 (Jean) : le bouton repart de la largeur du champ et se range en douceur (comme la fin du survol) */
+function _trainNotesScoreSettle(b, w0) {
+  if (!b || !w0 || !b.isConnected) return;
+  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  if (b._tnSettleT) { clearTimeout(b._tnSettleT); b._tnSettleT = null; }
+  b.classList.remove('is-settling'); b.style.transition = ''; b.style.width = ''; b.style.maxWidth = '';
+  var w1 = b.getBoundingClientRect().width;            /* largeur de repos */
+  if (Math.abs(w0 - w1) < 2) return;
+  b.style.transition = 'none'; b.style.maxWidth = 'none'; b.style.width = w0 + 'px'; b.classList.add('is-settling');
+  void b.offsetWidth;
+  b.style.transition = 'width 0.42s cubic-bezier(0.4,0,0.2,1), padding 0.42s cubic-bezier(0.4,0,0.2,1), background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease';
+  b.style.width = w1 + 'px'; b.classList.remove('is-settling');
+  b._tnSettleT = setTimeout(function () { b._tnSettleT = null; b.style.transition = ''; b.style.width = ''; b.style.maxWidth = ''; }, 460);
+}
 
 /* Ouvrir le sélecteur de statut depuis le modal erreurs */
 window.trainNotesOpenStatut = function(event) {
