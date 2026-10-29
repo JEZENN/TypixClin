@@ -18200,7 +18200,7 @@ window.tpxSkelHTML = function (kind) {
           <thead>
             <tr id="train-thead-row">
               <th data-sort="type">Type <i class="fas fa-sort sort-icon"></i></th><th data-sort="plateforme">Plateforme <i class="fas fa-sort sort-icon"></i></th><th data-sort="title">Intitulé <i class="fas fa-sort sort-icon"></i></th><th data-sort="matiere" style="text-align:center;">Matière <i class="fas fa-sort sort-icon"></i></th>
-              <th data-sort="statut">Statut <i class="fas fa-sort sort-icon"></i></th><th>Actions</th>
+              <th data-sort="statut">Statut <i class="fas fa-sort sort-icon"></i></th><th data-sort="score" class="train-score-th">Note /20 <i class="fas fa-sort sort-icon"></i></th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="train-table-body"></tbody>
@@ -23654,7 +23654,7 @@ function enableOfflineActions() {
 
 const TPX_PREMIUM_BLOCKED_ACTIONS = [
     'tour', 'task', 'validate', 'checklist', 'config', 'save', 'notes',
-    'train-notes', 'train-edit', 'train-add', 'train-delete', 'train-statut',
+    'train-notes', 'train-edit', 'train-add', 'train-delete', 'train-statut', 'train-note',
     'planning-status', 'planning-text', 'planning-specialty'
 ];
 function canPerformAction(actionName) {
@@ -39247,6 +39247,18 @@ body.tc-kb-open-phone .flash-expand-btn {
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Octobre 2026</span>
 
             <div class="whats-new-section">
+                <div class="whats-new-section-icon green">
+                    <i class="fas fa-star-half-stroke"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Notez vos entraînements sur 20</h4>
+                    <p>
+                        Dans le tableau des entraînements, la colonne <strong>Note /20</strong> se remplit d'un clic.
+                    </p>
+                </div>
+            </div>
+
+            <div class="whats-new-section">
                 <div class="whats-new-section-icon pomo">
                     <i class="fas fa-stopwatch"></i>
                 </div>
@@ -42449,7 +42461,7 @@ document.addEventListener('touchend', function(e) {
   max-width: 100%;
 }
 #page-entrainements .train-table {
-  min-width: 860px;
+  min-width: 920px;   /* 2026-10-29 : 860 → 920 (colonne « Note /20 ») ; 878 px sous 1100 px, cf. plus bas */
   width: 100%;
   table-layout: fixed;
 }
@@ -43629,10 +43641,58 @@ document.addEventListener('touchend', function(e) {
 /* Colonnes tableau */
 .train-table th:nth-child(1) { width: 110px; }
 .train-table th:nth-child(2) { width: 110px; }
-.train-table th:nth-child(3) { min-width: 200px; width: 240px; }
+.train-table th:nth-child(3) { min-width: 200px; width: 224px; }   /* 2026-10-29 : 240 → 224 (colonne « Note /20 ») */
 .train-table th:nth-child(4) { width: 130px; text-align: center; }
 .train-table th:nth-child(5) { width: 90px; }
-.train-table th:nth-child(6) { width: 180px; }
+.train-table th:nth-child(6) { width: 76px; text-align: center; }   /* 2026-10-29 : Note /20 */
+.train-table th:nth-child(7) { width: 180px; }
+/* 2026-10-29 : note sur 20 des entraînements — pastille rouge → vert (palette fixe des niveaux de confiance sur 10) */
+:root { --tpx-score-1: #991b1b; --tpx-score-2: #b91c1c; --tpx-score-3: #dc2626; --tpx-score-4: #ea580c; --tpx-score-5: #f59e0b;
+    --tpx-score-6: #ca8a04; --tpx-score-7: #84cc16; --tpx-score-8: #22c55e; --tpx-score-9: #16a34a; --tpx-score-10: #15803d; }
+html[data-theme="pastel"] { --tpx-score-1: #ad5555; --tpx-score-2: #b66159; --tpx-score-3: #bd7857; --tpx-score-4: #c19a58; --tpx-score-5: #a8a860;
+    --tpx-score-6: #8fae66; --tpx-score-7: #78b06e; --tpx-score-8: #70c090; --tpx-score-9: #4a9868; --tpx-score-10: #256b46; }
+.train-table td.train-score-cell { text-align: center; }
+.train-score-badge { min-width: 46px; height: 30px; padding: 0 0.5rem; border-radius: var(--border-radius-full, 999px); border: 1.5px solid transparent; font: inherit;
+    font-size: 0.82rem; font-weight: 800; color: #fff; cursor: pointer; display: inline-flex; align-items: baseline; justify-content: center; gap: 1px; line-height: 27px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; touch-action: manipulation; }
+.train-score-badge small { display: none; font-size: 0.64rem; font-weight: 700; opacity: 0.85; }   /* « /20 » : à partir de 1280 px (place) */
+@media (min-width: 1280px) { .train-score-badge small { display: inline; } .train-score-badge { min-width: 58px; } }
+/* moins de 1100 px : largeurs compactes, le tableau tient sans défiler (878 px à 1024 px, comme avant la colonne Note) */
+@media (max-width: 1099px) {
+  #page-entrainements .train-table { min-width: 878px; }
+  .train-table th:nth-child(3) { width: 220px; }
+  .train-table th:nth-child(4) { width: 112px; }
+  .train-table th:nth-child(6) { width: 64px; }
+  .train-table th:nth-child(7) { width: 172px; }
+  .train-table td.train-score-cell { padding-left: 6px; padding-right: 6px; }
+  .train-table td:nth-child(7) { padding-left: 8px; padding-right: 8px; }
+}
+.train-score-badge:hover { filter: brightness(0.9); transform: scale(1.06); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14); }
+.train-score-badge:active { transform: scale(0.94); }
+.train-score-badge:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.train-score-badge.is-empty { background: transparent; color: var(--gray-400); border: 1.5px dashed var(--gray-300); font-weight: 700; }
+.train-score-badge.is-empty:hover { color: var(--primary); border-color: var(--primary); filter: none; }
+[data-theme="dark"] .train-score-badge.is-empty { color: #94a3b8; border-color: #475569; }
+.train-score-badge.s1 { background: var(--tpx-score-1); } .train-score-badge.s2 { background: var(--tpx-score-2); } .train-score-badge.s3 { background: var(--tpx-score-3); }
+.train-score-badge.s4 { background: var(--tpx-score-4); } .train-score-badge.s5 { background: var(--tpx-score-5); } .train-score-badge.s6 { background: var(--tpx-score-6); }
+.train-score-badge.s7 { background: var(--tpx-score-7); } .train-score-badge.s8 { background: var(--tpx-score-8); } .train-score-badge.s9 { background: var(--tpx-score-9); }
+.train-score-badge.s10 { background: var(--tpx-score-10); }
+.train-score-edit { display: inline-flex; align-items: center; justify-content: center; gap: 1px; height: 30px; box-sizing: border-box; padding: 0 0.5rem 0 0.4rem; border: 2px solid var(--primary);
+    border-radius: var(--border-radius-full, 999px); background: var(--white); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); cursor: text; }
+[data-theme="dark"] .train-score-edit { background: #0f172a; }
+.train-score-input { width: 2.4em; height: 100%; box-sizing: border-box; padding: 0; border: none; background: transparent; outline: none; text-align: right;
+    font: inherit; font-size: 0.85rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--gray-900); caret-color: var(--primary); }
+[data-theme="dark"] .train-score-input { color: #f1f5f9; }
+.train-score-suffix { font-size: 0.72rem; font-weight: 700; color: var(--gray-500); user-select: none; }
+[data-theme="dark"] .train-score-suffix { color: #94a3b8; }
+/* 2026-10-29 : la pastille de saisie se déploie à l'ouverture */
+.train-score-edit.is-opening { animation: tpxScoreOpen 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes tpxScoreOpen { 0% { transform: scale(0.72); opacity: 0.35; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45); } 60% { opacity: 1; } 100% { transform: none; opacity: 1; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); } }
+.train-score-edit.is-bad { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18); animation: tpxScoreShake 0.32s ease; }
+@media (max-width: 1099px) { .train-score-suffix { display: none; } .train-score-edit { padding: 0 0.4rem; } .train-score-input { text-align: center; } }
+@keyframes tpxScoreShake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .train-score-badge, .train-score-edit.is-bad, .train-score-edit.is-opening { transition: none; animation: none; } }
+
 .train-table th[data-sort] { cursor: pointer; user-select: none; }
 .train-table th[data-sort]:hover { background: var(--gray-100); }
 .train-table th[data-sort] .sort-icon { margin-left: 0.4rem; opacity: 0.4; font-size: 0.7rem; transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); color: var(--gray-400); transform: rotate(0deg); }
@@ -44642,6 +44702,12 @@ window.renderTrainTable = function() {
   _trainRefreshLabelMaps(); // CATALOGUES (2026-09-30) : libellés à jour (recherche + tableau)
   var tbody   = document.getElementById('train-table-body');
   var emptyEl = document.getElementById('train-empty');
+  /* 2026-10-29 : note en cours de saisie → retenue, recréée après le rendu (synchronisation pendant la frappe) */
+  var _scoreEdit = window._trainScoreEditing;
+  if (_scoreEdit && _scoreEdit.input && _scoreEdit.input.isConnected && document.activeElement === _scoreEdit.input) {
+    _scoreEdit.keep = { v: _scoreEdit.input.value, s: _scoreEdit.input.selectionStart, e: _scoreEdit.input.selectionEnd };
+    _scoreEdit.input._tpxGone = true;
+  } else { _scoreEdit = null; window._trainScoreEditing = null; }
   var countEl = document.getElementById('train-count-badge');
   if (!tbody) return;
 
@@ -44657,7 +44723,7 @@ window.renderTrainTable = function() {
     var _isOfficialT = !!(t && (t.isDefault ||
       (typeof window.isOfficialTrainingId === 'function' && window.isOfficialTrainingId(t.id))));
     if (typeof window.isCustomTrainings === 'function' && window.isCustomTrainings() && _isOfficialT) {
-      var _touched = (t.statut && t.statut !== 'non-fait') ||
+      var _touched = (t.statut && t.statut !== 'non-fait') || (typeof t.score === 'number') ||
                      t.notesExist === true ||
                      (typeof t.notes === 'string' && t.notes.trim() && t.notes.trim() !== '<br>');
       if (!_touched) return false;
@@ -44689,6 +44755,7 @@ window.renderTrainTable = function() {
   else if (trainSortValue === 'plateforme') list.sort(function(a,b){ return _sd*(a.plateforme||'').localeCompare(b.plateforme||''); });
   else if (trainSortValue === 'title')      list.sort(function(a,b){ return _sd*(a.title||'').localeCompare(b.title||''); });
   else if (trainSortValue === 'statut')     list.sort(function(a,b){ return _sd*((sortOrder[a.statut]||0)-(sortOrder[b.statut]||0)); });
+  else if (trainSortValue === 'score')      list.sort(function(a,b){ var x = typeof a.score === 'number' ? a.score : -1, y = typeof b.score === 'number' ? b.score : -1; return _sd*(x-y); });   /* 2026-10-29 */
 
   if (countEl) countEl.textContent = list.length + ' entrainement' + (list.length > 1 ? 's' : '');
 
@@ -44812,6 +44879,12 @@ window.renderTrainTable = function() {
       statBtn.setAttribute('onclick', 'window._openTrainStatutPopup(' + t.id + ',event)');
       td5.appendChild(statBtn);
 
+      // Col 5 bis : Note /20 (2026-10-29)
+      var tdScore = document.createElement('td');
+      tdScore.className = 'train-score-cell';
+      var scoreBtn = window._trainScoreBadge(t);
+      tdScore.appendChild(scoreBtn);
+
       // Col 6 : Actions
       var td6 = document.createElement('td');
       var wrap = document.createElement('div');
@@ -44855,7 +44928,7 @@ window.renderTrainTable = function() {
 
       // Griser tous les boutons d'action si déjà hors ligne au moment du rendu
       if (window.offlineActionsBlocked) {
-        var offlineBtns = [btnNotes, btnEdit, btnDel, statBtn];
+        var offlineBtns = [btnNotes, btnEdit, btnDel, statBtn, scoreBtn];
         if (btnTodo.tagName === 'BUTTON') offlineBtns.push(btnTodo);
         offlineBtns.forEach(function(b) {
           b.style.opacity = '0.4';
@@ -44870,12 +44943,19 @@ window.renderTrainTable = function() {
       tr.appendChild(td2);
       tr.appendChild(td3);
       tr.appendChild(td5);
+      tr.appendChild(tdScore);
       tr.appendChild(td6);
       tbody.appendChild(tr);
     } catch(err) {
       console.error('Train render row error:', err, t);
     }
   });
+  if (_scoreEdit && _scoreEdit.keep) {
+    var _seB = tbody.querySelector('tr[data-train-id="' + _scoreEdit.id + '"] .train-score-badge');
+    if (_seB) { window._editTrainScore(_scoreEdit.id, _seB); var _seI = window._trainScoreEditing && window._trainScoreEditing.input;
+      if (_seI) { _seI.value = _scoreEdit.keep.v; try { _seI.setSelectionRange(_scoreEdit.keep.s, _scoreEdit.keep.e); } catch (e) {} } }
+    else window._trainScoreEditing = null;
+  }
   trainUpdatePaginationUI();
 };
 
@@ -45306,6 +45386,81 @@ window.trainConfirmDelete = function() {
   /* 2026-10-21 (Jean) : la ligne s'anime (« Entraînement supprimé ») PUIS quitte le tableau — données déjà supprimées et enregistrées */
   if (window.tpxPersoFx && window.tpxPersoFx.removeRow) window.tpxPersoFx.removeRow('train', deletedId, renderTrainTable);
   else { renderTrainTable(); if (window.showToastNotification) window.showToastNotification('Entrainement supprimé.', 'success'); }
+};
+
+
+/* 2026-10-29 : note sur 20 des entraînements — saisie directe dans le tableau (sans fenêtre) */
+function _trainScoreLevel(v) { return Math.min(10, Math.max(1, Math.ceil(v / 2))); }
+function _trainScoreText(v) { return String(Math.round(v * 100) / 100).replace('.', ','); }
+window._trainScoreBadge = function (t) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  var has = typeof t.score === 'number' && isFinite(t.score);
+  b.className = 'train-score-badge ' + (has ? 's' + _trainScoreLevel(t.score) : 'is-empty');
+  b.innerHTML = has ? _trainScoreText(t.score) + '<small>/20</small>' : '—';
+  b.setAttribute('aria-label', has ? 'Note : ' + _trainScoreText(t.score) + ' sur 20. Modifier la note' : 'Ajouter une note sur 20');
+  b.setAttribute('data-tooltip', has ? 'Modifier la note' : 'Noter sur 20');
+  b.setAttribute('onclick', 'window._editTrainScore(' + t.id + ',this)');
+  return b;
+};
+window._editTrainScore = function (id, btn) {
+  if (window.canPerformAction && !window.canPerformAction('train-note')) return;
+  initTrainingsData();
+  var t = window.userData.trainings.find(function (x) { return x.id === id; });
+  if (!t || !btn || !btn.parentNode) return;
+  var td = btn.parentNode;
+  var inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'train-score-input'; inp.setAttribute('inputmode', 'decimal'); inp.setAttribute('maxlength', '5');
+  inp.setAttribute('aria-label', 'Note sur 20 (vide pour effacer)');
+  var wrap = document.createElement('span'); wrap.className = 'train-score-edit';   /* 2026-10-29 : « /20 » à côté du champ, plus dedans (curseur visible) */
+  var suf = document.createElement('span'); suf.className = 'train-score-suffix'; suf.textContent = '/20'; suf.setAttribute('aria-hidden', 'true');
+  wrap.appendChild(inp); wrap.appendChild(suf);
+  wrap.addEventListener('mousedown', function (e) { if (e.target !== inp) { e.preventDefault(); inp.focus(); } });
+  wrap.classList.add('is-opening'); setTimeout(function () { wrap.classList.remove('is-opening'); }, 360);   /* déploiement */
+  /* seules les notes valides peuvent être tapées : chiffres, une virgule, 2 décimales, 20 au plus (sinon frappe ignorée) */
+  function okPartial(v) { if (!/^\d{0,2}([.,]\d{0,2})?$/.test(v)) return false; var n = Number(v.replace(',', '.')); return v === '' || /^[.,]/.test(v) || (isFinite(n) && n <= 20); }
+  var lastOk = '';
+  inp.addEventListener('input', function () {
+    if (okPartial(inp.value)) { lastOk = inp.value; return; }
+    var pos = Math.max(0, (inp.selectionStart || 0) - (inp.value.length - lastOk.length));
+    inp.value = lastOk; try { inp.setSelectionRange(pos, pos); } catch (e) {}
+    wrap.classList.remove('is-bad'); void wrap.offsetWidth; wrap.classList.add('is-bad');
+  });
+  inp.value = (typeof t.score === 'number' && isFinite(t.score)) ? _trainScoreText(t.score) : '';
+  td.replaceChild(wrap, btn);
+  lastOk = inp.value;
+  inp.focus(); inp.select();
+  inp.setAttribute('data-train-id', String(id));
+  window._trainScoreEditing = { id: id, input: inp };
+  var done = false;
+  /* l'entraînement À JOUR : la liste a pu être remplacée pendant la saisie (synchronisation) — sinon la note irait sur une copie orpheline */
+  function cur() { var a = (window.userData && window.userData.trainings) || []; for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return t; }
+  function restore() { if (wrap.parentNode) wrap.parentNode.replaceChild(window._trainScoreBadge(cur()), wrap); }
+  function finish(save) {
+    if (done || inp._tpxGone) return;
+    t = cur();
+    if (!save) { done = true; window._trainScoreEditing = null; restore(); return; }
+    var raw = inp.value.trim().replace(',', '.').replace(/\.$/, '');   /* « 14, » = 14 */
+    if (raw === '') {
+      done = true; window._trainScoreEditing = null;
+      if (typeof t.score === 'number') { delete t.score; saveTrainings(); renderTrainTable(); } else restore();
+      return;
+    }
+    var v = Number(raw);
+    if (!/^\d{1,2}(\.\d{1,2})?$/.test(raw) || !isFinite(v) || v < 0 || v > 20) {
+      wrap.classList.remove('is-bad'); void wrap.offsetWidth; wrap.classList.add('is-bad');
+      return false;   /* saisie invalide : on reste dans le champ */
+    }
+    done = true; window._trainScoreEditing = null;
+    v = Math.round(v * 100) / 100;
+    if (t.score !== v) { t.score = v; saveTrainings(); renderTrainTable(); } else restore();
+  }
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+  });
+  inp.addEventListener('blur', function () { if (inp._tpxGone) return; if (finish(true) === false) { done = true; window._trainScoreEditing = null; restore(); } });   /* clic ailleurs avec une saisie invalide : rien n'est changé */
+  wrap.addEventListener('click', function (e) { e.stopPropagation(); });
 };
 
 // ---- POPUP STATUT ----
