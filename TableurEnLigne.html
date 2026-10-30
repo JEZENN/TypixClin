@@ -43711,6 +43711,7 @@ html[data-theme="pastel"] { --tpx-score-1: #ad5555; --tpx-score-2: #b66159; --tp
 [data-theme="dark"] .notes-action-btn.btn-train-score:hover { background: #6b7280; color: #fff; }
 [data-theme="dark"] .notes-action-btn.btn-train-score.has-score:hover { background: var(--tn-score-c); }
 .notes-header-right .train-score-edit { flex-shrink: 0; }
+.train-score-badge.is-settling { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 .notes-action-btn.btn-train-score.is-settling { padding: 0 10px 0 8px; }
 .notes-action-btn.btn-train-score.is-settling .notes-btn-label { opacity: 1; max-width: 100px; margin-left: 5px; }
 .train-score-edit { display: inline-flex; align-items: center; justify-content: center; gap: 1px; height: 30px; box-sizing: border-box; padding: 0 0.5rem 0 0.4rem; border: 2px solid var(--primary);
@@ -45428,6 +45429,24 @@ window.trainConfirmDelete = function() {
 /* 2026-10-29 : note sur 20 des entraînements — saisie directe dans le tableau (sans fenêtre) */
 function _trainScoreLevel(v) { return Math.min(10, Math.max(1, Math.ceil(v / 2))); }
 function _trainScoreText(v) { return String(Math.round(v * 100) / 100).replace('.', ','); }
+/* 2026-10-30 (Jean) : la pastille du tableau repart de la largeur du champ et se range en douceur */
+function _trainScoreSettle(el, w0) {
+  if (!el || !w0 || !el.isConnected) return;
+  try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  if (el._tsSettleT) { clearTimeout(el._tsSettleT); el._tsSettleT = null; }
+  el.classList.remove('is-settling'); el.style.transition = ''; el.style.width = ''; el.style.minWidth = ''; el.style.overflow = '';
+  var w1 = el.getBoundingClientRect().width;            /* largeur de repos */
+  if (Math.abs(w0 - w1) < 2) return;
+  el.style.transition = 'none'; el.style.minWidth = '0'; el.style.overflow = 'hidden'; el.style.width = w0 + 'px'; el.classList.add('is-settling');
+  void el.offsetWidth;
+  el.style.transition = 'width 0.42s cubic-bezier(0.4,0,0.2,1), box-shadow 0.42s ease, filter 0.15s ease, transform 0.15s ease';
+  el.style.width = w1 + 'px'; el.classList.remove('is-settling');
+  el._tsSettleT = setTimeout(function () { el._tsSettleT = null; el.style.transition = ''; el.style.width = ''; el.style.minWidth = ''; el.style.overflow = ''; }, 460);
+}
+function _trainScoreSettleRow(id, w0) {
+  var b = document.querySelector('#train-table-body tr[data-train-id="' + id + '"] .train-score-badge');
+  if (b) _trainScoreSettle(b, w0);
+}
 window._trainScoreBadge = function (t) {
   var b = document.createElement('button');
   b.type = 'button';
@@ -45471,7 +45490,7 @@ window._editTrainScore = function (id, btn, opts) {   /* opts : en-tête du cahi
   var done = false;
   /* l'entraînement À JOUR : la liste a pu être remplacée pendant la saisie (synchronisation) — sinon la note irait sur une copie orpheline */
   function cur() { var a = (window.userData && window.userData.trainings) || []; for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return t; }
-  function restore() { var w0 = wrap.getBoundingClientRect().width; if (wrap.parentNode) wrap.parentNode.replaceChild(opts ? btn : window._trainScoreBadge(cur()), wrap); if (opts && opts.onClose) opts.onClose(cur(), w0); }
+  function restore() { var w0 = wrap.getBoundingClientRect().width, nb = opts ? btn : window._trainScoreBadge(cur()); if (wrap.parentNode) wrap.parentNode.replaceChild(nb, wrap); if (opts && opts.onClose) opts.onClose(cur(), w0); else _trainScoreSettle(nb, w0); }
   function finish(save) {
     if (done || inp._tpxGone) return;
     t = cur();
@@ -45479,7 +45498,7 @@ window._editTrainScore = function (id, btn, opts) {   /* opts : en-tête du cahi
     var raw = inp.value.trim().replace(',', '.').replace(/\.$/, '');   /* « 14, » = 14 */
     if (raw === '') {
       done = true; window._trainScoreEditing = null;
-      if (typeof t.score === 'number') { delete t.score; saveTrainings(); renderTrainTable(); if (opts) restore(); } else restore();
+      if (typeof t.score === 'number') { var w0c = wrap.getBoundingClientRect().width; delete t.score; saveTrainings(); renderTrainTable(); if (opts) restore(); else _trainScoreSettleRow(id, w0c); } else restore();
       return;
     }
     var v = Number(raw);
@@ -45489,7 +45508,7 @@ window._editTrainScore = function (id, btn, opts) {   /* opts : en-tête du cahi
     }
     done = true; window._trainScoreEditing = null;
     v = Math.round(v * 100) / 100;
-    if (t.score !== v) { t.score = v; saveTrainings(); renderTrainTable(); if (opts) restore(); } else restore();
+    if (t.score !== v) { var w0s = wrap.getBoundingClientRect().width; t.score = v; saveTrainings(); renderTrainTable(); if (opts) restore(); else _trainScoreSettleRow(id, w0s); } else restore();
   }
   inp.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); finish(true); }
@@ -46130,6 +46149,8 @@ window._trainNotesScoreRefresh = function (t) {
 };
 window.trainNotesEditScore = function (event) {
   if (event) event.stopPropagation();
+  var _sp = document.getElementById('trainNotesStatutPopupEl');   /* 2026-10-30 (Jean) : Note ferme le menu Statut */
+  if (_sp && _sp.classList.contains('show')) { _sp.classList.remove('show'); var _sb = document.getElementById('trainNotesStatutBtn'); if (_sb) _sb.classList.remove('popup-open'); }
   var btn = document.getElementById('trainNotesScoreBtn');
   if (!btn || !btn.parentNode || trainNotesCurrentId == null) return;
   window._editTrainScore(trainNotesCurrentId, btn, { onClose: function (t, w0) { window._trainNotesScoreRefresh(t); _trainNotesScoreSettle(btn, w0); } });
