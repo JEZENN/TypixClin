@@ -1029,6 +1029,16 @@ function avatarColor(uid) {
     return colors[h % colors.length];
 }
 
+/* Colonne « Stripe ID » : l'abonnement (sub_…) pour le mensuel ; sinon le client Stripe (cus_…), qui existe aussi pour les
+   formules à paiement unique (elles n'ont pas d'abonnement). Liens vers le tableau de bord Stripe. */
+function tpxStripeCell(u) {
+    const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const link = (id, kind) => '<a href="https://dashboard.stripe.com/' + kind + '/' + encodeURIComponent(id) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><code style="font-size:0.7rem;color:var(--text-muted)">' + esc(id) + '</code></a>';
+    const sub = u.stripeSubscriptionId, cus = u.stripeCustomerId;
+    if (sub) return link(sub, 'subscriptions') + (cus ? '<br>' + link(cus, 'customers') : '');
+    if (cus) return link(cus, 'customers') + (TPX_FIXED_PLAN_TYPES.indexOf(u.premiumType) !== -1 ? '<div style="font-size:0.62rem;color:var(--text-muted)">paiement unique</div>' : '');
+    return '<code style="font-size:0.7rem;color:var(--text-muted)">—</code>';
+}
 function formatDate(val) {
     if (!val) return '—';
     let d;
@@ -1318,7 +1328,7 @@ function renderSubsTable(users) {
                 </div>
             </td>
             <td><span class="badge ${plan.cls}">${plan.label}</span></td>
-            <td><code style="font-size:0.7rem;color:var(--text-muted)">${u.stripeSubscriptionId || '—'}</code></td>
+            <td>${tpxStripeCell(u)}</td>
             <td>${u.gracePeriodEnd ? '—' : formatDate(u.subscriptionStartDate)}</td>
             <td>${formatDate(u.subscriptionEndDate || u.gracePeriodEnd)}${tpxIsOfferedWithIgnoredEnd(u) ? ' <i class="fas fa-triangle-exclamation" style="color:var(--amber)" title="Accès offert enregistré « Actif » : la date de fin est ignorée (accès sans fin). Ouvrez la fiche et enregistrez pour appliquer la date."></i>' : ''}</td>
             <td>${getStatusBadge(u)}</td>
@@ -1425,7 +1435,7 @@ function subSortValue(u, field) {
     switch (field) {
         case 'name':   return (u.displayName || u.email || '').toLowerCase();
         case 'plan':   return planRank(u);
-        case 'stripe': return (u.stripeSubscriptionId || '').toLowerCase();
+        case 'stripe': return (u.stripeSubscriptionId || u.stripeCustomerId || '').toLowerCase();
         case 'start':  return u.gracePeriodEnd ? 0 : _toMsVal(u.subscriptionStartDate);
         case 'end':    return _toMsVal(u.subscriptionEndDate || u.gracePeriodEnd);
         case 'status': return (u.subscriptionStatus || '').toLowerCase();
