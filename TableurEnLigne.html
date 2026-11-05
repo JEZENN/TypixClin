@@ -72814,7 +72814,8 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
   function isCustom() { try { return typeof window.isCustom === 'function' && !!window.isCustom(); } catch (e) { return false; } }
   function rerender() { try { if (typeof window.renderItemsTable === 'function') window.renderItemsTable(); } catch (e) {} }
   function setOn(v, fromRemote) {
-    v = !!v; if (v && isCustom()) v = false;
+    v = !!v;
+    if (v && isCustom() && !fromRemote) { syncSettings(); return; }   /* indisponible en sur-mesure : la préférence reste celle du programme officiel */
     if (v === on && !fromRemote) { syncSettings(); return; }
     on = v; try { localStorage.setItem(LS, v ? '1' : '0'); } catch (e) {}
     if (!fromRemote) { lastLocal = Date.now(); if (typeof window._tpxSaveUserSettings === 'function') Promise.resolve(window._tpxSaveUserSettings({ itemsGridView: v })).catch(function () {}); }
@@ -72822,7 +72823,7 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
     rerender(); syncSettings();
   }
   function setRemote(v) { if (typeof v !== 'boolean') return; if (Date.now() - lastLocal < 2500) return; if (v !== on) setOn(v, true); }
-  function off() { var c = document.querySelector('.items-container'); if (c) c.classList.remove('tg-on'); document.body.classList.remove('tg-grid-on'); gridFilters(false); }
+  function off() { var c = document.querySelector('.items-container'); if (c) c.classList.remove('tg-on'); document.body.classList.remove('tg-grid-on'); gridFilters(false); try { syncSettings(); } catch (e) {} }
   /* filtres sans objet dans cette vue : « Urgence relative », « Urgent » (masqués ; remis à « tous » s'ils étaient choisis) — le filtre de référence entier est masqué en CSS */
   function gridFilters(onGrid) {
     [['status-dropdown', 'filter-item-status', ['prio-relative', 'prio-urgent']]].forEach(function (f) {
@@ -72848,7 +72849,7 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
   /* ---------- rendu (appelé par renderItemsTable avec son contexte) ---------- */
   function render(X) {
     var cont = document.querySelector('.items-container'); if (!cont) return;
-    cont.classList.add('tg-on'); document.body.classList.add('tg-grid-on'); gridFilters(true);
+    cont.classList.add('tg-on'); document.body.classList.add('tg-grid-on'); gridFilters(true); try { syncSettings(); } catch (e) {}
     var host = document.getElementById('tpx-grid');
     if (!host) { host = document.createElement('div'); host.id = 'tpx-grid'; cont.appendChild(host); }
     var empty = document.getElementById('items-empty');
@@ -73190,7 +73191,7 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
   /* ---------- Paramètres : Détaillé / Compact / Par item (même sélecteur que « Barème par défaut ») ---------- */
   function curMode() {
     if (pendingMode && Date.now() - pendingT < 1500) return pendingMode;
-    return on ? 'grid' : ((typeof window.getToursViewMode === 'function') ? window.getToursViewMode() : 'classic');
+    return (on && !isCustom()) ? 'grid' : ((typeof window.getToursViewMode === 'function') ? window.getToursViewMode() : 'classic');
   }
   function syncSettings() {
     var sw = document.getElementById('tours-mode-switch'); if (!sw) return;
@@ -73203,11 +73204,11 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
       sw.parentNode.insertBefore(seg, sw.nextSibling);
       seg.addEventListener('click', function (e) {
         var b = e.target.closest('.seg-opt[data-v]'); if (!b) return; e.stopPropagation();
-        if (b.classList.contains('is-disabled')) { toast('La vue « Par item » n\'est pas disponible en programme sur-mesure.'); return; }
+        if (b.getAttribute('data-v') === 'grid' && isCustom()) { paintSeg(seg, card, curMode()); toast('La vue « Par item » n\'est pas disponible en programme sur-mesure.'); return; }
         var v = b.getAttribute('data-v'), before = curMode(); if (v === before) return;
         pendingMode = v; pendingT = Date.now(); paintSeg(seg, card, v);   /* affiché tout de suite (la bascule du tableau est animée) */
         if (v === 'grid') { setOn(true); return; }
-        if (on) setOn(false);
+        if (on && !isCustom()) setOn(false);
         var cur = (typeof window.getToursViewMode === 'function') ? window.getToursViewMode() : 'classic';
         if (cur !== v && typeof window.toggleToursMode === 'function') window.toggleToursMode();
         setTimeout(function () { pendingMode = null; syncSettings(); }, 1200);
