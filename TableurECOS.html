@@ -14211,8 +14211,20 @@ body.ecos-offline-locked .send-to-checklist-btn {
   transition:color .3s ease, opacity .2s ease;
 }
 .ct-sign-l { left:6px; } .ct-sign-r { right:6px; }
-@keyframes ctflip { 0%{transform:scaleY(1);}40%{transform:scaleY(0);}100%{transform:scaleY(1);} }
-.ct-num.flip { animation:ctflip .18s ease; }
+/* changement de chiffre : l'ancien glisse et s'efface, le nouveau arrive (vers le haut en ajout, vers le bas en retrait) */
+.ct-n { position:relative; display:inline-block; }
+.ct-n.ct-anim { -webkit-text-fill-color:transparent; }
+.ct-n.ct-anim::before, .ct-n.ct-anim::after { position:absolute; left:-0.5em; right:-0.5em; top:0; text-align:center; -webkit-text-fill-color:currentColor;
+  animation-duration:.26s; animation-timing-function:cubic-bezier(.2,.7,.3,1); animation-fill-mode:both; animation-delay:inherit; }
+.ct-n.ct-anim::before { content:attr(data-prev); }
+.ct-n.ct-anim::after { content:attr(data-n); }
+.ct-n.ct-up::before { animation-name:ctOutUp; } .ct-n.ct-up::after { animation-name:ctInUp; }
+.ct-n.ct-down::before { animation-name:ctOutDown; } .ct-n.ct-down::after { animation-name:ctInDown; }
+@keyframes ctOutUp { from { transform:translateY(0); opacity:1; } to { transform:translateY(-75%); opacity:0; } }
+@keyframes ctInUp { from { transform:translateY(75%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+@keyframes ctOutDown { from { transform:translateY(0); opacity:1; } to { transform:translateY(75%); opacity:0; } }
+@keyframes ctInDown { from { transform:translateY(-75%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .ct-n.ct-anim { -webkit-text-fill-color:currentColor; } .ct-n.ct-anim::before, .ct-n.ct-anim::after { content:none; animation:none; } }
 
 /* Bloc confiance — même gabarit que la tuile Tours, contour moyen, LECTURE SEULE */
 .ct-conf {
@@ -25350,6 +25362,44 @@ html.tpx-skel .user-auth:not(.logged-in)::after { content: ''; position: absolut
 @media (prefers-reduced-motion: reduce) { .tpx-sk, html.tpx-skel #welcome-message:empty::after, html.tpx-skel .user-auth:not(.logged-in)::after { animation: none; } html.tpx-skel-in #main-content { animation: none; } }
 </style>
 <script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* squelette à chaque ouverture (plus jamais l'ancien écran) */</script>
+<style id="tpx-hd-css">
+/* En-tête compact : plus de bandeau titre / bienvenue ; il ne reste que l'espace du header fixe */
+.page-header { padding: var(--header-height) 0 0 !important; background: none !important; min-height: 0 !important; }
+.page-header > .container { display: none !important; }
+/* barre des pages à 10 px sous le header, au chargement comme après un clic sur un onglet (qui défile à header + 10 px) ;
+   squelette identique */
+#main-content { padding-top: 10px !important; }
+html.tpx-skel #tpx-skel { padding-top: 10px !important; }
+/* repère du tableur à côté du logo : pastille pleine au dégradé du site, légèrement surélevée */
+.logo .tpx-app-tag { position: relative; top: 1px; display: inline-flex; align-items: center; margin-left: .15rem; padding: .32rem .6rem .3rem; border-radius: 8px;
+    font-family: 'Outfit', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .08em; line-height: 1; vertical-align: middle;
+    color: #fff; -webkit-text-fill-color: #fff; background: var(--primary-gradient, linear-gradient(135deg, #3b82f6, #2563eb));
+    box-shadow: 0 2px 6px rgba(37, 99, 235, .28), inset 0 1px 0 rgba(255, 255, 255, .22); }
+[data-theme="dark"] .logo .tpx-app-tag { box-shadow: 0 2px 8px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .18); }
+[data-theme="pastel"] .logo .tpx-app-tag { background: var(--pastel-blue-600, #3b82f6); box-shadow: 0 2px 6px rgba(59, 130, 246, .22); }
+@media (max-width: 600px) { .logo .tpx-app-tag { margin-left: .05rem; padding: .28rem .5rem .26rem; font-size: .66rem; } }
+@media (max-width: 380px) { .logo .tpx-app-tag { margin-left: 0; padding: .24rem .42rem .22rem; font-size: .6rem; } }
+/* salutation éphémère au centre du header (au chargement, puis fondu) */
+#tpx-hello { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%) translateY(-5px); opacity: 0; pointer-events: none;
+    max-width: calc(100% - 300px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: .38rem .95rem; border-radius: 999px; font-size: .92rem; font-weight: 600; color: var(--gray-700);
+    background: var(--white, #fff); border: 1px solid var(--gray-200); box-shadow: 0 2px 10px rgba(15, 23, 42, .06);
+    transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
+#tpx-hello.is-on { opacity: 1; transform: translate(-50%, -50%); }
+#tpx-hello.no-tr { transition: none; }
+#tpx-hello .user-name { background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+[data-theme="dark"] #tpx-hello { background: var(--gray-100); border-color: var(--gray-200); }
+/* téléphone : pas la place entre le logo et l'avatar → petite bulle juste sous le header */
+@media (max-width: 600px) {
+    #tpx-hello { top: calc(100% + 8px); transform: translate(-50%, 0) translateY(-6px); max-width: calc(100% - 32px); font-size: .84rem; padding: .34rem .85rem; box-shadow: 0 4px 14px rgba(15, 23, 42, .10); }
+    #tpx-hello.is-on { transform: translate(-50%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    #tpx-hello { transition: opacity .2s linear; transform: translate(-50%, -50%); }
+    #tpx-hello.is-on { transform: translate(-50%, -50%); }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 600px) { #tpx-hello, #tpx-hello.is-on { transform: translate(-50%, 0); } }
+</style>
 </head>
 <body>
 
@@ -25365,7 +25415,7 @@ html.tpx-skel .user-auth:not(.logged-in)::after { content: ''; position: absolut
     <div class="container header-container">
         <a href="index.html" class="logo">
             <span class="logo-icon"><i class="fas fa-stethoscope"></i></span>
-            TypixClin
+            TypixClin<span class="tpx-app-tag">ECOS</span>
         </a>
         <nav class="nav">
             <ul class="nav-items">
@@ -30189,7 +30239,7 @@ function switchEcosPage(page, opts) {
     if (window._syncNavPill) window._syncNavPill(false);
     if (page === 'stats') renderStats();
     else if (page === 'dashboard') renderDashboardSpecialties();
-    else if (page === 'sdd') renderSDDTable();
+    else if (page === 'sdd') { renderSDDTable(); if (window.tpxSlidePage) window.tpxSlidePage(el); }   /* tableau calculé, puis glissement */
 		else if (page === 'planning' && window.ECOSPlanningModule) {
 			const grid = document.getElementById('calendar-grid');
 
@@ -31277,6 +31327,10 @@ function getFilteredSDDs() {
         });
     }
     const dir = sddSort.dir === 'asc' ? 1 : -1;
+    /* sur-mesure : tri par défaut = première matière de la SDD (ordre de la liste des matières), puis numéro */
+    const _tpxOrd = {}, _tpxCustom = (typeof window.isCustom === 'function' && window.isCustom());
+    if (_tpxCustom) (typeof ECOS_SPECIALTIES !== 'undefined' ? ECOS_SPECIALTIES : []).forEach(function (sp, i) { _tpxOrd[sp.id] = i; });
+    const _tpxSpecCmp = function (a, b) { const ia = _tpxOrd[(a.specialties || [])[0]], ib = _tpxOrd[(b.specialties || [])[0]]; return (ia == null ? 9999 : ia) - (ib == null ? 9999 : ib); };
     list.sort((a, b) => {
         const sa = getSDDState(a.id), sb = getSDDState(b.id);
         let va, vb;
@@ -31287,7 +31341,7 @@ function getFilteredSDDs() {
             case 'faire_passer': va = sa.fairePasserCount; vb = sb.fairePasserCount; break;
             case 'confidence': va = sa.confidence || 0; vb = sb.confidence || 0; break;
             case 'lastRevision': va = sa.lastRevision || ''; vb = sb.lastRevision || ''; return va.localeCompare(vb) * dir;
-            default: return compareSDDDefault(a, b) * dir;
+            default: return ((_tpxCustom ? _tpxSpecCmp(a, b) : 0) || compareSDDDefault(a, b)) * dir;
         }
         return (va - vb) * dir;
     });
@@ -31417,7 +31471,6 @@ function renderSDDTable() {
     if (window._ecosFlipKey) {
         const fk = window._ecosFlipKey, el = document.querySelector('#sdd-table .ct-num[data-flip="' + fk + '"]');
         window._ecosFlipKey = null;
-        if (el) { el.classList.remove('flip'); void el.offsetWidth; el.classList.add('flip'); }
         if (window._ecosAddFx === fk && window.tpxPlusFx) { const num = function () { return document.querySelector('#sdd-table .ct-num[data-flip="' + fk + '"]'); };
             window.tpxPlusFx({ row: true, label: '+1', frame: function () { const n = num(); return n ? n.closest('tr') : null; }, anchor: function () { const n = num(); return n ? (n.closest('.compact-tours, .ct-block, td') || n) : null; } }); }
         window._ecosAddFx = null;
@@ -31519,7 +31572,7 @@ function counterHTML(sddId, type, val) {
                 '<div class="ct-div ct-div-bot" style="background:' + p.border + '"></div>' +
                 '<div class="ct-sign ct-sign-l" style="color:' + p.text + '">\u2212</div>' +
                 '<div class="ct-sign ct-sign-r" style="color:' + p.text + '">+</div>' +
-                '<div class="ct-num" data-flip="' + sddId + '|' + type + '" style="color:' + p.text + '">' + n + '</div>' +
+                '<div class="ct-num" data-flip="' + sddId + '|' + type + '" style="color:' + p.text + '">' + (window.tpxCtNumHtml ? window.tpxCtNumHtml(sddId + '|' + type, n) : n) + '</div>' +
             '</div>' +
         '</div>' +
         '<span class="ct-cap">' + capLabel + '</span>' +
@@ -50597,7 +50650,8 @@ const CARD_HTML = `
         <label class="tpx-acc-label" for="tpx-acc-name">Nom affiché</label>
         <div class="tpx-acc-row">
             <input class="tpx-acc-input" id="tpx-acc-name" type="text" maxlength="60"
-                   autocomplete="name" placeholder="Votre nom">
+                   autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Votre nom"
+                   data-lpignore="true" data-1p-ignore="" data-bwignore="true" data-form-type="other" data-protonpass-ignore="true">
             <button class="tpx-acc-btn" id="tpx-acc-name-save" type="button">
                 <i class="fas fa-check"></i> Enregistrer
             </button>
@@ -55812,6 +55866,7 @@ html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64,
     /* partie visible d'un élément (coupée par un cadre qui défile, ex. tableau plus large que l'écran) */
     function visibleRect(el) {
         var b = el.getBoundingClientRect(), x0 = b.left, x1 = b.right, y0 = b.top, y1 = b.bottom, c = el.parentElement;
+        if (el.tagName === 'TR') { var kc = el.children, ka = Infinity, kz = -Infinity; for (var ki = 0; ki < kc.length; ki++) { var kb = kc[ki].getBoundingClientRect(); if (kb.width > 0 && kb.height > 0) { ka = Math.min(ka, kb.left); kz = Math.max(kz, kb.right); } } if (ka < kz) { x0 = ka; x1 = kz; } }
         while (c && c !== document.body && c !== document.documentElement) {
             var cs = getComputedStyle(c);
             if (/(auto|scroll|hidden|clip)/.test(cs.overflowX)) { var cr = c.getBoundingClientRect(); x0 = Math.max(x0, cr.left + c.clientLeft); x1 = Math.min(x1, cr.left + c.clientLeft + c.clientWidth); }
@@ -55822,13 +55877,22 @@ html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64,
         return { x: x0, y: y0, w: Math.max(0, x1 - x0), h: Math.max(0, y1 - y0) };
     }
     /* calque FIXE qui suit sa cible à chaque image (défilement de la page ou de la liste), retiré tout seul */
-    function layer(ms, get, z) {
+    /* onFrame(dx, dy) : appelé à chaque image avec le décalage déjà appliqué au calque (recalage du cadre) */
+    function layer(ms, get, z, onFrame) {
         var l = document.createElement('div'); l.className = 'tpx-pfx-layer'; l.style.zIndex = String(z); l.setAttribute('aria-hidden', 'true'); document.body.appendChild(l);
         var el0 = get && get(), r0 = el0 ? el0.getBoundingClientRect() : null, t0 = performance.now();
         (function tick() {
             if (!l.isConnected) return;
             if (performance.now() - t0 > ms) { l.remove(); return; }
-            if (get) { var el = get(); if (!el || !r0 || !el.isConnected) { l.style.opacity = '0'; } else { var rr = el.getBoundingClientRect(); l.style.transform = 'translate(' + (rr.left - r0.left) + 'px,' + (rr.top - r0.top) + 'px)'; } }
+            if (get) {
+                var el = get();
+                if (!el || !r0 || !el.isConnected) { l.style.opacity = '0'; }
+                else {
+                    var rr = el.getBoundingClientRect(), dx = rr.left - r0.left, dy = rr.top - r0.top;
+                    l.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+                    if (onFrame) { try { onFrame(dx, dy); } catch (e) {} }
+                }
+            }
             requestAnimationFrame(tick);
         })();
         return l;
@@ -55852,7 +55916,7 @@ html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64,
     function bringIntoView(el) {
         var r = el.getBoundingClientRect(), vh = window.innerHeight || document.documentElement.clientHeight;
         var inList = el.closest('#tpx-mgr-list');
-        if (inList) { var lr = inList.getBoundingClientRect(); if (r.top < lr.top || r.bottom > lr.bottom) { try { el.scrollIntoView({ block: 'nearest', behavior: lessMotion() ? 'auto' : 'smooth' }); } catch (e) {} return 360; } return 0; }
+        if (inList) { var lr = inList.getBoundingClientRect(); if (r.top < lr.top || r.bottom > lr.bottom) { try { el.scrollIntoView({ block: 'nearest', behavior: 'auto' }); } catch (e) {} return 40; } return 0; }   /* immédiat : un cadre mesuré en plein défilement fluide était rogné par le bord de la liste */
         if (r.top < 70 || r.bottom > vh - 8) { try { el.scrollIntoView({ block: 'center', behavior: lessMotion() ? 'auto' : 'smooth' }); } catch (e) { el.scrollIntoView(); } return 480; }
         return 0;
     }
@@ -55864,7 +55928,14 @@ html body .tpx-pin-in { animation: tpxPinIn 0.26s cubic-bezier(0.34, 1.56, 0.64,
         el.classList.remove('tpx-pfx-hit', 'tpx-pfx-pop'); void el.offsetWidth; el.classList.add('tpx-pfx-hit'); if (pop) el.classList.add('tpx-pfx-pop');
         setTimeout(function () { el.classList.remove('tpx-pfx-hit', 'tpx-pfx-pop'); }, 2500);
         if (lessMotion()) return;
-        var l = layer(2500, get, z);
+        /* lignes : le cadre et la pastille reprennent à chaque image la taille et la place réelles de la ligne
+           (fenêtre « Gérer » encore en train de s'ouvrir, liste qui défile) */
+        var l = layer(2500, get, z, pop ? null : function (dx, dy) {
+            var v = visibleRect(el);
+            g.style.left = (v.x + 1 - dx) + 'px'; g.style.top = (v.y + 1 - dy) + 'px';
+            g.style.width = Math.max(0, v.w - 2) + 'px'; g.style.height = Math.max(0, v.h - 2) + 'px';
+            p.style.left = (v.x + v.w / 2 - dx) + 'px'; p.style.top = (pillTop(el, v.y) - dy) + 'px';
+        });
         var g = document.createElement('div'); g.className = 'tpx-pfx-glow';
         g.style.left = (r.x + 1) + 'px'; g.style.top = (r.y + 1) + 'px'; g.style.width = Math.max(0, r.w - 2) + 'px'; g.style.height = Math.max(0, r.h - 2) + 'px';
         var br = parseFloat(getComputedStyle(el).borderTopLeftRadius); if (br) g.style.borderRadius = br + 'px';
@@ -58097,18 +58168,20 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         return added;
     }
 
+    /* Numéro proposé : le plus grand numéro de la matière + 1 (matière vide → 1). Les numéros augmentent
+       toujours : un trou laissé par une suppression n'est pas comblé, le nouvel item arrive à la suite. */
     function nextItemNumber(specialtyId) {
-        var used = state.items.filter(function (i) { return i.specialtyId === specialtyId; })
-                              .map(function (i) { return parseInt(i.num, 10); })
-                              .filter(function (n) { return !isNaN(n); });
-        var n = 1; while (used.indexOf(n) !== -1) n++;
-        return String(n);
+        var max = 0;
+        state.items.forEach(function (i) {
+            if (i.specialtyId !== specialtyId) return;
+            var n = parseInt(i.num, 10); if (!isNaN(n) && n > max) max = n;
+        });
+        return String(max + 1);
     }
     function nextSddNumber() {
-        var used = state.sdd.map(function (d) { return parseInt(d.number, 10); })
-                            .filter(function (n) { return !isNaN(n); });
-        var n = 1; while (used.indexOf(n) !== -1) n++;
-        return n;
+        var max = 0;
+        state.sdd.forEach(function (d) { var n = parseInt(d.number, 10); if (!isNaN(n) && n > max) max = n; });
+        return max + 1;
     }
 
 
@@ -58678,6 +58751,9 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         root.querySelectorAll('input.tpx-input').forEach(function (inp) {
             if (inp.getAttribute('data-tpx-clear')) return;
             inp.setAttribute('data-tpx-clear', '1');
+            /* pas de fenêtre « Informations enregistrées » ni de gestionnaire de mots de passe sur ces champs */
+            [['autocomplete', 'off'], ['data-lpignore', 'true'], ['data-1p-ignore', ''], ['data-bwignore', 'true'],
+             ['data-form-type', 'other'], ['data-protonpass-ignore', 'true']].forEach(function (a) { inp.setAttribute(a[0], a[1]); });
 
             var wrap = document.createElement('div');
             wrap.className = 'tpx-input-wrap';
@@ -58815,18 +58891,25 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         var entries = APP === 'edn'
             ? state.items.filter(function (i) { return i.specialtyId === id; }).length
             : state.sdd.filter(function (d) { return (d.specialties || []).indexOf(id) !== -1; }).length;
-        var entryWord = APP === 'edn' ? 'item' : 'SDD';
+        var entryWord = APP === 'edn' ? (entries > 1 ? 'items' : 'item') : 'SDD';
+        var assoc = APP === 'edn' ? (entries > 1 ? 'associés' : 'associé') : (entries > 1 ? 'associées' : 'associée');
 
         var body =
             '<div class="tpx-warn">' +
                 '<div class="tpx-warn-icon"><i class="fas fa-triangle-exclamation"></i></div>' +
                 '<div class="tpx-warn-txt">Vous êtes sur le point de supprimer la matière ' +
-                '<strong>' + esc(s.name) + '</strong>. Cette action est définitive.</div>' +
+                '<strong>' + esc(s.name) + '</strong>' +
+                (entries ? ' et <strong>' + entries + ' ' + entryWord + '</strong> ' + assoc : '') + '.</div>' +
             '</div>' +
+            '<div class="tpx-del-final"><i class="fas fa-circle-exclamation"></i><span>Cette action est définitive et irréversible : ' +
+                (APP === 'edn'
+                    ? 'la matière, ses items, leurs tours et leurs notes, ses flashcards et sa page de cahier d\'erreurs seront perdus.'
+                    : 'la matière, les SDD qui ne relèvent que d\'elle, leurs passages et leurs notes, ses flashcards et sa page de cahier d\'erreurs seront perdus.') +
+            '</span></div>' +
             '<div class="tpx-del-list" id="tpx-del-list">' +
                 '<div class="tpx-del-row"><i class="fas fa-folder"></i><span>1 matière</span></div>' +
                 (entries ? '<div class="tpx-del-row"><i class="fas fa-list-check"></i><span>' + entries + ' ' +
-                    entryWord + (entries > 1 ? 's' : '') + '</span></div>' : '') +
+                    entryWord + '</span></div>' : '') +
                 '<div class="tpx-del-row tpx-del-pending"><i class="fas fa-spinner fa-spin"></i>' +
                 '<span>Recherche des notes, flashcards et pages de cahier d\'erreurs…</span></div>' +
             '</div>' +
@@ -58834,10 +58917,10 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
             '<strong>programme sur-mesure</strong> sont concernées. Vos notes et flashcards du programme officiel ' +
             'sont rangées séparément et ne sont pas touchées.</span></div>';
 
-        var m = buildModal('Supprimer cette matière ?', 'fa-trash', body,
+        var m = buildModal('Supprimer cette matière ?', 'fa-triangle-exclamation', body,
             '<button class="tpx-btn" id="tpx-del-no" type="button">Annuler</button>' +
             '<button class="tpx-btn tpx-btn-confirm-danger" id="tpx-del-yes" type="button" disabled>' +
-            '<i class="fas fa-trash"></i> Supprimer définitivement</button>');
+            '<i class="fas fa-trash"></i> Supprimer</button>');
 
         var root = m.overlay;
         var yes = root.querySelector('#tpx-del-yes');
@@ -58971,12 +59054,22 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         return { get: function () { return box.getAttribute('data-value'); } };
     }
 
-    /* Liste filtrée sur UNE seule matière (sur-mesure) : la création part sur cette matière */
+    /* Matière proposée à la création : celle du filtre de la liste ; plusieurs matières filtrées → la première
+       dans l'ordre de la liste des matières (pas l'ordre des clics) ; aucun filtre → la première matière.
+       Côté EDN la sélection est une variable de module : elle se lit par window.tpxGetSelectedSpecialties. */
+    function filterSpecialtyIds() {
+        var cur = (APP === 'edn' && typeof window.tpxGetSelectedSpecialties === 'function')
+            ? window.tpxGetSelectedSpecialties()
+            : g(APP === 'edn' ? 'selectedSpecialties' : 'sddFilterSpecialties');
+        return Array.isArray(cur) ? cur.map(String) : [];
+    }
     function filteredSingleSpecialty() {
-        var cur = g(APP === 'edn' ? 'selectedSpecialties' : 'sddFilterSpecialties');
-        if (!Array.isArray(cur) || cur.length !== 1) return null;
-        var id = String(cur[0]);
-        return state.specialties.some(function (s) { return s.id === id; }) ? id : null;
+        if (!state.specialties.length) return null;
+        var cur = filterSpecialtyIds();
+        for (var i = 0; i < state.specialties.length; i++) {
+            if (cur.indexOf(String(state.specialties[i].id)) !== -1) return state.specialties[i].id;
+        }
+        return state.specialties[0].id;
     }
     function openItemModal(key, preSpec) {
         if (!requireCustom()) return;
@@ -59049,6 +59142,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         if (!state.specialties.length) { needSpecialtyFirst(); return; }
         var d = id ? state.sdd.filter(function (x) { return x.id === id; })[0] : null;
         if (id && !d) return;
+        if (!id && !(preSpec && state.specialties.some(function (s) { return s.id === preSpec; }))) preSpec = filteredSingleSpecialty();
         var picked = d ? (d.specialties || []).slice()
             : (preSpec && state.specialties.some(function (s) { return s.id === preSpec; }) ? [preSpec] : []);
 
@@ -59085,7 +59179,9 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         });
         setTimeout(function () { if (!window._tcNoAutoFocus) root.querySelector('#tpx-sdd-title').focus(); }, 60);
 
-        root.querySelector('#tpx-sdd-ok').addEventListener('click', function () {
+        var okBtn = root.querySelector('#tpx-sdd-ok');
+        var submit = function () {
+            if (okBtn.getAttribute('data-busy') === '1') return;
             var title = root.querySelector('#tpx-sdd-title').value.trim();
             var err = root.querySelector('#tpx-sdd-err');
             if (!title) { err.textContent = 'Donnez un intitulé à la situation.'; err.style.display = ''; return; }
@@ -59095,18 +59191,26 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 err.style.display = ''; return;
             }
             if (!picked.length) { err.textContent = 'Rattachez la situation à au moins une matière.'; err.style.display = ''; return; }
+            okBtn.setAttribute('data-busy', '1'); okBtn.disabled = true;   /* un seul ajout, même en double clic / double Entrée */
             upsertSdd({
                 id: id || null, title: title,
                 number: parseInt(root.querySelector('#tpx-sdd-num').value, 10) || nextSddNumber(),
                 specialties: picked
             });
             m.close();
-        });
+        };
+        okBtn.addEventListener('click', submit);
+        var onEnter = function (e) {
+            if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229 || e.repeat) return;
+            e.preventDefault(); submit();
+        };
+        root.querySelector('#tpx-sdd-title').addEventListener('keydown', onEnter);
+        root.querySelector('#tpx-sdd-num').addEventListener('keydown', onEnter);
 
         var del = root.querySelector('#tpx-sdd-del');
         if (del) del.addEventListener('click', function () {
             confirmModal('Supprimer cette SDD ?',
-                'La situation, ses stations enregistrées et sa note sur-mesure seront supprimées. Vos données du programme officiel ne sont pas concernées.',
+                'Cette SDD sera supprimée définitivement : ses passages, sa note et sa progression seront perdus. Cette action est irréversible. Ses flashcards sont conservées (classées « Non classé »).',
                 function () { deleteSdd(id); m.close(); });
         });
     }
@@ -59116,15 +59220,15 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         var m = buildModal(title, 'fa-triangle-exclamation',
             '<div class="tpx-hint" style="font-size:.86rem;line-height:1.6;">' + esc(text) + '</div>',
             '<button class="tpx-btn" id="tpx-cf-no" type="button">Annuler</button>' +
-            '<button class="tpx-btn tpx-btn-primary" id="tpx-cf-yes" type="button" style="margin-left:auto;background:linear-gradient(135deg,#ef4444,#dc2626);">Supprimer</button>');
+            '<button class="tpx-btn tpx-btn-confirm-danger" id="tpx-cf-yes" type="button"><i class="fas fa-trash"></i> Supprimer</button>');
         m.overlay.querySelector('#tpx-cf-no').addEventListener('click', m.close);
         m.overlay.querySelector('#tpx-cf-yes').addEventListener('click', function () { m.close(); onYes(); });
     }
 
     function needSpecialtyFirst() {
         var m = buildModal('Créez d\'abord une matière', 'fa-folder-plus',
-            '<div class="tpx-hint" style="font-size:.86rem;line-height:1.6;">Chaque ' + (APP === 'edn' ? 'item' : 'SDD') +
-            ' est rattaché à une matière. Créez-en une pour continuer.</div>',
+            '<div class="tpx-hint" style="font-size:.86rem;line-height:1.6;">' + (APP === 'edn' ? 'Chaque item est rattaché' : 'Chaque SDD est rattachée') +
+            ' à une matière. Créez-en une pour continuer.</div>',
             '<button class="tpx-btn" id="tpx-ns-no" type="button">Plus tard</button>' +
             '<button class="tpx-btn tpx-btn-primary" id="tpx-ns-go" type="button">Créer une matière</button>');
         m.overlay.querySelector('#tpx-ns-no').addEventListener('click', m.close);
@@ -59170,7 +59274,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
             '</div>' +
             '<div class="search-box tpx-mgr-search">' +
                 '<i class="fas fa-search"></i>' +
-                '<input type="text" class="tpx-mgr-input" id="tpx-mgr-q" placeholder="Rechercher…" autocomplete="off" spellcheck="false">' +
+                '<input type="text" class="tpx-mgr-input" id="tpx-mgr-q" placeholder="Rechercher…" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="" data-bwignore="true" data-form-type="other" data-protonpass-ignore="true">' +
                 '<button class="search-clear-btn" id="tpx-mgr-clear" type="button" style="display:none;" tabindex="-1" aria-label="Effacer">' +
                     '<i class="fas fa-times"></i>' +
                 '</button>' +
@@ -59178,13 +59282,11 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
             '<div class="tpx-mgr-list" id="tpx-mgr-list"></div>';
 
         var foot =
-            '<button class="tpx-btn" id="tpx-mgr-close" type="button">Fermer</button>' +
             '<button class="tpx-btn tpx-btn-primary" id="tpx-mgr-add" type="button"><i class="fas fa-plus"></i> <span id="tpx-mgr-add-label"></span></button>';
 
         var m = buildModal('Gérer mon programme', 'fa-sliders', body, foot, { wide: true, isManager: true });
         var root = m.overlay;
 
-        root.querySelector('#tpx-mgr-close').addEventListener('click', m.close);
         root.querySelectorAll('.tpx-mgr-tab').forEach(function (b) {
             b.addEventListener('click', function () {
                 var nt = b.getAttribute('data-tab'); if (nt === mgrTab) return;
@@ -59215,7 +59317,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
             mgrPendingReturn = { tab: mgrTab, filter: q.value };
             try {
                 if (mgrTab === 'spec') openSpecialtyModal(null);
-                else APP === 'edn' ? openItemModal(null) : openSddModal(null);
+                else APP === 'edn' ? openItemModal(null, filteredSingleSpecialty()) : openSddModal(null, filteredSingleSpecialty());
             } finally { mgrPendingReturn = null; }
         });
 
@@ -59257,6 +59359,29 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
         var s = state.specialties.filter(function (x) { return x.id === id; })[0];
         return (s && s.color) || '#6b7280';
     }
+    function specIconOf(id) {
+        var s = state.specialties.filter(function (x) { return x.id === id; })[0];
+        return (s && s.icon) || 'fa-book-medical';
+    }
+    /* Liste du gestionnaire : par matière (ordre de la liste des matières) puis par numéro ; sans numéro
+       exploitable → à la fin de sa matière, par intitulé. SDD : rangée par sa première matière. */
+    function specOrder() { var o = {}; state.specialties.forEach(function (s, i) { o[s.id] = i; }); return o; }
+    function byOrderThenNum(oa, ob, na, nb, ta, tb) {
+        var a = oa == null ? 1e9 : oa, b = ob == null ? 1e9 : ob;
+        if (a !== b) return a - b;
+        var x = parseInt(na, 10), y = parseInt(nb, 10);
+        if (isNaN(x) !== isNaN(y)) return isNaN(x) ? 1 : -1;
+        if (!isNaN(x) && x !== y) return x - y;
+        return String(ta || '').localeCompare(String(tb || ''), 'fr');
+    }
+    function sortedItems() {
+        var o = specOrder();
+        return state.items.slice().sort(function (a, b) { return byOrderThenNum(o[a.specialtyId], o[b.specialtyId], a.num, b.num, a.name, b.name); });
+    }
+    function sortedSdd() {
+        var o = specOrder();
+        return state.sdd.slice().sort(function (a, b) { return byOrderThenNum(o[(a.specialties || [])[0]], o[(b.specialties || [])[0]], a.number, b.number, a.title, b.title); });
+    }
 
     function renderManagerList(root, m) {
         var list = root.querySelector('#tpx-mgr-list');
@@ -59279,7 +59404,7 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 });
             });
         } else if (APP === 'edn') {
-            state.items.forEach(function (i) {
+            sortedItems().forEach(function (i) {
                 var label = i.num + ' — ' + i.name;
                 if (mgrFilter && label.toLowerCase().indexOf(mgrFilter) === -1 &&
                     specNameOf(i.specialtyId).toLowerCase().indexOf(mgrFilter) === -1) return;
@@ -59287,19 +59412,19 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 rows.push({
                     key: key,
                     color: specColorOf(i.specialtyId),
-                    icon: i.reference ? 'fa-star' : 'fa-list-check',
+                    icon: specIconOf(i.specialtyId),
                     title: label,
                     sub: specNameOf(i.specialtyId) + (i.reference ? ' · item de référence' : ''),
                     edit: function () { openItemModal(key); },
                     del: function () {
                         confirmModal('Supprimer cet item ?',
-                            'L\'item « ' + i.name + ' », ses tours enregistrés et sa note sur-mesure seront supprimés. Vos données du programme officiel ne sont pas concernées.',
+                            'L\'item « ' + i.name + ' » sera supprimé définitivement : ses tours, sa note et sa progression seront perdus. Cette action est irréversible. Ses flashcards sont conservées (classées « Non classé »).',
                             function () { mgrTrackDelete(key, deleteItem(key)); renderManager(root, m); });
                     }
                 });
             });
         } else {
-            state.sdd.forEach(function (d) {
+            sortedSdd().forEach(function (d) {
                 var label = d.number + ' — ' + d.title;
                 var specs = (d.specialties || []).map(specNameOf).join(', ');
                 if (mgrFilter && label.toLowerCase().indexOf(mgrFilter) === -1 &&
@@ -59307,13 +59432,13 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 rows.push({
                     key: d.id,
                     color: specColorOf((d.specialties || [])[0]),
-                    icon: 'fa-list-check',
+                    icon: specIconOf((d.specialties || [])[0]),
                     title: label,
                     sub: specs || 'Aucune matière',
                     edit: function () { openSddModal(d.id); },
                     del: function () {
                         confirmModal('Supprimer cette SDD ?',
-                            'La situation « ' + d.title + ' », ses stations enregistrées et sa note sur-mesure seront supprimées. Vos données du programme officiel ne sont pas concernées.',
+                            'La SDD « ' + d.title + ' » sera supprimée définitivement : ses passages, sa note et sa progression seront perdus. Cette action est irréversible. Ses flashcards sont conservées (classées « Non classé »).',
                             function () { mgrTrackDelete(d.id, deleteSdd(d.id)); renderManager(root, m); });
                     }
                 });
@@ -59493,6 +59618,15 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                     '</div>' +
                 '</div>' +
                 '<div class="tpx-hint" style="margin-top:.6rem;">Changer de mode masque ou réaffiche des lignes : aucun tour n\'est effacé.</div>' +
+                /* case repliable : ouverte en sur-mesure, refermée (et hors tabulation) en programme officiel */
+                '<div class="tpx-mgr-fold' + (state.contentMode === CUSTOM ? ' is-open' : '') + '" id="tpx-mgr-fold"' + (state.contentMode === CUSTOM ? '' : ' aria-hidden="true" inert') + '>' +
+                    '<div class="tpx-mgr-fold-in"><div class="tpx-mgr-box">' +
+                        '<span class="tpx-mgr-box-ico"><i class="fas fa-sliders"></i></span>' +
+                        '<div class="tpx-mgr-box-txt"><strong>Mon programme</strong>' +
+                        '<span>' + (APP === 'edn' ? 'Vos matières et vos items : ajoutez, modifiez, supprimez.' : 'Vos matières et vos SDD : ajoutez, modifiez, supprimez.') + '</span></div>' +
+                        '<button class="tpx-btn tpx-btn-primary" type="button" id="tpx-open-mgr"><i class="fas fa-sliders"></i> Gérer mon programme</button>' +
+                    '</div></div>' +
+                '</div>' +
             '</div>' +
             (hasTrainings() ?
             '<div class="settings-card" data-setting="tpx-trainings">' +
@@ -59522,8 +59656,11 @@ var LS_DIRTY = 'tpx_' + APP + '_contentDirty';
                 '</div>' +
             '</div>' : '') +
             '<div class="tpx-settings-actions">' +
-                '<button class="tpx-btn" type="button" id="tpx-open-mgr"><i class="fas fa-sliders"></i> Gérer mon programme</button>' +
-                '<button class="tpx-btn" type="button" id="tpx-restart-onb"><i class="fas fa-compass"></i> Revoir la présentation</button>' +
+                '<button class="tpx-onb-row" type="button" id="tpx-restart-onb">' +
+                    '<span class="tpx-onb-row-ico"><i class="fas fa-compass"></i></span>' +
+                    '<span class="tpx-onb-row-txt"><strong>Revoir la présentation</strong><span>Rejouer le tour guidé quand vous le souhaitez.</span></span>' +
+                    '<i class="fas fa-chevron-right tpx-onb-row-chev" aria-hidden="true"></i>' +
+                '</button>' +
             '</div>';
 
 body.appendChild(wrap);
@@ -59565,8 +59702,13 @@ bindSeg('tpx-seg-content', function (v) {
     }
 
     function updateSettingsUi() {
-        var mgrBtn = document.getElementById('tpx-open-mgr');
-        if (mgrBtn) mgrBtn.style.display = isCustom() ? '' : 'none';
+        var mgrFold = document.getElementById('tpx-mgr-fold');
+        if (mgrFold) {
+            var mgrOn = isCustom();
+            mgrFold.classList.toggle('is-open', mgrOn);
+            if (mgrOn) { mgrFold.removeAttribute('aria-hidden'); mgrFold.inert = false; }
+            else { mgrFold.setAttribute('aria-hidden', 'true'); mgrFold.inert = true; }
+        }
         [['tpx-seg-content', state.contentMode], ['tpx-seg-trainings', state.trainingsMode]].forEach(function (p) {
             var seg = document.getElementById(p[0]);
             if (!seg) return;
@@ -63136,7 +63278,11 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     var onb = document.getElementById('tpx-restart-onb');
     if (onb && acc) {
       var box = document.getElementById('fc-onb-row');
-      if (!box) { box = document.createElement('div'); box.id = 'fc-onb-row'; box.className = 'tpx-settings-actions fc-onb-row'; }
+      if (!box) {
+        box = document.createElement('div'); box.id = 'fc-onb-row'; box.className = 'fc-onb-row tpx-onb-card';
+        /* en-tête sans les classes settings-card-* : la case suit « Mon compte » sans créer de rubrique à part */
+        box.innerHTML = '<div class="tpx-onb-head"><span class="tpx-onb-ico"><i class="fas fa-compass"></i></span><div class="tpx-onb-titles"><div class="tpx-onb-title">Revoir la présentation</div><div class="tpx-onb-sub">Le tour guidé des pages principales et de leurs réglages.</div></div></div>';
+      }
       if (onb.parentNode !== box) box.appendChild(onb);
       if (acc.nextElementSibling !== box) acc.parentNode.insertBefore(box, acc.nextElementSibling);
     }
@@ -63323,6 +63469,7 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     /* partie VISIBLE d'un élément : coupée aux cadres qui défilent (tableau plus large que l'écran) et à l'écran */
     function vis(el) {
         var b = el.getBoundingClientRect(), x0 = b.left, x1 = b.right, c = el.parentElement;
+        if (el.tagName === 'TR') { var kc = el.children, ka = Infinity, kz = -Infinity; for (var ki = 0; ki < kc.length; ki++) { var kb = kc[ki].getBoundingClientRect(); if (kb.width > 0 && kb.height > 0) { ka = Math.min(ka, kb.left); kz = Math.max(kz, kb.right); } } if (ka < kz) { x0 = ka; x1 = kz; } }
         while (c && c !== document.body && c !== document.documentElement) {
             var ox = getComputedStyle(c).overflowX;
             if (ox === 'auto' || ox === 'scroll' || ox === 'hidden' || ox === 'clip') { var cr = c.getBoundingClientRect(); x0 = Math.max(x0, cr.left + c.clientLeft); x1 = Math.min(x1, cr.left + c.clientLeft + c.clientWidth); }
@@ -63332,7 +63479,7 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
         return { x: x0, y: b.top, w: Math.max(0, x1 - x0), h: b.height };
     }
     /* calque fixe qui suit sa cible à chaque image (défilement, tableau redessiné) ; retiré tout seul */
-    function layer(ms, get) {
+    function layer(ms, get, onFrame) {
         var l = document.createElement('div'); l.className = 'tpx-pf-layer'; l.setAttribute('aria-hidden', 'true'); document.body.appendChild(l);
         var e0 = get(), r0 = e0 ? e0.getBoundingClientRect() : null, t0 = performance.now();
         (function tick() {
@@ -63340,7 +63487,11 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
             if (performance.now() - t0 > ms) { l.remove(); return; }
             var e = get();
             if (!e || !r0 || !e.getClientRects().length) l.style.opacity = '0';
-            else { var r = e.getBoundingClientRect(); l.style.opacity = ''; l.style.transform = 'translate(' + (r.left - r0.left) + 'px,' + (r.top - r0.top) + 'px)'; }
+            else {
+                var r = e.getBoundingClientRect(), dx = r.left - r0.left, dy = r.top - r0.top;
+                l.style.opacity = ''; l.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+                if (onFrame) { try { onFrame(e, dx, dy); } catch (x) {} }   /* recalage du cadre sur la ligne */
+            }
             requestAnimationFrame(tick);
         })();
         return l;
@@ -63351,7 +63502,12 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
             if (!o || lessMotion()) return false;
             var f = o.frame && o.frame(); if (!f || !f.getClientRects().length) return false;
             var r = vis(f); if (r.w < 4) return false;
-            var l = layer(2300, o.frame), fr = document.createElement('div');
+            var fr = document.createElement('div');
+            var l = layer(2300, o.frame, o.row ? function (e, dx, dy) {   /* ligne : cadre recalé à chaque image sur sa partie visible */
+                var v = vis(e);
+                fr.style.left = (v.x + 2 - dx) + 'px'; fr.style.top = (v.y + 1 - dy) + 'px';
+                fr.style.width = Math.max(0, v.w - 4) + 'px'; fr.style.height = Math.max(0, v.h - 2) + 'px';
+            } : null);
             fr.className = 'tpx-pf-frame' + (o.row ? ' is-row' : '');
             var pad = o.row ? 0 : 2;
             fr.style.left = (r.x - pad + (o.row ? 2 : 0)) + 'px'; fr.style.top = (r.y - pad + (o.row ? 1 : 0)) + 'px';
@@ -63367,6 +63523,187 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
 })();
 </script>
 <!-- ═══ FIN ANIMATION « +1 » ═══ -->
+<!-- ═══ PROGRAMME SUR-MESURE : BOUTONS DES FENÊTRES, CONFIRMATIONS, PASTILLE DU HEADER, COMPTEUR, GLISSEMENT ═══ -->
+<style id="tpx-sm-css">
+/* Fenêtres de création et « Gérer mon programme » : survol (soulèvement, ombre, plus clair) et appui (enfoncé) */
+#tpx-modal-overlay .tpx-btn { transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .12s ease, filter .16s ease; }
+#tpx-modal-overlay .tpx-btn-primary:hover:not(:disabled),
+#tpx-modal-overlay .tpx-btn-confirm-danger:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.07); }
+#tpx-modal-overlay .tpx-btn-primary:hover:not(:disabled) { box-shadow: 0 8px 20px var(--tpx-accent-45); }
+#tpx-modal-overlay .tpx-btn-confirm-danger:hover:not(:disabled) { box-shadow: 0 8px 20px var(--tpx-danger-45); }
+#tpx-modal-overlay .tpx-btn-primary:active:not(:disabled),
+#tpx-modal-overlay .tpx-btn-confirm-danger:active:not(:disabled) { transform: scale(0.96); filter: brightness(0.93); }
+#tpx-modal-overlay .tpx-btn-primary:active:not(:disabled) { box-shadow: 0 2px 6px var(--tpx-accent-30); }
+#tpx-modal-overlay .tpx-btn-confirm-danger:active:not(:disabled) { box-shadow: 0 2px 6px var(--tpx-danger-30); }
+/* bouton secondaire (Annuler, Plus tard…) : pastel gris-bleu */
+#tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger) { background: #f1f5f9; border-color: #dbe3ec; color: #475569; }
+#tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger):hover:not(:disabled) { background: #e2e8f0; border-color: #c3cedb; color: #334155; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08); }
+#tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger):active:not(:disabled) { background: #d4dce7; border-color: #b6c2d1; color: #1e293b; transform: scale(0.96); box-shadow: none; }
+[data-theme="dark"] #tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger) { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.24); color: #cbd5e1; }
+[data-theme="dark"] #tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger):hover:not(:disabled) { background: rgba(148, 163, 184, 0.2); border-color: rgba(148, 163, 184, 0.36); color: #e2e8f0; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25); }
+[data-theme="dark"] #tpx-modal-overlay .tpx-btn:not(.tpx-btn-primary):not(.tpx-btn-danger):not(.tpx-btn-confirm-danger):active:not(:disabled) { background: rgba(148, 163, 184, 0.3); border-color: rgba(148, 163, 184, 0.46); color: #f1f5f9; box-shadow: none; }
+/* « Supprimer » d'une fenêtre de modification : rouge plein au survol, plus foncé à l'appui (clair et sombre) */
+#tpx-modal-overlay .tpx-btn.tpx-btn-danger:hover:not(:disabled) { background: #ef4444; border-color: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+#tpx-modal-overlay .tpx-btn.tpx-btn-danger:active:not(:disabled) { background: #dc2626; border-color: #dc2626; color: #fff; transform: scale(0.96); box-shadow: none; }
+[data-theme="dark"] #tpx-modal-overlay #tpx-it-del:hover:not(:disabled), [data-theme="dark"] #tpx-modal-overlay #tpx-mat-del:hover:not(:disabled), [data-theme="dark"] #tpx-modal-overlay #tpx-sdd-del:hover:not(:disabled) { background: #ef4444; border-color: #ef4444; color: #fff; }
+[data-theme="dark"] #tpx-modal-overlay #tpx-it-del:active:not(:disabled), [data-theme="dark"] #tpx-modal-overlay #tpx-mat-del:active:not(:disabled), [data-theme="dark"] #tpx-modal-overlay #tpx-sdd-del:active:not(:disabled) { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+    #tpx-modal-overlay .tpx-btn { transition: none; }
+    #tpx-modal-overlay .tpx-btn:hover, #tpx-modal-overlay .tpx-btn:active { transform: none !important; }
+}
+/* encart « définitif et irréversible » (suppression d'une matière) */
+.tpx-del-final { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.75rem 0.85rem; border-radius: 10px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); color: #b91c1c; font-size: 0.82rem; font-weight: 600; line-height: 1.5; }
+.tpx-del-final i { margin-top: 0.18rem; }
+[data-theme="dark"] .tpx-del-final { background: rgba(248, 113, 113, 0.1); border-color: rgba(248, 113, 113, 0.32); color: #fca5a5; }
+/* raccourcis de pages du header : une seule pastille active, qui glisse d'une icône à l'autre */
+#tpx-hnav .tpx-hn-pill { position: absolute; left: 0; top: 4px; bottom: 4px; width: 0; border-radius: 999px; pointer-events: none; z-index: 0; opacity: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #2563eb)); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+    transition: transform .26s cubic-bezier(.22, 1, .36, 1), width .26s cubic-bezier(.22, 1, .36, 1), opacity .2s ease; }
+#tpx-hnav .tpx-hn-pill.is-on { opacity: 1; }
+#tpx-hnav.is-out .tpx-hn-pill { opacity: 0; }
+#tpx-hnav .tpx-hn-pill.no-tr { transition: none !important; }
+#tpx-hnav .tpx-hn-btn { z-index: 1; }
+#tpx-hnav .tpx-hn-btn.is-active, #tpx-hnav .tpx-hn-btn.is-active:hover,
+[data-theme="dark"] #tpx-hnav .tpx-hn-btn.is-active, [data-theme="dark"] #tpx-hnav .tpx-hn-btn.is-active:hover { background: transparent; box-shadow: none; color: #fff; }
+@media (prefers-reduced-motion: reduce) { #tpx-hnav .tpx-hn-pill { transition: none !important; } }
+/* page des items / des SDD : même léger glissement que les autres pages, une fois le tableau calculé */
+#page-items.app-page.tpx-page-slide, #page-sdd.app-page.tpx-page-slide { animation: tpxPageSlideIn 300ms cubic-bezier(0.4, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { #page-items.app-page.tpx-page-slide, #page-sdd.app-page.tpx-page-slide { animation: none; } }
+/* Paramètres : case « Mon programme » sous « Contenu du tableur » (sur-mesure) — dépliée / repliée en douceur */
+.tpx-mgr-fold { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(-6px); margin-top: 0;
+    transition: grid-template-rows .34s cubic-bezier(.2,.7,.2,1), opacity .24s ease, transform .34s cubic-bezier(.2,.7,.2,1), margin-top .34s cubic-bezier(.2,.7,.2,1); }
+.tpx-mgr-fold.is-open { grid-template-rows: 1fr; opacity: 1; transform: none; margin-top: .75rem; }
+.tpx-mgr-fold-in { min-height: 0; overflow: hidden; }
+.tpx-mgr-box { display: flex; align-items: center; gap: .7rem; padding: .7rem .8rem; border-radius: var(--border-radius-md, 10px);
+    border: 1px solid rgba(59,130,246,0.4); background: rgba(59,130,246,0.06); box-shadow: 0 1px 4px rgba(59,130,246,0.08); }
+.tpx-mgr-box-ico { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; color: var(--primary, #3b82f6); background: rgba(59,130,246,0.12); }
+.tpx-mgr-box-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.tpx-mgr-box-txt strong { font-size: .82rem; font-weight: 650; color: var(--gray-800); }
+.tpx-mgr-box-txt span { font-size: .78rem; color: var(--gray-500); line-height: 1.4; }
+.tpx-mgr-box #tpx-open-mgr { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 520px) {
+    .tpx-mgr-box { display: grid; grid-template-columns: auto 1fr; align-items: start; }
+    .tpx-mgr-box #tpx-open-mgr { grid-column: 1 / -1; width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .tpx-mgr-fold { transition: none; transform: none; } }
+.tpx-settings-actions:empty { display: none; }
+/* Paramètres, « Mon compte » : case « Revoir la présentation » (même allure que les autres cases) */
+.tpx-onb-card { border: 1px solid var(--gray-200); border-radius: var(--border-radius-lg, 16px); padding: 1.1rem 1.15rem; background: var(--gray-50);
+    display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; transition: border-color .2s, box-shadow .2s; }
+.tpx-onb-card:hover { border-color: var(--gray-300); box-shadow: var(--shadow-sm); }
+[data-theme="dark"] .tpx-onb-card { background: var(--gray-100); border-color: var(--gray-200); }
+.tpx-onb-head { display: flex; align-items: flex-start; gap: .85rem; }
+.tpx-onb-ico { width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1rem; background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 3px 10px rgba(59,130,246,0.35); }
+.tpx-onb-titles { min-width: 0; flex: 1; padding-top: .1rem; }
+.tpx-onb-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--gray-900); line-height: 1.25; }
+.tpx-onb-sub { font-size: .8rem; color: var(--gray-500); line-height: 1.45; margin-top: .2rem; }
+.tpx-onb-row { width: 100%; display: flex; align-items: center; gap: .8rem; padding: .8rem .9rem; text-align: left; cursor: pointer; font: inherit;
+    border: 1px solid var(--gray-200); border-radius: var(--border-radius-md, 10px); background: var(--white, #fff); color: inherit;
+    transition: border-color .18s, box-shadow .18s, transform .18s, background .18s; }
+[data-theme="dark"] .tpx-onb-row { background: var(--gray-50); }
+.tpx-onb-row:hover { border-color: rgba(59,130,246,0.45); box-shadow: 0 2px 8px rgba(59,130,246,0.12); }
+.tpx-onb-row:active { transform: scale(.985); }
+.tpx-onb-row:focus-visible { outline: 2px solid var(--primary, #3b82f6); outline-offset: 2px; }
+.tpx-onb-row-ico { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; color: var(--primary, #3b82f6); background: rgba(59,130,246,0.12); }
+.tpx-onb-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.tpx-onb-row-txt strong { font-size: .88rem; font-weight: 650; color: var(--gray-800); }
+.tpx-onb-row-txt span { font-size: .78rem; color: var(--gray-500); line-height: 1.4; }
+.tpx-onb-row-chev { flex-shrink: 0; font-size: .8rem; color: var(--gray-400); transition: transform .18s, color .18s; }
+.tpx-onb-row:hover .tpx-onb-row-chev { transform: translateX(2px); color: var(--primary, #3b82f6); }
+@media (prefers-reduced-motion: reduce) { .tpx-onb-row, .tpx-onb-row-chev, .tpx-onb-card { transition: none; } .tpx-onb-row:active { transform: none; } .tpx-onb-row:hover .tpx-onb-row-chev { transform: none; } }
+</style>
+<script id="tpx-sm-js">
+(function () {
+    'use strict';
+    function lessMotion() { try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
+    /* Chiffre du compteur compact. Mémoire par compteur (dernier chiffre, sens, fin de l'animation) : une cellule
+       redessinée pendant l'animation la reprend à la même phase (délai négatif) au lieu de la couper. */
+    var MEM = {}, DUR = 260;
+    window.tpxCtNumHtml = function (key, n) {
+        n = Number(n) || 0;
+        var now = Date.now(), m = MEM[key];
+        if (!m) { MEM[key] = { n: n, end: 0 }; return '<span class="ct-n">' + n + '</span>'; }
+        if (m.n !== n) { m.prev = m.n; m.dir = n > m.n ? 'ct-up' : 'ct-down'; m.n = n; m.end = lessMotion() ? 0 : now + DUR; }
+        if (m.end > now) {
+            return '<span class="ct-n ct-anim ' + m.dir + '" data-prev="' + m.prev + '" data-n="' + n + '" style="animation-delay:-' + Math.max(0, DUR - (m.end - now)) + 'ms">' + n + '</span>';
+        }
+        return '<span class="ct-n">' + n + '</span>';
+    };
+    /* Glissement d'apparition d'une page lourde, joué à l'image qui suit son calcul (pas depuis un raccourci du header) */
+    window.tpxSlidePage = function (el) {
+        if (!el) return;
+        requestAnimationFrame(function () {
+            if (!el.classList.contains('active') || document.body.classList.contains('tpx-hn-go') || lessMotion()) return;
+            el.classList.remove('tpx-page-slide'); void el.offsetWidth; el.classList.add('tpx-page-slide');
+            clearTimeout(el._tpxSlideT); el._tpxSlideT = setTimeout(function () { el.classList.remove('tpx-page-slide'); }, 360);
+        });
+    };
+    /* Tour lancé par « Ajouter Tour » de la fenêtre des notes : origine lue (et effacée) une seule fois à la validation */
+    window.tpxTakeNotesTourOrigin = function (t) {
+        var o = window._tpxTourFromNotes; window._tpxTourFromNotes = null;
+        if (!o || !t || Date.now() - o.t > 120000 || o.key !== String(t.specialtyId) + '-' + String(t.fc)) return null;
+        return { sId: String(t.specialtyId), fc: String(t.fc) };
+    };
+    /* Mode Compact : cadre vert qui suit la ligne + pastille « +1 tour » ; faux si la ligne n'est pas visible
+       (mouvement réduit, autre page, ligne hors écran) → l'appelant garde l'ancien check */
+    window.tpxNotesTourFx = function (o) {
+        try {
+            if (!o || typeof window.getToursViewMode !== 'function' || window.getToursViewMode() !== 'compact' || !window.tpxPlusFx) return false;
+            var esc = function (v) { return (window.CSS && CSS.escape) ? CSS.escape(v) : String(v).replace(/["\\]/g, '\\$&'); };
+            var cell = function () { return document.querySelector('#items-table-body .tour-cell[data-specialty="' + esc(o.sId) + '"][data-fc="' + esc(o.fc) + '"]'); };
+            var c0 = cell(), tr = c0 && c0.closest('tr');
+            if (!tr || !tr.getClientRects().length) return false;
+            var r = tr.getBoundingClientRect(), vh = window.innerHeight || document.documentElement.clientHeight;
+            if (r.bottom < 0 || r.top > vh) return false;
+            return !!window.tpxPlusFx({ row: true, label: '+1 tour',
+                frame: function () { var c = cell(); return c ? c.closest('tr') : null; },
+                anchor: function () { var c = cell(); return c ? (c.querySelector('.compact-tours .ct-block') || c) : null; } });
+        } catch (e) { return false; }
+    };
+})();
+</script>
+<script id="tpx-hd-js">
+(function () {
+    'use strict';
+    /* Reprend le texte de #welcome-message (toujours tenu à jour par le site, mais plus affiché) :
+       la salutation s'affiche une fois par connexion, ~2,8 s, et s'efface tout de suite si la barre de
+       raccourcis du header apparaît (même emplacement). */
+    var el = null, timer = null, shownFor = '';
+    function hnavOn() { var d = document.getElementById('tpx-hnav'); return !!(d && d.classList.contains('is-on')); }
+    function text(w) { return (w.innerHTML || '').replace(/\s*!\s*$/, ''); }
+    function hide() { clearTimeout(timer); if (el) el.classList.remove('is-on'); }
+    function show(html) {
+        var h = document.getElementById('header'); if (!h) return;
+        if (!el) { el = document.createElement('div'); el.id = 'tpx-hello'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); h.appendChild(el); }
+        el.innerHTML = html;
+        if (hnavOn()) return;
+        void el.offsetWidth;
+        el.classList.add('is-on');
+        clearTimeout(timer); timer = setTimeout(hide, 2800);
+    }
+    function check() {
+        var w = document.getElementById('welcome-message'); if (!w) return;
+        var t = (w.textContent || '').trim();
+        if (!t) { shownFor = ''; hide(); return; }   /* déconnexion : la prochaine connexion salue à nouveau */
+        if (shownFor) { if (el && el.classList.contains('is-on')) el.innerHTML = text(w); return; }   /* nom remis en forme pendant l'affichage */
+        shownFor = t; show(text(w));
+    }
+    function start() {
+        var w = document.getElementById('welcome-message');
+        if (w) new MutationObserver(check).observe(w, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        check();
+        var tries = 0, t = setInterval(function () {
+            var d = document.getElementById('tpx-hnav');
+            if (d) { clearInterval(t); new MutationObserver(function () { if (hnavOn()) hide(); }).observe(d, { attributes: true, attributeFilter: ['class'] }); }
+            else if (++tries > 60) clearInterval(t);
+        }, 500);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
 <style id="tpx-hnav-css">
 #tpx-hnav { position: absolute; left: var(--hn-cx, 50%); top: 50%; z-index: 2; display: none; align-items: center; gap: 4px; box-sizing: border-box;
     width: var(--hn-w, 300px); height: 46px; padding: 4px;     border-radius: 999px; background: var(--white); border: 1px solid var(--gray-200);
@@ -63413,7 +63750,7 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
         });
         var td = document.getElementById('global-todo-btn');
         if (td) html += '<button type="button" class="tpx-hn-btn is-todo" data-hn-todo="1" aria-label="Ouvrir la To-Do List"><i class="fas fa-list-check" aria-hidden="true"></i><span class="tpx-hn-lbl">To-Do</span><span class="tpx-hn-cnt" hidden></span></button>';
-        dock.innerHTML = html;
+        dock.innerHTML = '<span class="tpx-hn-pill" aria-hidden="true"></span>' + html; pillPlaced = false;
         dock.querySelectorAll('.tpx-hn-btn').forEach(function (b, i) { b.style.setProperty('--hn-i', String(i)); });
         sync();
         return true;
@@ -63422,10 +63759,23 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
         if (!dock || !nav) return;
         var act = nav.querySelector('.app-nav-btn.active'), p = act ? act.getAttribute('data-page') : null;
         dock.querySelectorAll('[data-hn-page]').forEach(function (b) { var on = b.getAttribute('data-hn-page') === p; b.classList.toggle('is-active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+        movePill(false);
         var c = document.getElementById('global-todo-count'), cb = dock.querySelector('.tpx-hn-cnt');
         if (cb) { var shown = !!c && c.style.display !== 'none' && c.textContent.trim() !== '' && c.textContent.trim() !== '0'; cb.hidden = !shown; if (shown) cb.textContent = c.textContent.trim(); }
     }
     function n() { return dock ? dock.querySelectorAll('.tpx-hn-btn').length : 0; }
+    /* pastille active unique qui glisse d'une icône à l'autre ; première pose et réaffichage sans glissement */
+    var pillPlaced = false;
+    function movePill(instant) {
+        var pill = dock && dock.querySelector('.tpx-hn-pill'); if (!pill) return;
+        var b = dock.querySelector('.tpx-hn-btn.is-active');
+        if (!b || !b.offsetWidth || !dock.classList.contains('is-on')) { pill.classList.remove('is-on'); pillPlaced = false; return; }
+        var jump = instant || !pillPlaced || lessMotion();
+        if (jump) pill.classList.add('no-tr');
+        pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + b.offsetLeft + 'px)'; pill.classList.add('is-on');
+        if (jump) { void pill.offsetWidth; pill.classList.remove('no-tr'); }
+        pillPlaced = true;
+    }
     function place() {   /* centre de l'espace libre entre le logo et les menus de droite */
         var hr = header.getBoundingClientRect(), logo = header.querySelector('.logo'), right = header.querySelector('.nav, #mobile-menu-btn, #user-auth');
         var l = logo ? logo.getBoundingClientRect().right : hr.left, r = hr.right;
@@ -63441,6 +63791,7 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
         var p = place(); if (!p.fits) return;
         clearTimeout(busy); state = 'on'; sync();
         if (!dock.classList.contains('is-on')) { dock.classList.add('no-tr', 'is-on', 'is-out'); void dock.offsetWidth; dock.classList.remove('no-tr'); }
+        movePill(true);
         requestAnimationFrame(function () { if (state === 'on') dock.classList.remove('is-out'); });   /* fondu sur place, icônes l'une après l'autre */
     }
     function hide() {
@@ -63463,7 +63814,7 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     function boot() {
         if (booted || !build()) return; booted = true;
         window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', function () { if (state === 'on') { var p = place(); if (!p.fits || !wide()) hide(false); } check(false); });
+        window.addEventListener('resize', function () { if (state === 'on') { var p = place(); if (!p.fits || !wide()) hide(false); else movePill(true); } check(false); });
         new MutationObserver(sync).observe(nav, { attributes: true, subtree: true, attributeFilter: ['class'] });
         var c = document.getElementById('global-todo-count'); if (c) new MutationObserver(sync).observe(c, { attributes: true, childList: true, characterData: true, subtree: true });
         dock.addEventListener('click', function (e) {
