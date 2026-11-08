@@ -25779,6 +25779,9 @@ window.tpxSkelHTML = function (kind) {
     }
     return '<div class="tpx-skl tpx-skl-' + kind + '" contenteditable="false" aria-busy="true" aria-label="Chargement">' + out + '</div>';
 };
+/* Un éditeur encore en chargement, ou dont le chargement a échoué, ne contient pas la note : ce contenu n'est jamais enregistré. */
+window.tpxHtmlPasNote = function (html) { return /tpx-skl|Cette note n.a pas pu être chargée/.test(String(html == null ? '' : html)); };
+window.tpxRetirerSquelette = function (html) { return String(html == null ? '' : html).replace(/<div class="tpx-skl[^>]*>(?:<span[^>]*><\/span>)*<\/div>/g, ''); };
 </script>
 <section class="main-content" id="main-content">
     <div class="container">
@@ -32751,7 +32754,7 @@ function ecosErrAutoSave() {
     // brutale de l'onglet dans cette fenêtre de 1.5s laissait la dernière
     // saisie non protégée (ni en pending local, ni sur Firestore).
     var editor = document.getElementById('ecosErrEditor');
-    if (editor && _ecosErrCurrentId && !_ecosErrLoading) {
+    if (editor && _ecosErrCurrentId && !_ecosErrLoading && !window.tpxHtmlPasNote(editor.innerHTML)) {
         var _immediateHtml = typeof sanitizeNotes === 'function'
             ? sanitizeNotes(editor.innerHTML)
             : editor.innerHTML;
@@ -32773,6 +32776,7 @@ async function ecosErrSaveNow() {
     if (_ecosErrLoading) return false; // ne pas sauvegarder pendant le chargement
     var speId  = _ecosErrCurrentId;
     var editor = document.getElementById('ecosErrEditor'); if (!editor) return false;
+    if (window.tpxHtmlPasNote(editor.innerHTML)) return false;
     var html = typeof sanitizeNotes === 'function'
         ? sanitizeNotes(editor.innerHTML)
         : editor.innerHTML;
@@ -35002,7 +35006,7 @@ function notesOnInput() {
     // qui définit _loadSDDNote/_saveSDDNote, donc inaccessible ici directement.
     if (window.currentUser && currentSDDId && typeof window.sddNotesPendingKey === 'function') {
         const editor = document.getElementById('sdd-notes-editor');
-        if (editor) {
+        if (editor && !window.tpxHtmlPasNote(editor.innerHTML)) {
             const _lsKey = window.sddNotesPendingKey(window.currentUser.uid, currentSDDId);
             window.TPXSafeStore.set(_lsKey, JSON.stringify({ html: editor.innerHTML, savedAt: Date.now() }));
         }
@@ -35049,6 +35053,7 @@ function saveSDDNoteNow() {
     if (!currentSDDId) return;
     const sddId = currentSDDId; // capturer avant tout callback async
     const editor = document.getElementById('sdd-notes-editor');
+    if (window.tpxHtmlPasNote(editor.innerHTML)) return;
     const html = sanitizeNotes(editor.innerHTML);
     if (window._saveSDDNote) {
         setNotesAutosaveIcon('saving');
@@ -35075,7 +35080,7 @@ window.addEventListener('pagehide', function () {
     if (_notesSavedFlag) return;
     if (!currentSDDId || !window.currentUser || typeof window.sddNotesPendingKey !== 'function') return;
     var editor = document.getElementById('sdd-notes-editor');
-    if (!editor) return;
+    if (!editor || window.tpxHtmlPasNote(editor.innerHTML)) return;
     var _lsKey = window.sddNotesPendingKey(window.currentUser.uid, currentSDDId);
     try {
         localStorage.setItem(_lsKey, JSON.stringify({ html: editor.innerHTML, savedAt: Date.now() }));
@@ -44199,7 +44204,7 @@ window._loadSDDNote = async function (sddId) {
             const raw = localStorage.getItem(_lsKey);
             if (!raw) return null;
             const obj = JSON.parse(raw);
-            return (obj && typeof obj.html === 'string') ? obj : null;
+            return (obj && typeof obj.html === 'string' && !window.tpxHtmlPasNote(obj.html)) ? obj : null;
         } catch (e) { return null; }
     }
     let firestoreHtml = null, firestoreTime = 0, firestoreError = false;
@@ -44227,6 +44232,7 @@ window._loadSDDNote = async function (sddId) {
 };
 window._saveSDDNote = async function (sddId, html) {
     if (!currentUser || !sddId) return false;
+    if (window.tpxHtmlPasNote(html)) return false;
     const uid = currentUser.uid;
     const _lsKey = sddNotesPendingKey(uid, sddId);
     // 1) Brouillon local protégé AVANT la tentative Firestore : ne bloque

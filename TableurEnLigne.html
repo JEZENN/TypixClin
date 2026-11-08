@@ -17189,6 +17189,9 @@ window.tpxSkelHTML = function (kind) {
     }
     return '<div class="tpx-skl tpx-skl-' + kind + '" contenteditable="false" aria-busy="true" aria-label="Chargement">' + out + '</div>';
 };
+/* Un éditeur encore en chargement, ou dont le chargement a échoué, ne contient pas la note : ce contenu n'est jamais enregistré. */
+window.tpxHtmlPasNote = function (html) { return /tpx-skl|Cette note n.a pas pu être chargée/.test(String(html == null ? '' : html)); };
+window.tpxRetirerSquelette = function (html) { return String(html == null ? '' : html).replace(/<div class="tpx-skl[^>]*>(?:<span[^>]*><\/span>)*<\/div>/g, ''); };
 </script>
 <section class="main-content" id="main-content">
     <div class="container">
@@ -35330,7 +35333,7 @@ async function loadTrainNoteFromFirestore(trainId) {
             const raw = localStorage.getItem(_lsKey);
             if (!raw) return null;
             const obj = JSON.parse(raw);
-            return (obj && typeof obj.html === 'string') ? obj : null;
+            return (obj && typeof obj.html === 'string' && !window.tpxHtmlPasNote(obj.html)) ? obj : null;
         } catch (e) { return null; }
     }
 
@@ -35341,7 +35344,7 @@ async function loadTrainNoteFromFirestore(trainId) {
         const ref  = doc(db, 'users', currentUser.uid, 'notesEntrainements', String(trainId));
         const snap = await getDoc(ref);
         if (snap.exists()) {
-            firestoreHtml = snap.data().html || '';
+            firestoreHtml = window.tpxRetirerSquelette(snap.data().html || '');
             const upd = snap.data().updatedAt;
             firestoreTime = upd ? (upd.toDate ? upd.toDate().getTime() : new Date(upd).getTime()) : 0;
         }
@@ -35381,6 +35384,7 @@ async function saveTrainNoteFromFirestore(trainId, html) {
         console.warn('[TrainNotes] Bloqué — currentUser:', !!currentUser, 'trainId:', trainId);
         return false;
     }
+    if (window.tpxHtmlPasNote(html)) return false;
     // Le contrat de retour reste inchangé (true/false). On mémorise
     // seulement, pour l'appelant qui affiche le message (saveTrainNotes), si
     // l'échec vient d'une note > 1 Mo (refus définitif, pas un souci réseau).
@@ -35410,7 +35414,7 @@ async function loadSpeNoteFromFirestore(speId) {
             const raw = localStorage.getItem(_lsKey);
             if (!raw) return null;
             const obj = JSON.parse(raw);
-            return (obj && typeof obj.html === 'string') ? obj : null;
+            return (obj && typeof obj.html === 'string' && !window.tpxHtmlPasNote(obj.html)) ? obj : null;
         } catch (e) { return null; }
     }
     let firestoreHtml = null, firestoreTime = 0, firestoreError = false;
@@ -35418,7 +35422,7 @@ async function loadSpeNoteFromFirestore(speId) {
         const ref  = doc(db, 'users', currentUser.uid, TPXC('ErreurSpe'), String(speId));
         const snap = await getDoc(ref);
         if (snap.exists()) {
-            firestoreHtml = snap.data().html || '';
+            firestoreHtml = window.tpxRetirerSquelette(snap.data().html || '');
             const upd = snap.data().updatedAt;
             firestoreTime = upd ? (upd.toDate ? upd.toDate().getTime() : new Date(upd).getTime()) : 0;
         }
@@ -35449,6 +35453,7 @@ async function saveSpeNoteFromFirestore(speId, html) {
         console.warn('[SpeErr] Bloque - currentUser:', !!currentUser, 'speId:', speId);
         return false;
     }
+    if (window.tpxHtmlPasNote(html)) return false;
     // Même mémorisation que saveTrainNoteFromFirestore : contrat de
     // retour inchangé, l'appelant (saveSpeErr) choisit le message affiché.
     (window._tpxNoteTooLarge = window._tpxNoteTooLarge || {})['spe:' + speId] = false;
@@ -41541,6 +41546,7 @@ return _firestoreMissing
 async function saveNoteToFirestore(itemKey, html) {
     var _cu = window._notesFirestore.getCurrentUser();
     if (!_cu || !itemKey) return false;
+    if (window.tpxHtmlPasNote(html)) return false;
     if (html === _notesLastHtml && itemKey === _notesKey) return false;
 
     // ✅ Clé avec UID pour éviter la contamination cross-user sur le même appareil
@@ -41891,7 +41897,7 @@ document.addEventListener('keydown', function(e) {
 window.addEventListener('pagehide', function() {
     if (!_notesKey || _notesLastHtml === null) return;
     var editor = document.getElementById('notesEditorArea');
-    if (!editor) return;
+    if (!editor || window.tpxHtmlPasNote(editor.innerHTML)) return;
     try { window.TPXNotesPending.save(_notesKey, editor.innerHTML); } catch (e) {}
     try { saveNoteToFirestore(_notesKey, editor.innerHTML); } catch (e) {}
 });
@@ -46049,6 +46055,7 @@ window.saveTrainNotes = function() {
   if (trainNotesCurrentId === null) return Promise.resolve();
   var noteId = trainNotesCurrentId; // Bug3 fix : capturer l'ID avant tout callback async
   var content = document.getElementById('trainNotesEditor').innerHTML;
+  if (window.tpxHtmlPasNote(content)) return Promise.resolve();
 
   trainNotesSetAutosaveDot('saving');
 
@@ -46112,6 +46119,7 @@ window.saveTrainNotes = function() {
 };
 
 window.trainNotesAutoSave = function() {
+  if (window.tpxHtmlPasNote(document.getElementById('trainNotesEditor').innerHTML)) return;
   trainNotesDirty = true;
   trainNotesUpdateCharCount();
   _cleanEditorIfEmpty(document.getElementById('trainNotesEditor'));
@@ -46854,6 +46862,7 @@ var _trainUserWatcher = setInterval(function() {
     if (window.speErrCurrentId === null) return Promise.resolve();
     var speId = window.speErrCurrentId;
     var content = document.getElementById('speNotesEditor').innerHTML;
+    if (window.tpxHtmlPasNote(content)) return Promise.resolve();
 
     speErrSetAutosaveDot('saving');
 
@@ -46897,6 +46906,7 @@ var _trainUserWatcher = setInterval(function() {
 
   // ---- Autosave ----
   window.speErrAutoSave = function() {
+    if (window.tpxHtmlPasNote(document.getElementById('speNotesEditor').innerHTML)) return;
     window.speErrDirty = true;
     speErrUpdateCharCount();
     if (typeof _cleanEditorIfEmpty === 'function') _cleanEditorIfEmpty(document.getElementById('speNotesEditor'));
