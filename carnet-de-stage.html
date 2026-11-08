@@ -1044,6 +1044,64 @@ html.tpx-skel .user-auth .user-avatar img { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .tpx-sk, html.tpx-skel .user-auth:not(.logged-in)::after, html.tpx-skel .user-auth .user-avatar { animation: none !important; } html.tpx-skel-in #app, html.tpx-skel-in #login-required { animation: none; } }
 </style>
 <script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* 2026-10-25 : squelette à chaque ouverture (plus jamais l'ancien écran) */</script>
+<style id="tpx-hd-css">
+/* En-tête compact : le bandeau titre / bienvenue n'occupe plus que l'espace du header fixe.
+   La barre d'onglets arrive ainsi à la hauteur visée par le défilement au clic (position − header). */
+:root { --app-top-pad: 1.5rem; }
+.app { padding-top: var(--app-top-pad); }
+/* Sans barre d'onglets : même écart sous le header que celui de la barre sur grand écran. */
+@media (max-width: 768px) { .app { padding-top: calc(var(--app-top-pad) + .85rem); } }
+.page-header { padding: calc(var(--header-height) - var(--app-top-pad)) 0 0 !important; background: none !important; min-height: 0 !important; }
+.page-header > .container { display: none !important; }
+/* Les raccourcis du header prennent le relais quand la barre passe sous le header. */
+.app-nav { position: static !important; }
+/* Barre et squelette : même hauteur à toutes les largeurs (libellés ou icônes seules). */
+.app-seg { box-sizing: border-box; height: 65px; }
+.tpx-sk-cseg { height: 65px; }
+.tpx-sk-cseg .tpx-sk-cc, .tpx-sk-cseg .tpx-sk.on { height: 47px; }
+/* Salutation éphémère du header */
+#tpx-hello { position: absolute; left: var(--hello-cx, 50%); top: 50%; z-index: 2; box-sizing: border-box; transform: translate(-50%, -50%) translateY(-5px); opacity: 0; pointer-events: none;
+    max-width: calc(100% - 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: .38rem .95rem; border-radius: 999px; font-size: .92rem; font-weight: 600; color: var(--gray-700);
+    background: var(--white); border: 1px solid var(--gray-200); box-shadow: 0 2px 10px rgba(15, 23, 42, .06);
+    transition: opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
+#tpx-hello.is-on { opacity: 1; transform: translate(-50%, -50%); }
+#tpx-hello.no-tr { transition: none; }
+#tpx-hello .user-name { background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+[data-theme="dark"] #tpx-hello { background: var(--gray-100); border-color: var(--gray-200); }
+#tpx-hello.is-below { left: 50%; top: calc(100% + 8px); transform: translate(-50%, 0) translateY(-6px); font-size: .84rem; padding: .34rem .85rem; box-shadow: 0 4px 14px rgba(15, 23, 42, .10); }
+#tpx-hello.is-below.is-on { transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) {
+    #tpx-hello, #tpx-hello.is-on { transition: opacity .2s linear !important; transform: translate(-50%, -50%); }
+    #tpx-hello.no-tr { transition: none !important; }
+    #tpx-hello.is-below, #tpx-hello.is-below.is-on { transform: translate(-50%, 0); }
+}
+/* Raccourcis de modules dans le header */
+#tpx-hnav { position: absolute; left: var(--hn-cx, 50%); top: 50%; z-index: 2; display: none; align-items: center; gap: 4px; box-sizing: border-box;
+    width: var(--hn-w, 300px); height: 46px; padding: 4px; border-radius: 999px; background: var(--white); border: 1px solid var(--gray-200);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .08); transform: translate(-50%, -50%); opacity: 1; transition: opacity .28s ease; }
+#tpx-hnav.is-on { display: flex; }
+#tpx-hnav.is-out { opacity: 0; pointer-events: none; }
+#tpx-hnav.no-tr, #tpx-hnav.no-tr * { transition: none !important; }
+.tpx-hn-btn { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; height: 100%; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 999px;
+    background: transparent; color: var(--gray-500); font: inherit; font-size: .9rem; cursor: pointer;
+    transition: background .2s ease, color .2s ease, transform .3s cubic-bezier(.22,1,.36,1) calc(var(--hn-i, 0) * 35ms), opacity .3s ease calc(var(--hn-i, 0) * 35ms); }
+.tpx-hn-btn i { font-size: 1.08rem; flex: 0 0 auto; }
+#tpx-hnav.is-out .tpx-hn-btn { opacity: 0; transform: scale(.8); }
+.tpx-hn-btn:hover { background: var(--gray-100); color: var(--primary); }
+.tpx-hn-btn:active { transform: scale(.92); transition-delay: 0s; }
+.tpx-hn-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.tpx-hn-btn.is-active, .tpx-hn-btn.is-active:hover { background: transparent; color: #fff; }
+.tpx-hn-pill { position: absolute; left: 0; top: 4px; bottom: 4px; width: 0; border-radius: 999px; pointer-events: none; z-index: 0; opacity: 0;
+    background: var(--primary-gradient); box-shadow: 0 2px 8px rgba(59, 130, 246, .35);
+    transition: transform .26s cubic-bezier(.22,1,.36,1), width .26s cubic-bezier(.22,1,.36,1), opacity .2s ease; }
+.tpx-hn-pill.is-on { opacity: 1; }
+#tpx-hnav.is-out .tpx-hn-pill { opacity: 0; }
+.tpx-hn-pill.no-tr { transition: none !important; }
+[data-theme="dark"] #tpx-hnav { background: var(--gray-100); box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+@media (max-width: 768px) { #tpx-hnav { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { #tpx-hnav, #tpx-hnav * { transition: none !important; } }
+</style>
 </head>
 <body>
 <!-- ===== CSS supplémentaire (composants de rendu) ===== -->
@@ -1577,7 +1635,7 @@ img, video, canvas, svg { max-width: 100%; }
 <section class="page-header">
     <div class="container">
         <h1 class="page-title">Carnet de Stage</h1>
-        
+        <p class="welcome-message" id="welcome-message"></p>
     </div>
 </section>
 
@@ -3747,6 +3805,7 @@ async function updateUserUI(user){
     _writeQueue.clear(); _quarantine=[]; carnetDirty=false;
     Object.assign(_raw, { stages:[], gestures:[], notebooks:[], pages:[], progress:[], profile:{}, profileLoaded:false });
     state.user=null; state.profile={};
+    if($('welcome-message')) $('welcome-message').innerHTML='';
     state.stages=[]; state.gestures=[]; state.notebooks=[]; state.pages=[]; state.progress={};
     window.currentUser = null;
     userAuth.classList.remove('logged-in');
@@ -3764,6 +3823,16 @@ function renderProfileHeader(){
   const photo = state.profile.photoURL || state.user.photoURL || '';
   $('avatar-initials').innerHTML = photo ? `<img src="${esc(photo)}" alt="Profil">` : esc(getInitials(dn));
   $('profile-name').textContent = dn;
+  renderWelcome(dn);
+}
+/* Source de la salutation du header : ce message reste masqué à l'écran. */
+function renderWelcome(dn){
+  const w = $('welcome-message'); if(!w) return;
+  const h = new Date().getHours();
+  const hello = (h>=5 && h<12) ? 'Bonjour' : (h>=12 && h<18) ? 'Bon après-midi' : 'Bonsoir';
+  const parts = dn.trim().split(/\s+/);
+  const name = parts.length>=2 ? parts[0].charAt(0).toUpperCase()+parts[0].slice(1).toLowerCase()+' '+parts.slice(1).join(' ').toUpperCase() : dn;
+  w.innerHTML = hello+', <span class="user-name">'+esc(name)+'</span> !';
 }
 onAuthStateChanged(auth, (user)=> updateUserUI(user));
 
@@ -3822,7 +3891,10 @@ function switchModule(name, push){
   const nav = document.querySelector('.app-nav');
   if(nav){
     const navTop = nav.getBoundingClientRect().top + (window.pageYOffset||document.documentElement.scrollTop);
-    window.scrollTo({top: Math.max(0, Math.round(navTop - headerH)), behavior:'smooth'});
+    // Barre masquée (téléphone) : retour en haut de page.
+    // Barre déjà sous le header (haut de page) : aucun déplacement.
+    const navTarget = nav.getClientRects().length ? Math.max(0, Math.round(navTop - headerH)) : 0;
+    if((window.pageYOffset||document.documentElement.scrollTop) > navTarget) window.scrollTo({top: navTarget, behavior:'smooth'});
   }
   renderModule(name);
   requestAnimationFrame(positionNavThumb);
@@ -5558,7 +5630,7 @@ document.addEventListener('click', e=>{
       if(page) openPage(page);
       break;
     }
-    case 'goto-system': switchModule('checklist'); state.openSystems.add(t.dataset.sys); setTimeout(()=>{ renderChecklist(); const card=document.querySelector(`.sys-card[data-sys="${t.dataset.sys}"]`); if(card){ const headerH=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'))||70; const nav=document.querySelector('.app-nav'); const navH=(nav&&nav.offsetParent)?nav.offsetHeight:0; const top=card.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop); window.scrollTo({top:Math.max(0,Math.round(top-headerH-navH-14)),behavior:'smooth'}); } },160); break;
+    case 'goto-system': switchModule('checklist'); state.openSystems.add(t.dataset.sys); setTimeout(()=>{ renderChecklist(); const card=document.querySelector(`.sys-card[data-sys="${t.dataset.sys}"]`); if(card){ const headerH=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'))||70; const top=card.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop); window.scrollTo({top:Math.max(0,Math.round(top-headerH-14)),behavior:'smooth'}); } },160); break;
   }
 });
 
@@ -6335,5 +6407,153 @@ html[data-theme="pastel"] { scrollbar-color: #9db3d9 #ece8df; }
 }
 
 </style>
+<script id="tpx-hd-js">
+/* Salutation éphémère : reprend le texte de #welcome-message, une fois par connexion. */
+(function () {
+    'use strict';
+    var HOLD = 2350;   /* + fondu de 0,45 s : environ 2,8 s en tout */
+    var el = null, header = null, timer = null, shownFor = '';
+    function hnavOn() { var d = document.getElementById('tpx-hnav'); return !!(d && d.classList.contains('is-on')); }
+    function text(w) { return (w.innerHTML || '').replace(/\s*!\s*$/, ''); }
+    function hide(now) {
+        clearTimeout(timer); if (!el) return;
+        if (now) el.classList.add('no-tr');
+        el.classList.remove('is-on');
+        if (now) { void el.offsetWidth; el.classList.remove('no-tr'); }
+    }
+    /* Centrée entre le logo et les menus ; sinon juste sous le header */
+    function place() {
+        var hr = header.getBoundingClientRect(), logo = header.querySelector('.logo'), nav = header.querySelector('.nav');
+        var l = logo ? logo.getBoundingClientRect().right : hr.left, r = nav ? nav.getBoundingClientRect().left : hr.right;
+        el.classList.remove('is-below'); el.style.maxWidth = 'none';
+        var w = el.offsetWidth; el.style.maxWidth = '';
+        var inline = window.innerWidth > 600 && r - l >= w + 24;
+        el.classList.toggle('is-below', !inline);
+        if (inline) el.style.setProperty('--hello-cx', ((l + r) / 2 - hr.left) + 'px');
+    }
+    function show(html) {
+        el.innerHTML = html;
+        if (hnavOn()) return;
+        el.classList.add('no-tr'); place(); void el.offsetWidth; el.classList.remove('no-tr');
+        el.classList.add('is-on');
+        clearTimeout(timer); timer = setTimeout(function () { hide(false); }, HOLD);
+    }
+    function check() {
+        var w = document.getElementById('welcome-message'); if (!w || !el) return;
+        var t = (w.textContent || '').trim();
+        if (!t) { shownFor = ''; hide(true); el.innerHTML = ''; return; }
+        if (shownFor) {
+            var h = text(w);
+            if (el.classList.contains('is-on') && el.innerHTML !== h) { el.innerHTML = h; place(); }
+            return;
+        }
+        shownFor = t; show(text(w));
+    }
+    function start() {
+        header = document.getElementById('header');
+        var w = document.getElementById('welcome-message'); if (!header || !w) return;
+        el = document.createElement('div'); el.id = 'tpx-hello';
+        el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+        header.appendChild(el);
+        new MutationObserver(check).observe(w, { childList: true, characterData: true, subtree: true });
+        document.addEventListener('tpx:hnav-on', function () { hide(true); });
+        window.addEventListener('resize', function () { if (el.classList.contains('is-on')) place(); });
+        check();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+<script id="tpx-hnav-js">
+/* Raccourcis de modules dans le header : visibles quand la barre d'onglets est passée sous le header. */
+(function () {
+    'use strict';
+    var header, dock, nav, state = 'off', busy = null, pillPlaced = false;
+    function lessMotion() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+    function wide() { try { return !window.matchMedia('(max-width: 768px)').matches; } catch (e) { return true; } }
+    function count() { return dock ? dock.querySelectorAll('.tpx-hn-btn').length : 0; }
+    function build() {
+        header = document.getElementById('header'); nav = document.querySelector('.app-nav');
+        if (!header || !nav) return false;
+        dock = document.createElement('nav'); dock.id = 'tpx-hnav'; dock.setAttribute('aria-label', 'Raccourcis vers les modules');
+        var html = '<span class="tpx-hn-pill" aria-hidden="true"></span>';
+        nav.querySelectorAll('.seg-opt[data-module]').forEach(function (b, i) {
+            var ic = b.querySelector('i'), lb = (b.querySelector('.seg-label') || b).textContent.trim();
+            html += '<button type="button" class="tpx-hn-btn" style="--hn-i:' + i + '" data-hn-module="' + b.getAttribute('data-module') + '" aria-label="' + lb.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '"><i class="' + (ic ? ic.className : 'fas fa-circle') + '" aria-hidden="true"></i></button>';
+        });
+        dock.innerHTML = html; header.appendChild(dock);
+        return count() > 0;
+    }
+    function sync() {
+        var act = nav.querySelector('.seg-opt.active'), m = act ? act.getAttribute('data-module') : null;
+        dock.querySelectorAll('[data-hn-module]').forEach(function (b) {
+            var on = b.getAttribute('data-hn-module') === m;
+            b.classList.toggle('is-active', on);
+            if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+        });
+        movePill(false);
+    }
+    /* Pastille active unique : première pose sans glissement */
+    function movePill(instant) {
+        var pill = dock.querySelector('.tpx-hn-pill'), b = dock.querySelector('.tpx-hn-btn.is-active');
+        if (!b || !b.offsetWidth || !dock.classList.contains('is-on')) { pill.classList.remove('is-on'); pillPlaced = false; return; }
+        var jump = instant || !pillPlaced || lessMotion();
+        if (jump) pill.classList.add('no-tr');
+        pill.style.width = b.offsetWidth + 'px'; pill.style.transform = 'translateX(' + b.offsetLeft + 'px)'; pill.classList.add('is-on');
+        if (jump) { void pill.offsetWidth; pill.classList.remove('no-tr'); }
+        pillPlaced = true;
+    }
+    /* Centre de l'espace libre entre le logo et les menus */
+    function place() {
+        var hr = header.getBoundingClientRect(), logo = header.querySelector('.logo'), menus = header.querySelector('.nav');
+        var l = logo ? logo.getBoundingClientRect().right : hr.left, r = menus ? menus.getBoundingClientRect().left : hr.right;
+        var n = count(), w = n * 44 + (n - 1) * 4 + 8 + 2;
+        dock.style.setProperty('--hn-w', w + 'px');
+        dock.style.setProperty('--hn-cx', ((l + r) / 2 - hr.left) + 'px');
+        return r - l >= w + 24;
+    }
+    function show() {
+        if (state === 'on' || !place()) return;
+        clearTimeout(busy); state = 'on';
+        if (!dock.classList.contains('is-on')) { dock.classList.add('no-tr', 'is-on', 'is-out'); void dock.offsetWidth; dock.classList.remove('no-tr'); }
+        sync(); movePill(true);
+        requestAnimationFrame(function () { if (state === 'on') dock.classList.remove('is-out'); });
+        document.dispatchEvent(new CustomEvent('tpx:hnav-on'));
+    }
+    function hide() {
+        if (state !== 'on') return;
+        state = 'off'; clearTimeout(busy);
+        if (lessMotion()) { dock.classList.remove('is-on', 'is-out'); return; }
+        dock.classList.add('is-out');
+        busy = setTimeout(function () { if (state === 'off') dock.classList.remove('is-on', 'is-out'); }, 380);
+    }
+    function barHidden() {
+        if (!nav.getClientRects().length) return false;
+        var r = nav.getBoundingClientRect();
+        return r.height > 0 && r.bottom <= header.getBoundingClientRect().bottom + 1;
+    }
+    var raf = 0;
+    function check() { raf = 0; if (wide() && barHidden()) show(); else hide(); }
+    function onScroll() { if (!raf) raf = requestAnimationFrame(check); }
+    function boot() {
+        if (!build()) return;
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', function () { if (state === 'on') { if (place()) movePill(true); else hide(); } check(); });
+        new MutationObserver(sync).observe(nav, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        var app = document.getElementById('app');
+        if (app) new MutationObserver(check).observe(app, { attributes: true, attributeFilter: ['class'] });
+        dock.addEventListener('click', function (e) {
+            var b = e.target.closest('.tpx-hn-btn'); if (!b) return;
+            var real = nav.querySelector('.seg-opt[data-module="' + b.getAttribute('data-hn-module') + '"]');
+            if (real) real.click();
+            requestAnimationFrame(function () {
+                var top = Math.max(0, Math.round(nav.getBoundingClientRect().top + window.pageYOffset - header.getBoundingClientRect().height));
+                window.scrollTo({ top: top, behavior: lessMotion() ? 'auto' : 'smooth' });
+            });
+        });
+        check();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
 </body>
 </html>
