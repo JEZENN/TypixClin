@@ -73422,7 +73422,12 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
         openPick(sl, cur0, function (val) {
           var ok = typeof X2.quickTour === 'function' && list0.length && X2.quickTour(s0, list0, null, val);
           if (ok && window.tpxPlusFx) { var gs = function () { return document.querySelector('#tpx-grid .tg2-row[data-tg-key="' + k0 + '"] .tg2-slot[data-s="' + s0 + '"]'); };   /* case encadrée de vert + « +1 tour » */
-            window.tpxPlusFx({ label: '+1 tour', frame: gs, anchor: function () { var x = gs(); return x ? x.querySelector('.tg-count') : null; } }); }
+            window.tpxPlusFx({ label: '+1 tour', frame: gs, anchor: function () { var x = gs(); return x ? x.querySelector('.tg-count') : null; }, zone: function (e) {   /* derrière les colonnes fixes, à gauche comme à droite */
+              var z = { l: -100000, r: 100000 }, cols = e.closest('.tg2-cols'), row = e.closest('.tg2-row');
+              if (cols) { var cb = cols.getBoundingClientRect(); z.l = cb.left; z.r = cb.right; }
+              if (row) [].forEach.call(row.children, function (k) { if (getComputedStyle(k).position === 'sticky') z.l = Math.max(z.l, k.getBoundingClientRect().right); });
+              return z;
+            } }); }
         });
         if (pick) pick._for = plus;
         return;
@@ -73729,11 +73734,21 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
             if (!o || lessMotion()) return false;
             var f = o.frame && o.frame(); if (!f || !f.getClientRects().length) return false;
             var r = vis(f); if (r.w < 4) return false;
-            var fr = document.createElement('div');
-            var l = layer(2300, o.frame, o.row ? function (e, dx, dy) {   /* ligne : cadre recalé à chaque image sur sa partie visible */
-                var v = vis(e);
-                fr.style.left = (v.x + 2 - dx) + 'px'; fr.style.top = (v.y + 1 - dy) + 'px';
-                fr.style.width = Math.max(0, v.w - 4) + 'px'; fr.style.height = Math.max(0, v.h - 2) + 'px';
+            var fr = document.createElement('div'), p = null;
+            /* o.zone(cible) => { l, r } : limites horizontales à l'écran ; le cadre et la pastille sont coupés au-delà */
+            function couper(el, z) {
+                if (!el) return;
+                var b = el.getBoundingClientRect();
+                el.style.clipPath = 'inset(-40px ' + Math.round(b.right - z.r) + 'px -40px ' + Math.round(z.l - b.left) + 'px)';
+            }
+            var l = layer(2300, o.frame, (o.row || o.zone) ? function (e, dx, dy) {
+                if (o.row) {   /* ligne : cadre recalé à chaque image sur sa partie visible */
+                    var v = vis(e);
+                    fr.style.left = (v.x + 2 - dx) + 'px'; fr.style.top = (v.y + 1 - dy) + 'px';
+                    fr.style.width = Math.max(0, v.w - 4) + 'px'; fr.style.height = Math.max(0, v.h - 2) + 'px';
+                }
+                var z = o.zone && o.zone(e);
+                if (z) { couper(fr, z); couper(p, z); }
             } : null);
             fr.className = 'tpx-pf-frame' + (o.row ? ' is-row' : '');
             var pad = o.row ? 0 : 2;
@@ -73741,7 +73756,7 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
             fr.style.width = Math.max(0, r.w + pad * 2 - (o.row ? 4 : 0)) + 'px'; fr.style.height = Math.max(0, r.h + pad * 2 - (o.row ? 2 : 0)) + 'px';
             l.appendChild(fr);
             var a = (o.anchor && o.anchor()) || f, ar = a.getBoundingClientRect();
-            var p = document.createElement('span'); p.className = 'tpx-pf-plus'; p.textContent = o.label || '+1';
+            p = document.createElement('span'); p.className = 'tpx-pf-plus'; p.textContent = o.label || '+1';
             p.style.left = Math.max(r.x + 24, Math.min(r.x + r.w - 24, ar.left + ar.width / 2)) + 'px'; p.style.top = (ar.top - 22) + 'px';
             l.appendChild(p);
             return true;
