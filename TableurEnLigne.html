@@ -22997,6 +22997,25 @@ const referralEnsureCodeCall = async () => {
     const functions = _tpxFunctionsMod.getFunctions(app, 'europe-west1');
     return _tpxFunctionsMod.httpsCallable(functions, 'referralEnsureCode')();
 };
+
+/* Parrainage : un filleul resté connecté depuis son inscription (e-mail vérifié ensuite) ne repasse jamais
+   par le formulaire de connexion, qui seul le faisait compter. Une fois par compte et par appareil, peu après
+   l'arrivée, le serveur est prié de le compter ; sans effet sans parrain ou s'il l'est déjà. */
+onAuthStateChanged(auth, (u) => {
+    if (!u || !u.emailVerified) return;
+    const cle = 'tpx_ref_actif_' + u.uid;
+    try { if (localStorage.getItem(cle)) return; } catch (e) { return; }
+    setTimeout(async () => {
+        try {
+            if (!auth.currentUser || auth.currentUser.uid !== u.uid) return;
+            const jeton = await u.getIdTokenResult(true);
+            if (!jeton.claims.email_verified) return;
+            if (!_tpxFunctionsMod) _tpxFunctionsMod = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js");
+            await _tpxFunctionsMod.httpsCallable(_tpxFunctionsMod.getFunctions(app, 'europe-west1'), 'referralMarkActive')();
+            try { localStorage.setItem(cle, '1'); } catch (e) {}
+        } catch (e) { console.warn('⚠ referralMarkActive :', e); }
+    }, 6000);
+});
 window._db = db;
 const _storage = getStorage(app);
 window._storage       = _storage;
@@ -73424,7 +73443,8 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
           if (ok && window.tpxPlusFx) { var gs = function () { return document.querySelector('#tpx-grid .tg2-row[data-tg-key="' + k0 + '"] .tg2-slot[data-s="' + s0 + '"]'); };   /* case encadrée de vert + « +1 tour » */
             window.tpxPlusFx({ label: '+1 tour', frame: gs, anchor: function () { var x = gs(); return x ? x.querySelector('.tg-count') : null; }, zone: function (e) {   /* derrière les colonnes fixes, à gauche comme à droite */
               var z = { l: -100000, r: 100000 }, cols = e.closest('.tg2-cols'), row = e.closest('.tg2-row');
-              if (cols) { var cb = cols.getBoundingClientRect(); z.l = cb.left; z.r = cb.right; }
+              if (cols) { var cb = cols.getBoundingClientRect(); z.l = cb.left; z.r = cb.right;
+                z.trous = [].filter.call(cols.querySelectorAll('.tg2-hint'), function (h) { return !h.hidden && h.getClientRects().length; }).map(function (h) { return h.getBoundingClientRect(); }); }   /* boutons ‹ › de la ligne : devant */
               if (row) [].forEach.call(row.children, function (k) { if (getComputedStyle(k).position === 'sticky') z.l = Math.max(z.l, k.getBoundingClientRect().right); });
               return z;
             } }); }
@@ -73735,11 +73755,21 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
             var f = o.frame && o.frame(); if (!f || !f.getClientRects().length) return false;
             var r = vis(f); if (r.w < 4) return false;
             var fr = document.createElement('div'), p = null;
-            /* o.zone(cible) => { l, r } : limites horizontales à l'écran ; le cadre et la pastille sont coupés au-delà */
+            /* o.zone(cible) => { l, r, trous } : limites horizontales à l'écran et boutons à laisser devant ; le cadre et la pastille sont coupés */
             function couper(el, z) {
                 if (!el) return;
                 var b = el.getBoundingClientRect();
                 el.style.clipPath = 'inset(-40px ' + Math.round(b.right - z.r) + 'px -40px ' + Math.round(z.l - b.left) + 'px)';
+                if (!z.trous || !z.trous.length) return;
+                var f = function (v) { return Math.round(v * 10) / 10; };
+                var x0 = f(Math.max(z.l - b.left, -40)), x1 = f(Math.min(z.r - b.left, b.width + 40)), y1 = f(b.height + 40);
+                if (x1 <= x0) { el.style.clipPath = 'inset(50%)'; return; }   /* entièrement hors de la zone */
+                var d = 'M' + x0 + ' -40H' + x1 + 'V' + y1 + 'H' + x0 + 'Z';
+                z.trous.forEach(function (h) {
+                    var x = h.left - b.left, y = h.top - b.top, w = h.width, hh = h.height, rr = f(hh / 2);
+                    d += 'M' + f(x + rr) + ' ' + f(y) + 'H' + f(x + w - rr) + 'A' + rr + ' ' + rr + ' 0 0 1 ' + f(x + w - rr) + ' ' + f(y + hh) + 'H' + f(x + rr) + 'A' + rr + ' ' + rr + ' 0 0 1 ' + f(x + rr) + ' ' + f(y) + 'Z';
+                });
+                el.style.clipPath = 'path(evenodd, "' + d + '")';
             }
             var l = layer(2300, o.frame, (o.row || o.zone) ? function (e, dx, dy) {
                 if (o.row) {   /* ligne : cadre recalé à chaque image sur sa partie visible */

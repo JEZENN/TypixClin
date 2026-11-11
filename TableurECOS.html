@@ -42053,6 +42053,25 @@ const referralEnsureCodeCall = async () => {
     const functions = _tpxFunctionsMod.getFunctions(app, 'europe-west1');
     return _tpxFunctionsMod.httpsCallable(functions, 'referralEnsureCode')();
 };
+
+/* Parrainage : un filleul resté connecté depuis son inscription (e-mail vérifié ensuite) ne repasse jamais
+   par le formulaire de connexion, qui seul le faisait compter. Une fois par compte et par appareil, peu après
+   l'arrivée, le serveur est prié de le compter ; sans effet sans parrain ou s'il l'est déjà. */
+onAuthStateChanged(auth, (u) => {
+    if (!u || !u.emailVerified) return;
+    const cle = 'tpx_ref_actif_' + u.uid;
+    try { if (localStorage.getItem(cle)) return; } catch (e) { return; }
+    setTimeout(async () => {
+        try {
+            if (!auth.currentUser || auth.currentUser.uid !== u.uid) return;
+            const jeton = await u.getIdTokenResult(true);
+            if (!jeton.claims.email_verified) return;
+            if (!_tpxFunctionsMod) _tpxFunctionsMod = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js");
+            await _tpxFunctionsMod.httpsCallable(_tpxFunctionsMod.getFunctions(app, 'europe-west1'), 'referralMarkActive')();
+            try { localStorage.setItem(cle, '1'); } catch (e) {}
+        } catch (e) { console.warn('⚠ referralMarkActive :', e); }
+    }, 6000);
+});
 window._db = db;
 // TPX-PERSO : passerelle Firestore pour les scripts non-module (même
 // convention que le tableur EDN).

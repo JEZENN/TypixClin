@@ -1550,7 +1550,7 @@ if (logoutBtn) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, sendEmailVerification, updateProfile, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo, sendPasswordResetEmail, sendEmailVerification, updateProfile, onAuthStateChanged, signOut} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1583,6 +1583,15 @@ async function tpxCallable(name, data) {
 const referralInitCall = (data) => tpxCallable('referralInit', data);
 const referralMarkActiveCall = (data) => tpxCallable('referralMarkActive', data);
 const referralCheckCodeCall = (data) => tpxCallable('referralCheckCode', data);
+/* Compte le filleul (sans effet s'il n'a pas de parrain ou s'il est déjà compté) et attend la réponse
+   quelques secondes au plus avant de quitter la page : un départ immédiat coupait l'appel avant son envoi. */
+function referralMarkActiveBorne(ms) {
+    const appel = referralMarkActiveCall().then(function () {
+        try { if (auth.currentUser) localStorage.setItem('tpx_ref_actif_' + auth.currentUser.uid, '1'); } catch (e) {}
+    }).catch((e) => console.warn('⚠ referralMarkActive :', e));
+    return Promise.race([appel, new Promise((r) => setTimeout(r, ms || 5000))]);
+}
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1795,11 +1804,11 @@ loginForm.addEventListener('submit', async (e) => {
 			//    actif s'il a été créé avec un code de parrain (no-op silencieux
 			//    sinon, ou si déjà comptabilisé). Volontairement NON attendu :
 			//    ne doit jamais retarder la connexion. ──
-			referralMarkActiveCall().catch((e) => console.warn('⚠ referralMarkActive :', e));
+			const _refActif = referralMarkActiveBorne(5000);
 
 			showSuccess();
 
-        setTimeout(() => { window.location.href = redirectPage; }, 1500);
+        Promise.all([pause(1500), _refActif]).then(() => { window.location.href = redirectPage; });
     } catch (error) {
         showMessage(translateError(error.code));
         document.getElementById('login-password').classList.add('error');
@@ -2016,8 +2025,17 @@ async function handleGoogleAuth() {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         await createUserProfile(result.user);
+        /* nouveau compte Google : réserve son code et enregistre le code de parrain du champ (lien ?ref=) */
+        const _info = getAdditionalUserInfo(result);
+        if (_info && _info.isNewUser) {
+            const _refEl = document.getElementById('register-referral');
+            const _refCode = _refEl ? _refEl.value.trim() : '';
+            try { await Promise.race([referralInitCall({ referredBy: _refCode || null }), pause(6000)]); }
+            catch (e) { console.warn('⚠ Parrainage non initialisé (sans conséquence) :', e); }
+        }
+        const _refActif = referralMarkActiveBorne(5000);
         showSuccess();
-        setTimeout(() => { window.location.href = redirectPage; }, 1500);
+        Promise.all([pause(1500), _refActif]).then(() => { window.location.href = redirectPage; });
     } catch (error) { if (error.code !== 'auth/popup-closed-by-user') showMessage(translateError(error.code)); }
 }
 
@@ -2054,7 +2072,7 @@ onAuthStateChanged(auth, (user) => {
     if (_redirectHandled) return;
     _redirectHandled = true;
     if (user && user.emailVerified) {
-        window.location.href = redirectPage;
+        referralMarkActiveBorne(4000).then(() => { window.location.href = redirectPage; });
     }
 });
 
