@@ -25548,6 +25548,78 @@ html[data-theme="pastel"] .help-tip-blue > .help-tip-icon {
 .specialty-multi-option > .specialty-multi-option-icon { color: var(--primary); }
 .custom-select-option.selected > .option-icon { background: rgba(255, 255, 255, 0.22); }
 </style>
+<style id="tpx-todo-cible">
+/* To-Do : la tâche dont le popover de validation est ouvert reste repérable (case violette, contour, flèche du popover) */
+#global-todo-body .checklist-item.tpx-todo-cible:not(.completed) {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+    border-left-color: #7c3aed;
+    box-shadow: inset 0 0 0 1.5px #7c3aed, 0 6px 16px rgba(124, 58, 237, 0.18);
+}
+#global-todo-body .checklist-item.tpx-todo-cible:not(.completed) .checklist-checkbox {
+    background: #7c3aed;
+    border-color: #6d28d9;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.22);
+}
+[data-theme="dark"] #global-todo-body .checklist-item.tpx-todo-cible:not(.completed) {
+    background: #2b2650;
+    border-color: #a78bfa;
+    border-left-color: #a78bfa;
+    box-shadow: inset 0 0 0 1.5px #a78bfa, 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] #global-todo-body .checklist-item.tpx-todo-cible:not(.completed) .checklist-checkbox {
+    background: #8b5cf6;
+    border-color: #c4b5fd;
+    box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.28);
+}
+.checklist-choice-popup[data-side]::after {
+    content: "";
+    position: absolute;
+    left: calc(var(--tpx-fx, 50%) - 6px);
+    width: 12px;
+    height: 12px;
+    box-sizing: border-box;
+    background: inherit;
+    border: inherit;
+    pointer-events: none;
+}
+.checklist-choice-popup[data-side="above"]::after { bottom: -7px; transform: rotate(45deg); border-top-color: transparent; border-left-color: transparent; }
+.checklist-choice-popup[data-side="below"]::after { top: -7px; transform: rotate(45deg); border-bottom-color: transparent; border-right-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+    #global-todo-body .checklist-item.tpx-todo-cible,
+    #global-todo-body .checklist-item.tpx-todo-cible .checklist-checkbox { transition: none; }
+}
+</style>
+<style id="tpx-mois-pastille">
+/* Planning : icône du bouton « Mois » dans une case, comme l'en-tête du menu ; hauteur du bouton inchangée */
+#month-dropdown-btn > .custom-dropdown-icon {
+    width: 26px;
+    height: 26px;
+    margin: -5px 0 -5px -0.35rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    line-height: 1;
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.13);
+}
+#month-dropdown-btn > .custom-dropdown-icon i { color: inherit; font-size: 0.8rem; }
+[data-theme="dark"] #month-dropdown-btn > .custom-dropdown-icon {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.18);
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25);
+}
+html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
+    color: #4f6fa8;
+    background: rgba(99, 136, 197, 0.2);
+}
+@media (max-width: 480px) {
+    #month-dropdown-btn > .custom-dropdown-icon { display: none; }
+}
+</style>
 </head>
 <body>
 
@@ -26428,7 +26500,7 @@ window.tpxRetirerSquelette = function (html) { return String(html == null ? '' :
                             <div class="planning-date-selector">
                                 <div class="custom-dropdown month-dropdown" id="month-dropdown">
                                     <button class="custom-dropdown-btn" id="month-dropdown-btn">
-                                        <span class="custom-dropdown-icon"><i class="fas fa-calendar"></i></span>
+                                        <span class="custom-dropdown-icon"><i class="fas fa-calendar-alt"></i></span>
                                         <span class="custom-dropdown-text" id="month-dropdown-text">Janvier</span>
                                         <i class="fas fa-chevron-down"></i>
                                     </button>
@@ -64179,5 +64251,52 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
 })();
 </script>
 <!-- ═══ FIN PARAMÈTRES EN DEUX COLONNES ═══ -->
+<script id="tpx-todo-cible-js">
+/* To-Do : marque la tâche dont la case vient d'ouvrir un popover de validation ; la marque disparaît dès qu'aucun popover n'est affiché */
+(function () {
+    var POP = ['checklist-choice-popup', 'train-checklist-popup', 'todo-sdd-validation-popover', 'todo-sdd-confidence-popover'];
+    var cible = null;
+    function pops() { return POP.map(function (id) { return document.getElementById(id); }).filter(Boolean); }
+    function ouvert() { return pops().some(function (p) { return p.classList.contains('show'); }); }
+    function sel(id) { return '.checklist-item[data-todo-id="' + String(id).replace(/["\\]/g, '') + '"]'; }
+    function appliquer() {
+        var rows = document.querySelectorAll('.checklist-item[data-todo-id]');
+        for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('tpx-todo-cible', cible !== null && rows[i].getAttribute('data-todo-id') === cible);
+    }
+    /* flèche du popover (au-dessus ou au-dessous de la tâche) pointée sur la case */
+    function fleche(row) {
+        var box = row.querySelector('.checklist-checkbox'); if (!box) return;
+        var b = box.getBoundingClientRect();
+        pops().forEach(function (p) {
+            if (!p.classList.contains('show') || !p.classList.contains('checklist-choice-popup')) return;
+            var left = parseFloat(p.style.left), W = p.offsetWidth || 240;
+            if (isNaN(left)) left = p.getBoundingClientRect().left;
+            var cx = b.left + b.width / 2;
+            if (cx - left < 18 && cx - 18 >= 8) { left = cx - 18; p.style.left = left + 'px'; }   /* case trop près du bord arrondi : le popover se décale pour que la flèche tombe sur la case */
+            var above = (p.style.bottom && p.style.bottom !== 'auto') ? true : (parseFloat(p.style.top) < b.top);
+            p.setAttribute('data-side', above ? 'above' : 'below');
+            p.style.setProperty('--tpx-fx', Math.max(18, Math.min(cx - left, W - 18)) + 'px');
+        });
+    }
+    document.addEventListener('click', function (e) {
+        var box = e.target && e.target.closest ? e.target.closest('.checklist-checkbox') : null;
+        var row = box ? box.closest('.checklist-item[data-todo-id]') : null;
+        if (!row || row.classList.contains('completed')) return;
+        var id = row.getAttribute('data-todo-id');
+        setTimeout(function () {
+            if (!ouvert()) return;
+            cible = id; appliquer();
+            var r = document.querySelector(sel(id)); if (r) fleche(r);
+        }, 0);
+    }, true);
+    function surveiller() {
+        var mo = new MutationObserver(function () { if (cible !== null && !ouvert()) { cible = null; appliquer(); } });
+        pops().forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['class'] }); });
+        var list = document.getElementById('checklist-items');
+        if (list) new MutationObserver(function () { if (cible !== null) appliquer(); }).observe(list, { childList: true });   /* liste redessinée : la marque suit la tâche */
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', surveiller); else surveiller();
+})();
+</script>
 </body>
 </html>
