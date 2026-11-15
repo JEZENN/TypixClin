@@ -17320,10 +17320,10 @@ body.ecos-offline-locked .send-to-checklist-btn {
 [data-theme="dark"] .notes-action-btn.sdd-quick-pass:hover  { background: #10b981; color: #fff; }
 
 .notes-action-btn.sdd-quick-ps  { background: rgba(59,130,246,0.14); color: var(--primary-dark); }
-.notes-action-btn.sdd-quick-ps:hover  { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.45); }
+@media (hover: hover) and (pointer: fine) { .notes-action-btn.sdd-quick-ps:hover  { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.45); } }
 .notes-action-btn.sdd-quick-ps:active { background: var(--primary-dark); color: #fff; transform: scale(0.92); box-shadow: none; }
 [data-theme="dark"] .notes-action-btn.sdd-quick-ps  { background: rgba(59,130,246,0.25); color: #93c5fd; }
-[data-theme="dark"] .notes-action-btn.sdd-quick-ps:hover  { background: #3b82f6; color: #fff; }
+@media (hover: hover) and (pointer: fine) { [data-theme="dark"] .notes-action-btn.sdd-quick-ps:hover  { background: #3b82f6; color: #fff; } }
 
 .notes-action-btn.sdd-quick-sans  { background: var(--warning-light); color: #92400e; }
 .notes-action-btn.sdd-quick-sans:hover  { background: var(--warning); color: #fff; box-shadow: 0 4px 12px rgba(245,158,11,0.45); }
@@ -21450,7 +21450,7 @@ button.notes-clear-btn[data-tooltip="Importer une image"]:active { background:#1
 .notes-action-btn.sdd-quick-pass:hover { background: #10b981; color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.45); }
 [data-theme="dark"] .notes-action-btn.sdd-quick-pass { background: rgba(16,185,129,0.2); color: #6ee7b7; }
 .notes-action-btn.sdd-quick-ps { background: rgba(59,130,246,0.14); color: #1d4ed8; }
-.notes-action-btn.sdd-quick-ps:hover { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.45); }
+@media (hover: hover) and (pointer: fine) { .notes-action-btn.sdd-quick-ps:hover { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.45); } }
 [data-theme="dark"] .notes-action-btn.sdd-quick-ps { background: rgba(59,130,246,0.22); color: #93c5fd; }
 
 
@@ -31153,6 +31153,12 @@ function positionTodoSDDPopover(popover, anchor) {
     }
 
     let top = rect.top + rect.height / 2 - h / 2;
+
+    /* pas de place sur le côté : sous le bouton, ou au-dessus, pour qu'il reste visible */
+    if (left < rect.right + 2 && left + w > rect.left - 2) {
+        if (rect.bottom + gap + h <= window.innerHeight - margin) top = rect.bottom + gap;
+        else if (rect.top - gap - h >= margin) top = rect.top - gap - h;
+    }
 
     if (top + h > window.innerHeight - margin) {
         top = window.innerHeight - h - margin;
@@ -53986,9 +53992,9 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
 :where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-ps {
     background:rgba(99, 136, 197, 0.14);
 }
-:where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-ps:hover {
+@media (hover: hover) and (pointer: fine) { :where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-ps:hover {
     box-shadow:0 4px 12px rgba(122, 151, 199, 0.279);
-}
+} }
 :where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-sans {
     color:#7f4e30;
 }
@@ -54854,10 +54860,10 @@ html[data-theme="pastel"]::-webkit-scrollbar-thumb:hover {
     background:rgba(99, 136, 197, 0.14);
     color:#40599d;
 }
-:where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-ps:hover {
+@media (hover: hover) and (pointer: fine) { :where(html[data-theme="pastel"]) .notes-action-btn.sdd-quick-ps:hover {
     background:#6388c5;
     box-shadow:0 4px 12px rgba(122, 151, 199, 0.279);
-}
+} }
 :where(html[data-theme="pastel"]) .sdd-obj-panel-header-icon {
     background:linear-gradient(135deg, #876bc6, #8665c0);
     box-shadow:0 2px 6px rgba(151, 129, 202, 0.186);
@@ -64753,5 +64759,27 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     if (window.ResizeObserver) new ResizeObserver(plusTard).observe(tag);
 })();
 </script>
+<style id="tpx-notes-tactile-css">
+/* En-tête des notes SDD : l'indicateur de sauvegarde n'occupe de place que lorsqu'il est affiché */
+#sdd-notes-overlay .notes-header-right .notes-autosave-dot:not(.saving):not(.saved) { display: none !important; }
+/* Écran tactile étroit : intitulé de la SDD sur deux lignes au plus */
+@media (max-width: 820px) and (pointer: coarse) {
+    #sdd-notes-overlay .notes-modal-header .notes-header-name {
+        white-space: normal !important; text-overflow: clip !important; overflow: hidden !important;
+        display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; line-clamp: 2;
+        overflow-wrap: break-word !important; hyphens: manual !important; line-height: 1.12 !important;
+    }
+}
+/* PS/PSS, Sans PS, Grille : bouton foncé et icône blanche tant que le choix de confiance est ouvert (souris ou toucher) */
+html #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-ps.sdd-notes-btn-popover-open { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(59, 130, 246, .45) !important; }
+html #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-sans.sdd-notes-btn-popover-open { background: #7c3aed !important; color: #fff !important; box-shadow: 0 4px 12px rgba(124, 58, 237, .45) !important; }
+html #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #0891b2 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(8, 145, 178, .45) !important; }
+html[data-theme="dark"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-ps.sdd-notes-btn-popover-open { background: #3b82f6 !important; color: #fff !important; }
+html[data-theme="dark"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-sans.sdd-notes-btn-popover-open { background: #7c3aed !important; color: #fff !important; box-shadow: 0 4px 12px rgba(124, 58, 237, .48) !important; }
+html[data-theme="dark"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #0891b2 !important; color: #fff !important; }
+html[data-theme="pastel"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-ps.sdd-notes-btn-popover-open { background: #6388c5 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(122, 151, 199, .28) !important; }
+html[data-theme="pastel"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-sans.sdd-notes-btn-popover-open { background: #8665c0 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(150, 123, 195, .28) !important; }
+html[data-theme="pastel"] #sdd-notes-overlay .notes-modal-header .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #54a0b4 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(84, 160, 180, .28) !important; }
+</style>
 </body>
 </html>
