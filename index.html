@@ -3181,7 +3181,7 @@ button {
 <style id="tpx-skel-css">
 /* 2026-10-25 : chargement en squelette (comme les tableurs) à la place de l'écran « TypixClin + rond » */
 #tpx-skel { display: none; }
-html.tpx-skel { scrollbar-gutter: stable; }   /* place de la barre de défilement réservée : pas de décalage de l'en-tête quand la vraie page (plus longue) apparaît */
+html.tpx-skel { overflow-y: scroll; }   /* barre de défilement toujours présente pendant le squelette : la vraie page (plus longue) arrive sans décalage */
 html.tpx-skel #loader, html.tpx-noloader #loader { display: none !important; }   /* tpx-noloader : jamais retirée */
 html.tpx-skel body > section, html.tpx-skel body > footer { display: none !important; }
 html.tpx-skel #tpx-skel { display: block; transition: opacity 0.2s ease; pointer-events: none; user-select: none; -webkit-user-select: none; }
@@ -4470,6 +4470,7 @@ async function updateUserUI(user) {
 // Écouter les changements d'état d'authentification
 onAuthStateChanged(auth, (user) => {
     updateUserUI(user);
+    try { localStorage.setItem('tpx_skel_auth', user ? '1' : '0'); } catch (e) {}   /* squelette des tableurs : dernier état connu */
     if (window.tpxSkelReady) window.tpxSkelReady('auth');   /* 2026-10-25 : squelette de chargement */
 });
 

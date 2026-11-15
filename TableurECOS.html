@@ -25409,12 +25409,33 @@ html.tpx-skel .user-auth:not(.logged-in)::after { content: ''; position: absolut
 .tpx-skl-list .tpx-skl-row { padding: 6px 4px; }
 @media (prefers-reduced-motion: reduce) { .tpx-sk, html.tpx-skel #welcome-message:empty::after, html.tpx-skel .user-auth:not(.logged-in)::after { animation: none; } html.tpx-skel-in #main-content { animation: none; } }
 </style>
+<style id="tpx-skel-pres-css">
+/* squelette « présentation » : la page de présentation elle-même, contenus remplacés par des blocs gris animés */
+html.tpx-skel.tpx-skel-pres #tpx-skel { display: none !important; }
+html.tpx-skel.tpx-skel-pres #presentation-section { display: block !important; pointer-events: none; user-select: none; }
+html.tpx-skel.tpx-skel-pres #presentation-section * { color: transparent !important; text-shadow: none !important; -webkit-text-fill-color: transparent !important; }
+html.tpx-skel.tpx-skel-pres #presentation-section :is(i, img, svg, video, iframe, .tpx-conf-poster, .tpx-conf-btn-go, .carousel-arrow, .carousel-dots) { visibility: hidden !important; }
+html.tpx-skel.tpx-skel-pres #presentation-section :is(.login-sidebar-header, .presentation-info-highlight, .presentation-cta, .tpx-faq-item, .presentation-benefit-item, .presentation-feature-card, .tpx-conf-btn, .preview-tab, .carousel-slide) {
+    background: var(--white) !important; background-image: none !important; box-shadow: none !important; border-color: var(--gray-200) !important; }
+html.tpx-skel.tpx-skel-pres #presentation-section :is(h2, h3, h4, p, li, .presentation-feature-title, .presentation-feature-description, .presentation-benefit-text,
+    .tpx-faq-question, .tpx-faq-answer, .login-sidebar-btn, .presentation-cta-btn, .preview-tab, .login-sidebar-icon, .presentation-intro-icon,
+    .presentation-feature-icon, .presentation-benefit-icon, .tpx-conf-player, .tpx-conf-btn-ic, .tpx-conf-btn-txt strong, .tpx-conf-btn-txt small) {
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 37%, var(--gray-200) 63%) !important; background-size: 400% 100% !important; animation: tpxSkBg 1.4s ease infinite; border-color: transparent !important; box-shadow: none !important; border-radius: 8px; }
+html.tpx-skel.tpx-skel-pres #presentation-section :is(.login-sidebar-icon, .presentation-intro-icon) { border-radius: 50%; }
+html.tpx-skel.tpx-skel-pres #presentation-section .tpx-conf-player { border-radius: var(--border-radius-lg, 16px); }
+html.tpx-skel.tpx-skel-pres #presentation-section .tpx-conf[hidden]:not([data-yt=""]) { display: block !important; }   /* conférence : place gardée avant que son script tourne */
+@media (prefers-reduced-motion: reduce) { html.tpx-skel.tpx-skel-pres #presentation-section * { animation: none !important; } }
+html.tpx-skel.tpx-skel-pres #presentation-section [data-tpx-fige] { height: var(--tpx-fige-h) !important; }   /* blocs figés (tpx-skel-pres-fige) */
+html.tpx-skel.tpx-skel-pres #presentation-section [data-tpx-fige="w"] { width: var(--tpx-fige-w) !important; }
+</style>
 <style id="tpx-skel-gouttiere">
 /* squelette : barre de défilement toujours présente (la vraie page défile presque toujours) ; largeur utile constante,
    pas de décalage horizontal quand la barre apparaît ou disparaît pendant le chargement */
 html.tpx-skel { overflow-y: scroll; }
 </style>
-<script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* squelette à chaque ouverture (plus jamais l'ancien écran) */</script>
+<script id="tpx-skel-early">document.documentElement.classList.add('tpx-skel', 'tpx-noloader');   /* squelette à chaque ouverture (plus jamais l'ancien écran) */
+/* appareil non connecté (ou jamais connecté) : squelette de la page de présentation ; retour de la page de connexion : tableur */
+try { if (localStorage.getItem('tpx_skel_auth') !== '1' && (document.referrer || '').indexOf('/auth.html') < 0) document.documentElement.classList.add('tpx-skel-pres'); } catch (e) { document.documentElement.classList.add('tpx-skel-pres'); }</script>
 <style id="tpx-hd-css">
 /* En-tête compact : plus de bandeau titre / bienvenue ; il ne reste que l'espace du header fixe */
 .page-header { padding: var(--header-height) 0 0 !important; background: none !important; min-height: 0 !important; }
@@ -25625,6 +25646,138 @@ html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
     #month-dropdown-btn > .custom-dropdown-icon { display: none; }
 }
 </style>
+<style id="tpx-conf-css">
+/* Présentation : conférence méthodologie (affiche locale, lecteur YouTube chargé au clic) */
+.tpx-conf[hidden] { display: none !important; }
+.tpx-conf-intro { color: var(--gray-600); line-height: 1.7; margin: -0.5rem 0 1.1rem; }
+.tpx-conf-player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--border-radius-lg, 16px); overflow: hidden;
+    background: #0f172a; box-shadow: var(--shadow-md); }
+.tpx-conf-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.tpx-conf-poster { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; margin: 0; padding: clamp(1rem, 4vw, 2.25rem); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(0.6rem, 2vw, 1.1rem); text-align: center;
+    color: #fff; font: inherit;
+    background: radial-gradient(120% 90% at 15% 10%, rgba(139, 92, 246, 0.55) 0%, transparent 55%),
+                radial-gradient(110% 90% at 90% 95%, rgba(59, 130, 246, 0.6) 0%, transparent 60%),
+                linear-gradient(135deg, #1e3a8a 0%, #1e40af 45%, #312e81 100%); }
+.tpx-conf-poster[hidden] { display: none; }
+.tpx-conf-poster::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.18;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1.2px); background-size: 22px 22px; }
+.tpx-conf-play { position: relative; width: clamp(58px, 11vw, 84px); height: clamp(58px, 11vw, 84px); border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center; background: #fff; color: #2563eb; font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35), 0 0 0 8px rgba(255, 255, 255, 0.16); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.tpx-conf-play i { margin-left: 0.18em; }
+.tpx-conf-poster:hover .tpx-conf-play { transform: scale(1.06); box-shadow: 0 12px 34px rgba(15, 23, 42, 0.4), 0 0 0 11px rgba(255, 255, 255, 0.2); }
+.tpx-conf-poster:focus-visible { outline: 3px solid #fff; outline-offset: -6px; }
+.tpx-conf-title { position: relative; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: clamp(1.1rem, 3.2vw, 1.7rem); line-height: 1.2; letter-spacing: -0.01em; }
+.tpx-conf-meta { position: relative; display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.tpx-conf-chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.28); }
+.tpx-conf-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.tpx-conf-btn { display: flex; align-items: center; gap: 0.85rem; min-width: 0; padding: 0.8rem 1rem; border-radius: 14px; text-decoration: none;
+    background: #fff; border: 1px solid var(--gray-200, #e5e7eb); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+.tpx-conf-btn-ic { flex: none; width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.15rem; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16); }
+.tpx-conf-btn-pdf .tpx-conf-btn-ic { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 55%, #7c3aed 100%); }
+.tpx-conf-btn-yt .tpx-conf-btn-ic { background: linear-gradient(135deg, #ff3b4e 0%, #e11d2e 100%); }
+.tpx-conf-btn-txt { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
+.tpx-conf-btn-txt strong { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.95rem; line-height: 1.25; color: var(--gray-800, #1f2937); }
+.tpx-conf-btn-txt small { font-size: 0.78rem; line-height: 1.3; color: var(--gray-500, #6b7280); }
+.tpx-conf-btn-go { flex: none; font-size: 0.8rem; color: var(--gray-400, #9ca3af); transition: transform 0.18s ease, color 0.18s ease; }
+@media (hover: hover) {
+    .tpx-conf-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1); }
+    .tpx-conf-btn-pdf:hover { border-color: rgba(79, 70, 229, 0.45); }
+    .tpx-conf-btn-yt:hover { border-color: rgba(225, 29, 46, 0.4); }
+    .tpx-conf-btn:hover .tpx-conf-btn-go { transform: translate(2px, -2px); }
+    .tpx-conf-btn-pdf:hover .tpx-conf-btn-go { color: #4f46e5; }
+    .tpx-conf-btn-yt:hover .tpx-conf-btn-go { color: #e11d2e; }
+}
+.tpx-conf-btn:active { transform: scale(0.98); }
+.tpx-conf-btn:focus-visible { outline: 3px solid var(--primary, #3b82f6); outline-offset: 2px; }
+[data-theme="dark"] .tpx-conf-btn { background: #1e293b; border-color: #334155; box-shadow: none; }
+[data-theme="dark"] .tpx-conf-btn-txt strong { color: #e2e8f0; }
+[data-theme="dark"] .tpx-conf-btn-txt small, [data-theme="dark"] .tpx-conf-btn-go { color: #94a3b8; }
+@media (hover: hover) { [data-theme="dark"] .tpx-conf-btn:hover { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); } }
+html[data-theme="pastel"] .tpx-conf-btn-pdf .tpx-conf-btn-ic { background: linear-gradient(135deg, #6388c5 0%, #7a78c2 55%, #876bc6 100%); }
+html[data-theme="pastel"] .tpx-conf-btn-yt .tpx-conf-btn-ic { background: linear-gradient(135deg, #e07a85 0%, #c9606c 100%); }
+@media (max-width: 640px) { .tpx-conf-foot { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; } }
+@media (prefers-reduced-motion: reduce) { .tpx-conf-btn, .tpx-conf-btn-go { transition: none; } .tpx-conf-btn:hover, .tpx-conf-btn:active, .tpx-conf-btn:hover .tpx-conf-btn-go { transform: none; } }
+[data-theme="dark"] .tpx-conf-intro { color: #cbd5e1; }
+[data-theme="dark"] .tpx-conf-player { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); outline: 1px solid #334155; }
+html[data-theme="pastel"] .tpx-conf-poster { background: radial-gradient(120% 90% at 15% 10%, rgba(135, 107, 198, 0.55) 0%, transparent 55%),
+    radial-gradient(110% 90% at 90% 95%, rgba(99, 136, 197, 0.65) 0%, transparent 60%), linear-gradient(135deg, #4f6fa8 0%, #5b72b0 45%, #6a5ea8 100%); }
+html[data-theme="pastel"] .tpx-conf-play { color: #4f6fa8; }
+@media (max-width: 480px) { .tpx-conf-chip { font-size: 0.72rem; padding: 0.22rem 0.55rem; } }
+@media (prefers-reduced-motion: reduce) { .tpx-conf-play { transition: none; } .tpx-conf-poster:hover .tpx-conf-play { transform: none; } }
+</style>
+<style id="tpx-grille-css">
+/* Liste des SDD : colonne « Relecture grille » — 4 compteurs sans débordement (case 76 px, marges réduites) */
+#sdd-table th[hidden] { display: none; }
+#sdd-table th[data-sort="relecture_grille"] { text-align: center; white-space: normal; line-height: 1.25; }
+#sdd-table.tpx-grille-on th[data-sort="ps_pss"], #sdd-table.tpx-grille-on th[data-sort="sans_ps"],
+#sdd-table.tpx-grille-on th[data-sort="faire_passer"], #sdd-table.tpx-grille-on th[data-sort="relecture_grille"] { white-space: normal; line-height: 1.25; padding-left: 6px; padding-right: 6px; }
+#sdd-table.tpx-grille-on th[data-sort] .sort-icon { margin-left: 0.3rem; }
+#sdd-table.tpx-grille-on col.col-cnt { width: 86px; }
+/* place suffisante : intitulés des compteurs sur une ligne, largeurs posées par le script (tpx-grille-js) */
+#sdd-table.tpx-grille-on.tpx-grille-1l th[data-sort="ps_pss"], #sdd-table.tpx-grille-on.tpx-grille-1l th[data-sort="sans_ps"],
+#sdd-table.tpx-grille-on.tpx-grille-1l th[data-sort="faire_passer"], #sdd-table.tpx-grille-on.tpx-grille-1l th[data-sort="relecture_grille"] { white-space: nowrap; }
+#sdd-table.tpx-grille-on.tpx-grille-1l col.col-title { width: auto; }
+#sdd-table.tpx-grille-on td:nth-child(4), #sdd-table.tpx-grille-on td:nth-child(5),
+#sdd-table.tpx-grille-on td:nth-child(6), #sdd-table.tpx-grille-on td:nth-child(7) { padding-left: 5px; padding-right: 5px; }
+#sdd-table.tpx-grille-on td:nth-child(8) { text-align: center; vertical-align: middle; }
+/* écran moyen : plutôt qu'un intitulé écrasé, le tableau défile dans son cadre (comme sous 1024 px) */
+@media (min-width: 1025px) and (max-width: 1179px) {
+    #page-sdd .sdd-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #sdd-table.tpx-grille-on { min-width: 1080px; }
+}
+</style>
+<style id="tpx-grille-btn-css">
+/* Relecture de grille : bouton des notes et pastille de validation To-Do */
+.notes-action-btn[hidden] { display: none !important; }
+#sdd-notes-overlay .notes-action-btn.sdd-quick-grille { background: rgba(8, 145, 178, 0.14) !important; color: #0e7490 !important; }
+@media (hover: hover) and (pointer: fine) {
+    #sdd-notes-overlay .notes-action-btn.sdd-quick-grille:hover,
+    #sdd-notes-overlay .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #0891b2 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.45) !important; }
+}
+#sdd-notes-overlay .notes-action-btn.sdd-quick-grille:active { background: #0e7490 !important; color: #fff !important; box-shadow: none !important; }
+[data-theme="dark"] #sdd-notes-overlay .notes-action-btn.sdd-quick-grille { background: rgba(8, 145, 178, 0.25) !important; color: #67e8f9 !important; }
+@media (hover: hover) and (pointer: fine) {
+    [data-theme="dark"] #sdd-notes-overlay .notes-action-btn.sdd-quick-grille:hover,
+    [data-theme="dark"] #sdd-notes-overlay .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #0891b2 !important; color: #fff !important; }
+}
+:where(html[data-theme="pastel"]) #sdd-notes-overlay .notes-action-btn.sdd-quick-grille { background: rgba(84, 160, 180, 0.14) !important; color: #2f6f80 !important; }
+@media (hover: hover) and (pointer: fine) {
+    :where(html[data-theme="pastel"]) #sdd-notes-overlay .notes-action-btn.sdd-quick-grille:hover,
+    :where(html[data-theme="pastel"]) #sdd-notes-overlay .notes-action-btn.sdd-quick-grille.sdd-notes-btn-popover-open { background: #54a0b4 !important; box-shadow: 0 4px 12px rgba(84, 160, 180, 0.28) !important; }
+}
+.todo-sdd-passage-pill.grille { background: #0891b2; }
+[data-theme="dark"] .todo-sdd-passage-pill.grille { background: #0e7490; }
+:where(html[data-theme="pastel"]) .todo-sdd-passage-pill.grille { background: #54a0b4; }
+</style>
+<style id="tpx-wn-grille-css">
+/* Nouveautés : icône de l'entrée « Relecture de grille » (cyan, comme le bouton Grille) */
+.whats-new-section-icon.grille { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 2px 6px rgba(8, 145, 178, 0.3); }
+:where(html[data-theme="pastel"]) .whats-new-section-icon.grille { background: linear-gradient(135deg, #6fb3c4, #54a0b4); }
+</style>
+<style id="tpx-crown-css">
+/* couronne Premium posée sur la pastille EDN / ECOS (placée par tpx-crown-js, dans le header fixe : ne bouge pas au défilement) */
+.tpx-prem-crown { position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+    margin: 0; padding: 0; border-radius: 50%; text-decoration: none; cursor: pointer; transform: rotate(16deg);
+    color: #f5a30b; font-size: 13px; line-height: 1; filter: drop-shadow(0 1px 1.5px rgba(146, 64, 14, .35));
+    transition: transform .18s ease, filter .18s ease, color .18s ease; -webkit-tap-highlight-color: transparent; }
+.tpx-prem-crown[hidden] { display: none !important; }
+.tpx-prem-crown:not([hidden]) { animation: tpx-crown-in .55s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes tpx-crown-in { from { opacity: 0; scale: .55; translate: 0 3px; } 60% { opacity: 1; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@media (hover: hover) and (pointer: fine) {
+    .tpx-prem-crown:hover { transform: rotate(16deg) scale(1.18); filter: drop-shadow(0 2px 4px rgba(217, 119, 6, .45)); }
+}
+.tpx-prem-crown:focus-visible { outline: 2px solid #f59e0b; outline-offset: 1px; }
+.tpx-prem-crown:active { transform: rotate(16deg) scale(.95); }
+html[data-theme="pastel"] .tpx-prem-crown { color: #dfa441; }
+@media (max-width: 600px) { .tpx-prem-crown { width: 18px; height: 18px; font-size: 11px; } }
+@keyframes tpx-crown-fondu { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tpx-prem-crown, .tpx-prem-crown:not([hidden]) { transition: none; animation: tpx-crown-fondu .3s ease both; } .tpx-prem-crown:hover { transform: rotate(16deg); } }
+</style>
 </head>
 <body>
 
@@ -25642,6 +25795,7 @@ html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
             <span class="logo-icon"><i class="fas fa-stethoscope"></i></span>
             TypixClin<span class="tpx-app-tag">ECOS</span>
         </a>
+        <a class="tpx-prem-crown" id="tpx-prem-crown" href="comptepremium.html?from=ecos" hidden aria-label="Compte Premium"><i class="fas fa-crown" aria-hidden="true"></i></a>
         <nav class="nav">
             <ul class="nav-items">
                 <div class="save-indicator-header" id="save-indicator-header" title="Sauvegarde automatique"></div>
@@ -25801,6 +25955,33 @@ html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
 					
 					<hr class="presentation-separator">
 
+                    <section class="tpx-conf" id="tpx-conf" data-yt="5-xAneRRnys" hidden aria-labelledby="tpx-conf-titre">
+                        <h3 class="presentation-section-title" id="tpx-conf-titre"><i class="fas fa-circle-play"></i> Conférence méthodologie ECOS</h3>
+                        <p class="tpx-conf-intro">La méthodologie des ECOS de A à Z en une conférence.</p>
+                        <div class="tpx-conf-player" id="tpx-conf-player">
+                            <button type="button" class="tpx-conf-poster" id="tpx-conf-poster" aria-label="Lire la conférence méthodologie ECOS (2 h 30)">
+                                <span class="tpx-conf-play" aria-hidden="true"><i class="fas fa-play"></i></span>
+                                <span class="tpx-conf-title">Conférence méthodologie ECOS</span>
+                                <span class="tpx-conf-meta" aria-hidden="true">
+                                    <span class="tpx-conf-chip"><i class="fas fa-clock"></i> 2 h 30</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div class="tpx-conf-foot">
+                            <a id="tpx-conf-pdf" class="tpx-conf-btn tpx-conf-btn-pdf" href="conference-methodologie-ecos.pdf" target="_blank" rel="noopener">
+                                <span class="tpx-conf-btn-ic" aria-hidden="true"><i class="fas fa-file-pdf"></i></span>
+                                <span class="tpx-conf-btn-txt"><strong>Diaporama de la conférence</strong><small>PDF · 80 diapositives</small></span>
+                                <i class="fas fa-arrow-up-right-from-square tpx-conf-btn-go" aria-hidden="true"></i>
+                            </a>
+                            <a id="tpx-conf-lien" class="tpx-conf-btn tpx-conf-btn-yt" href="#" target="_blank" rel="noopener">
+                                <span class="tpx-conf-btn-ic" aria-hidden="true"><i class="fab fa-youtube"></i></span>
+                                <span class="tpx-conf-btn-txt"><strong>Regarder sur YouTube</strong><small>2 h 30</small></span>
+                                <i class="fas fa-arrow-up-right-from-square tpx-conf-btn-go" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                        <hr class="presentation-separator">
+                    </section>
+
                     <h3 class="presentation-section-title"><i class="fas fa-star"></i> Fonctionnalités principales</h3>
                     <div class="presentation-feature-grid">
                         <div class="presentation-feature-card">
@@ -25944,6 +26125,40 @@ html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
 </section>
 
 <!-- ============ CONTENU PRINCIPAL ============ -->
+<script id="tpx-skel-pres-fige">
+/* squelette « présentation » : tailles des blocs figées dès leur premier affichage (l'arrivée des polices ne les fait plus
+   grandir) ; la vraie présentation attend ses polices (2 s au plus) pour ne pas s'élargir non plus */
+(function () {
+    var h = document.documentElement, p = document.getElementById('presentation-section');
+    if (!p || !h.classList.contains('tpx-skel-pres')) return;
+    var els = p.querySelectorAll('h2, h3, h4, p, li, .presentation-feature-title, .presentation-feature-description, .presentation-benefit-text, .tpx-faq-question, .tpx-faq-answer, ' +
+        '.login-sidebar-btn, .presentation-cta-btn, .preview-tab, .tpx-conf-btn-txt strong, .tpx-conf-btn-txt small');
+    var px = function (v) { return parseFloat(v) || 0; }, mes = [], i;
+    for (i = 0; i < els.length; i++) {
+        var r = els[i].getBoundingClientRect(); if (!(r.height > 0)) continue;
+        var cs = getComputedStyle(els[i]), cb = cs.boxSizing !== 'border-box';
+        var hh = r.height - (cb ? px(cs.paddingTop) + px(cs.paddingBottom) + px(cs.borderTopWidth) + px(cs.borderBottomWidth) : 0);
+        var ww = /^inline/.test(cs.display) ? r.width - (cb ? px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth) : 0) : 0;
+        mes.push([els[i], hh, ww]);
+    }
+    for (i = 0; i < mes.length; i++) {
+        var e = mes[i][0]; e.style.setProperty('--tpx-fige-h', mes[i][1] + 'px');
+        if (mes[i][2]) { e.style.setProperty('--tpx-fige-w', mes[i][2] + 'px'); e.setAttribute('data-tpx-fige', 'w'); } else e.setAttribute('data-tpx-fige', '');
+    }
+    var vus = {}, attente = [];
+    try {
+        for (i = 0; i < els.length; i++) { var c = getComputedStyle(els[i]), f = c.fontStyle + ' ' + c.fontWeight + ' 16px ' + c.fontFamily; if (!vus[f]) { vus[f] = 1; attente.push(document.fonts.load(f)); } }
+    } catch (e) {}
+    window.tpxSkelFonts = Promise.race([Promise.all(attente).then(null, function () {}), new Promise(function (r) { setTimeout(r, 2000); })]);
+    function liberer() {   /* vraie page affichée : les tailles figées ne servent plus */
+        for (var j = 0; j < mes.length; j++) { var x = mes[j][0]; x.removeAttribute('data-tpx-fige'); x.style.removeProperty('--tpx-fige-h'); x.style.removeProperty('--tpx-fige-w'); }
+    }
+    try {
+        var mo = new MutationObserver(function () { if (!h.classList.contains('tpx-skel') || !h.classList.contains('tpx-skel-pres')) { mo.disconnect(); liberer(); } });
+        mo.observe(h, { attributes: true, attributeFilter: ['class'] });
+    } catch (e) {}
+})();
+</script>
 <div id="tpx-skel" aria-hidden="true"><div class="container"><div class="tpx-sk-nav"><div class="tpx-sk-navbar"><span class="tpx-sk"></span><span class="tpx-sk on"></span><span class="tpx-sk"></span><span class="tpx-sk"></span></div><span class="tpx-sk tpx-sk-todo"></span></div><div class="tpx-sk-tools"><span class="tpx-sk tpx-sk-search"></span><span class="tpx-sk tpx-sk-select"></span><span class="tpx-sk tpx-sk-select"></span></div><div class="tpx-sk-section"><div class="tpx-sk-head"><span class="tpx-sk tpx-sk-ico"></span><span class="tpx-sk tpx-sk-title"></span><span class="tpx-sk-sp"></span><span class="tpx-sk tpx-sk-btn"></span><span class="tpx-sk tpx-sk-btn sm"></span></div><div class="tpx-sk-grid tpx-sk-ecos"><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div><div class="tpx-sk-card"><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-ico sm"></span><span class="tpx-sk tpx-sk-line l tpx-sk-w55"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-line tpx-sk-w25"></span><span class="tpx-sk tpx-sk-line tpx-sk-w20"></span></div><div class="tpx-sk-row"><span class="tpx-sk tpx-sk-chip"></span><span class="tpx-sk tpx-sk-chip"></span></div><span class="tpx-sk tpx-sk-bar"></span></div></div></div></div></div>
 <script id="tpx-skel-js">
 /* fin du squelette de chargement — utilisateur chargé (statut appliqué) ET données arrivées ; déconnecté →
@@ -25964,17 +26179,23 @@ html[data-theme="pastel"] #month-dropdown-btn > .custom-dropdown-icon {
         if (!html.classList.contains('tpx-skel')) { drop(); return; }
         html.classList.add('tpx-skel-out');
         setTimeout(function () {
-            html.classList.remove('tpx-skel', 'tpx-skel-out'); html.classList.add('tpx-skel-in'); drop();
+            html.classList.remove('tpx-skel', 'tpx-skel-out', 'tpx-skel-pres'); html.classList.add('tpx-skel-in'); drop();
             relayout(); requestAnimationFrame(relayout); setTimeout(relayout, 120);
             setTimeout(function () { html.classList.remove('tpx-skel-in'); }, 400);
         }, 200);
     }
     window.tpxSkelReady = function (what) {
         try {
+            try { if (what === 'out') localStorage.setItem('tpx_skel_auth', '0'); else if (what === 'user') localStorage.setItem('tpx_skel_auth', '1'); } catch (e) {}
             if (what === 'out') {
-                if (!done) { done = true; html.classList.remove('tpx-skel'); drop(); }
+                if (!done) {
+                    done = true;
+                    var fin = function () { html.classList.remove('tpx-skel'); html.classList.remove('tpx-skel-pres'); drop(); };
+                    if (window.tpxSkelFonts) window.tpxSkelFonts.then(fin, fin); else fin();   /* présentation montrée avec ses polices : pas de texte qui s'élargit */
+                }
                 return;
             }
+            if (what === 'user') html.classList.remove('tpx-skel-pres');   /* connecté finalement : squelette du tableur */
             st[what] = true;
             if (st.user && st.data && !done) requestAnimationFrame(function () { setTimeout(finish, 60); });   /* le rendu des données est fait dans la même tâche */
         } catch (e) { finish(); }
@@ -26390,7 +26611,7 @@ window.tpxRetirerSquelette = function (html) { return String(html == null ? '' :
                     <table class="items-table" id="sdd-table">
                         <colgroup>
                             <col class="col-num"><col class="col-title"><col class="col-spec">
-                            <col class="col-cnt"><col class="col-cnt"><col class="col-cnt">
+                            <col class="col-cnt"><col class="col-cnt"><col class="col-cnt"><col class="col-cnt" id="sdd-col-grille">
                             <col class="col-conf"><col class="col-res">
                         </colgroup>
                         <thead><tr>
@@ -26400,6 +26621,7 @@ window.tpxRetirerSquelette = function (html) { return String(html == null ? '' :
                             <th data-sort="ps_pss">PS/PSS <i class="fas fa-sort sort-icon"></i></th>
                             <th data-sort="sans_ps">Sans PS <i class="fas fa-sort sort-icon"></i></th>
                             <th data-sort="faire_passer">Fait passer <i class="fas fa-sort sort-icon"></i></th>
+                            <th data-sort="relecture_grille" id="sdd-th-grille">Relecture grille <i class="fas fa-sort sort-icon"></i></th>
                             <th data-sort="confidence">Confiance / révision <i class="fas fa-sort sort-icon"></i></th>
                             <th>Ressources</th>
                         </tr></thead>
@@ -26843,6 +27065,7 @@ window.tpxRetirerSquelette = function (html) { return String(html == null ? '' :
                 <button class="notes-action-btn sdd-quick-pass" onclick="sddNotesQuickPassage('faire_passer', event)" data-tooltip="Fait passer"><i class="fas fa-handshake"></i><span class="notes-btn-label">Fait passer</span></button>
                 <button class="notes-action-btn sdd-quick-ps" onclick="sddNotesQuickPassage('ps_pss', event)" data-tooltip="PS/PSS"><i class="fas fa-user-doctor"></i><span class="notes-btn-label">PS/PSS</span></button>
                 <button class="notes-action-btn sdd-quick-sans" onclick="sddNotesQuickPassage('sans_ps', event)" data-tooltip="Sans PS"><i class="fas fa-flag"></i><span class="notes-btn-label">Sans PS</span></button>
+                <button class="notes-action-btn sdd-quick-grille" id="sddNotesGrilleBtn" onclick="sddNotesQuickPassage('relecture_grille', event)" data-tooltip="Relecture de grille"><i class="fas fa-list-check"></i><span class="notes-btn-label">Grille</span></button>
                 <span id="sdd-notes-todo-zone"></span>
                 <button class="notes-close-btn" onclick="closeSDDNotesModal()"><i class="fas fa-times"></i></button>
             </div>
@@ -27406,6 +27629,19 @@ window.tpxRetirerSquelette = function (html) { return String(html == null ? '' :
 
             <!-- ══════════════ NOVEMBRE 2026 ══════════════ -->
             <span class="whats-new-version-tag"><i class="fas fa-tag"></i> Mise à jour — Novembre 2026</span>
+
+            <div class="whats-new-section">
+                <div class="whats-new-section-icon grille">
+                    <i class="fas fa-list-check"></i>
+                </div>
+                <div class="whats-new-section-text">
+                    <h4>Relecture de grille</h4>
+                    <p>
+                        Nouvelle colonne <strong>Relecture grille</strong> dans la liste des SDD&nbsp;: comptez vos relectures de grille
+                        comme vos passages. Masquée par défaut&nbsp;: affichez-la dans <strong>Paramètres → Relecture grille</strong>.
+                    </p>
+                </div>
+            </div>
 
             <div class="whats-new-section">
                 <div class="whats-new-section-icon purple">
@@ -29901,6 +30137,7 @@ function ecosDefaultSDD() {
         psPssCount: 0,
         sansPsCount: 0,
         fairePasserCount: 0,
+        relectureGrilleCount: 0,
         confidence: null,
         lastRevision: null,
         priority: 'none',
@@ -30552,9 +30789,12 @@ function isProcedureSDD(metaOrId) {
 }
 function getAllowedPassageTypes(metaOrId) {
     var m = (metaOrId && typeof metaOrId === 'object') ? metaOrId : getSDDMeta(metaOrId);
-    if (m && Array.isArray(m.allowedPassageTypes)) return m.allowedPassageTypes.slice();
-    if (isProcedureSDD(m)) return ['sans_ps', 'faire_passer'];
-    return ['ps_pss', 'sans_ps', 'faire_passer'];
+    var t;
+    if (m && Array.isArray(m.allowedPassageTypes)) t = m.allowedPassageTypes.slice();
+    else if (isProcedureSDD(m)) t = ['sans_ps', 'faire_passer'];
+    else t = ['ps_pss', 'sans_ps', 'faire_passer'];
+    if (t.indexOf('relecture_grille') === -1) t.push('relecture_grille');   /* relecture de grille : possible pour toute SDD, procédures comprises */
+    return t;
 }
 function isPassageTypeAllowed(metaOrId, type) {
     return getAllowedPassageTypes(metaOrId).indexOf(type) !== -1;
@@ -30609,10 +30849,11 @@ function applySDDIncrement(sddId, type, confidence) {
     if (type === 'ps_pss') { s.psPssCount++; }
     else if (type === 'sans_ps') { s.sansPsCount++; }
     else if (type === 'faire_passer') { s.fairePasserCount++; }
+    else if (type === 'relecture_grille') { s.relectureGrilleCount = (s.relectureGrilleCount || 0) + 1; }
     // Section 3 : « faire passer » n'est PAS une pratique personnelle.
     // → il n'écrase ni la confiance ni la dernière révision personnelle ;
     //   il se contente d'incrémenter son compteur et d'écrire son entrée d'historique.
-    if (type === 'ps_pss' || type === 'sans_ps') {
+    if (type === 'ps_pss' || type === 'sans_ps' || type === 'relecture_grille') {   /* relecture de grille : pratique personnelle (confiance + dernière révision) */
         if (confidence != null) s.confidence = confidence;
         s.lastRevision = today;
     }
@@ -30636,6 +30877,7 @@ function sddDecrement(sddId, type) {
     let countKey;
     if (type === 'ps_pss') countKey = 'psPssCount';
     else if (type === 'sans_ps') countKey = 'sansPsCount';
+    else if (type === 'relecture_grille') countKey = 'relectureGrilleCount';
     else countKey = 'fairePasserCount';
     if (!s[countKey] || s[countKey] <= 0) return;
     const real = ensureSDDState(sddId);
@@ -30646,7 +30888,7 @@ function sddDecrement(sddId, type) {
     }
     // Section 3 : recalculer confiance + dernière révision UNIQUEMENT à partir
     // des passages personnels restants (ps_pss / sans_ps). « faire passer » est ignoré.
-    const ownHistory = real.history.filter(h => h.type === 'ps_pss' || h.type === 'sans_ps');
+    const ownHistory = real.history.filter(h => h.type === 'ps_pss' || h.type === 'sans_ps' || h.type === 'relecture_grille');
     if (!ownHistory.length) {
         real.confidence = null;
         real.lastRevision = null;
@@ -30694,7 +30936,7 @@ function openConfPicker(sddId, type) {
     confPickerContext = { sddId, type };
     const cur = getSDDState(sddId).confidence;
     const overlay = document.getElementById('ecos-conf-overlay');
-    const label = (type === 'ps_pss') ? 'Station avec PS/PSS' : 'Station sans PS';
+    const label = (type === 'ps_pss') ? 'Station avec PS/PSS' : (type === 'relecture_grille' ? 'Relecture de grille' : 'Station sans PS');
     document.getElementById('ecos-conf-sub').textContent = label + ' — quel est votre niveau de confiance ?';
     document.querySelectorAll('.ecos-conf-btn').forEach(b => {
         b.classList.toggle('sel', parseInt(b.dataset.val) === cur);
@@ -30780,17 +31022,19 @@ function _buildValidationPopoverHTML(selectedType) {
     var curConf = (typeof getSDDState === 'function' && sddId) ? (getSDDState(sddId).confidence || 0) : 0;
 
     var _psAllowed = (typeof isPassageTypeAllowed !== 'function') || isPassageTypeAllowed(sddId, 'ps_pss');
+    var _rgOn = !window._tpxGrilleOn || window._tpxGrilleOn();   /* relecture de grille masquée dans Paramètres : pas de pastille */
     var pillsHTML =
         (_psAllowed ? '<button class="todo-sdd-passage-pill ps' + (selectedType === 'ps_pss' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;ps_pss&apos;)"><i class="fas fa-user-doctor"></i> PS/PSS</button>' : '') +
         '<button class="todo-sdd-passage-pill sans' + (selectedType === 'sans_ps' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;sans_ps&apos;)"><i class="fas fa-flag"></i> Sans PS</button>' +
-        '<button class="todo-sdd-passage-pill pass' + (selectedType === 'faire_passer' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();confirmTodoSDDValidationType(&apos;faire_passer&apos;, this)"><i class="fas fa-handshake"></i> Fait passer</button>';
+        '<button class="todo-sdd-passage-pill pass' + (selectedType === 'faire_passer' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();confirmTodoSDDValidationType(&apos;faire_passer&apos;, this)"><i class="fas fa-handshake"></i> Fait passer</button>' +
+        (_rgOn ? '<button class="todo-sdd-passage-pill grille' + (selectedType === 'relecture_grille' ? ' pill-selected' : '') + '" onclick="event.stopPropagation();selectTodoSDDPassageType(&apos;relecture_grille&apos;)"><i class="fas fa-list-check"></i> Grille</button>' : '');
 
     var confHTML = '';
-    if (selectedType === 'ps_pss' || selectedType === 'sans_ps') {
-        var isPs = (selectedType === 'ps_pss');
-        var accent = isPs ? '#2563eb' : '#7c3aed';
-        var icon   = isPs ? 'fa-user-doctor' : 'fa-flag';
-        var label  = isPs ? 'PS/PSS' : 'Sans PS';
+    if (selectedType === 'ps_pss' || selectedType === 'sans_ps' || selectedType === 'relecture_grille') {
+        var isPs = (selectedType === 'ps_pss'), isRg = (selectedType === 'relecture_grille');
+        var accent = isPs ? '#2563eb' : (isRg ? '#0891b2' : '#7c3aed');
+        var icon   = isPs ? 'fa-user-doctor' : (isRg ? 'fa-list-check' : 'fa-flag');
+        var label  = isPs ? 'PS/PSS' : (isRg ? 'Relecture de grille' : 'Sans PS');
         confHTML =
             '<div class="todo-sdd-inline-conf">' +
                 '<div class="todo-sdd-inline-conf-title"><i class="fas ' + icon + '" style="color:' + accent + '"></i> ' + label + ' — Nouvelle confiance</div>' +
@@ -31012,7 +31256,7 @@ if (type === 'faire_passer') {
 
     return;
 }
-    if (type === 'ps_pss' || type === 'sans_ps') {
+    if (type === 'ps_pss' || type === 'sans_ps' || type === 'relecture_grille') {
         // Les niveaux de confiance s'affichent inline dans le même popover
         window.selectTodoSDDPassageType(type);
     }
@@ -31044,9 +31288,10 @@ function openTodoSDDConfidencePopover(type) {
     const wasOpen = popover.classList.contains('show');
 
     const isPs  = (type === 'ps_pss');
-    const label = isPs ? 'PS/PSS' : 'Sans PS';
-    const icon  = isPs ? 'fa-user-doctor' : 'fa-flag';
-    const accent = isPs ? '#2563eb' : '#7c3aed';
+    const isRg  = (type === 'relecture_grille');
+    const label = isPs ? 'PS/PSS' : (isRg ? 'Relecture de grille' : 'Sans PS');
+    const icon  = isPs ? 'fa-user-doctor' : (isRg ? 'fa-list-check' : 'fa-flag');
+    const accent = isPs ? '#2563eb' : (isRg ? '#0891b2' : '#7c3aed');
     // Récupérer la confiance actuelle de la SDD pour pré-sélectionner le niveau courant
     var _curConf = (typeof getSDDState === 'function' && ctx.sddId) ? (getSDDState(ctx.sddId).confidence || 0) : 0;
     popover.innerHTML =
@@ -31119,6 +31364,7 @@ window.confirmTodoSDDConfidence = function(confidence, btn) {
         if (selPill) {
             if (selPill.classList.contains('ps')) type = 'ps_pss';
             else if (selPill.classList.contains('sans')) type = 'sans_ps';
+            else if (selPill.classList.contains('grille')) type = 'relecture_grille';
         }
     }
     if (!type && confPop) type = confPop.dataset.type;
@@ -31157,7 +31403,7 @@ window.closeTodoSDDConfidencePopover = function() {
     // Retirer la classe d'expansion du bouton header si non confirmé
 		if (pendingTodoSDDValidation && pendingTodoSDDValidation.notesHeaderButtonsLocked) {
 			document
-				.querySelectorAll('.notes-action-btn.sdd-quick-ps, .notes-action-btn.sdd-quick-sans')
+				.querySelectorAll('.notes-action-btn.sdd-quick-ps, .notes-action-btn.sdd-quick-sans, .notes-action-btn.sdd-quick-grille')
 				.forEach(function(b) {
 					b.classList.remove('sdd-notes-btn-popover-open');
 				});
@@ -31546,7 +31792,7 @@ function getFilteredSDDs() {
     if (sddFilterStatus !== 'all') {
         list = list.filter(s => {
             const st = getSDDState(s.id);
-            const seen = st.psPssCount + st.sansPsCount + st.fairePasserCount > 0;
+            const seen = st.psPssCount + st.sansPsCount + st.fairePasserCount + (st.relectureGrilleCount || 0) > 0;
             if (sddFilterStatus === 'not-started') return !seen;
             if (sddFilterStatus === 'in-progress') return seen;
             if (sddFilterStatus === 'prio-relative') return st.priority === 'relative';
@@ -31567,6 +31813,7 @@ function getFilteredSDDs() {
             case 'ps_pss': va = sa.psPssCount; vb = sb.psPssCount; break;
             case 'sans_ps': va = sa.sansPsCount; vb = sb.sansPsCount; break;
             case 'faire_passer': va = sa.fairePasserCount; vb = sb.fairePasserCount; break;
+            case 'relecture_grille': va = sa.relectureGrilleCount || 0; vb = sb.relectureGrilleCount || 0; break;
             case 'confidence': va = sa.confidence || 0; vb = sb.confidence || 0; break;
             case 'lastRevision': va = sa.lastRevision || ''; vb = sb.lastRevision || ''; return va.localeCompare(vb) * dir;
             default: return ((_tpxCustom ? _tpxSpecCmp(a, b) : 0) || compareSDDDefault(a, b)) * dir;
@@ -31584,6 +31831,7 @@ function ecosShortDate(iso) {
 }
 
 function renderSDDTable() {
+    if (window._tpxGrilleSync) window._tpxGrilleSync();   /* colonne « Relecture grille » affichée ou masquée */
     const tbody = document.getElementById('sdd-table-body');
     if (!tbody) return;
     ecosInitSDDPageUI();
@@ -31645,6 +31893,7 @@ function renderSDDTable() {
             '<td>' + counterHTML(sdd.id, 'ps_pss', s.psPssCount) + '</td>' +
             '<td>' + counterHTML(sdd.id, 'sans_ps', s.sansPsCount) + '</td>' +
             '<td>' + counterHTML(sdd.id, 'faire_passer', s.fairePasserCount) + '</td>' +
+            (window._tpxGrilleOn && window._tpxGrilleOn() ? '<td>' + counterHTML(sdd.id, 'relecture_grille', s.relectureGrilleCount || 0) + '</td>' : '') +
             '<td>' + confDateCellHTML(s) + '</td>' +
             '<td class="resources-cell">' + resCell + '</td>' +
         '</tr>';
@@ -31673,7 +31922,7 @@ function renderSDDTable() {
             }
         } else {
             if (_sddEmptyEl) _sddEmptyEl.style.display = 'none';
-            tbody.innerHTML = '<tr><td colspan="8"><div class="priority-empty" style="grid-column:1/-1;"><i class="fas fa-search"></i><p>Aucune SDD ne correspond</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="' + (window._tpxGrilleOn && window._tpxGrilleOn() ? 9 : 8) + '"><div class="priority-empty" style="grid-column:1/-1;"><i class="fas fa-search"></i><p>Aucune SDD ne correspond</p></div></td></tr>';
         }
     } else {
         var _sddEmptyElFilled = document.getElementById('sdd-empty');
@@ -31789,13 +32038,14 @@ function counterHTML(sddId, type, val) {
     var addAction = (type === 'faire_passer')
         ? 'sddIncrement(\'' + sddId + '\',\'' + type + '\')'
         : 'openEcosConfPop(event,\'' + sddId + '\',\'' + type + '\')';
-    var capLabel = type === 'ps_pss' ? 'PS/PSS' : type === 'sans_ps' ? 'Sans PS' : 'Fait passer';
+    var capLabel = type === 'ps_pss' ? 'PS/PSS' : type === 'sans_ps' ? 'Sans PS' : type === 'relecture_grille' ? 'Grille' : 'Fait passer';
+    var _rg = type === 'relecture_grille';
     return '<div class="compact-tours">' +
         '<div class="ct-block">' +
         '<div class="ct-tile-border" style="background:' + p.border + '">' +
             '<div class="ct-tile" data-count="' + n + '" style="background:' + p.pastel + '">' +
-'<div class="ct-zone ct-zone-l' + leftDisabled + '" data-ecos-tooltip="' + (n <= 0 ? 'Aucun passage à retirer' : 'Retirer un passage') + '" ' + removeAction + '></div>' +
-'<div class="ct-zone ct-zone-r" data-ecos-tooltip="Ajouter un passage" onclick="' + addAction + '"></div>' +
+'<div class="ct-zone ct-zone-l' + leftDisabled + '" data-ecos-tooltip="' + (n <= 0 ? (_rg ? 'Aucune relecture à retirer' : 'Aucun passage à retirer') : (_rg ? 'Retirer une relecture' : 'Retirer un passage')) + '" ' + removeAction + '></div>' +
+'<div class="ct-zone ct-zone-r" data-ecos-tooltip="' + (_rg ? 'Ajouter une relecture' : 'Ajouter un passage') + '" onclick="' + addAction + '"></div>' +
                 '<div class="ct-div ct-div-top" style="background:' + p.border + '"></div>' +
                 '<div class="ct-div ct-div-bot" style="background:' + p.border + '"></div>' +
                 '<div class="ct-sign ct-sign-l" style="color:' + p.text + '">\u2212</div>' +
@@ -32347,7 +32597,7 @@ function openEcosDelPop(ev, sddId, type) {
     const ar = anchor.getBoundingClientRect();
     const pop = document.createElement('div');
     pop.className = 'ct-rm-pop';
-    pop.innerHTML = '<div class="ctrm-title">Retirer un passage&nbsp;?</div>' +
+    pop.innerHTML = '<div class="ctrm-title">' + (type === 'relecture_grille' ? 'Retirer une relecture&nbsp;?' : 'Retirer un passage&nbsp;?') + '</div>' +
         '<button type="button" class="ctrm-btn"><i class="fas fa-trash"></i>Supprimer</button>';
     document.body.appendChild(pop);
     _ecosDelPopEl = pop;
@@ -33587,7 +33837,7 @@ function getLastOwnPracticeDate(sddState) {
     let best = null;
     for (const entry of sddState.history) {
         if (!entry) continue;
-        if (entry.type !== 'ps_pss' && entry.type !== 'sans_ps') continue;
+        if (entry.type !== 'ps_pss' && entry.type !== 'sans_ps' && entry.type !== 'relecture_grille') continue;
         if (!entry.date) continue;
         const t = new Date(entry.date).getTime();
         if (isNaN(t)) continue;
@@ -33596,7 +33846,7 @@ function getLastOwnPracticeDate(sddState) {
     if (best === null) {
         // Repli pour anciennes données sans historique exploitable :
         // lastRevision n'est fiable que s'il existe au moins un passage personnel agrégé.
-        if (((sddState.psPssCount || 0) + (sddState.sansPsCount || 0)) > 0 && sddState.lastRevision) {
+        if (((sddState.psPssCount || 0) + (sddState.sansPsCount || 0) + (sddState.relectureGrilleCount || 0)) > 0 && sddState.lastRevision) {
             const t = new Date(sddState.lastRevision).getTime();
             if (!isNaN(t)) return ecosNormalizeDateKey(t);
         }
@@ -33618,9 +33868,9 @@ function getOwnPracticeStats(sddState) {
     const hist = (sddState && Array.isArray(sddState.history)) ? sddState.history : [];
     let usedHistory = false;
     for (const entry of hist) {
-        if (!entry || (entry.type !== 'ps_pss' && entry.type !== 'sans_ps')) continue;
+        if (!entry || (entry.type !== 'ps_pss' && entry.type !== 'sans_ps' && entry.type !== 'relecture_grille')) continue;
         usedHistory = true;
-        count++;
+        if (entry.type !== 'relecture_grille') count++;   /* nombre de stations passées : la relecture de grille n'en est pas une */
         if (entry.confidence != null) {
             confSum += entry.confidence; confN++;
             const t = entry.date ? new Date(entry.date).getTime() : NaN;
@@ -35648,12 +35898,12 @@ window.sddNotesQuickPassage = function(type, event) {
         sddNotesBtnCheckAnim(btn);
         return;
     }
-			if (type === 'ps_pss' || type === 'sans_ps') {
+			if (type === 'ps_pss' || type === 'sans_ps' || type === 'relecture_grille') {
 				const btn = (event && event.currentTarget) || null;
 
 				// Un seul bouton ouvert à la fois
 				document
-					.querySelectorAll('.notes-action-btn.sdd-quick-ps, .notes-action-btn.sdd-quick-sans')
+					.querySelectorAll('.notes-action-btn.sdd-quick-ps, .notes-action-btn.sdd-quick-sans, .notes-action-btn.sdd-quick-grille')
 					.forEach(function(b) {
 						if (b !== btn) {
 							b.classList.remove('sdd-notes-btn-popover-open');
@@ -37592,7 +37842,7 @@ function rsSyncSelfStats() {
         var pills = card.querySelector('.rstation-card-pills');
         if (!sddId || !pills) return;
         var st = getSDDState(sddId);
-        var sig = [st.psPssCount || 0, st.sansPsCount || 0, st.fairePasserCount || 0, st.confidence || 0, st.lastRevision || ''].join('|');
+        var sig = [st.psPssCount || 0, st.sansPsCount || 0, st.fairePasserCount || 0, st.relectureGrilleCount || 0, st.confidence || 0, st.lastRevision || ''].join('|');
         if (pills.dataset.sig !== sig) { pills.innerHTML = rsBuildSelfPills(st); pills.dataset.sig = sig; }
     });
 }
@@ -38483,7 +38733,7 @@ function closeFbSentToast() {
 /* ----------------------------------------------------------------------------
    NOUVEAUTÉS & AIDE
    ---------------------------------------------------------------------------- */
-const ECOS_WHATSNEW_VERSION = 'ecos-v9';
+const ECOS_WHATSNEW_VERSION = 'ecos-v10';
 function openWhatsNewModal() {
     const overlay = document.getElementById('whatsNewModalOverlay');
 
@@ -42876,6 +43126,7 @@ function applyUserSettings(data) {
         if (document.documentElement.getAttribute('data-theme') !== data.theme) setTheme(data.theme, false);
     }
     if (data.font && typeof window.tpxApplyFont === 'function') window.tpxApplyFont(data.font, false);   // police d'écriture
+    if (typeof data.ecosGridReviewCol === 'boolean' && window._tpxGrilleSetRemote) window._tpxGrilleSetRemote(data.ecosGridReviewCol);
     if (data.ecosRStationPrefs && window._setRStationPrefs) {
         window._setRStationPrefs(data.ecosRStationPrefs);
     }
@@ -43492,7 +43743,7 @@ function _tpxEcosMergeSDD(serverSdd, localSdd) {
     });
     mergedHist.sort(function (a, b) { return new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime(); });
 
-    var counts = { ps_pss: 0, sans_ps: 0, faire_passer: 0 };
+    var counts = { ps_pss: 0, sans_ps: 0, faire_passer: 0, relecture_grille: 0 };
     mergedHist.forEach(function (h) { if (counts[h.type] != null) counts[h.type]++; });
 
     var mergedState = { history: mergedHist };
@@ -43500,13 +43751,14 @@ function _tpxEcosMergeSDD(serverSdd, localSdd) {
     var confidence = null;
     for (var i = mergedHist.length - 1; i >= 0; i--) {
         var h = mergedHist[i];
-        if ((h.type === 'ps_pss' || h.type === 'sans_ps') && h.confidence != null) { confidence = h.confidence; break; }
+        if ((h.type === 'ps_pss' || h.type === 'sans_ps' || h.type === 'relecture_grille') && h.confidence != null) { confidence = h.confidence; break; }
     }
 
     return {
         psPssCount: counts.ps_pss,
         sansPsCount: counts.sans_ps,
         fairePasserCount: counts.faire_passer,
+        relectureGrilleCount: counts.relecture_grille,
         confidence: confidence,
         lastRevision: lastRevision,
         priority: localSdd.priority || serverSdd.priority || 'none',
@@ -60130,7 +60382,7 @@ bindSeg('tpx-seg-content', function (v) {
 
     points: [],
 
-    choices: ['content'],
+    choices: ['content', 'grille'],
 
     /* Ce n'est pas une vraie page du site :
        on ne l'affiche donc pas dans la liste d'accueil */
@@ -60257,6 +60509,20 @@ bindSeg('tpx-seg-content', function (v) {
                       desc: EDN
                         ? 'Page blanche : vos matières, vos items, vos intitulés.'
                         : 'Page blanche : vos matières, vos situations, vos intitulés.' }
+                ]
+            },
+            grille: {
+                id: 'grille',
+                label: 'Colonne Relecture grille',
+                hint: 'Elle comptabilise vos relectures de grille, avec un niveau de confiance.',
+                available: function () { return !EDN && typeof window._tpxGrilleOn === 'function' && typeof window._tpxGrilleSet === 'function'; },
+                get: function () { return window._tpxGrilleOn() ? 'on' : 'off'; },
+                apply: function (v) { window._tpxGrilleSet(v === 'on'); },
+                options: [
+                    { value: 'on', icon: 'fa-eye', label: 'Affichée',
+                      desc: 'À côté de PS/PSS et Sans PS.' },
+                    { value: 'off', icon: 'fa-eye-slash', label: 'Masquée',
+                      desc: 'Liste des SDD inchangée.' }
                 ]
             },
             trainings: {
@@ -63925,10 +64191,17 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
     function hnavOn() { var d = document.getElementById('tpx-hnav'); return !!(d && d.classList.contains('is-on')); }
     function text(w) { return (w.innerHTML || '').replace(/\s*!\s*$/, ''); }
     function hide() { clearTimeout(timer); if (el) el.classList.remove('is-on'); }
+    function caler() {   /* milieu du header sans la compensation de barre de défilement des modals (padding-right) */
+        var h = document.getElementById('header'); if (!el || !h) return;
+        var comp = parseFloat(h.style.paddingRight) || 0;
+        el.style.left = Math.round((h.getBoundingClientRect().width - comp) / 2) + 'px';
+    }
+    window.addEventListener('resize', caler);
     function show(html) {
         var h = document.getElementById('header'); if (!h) return;
         if (!el) { el = document.createElement('div'); el.id = 'tpx-hello'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); h.appendChild(el); }
         el.innerHTML = html;
+        caler();
         if (hnavOn()) return;
         void el.offsetWidth;
         el.classList.add('is-on');
@@ -64301,6 +64574,183 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
         if (list) new MutationObserver(function () { if (cible !== null) appliquer(); }).observe(list, { childList: true });   /* liste redessinée : la marque suit la tâche */
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', surveiller); else surveiller();
+})();
+</script>
+<script id="tpx-conf-js">
+/* Présentation : conférence méthodologie — lecteur YouTube (youtube-nocookie) chargé seulement au clic ; remis en affiche
+   quand la présentation est masquée (connexion), pour que le son ne continue pas en arrière-plan */
+(function () {
+    var box = document.getElementById('tpx-conf'); if (!box) return;
+    function idYT(v) {
+        v = String(v || '').trim(); if (!v) return '';
+        var m = v.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
+        if (m) return m[1];
+        return /^[A-Za-z0-9_-]{11}$/.test(v) ? v : '';
+    }
+    var id = idYT(box.getAttribute('data-yt')); if (!id) return;   /* lien pas encore renseigné : bloc masqué */
+    box.hidden = false;
+    var player = document.getElementById('tpx-conf-player'), poster = document.getElementById('tpx-conf-poster');
+    var lien = document.getElementById('tpx-conf-lien'); if (lien) lien.href = 'https://www.youtube.com/watch?v=' + id;
+    function lire() {
+        if (player.querySelector('iframe')) return;
+        /* page ouverte hors d'un site (file://) : YouTube refuse le lecteur intégré (erreur 153), la vidéo s'ouvre sur YouTube */
+        if (!/^https?:$/.test(location.protocol)) { window.open('https://www.youtube.com/watch?v=' + id, '_blank', 'noopener'); return; }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&playsinline=1&origin=' + encodeURIComponent(location.origin);
+        f.title = 'Conférence méthodologie ECOS';
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        poster.hidden = true;
+        player.appendChild(f);
+        try { f.focus(); } catch (e) {}
+    }
+    function arreter() {
+        var f = player.querySelector('iframe'); if (!f) return;
+        f.parentNode.removeChild(f); poster.hidden = false;
+    }
+    poster.addEventListener('click', lire);
+    if (window.ResizeObserver) new ResizeObserver(function (en) { var r = en[0] && en[0].contentRect; if (r && r.width === 0 && r.height === 0) arreter(); }).observe(player);
+})();
+</script>
+<script id="tpx-grille-js">
+/* Liste des SDD : colonne « Relecture grille » affichée ou masquée (Paramètres) ; préférence par compte, synchronisée */
+(function () {
+    var remote = null;   /* { uid, v } : valeur du compte connecté (jamais celle d'un compte précédent) */
+    function uid() { return (window.currentUser && window.currentUser.uid) || ''; }
+    function cle() { return 'ecos_grille_col__' + uid(); }
+    function on() {
+        if (remote && remote.uid === uid()) return remote.v;
+        try { var v = localStorage.getItem(cle()); if (v === '0') return false; if (v === '1') return true; } catch (e) {}
+        return false;   /* masquée par défaut : chacun l'affiche dans Paramètres */
+    }
+    var colEl = null;
+    function sync() {
+        var t = document.getElementById('sdd-table'); if (!t) return;
+        var vis = on();
+        t.classList.toggle('tpx-grille-on', vis);
+        var th = document.getElementById('sdd-th-grille'); if (th) th.hidden = !vis;
+        var nb = document.getElementById('sddNotesGrilleBtn'); if (nb) nb.hidden = !vis;
+        if (!colEl) colEl = document.getElementById('sdd-col-grille');
+        if (colEl) {
+            if (vis && !colEl.parentNode) { var cg = t.querySelector('colgroup'), conf = cg && cg.querySelector('col.col-conf'); if (cg) cg.insertBefore(colEl, conf || null); }
+            else if (!vis && colEl.parentNode) colEl.parentNode.removeChild(colEl);
+        }
+        largeurs(t, vis);
+        var seg = document.getElementById('tpx-seg-grille');
+        if (seg) seg.querySelectorAll('.tpx-seg-opt').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-v') === (vis ? 'a' : 'b')); });
+    }
+    /* largeurs : chaque compteur à la largeur de son intitulé sur une ligne, intitulé de la SDD entre 200 et 280 px */
+    var CLES = ['ps_pss', 'sans_ps', 'faire_passer', 'relecture_grille'], AUTRES = 92 + 104 + 196 + 170;   /* N°, spécialités, confiance, ressources */
+    function naturelle(th) {
+        var c = th.cloneNode(true); c.removeAttribute('id'); c.removeAttribute('hidden');
+        c.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;width:auto;display:inline-block;';
+        th.parentNode.appendChild(c); var w = Math.ceil(c.getBoundingClientRect().width); c.parentNode.removeChild(c); return w;
+    }
+    function largeurs(t, vis) {
+        var cols = t.querySelectorAll('colgroup col.col-cnt'), wrap = t.parentElement;
+        function remettre() { t.classList.remove('tpx-grille-1l'); t.style.minWidth = ''; for (var i = 0; i < cols.length; i++) cols[i].style.width = ''; }
+        if (!vis || cols.length !== 4 || !wrap || !wrap.clientWidth) { remettre(); return; }
+        var nat = CLES.map(function (k) { var th = t.querySelector('thead th[data-sort="' + k + '"]'); return th ? Math.max(86, naturelle(th)) : 86; });
+        var somme = AUTRES + nat[0] + nat[1] + nat[2] + nat[3], dispo = wrap.clientWidth, etroit = window.innerWidth <= 1024;
+        var reste = dispo - somme;
+        if (!etroit && reste < 200) { remettre(); return; }   /* pas la place sans défilement : disposition d'avant */
+        if (!etroit && reste > 280) { var plus = Math.floor((reste - 280) / 4); nat = nat.map(function (w) { return w + plus; }); }
+        t.classList.add('tpx-grille-1l');
+        for (var i = 0; i < 4; i++) cols[i].style.width = nat[i] + 'px';
+        t.style.minWidth = etroit ? (AUTRES + nat[0] + nat[1] + nat[2] + nat[3] + 220) + 'px' : '';
+    }
+    var attente = null;
+    function plusTard() { clearTimeout(attente); attente = setTimeout(sync, 120); }
+    window.addEventListener('resize', plusTard);
+    try { document.fonts.addEventListener('loadingdone', plusTard); } catch (e) {}
+    var vu = null;   /* cadre du tableau : nouvelle mesure quand il change de taille (page affichée, barre latérale…) */
+    setInterval(function () {
+        var w = document.querySelector('#page-sdd .sdd-table-scroll');
+        if (w && w !== vu && window.ResizeObserver) { vu = w; new ResizeObserver(plusTard).observe(w); }
+    }, 1000);
+    function rerender() {
+        sync();
+        try { if (typeof renderSDDTable === 'function') renderSDDTable(); } catch (e) {}
+    }
+    function set(vis, save) {
+        if (vis === on() && !save) return;
+        remote = { uid: uid(), v: vis };
+        try { if (uid()) localStorage.setItem(cle(), vis ? '1' : '0'); } catch (e) {}
+        rerender();
+        if (save && uid() && typeof window._saveUserSettings === 'function') window._saveUserSettings({ ecosGridReviewCol: vis });
+    }
+    window._tpxGrilleOn = on;
+    window._tpxGrilleSync = sync;
+    window._tpxGrilleSetRemote = function (vis) { set(!!vis, false); };
+    window._tpxGrilleSet = function (vis) { set(!!vis, true); };   /* choix de l'utilisateur (présentation) : enregistré sur le compte */
+    /* changement de compte : valeur du nouveau compte (cache local, puis compte) */
+    var lastUid = null;
+    setInterval(function () { var u = uid(); if (u === lastUid) return; lastUid = u; rerender(); }, 500);
+
+    function carte() {
+        var body = document.querySelector('#settings-modal-overlay .settings-modal-body');
+        if (!body || document.getElementById('tpx-grille-settings')) return;
+        var card = document.createElement('div');
+        card.className = 'settings-card'; card.id = 'tpx-grille-settings'; card.setAttribute('data-setting', 'ecos-grille');
+        card.innerHTML =
+            '<div class="settings-card-head">' +
+                '<div class="settings-card-icon tours"><i class="fas fa-table-columns"></i></div>' +
+                '<div class="settings-card-titles">' +
+                    '<div class="settings-card-title">Relecture grille</div>' +
+                    '<div class="settings-card-sub">Comptez vos relectures de grille, avec un niveau de confiance, à côté de vos passages.</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="settings-switch-row">' +
+                '<div class="tpx-seg" id="tpx-seg-grille" role="group" aria-label="Relecture grille">' +
+                    '<button type="button" class="tpx-seg-opt" data-v="a"><i class="fas fa-eye"></i>Affichée</button>' +
+                    '<button type="button" class="tpx-seg-opt" data-v="b"><i class="fas fa-eye-slash"></i>Masquée</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="tpx-hint" style="margin-top:.6rem;">Masquer la relecture de grille ne supprime aucune relecture enregistrée.</div>';
+        var after = body.querySelector('.settings-card[data-setting="confidence-scale"]');
+        if (after && after.parentNode) after.parentNode.insertBefore(card, after.nextSibling); else body.appendChild(card);
+        card.querySelectorAll('.tpx-seg-opt').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (b.classList.contains('active')) return;
+                set(b.getAttribute('data-v') === 'a', true);
+            });
+        });
+        sync();
+    }
+    function init() { carte(); sync(); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script id="tpx-crown-js">
+/* couronne Premium sur la pastille du tableur : abonnés seulement, recalée si la pastille bouge (taille d'écran, police) */
+(function () {
+    var cr = document.getElementById('tpx-prem-crown'), header = document.getElementById('header');
+    var tag = document.querySelector('#header .logo .tpx-app-tag');
+    if (!cr || !header || !tag) return;
+    function placer() {
+        if (cr.hidden) return;
+        var h = header.getBoundingClientRect(), t = tag.getBoundingClientRect(), w = cr.offsetWidth || 22;
+        cr.style.left = Math.round(t.right - h.left - w * 0.62) + 'px';
+        cr.style.top = Math.round(t.top - h.top - w * 0.66) + 'px';
+    }
+    function montrer(oui) {
+        oui = !!oui; if (cr.hidden === !oui) { if (oui) placer(); return; }
+        cr.hidden = !oui; if (oui) placer();
+    }
+    cr.addEventListener('click', function () { try { localStorage.setItem('premiumReturnTableur', 'ecos'); } catch (e) {} });
+    var applique = window.tpxApplyPremiumState, remet = window.tpxResetPremiumState, inconnu = window.tpxSetUnknownState;
+    if (typeof applique === 'function') window.tpxApplyPremiumState = function (u) {
+        var r = applique.apply(this, arguments);
+        try { montrer(typeof window.tpxIsSubscribed === 'function' && window.tpxIsSubscribed(u)); } catch (e) {}
+        return r;
+    };
+    if (typeof remet === 'function') window.tpxResetPremiumState = function () { montrer(false); return remet.apply(this, arguments); };
+    if (typeof inconnu === 'function') window.tpxSetUnknownState = function () { montrer(false); return inconnu.apply(this, arguments); };
+    var attente = null; function plusTard() { clearTimeout(attente); attente = setTimeout(placer, 80); }
+    window.addEventListener('resize', plusTard);
+    try { document.fonts.addEventListener('loadingdone', plusTard); } catch (e) {}
+    if (window.ResizeObserver) new ResizeObserver(plusTard).observe(tag);
 })();
 </script>
 </body>
