@@ -73722,6 +73722,8 @@ body.tg-grid-on #page-items .filter-bar .config-resources-btn { grid-column: 1 /
             window.tpxPlusFx({ label: '+1 tour', frame: gs, anchor: function () { var x = gs(); return x ? x.querySelector('.tg-count') : null; }, zone: function (e) {   /* derrière les colonnes fixes, à gauche comme à droite */
               var z = { l: -100000, r: 100000 }, cols = e.closest('.tg2-cols'), row = e.closest('.tg2-row');
               if (cols) { var cb = cols.getBoundingClientRect(); z.l = cb.left; z.r = cb.right;
+                var eb = e.getBoundingClientRect(), ecart = row ? (parseFloat(getComputedStyle(row).columnGap) || 0) : 0;   /* case entière : cadre et halo débordent dans l'espace entre colonnes */
+                if (eb.left >= cb.left - 0.5) z.l -= ecart; if (eb.right <= cb.right + 0.5) z.r += ecart;
                 z.trous = [].filter.call(cols.querySelectorAll('.tg2-hint'), function (h) { return !h.hidden && h.getClientRects().length; }).map(function (h) { return h.getBoundingClientRect(); }); }   /* boutons ‹ › de la ligne : devant */
               if (row) [].forEach.call(row.children, function (k) { if (getComputedStyle(k).position === 'sticky') z.l = Math.max(z.l, k.getBoundingClientRect().right); });
               return z;
