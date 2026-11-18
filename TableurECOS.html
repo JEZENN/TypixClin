@@ -25474,16 +25474,15 @@ html.tpx-skel #tpx-skel { padding-top: 10px !important; }
     font-family: 'Outfit', sans-serif; font-size: 1.16rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
 #header .logo { transition: color .3s ease .14s; }
 #header .logo .tpx-app-tag { transition: opacity .3s ease .14s; }   /* fondu seul : la pastille ne bouge pas, la couronne s'y cale */
-#header .tpx-prem-crown { transition: transform .18s ease, filter .18s ease, color .18s ease, opacity .3s ease .14s; }
 #header.tpx-hi-tel .logo { color: transparent !important; transition-delay: 0s; }
 #header.tpx-hi-tel .logo .tpx-app-tag { opacity: 0; transition-delay: 0s; }
-#header.tpx-hi-tel .tpx-prem-crown { opacity: 0 !important; pointer-events: none; transition-delay: 0s; }
+#header.tpx-hi-tel .tpx-prem-crown { opacity: 0 !important; animation: none; pointer-events: none; transition: opacity .25s ease; }
+#header.tpx-hi-retour .tpx-prem-crown:not([hidden]) { animation-delay: .44s; }   /* fin de la salutation : la couronne revient après le nom du logo et sa pastille */
 @media (prefers-reduced-motion: reduce) {
     #tpx-hello { transition: opacity .2s linear; transform: translate(-50%, -50%); }
     #tpx-hello.is-on { transform: translate(-50%, -50%); }
     #header #tpx-hello.is-tel, #header #tpx-hello.is-tel.is-on { transform: translate(0, -50%); transition: opacity .2s linear; }
     #header .logo .tpx-app-tag { transition: opacity .2s linear; }
-    #header .tpx-prem-crown { transition: opacity .2s linear; }
 }
 </style>
 <style id="tpx-pastilles">
@@ -64207,16 +64206,22 @@ html[data-theme="dark"] body .resource-box.ecos.overflow-btn.overflow-validated:
        raccourcis du header apparaît (même emplacement).
        Bulle au milieu du header si elle tient entre le logo et les menus de droite ; sinon (téléphone), elle prend
        la place du nom « TypixClin » à côté de l'icône, sur deux lignes, sans rien cacher sous le header. */
-    var el = null, timer = null, shownFor = '', cv = null;
+    var el = null, timer = null, shownFor = '', cv = null, retourT = null;
     function hnavOn() { var d = document.getElementById('tpx-hnav'); return !!(d && d.classList.contains('is-on')); }
     function text(w) { return (w.innerHTML || '').replace(/\s*!\s*$/, ''); }
     function fmt(html) {   /* « Bonsoir, <nom> » : salutation et nom séparés (une ligne dans la bulle, deux à la place du logo) */
         var i = html.indexOf('<span class="user-name"'); if (i <= 0) return html;
         return '<span class="tpx-hi-mot">' + html.slice(0, i).replace(/\s+$/, '') + '</span> ' + html.slice(i);
     }
-    function marquer() {   /* nom du logo effacé tant que la salutation est à sa place */
-        var h = document.getElementById('header');
-        if (h) h.classList.toggle('tpx-hi-tel', !!(el && el.classList.contains('is-on') && el.classList.contains('is-tel')));
+    function marquer() {   /* nom du logo effacé tant que la salutation est à sa place ; à la fin, la couronne revient après lui */
+        var h = document.getElementById('header'); if (!h) return;
+        var tel = !!(el && el.classList.contains('is-on') && el.classList.contains('is-tel'));
+        if (tel) { clearTimeout(retourT); h.classList.remove('tpx-hi-retour'); }
+        else if (h.classList.contains('tpx-hi-tel')) {
+            h.classList.add('tpx-hi-retour'); clearTimeout(retourT);
+            retourT = setTimeout(function () { h.classList.remove('tpx-hi-retour'); }, 1500);
+        }
+        h.classList.toggle('tpx-hi-tel', tel);
     }
     function hide() { clearTimeout(timer); if (el) el.classList.remove('is-on'); marquer(); }
     function largeurBulle() {   /* largeur de la bulle sur une ligne, mesurée sans la redessiner */
