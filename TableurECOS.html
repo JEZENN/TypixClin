@@ -49487,10 +49487,27 @@ if (auth) onAuthStateChanged(auth, async (user) => {
     const sid  = user.uid + '_' + Math.random().toString(36).slice(2, 9);
     const me   = rRef(rtdb, 'presence/' + sid);
     const conn = rRef(rtdb, '.info/connected');
+    const fiche = () => ({ uid: user.uid, app: APP_ID, lastActive: Date.now() });
+    let presenceAverti = false, presenceRefusee = false, presenceConnectee = false;
+    const signaler = e => {   /* présence facultative : un refus (droits, identifiants, réseau) ne doit pas remonter en erreur */
+      if (/permission/i.test(String((e && (e.code || e.message)) || ''))) presenceRefusee = true;
+      if (presenceAverti) return; presenceAverti = true;
+      console.warn('[Présence] inscription refusée :', e && e.message ? e.message : e);
+    };
     onValue(conn, snap => {
-      if (snap.val() === false) return;
-      onDisconnect(me).remove().then(() => rSet(me, { uid: user.uid, app: APP_ID, lastActive: Date.now() }));
+      presenceConnectee = snap.val() === true;
+      if (!presenceConnectee) return;
+      onDisconnect(me).remove().then(() => rSet(me, fiche())).catch(signaler);
     });
+    /* lastActive rafraîchi toutes les 30 s (le compteur de l'admin ne garde que les présences de moins de 2 min),
+       tout de suite au retour sur l'onglet ; arrêt après un refus ou à la déconnexion du compte */
+    const rafraichir = () => {
+      if (presenceRefusee || !presenceConnectee) return;
+      if (!auth.currentUser || auth.currentUser.uid !== user.uid) { clearInterval(presenceMinuteur); return; }
+      rSet(me, fiche()).catch(signaler);
+    };
+    const presenceMinuteur = setInterval(rafraichir, 30000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') rafraichir(); });
   }
 });
 </script>
